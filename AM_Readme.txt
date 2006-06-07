@@ -1,4 +1,4 @@
-This folder contains source code and required dll's for analysis manager and plug-in development. Copies of all separately-developed dll's are to be kept in the AM_Common directory.
+This folder contains source code and required dll's for analysis manager and plug-in development. Copies of all separately-developed dll's are to be kept in the AM_Common directory. Due to Vis Studio stupidity in storing reference paths, it may be necessary to modify the reference path for each sub-project to point to the AM_Common folder on your particular hard drive.
 
 For deployment of an Analysis Manager:
 

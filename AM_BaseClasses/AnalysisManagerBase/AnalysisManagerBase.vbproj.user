@@ -1,7 +1,7 @@
 <VisualStudioProject>
     <VisualBasic LastOpenVersion = "7.10.3077" >
         <Build>
-            <Settings ReferencePath = "D:\Temporary\AnalysisManagerCommon\;D:\Temporary\AnalysisManager\AnalysisManagerCommon\" >
+            <Settings ReferencePath = "D:\DMS_Controlled\Analysis_Manager\AM_Common\" >
                 <Config
                     Name = "Debug"
                     EnableASPDebugging = "false"
