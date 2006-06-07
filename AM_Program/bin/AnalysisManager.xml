@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sections>
+  <section name="databasesettings">
+    <item key="connectionstring" value="Data Source=gigasax;Initial Catalog=DMS5_T_Managers;Integrated Security=SSPI;" />
+    <item key="fastacnstring" value="Data Source=gigasax;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;" />
+  </section>
+  <section name="logging">
+    <item key="logfilename" value="D:\Temporary\AnalysisManager\AnalysisManagerProg\bin\AnalysisManager" />
+  </section>
+  <section name="programcontrol">
+    <item key="modulename" value="Analysis: WE10129" />
+    <item key="machname" value="WE10129" />
+    <item key="analysistypes" value="MASIC_Finnigan" />
+    <item key="priorities" value="2" />
+    <item key="minduration" value="0" />
+    <item key="maxduration" value="99999" />
+    <item key="maxjobcount" value="5" />
+    <item key="debuglevel" value="5" />
+    <item key="performextraction" value="False" />
+    <item key="mgractive" value="True" />
+  </section>
+  <section name="commonfileandfolderlocations">
+    <item key="zipprogram" value="C:\PKWARE\PKZIPC\pkzipc.exe" />
+    <item key="workdir" value="D:\DMS_WorkDir" />
+    <item key="statusfilelocation" value="D:\Temporary\AnalysisManager\AnalysisManagerProg\bin\Status.xml" />
+    <item key="orgdbdir" value="D:\DMS_OrgDB" />
+    <item key="lcqdtaloc" value="C:\Xcalibur\system\programs\extract_msn.exe" />
+    <item key="dtascaneditor" value="C:\Pkgr\DTA_scan_edit.pl" />
+    <item key="xtprogloc" value="C:\XTandem\bin\Tandem.exe" />
+    <item key="xtoutconv-dir" value="C:\XTandemOutputConverter\" />
+    <item key="xtoutconv-prog" value="XMLtoTextViaXSL.exe" />
+    <item key="xtoutconv-xslt" value="tandem-style-text4.xsl" />
+  </section>
+  <section name="icr2ls">
+    <item key="usefilecheck" value="False" />
+  </section>
+  <section name="qtof">
+    <item key="performcal" value="True" />
+  </section>
+  <section name="agilenttofpek">
+    <item key="performcal" value="True" />
+  </section>
+  <section name="masic">
+    <item key="masicprogloc" value="C:\Program Files\MASIC\masic.exe" />
+  </section>
+  <section name="sequest">
+    <comment>NOTE: Some Sequest parameters are also required for denovopeak processing</comment>
+    <item key="cluster" value="False" />
+    <comment>Valid values for "bioworksversion" are "20", "30", and "31"</comment>
+    <item key="bioworksversion" value="20" />
+    <comment>Valid values for "xcalversion" are "13" and "14"</comment>
+    <item key="xcalversion" value="14" />
+    <item key="createnowindow" value="False" />
+    <item key="numberofprocessors" value="2" />
+    <item key="seqprogloc" value="C:\Xcalibur\system\programs\sequest.exe" />
+    <item key="paramtemplateloc" value="\\gigasax\DMS_Parameter_Files\Sequest\sequest_N14_NE_Template.params" />
+  </section>
+  <section name="denovoid">
+    <item key="numberofprocessors" value="1" />
+    <item key="denovosummary" value="C:\progra~1\peakss~1\peaks_summary.exe" />
+    <item key="jarloc" value="&quot;C:\Program Files\PEAKS Studio Demo\peaksbatch.jar&quot;" />
+  </section>
+  <section name="cluster">
+    <item key="hostsfilelocation" value="c:\cluster\pvmhosts-ip.txt" />
+    <item key="nodedblocation" value="Database" />
+  </section>
+</sections>

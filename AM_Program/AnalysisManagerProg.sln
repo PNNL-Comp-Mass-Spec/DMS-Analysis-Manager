@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg", "AnalysisManagerProg.vbproj", "{A399FE25-6566-4A34-8D84-8BCF5133F9BA}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{A399FE25-6566-4A34-8D84-8BCF5133F9BA}.Debug.ActiveCfg = Debug|.NET
+		{A399FE25-6566-4A34-8D84-8BCF5133F9BA}.Debug.Build.0 = Debug|.NET
+		{A399FE25-6566-4A34-8D84-8BCF5133F9BA}.Release.ActiveCfg = Release|.NET
+		{A399FE25-6566-4A34-8D84-8BCF5133F9BA}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

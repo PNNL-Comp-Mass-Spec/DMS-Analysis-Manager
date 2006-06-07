@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerSequestPlugin", "AnalysisManagerSequestPlugin.vbproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}.Debug.ActiveCfg = Debug|.NET
+		{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}.Debug.Build.0 = Debug|.NET
+		{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}.Release.ActiveCfg = Release|.NET
+		{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
