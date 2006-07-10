@@ -119,7 +119,7 @@ Public Class clsAnalysisJob
 			m_jobParams("priority") = mp_requestedPriority.ToString
 
 			'Obtain additional parameters
-			If Not RequestAdditionalJobParamenters(mp_jobNum) Then Return False
+			If Not RequestAdditionalJobParameters(mp_jobNum) Then Return False
 		End If
 
 		Return m_TaskWasAssigned
@@ -334,6 +334,9 @@ Public Class clsAnalysisJob
 			myParm.Direction = ParameterDirection.Input
 			myParm.Value = comment
 
+			myParm = sc.Parameters.Add("@organismDBName", SqlDbType.VarChar, 64)
+			myParm.Direction = ParameterDirection.Input
+			myParm.Value = CStr(IIf(m_jobParams.ContainsKey("generatedFastaName"), m_jobParams.Item("generatedFastaName"), ""))
 
 			' execute the stored procedure
 			'
@@ -362,7 +365,7 @@ Public Class clsAnalysisJob
 
 	End Function
 
-	Private Function RequestAdditionalJobParamenters(ByVal JobNum As String) As Boolean
+	Private Function RequestAdditionalJobParameters(ByVal JobNum As String) As Boolean
 
 		'Requests additional job parameters from database and adds them to the m_jobParams string dictionary
 		Dim SQL As String = "SELECT * FROM V_Analysis_Job_Additional_Parameters WHERE Job = " & JobNum
@@ -376,14 +379,14 @@ Public Class clsAnalysisJob
 			Da.Fill(Ds)
 		Catch ex As Exception
 			m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling data adapter, " & ex.Message, _
-				ILogger.logMsgType.logError, True)
+			 ILogger.logMsgType.logError, True)
 			Return False
 		End Try
 
 		Dim Dt As DataTable = Ds.Tables(0)
 		If Dt.Rows.Count <> 1 Then
 			m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), invalid row count: " & Dt.Rows.Count.ToString, _
-				ILogger.logMsgType.logError, True)
+			 ILogger.logMsgType.logError, True)
 			Return False
 		End If
 
