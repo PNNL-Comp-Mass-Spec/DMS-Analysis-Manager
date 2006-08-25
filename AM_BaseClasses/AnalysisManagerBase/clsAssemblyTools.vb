@@ -21,7 +21,7 @@ Public Class clsAssemblyTools
 
 	Public Shared Sub GetComponentFileVersionInfo()
 		' Create a reference to the current directory.
-		Dim di As New DirectoryInfo(Environment.CurrentDirectory)
+		Dim di As New DirectoryInfo(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath))
 
 		' Create an array representing the files in the current directory.
 		Dim fi As FileInfo() = di.GetFiles("*.dll")
