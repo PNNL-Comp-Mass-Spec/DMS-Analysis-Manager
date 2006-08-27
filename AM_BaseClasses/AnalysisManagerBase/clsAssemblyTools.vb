@@ -30,10 +30,11 @@ Public Class clsAssemblyTools
 		Dim fiTemp As FileInfo
 		Dim myFVI As FileVersionInfo
 		For Each fiTemp In fi
-			myFVI = FileVersionInfo.GetVersionInfo(Path.GetFullPath(fiTemp.Name))
+			myFVI = FileVersionInfo.GetVersionInfo(fiTemp.FullName)
 			''Console.WriteLine(myFVI.ToString)
 			AnalysisManagerBase.clsSummaryFile.Add(myFVI.ToString)
 		Next fiTemp
+
 	End Sub
 
 End Class
