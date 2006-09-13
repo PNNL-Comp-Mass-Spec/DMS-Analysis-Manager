@@ -1,0 +1,34 @@
+Summary of DLL's required for analysis manager
+
+Manager Common DLL's
+--------------------
+(Note -- all plug-ins require reference to one or more of these dll's)
+AnalysisManagerBase.dll -- base classes for all AM operations
+AnalysisManagerMSMSBase.dll -- base classes for operation on MSMS data
+AnalysisManagerMSMSResourceBase.dll -- base classes for retrieval of resources (data file, setup file, etc) for MSMS processing
+
+
+Sequest Processing
+--------------
+AnalysisManagerSequestPlugin.dll -- Plug-in for Sequest processing
+
+XTandem Processing
+--------------
+AnalysisManagerXTandemPlugIn.dll -- (MEM) Plug-in for XTandem processing
+
+Other Plug-In DLL's
+-------------------
+DTASpectraFileGen.dll -- Plug-in for generation of DTA files used in Sequest and XTandem processing
+MSMSSpectrumFilter.dll -- (MEM) Plug-in for filtering DTA's prior to Sequest/XTandem processing; Also required by DTASpectraFileGen.dll
+
+Misc DLL's
+----------
+FileConcatenator.dll -- (KJA) Required by AnalysisManagerMSMSBase.dll and PeptideFileExtractor.dll. Concatenates .out and .dta files
+MsMsDataFileReader.dll -- (MEM) data file reader; required by DTASpectraFileGen.dll and MSMSSpectrumFilter.dll
+ParamFileGenerator.dll -- (KJA) Required by AnalysisManagerBase.dll and AnalysisManagerXTandemPlugIn.dll; Generates parameter files for Sequest processing
+PeptideFileExtractor.dll -- (KJA) Required by AnalysisManagerSequestPlugin.dll, but not actually used since DEM implementation
+PeptideHitResultsProcessor.dll -- (MEM) Previously used by Sequest Plug-in, but may not be needed since DEM implementation
+PRISM.dll -- Generic library used by manager and all plug-ins
+Protein_Exporter.dll -- (KJA) Required by AnalysisManagerMSMSResourceBase.dll; Used for fasta file generation
+Protein_Storage.dll -- (KJA) Required by Protein_Exporter.dll for fasta file generation
+TableManipulationBase.dll -- (KJA) Required by Protein_Exporter.dll for fasta file generation
