@@ -84,14 +84,24 @@
 		AssemblyFile="AnalysisManagerBase.dll" 
 	/>
 	<ToolRunner 
-		Tool="junk_y" 
-		Class="JunkToolY.clsJunkToolY" 
-		AssemblyFile="JunkToolY.dll" 
+		Tool="decon2ls" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
 	<ToolRunner 
-		Tool="junk" 
-		Class="AMToolX.clsJunkTool" 
-		AssemblyFile="AMToolX.dll" 
+		Tool="decon2ls_agilent" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="tic_d2l" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="tic_d2l_agilent" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
 </ToolRunners>
 
@@ -168,6 +178,26 @@
 	/>
 	<Resourcer 
 		Tool="masic_agilent" 
+		Class="AnalysisManagerBase.clsAnalysisResources" 
+		AssemblyFile="AnalysisManagerBase.dll" 
+	/>
+	<Resourcer 
+		Tool="decon2ls" 
+		Class="AnalysisManagerBase.clsAnalysisResources" 
+		AssemblyFile="AnalysisManagerBase.dll" 
+	/>
+	<Resourcer 
+		Tool="decon2ls_agilent" 
+		Class="AnalysisManagerBase.clsAnalysisResources" 
+		AssemblyFile="AnalysisManagerBase.dll" 
+	/>
+	<Resourcer 
+		Tool="tic_d2l" 
+		Class="AnalysisManagerBase.clsAnalysisResources" 
+		AssemblyFile="AnalysisManagerBase.dll" 
+	/>
+	<Resourcer 
+		Tool="tic_d2l_agilent" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
 		AssemblyFile="AnalysisManagerBase.dll" 
 	/>
