@@ -94,5 +94,37 @@ Public MustInherit Class clsDBTask
     Next
   End Sub
 
+	Protected Function GetJobParamsFromTableWithRetries(ByVal SqlStr As String) As DataTable
+
+		'Requests job parameters from database. Input string specifies view to use. Performs retries if necessary.
+		'Returns a data table containing results if successful, NOTHING on failure
+
+		Dim RetryCount As Short = 3
+		Dim ErrMsg As String
+
+		'Get a table containing data for job
+		Dim Cn As New SqlConnection(m_connection_str)
+		Dim Da As New SqlDataAdapter(SqlStr, Cn)
+		Dim Ds As DataSet = New DataSet
+
+		While RetryCount > 0
+			Try
+				Da.Fill(Ds)
+				Exit While
+			Catch ex As Exception
+				ErrMsg = "clsDBTask.GetJobParamsFromTableWithRetries(), Filling data adapter, " & ex.Message & "; Retry count = " & RetryCount.ToString
+				m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
+				RetryCount -= 1S
+				System.Threading.Thread.Sleep(1000)			 'Delay for 1 second before trying again
+			End Try
+		End While
+
+		'If loop exited due to error, return nothing
+		If RetryCount < 1 Then Return Nothing
+
+		Return Ds.Tables(0)
+
+	End Function
+
 End Class
 

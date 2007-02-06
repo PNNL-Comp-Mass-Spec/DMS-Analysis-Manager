@@ -48,6 +48,8 @@ Public Class clsAnalysisJob
 	End Property
 
 	Public Function RequestJob() As Boolean
+
+		'Requests an analysis job. If job is found, fills a string dictionary object with the necessary parameters
 		Dim tools As String = m_mgrParams.GetParam("ProgramControl", "AnalysisTypes")
 		Dim priorities As String = m_mgrParams.GetParam("ProgramControl", "Priorities")
 
@@ -97,29 +99,76 @@ Public Class clsAnalysisJob
 
 		If m_TaskWasAssigned Then
 			m_assignedTool = mp_toolName
-			' set up parameters conveniently in dictionary for "GetParam" method to use
-			'
-			m_jobParams("jobNum") = mp_jobNum
-			m_jobParams("datasetNum") = mp_datasetNum
-			m_jobParams("datasetFolderName") = mp_datasetFolderName
-			m_jobParams("datasetFolderStoragePath") = mp_datasetFolderStoragePath
-			m_jobParams("transferFolderPath") = mp_transferFolderPath
-			m_jobParams("parmFileName") = mp_parmFileName
-			m_jobParams("parmFileStoragePath") = mp_parmFileStoragePath
-			m_jobParams("settingsFileName") = mp_settingsFileName
-			m_jobParams("settingsFileStoragePath") = mp_settingsFileStoragePath
-			'TODO: Next two parameters may no longer be needed
-			m_jobParams("organismDBName") = mp_organismDBName
-			m_jobParams("organismDBStoragePath") = mp_organismDBStoragePath
-			'Replaces organismDBName (needs to be verified true in all cases)
-			m_jobParams("legacyFastaFileName") = mp_legacyFastaFileName
-			m_jobParams("instClass") = mp_instClass
-			m_jobParams("comment") = mp_comment
+			' set up currently known parameters conveniently in dictionary for "GetParam" method to use
 			m_jobParams("tool") = mp_toolName
 			m_jobParams("priority") = mp_requestedPriority.ToString
+			m_jobParams("jobNum") = mp_jobNum
+			'========================================================================================
+			'Section removed during conversion to retrieve data files from archive
+			'========================================================================================
+			'm_jobParams("datasetNum") = mp_datasetNum
+			'm_jobParams("datasetFolderName") = mp_datasetFolderName
+			'm_jobParams("datasetFolderStoragePath") = mp_datasetFolderStoragePath
+			'm_jobParams("transferFolderPath") = mp_transferFolderPath
+			'm_jobParams("parmFileName") = mp_parmFileName
+			'm_jobParams("parmFileStoragePath") = mp_parmFileStoragePath
+			'm_jobParams("settingsFileName") = mp_settingsFileName
+			'm_jobParams("settingsFileStoragePath") = mp_settingsFileStoragePath
+			''TODO: Next two parameters may no longer be needed
+			'm_jobParams("organismDBName") = mp_organismDBName
+			'm_jobParams("organismDBStoragePath") = mp_organismDBStoragePath
+			''Replaces organismDBName (needs to be verified true in all cases)
+			'm_jobParams("legacyFastaFileName") = mp_legacyFastaFileName
+			'm_jobParams("instClass") = mp_instClass
+			'm_jobParams("comment") = mp_comment
+			'm_jobParams("tool") = mp_toolName
+			'm_jobParams("priority") = mp_requestedPriority.ToString
 
 			'Obtain additional parameters
-			If Not RequestAdditionalJobParameters(mp_jobNum) Then Return False
+			'If Not RequestAdditionalJobParameters(mp_jobNum) Then Return False
+			'========================================================================================
+			'End removed section
+			'========================================================================================
+
+			'========================================================================================
+			'Section added during conversion to retrieve data files from archive
+			'Data is now retrieved from view V_RequestAnalysisJobEx5
+			'========================================================================================
+			'Get a table containing the associated data for this job
+			Dim SqlStr As String = "SELECT * FROM V_RequestAnalysisJobEx5 WHERE JobNum = '" & m_jobParams("jobNum") & "'"
+			Dim ResultTable As DataTable = GetJobParamsFromTableWithRetries(SqlStr)
+			If ResultTable Is Nothing Then	'There was an error
+				m_logger.PostEntry("clsAnalysisJob.RequestJob(), Unable to obtain job data", ILogger.logMsgType.logError, True)
+				Return False
+			End If
+			'Verify exactly 1 row was received
+			If ResultTable.Rows.Count <> 1 Then
+				m_logger.PostEntry("clsAnalysisJob.RequestJob(), Invalid job data record count: " & ResultTable.Rows.Count.ToString, _
+				  ILogger.logMsgType.logError, True)
+				Return False
+			End If
+			'Add job parameters to string dictionary
+			Dim ResultRow As DataRow = ResultTable.Rows(0)
+			m_jobParams("datasetNum") = CStr(ResultRow(ResultTable.Columns("DatasetNum")))
+			m_jobParams("datasetFolderName") = CStr(ResultRow(ResultTable.Columns("DatasetFolderName")))
+			m_jobParams("datasetFolderStoragePath") = CStr(ResultRow(ResultTable.Columns("DatasetStoragePath")))		 'Samba path in archive
+			m_jobParams("transferFolderPath") = CStr(ResultRow(ResultTable.Columns("transferFolderPath")))
+			m_jobParams("parmFileName") = CStr(ResultRow(ResultTable.Columns("ParmFileName")))
+			m_jobParams("parmFileStoragePath") = CStr(ResultRow(ResultTable.Columns("ParmFileStoragePath")))
+			m_jobParams("settingsFileName") = CStr(ResultRow(ResultTable.Columns("SettingsFileName")))
+			m_jobParams("settingsFileStoragePath") = CStr(ResultRow(ResultTable.Columns("SettingsFileStoragePath")))
+			m_jobParams("legacyFastaFileName") = CStr(ResultRow(ResultTable.Columns("legacyFastaFileName")))
+			m_jobParams("instClass") = CStr(ResultRow(ResultTable.Columns("InstClass")))
+			m_jobParams("comment") = CStr(ResultRow(ResultTable.Columns("Comment")))
+			m_jobParams("RawDataType") = CStr(ResultRow(ResultTable.Columns("RawDataType")))
+			m_jobParams("SearchEngineInputFileFormats") = CStr(ResultRow(ResultTable.Columns("SearchEngineInputFileFormats")))
+			m_jobParams("OrganismName") = CStr(ResultRow(ResultTable.Columns("OrganismName")))
+			m_jobParams("OrgDbReqd") = CStr(ResultRow(ResultTable.Columns("OrgDbReqd")))
+			m_jobParams("ProteinCollectionList") = CStr(ResultRow(ResultTable.Columns("ProteinCollectionList")))
+			m_jobParams("ProteinOptionsList") = CStr(ResultRow(ResultTable.Columns("ProteinOptions")))
+			'========================================================================================
+			'End added section
+			'========================================================================================
 		End If
 
 		Return m_TaskWasAssigned
@@ -221,7 +270,7 @@ Public Class clsAnalysisJob
 			myParm = sc.Parameters.Add("@transferFolderPath", SqlDbType.VarChar, 255)
 			myParm.Direction = ParameterDirection.Output
 
-            myParm = sc.Parameters.Add("@parmFileName", SqlDbType.VarChar, 255)
+			myParm = sc.Parameters.Add("@parmFileName", SqlDbType.VarChar, 255)
 			myParm.Direction = ParameterDirection.Output
 
 			myParm = sc.Parameters.Add("@parmFileStoragePath", SqlDbType.VarChar, 255)
@@ -251,29 +300,34 @@ Public Class clsAnalysisJob
 
 			' get return value
 			'
-			'        Dim ret As Object
 			Dim ret As Integer
 			ret = CInt(sc.Parameters("@Return").Value)
 
 			If ret = 0 Then
-				' get values for output parameters
+				' get job number
 				'
 				mp_jobNum = CStr(sc.Parameters("@jobNum").Value)
-				mp_datasetNum = CStr(sc.Parameters("@datasetNum").Value)
-				mp_datasetFolderName = CStr(sc.Parameters("@datasetFolderName").Value)
-				mp_datasetFolderStoragePath = CStr(sc.Parameters("@datasetFolderStoragePath").Value)
-				mp_transferFolderPath = CStr(sc.Parameters("@transferFolderPath").Value)
-				mp_parmFileName = CStr(sc.Parameters("@parmFileName").Value)
-				mp_parmFileStoragePath = CStr(sc.Parameters("@parmFileStoragePath").Value)
-				mp_settingsFileName = CStr(sc.Parameters("@settingsFileName").Value)
-				mp_settingsFileStoragePath = CStr(sc.Parameters("@settingsFileStoragePath").Value)
-				'TODO: The next two parameters may no longer be needed, but are left in until we know for sure
-				mp_organismDBName = CStr(sc.Parameters("@organismDBName").Value)
-				mp_organismDBStoragePath = CStr(sc.Parameters("@organismDBStoragePath").Value)
-				'This parameter replaces mp_organismDBName for Sequest/XTandem analysis
-				mp_legacyFastaFileName = CStr(sc.Parameters("@organismDBName").Value)
-				mp_instClass = CStr(sc.Parameters("@instClass").Value)
-				mp_comment = CStr(sc.Parameters("@comment").Value)
+				'========================================================================================
+				'Section removed during conversion to retrieve data files from archive
+				'========================================================================================
+				'mp_datasetNum = CStr(sc.Parameters("@datasetNum").Value)
+				'mp_datasetFolderName = CStr(sc.Parameters("@datasetFolderName").Value)
+				'mp_datasetFolderStoragePath = CStr(sc.Parameters("@datasetFolderStoragePath").Value)
+				'mp_transferFolderPath = CStr(sc.Parameters("@transferFolderPath").Value)
+				'mp_parmFileName = CStr(sc.Parameters("@parmFileName").Value)
+				'mp_parmFileStoragePath = CStr(sc.Parameters("@parmFileStoragePath").Value)
+				'mp_settingsFileName = CStr(sc.Parameters("@settingsFileName").Value)
+				'mp_settingsFileStoragePath = CStr(sc.Parameters("@settingsFileStoragePath").Value)
+				''TODO: The next two parameters may no longer be needed, but are left in until we know for sure
+				'mp_organismDBName = CStr(sc.Parameters("@organismDBName").Value)
+				'mp_organismDBStoragePath = CStr(sc.Parameters("@organismDBStoragePath").Value)
+				''This parameter replaces mp_organismDBName for Sequest/XTandem analysis
+				'mp_legacyFastaFileName = CStr(sc.Parameters("@organismDBName").Value)
+				'mp_instClass = CStr(sc.Parameters("@instClass").Value)
+				'mp_comment = CStr(sc.Parameters("@comment").Value)
+				'========================================================================================
+				'End removed section
+				'========================================================================================
 
 				' if we made it this far, we succeeded
 				'
@@ -288,6 +342,7 @@ Public Class clsAnalysisJob
 		LogErrorEvents()
 
 		Return Outcome
+
 	End Function
 
 	Private Function SetAnalysisJobCompleteEx5(ByVal completionCode As Int32, ByVal resultsFolderName As String, ByVal comment As String) As Boolean
@@ -365,50 +420,57 @@ Public Class clsAnalysisJob
 
 	End Function
 
-	Private Function RequestAdditionalJobParameters(ByVal JobNum As String) As Boolean
+	'========================================================================================
+	'Section removed during conversion to retrieve data files from archive
+	'========================================================================================
+	'Private Function RequestAdditionalJobParameters(ByVal JobNum As String) As Boolean
 
-		'Requests additional job parameters from database and adds them to the m_jobParams string dictionary
-		Dim SQL As String = "SELECT * FROM V_Analysis_Job_Additional_Parameters WHERE Job = " & JobNum
+	'	'Requests additional job parameters from database and adds them to the m_jobParams string dictionary
+	'	Dim SQL As String = "SELECT * FROM V_Analysis_Job_Additional_Parameters WHERE Job = " & JobNum
 
-		'Get a list of all records in database (hopefully just one) matching the job number
-		Dim Cn As New SqlConnection(m_connection_str)
-		Dim Da As New SqlDataAdapter(SQL, Cn)
-		Dim Ds As DataSet = New DataSet
+	'	'Get a list of all records in database (hopefully just one) matching the job number
+	'	Dim Cn As New SqlConnection(m_connection_str)
+	'	Dim Da As New SqlDataAdapter(SQL, Cn)
+	'	Dim Ds As DataSet = New DataSet
 
-		Try
-			Da.Fill(Ds)
-		Catch ex As Exception
-			m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling data adapter, " & ex.Message, _
-			 ILogger.logMsgType.logError, True)
-			Return False
-		End Try
+	'	Try
+	'		Da.Fill(Ds)
+	'	Catch ex As Exception
+	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling data adapter, " & ex.Message, _
+	'		 ILogger.logMsgType.logError, True)
+	'		Return False
+	'	End Try
 
-		Dim Dt As DataTable = Ds.Tables(0)
-		If Dt.Rows.Count <> 1 Then
-			m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), invalid row count: " & Dt.Rows.Count.ToString, _
-			 ILogger.logMsgType.logError, True)
-			Return False
-		End If
+	'	Dim Dt As DataTable = Ds.Tables(0)
+	'	If Dt.Rows.Count <> 1 Then
+	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), invalid row count: " & Dt.Rows.Count.ToString, _
+	'		 ILogger.logMsgType.logError, True)
+	'		Return False
+	'	End If
 
-		'Read the extra parameters into a collection
-		Dim MyRow As DataRow = Dt.Rows(0)
-		Dim cols As DataColumnCollection = Dt.Columns
-		Dim col As DataColumn
-		Try
-			'Add the raw data type to the string dictionary
-			For Each col In cols
-				m_jobParams.Add(col.ColumnName, CStr(MyRow(Dt.Columns(col.ColumnName))))
-				'm_jobParams.Add(col.ColumnName, DbCStr(MyRow(Dt.Columns(col.ColumnName))))
-			Next
-		Catch ex As Exception
-			m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling additional parameter collection, " _
-			  & ex.Message, ILogger.logMsgType.logError, True)
-			Return False
-		End Try
+	'	'Read the extra parameters into a collection
+	'	Dim MyRow As DataRow = Dt.Rows(0)
+	'	Dim cols As DataColumnCollection = Dt.Columns
+	'	Dim col As DataColumn
+	'	Try
+	'		'Add the raw data type to the string dictionary
+	'		For Each col In cols
+	'			m_jobParams.Add(col.ColumnName, CStr(MyRow(Dt.Columns(col.ColumnName))))
+	'			'm_jobParams.Add(col.ColumnName, DbCStr(MyRow(Dt.Columns(col.ColumnName))))
+	'		Next
+	'	Catch ex As Exception
+	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling additional parameter collection, " _
+	'		  & ex.Message, ILogger.logMsgType.logError, True)
+	'		Return False
+	'	End Try
 
-		Return True
+	'	Return True
 
-	End Function
+	'End Function
+	'========================================================================================
+	'End removed section
+	'========================================================================================
+
 
 	'-------[for interface IJobParams]----------------------------------------------
 	Public Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean _

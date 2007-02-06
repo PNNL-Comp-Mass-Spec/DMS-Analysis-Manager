@@ -360,26 +360,48 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 	Protected Overridable Function ZipConcatOutFile(ByVal WorkDir As String, ByVal ZipperLoc As String, ByVal JobNum As String) As Boolean
 
 		'Zips the concatenated .out file
-		Dim CmdStr As String
-		Dim FileList() As String
-		Dim TmpFile As String
-		Dim CmdRunner As New clsRunDosProgram(m_logger, m_workdir)
 
-		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.ZipConcatOutFile(), zipping concatenated out file", _
-			 ILogger.logMsgType.logDebug, True)
+		Dim OutFileName As String = m_jobParams.GetParam("datasetNum") & "_out.txt"
+
+		m_logger.PostEntry("Zipping concatenated output file, job " & m_JobNum, ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+
+		'Verify file exists
+		If Not File.Exists(Path.Combine(m_workdir, OutFileName)) Then
+			m_logger.PostEntry("Unable to find concatenated .out file", ILogger.logMsgType.logError, True)
+			Return False
 		End If
 
-		FileList = Directory.GetFiles(WorkDir, "*_out.txt")
-		For Each TmpFile In FileList
-			'Set up a program runner to zip the file
-			CmdStr = "-add -fast " & Path.Combine(WorkDir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip " & TmpFile
-			If Not CmdRunner.RunProgram(ZipperLoc, CmdStr, "Zipper", True) Then
-				m_logger.PostEntry("Error zipping output files, job " & JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_message, "Error zipping concatenated out files")
-				Return False
-			End If
-		Next
+		'Zip the file
+		Dim Zipper As New clsSharpZipWrapper
+		Dim ZipFileName As String = Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(OutFileName)) & ".zip"
+		If Not Zipper.ZipFilesInFolder(ZipFileName, m_workdir, False, OutFileName) Then
+			Dim Msg As String = "Error zipping concat out file, job " & m_jobnum & ": " & Zipper.ErrMsg
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
+			Return False
+		End If
+
+		'm_CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
+
+		'Dim CmdStr As String
+		'Dim FileList() As String
+		'Dim TmpFile As String
+		'Dim CmdRunner As New clsRunDosProgram(m_logger, m_workdir)
+
+		'If m_DebugLevel > 0 Then
+		'	m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.ZipConcatOutFile(), zipping concatenated out file", _
+		'	 ILogger.logMsgType.logDebug, True)
+		'End If
+
+		'FileList = Directory.GetFiles(WorkDir, "*_out.txt")
+		'For Each TmpFile In FileList
+		'	'Set up a program runner to zip the file
+		'	CmdStr = "-add -fast " & Path.Combine(WorkDir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip " & TmpFile
+		'	If Not CmdRunner.RunProgram(ZipperLoc, CmdStr, "Zipper", True) Then
+		'		m_logger.PostEntry("Error zipping output files, job " & JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
+		'		m_message = AppendToComment(m_message, "Error zipping concatenated out files")
+		'		Return False
+		'	End If
+		'Next
 
 		If m_DebugLevel > 0 Then
 			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.ZipConcatOutFile(), concatenated outfile zipping successful", _

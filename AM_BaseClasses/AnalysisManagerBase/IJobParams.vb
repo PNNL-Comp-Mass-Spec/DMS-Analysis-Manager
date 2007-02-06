@@ -15,23 +15,18 @@ Public Interface IJobParams
 	'	Parameters defined in this class:
 	'		"jobNum"	--	Job number
 	'		"datasetNum"	--	Dataset number
-	'		"datasetFolderName"	--	Name of dataset folder on storage server (normally same as dataset number)
-	'		"datasetFolderStoragePath"	--	Path to dataset folder on storage server (ie, \\proto-2\SWT_LCQ2\)
+	'		"datasetFolderName"	--	Name of dataset folder (normally same as dataset number)
+	'		"datasetFolderStoragePath"	--	Path to dataset folder in archive via Samba (ie, \\n2.emsl.pnl.gov\dmsarch\LCQ_1\LCQ_C2)
 	'		"transferFolderPath"	--	Results transfer folder on storage server (ie, DMS3_Xfer\)
 	'		"parmFileName"	-- Parameter file name
 	'		"parmFileStoragePath"	--	Location where param file storage is located (not used for Sequest)
 	'		"settingsFileName"	--	Name of settings file
 	'		"settingsFileStoragePath"	--	Settings file storage location
-	'		"organismDBName"	-- Organism database name (not used since protein db came into service)
-	'		"organismDBStoragePath"	--	Storage path for organism database  (not used since protein db came into service)
 	'		"instClass"	-- Instrument class for instrument that dataset was created on
 	'		"comment"	--	Misc comments
 	'		"tool"	-- Analysis tool for this job
 	'		"priority"	-- Job priority
 	'		"legacyFastaFileName  -- Fasta file name for legacy jobs (replaced organismDBName)
-	'
-	'	The above parameters are the minimum set. Additional parameters defined by V_Analysis_Job_Additional_Parameters may 
-	'		also be loaded into the job parameter dictionary. Currently loaded parameters are:
 	'		"RawDataType"  -- Describes format of raw data (.wiff, .raw, folder, etc)
 	'		"SearchEngineInputFileFormats"  --  Future use?
 	'		"OrganismName"  -- Organism name

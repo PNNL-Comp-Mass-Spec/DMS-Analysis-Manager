@@ -77,11 +77,11 @@ Public Class clsPluginLoader
 			'Build instance of tool runner subclass from class name and assembly file name.
 			Dim a As System.Reflection.Assembly
 			a = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName))
-			Dim t As Type = a.GetType(className)
+			Dim t As Type = a.GetType(className, False, True)
 			obj = Activator.CreateInstance(t)
 		Catch e
 			''Catch any exceptions
-			m_msgList.Add(e.Message)
+			m_msgList.Add("clsPluginLoader.LoadObject(), exception: " & e.Message)
 		End Try
 		LoadObject = obj
 	End Function

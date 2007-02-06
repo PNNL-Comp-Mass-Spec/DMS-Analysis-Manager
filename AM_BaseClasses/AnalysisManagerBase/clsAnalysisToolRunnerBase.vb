@@ -105,10 +105,15 @@ Public Class clsAnalysisToolRunnerBase
 		Dim fileName As String = m_jobParams.GetParam("settingsFileName")
 		If fileName <> "na" Then
 			Dim filePath As String = Path.Combine(m_WorkDir, fileName)
-			Return m_settingsFileParams.LoadSettings(filePath)
+			If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
+				Return m_settingsFileParams.LoadSettings(filePath)
+			Else
+				Return False			'Settings file wasn't found
+			End If
 		Else
-			Return True
+			Return True		  'Settings file wasn't required
 		End If
+
 	End Function
 
 	Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool

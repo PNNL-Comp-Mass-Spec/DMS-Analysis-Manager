@@ -114,19 +114,32 @@ Public Class clsAnalysisToolRunnerXT
 	Private Function ZipMainOutputFile() As IJobParams.CloseOutType
 		Dim TmpFile As String
 		Dim FileList() As String
+		Dim ZipFileName As String
 
 		'Zip concatenated XML output files (should only be one)
-		Dim CmdStr As String
+		Dim Zipper As New clsSharpZipWrapper
 		FileList = Directory.GetFiles(m_workdir, "*_xt.xml")
 		For Each TmpFile In FileList
-			'Set up a program runner to zip the file
-			CmdStr = "-add -fast " & Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip " & TmpFile
-			If Not CmdRunner.RunProgram(m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"), CmdStr, "Zipper", True) Then
-				m_logger.PostEntry("Error zipping output files, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+			ZipFileName = Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
+			If Not Zipper.ZipFilesInFolder(ZipFileName, m_workdir, False, Path.GetFileName(TmpFile)) Then
+				Dim Msg As String = "Error zipping output files, job " & m_jobnum & ": " & Zipper.ErrMsg
+				m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
 				m_message = AppendToComment(m_message, "Error zipping output files")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		Next
+
+		'		Dim CmdStr As String
+		'		FileList = Directory.GetFiles(m_workdir, "*_xt.xml")
+		'For Each TmpFile In FileList
+		'	'Set up a program runner to zip the file
+		'	CmdStr = "-add -fast " & Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip " & TmpFile
+		'	If Not CmdRunner.RunProgram(m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"), CmdStr, "Zipper", True) Then
+		'		m_logger.PostEntry("Error zipping output files, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+		'		m_message = AppendToComment(m_message, "Error zipping output files")
+		'		Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'	End If
+		'Next
 
 		'Delete the XML output files
 		Try

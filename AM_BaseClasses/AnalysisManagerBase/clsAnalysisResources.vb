@@ -82,7 +82,8 @@ Public Class clsAnalysisResources
 			If Not RetrieveOrgDB(m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir")) Then
 				msgstr = "Error copying OrgDB file, job " & m_JobNum
 				m_logger.PostEntry(msgstr, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying OrgDB file")
+				'				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying OrgDB file")
+				m_message = "Error copying OrgDB file"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		End If
@@ -92,7 +93,8 @@ Public Class clsAnalysisResources
 			If Not RetrieveParamFile(ParamFile, m_jobParams.GetParam("parmFileStoragePath"), m_WorkingDir) Then
 				msgstr = "Error copying param file, job " & m_JobNum
 				m_logger.PostEntry(msgstr, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying param file")
+				'				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying param file")
+				m_message = "Error copying param file"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		End If
@@ -102,7 +104,8 @@ Public Class clsAnalysisResources
 			If Not CopyFileToWorkDir(SettingsFile, m_jobParams.GetParam("settingsFileStoragePath"), m_WorkingDir) Then
 				msgstr = "Error copying settings file, job " & m_JobNum
 				m_logger.PostEntry(msgstr, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying settings file")
+				'				m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying settings file")
+				m_message = "Error copying settings file"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		End If
@@ -111,7 +114,8 @@ Public Class clsAnalysisResources
 		If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_WorkingDir) Then
 			msgstr = "Error copying spectra, job " & m_JobNum
 			m_logger.PostEntry(msgstr, ILogger.logMsgType.logError, LOG_DATABASE)
-			m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying spectra")
+			'			m_message = AppendToComment(m_jobParams.GetParam("comment"), "Error copying spectra")
+			m_message = "Error copying spectra"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -130,11 +134,17 @@ Public Class clsAnalysisResources
 
 		'Verify source file exists
 		If Not File.Exists(SourceFile) Then
+			Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File not found: " & SourceFile
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, True)
 			Return False
 		End If
 
 		Try
 			File.Copy(SourceFile, Path.Combine(OutDir, InpFile), True)
+			If m_DebugLevel > 3 Then
+				Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File copied: " & SourceFile
+				m_logger.PostEntry(msg, ILogger.logMsgType.logDebug, True)
+			End If
 		Catch CopyError As Exception
 			m_logger.PostError("Error copying file " & SourceFile, CopyError, LOG_DATABASE)
 			Return False
@@ -252,6 +262,8 @@ Public Class clsAnalysisResources
 
 		'Retrieves the spectra file(s) based on raw data type and puts them in the working directory
 		Dim OpResult As Boolean = False
+
+		m_logger.PostEntry("Retrieving spectra file(s)", ILogger.logMsgType.logNormal, True)
 
 		Select Case RawDataType.ToLower
 			Case "dot_d_folders"			'Agilent ion trap data
@@ -391,42 +403,107 @@ Public Class clsAnalysisResources
 
 	Private Function RetrieveSFolders(ByVal WorkDir As String) As Boolean
 
+		'=====================================================================================================
+		'Original version
+		'=====================================================================================================
+		''Unzips dataset folders to working directory
+		'Dim DSName As String = m_jobParams.GetParam("datasetNum")
+		'Dim ServerPath As String = m_jobParams.GetParam("datasetFolderStoragePath")
+		'Dim ZipFiles() As String
+		'Dim DSFolderPath As String
+		'Dim UnZipper As ZipTools
+		'Dim TargetFolder As String
+		'Dim ZipFile As String
+
+		'DSFolderPath = Path.Combine(ServerPath, DSName)
+
+		''Verify dataset folder exists
+		'If Not Directory.Exists(DSFolderPath) Then Return False
+
+		''Get a listing of the zip files to process
+		'ZipFiles = Directory.GetFiles(CheckTerminator(DSFolderPath), "s*.zip")
+		'If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
+
+		''Set up the unzipper
+		'UnZipper = New PRISM.Files.ZipTools(WorkDir, m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"))
+
+		''Create a dataset subdirectory under the working directory
+		'Directory.CreateDirectory(Path.Combine(WorkDir, DSName))
+
+		''Unzip each of the zip files to the working directory
+		'For Each ZipFile In ZipFiles
+		'	TargetFolder = Path.Combine(WorkDir, Path.Combine(DSName, _
+		'	 Path.GetFileNameWithoutExtension(ZipFile)))
+		'	Directory.CreateDirectory(TargetFolder)
+		'	If Not UnZipper.UnzipFile("-dir=relative", ZipFile, TargetFolder) Then
+		'		UnZipper = Nothing
+		'		Return False
+		'	End If
+		'Next
+
+		'UnZipper = Nothing
+		'Return True
+
+		'=====================================================================================================
+		'Modified for local unzip and #ZipLib use
+		'=====================================================================================================
 		'Unzips dataset folders to working directory
 		Dim DSName As String = m_jobParams.GetParam("datasetNum")
-		Dim ServerPath As String = m_jobParams.GetParam("datasetFolderStoragePath")
 		Dim ZipFiles() As String
-		Dim DSFolderPath As String
-		Dim UnZipper As ZipTools
+		Dim DSWorkFolder As String
+		Dim UnZipper As clsSharpZipWrapper
 		Dim TargetFolder As String
 		Dim ZipFile As String
 
-		DSFolderPath = Path.Combine(ServerPath, DSName)
-
-		'Verify dataset folder exists
-		If Not Directory.Exists(DSFolderPath) Then Return False
+		'Copy the zipped s-folders from archive to work directory
+		If Not CopySFoldersToWorkDir(WorkDir) Then
+			'Error messages have already been logged, so just exit
+			Return False
+		End If
 
 		'Get a listing of the zip files to process
-		ZipFiles = Directory.GetFiles(CheckTerminator(DSFolderPath), "s*.zip")
-		If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
+		ZipFiles = Directory.GetFiles(WorkDir, "s*.zip")
+		If ZipFiles.GetLength(0) < 1 Then
+			m_logger.PostEntry("No zipped s-folders found in working directory", ILogger.logMsgType.logError, True)
+			Return False			'No zipped data files found
+		End If
 
-		'Set up the unzipper
-		UnZipper = New PRISM.Files.ZipTools(WorkDir, m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"))
+		''Set up the unzipper
+		UnZipper = New clsSharpZipWrapper
 
 		'Create a dataset subdirectory under the working directory
-		Directory.CreateDirectory(Path.Combine(WorkDir, DSName))
+		DSWorkFolder = Path.Combine(WorkDir, DSName)
+		Directory.CreateDirectory(DSWorkFolder)
 
 		'Unzip each of the zip files to the working directory
 		For Each ZipFile In ZipFiles
-			TargetFolder = Path.Combine(WorkDir, Path.Combine(DSName, _
-			 Path.GetFileNameWithoutExtension(ZipFile)))
-			Directory.CreateDirectory(TargetFolder)
-			If Not UnZipper.UnzipFile("-dir=relative", ZipFile, TargetFolder) Then
-				UnZipper = Nothing
-				Return False
+			If m_DebugLevel > 3 Then
+				m_logger.PostEntry("Unzipping file " & ZipFile, ILogger.logMsgType.logDebug, True)
 			End If
+			Try
+				TargetFolder = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
+				Directory.CreateDirectory(TargetFolder)
+				If Not UnZipper.ExtractAllFilesToOneFolder(ZipFile, TargetFolder) Then
+					m_logger.PostEntry(UnZipper.ErrMsg, ILogger.logMsgType.logError, True)
+					Return False
+				End If
+			Catch ex As Exception
+				m_logger.PostEntry("Exception while unzipping s-folders: " & ex.Message, ILogger.logMsgType.logError, True)
+				Return False
+			End Try
 		Next
 
-		UnZipper = Nothing
+		'Delete all s*.zip files in working directory
+		For Each ZipFile In ZipFiles
+			Try
+				File.Delete(ZipFile)
+			Catch ex As Exception
+				m_logger.PostEntry("Exception deleting file " & ZipFile & " : " & ex.Message, ILogger.logMsgType.logError, True)
+				Return False
+			End Try
+		Next
+
+		'Got to here, so everything must have worked
 		Return True
 
 	End Function
@@ -448,6 +525,43 @@ Public Class clsAnalysisResources
 				'If we get to here, there's a problem
 				Return Nothing
 		End Select
+
+	End Function
+
+	Private Function CopySFoldersToWorkDir(ByVal WorkDir As String) As Boolean
+
+		'Copies the zipped s-folders to the working directory
+		Dim DSName As String = m_jobParams.GetParam("datasetNum")
+		Dim ServerPath As String = m_jobParams.GetParam("datasetFolderStoragePath")
+		Dim ZipFiles() As String
+		Dim DSFolderPath As String
+		Dim ZippedFileName As String
+
+		DSFolderPath = Path.Combine(ServerPath, DSName)
+
+		'Verify dataset folder exists
+		If Not Directory.Exists(DSFolderPath) Then Return False
+
+		'Get a listing of the zip files to process
+		ZipFiles = Directory.GetFiles(DSFolderPath, "s*.zip")
+		If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
+
+		'copy each of the s*.zip files to the working directory
+		For Each ZipFile As String In ZipFiles
+			ZippedFileName = Path.GetFileName(ZipFile)
+			Try
+				If m_DebugLevel > 3 Then
+					m_logger.PostEntry("Copying file " & ZipFile & " to work directory", ILogger.logMsgType.logDebug, True)
+				End If
+				File.Copy(ZipFile, Path.Combine(WorkDir, ZippedFileName), False)
+			Catch ex As Exception
+				m_logger.PostEntry("Exception copying file " & ZipFile & " : " & ex.Message, ILogger.logMsgType.logError, True)
+				Return False
+			End Try
+		Next
+
+		'If we got to here, then copy was a success
+		Return True
 
 	End Function
 

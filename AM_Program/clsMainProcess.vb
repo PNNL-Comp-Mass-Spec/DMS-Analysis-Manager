@@ -160,7 +160,7 @@ Public Class clsMainProcess
 						DeleteStatusFlagFile(myLogger)
 					End If
 					myStatusTools.UpdateIdle()
-					myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+					'					myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 					Exit Sub
 				End If
 			Catch Err As Exception
@@ -168,7 +168,7 @@ Public Class clsMainProcess
 				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Getting resources," & _
 				 Err.Message, ILogger.logMsgType.logError, True)
 				myStatusTools.UpdateIdle()
-				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 				Exit Sub
 			End Try
 
@@ -191,7 +191,7 @@ Public Class clsMainProcess
 						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & _
 						 Err.Message, ILogger.logMsgType.logError, True)
 						myStatusTools.UpdateIdle()
-						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+						'						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 						Exit Sub
 					End Try
 				End If
@@ -200,7 +200,7 @@ Public Class clsMainProcess
 				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message, _
 				 ILogger.logMsgType.logError, True)
 				myStatusTools.UpdateIdle()
-				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 				Exit Sub
 			End Try
 
@@ -219,7 +219,7 @@ Public Class clsMainProcess
 						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Cleaning up after DeliverResults error," & _
 						 Err.Message, ILogger.logMsgType.logError, True)
 						myStatusTools.UpdateIdle()
-						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+						'						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 						Exit Sub
 					End Try
 				End If
@@ -242,7 +242,7 @@ Public Class clsMainProcess
 				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & _
 				 Err.Message, ILogger.logMsgType.logError, True)
 				myStatusTools.UpdateIdle()
-				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 				Exit Sub
 			End Try
 
@@ -257,7 +257,7 @@ Public Class clsMainProcess
 			FailCount += 1
 			myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), " & Err.Message, ILogger.logMsgType.logError, True)
 			myStatusTools.UpdateIdle()
-			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+			'			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 			Exit Sub
 		End Try
 		'		OutputSummary()
@@ -441,7 +441,7 @@ Public Class clsMainProcess
 
 		'Verify working directory is valid
 		If Not Directory.Exists(WorkingDir) Then
-			MsgStr = "Invalid working directory"
+			MsgStr = "Invalid working directory: " & WorkingDir
 			myLogger.PostEntry(MsgStr, ILogger.logMsgType.logError, LOG_DATABASE)
 			Return False
 		End If

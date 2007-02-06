@@ -5,27 +5,29 @@
     <item key="fastacnstring" value="Data Source=gigasax;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;" />
   </section>
   <section name="logging">
-    <item key="logfilename" value="D:\DMS_Controlled\Analysis_Manager_Decon2LS_Remotable\AM_Program\bin\AnalysisManager" />
+    <item key="logfilename" value="D:\DMS_Controlled\Analysis_Manager_Samba\AM_Program\bin\AnalysisManager" />
   </section>
   <section name="programcontrol">
     <item key="modulename" value="Analysis: WE10129" />
     <item key="machname" value="WE10129" />
-    <item key="analysistypes" value="Decon2LS_Agilent;TIC_D2L_Agilent;TIC_D2L;Decon2LS" />
+    <item key="analysistypes" value="Sequest;MASIC_Finnigan;TIC_D2L;TIC_D2L_Agilent;XTandem;Decon2LS" />
     <item key="priorities" value="9" />
     <item key="minduration" value="0" />
     <item key="maxduration" value="99999" />
-    <item key="maxjobcount" value="5" />
+    <item key="maxjobcount" value="10" />
     <item key="debuglevel" value="5" />
     <item key="performextraction" value="False" />
     <item key="tcpport" value="54321" />
     <item key="mgractive" value="True" />
   </section>
   <section name="commonfileandfolderlocations">
-    <item key="zipprogram" value="C:\PKWARE\PKZIPC\pkzipc.exe" />
+    <comment>
+    	<item key="zipprogram" value="C:\PKWARE\PKZIPC\pkzipc.exe" />
+    </comment>
     <item key="workdir" value="D:\DMS_WorkDir" />
-    <item key="statusfilelocation" value="D:\DMS_Controlled\Analysis_Manager_Decon2LS_Remotable\AM_Program\bin\Status.xml" />
+    <item key="statusfilelocation" value="D:\DMS_Controlled\Analysis_Manager_Samba\AM_Program\bin\Status.xml" />
     <item key="orgdbdir" value="D:\DMS_OrgDB" />
-    <item key="lcqdtaloc" value="C:\Xcalibur\system\programs\extract_msn.exe" />
+    <item key="lcqdtaloc" value="C:\Xcalibur\system\programs" />
     <item key="dtascaneditor" value="C:\Pkgr\DTA_scan_edit.pl" />
     <item key="xtprogloc" value="C:\XTandem\bin\Tandem.exe" />
     <item key="xtoutconv-dir" value="C:\XTandemOutputConverter\" />

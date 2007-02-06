@@ -20,15 +20,21 @@ Public Class clsAnalysisResourcesXT
 		' XTandem just copies its parameter file from the central repository
 		'	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
-		'		result = result And CopyFileToWorkDir(ParamFileName, ParamFilePath, WorkDir)
+		m_logger.PostEntry("Getting param file", ILogger.logMsgType.logNormal, True)
 
 		'Uses ParamFileGenerator dll provided by Ken Auberry to get mod_defs and mass correction files
 		'NOTE: ParamFilePath isn't used in this override, but is needed in parameter list for compatability
 		Dim ParFileGen As IGenerateFile = New clsMakeParameterFile
 
-		result = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion("xtandem"), _
-			Path.Combine(m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir"), m_jobParams.GetParam("organismDBName")), _
-			WorkDir, m_mgrParams.GetParam("databasesettings", "connectionstring"))
+		Try
+			result = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion("xtandem"), _
+			 Path.Combine(m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
+			 WorkDir, m_mgrParams.GetParam("databasesettings", "connectionstring"))
+		Catch Ex As Exception
+			Dim Msg As String = "clsAnalysisResourcesXT.RetrieveParamFile(), exception generating param file: " & Ex.Message
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, True)
+			Return False
+		End Try
 
 		If Not result Then
 			m_logger.PostEntry("Error converting param file: " & ParFileGen.LastError, ILogger.logMsgType.logError, True)

@@ -55,6 +55,15 @@ Public Class clsDtaGenMainProcess
 			Return m_status
 		End If
 
+		'Verify DTA creation tool exists
+		m_DtaToolNameLoc = Path.Combine(m_MgrParams.GetParam("commonfileandfolderlocations", "lcqdtaloc"), _
+		 m_settings.GetParam("DtaGenerator", "DtaGenerator", "Bad_Program.exe"))
+		If Not VerifyFileExists(m_DtaToolNameLoc) Then
+			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+			Return m_status
+		End If
+
 		'Make the DTA files (the process runs in a separate thread)
 		Try
 			m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
@@ -103,9 +112,10 @@ Public Class clsDtaGenMainProcess
 		'Raw data file exists?
 		If Not VerifyRawFileExists(m_SourceFolderPath, m_DSName) Then Return False 'Error message handled by VerifyRawFileExists
 
-		'DTA creation tool exists?
-		m_DtaToolNameLoc = m_MgrParams.GetParam("commonfileandfolderlocations", "lcqdtaloc")
-		If Not VerifyFileExists(m_DtaToolNameLoc) Then Return False 'Error message handled by VerifyFileExists
+		''DTA creation tool exists?
+		'm_DtaToolNameLoc = Path.Combine(m_MgrParams.GetParam("commonfileandfolderlocations", "lcqdtaloc"), _
+		'	m_settings.GetParam("DtaGenerator", "DtaGenerator", "Bad_Program.exe"))
+		'If Not VerifyFileExists(m_DtaToolNameLoc) Then Return False 'Error message handled by VerifyFileExists
 
 		'If we got to here, there was no problem
 		Return True

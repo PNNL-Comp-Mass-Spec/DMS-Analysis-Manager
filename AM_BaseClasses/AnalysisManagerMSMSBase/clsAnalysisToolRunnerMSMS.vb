@@ -407,31 +407,40 @@ Public Class clsAnalysisToolRunnerMSMS
 
 		'Zips the concatenated dta file
 		Dim DtaFileName As String = m_jobParams.GetParam("datasetNum") & "_dta.txt"
-		Dim CmdStr As String
+		'		Dim CmdStr As String
 
 		m_logger.PostEntry("Zipping concatenated spectra file, job " & m_JobNum, ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 
 		'Verify file exists
 		If Not File.Exists(Path.Combine(m_workdir, DtaFileName)) Then
-			m_logger.PostEntry("Error zipping concatenated dta file", ILogger.logMsgType.logError, True)
+			m_logger.PostEntry("Unable to find concatenated dta file", ILogger.logMsgType.logError, True)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		m_CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
-
-		'DAC debug
-		Debug.WriteLine("clsAnalysisToolRunnerMSMS.ZipConcDtaFile, calling RunProgram, thread " & Thread.CurrentThread.Name)
-
-		'Set up a program runner to zip the file
-		CmdStr = "-add -fast " & Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(DtaFileName)) & ".zip " & _
-		 Path.Combine(m_workdir, DtaFileName)
-		If Not m_CmdRunner.RunProgram(m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"), CmdStr, "Zipper", True) Then
-			m_logger.PostEntry("Error zipping concat dta file, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+		'Zip the file
+		Dim Zipper As New clsSharpZipWrapper
+		Dim ZipFileName As String = Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(DtaFileName)) & ".zip"
+		If Not Zipper.ZipFilesInFolder(ZipFileName, m_workdir, False, DtaFileName) Then
+			Dim Msg As String = "Error zipping concat dta file, job " & m_jobnum & ": " & Zipper.ErrMsg
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		'DAC debug
-		Debug.WriteLine("clsAnalysisToolRunnerMSMS.ZipConcDtaFile, RunProgram complete, thread " & Thread.CurrentThread.Name)
+		'm_CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
+
+		''DAC debug
+		'Debug.WriteLine("clsAnalysisToolRunnerMSMS.ZipConcDtaFile, calling RunProgram, thread " & Thread.CurrentThread.Name)
+
+		''Set up a program runner to zip the file
+		'CmdStr = "-add -fast " & Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(DtaFileName)) & ".zip " & _
+		' Path.Combine(m_workdir, DtaFileName)
+		'If Not m_CmdRunner.RunProgram(m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"), CmdStr, "Zipper", True) Then
+		'	m_logger.PostEntry("Error zipping concat dta file, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+		'	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'End If
+
+		''DAC debug
+		'Debug.WriteLine("clsAnalysisToolRunnerMSMS.ZipConcDtaFile, RunProgram complete, thread " & Thread.CurrentThread.Name)
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

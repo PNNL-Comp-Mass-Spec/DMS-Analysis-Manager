@@ -91,6 +91,12 @@
                     HintPath = "..\..\AnalysisManagerCommon\ParamFileGenerator.dll"
                     Private = "False"
                 />
+                <Reference
+                    Name = "ICSharpCode.SharpZipLib"
+                    AssemblyName = "ICSharpCode.SharpZipLib"
+                    HintPath = "..\..\AM_Common\ICSharpCode.SharpZipLib.dll"
+                    Private = "False"
+                />
             </References>
             <Imports>
                 <Import Namespace = "Microsoft.VisualBasic" />
@@ -169,6 +175,11 @@
                 />
                 <File
                     RelPath = "clsRunDosProgram.vb"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "clsSharpZipWrapper.vb"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
