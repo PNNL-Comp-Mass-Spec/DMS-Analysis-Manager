@@ -55,7 +55,8 @@ Public Class clsMainProcess
 
 	Private Function SetToolRunnerObject(ByVal StartTime As Date) As Boolean
 
-		Dim toolName As String = myAnalysisJob.AssignedTool
+		'		Dim toolName As String = myAnalysisJob.AssignedTool
+		Dim toolName As String = myAnalysisJob.GetParam("tool").ToLower
 		Dim clustered As Boolean = CBool(myMgrSettings.GetParam("sequest", "cluster"))
 
 		myToolRunner = clsPluginLoader.GetToolRunner(toolName, clustered)
@@ -137,7 +138,6 @@ Public Class clsMainProcess
 				 ILogger.logMsgType.logError, LOG_DATABASE)
 				myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
 				 AppendToComment(myAnalysisJob.GetParam("comment"), "Unable to set tool runner object"))
-				'FailCount += 1		'No longer needed because CloseJob increments counter
 				Exit Sub
 			End If
 
@@ -191,7 +191,6 @@ Public Class clsMainProcess
 						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & _
 						 Err.Message, ILogger.logMsgType.logError, True)
 						myStatusTools.UpdateIdle()
-						'						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 						Exit Sub
 					End Try
 				End If
@@ -200,7 +199,6 @@ Public Class clsMainProcess
 				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message, _
 				 ILogger.logMsgType.logError, True)
 				myStatusTools.UpdateIdle()
-				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 				Exit Sub
 			End Try
 
@@ -219,7 +217,6 @@ Public Class clsMainProcess
 						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Cleaning up after DeliverResults error," & _
 						 Err.Message, ILogger.logMsgType.logError, True)
 						myStatusTools.UpdateIdle()
-						'						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 						Exit Sub
 					End Try
 				End If
@@ -260,7 +257,7 @@ Public Class clsMainProcess
 			'			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 			Exit Sub
 		End Try
-		'		OutputSummary()
+
 	End Sub
 
 	Public Sub DoAnalysis()

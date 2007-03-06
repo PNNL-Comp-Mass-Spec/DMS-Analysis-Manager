@@ -20,6 +20,8 @@ Public MustInherit Class clsDBTask
   ' job status
   Protected m_TaskWasAssigned As Boolean = False
 
+	''Debug level
+	'Protected m_DebugLevel As Integer = 0
 #End Region
 
   ' constructor
@@ -39,60 +41,68 @@ Public MustInherit Class clsDBTask
 
   'Public MustOverride Sub CloseTask(Optional ByVal success As Boolean = True)
 
-  '------[for DB access]-----------------------------------------------------------
+	Protected Sub OpenConnection()
+		Dim retryCount As Integer = 3
+		While retryCount > 0
+			Try
+				m_DBCn = New SqlConnection(m_connection_str)
+				AddHandler m_DBCn.InfoMessage, New SqlInfoMessageEventHandler(AddressOf OnInfoMessage)
+				m_DBCn.Open()
+				retryCount = 0
+			Catch e As SqlException
+				retryCount -= 1
+				m_DBCn.Close()
+				m_logger.PostError("Connection problem: ", e, True)
+				System.Threading.Thread.Sleep(300)
+			End Try
+		End While
+	End Sub
 
-  Protected Sub OpenConnection()
-    Dim retryCount As Integer = 3
-    While retryCount > 0
-      Try
-        m_DBCn = New SqlConnection(m_connection_str)
-        AddHandler m_DBCn.InfoMessage, New SqlInfoMessageEventHandler(AddressOf OnInfoMessage)
-        m_DBCn.Open()
-        retryCount = 0
-      Catch e As SqlException
-        retryCount -= 1
-        m_DBCn.Close()
-        m_logger.PostError("Connection problem: ", e, True)
-        System.Threading.Thread.Sleep(300)
-      End Try
-    End While
-  End Sub
+	Protected Sub CLoseConnection()
+		If Not m_DBCn Is Nothing Then
+			m_DBCn.Close()
+		End If
+	End Sub
 
-  Protected Sub CLoseConnection()
-    If Not m_DBCn Is Nothing Then
-      m_DBCn.Close()
-    End If
-  End Sub
+	Protected Sub LogErrorEvents()
+		If m_error_list.Count > 0 Then
+			m_logger.PostEntry("Warning messages were posted to local log", ILogger.logMsgType.logWarning, True)
+		End If
+		Dim s As String
+		For Each s In m_error_list
+			m_logger.PostEntry(s, ILogger.logMsgType.logWarning, True)
+		Next
+	End Sub
 
-  Protected Sub LogErrorEvents()
-    If m_error_list.Count > 0 Then
-            m_logger.PostEntry("Warning messages were posted to local log", ILogger.logMsgType.logWarning, True)
-    End If
-    Dim s As String
-    For Each s In m_error_list
-            m_logger.PostEntry(s, ILogger.logMsgType.logWarning, True)
-    Next
-  End Sub
+	' event handler for InfoMessage event
+	' errors and warnings sent from the SQL server are caught here
+	'
+	Private Sub OnInfoMessage(ByVal sender As Object, ByVal args As SqlInfoMessageEventArgs)
 
-  ' event handler for InfoMessage event
-  ' errors and warnings sent from the SQL server are caught here
-  '
-  Private Sub OnInfoMessage(ByVal sender As Object, ByVal args As SqlInfoMessageEventArgs)
-    Dim err As SqlError
-    Dim s As String
-    For Each err In args.Errors
-      s = ""
-      s &= "Message: " & err.Message
-      s &= ", Source: " & err.Source
-      s &= ", Class: " & err.Class
-      s &= ", State: " & err.State
-      s &= ", Number: " & err.Number
-      s &= ", LineNumber: " & err.LineNumber
-      s &= ", Procedure:" & err.Procedure
-      s &= ", Server: " & err.Server
-      m_error_list.Add(s)
-    Next
-  End Sub
+		Dim err As SqlError
+		Dim s As String
+		Dim DebugLevel As Integer = CInt(m_mgrParams.GetParam("programcontrol", "debuglevel"))
+
+		For Each err In args.Errors
+			'Don't routinely log messages about jobs not being assigned
+			If (DebugLevel > 0) Or ((DebugLevel = 0) And (err.Message.ToLower.IndexOf("job not available") = -1)) Then
+				'Print all error messages
+				s = ""
+				s &= "Message: " & err.Message
+				s &= ", Source: " & err.Source
+				s &= ", Class: " & err.Class
+				s &= ", State: " & err.State
+				s &= ", Number: " & err.Number
+				s &= ", LineNumber: " & err.LineNumber
+				s &= ", Procedure:" & err.Procedure
+				s &= ", Server: " & err.Server
+				m_error_list.Add(s)
+			Else
+				'Do nothing - we don't want to record this message
+			End If
+		Next
+
+	End Sub
 
 	Protected Function GetJobParamsFromTableWithRetries(ByVal SqlStr As String) As DataTable
 
@@ -115,7 +125,7 @@ Public MustInherit Class clsDBTask
 				ErrMsg = "clsDBTask.GetJobParamsFromTableWithRetries(), Filling data adapter, " & ex.Message & "; Retry count = " & RetryCount.ToString
 				m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
 				RetryCount -= 1S
-				System.Threading.Thread.Sleep(1000)			 'Delay for 1 second before trying again
+				System.Threading.Thread.Sleep(1000)				'Delay for 1 second before trying again
 			End Try
 		End While
 
@@ -127,4 +137,3 @@ Public MustInherit Class clsDBTask
 	End Function
 
 End Class
-

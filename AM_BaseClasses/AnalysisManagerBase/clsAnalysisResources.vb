@@ -65,8 +65,6 @@ Public Class clsAnalysisResources
 		Dim SettingsFile As String = m_jobParams.GetParam("settingsFileName")
 		Dim OrgDB As String = m_jobParams.GetParam("organismDBName")
 		Dim msgstr As String
-		'Dim TmpDirArray() As String
-		'Dim TmpFilArray() As String
 
 		m_WorkingDir = m_mgrParams.GetParam("commonfileandfolderlocations", "WorkDir")
 
@@ -75,7 +73,7 @@ Public Class clsAnalysisResources
 		ILogger.logMsgType.logNormal, LOG_DATABASE)
 
 		'Copy OrgDB file, if specified
-		'
+
 		'IMPORTANT: The OrgDB MUST be processed before the param file because
 		'	for some analysis tools OrgDB processing generates data that feeds into param file processing
 		If CInt(m_jobParams.GetParam("OrgDbReqd")) = COPY_ORG_DB_TRUE Then
@@ -403,50 +401,6 @@ Public Class clsAnalysisResources
 
 	Private Function RetrieveSFolders(ByVal WorkDir As String) As Boolean
 
-		'=====================================================================================================
-		'Original version
-		'=====================================================================================================
-		''Unzips dataset folders to working directory
-		'Dim DSName As String = m_jobParams.GetParam("datasetNum")
-		'Dim ServerPath As String = m_jobParams.GetParam("datasetFolderStoragePath")
-		'Dim ZipFiles() As String
-		'Dim DSFolderPath As String
-		'Dim UnZipper As ZipTools
-		'Dim TargetFolder As String
-		'Dim ZipFile As String
-
-		'DSFolderPath = Path.Combine(ServerPath, DSName)
-
-		''Verify dataset folder exists
-		'If Not Directory.Exists(DSFolderPath) Then Return False
-
-		''Get a listing of the zip files to process
-		'ZipFiles = Directory.GetFiles(CheckTerminator(DSFolderPath), "s*.zip")
-		'If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
-
-		''Set up the unzipper
-		'UnZipper = New PRISM.Files.ZipTools(WorkDir, m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"))
-
-		''Create a dataset subdirectory under the working directory
-		'Directory.CreateDirectory(Path.Combine(WorkDir, DSName))
-
-		''Unzip each of the zip files to the working directory
-		'For Each ZipFile In ZipFiles
-		'	TargetFolder = Path.Combine(WorkDir, Path.Combine(DSName, _
-		'	 Path.GetFileNameWithoutExtension(ZipFile)))
-		'	Directory.CreateDirectory(TargetFolder)
-		'	If Not UnZipper.UnzipFile("-dir=relative", ZipFile, TargetFolder) Then
-		'		UnZipper = Nothing
-		'		Return False
-		'	End If
-		'Next
-
-		'UnZipper = Nothing
-		'Return True
-
-		'=====================================================================================================
-		'Modified for local unzip and #ZipLib use
-		'=====================================================================================================
 		'Unzips dataset folders to working directory
 		Dim DSName As String = m_jobParams.GetParam("datasetNum")
 		Dim ZipFiles() As String

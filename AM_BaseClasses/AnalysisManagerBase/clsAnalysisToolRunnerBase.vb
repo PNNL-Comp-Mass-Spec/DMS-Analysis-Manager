@@ -2,7 +2,6 @@ Imports PRISM.Logging
 Imports System.Xml
 Imports System.IO
 Imports AnalysisManagerBase.clsGlobal
-'Imports AnalysisManagerTools
 
 Public Class clsAnalysisToolRunnerBase
 	Implements IToolRunner
@@ -280,7 +279,6 @@ Public Class clsAnalysisToolRunnerBase
 		'Saves the summary file in the results folder
 
 		clsAssemblyTools.GetComponentFileVersionInfo()
-		'		clsAssemblyTools.GetLoadedAssemblyInfo()
 
 		clsSummaryFile.SaveSummaryFile(Path.Combine(OutputPath, "AnalysisSummary.txt"))
 
@@ -348,61 +346,10 @@ Public Class clsAnalysisToolRunnerBase
 			End Try
 		End While
 
-		''If we got to here, then we've exceeded the max retry limit; attempt to move the file to garbage can
-		'If Not MoveFileToGarbage(FileNamePath) Then
-		'	'File can't be deleted or moved
-		'	Throw New AMFileNotDeletedAfterRetryException(FileNamePath, ErrType, "Unable to delete or move file after multiple retries")
-		'	Return False
-		'Else
-		'	Return True
-		'End If
-
 		'If we got to here, then we've exceeded the max retry limit
 		Throw New AMFileNotDeletedAfterRetryException(FileNamePath, ErrType, "Unable to delete or move file after multiple retries")
 		Return False
 
 	End Function
-
-	'Public Overridable Function MoveFileToGarbage(ByVal FileNamePath As String) As Boolean
-
-	'	'Moves specified file to C:\GarbageCan folder. Returns True for success, False for error
-
-	'	'Verify garbage can exists
-	'	If Not Directory.Exists("C:\GarbageCan") Then
-	'		m_logger.PostEntry("Garbage directory not found", ILogger.logMsgType.logError, LOG_DATABASE)
-	'		Return False
-	'	End If
-
-	'	Dim MyFileName As String = Path.GetFileName(FileNamePath)
-	'	Dim DestFile As String = Path.Combine("C:\GarbageCan", MyFileName)
-
-	'	Try
-	'		File.Move(FileNamePath, DestFile)
-	'		m_logger.PostEntry("Moved file " & MyFileName & " to garbage", ILogger.logMsgType.logWarning, True)
-	'		Return True
-	'	Catch Err1 As UnauthorizedAccessException
-	'		If m_DebugLevel > 0 Then
-	'			m_logger.PostEntry("File " & FileNamePath & " to " & DestFile & " move exception ERR1: " & Err1.Message, _
-	'					ILogger.logMsgType.logDebug, True)
-	'			If Not Err1.InnerException Is Nothing Then
-	'				m_logger.PostEntry("Inner exception: " & Err1.InnerException.Message, ILogger.logMsgType.logDebug, True)
-	'			End If
-	'		End If
-	'		Return False
-	'	Catch Err2 As IOException
-	'		If m_DebugLevel > 0 Then
-	'			m_logger.PostEntry("File " & FileNamePath & " move exception ERR2: " & Err2.Message, ILogger.logMsgType.logDebug, True)
-	'			If Not Err2.InnerException Is Nothing Then
-	'				m_logger.PostEntry("Inner exception: " & Err2.InnerException.Message, ILogger.logMsgType.logDebug, True)
-	'			End If
-	'		End If
-	'		Return False
-	'	Catch Err3 As Exception
-	'		m_logger.PostError("Error deleting file, exception ERR3 " & FileNamePath, Err3, LOG_DATABASE)
-	'		Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
-	'		Return False
-	'	End Try
-
-	'End Function
 
 End Class

@@ -16,7 +16,6 @@ Public Class clsAnalysisJob
 
 #Region "Member variables"
 	Private m_jobParams As New StringDictionary		' job parameters returned from request
-	Private m_assignedTool As String	 ' specific tool for the assigned job
 #End Region
 
 #Region "parameters for calling stored procedures"
@@ -41,12 +40,6 @@ Public Class clsAnalysisJob
 	Private mp_legacyFastaFileName As String
 #End Region
 
-	Public ReadOnly Property AssignedTool() As String
-		Get
-			Return m_assignedTool
-		End Get
-	End Property
-
 	Public Function RequestJob() As Boolean
 
 		'Requests an analysis job. If job is found, fills a string dictionary object with the necessary parameters
@@ -64,6 +57,7 @@ Public Class clsAnalysisJob
 
 		m_connection_str = m_mgrParams.GetParam("DatabaseSettings", "ConnectionString")
 
+		'TODO: Eliminate looping after job grouping database changes implemented
 		' cycle though combinations of priorities and tools
 		' requesting available jobs
 		'
@@ -98,46 +92,14 @@ Public Class clsAnalysisJob
 		End Try
 
 		If m_TaskWasAssigned Then
-			m_assignedTool = mp_toolName
 			' set up currently known parameters conveniently in dictionary for "GetParam" method to use
-			m_jobParams("tool") = mp_toolName
 			m_jobParams("priority") = mp_requestedPriority.ToString
 			m_jobParams("jobNum") = mp_jobNum
-			'========================================================================================
-			'Section removed during conversion to retrieve data files from archive
-			'========================================================================================
-			'm_jobParams("datasetNum") = mp_datasetNum
-			'm_jobParams("datasetFolderName") = mp_datasetFolderName
-			'm_jobParams("datasetFolderStoragePath") = mp_datasetFolderStoragePath
-			'm_jobParams("transferFolderPath") = mp_transferFolderPath
-			'm_jobParams("parmFileName") = mp_parmFileName
-			'm_jobParams("parmFileStoragePath") = mp_parmFileStoragePath
-			'm_jobParams("settingsFileName") = mp_settingsFileName
-			'm_jobParams("settingsFileStoragePath") = mp_settingsFileStoragePath
-			''TODO: Next two parameters may no longer be needed
-			'm_jobParams("organismDBName") = mp_organismDBName
-			'm_jobParams("organismDBStoragePath") = mp_organismDBStoragePath
-			''Replaces organismDBName (needs to be verified true in all cases)
-			'm_jobParams("legacyFastaFileName") = mp_legacyFastaFileName
-			'm_jobParams("instClass") = mp_instClass
-			'm_jobParams("comment") = mp_comment
-			'm_jobParams("tool") = mp_toolName
-			'm_jobParams("priority") = mp_requestedPriority.ToString
 
-			'Obtain additional parameters
-			'If Not RequestAdditionalJobParameters(mp_jobNum) Then Return False
-			'========================================================================================
-			'End removed section
-			'========================================================================================
-
-			'========================================================================================
-			'Section added during conversion to retrieve data files from archive
-			'Data is now retrieved from view V_RequestAnalysisJobEx5
-			'========================================================================================
 			'Get a table containing the associated data for this job
 			Dim SqlStr As String = "SELECT * FROM V_RequestAnalysisJobEx5 WHERE JobNum = '" & m_jobParams("jobNum") & "'"
 			Dim ResultTable As DataTable = GetJobParamsFromTableWithRetries(SqlStr)
-			If ResultTable Is Nothing Then	'There was an error
+			If ResultTable Is Nothing Then			'There was an error
 				m_logger.PostEntry("clsAnalysisJob.RequestJob(), Unable to obtain job data", ILogger.logMsgType.logError, True)
 				Return False
 			End If
@@ -149,9 +111,10 @@ Public Class clsAnalysisJob
 			End If
 			'Add job parameters to string dictionary
 			Dim ResultRow As DataRow = ResultTable.Rows(0)
+			m_jobParams("tool") = CStr(ResultRow(ResultTable.Columns("ToolName")))
 			m_jobParams("datasetNum") = CStr(ResultRow(ResultTable.Columns("DatasetNum")))
 			m_jobParams("datasetFolderName") = CStr(ResultRow(ResultTable.Columns("DatasetFolderName")))
-			m_jobParams("datasetFolderStoragePath") = CStr(ResultRow(ResultTable.Columns("DatasetStoragePath")))		 'Samba path in archive
+			m_jobParams("datasetFolderStoragePath") = CStr(ResultRow(ResultTable.Columns("DatasetStoragePath")))			'Samba path in archive
 			m_jobParams("transferFolderPath") = CStr(ResultRow(ResultTable.Columns("transferFolderPath")))
 			m_jobParams("parmFileName") = CStr(ResultRow(ResultTable.Columns("ParmFileName")))
 			m_jobParams("parmFileStoragePath") = CStr(ResultRow(ResultTable.Columns("ParmFileStoragePath")))
@@ -166,9 +129,6 @@ Public Class clsAnalysisJob
 			m_jobParams("OrgDbReqd") = CStr(ResultRow(ResultTable.Columns("OrgDbReqd")))
 			m_jobParams("ProteinCollectionList") = CStr(ResultRow(ResultTable.Columns("ProteinCollectionList")))
 			m_jobParams("ProteinOptionsList") = CStr(ResultRow(ResultTable.Columns("ProteinOptions")))
-			'========================================================================================
-			'End added section
-			'========================================================================================
 		End If
 
 		Return m_TaskWasAssigned
@@ -187,7 +147,7 @@ Public Class clsAnalysisJob
 	End Sub
 
 	Private Function GetCompletionCode(ByVal closeOut As IJobParams.CloseOutType) As Integer
-		Dim code As Integer = 1			 '  0->success, 1->failure, anything else ->no intermediate files
+		Dim code As Integer = 1		  '  0->success, 1->failure, anything else ->no intermediate files
 		Select Case closeOut
 			Case IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 				code = 0
@@ -197,18 +157,13 @@ Public Class clsAnalysisJob
 				code = 2
 			Case IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 				code = 3
-				'Case IJobParams.CloseOutType.CLOSEOUT_NO_HTML_FILES
-				'	code = 4
 		End Select
 		GetCompletionCode = code
 	End Function
 
-	'-------[for interface IJobParams]----------------------------------------------
 	Public Function GetParam(ByVal Name As String) As String Implements IJobParams.GetParam
 		Return m_jobParams(Name)
 	End Function
-
-	'------[for DB access]-----------------------------------------------------------
 
 	Private Function RequestAnalysisJobEx5() As Boolean
 
@@ -218,22 +173,19 @@ Public Class clsAnalysisJob
 
 		Try
 			m_error_list.Clear()
-			' create the command object
-			'
+
+			'Create the command object
 			sc = New SqlCommand("RequestAnalysisJobEx5", m_DBCn)
 			sc.CommandType = CommandType.StoredProcedure
 
-			' define parameters for command object
-			'
+			'Define parameters for command object
 			Dim myParm As SqlParameter
-			'
-			' define parameter for stored procedure's return value
-			'
+
+			'Define parameter for stored procedure's return value
 			myParm = sc.Parameters.Add("@Return", SqlDbType.Int)
 			myParm.Direction = ParameterDirection.ReturnValue
-			'
-			' define parameters for the stored procedure's arguments
-			'
+
+			'Define parameters for the stored procedure's arguments
 			myParm = sc.Parameters.Add("@toolName", SqlDbType.VarChar, 64)
 			myParm.Direction = ParameterDirection.Input
 			myParm.Value = mp_toolName
@@ -294,43 +246,18 @@ Public Class clsAnalysisJob
 			myParm = sc.Parameters.Add("@comment", SqlDbType.VarChar, 255)
 			myParm.Direction = ParameterDirection.Output
 
-			' execute the stored procedure
-			'
+			'Execute the stored procedure
 			sc.ExecuteNonQuery()
 
-			' get return value
-			'
+			'Get return value
 			Dim ret As Integer
 			ret = CInt(sc.Parameters("@Return").Value)
 
 			If ret = 0 Then
-				' get job number
-				'
+				'Get job number
 				mp_jobNum = CStr(sc.Parameters("@jobNum").Value)
-				'========================================================================================
-				'Section removed during conversion to retrieve data files from archive
-				'========================================================================================
-				'mp_datasetNum = CStr(sc.Parameters("@datasetNum").Value)
-				'mp_datasetFolderName = CStr(sc.Parameters("@datasetFolderName").Value)
-				'mp_datasetFolderStoragePath = CStr(sc.Parameters("@datasetFolderStoragePath").Value)
-				'mp_transferFolderPath = CStr(sc.Parameters("@transferFolderPath").Value)
-				'mp_parmFileName = CStr(sc.Parameters("@parmFileName").Value)
-				'mp_parmFileStoragePath = CStr(sc.Parameters("@parmFileStoragePath").Value)
-				'mp_settingsFileName = CStr(sc.Parameters("@settingsFileName").Value)
-				'mp_settingsFileStoragePath = CStr(sc.Parameters("@settingsFileStoragePath").Value)
-				''TODO: The next two parameters may no longer be needed, but are left in until we know for sure
-				'mp_organismDBName = CStr(sc.Parameters("@organismDBName").Value)
-				'mp_organismDBStoragePath = CStr(sc.Parameters("@organismDBStoragePath").Value)
-				''This parameter replaces mp_organismDBName for Sequest/XTandem analysis
-				'mp_legacyFastaFileName = CStr(sc.Parameters("@organismDBName").Value)
-				'mp_instClass = CStr(sc.Parameters("@instClass").Value)
-				'mp_comment = CStr(sc.Parameters("@comment").Value)
-				'========================================================================================
-				'End removed section
-				'========================================================================================
 
-				' if we made it this far, we succeeded
-				'
+				'If we made it this far, we succeeded
 				Outcome = True
 			End If
 
@@ -346,29 +273,24 @@ Public Class clsAnalysisJob
 	End Function
 
 	Private Function SetAnalysisJobCompleteEx5(ByVal completionCode As Int32, ByVal resultsFolderName As String, ByVal comment As String) As Boolean
-		'			Dim m_DBCn As SqlConnection
 		Dim sc As SqlCommand
 		Dim Outcome As Boolean = False
 
 		Try
 			m_error_list.Clear()
 
-			' create the command object
-			'
+			'Create the command object
 			sc = New SqlCommand("SetAnalysisJobCompleteEx5", m_DBCn)
 			sc.CommandType = CommandType.StoredProcedure
 
-			' define parameters for command object
-			'
+			'Define parameters for command object
 			Dim myParm As SqlParameter
-			'
-			' define parameter for stored procedure's return value
-			'
+
+			'Define parameter for stored procedure's return value
 			myParm = sc.Parameters.Add("@Return", SqlDbType.Int)
 			myParm.Direction = ParameterDirection.ReturnValue
-			'
-			' define parameters for the stored procedure's arguments
-			'
+
+			'Define parameters for the stored procedure's arguments
 			myParm = sc.Parameters.Add("@jobNum", SqlDbType.VarChar, 32)
 			myParm.Direction = ParameterDirection.Input
 			myParm.Value = mp_jobNum
@@ -393,20 +315,14 @@ Public Class clsAnalysisJob
 			myParm.Direction = ParameterDirection.Input
 			myParm.Value = CStr(IIf(m_jobParams.ContainsKey("generatedFastaName"), m_jobParams.Item("generatedFastaName"), ""))
 
-			' execute the stored procedure
-			'
+			'Execute the stored procedure
 			sc.ExecuteNonQuery()
 
-			' get return value
-			'
+			'Get return value
 			Dim ret As Object
 			ret = sc.Parameters("@Return").Value
 
-			' get values for output parameters
-			'
-
-			' if we made it this far, we succeeded
-			'
+			'If we made it this far, we succeeded
 			Outcome = True
 
 		Catch ex As System.Exception
@@ -420,59 +336,6 @@ Public Class clsAnalysisJob
 
 	End Function
 
-	'========================================================================================
-	'Section removed during conversion to retrieve data files from archive
-	'========================================================================================
-	'Private Function RequestAdditionalJobParameters(ByVal JobNum As String) As Boolean
-
-	'	'Requests additional job parameters from database and adds them to the m_jobParams string dictionary
-	'	Dim SQL As String = "SELECT * FROM V_Analysis_Job_Additional_Parameters WHERE Job = " & JobNum
-
-	'	'Get a list of all records in database (hopefully just one) matching the job number
-	'	Dim Cn As New SqlConnection(m_connection_str)
-	'	Dim Da As New SqlDataAdapter(SQL, Cn)
-	'	Dim Ds As DataSet = New DataSet
-
-	'	Try
-	'		Da.Fill(Ds)
-	'	Catch ex As Exception
-	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling data adapter, " & ex.Message, _
-	'		 ILogger.logMsgType.logError, True)
-	'		Return False
-	'	End Try
-
-	'	Dim Dt As DataTable = Ds.Tables(0)
-	'	If Dt.Rows.Count <> 1 Then
-	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), invalid row count: " & Dt.Rows.Count.ToString, _
-	'		 ILogger.logMsgType.logError, True)
-	'		Return False
-	'	End If
-
-	'	'Read the extra parameters into a collection
-	'	Dim MyRow As DataRow = Dt.Rows(0)
-	'	Dim cols As DataColumnCollection = Dt.Columns
-	'	Dim col As DataColumn
-	'	Try
-	'		'Add the raw data type to the string dictionary
-	'		For Each col In cols
-	'			m_jobParams.Add(col.ColumnName, CStr(MyRow(Dt.Columns(col.ColumnName))))
-	'			'm_jobParams.Add(col.ColumnName, DbCStr(MyRow(Dt.Columns(col.ColumnName))))
-	'		Next
-	'	Catch ex As Exception
-	'		m_logger.PostEntry("clsAnalysisJob.RequestAdditionalParameters(), Filling additional parameter collection, " _
-	'		  & ex.Message, ILogger.logMsgType.logError, True)
-	'		Return False
-	'	End Try
-
-	'	Return True
-
-	'End Function
-	'========================================================================================
-	'End removed section
-	'========================================================================================
-
-
-	'-------[for interface IJobParams]----------------------------------------------
 	Public Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean _
 	  Implements IJobParams.AddAdditionalParameter
 
