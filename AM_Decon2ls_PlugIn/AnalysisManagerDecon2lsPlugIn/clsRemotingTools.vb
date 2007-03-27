@@ -85,7 +85,7 @@ Public Class clsRemotingTools
 				.CreateNoWindow = False
 				.MonitoringInterval = 100				 'Milliseconds
 				.Program = Path.Combine(Path.GetDirectoryName(clsGlobal.AppFilePath), SVR_FILE_NAME)
-				.RegisterEventLogger(m_Logger)
+				'				.RegisterEventLogger(m_Logger)
 				.RegisterExceptionLogger(m_Logger)
 				.Repeat = False
 				.RepeatHoldOffTime = 0

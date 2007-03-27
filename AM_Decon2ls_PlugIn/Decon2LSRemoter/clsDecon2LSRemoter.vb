@@ -9,6 +9,7 @@
 
 Imports DMSDecon2LS
 Imports DeconEngine
+Imports System.Runtime.Remoting.Lifetime
 
 Public Class clsDecon2LSRemoter
 	Inherits MarshalByRefObject
@@ -183,6 +184,22 @@ Public Class clsDecon2LSRemoter
 		m_DeconObj.ResetState()
 
 	End Sub
+
+	Public Overrides Function InitializeLifetimeService() As Object
+
+		'Sets remote object lifetime
+
+		'Dim lease As ILease = CType(MyBase.InitializeLifetimeService(), ILease)
+		'If lease.CurrentState = LeaseState.Initial Then
+		'	lease.InitialLeaseTime = TimeSpan.FromMinutes(1)
+		'	lease.SponsorshipTimeout = TimeSpan.FromMinutes(2)
+		'	lease.RenewOnCallTime = TimeSpan.FromSeconds(2)
+		'End If
+		'Return lease
+
+		'Attempt to set an infinite object lifetime
+		Return Nothing
+	End Function
 
 #End Region
 
