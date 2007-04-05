@@ -24,7 +24,7 @@
     <item key="workdir" value="D:\DMS_WorkDir" />
     <item key="statusfilelocation" value="D:\DMS_Controlled\Analysis_Manager\AM_Program\bin\Status.xml" />
     <item key="orgdbdir" value="D:\DMS_OrgDB" />
-    <item key="lcqdtaloc" value="C:\Xcalibur\system\programs" />
+    <item key="lcqdtaloc" value="D:\DMS_Controlled\Analysis_Manager\AM_Program\bin" />
     <item key="dtascaneditor" value="C:\Pkgr\DTA_scan_edit.pl" />
     <item key="xtprogloc" value="C:\XTandem\bin\Tandem.exe" />
     <item key="xtoutconv-dir" value="C:\XTandemOutputConverter\" />
