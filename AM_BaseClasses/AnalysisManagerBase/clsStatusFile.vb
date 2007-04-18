@@ -197,7 +197,7 @@ Public Class clsStatusFile
 			XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
 			XWriter.WriteElementString("JobNumber", m_JobNumber)
 			XWriter.WriteElementString("DSName", m_DSName)
-			XWriter.WriteElementString("MaxDuration", m_MaxJobDuration)
+			'			XWriter.WriteElementString("MaxDuration", m_MaxJobDuration)
 			XWriter.WriteElementString("Tool", m_Tool)
 			XWriter.WriteElementString("Duration", GetRunTime.ToString)
 			XWriter.WriteEndElement()
