@@ -18,49 +18,12 @@ Public Class clsAnalysisJob
 	Private m_jobParams As New StringDictionary		' job parameters returned from request
 #End Region
 
-#Region "parameters for calling stored procedures"
-	Private mp_toolName As String
-	Private mp_processorName As String
-	Private mp_requestedPriority As Int32
-	Private mp_requestedMinDuration As Double
-	Private mp_requestedMaxDuration As Double
-	Private mp_jobNum As String
-	Private mp_datasetNum As String
-	Private mp_datasetFolderName As String
-	Private mp_datasetFolderStoragePath As String
-	Private mp_transferFolderPath As String
-	Private mp_parmFileName As String
-	Private mp_parmFileStoragePath As String
-	Private mp_settingsFileName As String
-	Private mp_settingsFileStoragePath As String
-	Private mp_organismDBName As String
-	Private mp_organismDBStoragePath As String
-	Private mp_instClass As String
-	Private mp_comment As String
-	Private mp_legacyFastaFileName As String
-#End Region
-
 	Public Function RequestJob() As Boolean
 
 		'Requests an analysis job. If job is found, fills a string dictionary object with the necessary parameters
-		Dim tools As String = m_mgrParams.GetParam("ProgramControl", "AnalysisTypes")
-		Dim priorities As String = m_mgrParams.GetParam("ProgramControl", "Priorities")
-
-		Dim cpu As String
-		Dim minDur As String = m_mgrParams.GetParam("ProgramControl", "minduration")
-		Dim maxDur As String = m_mgrParams.GetParam("ProgramControl", "maxduration")
-
-
-		mp_processorName = m_mgrParams.GetParam("ProgramControl", "MachName")
-		mp_requestedMinDuration = Double.Parse(minDur)
-		mp_requestedMaxDuration = Double.Parse(maxDur)
 
 		m_connection_str = m_mgrParams.GetParam("DatabaseSettings", "ConnectionString")
 
-		'TODO: Eliminate looping after job grouping database changes implemented
-		' cycle though combinations of priorities and tools
-		' requesting available jobs
-		'
 		Try
 			OpenConnection()
 		Catch Err As Exception
@@ -70,17 +33,9 @@ Public Class clsAnalysisJob
 
 		Dim priority As String
 		Try
-			For Each priority In Split(priorities, ";")
-				mp_requestedPriority = Int32.Parse(priority)
-				For Each mp_toolName In Split(tools, ";")
-					' call request stored procedure
-					m_TaskWasAssigned = RequestAnalysisJobEx5()
-					If m_TaskWasAssigned Then Exit For
-				Next
-				If m_TaskWasAssigned Then Exit For
-			Next
+			m_TaskWasAssigned = RequestAnalysisJob()
 		Catch Err As Exception
-			m_logger.PostEntry("clsAnalysisJob.RequestJob(), Error running RequestAnalysisJobEx5, " & Err.Message, ILogger.logMsgType.logError, True)
+			m_logger.PostEntry("clsAnalysisJob.RequestJob(), Error running RequestAnalysisJob, " & Err.Message, ILogger.logMsgType.logError, True)
 			Return False
 		End Try
 
@@ -92,10 +47,6 @@ Public Class clsAnalysisJob
 		End Try
 
 		If m_TaskWasAssigned Then
-			' set up currently known parameters conveniently in dictionary for "GetParam" method to use
-			m_jobParams("priority") = mp_requestedPriority.ToString
-			m_jobParams("jobNum") = mp_jobNum
-
 			'Get a table containing the associated data for this job
 			Dim SqlStr As String = "SELECT * FROM V_RequestAnalysisJobEx5 WHERE JobNum = '" & m_jobParams("jobNum") & "'"
 			Dim ResultTable As DataTable = GetJobParamsFromTableWithRetries(SqlStr)
@@ -142,7 +93,7 @@ Public Class clsAnalysisJob
 			FailCount += 1
 		End If
 		OpenConnection()
-		SetAnalysisJobCompleteEx5(GetCompletionCode(closeOut), resultsFolderName, comment)
+		SetAnalysisJobComplete(GetCompletionCode(closeOut), resultsFolderName, comment)
 		CLoseConnection()
 	End Sub
 
@@ -165,17 +116,16 @@ Public Class clsAnalysisJob
 		Return m_jobParams(Name)
 	End Function
 
-	Private Function RequestAnalysisJobEx5() As Boolean
+	Private Function RequestAnalysisJob() As Boolean
 
 		Dim sc As SqlCommand
 		Dim Outcome As Boolean = False
-		Dim TempMaxDuration As Single
 
 		Try
 			m_error_list.Clear()
 
 			'Create the command object
-			sc = New SqlCommand("RequestAnalysisJobEx5", m_DBCn)
+			sc = New SqlCommand("RequestAnalysisJob", m_DBCn)
 			sc.CommandType = CommandType.StoredProcedure
 
 			'Define parameters for command object
@@ -186,64 +136,11 @@ Public Class clsAnalysisJob
 			myParm.Direction = ParameterDirection.ReturnValue
 
 			'Define parameters for the stored procedure's arguments
-			myParm = sc.Parameters.Add("@toolName", SqlDbType.VarChar, 64)
-			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_toolName
-
 			myParm = sc.Parameters.Add("@processorName", SqlDbType.VarChar, 64)
 			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_processorName
-
-			myParm = sc.Parameters.Add("@requestedPriority", SqlDbType.Int)
-			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_requestedPriority
-
-			myParm = sc.Parameters.Add("@requestedMinDuration", SqlDbType.Float)
-			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_requestedMinDuration
-
-			myParm = sc.Parameters.Add("@requestedMaxDuration", SqlDbType.Float)
-			myParm.Direction = ParameterDirection.Input
-			TempMaxDuration = CSng(IIf(mp_requestedPriority = 1, 99000, mp_requestedMaxDuration))
-			myParm.Value = TempMaxDuration
+			myParm.Value = m_mgrParams.GetParam("ProgramControl", "MachName")
 
 			myParm = sc.Parameters.Add("@jobNum", SqlDbType.VarChar, 32)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@datasetNum", SqlDbType.VarChar, 64)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@datasetFolderName", SqlDbType.VarChar, 128)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@datasetFolderStoragePath", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@transferFolderPath", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@parmFileName", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@parmFileStoragePath", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@settingsFileName", SqlDbType.VarChar, 64)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@settingsFileStoragePath", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@organismDBName", SqlDbType.VarChar, 64)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@organismDBStoragePath", SqlDbType.VarChar, 255)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@instClass", SqlDbType.VarChar, 32)
-			myParm.Direction = ParameterDirection.Output
-
-			myParm = sc.Parameters.Add("@comment", SqlDbType.VarChar, 255)
 			myParm.Direction = ParameterDirection.Output
 
 			'Execute the stored procedure
@@ -255,7 +152,7 @@ Public Class clsAnalysisJob
 
 			If ret = 0 Then
 				'Get job number
-				mp_jobNum = CStr(sc.Parameters("@jobNum").Value)
+				m_jobParams("jobNum") = CStr(sc.Parameters("@jobNum").Value)
 
 				'If we made it this far, we succeeded
 				Outcome = True
@@ -272,7 +169,7 @@ Public Class clsAnalysisJob
 
 	End Function
 
-	Private Function SetAnalysisJobCompleteEx5(ByVal completionCode As Int32, ByVal resultsFolderName As String, ByVal comment As String) As Boolean
+	Private Function SetAnalysisJobComplete(ByVal completionCode As Int32, ByVal resultsFolderName As String, ByVal comment As String) As Boolean
 		Dim sc As SqlCommand
 		Dim Outcome As Boolean = False
 
@@ -280,7 +177,7 @@ Public Class clsAnalysisJob
 			m_error_list.Clear()
 
 			'Create the command object
-			sc = New SqlCommand("SetAnalysisJobCompleteEx5", m_DBCn)
+			sc = New SqlCommand("SetAnalysisJobComplete", m_DBCn)
 			sc.CommandType = CommandType.StoredProcedure
 
 			'Define parameters for command object
@@ -293,11 +190,11 @@ Public Class clsAnalysisJob
 			'Define parameters for the stored procedure's arguments
 			myParm = sc.Parameters.Add("@jobNum", SqlDbType.VarChar, 32)
 			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_jobNum
+			myParm.Value = m_jobParams("jobNum")
 
 			myParm = sc.Parameters.Add("@processorName", SqlDbType.VarChar, 64)
 			myParm.Direction = ParameterDirection.Input
-			myParm.Value = mp_processorName
+			myParm.Value = m_mgrParams.GetParam("ProgramControl", "MachName")
 
 			myParm = sc.Parameters.Add("@completionCode", SqlDbType.Int)
 			myParm.Direction = ParameterDirection.Input

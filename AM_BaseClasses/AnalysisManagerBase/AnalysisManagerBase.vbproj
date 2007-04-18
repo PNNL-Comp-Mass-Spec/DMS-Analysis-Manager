@@ -80,21 +80,21 @@
                     HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Windows.Forms.dll"
                 />
                 <Reference
-                    Name = "PRISM"
-                    AssemblyName = "PRISM"
-                    HintPath = "..\..\AnalysisManagerCommon\PRISM.dll"
+                    Name = "ICSharpCode.SharpZipLib"
+                    AssemblyName = "ICSharpCode.SharpZipLib"
+                    HintPath = "..\..\AM_Common\ICSharpCode.SharpZipLib.dll"
                     Private = "False"
                 />
                 <Reference
                     Name = "ParamFileGenerator"
                     AssemblyName = "ParamFileGenerator"
-                    HintPath = "..\..\AnalysisManagerCommon\ParamFileGenerator.dll"
+                    HintPath = "..\..\AM_Common\ParamFileGenerator.dll"
                     Private = "False"
                 />
                 <Reference
-                    Name = "ICSharpCode.SharpZipLib"
-                    AssemblyName = "ICSharpCode.SharpZipLib"
-                    HintPath = "..\..\AM_Common\ICSharpCode.SharpZipLib.dll"
+                    Name = "PRISM"
+                    AssemblyName = "PRISM"
+                    HintPath = "..\..\AM_Common\PRISM.dll"
                     Private = "False"
                 />
             </References>
