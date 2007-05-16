@@ -214,7 +214,16 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 			Case "dot_raw_folder"
 				Return FileType.MICROMASSRAWDATA
 			Case "zipped_s_folders"
-				Return FileType.ICR2LSRAWDATA
+				If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
+					'Data off of Bruker FTICR
+					Return FileType.ICR2LSRAWDATA
+				ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
+					'Data from old Finnigan FTICR
+					Return FileType.SUNEXTREL
+				Else
+					'Should never get here
+					Return FileType.UNDEFINED
+				End If
 			Case Else
 				'Should never get this value
 				Return FileType.UNDEFINED
