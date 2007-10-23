@@ -310,11 +310,19 @@ Public Class clsDtaGenMainProcess
 				'Set up parameters to loop through .dta creation until no more files are created
 				' Limit to chunks of 5000 scans due to limitation of extract_msn.exe
 				LocScanStart = ScanStart
-				If ScanStop > (LocScanStart + 5000) Then
-					LocScanStop = LocScanStart + 5000
-				Else
-					LocScanStop = ScanStop
-				End If
+
+				'**************************************************************************************************************************
+				'DTA creation looping is disabled in place. Reverse commenting to enable looping
+				'**************************************************************************************************************************
+				'If ScanStop > (LocScanStart + 5000) Then
+				'	LocScanStop = LocScanStart + 5000
+				'Else
+				'	LocScanStop = ScanStop
+				'End If
+				LocScanStop = ScanStop
+				'**************************************************************************************************************************
+				'End section for comment reversal
+				'**************************************************************************************************************************
 
 				'Loop until no more .dta files are created or ScanStop is reached
 				Do While (LocScanStart <= ScanStop)
