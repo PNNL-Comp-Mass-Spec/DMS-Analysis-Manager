@@ -1,0 +1,10 @@
+bin\AnalysisManagerProg.exe.config
+bin\AnalysisManagerProg.exe
+bin\AnalysisManagerProg.pdb
+bin\AnalysisManagerProg.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\Resources.resources
+obj\Debug\AnalysisManagerProg.vbproj.GenerateResource.Cache
+obj\Debug\AnalysisManagerProg.exe
+obj\Debug\AnalysisManagerProg.xml
+obj\Debug\AnalysisManagerProg.pdb

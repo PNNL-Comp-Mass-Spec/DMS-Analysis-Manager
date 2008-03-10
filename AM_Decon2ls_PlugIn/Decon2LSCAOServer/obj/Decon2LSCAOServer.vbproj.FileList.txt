@@ -1,0 +1,7 @@
+..\Bin_Debug\Decon2LSCAOServer.exe
+..\Bin_Debug\Decon2LSCAOServer.pdb
+..\Bin_Debug\Decon2LSCAOServer.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\Decon2LSCAOServer.exe
+obj\Debug\Decon2LSCAOServer.xml
+obj\Debug\Decon2LSCAOServer.pdb

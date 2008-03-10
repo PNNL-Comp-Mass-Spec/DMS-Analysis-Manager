@@ -1,0 +1,163 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerSequestPlugin
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.RetrieveOrgDB(System.String)">
+	<summary>
+ Provides a function that can copy the org db to the cluster head and distribute it to the nodes
+ </summary>
+	<param name="LocOrgDBFolder">Folder on AM processing machine for orgdb files</param>
+	<returns>TRUE for success: FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.RetrieveParamFile(System.String,System.String,System.String)">
+	<summary>
+ Overrides base class version of the function to creates a Sequest params file compatible 
+	with the Bioworks version on this system. Uses ParamFileGenerator dll provided by Ken Auberry
+ </summary>
+	<param name="ParamFileName">Name of param file to be created</param>
+	<param name="ParamFilePath">Param file storage path</param>
+	<param name="WorkDir">Working directory on analysis machine</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks>NOTE: ParamFilePath isn't used in this override, but is needed in parameter list for compatability</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyDatabase(System.String,System.String)">
+	<summary>
+ Verifies the fasta file required by the job is distributed to all the cluster nodes
+ </summary>
+	<param name="OrgDBName">Fasta file name</param>
+	<param name="OrgDBPath">Fasta file location on analysis machine</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.GetHostList(System.String)">
+	<summary>
+ Reads the list of nodes from the hosts config file
+ </summary>
+	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
+	<returns>returns a string collection containing IP addresses for each node</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.String)">
+	<summary>
+ Verifies specified database is present on the node. If present, compares date and size. If not
+	present, copies database from master
+ </summary>
+	<param name="DbName">Fasta file name to be verified</param>
+	<param name="SourcePath">Fasta storage location on cluster head</param>
+	<param name="DestPath">Fasta storage location on cluster node</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Presently not used</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,PRISM.Logging.ILogger,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Initializes class
+ </summary>
+	<param name="mgrParams">Object containing manager parameters</param>
+	<param name="jobParams">Object containing job parameters</param>
+	<param name="logger">Logging object</param>
+	<param name="StatusTools">Object for updating status file as job progresses</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.CalculateNewStatus">
+	<summary>
+ Calculates status information for progress file
+ </summary>
+	<remarks>
+ Calculation in this class is based on Sequest processing. For other processing types,
+	override this function in derived class
+</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.MakeOUTFiles">
+	<summary>
+ Runs Sequest to make .out files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.DeleteTempAnalFiles">
+	<summary>
+ Deletes stray files (*.csv, lcq*.txt) left behind by Sequest
+ </summary>
+	<returns>CloseOutType enum indicating success or failur</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.OperateAnalysisTool">
+	<summary>
+ Overrides base class method to run Sequest analysis tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failur</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.DispositionResults">
+	<summary>
+ Cleans up working directory prior to packaging analysis results
+ </summary>
+	<returns>CloseOutType enum indicating success or failur</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ConcatOutFiles(System.String,System.String,System.String)">
+	<summary>
+ Concatenates the .out files in the working directory to a single _out.txt file
+ </summary>
+	<param name="WorkDir">Working directory</param>
+	<param name="DSName">Dataset name</param>
+	<param name="JobNum">Job number</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(System.String,System.String,System.String)">
+	<summary>
+ Zips the concatenated .out file
+ </summary>
+	<param name="WorkDir">Working directory</param>
+	<param name="ZipperLoc">Location of file zipping program</param>
+	<param name="JobNum">Job number</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Does nothing at present</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,PRISM.Logging.ILogger,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Modifies base class Setup method to provide log message appropriate for this class
+ </summary>
+	<param name="mgrParams">Object containing manager parameters</param>
+	<param name="jobParams">Object containing job parameters</param>
+	<param name="logger">Logging object</param>
+	<param name="StatusTools">Object providing tools for status file updates</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.MakeOUTFiles">
+	<summary>
+ Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.m_CmdRunner_LoopWaiting">
+	<summary>
+ Provides a wait loop while Sequest is running
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile">
+	<summary>
+ Reads sequest.log file after Sequest finishes and adds cluster statistics info to summary file
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.GetIntegerFromSeqLogFileString(System.String,System.String)">
+	<summary>
+ Finds specified integer value in a sequest.log file
+ </summary>
+	<param name="InpFileStr">A string containing the contents of the sequest.log file</param>
+	<param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
+	<returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
+	<remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.GetSingleFromSeqLogFileString(System.String,System.String)">
+	<summary>
+ Finds specified integer value in a sequest.log file
+ </summary>
+	<param name="InpFileStr">A string containing the contents of the sequest.log file</param>
+	<param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
+	<returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
+	<remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
+</member>
+</members>
+</doc>

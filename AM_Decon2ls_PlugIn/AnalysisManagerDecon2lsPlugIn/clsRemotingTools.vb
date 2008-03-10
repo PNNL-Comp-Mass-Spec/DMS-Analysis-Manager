@@ -4,7 +4,7 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 10/30/2006
 '
-' Last modified 10/30/2006
+' Last modified 01/25/2008
 '*********************************************************************************************************
 
 Imports System.IO
@@ -68,7 +68,7 @@ Public Class clsRemotingTools
 		'Register a TCP client channel
 		m_Channel = New TcpClientChannel
 
-		ChannelServices.RegisterChannel(m_Channel)
+		ChannelServices.RegisterChannel(m_Channel, False)
 
 		'Register the remote class as a valid type in the client's app domain by passing
 		'the Remote class and its URL (it will be instantiated later)

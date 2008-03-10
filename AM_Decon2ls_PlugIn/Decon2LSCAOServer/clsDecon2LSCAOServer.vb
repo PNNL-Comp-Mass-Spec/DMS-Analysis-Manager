@@ -52,7 +52,7 @@ Module clsDecon2LSCAOServer
 
 		'Create and register a TCP channel
 		Dim Channel As TcpServerChannel = New TcpServerChannel(m_TcpPort)
-		ChannelServices.RegisterChannel(Channel)
+		ChannelServices.RegisterChannel(Channel, False)
 
 		'Register the client activated object
 		RemotingConfiguration.RegisterActivatedServiceType(GetType(clsDecon2LSRemoter))
@@ -60,7 +60,7 @@ Module clsDecon2LSCAOServer
 		System.Console.WriteLine("Activated Decon2LS remoting service")
 
 		'Create a flag file that will be used to control server lifetime
-		Dim RetVal = CreateFlagFile()
+		Dim RetVal As Integer = CreateFlagFile()
 		If RetVal <> 0 Then
 			Environment.Exit(RetVal)
 		End If

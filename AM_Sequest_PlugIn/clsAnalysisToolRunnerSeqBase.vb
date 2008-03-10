@@ -1,4 +1,14 @@
+'*********************************************************************************************************
+' Written by Dave Clark for the US Department of Energy 
+' Pacific Northwest National Laboratory, Richland, WA
+' Copyright 2006, Battelle Memorial Institute
+' Created 06/07/2006
+'
+' Last modified 01/18/2008
+'*********************************************************************************************************
+
 Imports System.IO
+Imports PRISM.Files
 Imports PRISM.Files.clsFileTools
 Imports System.Text.RegularExpressions
 Imports PRISM.Logging
@@ -9,12 +19,29 @@ Imports AnalysisManagerMSMSBase
 Public MustInherit Class clsAnalysisToolRunnerSeqBase
 	Inherits clsAnalysisToolRunnerMSMS
 
+	'*********************************************************************************************************
+	'Base class for Sequest analysis
+	'*********************************************************************************************************
+
+#Region "Methods"
+	''' <summary>
+	''' Constructor
+	''' </summary>
+	''' <remarks>Presently not used</remarks>
 	Public Sub New()
 
 	End Sub
 
+	''' <summary>
+	''' Initializes class
+	''' </summary>
+	''' <param name="mgrParams">Object containing manager parameters</param>
+	''' <param name="jobParams">Object containing job parameters</param>
+	''' <param name="logger">Logging object</param>
+	''' <param name="StatusTools">Object for updating status file as job progresses</param>
+	''' <remarks></remarks>
 	Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-	 ByVal logger As ILogger, ByVal StatusTools As IStatusFile)
+	  ByVal logger As ILogger, ByVal StatusTools As IStatusFile)
 
 		MyBase.Setup(mgrParams, jobParams, logger, StatusTools)
 
@@ -23,32 +50,41 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		End If
 	End Sub
 
+	''' <summary>
+	''' Calculates status information for progress file
+	''' </summary>
+	''' <remarks>
+	''' Calculation in this class is based on Sequest processing. For other processing types,
+	'''	override this function in derived class
+	'''</remarks>
 	Protected Overridable Sub CalculateNewStatus()
 
-		'Calculates status information for progress file
-		'	Calculation in this class is based on Sequest processing. For other processing types,
-		'	override this function in derived class
 		Dim FileArray() As String
 		Dim OutFileCount As Integer
 
 		'Get DTA count
-		m_workdir = CheckTerminator(m_workdir)
-		FileArray = Directory.GetFiles(m_workdir, "*.dta")
+		m_WorkDir = CheckTerminator(m_WorkDir)
+		FileArray = Directory.GetFiles(m_WorkDir, "*.dta")
 		m_DtaCount = FileArray.GetLength(0)
 
 		'Get OUT file count
-		FileArray = Directory.GetFiles(m_workdir, "*.out")
+		FileArray = Directory.GetFiles(m_WorkDir, "*.out")
 		OutFileCount = FileArray.GetLength(0)
 
 		'Calculate % complete
-		If m_dtacount > 0 Then
-			m_progress = 100.0! * CSng(OutFileCount / m_dtacount)
+		If m_DtaCount > 0 Then
+			m_progress = 100.0! * CSng(OutFileCount / m_DtaCount)
 		Else
 			m_progress = 0
 		End If
 
 	End Sub
 
+	''' <summary>
+	''' Runs Sequest to make .out files
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failure</returns>
+	''' <remarks></remarks>
 	Protected Overridable Function MakeOUTFiles() As IJobParams.CloseOutType
 
 		'Creates Sequest .out files from DTA files
@@ -60,13 +96,13 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		Dim NumFiles As Integer
 		Dim ProcIndx As Integer
 		Dim StillRunning As Boolean
-		Dim NumProcessors As Integer = CInt(m_mgrParams.GetParam("sequest", "numberofprocessors"))
+		Dim NumProcessors As Integer = CInt(m_mgrParams.GetParam("numberofprocessors"))
 
 		'Ensure output path doesn't have backslash
-		m_workdir = CheckTerminator(m_workdir, False)
+		m_WorkDir = CheckTerminator(m_WorkDir, False)
 
 		'Get a list of .dta file names
-		DtaFiles = Directory.GetFiles(m_workdir, "*.dta")
+		DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta")
 		NumFiles = DtaFiles.GetLength(0)
 		If NumFiles = 0 Then
 			m_message = AppendToComment(m_message, "No dta files found for Sequest processing")
@@ -76,14 +112,14 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		'Set up a program runner and text file for each processor
 		ReDim RunProgs(NumProcessors - 1)
 		ReDim Textfiles(NumProcessors - 1)
-		CmdStr = "-D" & Path.Combine(m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir"), m_jobParams.GetParam("generatedFastaName")) _
-			& " -P" & m_jobParams.GetParam("parmFileName") & " -R"
+		CmdStr = "-D" & Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")) _
+		  & " -P" & m_jobParams.GetParam("parmFileName") & " -R"
 		For ProcIndx = 0 To NumProcessors - 1
-			DumStr = Path.Combine(m_workdir, "FileList" & ProcIndx.ToString & ".txt")
+			DumStr = Path.Combine(m_WorkDir, "FileList" & ProcIndx.ToString & ".txt")
 			RunProgs(ProcIndx) = New PRISM.Processes.clsProgRunner
 			RunProgs(ProcIndx).Name = "Seq" & ProcIndx.ToString
-			RunProgs(ProcIndx).CreateNoWindow = CBool(m_mgrParams.GetParam("sequest", "createnowindow"))
-			RunProgs(ProcIndx).Program = m_mgrParams.GetParam("sequest", "seqprogloc")
+			RunProgs(ProcIndx).CreateNoWindow = CBool(m_mgrParams.GetParam("createnowindow"))
+			RunProgs(ProcIndx).Program = m_mgrParams.GetParam("seqprogloc")
 			RunProgs(ProcIndx).Arguments = CmdStr & DumStr
 			RunProgs(ProcIndx).WorkDir = m_WorkDir
 			Textfiles(ProcIndx) = New StreamWriter(DumStr, False)
@@ -126,17 +162,17 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 			CalculateNewStatus()
 			m_StatusTools.UpdateAndWrite(m_progress)
 			For ProcIndx = 0 To RunProgs.GetUpperBound(0)
-				If m_debuglevel > 4 Then
+				If m_DebugLevel > 4 Then
 					m_logger.PostEntry("clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" & ProcIndx.ToString & ").State = " & _
 					 RunProgs(ProcIndx).State.ToString, ILogger.logMsgType.logDebug, True)
 				End If
 				If (RunProgs(ProcIndx).State <> 0) Then
-					If m_debuglevel > 4 Then
+					If m_DebugLevel > 4 Then
 						m_logger.PostEntry("clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" & ProcIndx.ToString & ").State = " & _
 						 RunProgs(ProcIndx).State.ToString, ILogger.logMsgType.logDebug, True)
 					End If
 					If (RunProgs(ProcIndx).State <> 10) Then
-						If m_debuglevel > 4 Then
+						If m_DebugLevel > 4 Then
 							m_logger.PostEntry("clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" & ProcIndx.ToString & ").State = " & _
 							 RunProgs(ProcIndx).State.ToString, ILogger.logMsgType.logDebug, True)
 						End If
@@ -159,7 +195,7 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		End If
 		For ProcIndx = 0 To RunProgs.GetUpperBound(0)
 			RunProgs(ProcIndx) = Nothing
-			If m_debuglevel > 0 Then
+			If m_DebugLevel > 0 Then
 				m_logger.PostEntry("Set RunProgs(" & ProcIndx.ToString & ") to Nothing", _
 				 ILogger.logMsgType.logDebug, True)
 			End If
@@ -175,7 +211,7 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 			m_logger.PostEntry("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation", _
 			 ILogger.logMsgType.logDebug, True)
 		End If
-		DtaFiles = Directory.GetFiles(m_workdir, "*.out")
+		DtaFiles = Directory.GetFiles(m_WorkDir, "*.out")
 		If DtaFiles.GetLength(0) < 1 Then
 			m_logger.PostEntry("No OUT files created, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
 			m_message = AppendToComment(m_message, "No OUT files created")
@@ -183,12 +219,12 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		'Package out files into concatenated text files 
-		If Not ConcatOutFiles(m_workdir, m_jobParams.GetParam("datasetNum"), m_jobnum) Then
+		If Not ConcatOutFiles(m_WorkDir, m_jobParams.GetParam("datasetNum"), m_JobNum) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Zip concatenated .out files
-		If Not ZipConcatOutFile(m_workdir, m_mgrParams.GetParam("commonfileandfolderlocations", "zipprogram"), m_jobnum) Then
+		If Not ZipConcatOutFile(m_WorkDir, m_mgrParams.GetParam("zipprogram"), m_JobNum) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -197,27 +233,13 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
-	Protected Overridable Function PkgResults() As IJobParams.CloseOutType
-
-		'Packages runs peptide extractor program on Sequest 
-		'		results files, deletes .dta and .out files after completion
-		'	For use with other analysis programs, override in derived class
-
-		Dim ExtractTool As New clsPepFileExtractWrapper(m_WorkDir)
-		If Not ExtractTool.PerformExtraction(m_jobParams.GetParam("datasetNum")) Then
-			m_logger.PostEntry("Error performing peptide extraction, job " & m_jobnum & ": " & ExtractTool.ErrMsg, _
-			  ILogger.logMsgType.logError, LOG_DATABASE)
-			m_message = AppendToComment(m_message, "Error extracting results")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
-
-	End Function
-
+	''' <summary>
+	''' Deletes stray files (*.csv, lcq*.txt) left behind by Sequest
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failur</returns>
+	''' <remarks></remarks>
 	Protected Overrides Function DeleteTempAnalFiles() As IJobParams.CloseOutType
 
-		'Deletes stray files (*.csv, lcq*.txt) left behind by Sequest
 		Dim FileList() As String
 		Dim TmpFile As String
 
@@ -227,22 +249,8 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 			For Each TmpFile In FileList
 				DeleteFileWithRetries(TmpFile)
 			Next
-			'********************* DAC -- decided to leave these files for troubleshooting purposes.
-			'********************* Files are not large enough to occupy significant storage server space
-			''Delete stray text files
-			'FileList = Directory.GetFiles(m_WorkDir, "lcq_*.txt")
-			'For Each TmpFile In FileList
-			'	File.Delete(TmpFile)
-			'Next
-			''Delete stray log files
-			'FileList = Directory.GetFiles(m_WorkDir, "*.log")
-			'For Each TmpFile In FileList
-			'	File.Delete(TmpFile)
-			'Next
-			'********************* DAC
-			'Delete leftover file lists
 			'Delete the text files
-			FileList = Directory.GetFiles(m_workdir, "File*.txt")
+			FileList = Directory.GetFiles(m_WorkDir, "File*.txt")
 			For Each TmpFile In FileList
 				DeleteFileWithRetries(TmpFile)
 			Next
@@ -256,6 +264,11 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
+	''' <summary>
+	''' Overrides base class method to run Sequest analysis tool
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failur</returns>
+	''' <remarks></remarks>
 	Public Overrides Function OperateAnalysisTool() As IJobParams.CloseOutType
 		Dim StepResult As IJobParams.CloseOutType
 
@@ -277,19 +290,22 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
+	''' <summary>
+	''' Cleans up working directory prior to packaging analysis results
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failur</returns>
+	''' <remarks></remarks>
 	Public Overrides Function DispositionResults() As IJobParams.CloseOutType
-		Dim StepResult As IJobParams.CloseOutType
 		Dim FileList() As String
 		Dim TmpFile As String
 
 		'Delete unzipped concatenated out files
-		Dim DtaFileName As String
-		FileList = Directory.GetFiles(m_workdir, "*_out.txt")
+		FileList = Directory.GetFiles(m_WorkDir, "*_out.txt")
 		For Each TmpFile In FileList
 			Try
 				DeleteFileWithRetries(TmpFile)
 			Catch ex As Exception
-				m_logger.PostEntry("Error: " & ex.Message & " deleting concatenated out file, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+				m_logger.PostEntry("Error: " & ex.Message & " deleting concatenated out file, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
 				m_message = AppendToComment(m_message, "Error packaging results")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
@@ -302,7 +318,7 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 				DeleteFileWithRetries(TmpFile)
 			Next
 		Catch Err As Exception
-			m_logger.PostError("Error deleting .out files, job " & m_jobnum, Err, LOG_DATABASE)
+			m_logger.PostError("Error deleting .out files, job " & m_JobNum, Err, LOG_DATABASE)
 			m_message = AppendToComment(m_message, "Error deleting .out files")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
@@ -312,30 +328,16 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
-	Public Overrides Function ExtractDataFromResults() As IJobParams.CloseOutType
-		Dim StepResult As IJobParams.CloseOutType
-
-		CalculateNewStatus()
-		m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RUNNING, m_progress, m_DtaCount)
-
-		'run the packager
-		m_logger.PostEntry("Packaging analysis results, job " & m_JobNum, ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-		Try
-			StepResult = PkgResults()
-			If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return StepResult
-			End If
-		Catch Err As Exception
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunTool(), Exception packaging results, " & Err.Message, _
-			 ILogger.logMsgType.logError, True)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-	End Function
-
+	''' <summary>
+	''' Concatenates the .out files in the working directory to a single _out.txt file
+	''' </summary>
+	''' <param name="WorkDir">Working directory</param>
+	''' <param name="DSName">Dataset name</param>
+	''' <param name="JobNum">Job number</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
-		'Concatenates the .out files in the working directory to a single _out.txt file
 		Dim ConcatTools As New clsConcatToolWrapper(WorkDir)
 
 		If m_DebugLevel > 0 Then
@@ -357,28 +359,40 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
+	''' <summary>
+	''' Zips the concatenated .out file
+	''' </summary>
+	''' <param name="WorkDir">Working directory</param>
+	''' <param name="ZipperLoc">Location of file zipping program</param>
+	''' <param name="JobNum">Job number</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
 	Protected Overridable Function ZipConcatOutFile(ByVal WorkDir As String, ByVal ZipperLoc As String, ByVal JobNum As String) As Boolean
-
-		'Zips the concatenated .out file
 
 		Dim OutFileName As String = m_jobParams.GetParam("datasetNum") & "_out.txt"
 
 		m_logger.PostEntry("Zipping concatenated output file, job " & m_JobNum, ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 
 		'Verify file exists
-		If Not File.Exists(Path.Combine(m_workdir, OutFileName)) Then
+		If Not File.Exists(Path.Combine(m_WorkDir, OutFileName)) Then
 			m_logger.PostEntry("Unable to find concatenated .out file", ILogger.logMsgType.logError, True)
 			Return False
 		End If
 
-		'Zip the file
-		Dim Zipper As New clsSharpZipWrapper
-		Dim ZipFileName As String = Path.Combine(m_workdir, Path.GetFileNameWithoutExtension(OutFileName)) & ".zip"
-		If Not Zipper.ZipFilesInFolder(ZipFileName, m_workdir, False, OutFileName) Then
-			Dim Msg As String = "Error zipping concat out file, job " & m_jobnum & ": " & Zipper.ErrMsg
+		Try
+			'Zip the file
+			Dim Zipper As New ZipTools(m_WorkDir, ZipperLoc)
+			Dim ZipFileName As String = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(OutFileName)) & ".zip"
+			If Not Zipper.MakeZipFile("-fast", ZipFileName, OutFileName) Then
+				Dim Msg As String = "Error zipping concat out file, job " & m_JobNum
+				m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
+				Return False
+			End If
+		Catch ex As Exception
+			Dim Msg As String = "Exception zipping concat out file, job " & m_JobNum & ": " & ex.Message
 			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
 			Return False
-		End If
+		End Try
 
 		'm_CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
 
@@ -411,5 +425,6 @@ Public MustInherit Class clsAnalysisToolRunnerSeqBase
 		Return True
 
 	End Function
+#End Region
 
 End Class

@@ -75,13 +75,13 @@
 	/>
 	<ToolRunner 
 		Tool="masic_finnigan" 
-		Class="AnalysisManagerBase.clsAnalysisToolRunnerMASICFinnigan" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan" 
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" 
 	/>
 	<ToolRunner 
 		Tool="masic_agilent" 
-		Class="AnalysisManagerBase.clsAnalysisToolRunnerMASICAgilent" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICAgilent" 
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" 
 	/>
 	<ToolRunner 
 		Tool="decon2ls" 
@@ -174,32 +174,32 @@
 	<Resourcer 
 		Tool="masic_finnigan" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 	<Resourcer 
 		Tool="masic_agilent" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 	<Resourcer 
 		Tool="decon2ls" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 	<Resourcer 
 		Tool="decon2ls_agilent" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 	<Resourcer 
 		Tool="tic_d2l" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 	<Resourcer 
 		Tool="tic_d2l_agilent" 
 		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		AssemblyFile="AnalysisManagerProg.exe" 
 	/>
 </Resourcers>
 

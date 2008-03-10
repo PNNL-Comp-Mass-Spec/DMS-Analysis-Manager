@@ -1,460 +1,536 @@
+'*********************************************************************************************************
+' Written by Dave Clark for the US Department of Energy 
+' Pacific Northwest National Laboratory, Richland, WA
+' Copyright 2007, Battelle Memorial Institute
+' Created 12/19/2007
+'
+' Last modified 01/16/2008
+'*********************************************************************************************************
+
 Imports System.IO
-Imports System.Object
-Imports System.Activator
-Imports System.Xml
 Imports PRISM.Logging
 Imports AnalysisManagerBase
 Imports AnalysisManagerBase.clsGlobal
-Imports System.Reflection
 
-Imports System.Diagnostics
+Namespace AnalysisManagerProg
 
-Public Class clsMainProcess
+	Public Class clsMainProcess
 
-	'TODO: Make sure fix for 100+ s-folders is incorporated in FTICR processing
+		'*********************************************************************************************************
+		'Master processing class for analysis manager
+		'*********************************************************************************************************
 
-#Region "Member Variables"
-	Private myMgrSettings As clsAnalysisMgrSettings
-	Private myAnalysisJob As clsAnalysisJob
-	Private myLogger As ILogger
-	Private myResource As IAnalysisResources
-	Private myToolRunner As IToolRunner
-	Private myStatusTools As clsStatusFile
-	Private m_MaxJobsAllowed As Short = 9999
-	Private m_JobsPerformed As Short
-	Private m_JobsFound As Boolean
-	Private Shared m_StartupClass As clsMainProcess
-	Private m_IniFileChanged As Boolean = False
-	Private WithEvents m_FileWatcher As New FileSystemWatcher
-	Private m_IniFileName As String = "AnalysisManager.xml"
-	Private m_MgrActive As Boolean = True
-	'Shared m_EventLog As EventLog
-	Private m_DebugLevel As Integer = 0
+#Region "Constants"
+		Private Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
+		Private Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
+		Private Const MAX_ERROR_COUNT As Integer = 4
 #End Region
 
-	Private Function GetIniFilePath(ByVal IniFileName As String) As String
-		Dim fi As New FileInfo(Application.ExecutablePath)
-		Return Path.Combine(fi.DirectoryName, IniFileName)
-	End Function
+#Region "Module variables"
+		Private Shared m_MainProcess As clsMainProcess
+		Private m_MgrSettings As clsAnalysisMgrSettings
+		Private m_AnalysisTask As clsAnalysisJob
+		Private m_Logger As ILogger
+		Private WithEvents m_FileWatcher As FileSystemWatcher
+		Private m_ConfigChanged As Boolean = False
+		Private m_OneTaskPerformed As Boolean = False
+		Private m_TaskFound As Boolean = False
+		Private m_DebugLevel As Integer = 0
+		Private m_ErrorCount As Integer = 0
+		Private m_FirstRun As Boolean = True
+		Private m_Resource As IAnalysisResources
+		Private m_ToolRunner As IToolRunner
+		Private m_StatusTools As clsStatusFile
+#End Region
 
-	Private Function SetResourceObject() As Boolean
+#Region "Properties"
+#End Region
 
-		myResource = clsPluginLoader.GetAnalysisResources(myAnalysisJob.GetParam("tool").ToLower)
-		If myResource Is Nothing Then
-			Dim m As String = clsPluginLoader.Message
-			myLogger.PostEntry("Unable to load resource object, " & m, ILogger.logMsgType.logError, True)
-			Return False
-		End If
-		If m_DebugLevel > 0 Then
-			myLogger.PostEntry("Loaded resourcer " & clsPluginLoader.Message, ILogger.logMsgType.logDebug, True)
-		End If
-		myResource.Setup(myMgrSettings, myAnalysisJob, myLogger)
-		Return True
+#Region "Methods"
+		''' <summary>
+		''' Starts program execution
+		''' </summary>
+		''' <remarks></remarks>
+		Shared Sub Main()
 
-	End Function
+			Dim ErrMsg As String
 
-	Private Function SetToolRunnerObject(ByVal StartTime As Date) As Boolean
-
-		'		Dim toolName As String = myAnalysisJob.AssignedTool
-		Dim toolName As String = myAnalysisJob.GetParam("tool").ToLower
-		Dim clustered As Boolean = CBool(myMgrSettings.GetParam("sequest", "cluster"))
-
-		myToolRunner = clsPluginLoader.GetToolRunner(toolName, clustered)
-		If myToolRunner Is Nothing Then
-			Dim m As String = clsPluginLoader.Message
-			myLogger.PostEntry("Unable to load tool runner, " & m, ILogger.logMsgType.logError, True)
-			Return False
-		End If
-		If m_DebugLevel > 0 Then
-			myLogger.PostEntry("Loaded tool runner " & clsPluginLoader.Message, ILogger.logMsgType.logDebug, True)
-		End If
-		myToolRunner.Setup(myMgrSettings, myAnalysisJob, myLogger, myStatusTools)
-		Return True
-
-	End Function
-
-	Private Sub DoAnalysisJob()
-
-		Dim result As IJobParams.CloseOutType
-		Dim MachName As String
-		Dim JobNum As String
-		Dim Dataset As String
-
-		Try
-			' create the object that will manage the analysis job parameters
-			'
-			myAnalysisJob = New clsAnalysisJob(myMgrSettings, myLogger)
-
-			' request a new job using mgr parameters
-			'
-			MachName = myMgrSettings.GetParam("programcontrol", "machname")
-			myLogger.PostEntry("Retrieving job", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-			Application.DoEvents()
 			Try
-				If Not myAnalysisJob.RequestJob() Then
-					' didn't find a job
-					myLogger.PostEntry(MachName & ": No jobs available for retrieval", ILogger.logMsgType.logHealth, LOG_DATABASE)
-					m_JobsFound = False
-					myStatusTools.UpdateIdle()
-					Exit Sub
+				If IsNothing(m_MainProcess) Then
+					m_MainProcess = New clsMainProcess
+					If Not m_MainProcess.InitMgr Then Exit Sub
 				End If
-			Catch Err As Exception
-				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), requesting job, Error " & _
-				 Err.Message, ILogger.logMsgType.logError, True)
-				FailCount += 1
+				clsGlobal.AppFilePath = Application.ExecutablePath
+				m_MainProcess.DoAnalysis()
+			Catch Err As System.Exception
+				'Report any exceptions not handled at a lower level to the system application log
+				ErrMsg = "Critical exception starting application: " & Err.Message
+				Dim Ev As New EventLog("Application", ".", "DMSAnalysisManager")
+				Trace.Listeners.Add(New EventLogTraceListener("DMSAnalysisManager"))
+				Trace.WriteLine(ErrMsg)
+				Ev.Close()
 				Exit Sub
 			End Try
 
-			'Found a job
-			m_JobsFound = True
-			InitSummary()
-			JobNum = myAnalysisJob.GetParam("jobNum")
-			Dataset = myAnalysisJob.GetParam("datasetNum")
-			With myStatusTools
-				.StartTime = Now
-				.DatasetName = Dataset
-				.JobNumber = JobNum
-				.UpdateAndWrite(IStatusFile.JobStatus.STATUS_STARTING, 0, 0)
+		End Sub
+
+		''' <summary>
+		''' Constructor
+		''' </summary>
+		''' <remarks>Doesn't do anything at present</remarks>
+		Public Sub New()
+
+		End Sub
+
+		''' <summary>
+		''' Initializes the manager settings
+		''' </summary>
+		''' <returns>TRUE for success, FALSE for failure</returns>
+		''' <remarks></remarks>
+		Private Function InitMgr() As Boolean
+
+			'Get the manager settings
+			Try
+				m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+			Catch ex As System.Exception
+				'Failures are logged by clsMgrSettings to application event logs
+				Return False
+			End Try
+
+			'Setup the logger
+			Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
+			Dim LogFileName As String = Path.Combine(FInfo.DirectoryName, m_MgrSettings.GetParam("logfilename"))
+			Dim DbLogger As New clsDBLogger
+			DbLogger.LogFilePath = LogFileName
+			DbLogger.ConnectionString = m_MgrSettings.GetParam("connectionstring")
+			DbLogger.ModuleName = m_MgrSettings.GetParam("modulename")
+			m_Logger = New clsQueLogger(DbLogger)
+			DbLogger = Nothing
+
+			'Make the initial log entry
+			Dim MyMsg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
+			m_Logger.PostEntry(MyMsg, ILogger.logMsgType.logNormal, True)
+
+			'Setup a file watcher for the config file
+			m_FileWatcher = New FileSystemWatcher
+			With m_FileWatcher
+				.BeginInit()
+				.Path = FInfo.DirectoryName
+				.IncludeSubdirectories = False
+				.Filter = m_MgrSettings.GetParam("configfilename")
+				.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
+				.EndInit()
+				.EnableRaisingEvents = True
 			End With
-			myLogger.PostEntry(MachName & ": Started analysis job " & JobNum & ", Dataset " & Dataset, _
-			 ILogger.logMsgType.logNormal, LOG_DATABASE)
 
-			' create the object that will manage getting the job resources
-			'
-			If Not SetResourceObject() Then
-				myLogger.PostEntry(MachName & ": Unable to SetResourceObject, job " & JobNum & ", Dataset " & Dataset, _
-				 ILogger.logMsgType.logError, LOG_DATABASE)
-				Dim TempComment As String = AppendToComment(myAnalysisJob.GetParam("comment"), "Unable to set resource object")
-				myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
-				 AppendToComment(myAnalysisJob.GetParam("comment"), "Unable to set resource object"))
-				'FailCount += 1		'No longer needed because CloseJob increments counter
-				Exit Sub
-			End If
+			'Get the debug level
+			m_DebugLevel = CInt(m_MgrSettings.GetParam("debuglevel"))
 
-			' create the object that will manage the analysis tool
-			'
-			If Not SetToolRunnerObject(Now) Then
-				myLogger.PostEntry(MachName & ": Unable to SetToolRunnerObject, job " & JobNum & ", Dataset " & Dataset, _
-				 ILogger.logMsgType.logError, LOG_DATABASE)
-				myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
-				 AppendToComment(myAnalysisJob.GetParam("comment"), "Unable to set tool runner object"))
-				Exit Sub
-			End If
+			'Setup the tool for getting tasks
+			m_AnalysisTask = New clsAnalysisJob(m_MgrSettings, m_Logger, m_DebugLevel)
 
-			' create the object that will manage the analysis results
-			'
-			Dim myResults As New clsAnalysisResults(myMgrSettings, myAnalysisJob, myLogger)
+			'Everything worked
+			Return True
 
-			' Get the files required for running the job
-			'
-			myStatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RETRIEVING_DATASET, 0, 0)
-			CreateStatusFlagFile()			 'Set status file for control of future runs
-			Try
-				result = myResource.GetResources()
-				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					myLogger.PostEntry(MachName & ": " & myResource.Message & ", Job " & JobNum & ", Dataset " & Dataset, _
-					 ILogger.logMsgType.logError, LOG_DATABASE)
-					myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
-					 AppendToComment(myAnalysisJob.GetParam("comment"), myResource.Message))
-					If CleanWorkDir(myMgrSettings.GetParam("commonfileandfolderlocations", "workdir"), myLogger) Then
-						DeleteStatusFlagFile(myLogger)
-					End If
-					myStatusTools.UpdateIdle()
-					'					myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-					Exit Sub
-				End If
-			Catch Err As Exception
-				FailCount += 1
-				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Getting resources," & _
-				 Err.Message, ILogger.logMsgType.logError, True)
-				myStatusTools.UpdateIdle()
-				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-				Exit Sub
-			End Try
+		End Function
 
-			' Run the job
-			'
-			myStatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RUNNING, 0, 0)
-			Try
-				result = myToolRunner.RunTool
-				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					myLogger.PostEntry(MachName & ": " & myToolRunner.Message & ", Job " & JobNum & ", Dataset " & Dataset, _
-					 ILogger.logMsgType.logError, LOG_DATABASE)
-					myAnalysisJob.CloseJob(result, "", AppendToComment(myAnalysisJob.GetParam("comment"), myToolRunner.Message))
-					Try
-						If CleanWorkDir(myMgrSettings.GetParam("commonfileandfolderlocations", "workdir"), myLogger) Then
-							DeleteStatusFlagFile(myLogger)
-						End If
-						Exit Sub
-					Catch Err As Exception
-						FailCount += 1
-						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & _
-						 Err.Message, ILogger.logMsgType.logError, True)
-						myStatusTools.UpdateIdle()
-						Exit Sub
-					End Try
-				End If
-			Catch Err As Exception
-				FailCount += 1
-				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message, _
-				 ILogger.logMsgType.logError, True)
-				myStatusTools.UpdateIdle()
-				Exit Sub
-			End Try
+		''' <summary>
+		''' Loop to perform all analysis jobs
+		''' </summary>
+		''' <remarks></remarks>
+		Public Sub DoAnalysis()
 
-			myStatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_CLOSING, 0, 0)
-			Try
-				result = myResults.DeliverResults(myToolRunner.ResFolderName)
-				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					myAnalysisJob.CloseJob(result, "", AppendToComment(myAnalysisJob.GetParam("comment"), myResults.Message))
-					Try
-						If CleanWorkDir(myMgrSettings.GetParam("commonfileandfolderlocations", "workdir"), myLogger) Then
-							DeleteStatusFlagFile(myLogger)
-						End If
-						Exit Sub
-					Catch Err As Exception
-						FailCount += 1
-						myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Cleaning up after DeliverResults error," & _
-						 Err.Message, ILogger.logMsgType.logError, True)
-						myStatusTools.UpdateIdle()
-						Exit Sub
-					End Try
-				End If
-			Catch Err As Exception
-				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Delivering results," & Err.Message, ILogger.logMsgType.logError, True)
-				Exit Sub
-			End Try
+			Dim TaskCount As Integer = 0
+			Dim MaxTaskCount As Integer = CInt(m_MgrSettings.GetParam("maxrepetitions"))
+			m_TaskFound = True
+			m_OneTaskPerformed = False
 
-			'Clean the working directory
-			Try
-				If Not CleanWorkDir(myMgrSettings.GetParam("commonfileandfolderlocations", "workdir"), myLogger) Then
-					myLogger.PostEntry("Error cleaning working directory, job " & myAnalysisJob.GetParam("jobNum"), _
-					 ILogger.logMsgType.logError, LOG_DATABASE)
-					myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
-					 AppendToComment(myAnalysisJob.GetParam("comment"), "Error cleaning working directory"))
-					Exit Sub
-				End If
-			Catch Err As Exception
-				FailCount += 1
-				myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & _
-				 Err.Message, ILogger.logMsgType.logError, True)
-				myStatusTools.UpdateIdle()
-				'				myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-				Exit Sub
-			End Try
+			InitStatusTools()
 
-			' If we got to here, then closeout the job as a success
-			'
-			DeleteStatusFlagFile(myLogger)
-			FailCount = 0
-			myAnalysisJob.CloseJob(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, myToolRunner.ResFolderName, myAnalysisJob.GetParam("comment"))
-			myLogger.PostEntry(MachName & ": Completed job " & JobNum, ILogger.logMsgType.logNormal, LOG_DATABASE)
-			myStatusTools.UpdateIdle()
-		Catch Err As Exception
-			FailCount += 1
-			myLogger.PostEntry("clsMainProcess.DoAnalysisJob(), " & Err.Message, ILogger.logMsgType.logError, True)
-			myStatusTools.UpdateIdle()
-			'			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-			Exit Sub
-		End Try
+			While (TaskCount < MaxTaskCount) And m_TaskFound
 
-	End Sub
-
-	Public Sub DoAnalysis()
-
-		Try
-			m_JobsFound = True
-			m_JobsPerformed = 0
-			m_MaxJobsAllowed = CShort(myMgrSettings.GetParam("programcontrol", "maxjobcount"))
-			m_DebugLevel = CInt(myMgrSettings.GetParam("programcontrol", "debuglevel"))
-
-			While (m_JobsPerformed < m_MaxJobsAllowed) And m_JobsFound
 				'Verify an error hasn't left the the system in an odd state
 				If DetectStatusFlagFile() Then
-					myLogger.PostEntry("Flag file exists - unable to perform any further analysis jobs", _
-					 ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
-					myStatusTools.UpdateFlagFileExists()
-					myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+					m_StatusTools.UpdateIdle()
+					m_Logger.PostEntry("Flag file exists - unable to perform any further analysis jobs", _
+					  ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+					m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 					Exit Sub
 				End If
+
 				'Check to see if the machine settings have changed
-				If m_IniFileChanged Then
-					m_IniFileChanged = False
-					If Not ReReadIniFile() Then
-						myLogger.PostEntry("Error re-reading ini file", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
-						Try
-							myStatusTools.UpdateIdle()
-						Catch
-							'Do nothing - try/catch was used in case status file entries were wrong after re-read
-						End Try
-						myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+				If m_ConfigChanged Then
+					'Local config file has changed
+					m_ConfigChanged = False
+					If Not m_MgrSettings.LoadSettings(m_Logger) Then
+						If m_MgrSettings.ErrMsg <> "" Then
+							'Manager has been deactivated, so report this
+							m_StatusTools.UpdateDisabled()
+							m_Logger.PostEntry(m_MgrSettings.ErrMsg, ILogger.logMsgType.logWarning, LOG_LOCAL_ONLY)
+						Else
+							'Unknown problem reading config file
+							m_Logger.PostEntry("Error re-reading config file", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+						End If
+						m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 						Exit Sub
 					End If
 					m_FileWatcher.EnableRaisingEvents = True
+				Else
+					If m_FirstRun Then
+						'No need to check for mgr control db changes since they were just loaded
+						m_FirstRun = False
+					Else	'm_FirstRun check
+						'Check if manager control database settings have changed
+						If Not m_MgrSettings.LoadMgrSettingsFromDB(m_Logger) Then
+							m_Logger.PostEntry(m_MgrSettings.ErrMsg, ILogger.logMsgType.logError, True)
+							m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+							Exit Sub
+						End If
+					End If	'm_FirstRun check
 				End If
+
+				'Check to see if manager is still active
+				Dim MgrActive As Boolean = CBool(m_MgrSettings.GetParam("mgractive")) And CBool(m_MgrSettings.GetParam("mgractive_local"))
+				If Not MgrActive Then
+					m_StatusTools.UpdateDisabled()
+					m_Logger.PostEntry("Manager inactive", ILogger.logMsgType.logNormal, True)
+					m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+					Exit Sub
+				End If
+
 				'Verify working directory properly specified and empty
 				If Not ValidateWorkingDir() Then
 					'Working directory problem, so exit
-					myLogger.PostEntry("Working directory problem, disabling manager", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
-					m_MgrActive = False
-					myMgrSettings.SetParam("programcontrol", "mgractive", m_MgrActive.ToString)
-					myMgrSettings.SaveSettings()
+					m_Logger.PostEntry("Working directory problem, disabling manager", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+					DisableManagerLocally()
+					m_StatusTools.UpdateDisabled()
+					Exit While
 				End If
-				'Check to see if excessive consecutive failures have occurred
-				If FailCount > 4 Then
-					'More than 5 consecutive failures; there must be a generic problem, so exit
-					myLogger.PostEntry("Multiple job failures, disabling manager", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
-					m_MgrActive = False
-					myMgrSettings.SetParam("programcontrol", "mgractive", m_MgrActive.ToString)
-					myMgrSettings.SaveSettings()
+
+				'Check to see if an excessive number of errors have occurred
+				If m_ErrorCount > MAX_ERROR_COUNT Then
+					m_Logger.PostEntry("Excessive task failures; disabling manager", ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+					DisableManagerLocally()
+					m_StatusTools.UpdateDisabled()
+					Exit While
 				End If
-				'Check to see if the manager is still active
-				If Not m_MgrActive Then
-					myLogger.PostEntry("Manager inactive", ILogger.logMsgType.logNormal, True)
-					myStatusTools.UpdateDisabled()
-					myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-					Exit Sub
-				End If
-				'Check to see if there are any analysis jobs ready
-				DoAnalysisJob()
-				m_JobsPerformed += 1S
+
+				'Get an analysis job, if any are available
+				Dim TaskReturn As clsAnalysisJob.RequestTaskResult = m_AnalysisTask.RequestTask
+				Select Case TaskReturn
+					Case clsDBTask.RequestTaskResult.NoTaskFound
+						'No tasks found
+						m_Logger.PostEntry("No analysis jobs found", ILogger.logMsgType.logHealth, LOG_DATABASE)
+						m_TaskFound = False
+						m_ErrorCount = 0
+						m_StatusTools.UpdateIdle()
+					Case clsDBTask.RequestTaskResult.ResultError
+						'There was a problem getting the task; errors were logged by RequestTaskResult
+						m_ErrorCount += 1
+					Case clsDBTask.RequestTaskResult.TaskFound
+						m_TaskFound = True
+						If DoAnalysisJob() Then
+							m_ErrorCount = 0
+							m_OneTaskPerformed = True
+							m_AnalysisTask.CloseTask(True)
+						Else
+							'Something went wrong; errors were logged by DoAnalysisJob
+							m_ErrorCount += 1
+							m_AnalysisTask.CloseTask(False)
+						End If
+					Case Else
+						'Shouldn't ever get here
+						Dim MyErr As String = "clsMainProcess.DoAnalysis; Invalid request result: "
+						MyErr &= CInt(TaskReturn).ToString
+						m_Logger.PostEntry(MyErr, ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+						Exit Sub
+				End Select
+				TaskCount += 1
+
 			End While
-			myStatusTools.UpdateIdle()
-			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-		Catch Err As Exception
-			myLogger.PostEntry("clsMainProcess.DoAnalysis(), " & Err.Message, ILogger.logMsgType.logError, True)
-			myStatusTools.UpdateIdle()
-			myLogger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-			Exit Sub
-		End Try
 
-	End Sub
-
-	Shared Sub Main()
-
-		Dim ErrMsg As String
-
-		Try
-			clsGlobal.AppFilePath = Application.ExecutablePath
-			If IsNothing(m_StartupClass) Then
-				m_StartupClass = New clsMainProcess
+			If m_OneTaskPerformed Then
+				m_Logger.PostEntry("Analysis complete for all available jobs", ILogger.logMsgType.logNormal, LOG_DATABASE)
 			End If
-			m_StartupClass.DoAnalysis()
-		Catch Err As Exception
-			'Report any exceptions not handled at a lower level to the system application log
-			ErrMsg = "Critical exception starting application: " & Err.Message
-			Dim Ev As New EventLog("Application", ".", "DMSAnalysisManager")
-			Trace.Listeners.Add(New EventLogTraceListener("DMSAnalysisManager"))
-			Trace.WriteLine(ErrMsg)
-			Ev.Close()
-			Exit Sub
-		End Try
 
-	End Sub
+			m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
 
-	Public Sub New()
+		End Sub
 
-		Dim LogFile As String
-		Dim ConnectStr As String
-		Dim ModName As String
-		Dim Fi As FileInfo
+		''' <summary>
+		''' Sets the local mgr_active flag to False for serious problems
+		''' </summary>
+		''' <remarks></remarks>
+		Private Sub DisableManagerLocally()
 
-		Try
-			'Load initial settings
-			myMgrSettings = New clsAnalysisMgrSettings(GetIniFilePath(m_IniFileName))
-			myStatusTools = New clsStatusFile(myMgrSettings.GetParam("commonfileandfolderlocations", "statusfilelocation"), _
-			 myMgrSettings.GetParam("programcontrol", "maxduration"))
-			myStatusTools.MachName = myMgrSettings.GetParam("programcontrol", "machname")
-			m_MgrActive = CBool(myMgrSettings.GetParam("programcontrol", "mgractive"))
+			If Not m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False") Then
+				m_Logger.PostEntry("Error while disabling manager: " & m_MgrSettings.ErrMsg, ILogger.logMsgType.logError, True)
+			End If
 
-			' create the object that will manage the logging
-			LogFile = myMgrSettings.GetParam("logging", "logfilename")
-			ConnectStr = myMgrSettings.GetParam("databasesettings", "connectionstring")
-			ModName = myMgrSettings.GetParam("programcontrol", "modulename")
-			myLogger = New clsQueLogger(New clsDBLogger(ModName, ConnectStr, LogFile))
+		End Sub
 
-			'Write the initial log and status entries
-			myLogger.PostEntry("===== Started Analysis Manager V" & Application.ProductVersion & " =====", _
-			 ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-			myStatusTools.WriteStatusFile()
-		Catch Err As Exception
-			'			m_EventLog.WriteEntry("clsMainProcess.New(), " & Err.Message)
-			Throw New Exception("clsMainProcess.New(), " & Err.Message)
-			Exit Sub
-		End Try
+		''' <summary>
+		''' Event handler for file watcher
+		''' </summary>
+		''' <param name="sender"></param>
+		''' <param name="e"></param>
+		''' <remarks></remarks>
+		Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles m_FileWatcher.Changed
 
-		'Set up the FileWatcher to detect setup file changes
-		Fi = New FileInfo(Application.ExecutablePath)
-		m_FileWatcher.BeginInit()
-		m_FileWatcher.Path = Fi.DirectoryName
-		m_FileWatcher.IncludeSubdirectories = False
-		m_FileWatcher.Filter = m_IniFileName
-		m_FileWatcher.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-		m_FileWatcher.EndInit()
-		m_FileWatcher.EnableRaisingEvents = True
+			m_FileWatcher.EnableRaisingEvents = False
+			m_ConfigChanged = True
 
-	End Sub
+			If m_DebugLevel > 3 Then
+				m_Logger.PostEntry("Config file changed", ILogger.logMsgType.logDebug, True)
+			End If
 
-	Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles m_FileWatcher.Changed
-		m_IniFileChanged = True
-		m_FileWatcher.EnableRaisingEvents = False		'Turn off change detection until current change has been acted upon
-	End Sub
+		End Sub
 
-	Private Function ReReadIniFile() As Boolean
+		Private Function DoAnalysisJob() As Boolean
 
-		'Re-read the ini file that may have changed
-		'Note: Assumes log file and module name entries in ini file don't get changed
+			Dim Result As IJobParams.CloseOutType
+			Dim MgrName As String = m_MgrSettings.GetParam("MgrName")
+			Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("JobNum"))
+			Dim Dataset As String = m_AnalysisTask.GetParam("DatasetNum")
 
-		If Not myMgrSettings.LoadSettings Then
-			myLogger.PostEntry("Error reloading settings file", ILogger.logMsgType.logError, True)
-			Return False
-		End If
+			Try
+				'Initialize summary and status files
+				InitSummary()
+				If m_StatusTools Is Nothing Then
+					Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
+					Dim StatusFileLoc As String = Path.Combine(FInfo.DirectoryName, m_MgrSettings.GetParam("statusfilelocation"))
+					m_StatusTools = New clsStatusFile(StatusFileLoc)
+				End If
+				With m_StatusTools
+					.StartTime = Now
+					.DatasetName = Dataset
+					.JobNumber = JobNum.ToString
+					.MachName = m_MgrSettings.GetParam("MgrName")
+					.UpdateAndWrite(IStatusFile.JobStatus.STATUS_STARTING, 0, 0)
+				End With
 
-		'NOTE: Debug level has implied update because new instances of resource retrieval and analysis tool
-		'	classes retrieve the debug level from MyMgrSettings in the constructor
+				m_Logger.PostEntry(MgrName & ": Started analysis job " & JobNum & ", Dataset " & Dataset, _
+				  ILogger.logMsgType.logNormal, LOG_DATABASE)
 
-		myStatusTools.FileLocation = myMgrSettings.GetParam("commonfileandfolderlocations", "statusfilelocation")
-		myStatusTools.MachName = myMgrSettings.GetParam("programcontrol", "machname")
-		myStatusTools.MaxJobDuration = myMgrSettings.GetParam("programcontrol", "maxduration")
+				'Create an object to manage the job resources
+				If Not SetResourceObject() Then
+					m_Logger.PostEntry(MgrName & ": Unable to SetResourceObject, job " & JobNum & ", Dataset " & Dataset, _
+					  ILogger.logMsgType.logError, LOG_DATABASE)
+					Dim TempComment As String = AppendToComment(m_AnalysisTask.GetParam("comment"), "Unable to set resource object")
+					m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
+					  AppendToComment(m_AnalysisTask.GetParam("comment"), "Unable to set resource object"))
+					m_StatusTools.UpdateIdle()
+					Return False
+				End If
 
-		m_MaxJobsAllowed = CShort(myMgrSettings.GetParam("programcontrol", "maxjobcount"))
-		m_MgrActive = CBool(myMgrSettings.GetParam("programcontrol", "mgractive"))
-		'NOTE: Debug level implied update because new instances of resource retrieval and analysis tool
-		'	classes retrieve the debug level from MyMgrSettings in the constructor
-		Return True
+				'Create an object to run the analysis tool
+				If Not SetToolRunnerObject(Now) Then
+					m_Logger.PostEntry(MgrName & ": Unable to SetToolRunnerObject, job " & JobNum & ", Dataset " & Dataset, _
+					  ILogger.logMsgType.logError, LOG_DATABASE)
+					m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
+					 AppendToComment(m_AnalysisTask.GetParam("comment"), "Unable to set tool runner object"))
+					m_StatusTools.UpdateIdle()
+					Return False
+				End If
 
-	End Function
+				'Create the object that handles analysis results
+				Dim myResults As New clsAnalysisResults(m_MgrSettings, m_AnalysisTask, m_Logger)
 
-	Private Sub InitSummary()
-		clsSummaryFile.Clear()
-	End Sub
+				'Retrieve files required for the job
+				m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RETRIEVING_DATASET, 0, 0)
+				CreateStatusFlagFile()
+				Try
+					Result = m_Resource.GetResources()
+					If Result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						m_ToolRunner.SetResourcerDataFileList(m_Resource.DataFileList)
+					Else
+						m_Logger.PostEntry(MgrName & ": " & m_Resource.Message & ", Job " & JobNum & ", Dataset " & Dataset, _
+						  ILogger.logMsgType.logError, LOG_DATABASE)
+						m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
+						 AppendToComment(m_AnalysisTask.GetParam("comment"), m_Resource.Message))
+						If CleanWorkDir(m_MgrSettings.GetParam("workdir"), m_Logger) Then
+							DeleteStatusFlagFile(m_Logger)
+						End If
+						m_StatusTools.UpdateIdle()
+						clsGlobal.DeleteStatusFlagFile(m_Logger)
+						Return False
+					End If
+				Catch Err As Exception
+					m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), Getting resources," & _
+					  Err.Message, ILogger.logMsgType.logError, True)
+					m_StatusTools.UpdateIdle()
+					Return False
+				End Try
 
+				'Run the job
+				m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RUNNING, 0, 0)
+				Try
+					Result = m_ToolRunner.RunTool
+					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						m_Logger.PostEntry(MgrName & ": " & m_ToolRunner.Message & ", Job " & JobNum & ", Dataset " & Dataset, _
+						  ILogger.logMsgType.logError, LOG_DATABASE)
+						m_AnalysisTask.CloseTask(Result, "", AppendToComment(m_AnalysisTask.GetParam("comment"), m_ToolRunner.Message))
+						Try
+							If CleanWorkDir(m_MgrSettings.GetParam("workdir"), m_Logger) Then
+								DeleteStatusFlagFile(m_Logger)
+							End If
+							Return False
+						Catch Err As Exception
+							m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & _
+							  Err.Message, ILogger.logMsgType.logError, True)
+							m_StatusTools.UpdateIdle()
+							Return False
+						End Try
+					End If
+				Catch Err As Exception
+					m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message, _
+						ILogger.logMsgType.logError, True)
+					m_StatusTools.UpdateIdle()
+					Return False
+				End Try
 
-	Private Function ValidateWorkingDir() As Boolean
+				'Close out the job
+				m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_CLOSING, 0, 0)
+				Try
+					Result = myResults.DeliverResults(m_ToolRunner.ResFolderName)
+					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						m_AnalysisTask.CloseTask(Result, "", AppendToComment(m_AnalysisTask.GetParam("comment"), myResults.Message))
+						Try
+							If CleanWorkDir(m_MgrSettings.GetParam("workdir"), m_Logger) Then
+								DeleteStatusFlagFile(m_Logger)
+							End If
+							Return False
+						Catch Err As Exception
+							m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), Cleaning up after DeliverResults error," & _
+							  Err.Message, ILogger.logMsgType.logError, True)
+							m_StatusTools.UpdateIdle()
+							Return False
+						End Try
+					End If
+				Catch Err As Exception
+					m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), Delivering results," & Err.Message, ILogger.logMsgType.logError, True)
+					Return False
+				End Try
 
-		'Verifies working directory is properly specified and is empty
-		Dim WorkingDir As String = myMgrSettings.GetParam("commonfileandfolderlocations", "WorkDir")
-		Dim MsgStr As String
+				'Clean the working directory
+				Try
+					If Not CleanWorkDir(m_MgrSettings.GetParam("workdir"), m_Logger) Then
+						m_Logger.PostEntry("Error cleaning working directory, job " & m_AnalysisTask.GetParam("jobNum"), _
+						  ILogger.logMsgType.logError, LOG_DATABASE)
+						m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "", _
+						 AppendToComment(m_AnalysisTask.GetParam("comment"), "Error cleaning working directory"))
+						Return False
+					End If
+				Catch Err As Exception
+					m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & _
+					 Err.Message, ILogger.logMsgType.logError, True)
+					m_StatusTools.UpdateIdle()
+					Return False
+				End Try
 
-		'Verify working directory is valid
-		If Not Directory.Exists(WorkingDir) Then
-			MsgStr = "Invalid working directory: " & WorkingDir
-			myLogger.PostEntry(MsgStr, ILogger.logMsgType.logError, LOG_DATABASE)
-			Return False
-		End If
+				'Close out the job as a success
+				DeleteStatusFlagFile(m_Logger)
+				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, m_ToolRunner.ResFolderName, m_AnalysisTask.GetParam("comment"))
+				m_Logger.PostEntry(MgrName & ": Completed job " & JobNum, ILogger.logMsgType.logNormal, LOG_DATABASE)
+				m_StatusTools.UpdateIdle()
+				Return True
 
-		'Verify the working directory is empty
-		Dim TmpDirArray() As String = Directory.GetFiles(WorkingDir)
-		Dim TmpFilArray() As String = Directory.GetDirectories(WorkingDir)
-		If (TmpDirArray.GetLength(0) > 0) Or (TmpFilArray.GetLength(0) > 0) Then
-			MsgStr = "Working directory not empty"
-			myLogger.PostEntry(MsgStr, ILogger.logMsgType.logError, LOG_DATABASE)
-			Return False
-		End If
+			Catch ex As Exception
+				m_Logger.PostEntry("clsMainProcess.DoAnalysisJob(), " & ex.Message, ILogger.logMsgType.logError, True)
+				m_StatusTools.UpdateIdle()
+				Return False
+			End Try
 
-		'No problems found
-		Return True
+		End Function
 
-	End Function
+		Private Function SetResourceObject() As Boolean
 
-End Class
+			m_Resource = clsPluginLoader.GetAnalysisResources(m_AnalysisTask.GetParam("toolname").ToLower)
+			If m_Resource Is Nothing Then
+				Dim Msg As String = clsPluginLoader.Message
+				m_Logger.PostEntry("Unable to load resource object, " & Msg, ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+				Return False
+			End If
+			If m_DebugLevel > 0 Then
+				m_Logger.PostEntry("Loaded resourcer " & clsPluginLoader.Message, ILogger.logMsgType.logDebug, LOG_LOCAL_ONLY)
+			End If
+			m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_Logger)
+			Return True
+
+		End Function
+
+		Private Function SetToolRunnerObject(ByVal StartTime As Date) As Boolean
+
+			Dim toolName As String = m_AnalysisTask.GetParam("toolname").ToLower
+			'TODO: May be able to get rid of cluster parameter
+			Dim clustered As Boolean = CBool(m_MgrSettings.GetParam("cluster"))
+
+			m_ToolRunner = clsPluginLoader.GetToolRunner(toolName, clustered)
+			If m_ToolRunner Is Nothing Then
+				Dim m As String = clsPluginLoader.Message
+				m_Logger.PostEntry("Unable to load tool runner, " & m, ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
+				Return False
+			End If
+			If m_DebugLevel > 0 Then
+				m_Logger.PostEntry("Loaded tool runner " & clsPluginLoader.Message, ILogger.logMsgType.logDebug, LOG_LOCAL_ONLY)
+			End If
+			m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_Logger, m_StatusTools)
+			Return True
+
+		End Function
+
+		Private Sub InitSummary()
+			clsSummaryFile.Clear()
+		End Sub
+
+		Private Function ValidateWorkingDir() As Boolean
+
+			'Verifies working directory is properly specified and is empty
+			Dim WorkingDir As String = m_MgrSettings.GetParam("WorkDir")
+			Dim MsgStr As String
+
+			'Verify working directory is valid
+			If Not Directory.Exists(WorkingDir) Then
+				MsgStr = "Invalid working directory: " & WorkingDir
+				m_Logger.PostEntry(MsgStr, ILogger.logMsgType.logError, LOG_DATABASE)
+				Return False
+			End If
+
+			'Verify the working directory is empty
+			Dim TmpDirArray() As String = Directory.GetFiles(WorkingDir)
+			Dim TmpFilArray() As String = Directory.GetDirectories(WorkingDir)
+			If (TmpDirArray.GetLength(0) > 0) Or (TmpFilArray.GetLength(0) > 0) Then
+				MsgStr = "Working directory not empty"
+				m_Logger.PostEntry(MsgStr, ILogger.logMsgType.logError, LOG_DATABASE)
+				Return False
+			End If
+
+			'No problems found
+			Return True
+
+		End Function
+
+		''' <summary>
+		''' Initializes the status file writing tool
+		''' </summary>
+		''' <remarks></remarks>
+		Private Sub InitStatusTools()
+
+			If m_StatusTools Is Nothing Then
+				Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
+				Dim StatusFileLoc As String = Path.Combine(FInfo.DirectoryName, m_MgrSettings.GetParam("statusfilelocation"))
+				m_StatusTools = New clsStatusFile(StatusFileLoc)
+				With m_StatusTools
+					.StartTime = Now
+					.DatasetName = ""
+					.JobNumber = ""
+					.MachName = m_MgrSettings.GetParam("MgrName")
+				End With
+			End If
+
+		End Sub
+#End Region
+
+	End Class
+
+End Namespace

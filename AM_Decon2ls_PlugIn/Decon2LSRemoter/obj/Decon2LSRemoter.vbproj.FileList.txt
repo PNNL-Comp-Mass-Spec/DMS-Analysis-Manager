@@ -1,0 +1,7 @@
+..\Bin_Debug\Decon2LSRemoter.dll
+..\Bin_Debug\Decon2LSRemoter.pdb
+..\Bin_Debug\Decon2LSRemoter.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\Decon2LSRemoter.dll
+obj\Debug\Decon2LSRemoter.xml
+obj\Debug\Decon2LSRemoter.pdb

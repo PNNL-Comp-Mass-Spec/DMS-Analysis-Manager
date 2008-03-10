@@ -15,7 +15,6 @@ Public Class clsAnalysisResourcesXT
 																	ByVal ParamFilePath As String, ByVal WorkDir As String) As Boolean
 
 		Dim result As Boolean = True
-		Dim ModDefsFileName As String
 
 		' XTandem just copies its parameter file from the central repository
 		'	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
@@ -28,8 +27,8 @@ Public Class clsAnalysisResourcesXT
 
 		Try
 			result = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion("xtandem"), _
-			 Path.Combine(m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
-			 WorkDir, m_mgrParams.GetParam("databasesettings", "connectionstring"))
+			 Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
+			 WorkDir, m_mgrParams.GetParam("connectionstring"))
 		Catch Ex As Exception
 			Dim Msg As String = "clsAnalysisResourcesXT.RetrieveParamFile(), exception generating param file: " & Ex.Message
 			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, True)
@@ -61,10 +60,10 @@ Public Class clsAnalysisResourcesXT
 
 		' set up taxonomy file to reference the organsim DB file (fasta)
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("commonfileandfolderlocations", "WorkDir")
+		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
 		Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
-		Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("commonfileandfolderlocations", "orgdbdir")
+		Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 		Dim OrgFilePath As String = Path.Combine(LocalOrgDBFolder, OrgDBName)
 
 		'edit base taxonomy file into actual
@@ -74,7 +73,6 @@ Public Class clsAnalysisResourcesXT
 			' Create an instance of StreamReader to read from a file.
 			Dim inputBase As StreamReader = New StreamReader(Path.Combine(WorkingDir, "taxonomy_base.xml"))
 			Dim inpLine As String
-			Dim tmpFlag As Boolean
 			' Read and display the lines from the file until the end 
 			' of the file is reached.
 			Do
@@ -103,7 +101,7 @@ Public Class clsAnalysisResourcesXT
 
 		' set up input to reference spectra file, taxonomy file, and parameter file
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("commonfileandfolderlocations", "WorkDir")
+		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
 		Dim ParamFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
 		Dim SpectrumFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")

@@ -56,8 +56,8 @@ Public Class clsDtaGenMainProcess
 		End If
 
 		'Verify DTA creation tool exists
-		m_DtaToolNameLoc = Path.Combine(m_MgrParams.GetParam("commonfileandfolderlocations", "lcqdtaloc"), _
-		 m_settings.GetParam("DtaGenerator", "DtaGenerator", "Bad_Program.exe"))
+		m_DtaToolNameLoc = Path.Combine(m_MgrParams.GetParam("lcqdtaloc"), _
+		  m_Settings.GetParam("DtaGenerator", "DtaGenerator", "Bad_Program.exe"))
 		If Not VerifyFileExists(m_DtaToolNameLoc) Then
 			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
@@ -224,7 +224,6 @@ Public Class clsDtaGenMainProcess
 		Dim LocScanStop As Integer
 		Dim MaxScanInFile As Integer
 		Dim OutDirParam As String = " -P"		'Output directory parameter, dependent on xcalibur version
-		Dim XcalVersion As String
 
 		'DAC debugging
 		System.Threading.Thread.CurrentThread.Name = "MakeDTAFiles"
@@ -245,14 +244,6 @@ Public Class clsDtaGenMainProcess
 
 		'TODO: Is this line necessary when using Matt's replacement for settings file reader?
 		If MassTol Is Nothing Then MassTol = DEF_MASS_TOL 'Some of the settings files don't have this value
-
-		XcalVersion = m_MgrParams.GetParam("sequest", "xcalversion")
-		Select Case XcalVersion.ToLower
-			Case "14"
-				OutDirParam = " -D"
-			Case Else
-				OutDirParam = " -P"
-		End Select
 
 		CreateDefaultCharges = m_Settings.GetParam("Charges", "CreateDefaultCharges", True)
 		ExplicitChargeStart = m_Settings.GetParam("Charges", "ExplicitChargeStart", 0S)
@@ -308,21 +299,19 @@ Public Class clsDtaGenMainProcess
 			If LocCharge = 0 And CreateDefaultCharges OrElse LocCharge > 0 Then
 
 				'Set up parameters to loop through .dta creation until no more files are created
-				' Limit to chunks of 5000 scans due to limitation of extract_msn.exe
+				' Limit to chunks of 20000 scans due to limitation of extract_msn.exe
+				' (only used if selected in manager settings)
 				LocScanStart = ScanStart
 
-				'**************************************************************************************************************************
-				'DTA creation looping is disabled in place. Reverse commenting to enable looping
-				'**************************************************************************************************************************
-				'If ScanStop > (LocScanStart + 5000) Then
-				'	LocScanStop = LocScanStart + 5000
-				'Else
-				'	LocScanStop = ScanStop
-				'End If
-				LocScanStop = ScanStop
-				'**************************************************************************************************************************
-				'End section for comment reversal
-				'**************************************************************************************************************************
+				If CBool(m_MgrParams.GetParam("UseDTALooping")) Then
+					If ScanStop > (LocScanStart + 20000) Then
+						LocScanStop = LocScanStart + 20000
+					Else
+						LocScanStop = ScanStop
+					End If
+				Else
+					LocScanStop = ScanStop
+				End If
 
 				'Loop until no more .dta files are created or ScanStop is reached
 				Do While (LocScanStart <= ScanStop)
@@ -339,30 +328,30 @@ Public Class clsDtaGenMainProcess
 					End If
 					CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
 					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
-					CmdStr &= OutDirParam & m_OutFolderPath & " " & RawFile
+					CmdStr &= " -D" & m_OutFolderPath & " " & RawFile
 
 					'DAC debugging
 					If m_DebugLevel > 0 Then
-						m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, CmdStr=" & CmdStr, _
+						m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, CmdStr=" & CmdStr, _
 						  PRISM.Logging.ILogger.logMsgType.logDebug, True)
-						m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, starting RunProgram, thread " _
+						m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, starting RunProgram, thread " _
 						  & System.Threading.Thread.CurrentThread.Name, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 					End If
 
 					If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
-						m_errmsg = "Error running extract_msn"
+						m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
 						Return False
 					End If
 
 					'DAC debugging
 					If m_DebugLevel > 0 Then
-						m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, RunProgram complete, thread " _
+						m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, RunProgram complete, thread " _
 						 & System.Threading.Thread.CurrentThread.Name, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 					End If
 
 					'Update loopy parameters
 					LocScanStart = LocScanStop + 1
-					LocScanStop = LocScanStart + 5000
+					LocScanStop = LocScanStart + 20000
 					If LocScanStop > ScanStop Then
 						LocScanStop = ScanStop
 					End If
@@ -401,8 +390,6 @@ Public Class clsDtaGenMainProcess
 	End Function
 
 	Private Function VerifyDtaCreation() As Boolean
-
-		Dim DtaFiles() As String
 
 		'Verify at least one .dta file has been created
 		If CountDtaFiles < 1 Then

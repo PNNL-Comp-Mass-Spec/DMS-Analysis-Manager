@@ -1,0 +1,7 @@
+..\Bin_Debug\AnalysisManagerDecon2lsPlugIn.dll
+..\Bin_Debug\AnalysisManagerDecon2lsPlugIn.pdb
+..\Bin_Debug\AnalysisManagerDecon2lsPlugIn.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\AnalysisManagerDecon2lsPlugIn.dll
+obj\Debug\AnalysisManagerDecon2lsPlugIn.xml
+obj\Debug\AnalysisManagerDecon2lsPlugIn.pdb

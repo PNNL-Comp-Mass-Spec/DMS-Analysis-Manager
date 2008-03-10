@@ -49,7 +49,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 		'Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
 
 		Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-		Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("programcontrol", "tcpport"))
+		Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
 
 		If m_DebugLevel > 3 Then
 			m_logger.PostEntry("clsAnalysisToolRunnerDecon2LSBase.RunTool()", ILogger.logMsgType.logDebug, True)
