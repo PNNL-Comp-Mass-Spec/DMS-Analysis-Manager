@@ -333,6 +333,9 @@ Public Class clsMGFtoDtaGenMainProcess
 		Dim sngValueData() As Single
 		Dim strMsMsDataNew() As String
 
+		Dim udtSpectrumQualityScore As MSMSSpectrumFilter.clsMsMsSpectrumFilter.udtSpectrumQualityScoreType
+		Dim intCharge As Integer
+
 		Dim strFileName As String
 		Dim strOutputFilePath As String = ""
 
@@ -358,19 +361,43 @@ Public Class clsMGFtoDtaGenMainProcess
 				' Populate sngIonMasses() and sngIonIntensities()
 				intDataCount = objMGFReader.ParseMsMsDataList(strMSMSData, intMsMsDataCount, sngIonMasses, sngIonIntensities)
 
-				If mFilterSpectraOptions.FilterSpectra AndAlso _
-					(udtSpectrumHeaderInfo.ParentIonMZ < mFilterSpectraOptions.MinimumParentIonMZ OrElse _
-					 objSpectrumFilter.EvaluateMsMsSpectrum(sngIonMasses, sngIonIntensities) < 1) Then
-					' Do not create an entry for this scan since parent ion m/z is too low or spectrum doesn't pass filter
-				Else
+				If mFilterSpectraOptions.FilterSpectra Then
+					If udtSpectrumHeaderInfo.ParentIonMZ < mFilterSpectraOptions.MinimumParentIonMZ Then
+						' Do not create an entry for this scan since parent ion m/z is too low
+						blnCreateEntry = False
+					Else
+						With udtSpectrumHeaderInfo
+							If .ParentIonChargeCount = 0 OrElse .ParentIonCharges Is Nothing Then
+								intCharge = 0
+							Else
+								intCharge = .ParentIonCharges(0)
+							End If
+
+							udtSpectrumQualityScore = objSpectrumFilter.EvaluateMsMsSpectrum( _
+									 sngIonMasses, _
+									 sngIonIntensities, _
+									 intCharge, _
+									 .ParentIonMH, _
+									 .ParentIonMZ, 0)
+						End With
+
+						If udtSpectrumQualityScore.SpectrumQualityScore <= 0 Then
+							' Do not create an entry for this scan since spectrum doesn't pass filter
+							blnCreateEntry = False
+						End If
+					End If
+				End If
+
+
+				If blnCreateEntry Then
 					If mSpectrumProcessingOptions.GuesstimateChargeForAllSpectra OrElse _
-						udtSpectrumHeaderInfo.ParentIonChargeCount = 0 OrElse _
-						udtSpectrumHeaderInfo.ParentIonCharges(0) = 0 Then
+					 udtSpectrumHeaderInfo.ParentIonChargeCount = 0 OrElse _
+					 udtSpectrumHeaderInfo.ParentIonCharges(0) = 0 Then
 						' Guesstimating charge for all spectra or unknown charge
 						' Determine the appropriate charge based on the parent ion m/z and the ions that are present
 						objMGFReader.GuesstimateCharge(intDataCount, sngIonMasses, sngIonIntensities, udtSpectrumHeaderInfo, _
-																  mSpectrumProcessingOptions.GuesstimateChargeForAllSpectra, _
-																  mSpectrumProcessingOptions.ForceChargeAddnForPredefined2PlusOr3Plus)
+										mSpectrumProcessingOptions.GuesstimateChargeForAllSpectra, _
+										mSpectrumProcessingOptions.ForceChargeAddnForPredefined2PlusOr3Plus)
 					End If
 
 					With udtSpectrumHeaderInfo
@@ -421,7 +448,7 @@ Public Class clsMGFtoDtaGenMainProcess
 						Next intDataIndex
 
 						If mSpectrumProcessingOptions.MaximumIonsPerSpectrum > 0 AndAlso _
-							intMsMsDataCount > mSpectrumProcessingOptions.MaximumIonsPerSpectrum Then
+						 intMsMsDataCount > mSpectrumProcessingOptions.MaximumIonsPerSpectrum Then
 							' Sort strMsMsData() on descending intensity and only keep the top mMaximumIonsPerSpectrum ions
 							' First extract out the intensity values from strMsMsData()
 							ReDim sngValueData(intMsMsDataCount - 1)

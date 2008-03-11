@@ -1,12 +1,22 @@
+'*********************************************************************************************************
+' Written by Dave Clark for the US Department of Energy 
+' Pacific Northwest National Laboratory, Richland, WA
+' Copyright 2006, Battelle Memorial Institute
+' Created 06/07/2006
+'
+' Last modified 03/11/2008
+'*********************************************************************************************************
+
 Imports System.IO
 
-'Imports AnalysisManagerTools
 Imports AnalysisManagerBase
 
 Public Class clsDtaGenMainProcess
 	Inherits clsDtaGen
 
+	'*********************************************************************************************************
 	'Main processing class for simple DTA generation
+	'*********************************************************************************************************
 
 #Region "Module variables"
 	Private m_DtaToolNameLoc As String
@@ -33,10 +43,21 @@ Public Class clsDtaGenMainProcess
 	Private Const OF_SHARE_EXCLUSIVE As Short = &H10S
 #End Region
 
+#Region "Methods"
+	''' <summary>
+	''' Aborts processing
+	''' </summary>
+	''' <returns>ProcessStatus value indicating process was aborted</returns>
+	''' <remarks></remarks>
 	Public Overrides Function Abort() As ISpectraFileProcessor.ProcessStatus
 		m_AbortRequested = True
 	End Function
 
+	''' <summary>
+	''' Starts DTA creation
+	''' </summary>
+	''' <returns>ProcessStatus value indicating success or failure</returns>
+	''' <remarks></remarks>
 	Public Overrides Function Start() As ISpectraFileProcessor.ProcessStatus
 
 		m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
@@ -45,14 +66,14 @@ Public Class clsDtaGenMainProcess
 		If Not InitSetup() Then
 			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return m_status
+			Return m_Status
 		End If
 
 		'Read the settings file
 		If Not ReadSettingsFile(m_SettingsFileName, m_SourceFolderPath) Then
 			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return m_status
+			Return m_Status
 		End If
 
 		'Verify DTA creation tool exists
@@ -61,36 +82,48 @@ Public Class clsDtaGenMainProcess
 		If Not VerifyFileExists(m_DtaToolNameLoc) Then
 			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return m_status
+			Return m_Status
 		End If
 
 		'Make the DTA files (the process runs in a separate thread)
 		Try
 			m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
 			m_thThread.Start()
-			m_status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+			m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
 		Catch ex As Exception
 			m_ErrMsg = "Error calling MakeDTAFiles"
-			m_status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
 		End Try
 
-		Return m_status
+		Return m_Status
 
 	End Function
 
+	''' <summary>
+	''' Tests for existence of .raw file in specified location
+	''' </summary>
+	''' <param name="WorkDir">Directory where .raw file should be found</param>
+	''' <param name="DSName">Name of dataset being processed</param>
+	''' <returns>TRUE if file found; FALSE otherwise</returns>
+	''' <remarks></remarks>
 	Private Function VerifyRawFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
 		'Verifies a .raw file exists in specfied directory
 		If File.Exists(Path.Combine(WorkDir, DSName & ".raw")) Then
-			m_errmsg = ""
+			m_ErrMsg = ""
 			Return True
 		Else
-			m_errmsg = "Data file " & DSName & ".raw not found in working directory"
+			m_ErrMsg = "Data file " & DSName & ".raw not found in working directory"
 			Return False
 		End If
 
 	End Function
 
+	''' <summary>
+	''' Initializes the class
+	''' </summary>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
 	Protected Overrides Function InitSetup() As Boolean
 
 		'Verifies all necessary files exist in the specified locations
@@ -122,6 +155,12 @@ Public Class clsDtaGenMainProcess
 
 	End Function
 
+	''' <summary>
+	''' Determines the maximum scan number in the .raw file
+	''' </summary>
+	''' <param name="RawFile">Data file name</param>
+	''' <returns>Number of scans found</returns>
+	''' <remarks>Uses ICR2LS function to read data file</remarks>
 	Protected Overridable Function GetMaxScan(ByVal RawFile As String) As Integer
 
 		'Uses ICR2LS to get the maximum number of scans in a .raw file
@@ -166,6 +205,10 @@ Public Class clsDtaGenMainProcess
 
 	End Function
 
+	''' <summary>
+	''' Thread for creation of DTA files
+	''' </summary>
+	''' <remarks></remarks>
 	Protected Overridable Sub MakeDTAFilesThreaded()
 
 		m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
@@ -177,7 +220,7 @@ Public Class clsDtaGenMainProcess
 		End If
 
 		'Remove any files with non-standard file names (extract_msn bug)
-		If Not DeleteNonDosFiles Then
+		If Not DeleteNonDosFiles() Then
 			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
 				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
@@ -201,6 +244,11 @@ Public Class clsDtaGenMainProcess
 
 	End Sub
 
+	''' <summary>
+	''' Method that actually makes the DTA files
+	''' </summary>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
 	Private Function MakeDTAFiles() As Boolean
 
 		'Makes DTA files using extract_msn.exe
@@ -211,6 +259,7 @@ Public Class clsDtaGenMainProcess
 
 		Dim ScanStart As Integer
 		Dim ScanStop As Integer
+		Dim MaxIntermediateScansWhenGrouping As Integer
 		Dim MWLower As String
 		Dim MWUpper As String
 		Dim MassTol As String
@@ -230,13 +279,18 @@ Public Class clsDtaGenMainProcess
 
 		If m_DebugLevel > 0 Then
 			m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles: Making DTA files", _
-				PRISM.Logging.ILogger.logMsgType.logDebug, True)
+			 PRISM.Logging.ILogger.logMsgType.logDebug, True)
 		End If
 
 		'Get the parameters from the various setup files
 		RawFile = Path.Combine(m_SourceFolderPath, m_DSName & ".raw")
+
 		ScanStart = m_Settings.GetParam("ScanControl", "ScanStart", 1)
 		ScanStop = m_Settings.GetParam("ScanControl", "ScanStop", 1000000)
+
+		' Note: Set MaxIntermediateScansWhenGrouping to 0 to disable grouping
+		MaxIntermediateScansWhenGrouping = m_Settings.GetParam("ScanControl", "MaxIntermediateScansWhenGrouping", 1)
+
 		MWLower = m_Settings.GetParam("MWControl", "MWStart", 200).ToString
 		MWUpper = m_Settings.GetParam("MWControl", "MWStop", 5000).ToString
 		IonCount = m_Settings.GetParam("IonCounts", "IonCount", 35).ToString
@@ -254,16 +308,16 @@ Public Class clsDtaGenMainProcess
 
 		Select Case MaxScanInFile
 			Case -1			'Generic error getting number of scans
-				m_errmsg = "Unknown error getting number of scans; Maxscan = " & MaxScanInFile.ToString
+				m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & MaxScanInFile.ToString
 				Return False
 			Case 0			'ICR2LS unable to read file
-				m_errmsg = "Unable to get maxscan; Maxscan = " & MaxScanInFile.ToString
+				m_ErrMsg = "Unable to get maxscan; Maxscan = " & MaxScanInFile.ToString
 				Return False
 			Case Is > 0
 				'This is normal, do nothing
 			Case Else
 				'This should never happen
-				m_errmsg = "Critical error getting number of scans; Maxscan = " & MaxScanInFile.ToString
+				m_ErrMsg = "Critical error getting number of scans; Maxscan = " & MaxScanInFile.ToString
 				Return False
 		End Select
 
@@ -278,7 +332,7 @@ Public Class clsDtaGenMainProcess
 
 		'DAC debugging
 		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, preparing DTA creation loop, thread " _
+			m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, preparing DTA creation loop, thread " _
 			  & System.Threading.Thread.CurrentThread.Name, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 		End If
 
@@ -291,7 +345,7 @@ Public Class clsDtaGenMainProcess
 
 		'DAC debugging
 		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, LocCharge=" & LocCharge.ToString & ", ExplicitChargeEnd=" & _
+			m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, LocCharge=" & LocCharge.ToString & ", ExplicitChargeEnd=" & _
 			 ExplicitChargeEnd.ToString & ", m_AbortRequested=" & m_AbortRequested.ToString, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 		End If
 
@@ -326,7 +380,9 @@ Public Class clsDtaGenMainProcess
 					If LocCharge > 0 Then
 						CmdStr &= " -C" & LocCharge.ToString
 					End If
+
 					CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
+					CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
 					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
 					CmdStr &= " -D" & m_OutFolderPath & " " & RawFile
 
@@ -375,8 +431,8 @@ Public Class clsDtaGenMainProcess
 		End If
 
 		'DAC debugging
-		If m_debuglevel > 0 Then
-			m_logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, DTA creation loop complete, thread " _
+		If m_DebugLevel > 0 Then
+			m_Logger.PostEntry("clsDtaGenMainProcess.MakeDTAFiles, DTA creation loop complete, thread " _
 			  & System.Threading.Thread.CurrentThread.Name, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 		End If
 
@@ -389,11 +445,16 @@ Public Class clsDtaGenMainProcess
 
 	End Function
 
+	''' <summary>
+	''' Verifies at least one DTA file was created
+	''' </summary>
+	''' <returns>TRUE if at least 1 file created; FALSE otherwise</returns>
+	''' <remarks></remarks>
 	Private Function VerifyDtaCreation() As Boolean
 
 		'Verify at least one .dta file has been created
-		If CountDtaFiles < 1 Then
-			m_errmsg = "No dta files created"
+		If CountDtaFiles() < 1 Then
+			m_ErrMsg = "No dta files created"
 			Return False
 		Else
 			Return True
@@ -401,6 +462,10 @@ Public Class clsDtaGenMainProcess
 
 	End Function
 
+	''' <summary>
+	''' Event handler for LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
 	Private Sub m_RunProgTool_LoopWaiting() Handles m_RunProgTool.LoopWaiting
 
 		'Update the status file
@@ -410,5 +475,6 @@ Public Class clsDtaGenMainProcess
 		m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RUNNING, 0, m_SpectraFileCount)
 
 	End Sub
+#End Region
 
 End Class
