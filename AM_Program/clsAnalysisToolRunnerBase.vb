@@ -4,7 +4,7 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 01/16/2008
+' Last modified 03/21/2008
 '*********************************************************************************************************
 
 Imports PRISM.Logging
@@ -283,7 +283,7 @@ Namespace AnalysisManagerBase
 			clsSummaryFile.Add("Settings File Path" & vbTab & m_jobParams.GetParam("settingsFileStoragePath"))
 			clsSummaryFile.Add("Legacy Organism Db Name" & vbTab & m_jobParams.GetParam("LegacyFastaFileName"))
 			clsSummaryFile.Add("Protein Collection List" & vbTab & m_jobParams.GetParam("ProteinCollectionList"))
-			clsSummaryFile.Add("Protein Options List" & vbTab & m_jobParams.GetParam("ProteinOptionsList"))
+			clsSummaryFile.Add("Protein Options List" & vbTab & m_jobParams.GetParam("ProteinOptions"))
 			clsSummaryFile.Add("Fasta File Name" & vbTab & m_jobParams.GetParam("generatedFastaName"))
 			clsSummaryFile.Add("Analysis Time (hh:mm)" & vbTab & CalcElapsedTime(m_StartTime, m_StopTime))
 
