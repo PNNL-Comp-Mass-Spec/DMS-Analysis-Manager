@@ -4,7 +4,7 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 02/27/2008
+' Last modified 05/09/2008
 '*********************************************************************************************************
 
 Imports System.IO
@@ -27,6 +27,9 @@ Namespace AnalysisManagerBase
 #Region "Constants"
 		Protected Const COPY_ORG_DB_TRUE As Integer = 1
 		Protected Const COPY_ORG_DB_FALSE As Integer = 0
+
+		Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
+		Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
 #End Region
 
 #Region "Module variables"
@@ -295,7 +298,7 @@ Namespace AnalysisManagerBase
 		''' </summary>
 		''' <param name="ParamFileName">Name of file to copy</param>
 		''' <param name="ParamFilePath">Full path to param file</param>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveParamFile(ByVal ParamFileName As String, ByVal ParamFilePath As String, _
@@ -316,7 +319,7 @@ Namespace AnalysisManagerBase
 		''' </summary>
 		''' <param name="SettingFileName">Name of file to copy</param>
 		''' <param name="SettingFilePath">Full path to param file</param>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveSettingsFile(ByVal SettingFileName As String, ByVal SettingFilePath As String, _
@@ -334,7 +337,7 @@ Namespace AnalysisManagerBase
 		''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
 		''' </summary>
 		''' <param name="RawDataType">Type of data to copy</param>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveSpectra(ByVal RawDataType As String, ByVal WorkDir As String) As Boolean
@@ -371,15 +374,16 @@ Namespace AnalysisManagerBase
 		''' <summary>
 		''' Retrieves a .raw file for the analysis job in progress
 		''' </summary>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotRawFile(ByVal WorkDir As String) As Boolean
 
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
+			Dim DataFileName As String = DSName & ".raw"
+			Dim ServerPath As String = FindValidDatasetFolder(DSName, DataFileName)
 
-			If CopyFileToWorkDir(DSName & ".raw", ServerPath, WorkDir) Then
+			If CopyFileToWorkDir(DataFileName, ServerPath, WorkDir) Then
 				Return True
 			Else
 				Return False
@@ -390,15 +394,16 @@ Namespace AnalysisManagerBase
 		''' <summary>
 		''' Retrieves a .wiff file for the analysis job in progress
 		''' </summary>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotWiffFile(ByVal WorkDir As String) As Boolean
 
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
+			Dim DataFileName As String = DSName & ".wiff"
+			Dim ServerPath As String = FindValidDatasetFolder(DSName, DataFileName)
 
-			If CopyFileToWorkDir(DSName & ".wiff", ServerPath, WorkDir) Then
+			If CopyFileToWorkDir(DataFileName, ServerPath, WorkDir) Then
 				Return True
 			Else
 				Return False
@@ -409,7 +414,7 @@ Namespace AnalysisManagerBase
 		''' <summary>
 		''' Retrieves an Agilent ion trap .mgf file or .cdf/,mgf pair for analysis job in progress
 		''' </summary>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
@@ -419,7 +424,8 @@ Namespace AnalysisManagerBase
 			'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = m_jobParams.GetParam("DatasetStoragePath")
+			Dim ServerPath As String = FindValidDatasetFolder(DSName, "", "*.D")
+
 			Dim DSFolders() As String
 			Dim DSFiles() As String = Nothing
 			'		Dim DSFileInfo As FileInfo
@@ -473,14 +479,14 @@ Namespace AnalysisManagerBase
 		''' <summary>
 		''' Retrieves a .raw folder from Micromass TOF for the analysis job in progress
 		''' </summary>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotRawFolder(ByVal WorkDir As String) As Boolean
 
 			'Copies a .raw datafolder from the Micromass TOF datafile to the working directory
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = m_jobParams.GetParam("DatasetStoragePath")
+			Dim ServerPath As String = FindValidDatasetFolder(DSName, "", "*.raw")
 
 			'Set up the file paths
 			Dim DSFolderPath As String = Path.Combine(ServerPath, DSName)
@@ -598,14 +604,15 @@ Namespace AnalysisManagerBase
 		''' <summary>
 		''' Copies the zipped s-folders to the working directory
 		''' </summary>
-		''' <param name="WorkDir">Destination dirctory for copy</param>
+		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Private Function CopySFoldersToWorkDir(ByVal WorkDir As String) As Boolean
 
 			'
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = m_jobParams.GetParam("DatasetStoragePath")
+			Dim ServerPath As String = FindValidDatasetFolder(DSName, "s*.zip")
+
 			Dim ZipFiles() As String
 			Dim DSFolderPath As String
 			Dim ZippedFileName As String
@@ -679,8 +686,21 @@ Namespace AnalysisManagerBase
 		''' <returns></returns>
 		''' <remarks></remarks>
 		Private Function FileExistsWithRetry(ByVal FileName As String) As Boolean
+			Return FileExistsWithRetry(FileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS)
+		End Function
+
+		''' <summary>
+		''' Test for file existence with a retry loop in case of temporary glitch
+		''' </summary>
+		''' <param name="FileName"></param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Private Function FileExistsWithRetry(ByVal FileName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
 
 			Dim RetryCount As Integer = 3
+
+			If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
+			If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
 			While RetryCount > 0
 				If File.Exists(FileName) Then
@@ -689,7 +709,7 @@ Namespace AnalysisManagerBase
 					Dim ErrMsg As String = "File " & FileName & " not found. Retry count = " & RetryCount.ToString
 					m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
 					RetryCount -= 1
-					System.Threading.Thread.Sleep(15000)	'Wait 15 seconds before retrying
+					System.Threading.Thread.Sleep(New System.TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
 				End If
 			End While
 
@@ -698,6 +718,201 @@ Namespace AnalysisManagerBase
 				m_logger.PostEntry("File could not be found after multiple retries", ILogger.logMsgType.logError, True)
 				Return False
 			End If
+
+		End Function
+
+		''' <summary>
+		''' Test for folder existence with a retry loop in case of temporary glitch
+		''' </summary>
+		''' <param name="FolderName">Folder name to look for</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Private Function FolderExistsWithRetry(ByVal FolderName As String) As Boolean
+			Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS)
+		End Function
+
+
+		''' <summary>
+		''' Test for folder existence with a retry loop in case of temporary glitch
+		''' </summary>
+		''' <param name="FolderName">Folder name to look for</param>
+		''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
+
+			Dim RetryCount As Integer = 3
+
+			If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS
+			If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
+
+			While RetryCount > 0
+				If System.IO.Directory.Exists(FolderName) Then
+					Return True
+				Else
+					Dim ErrMsg As String = "Folder " & FolderName & " not found. Retry count = " & RetryCount.ToString
+					m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
+					RetryCount -= 1
+					System.Threading.Thread.Sleep(New System.TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
+				End If
+			End While
+
+			'If we got to here, there were too many failures
+			If RetryCount < 1 Then
+				m_logger.PostEntry("Folder could not be found after multiple retries", ILogger.logMsgType.logError, True)
+				Return False
+			End If
+
+		End Function
+
+		''' <summary>
+		''' Determines the most appropriate folder to use to obtain dataset files from
+		''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+		''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+		''' </summary>
+		''' <param name="DSName">Name of the dataset</param>
+		''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
+		''' <returns>Path to the most appropriate dataset folder</returns>
+		''' <remarks></remarks>
+		Private Function FindValidDatasetFolder(ByVal DSName As String, ByVal FileNameToFind As String) As String
+			Return FindValidDatasetFolder(DSName, FileNameToFind, "")
+		End Function
+
+		''' <summary>
+		''' Determines the most appropriate folder to use to obtain dataset files from
+		''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+		''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+		''' </summary>
+		''' <param name="DSName">Name of the dataset</param>
+		''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
+		''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder</param>
+		''' <returns>Path to the most appropriate dataset folder</returns>
+		''' <remarks></remarks>
+		Private Function FindValidDatasetFolder(ByVal DSName As String, ByVal FileNameToFind As String, ByVal FolderNameToFind As String) As String
+
+			Dim strBestPath As String = String.Empty
+			Dim PathsToCheck() As String
+
+			Dim intIndex As Integer
+			Dim blnValidFolder As Boolean
+
+			Dim objFolderInfo As System.IO.DirectoryInfo
+
+			ReDim PathsToCheck(1)
+
+			Try
+				If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
+
+				PathsToCheck(0) = Path.Combine(m_jobParams.GetParam("DatasetStoragePathLocal"), DSName)
+				PathsToCheck(1) = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
+
+				strBestPath = PathsToCheck(0)
+				For intIndex = 0 To PathsToCheck.Length - 1
+					Try
+						If m_DebugLevel > 3 Then
+							Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for folder " & PathsToCheck(intIndex)
+							m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+						End If
+
+						' First check whether this folder exists
+						' Using a 3 second holdoff between retries
+						If FolderExistsWithRetry(PathsToCheck(intIndex), 3) Then
+							If m_DebugLevel > 3 Then
+								Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Folder found " & PathsToCheck(intIndex)
+								m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+							End If
+
+							' Folder was found
+							blnValidFolder = True
+
+							' Optionally look for FileNameToFind
+							If FileNameToFind.Length > 0 Then
+
+								If FileNameToFind.Contains("*") Then
+									If m_DebugLevel > 3 Then
+										Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for files matching " & FileNameToFind
+										m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+									End If
+
+									' Wildcard in the name
+									' Look for any files matching FileNameToFind
+									objFolderInfo = New System.IO.DirectoryInfo(PathsToCheck(intIndex))
+
+									If objFolderInfo.GetFiles(FileNameToFind).Length = 0 Then
+										blnValidFolder = False
+									End If
+								Else
+									If m_DebugLevel > 3 Then
+										Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for file named " & FileNameToFind
+										m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+									End If
+
+									' Look for file FileNameToFind in this folder
+									' Note: Using a 1 second holdoff between retries
+									If Not FileExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FileNameToFind), 1) Then
+										blnValidFolder = False
+									End If
+								End If
+							End If
+
+							' Optionally look for FolderNameToFind
+							If blnValidFolder AndAlso FolderNameToFind.Length > 0 Then
+								If FolderNameToFind.Contains("*") Then
+									If m_DebugLevel > 3 Then
+										Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for folders matching " & FolderNameToFind
+										m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+									End If
+
+									' Wildcard in the name
+									' Look for any folders matching FolderNameToFind
+									objFolderInfo = New System.IO.DirectoryInfo(PathsToCheck(intIndex))
+
+									If objFolderInfo.GetDirectories(FolderNameToFind).Length = 0 Then
+										blnValidFolder = False
+									End If
+								Else
+									If m_DebugLevel > 3 Then
+										Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for folder named " & FolderNameToFind
+										m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+									End If
+
+									' Look for folder FolderNameToFind in this folder
+									' Note: Using a 1 second holdoff between retries
+									If Not FolderExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FolderNameToFind), 1) Then
+										blnValidFolder = False
+									End If
+								End If
+							End If
+
+							If blnValidFolder Then
+								strBestPath = PathsToCheck(intIndex)
+
+								If m_DebugLevel > 3 Then
+									Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Valid dataset folder has been found:  " & strBestPath
+									m_logger.PostEntry(Msg, ILogger.logMsgType.logDebug, True)
+								End If
+
+								Exit For
+							End If
+						End If
+
+					Catch ex As Exception
+						Dim ErrMsg As String = "Exception looking for folder: " & PathsToCheck(intIndex)
+						m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
+					End Try
+				Next intIndex
+
+				If Not blnValidFolder Then
+					Dim Msg As String = "Could not find a valid dataset folder, Job " & m_JobNum.ToString & ", Dataset " & DSName
+					m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
+				End If
+
+			Catch ex As Exception
+				Dim ErrMsg As String = "Exception looking for a valid dataset folder for dataset " & DSName
+				m_logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
+			End Try
+
+			Return strBestPath
 
 		End Function
 #End Region

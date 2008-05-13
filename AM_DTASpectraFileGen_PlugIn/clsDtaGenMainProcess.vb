@@ -328,7 +328,7 @@ Public Class clsDtaGenMainProcess
 		m_NumScans = ScanStop - ScanStart + 1
 
 		'Setup a program runner tool to make the spectra files
-		m_RunProgTool = New clsRunDosProgram(m_Logger, m_OutFolderPath)
+        m_RunProgTool = New clsRunDosProgram(m_Logger, m_OutFolderPath)
 
 		'DAC debugging
 		If m_DebugLevel > 0 Then
@@ -394,10 +394,13 @@ Public Class clsDtaGenMainProcess
 						  & System.Threading.Thread.CurrentThread.Name, PRISM.Logging.ILogger.logMsgType.logDebug, True)
 					End If
 
-					If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
-						m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
-						Return False
-					End If
+                    If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
+                        ' .RunProgram returned False
+                        LogDTACreationStats("clsDtaGenmainProcess.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+
+                        m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
+                        Return False
+                    End If
 
 					'DAC debugging
 					If m_DebugLevel > 0 Then
@@ -437,11 +440,17 @@ Public Class clsDtaGenMainProcess
 		End If
 
 		'We got this far, everything must have worked
-		If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Or m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-			Return False
-		Else
-			Return True
-		End If
+        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+            LogDTACreationStats("clsDtaGenmainProcess.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
+            Return False
+
+        ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+            LogDTACreationStats("clsDtaGenmainProcess.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
+            Return False
+
+        Else
+            Return True
+        End If
 
 	End Function
 

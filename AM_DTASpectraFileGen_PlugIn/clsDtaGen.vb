@@ -274,4 +274,105 @@ Public Class clsDtaGen
 
 	End Function
 
+    Protected Sub LogDTACreationStats(ByVal strProcedureName As String, ByVal strDTAToolName As String, ByVal strErrorMessage As String)
+        Dim objFolderInfo As System.IO.DirectoryInfo
+        Dim objFiles() As System.IO.FileInfo
+
+        Dim intIndex As Integer
+        Dim intDTACount As Integer
+
+        Dim strMostRecentBlankDTA As String = String.Empty
+        Dim strMostRecentValidDTA As String = String.Empty
+        Dim lngDTAFileSize As Long = 0
+
+        Dim intMostRecentValidDTAIndex As Integer = -1
+        Dim intMostRecentBlankDTAIndex As Integer = -1
+
+        If strProcedureName Is Nothing Then
+            strProcedureName = "clsDtaGen.??"
+        End If
+        If strDTAToolName Is Nothing Then
+            strDTAToolName = "Unknown DTA Tool"
+        End If
+
+        If strErrorMessage Is Nothing Then
+            strErrorMessage = "Unknown error"
+        End If
+
+        m_Logger.PostEntry(strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage, _
+            PRISM.Logging.ILogger.logMsgType.logError, True)
+
+        ' Now count the number of .Dta files in the working folder
+
+        Try
+            objFolderInfo = New System.IO.DirectoryInfo(m_OutFolderPath)
+
+            objFiles = objFolderInfo.GetFiles("*.dta")
+            If objFiles Is Nothing OrElse objFiles.Length <= 0 Then
+                intDTACount = 0
+            Else
+                intDTACount = objFiles.Length
+
+                intMostRecentValidDTAIndex = -1
+                intMostRecentBlankDTAIndex = -1
+
+                ' Find the most recently created .Dta file
+                ' However, track blank (zero-length) .Dta files separate from those with data 
+                For intIndex = 1 To objFiles.Length - 1
+                    If objFiles(intIndex).Length = 0 Then
+                        If intMostRecentBlankDTAIndex < 0 Then
+                            intMostRecentBlankDTAIndex = intIndex
+                        Else
+                            If objFiles(intIndex).LastWriteTime > objFiles(intMostRecentBlankDTAIndex).LastWriteTime Then
+                                intMostRecentBlankDTAIndex = intIndex
+                            End If
+                        End If
+                    Else
+                        If intMostRecentValidDTAIndex < 0 Then
+                            intMostRecentValidDTAIndex = intIndex
+                        Else
+                            If objFiles(intIndex).LastWriteTime > objFiles(intMostRecentValidDTAIndex).LastWriteTime Then
+                                intMostRecentValidDTAIndex = intIndex
+                            End If
+                        End If
+                    End If
+                Next
+
+                If intMostRecentBlankDTAIndex >= 0 Then
+                    strMostRecentBlankDTA = objFiles(intMostRecentBlankDTAIndex).Name
+                End If
+
+                If intMostRecentValidDTAIndex >= 0 Then
+                    strMostRecentValidDTA = objFiles(intMostRecentValidDTAIndex).Name
+                    lngDTAFileSize = objFiles(intMostRecentValidDTAIndex).Length
+                End If
+
+            End If
+
+            ' Log the number of .Dta files that were found
+            m_Logger.PostEntry(strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files", _
+                PRISM.Logging.ILogger.logMsgType.logDebug, True)
+
+            If intDTACount > 0 Then
+                ' Log the name of the most recently created .Dta file
+                If intMostRecentValidDTAIndex >= 0 Then
+                    m_Logger.PostEntry(strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes", _
+                        PRISM.Logging.ILogger.logMsgType.logDebug, True)
+                Else
+                    m_Logger.PostEntry(strProcedureName & ", No valid (non zero length) .Dta files were created", _
+                        PRISM.Logging.ILogger.logMsgType.logDebug, True)
+                End If
+
+                If intMostRecentBlankDTAIndex >= 0 Then
+                    m_Logger.PostEntry(strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA, _
+                        PRISM.Logging.ILogger.logMsgType.logDebug, True)
+                End If
+            End If
+
+        Catch ex As Exception
+            m_Logger.PostEntry(strProcedureName & ", Error finding the most recently created .Dta file: " & ex.Message, _
+            PRISM.Logging.ILogger.logMsgType.logError, True)
+        End Try
+
+    End Sub
 End Class

@@ -4,7 +4,7 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 01/16/2008
+' Last modified 05/09/2008
 '*********************************************************************************************************
 
 Imports PRISM.Logging
@@ -125,8 +125,16 @@ Namespace AnalysisManagerBase
 			End Try
 
 
-			If ProgRunner.State = 10 Or (UseResCode And ProgRunner.ExitCode <> 0) Then
+			If ProgRunner.State = 10 Then
+				m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), Error: Progrunner.State = 10", _
+				 ILogger.logMsgType.logError, True)
 				Return False
+
+			ElseIf (UseResCode And ProgRunner.ExitCode <> 0) Then
+				m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), Error: ProgRunner.ExitCode = " & ProgRunner.ExitCode.ToString, _
+				 ILogger.logMsgType.logError, True)
+				Return False
+
 			Else
 				Return True
 			End If
