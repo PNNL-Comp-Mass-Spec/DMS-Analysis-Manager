@@ -4,7 +4,7 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 01/16/2008
+' Last modified 05/19/2008
 '*********************************************************************************************************
 
 Imports System.IO
@@ -151,7 +151,7 @@ Namespace AnalysisManagerProg
 
 				'Verify an error hasn't left the the system in an odd state
 				If DetectStatusFlagFile() Then
-					m_StatusTools.UpdateIdle()
+					m_StatusTools.UpdateFlagFileExists()
 					m_Logger.PostEntry("Flag file exists - unable to perform any further analysis jobs", _
 					  ILogger.logMsgType.logError, LOG_LOCAL_ONLY)
 					m_Logger.PostEntry("===== Closing Analysis Manager =====", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)

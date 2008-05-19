@@ -4,7 +4,7 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 05/09/2008
+' Last modified 05/14/2008
 '*********************************************************************************************************
 
 Imports System.IO
@@ -381,9 +381,9 @@ Namespace AnalysisManagerBase
 
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
 			Dim DataFileName As String = DSName & ".raw"
-			Dim ServerPath As String = FindValidDatasetFolder(DSName, DataFileName)
+			Dim DSFolderPath As String = FindValidDatasetFolder(DSName, DataFileName)
 
-			If CopyFileToWorkDir(DataFileName, ServerPath, WorkDir) Then
+			If CopyFileToWorkDir(DataFileName, DSFolderPath, WorkDir) Then
 				Return True
 			Else
 				Return False
@@ -401,9 +401,9 @@ Namespace AnalysisManagerBase
 
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
 			Dim DataFileName As String = DSName & ".wiff"
-			Dim ServerPath As String = FindValidDatasetFolder(DSName, DataFileName)
+			Dim DSFolderPath As String = FindValidDatasetFolder(DSName, DataFileName)
 
-			If CopyFileToWorkDir(DataFileName, ServerPath, WorkDir) Then
+			If CopyFileToWorkDir(DataFileName, DSFolderPath, WorkDir) Then
 				Return True
 			Else
 				Return False
@@ -428,18 +428,12 @@ Namespace AnalysisManagerBase
 
 			Dim DSFolders() As String
 			Dim DSFiles() As String = Nothing
-			'		Dim DSFileInfo As FileInfo
-			Dim DSFolderPath As String = ""
 			Dim DumFolder As String
-			'		Dim DumFile As String
 			Dim FileFound As Boolean = False
 			Dim DataFolderPath As String = ""
 
-			'Set up the file paths
-			DSFolderPath = Path.Combine(ServerPath, DSName)
-
 			'Get a list of the subfolders in the dataset folder
-			DSFolders = Directory.GetDirectories(DSFolderPath)
+			DSFolders = Directory.GetDirectories(ServerPath)
 			'Go through the folders looking for a file with a ".mgf" extension
 			For Each DumFolder In DSFolders
 				If FileFound Then Exit For
@@ -488,16 +482,16 @@ Namespace AnalysisManagerBase
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
 			Dim ServerPath As String = FindValidDatasetFolder(DSName, "", "*.raw")
 
-			'Set up the file paths
-			Dim DSFolderPath As String = Path.Combine(ServerPath, DSName)
-
 			'Find the .raw folder in the dataset folder
-			Dim RemFolders() As String = Directory.GetDirectories(DSFolderPath, "*.raw")
+			Dim RemFolders() As String = Directory.GetDirectories(ServerPath, "*.raw")
 			If RemFolders.GetLength(0) <> 1 Then Return False
+
+			'Set up the file paths
+			Dim DSFolderPath As String = Path.Combine(ServerPath, RemFolders(0))
 
 			'Do the copy
 			Try
-				CopyDirectory(Path.Combine(DSFolderPath, RemFolders(0)), Path.Combine(WorkDir, DSName & ".raw"))
+				CopyDirectory(DSFolderPath, Path.Combine(WorkDir, DSName & ".raw"))
 				Return True
 			Catch ex As Exception
 				Dim MsgStr As String = "Error copying folder " & DSFolderPath & " to working directory: " & ex.Message
@@ -611,13 +605,10 @@ Namespace AnalysisManagerBase
 
 			'
 			Dim DSName As String = m_jobParams.GetParam("datasetNum")
-			Dim ServerPath As String = FindValidDatasetFolder(DSName, "s*.zip")
+			Dim DSFolderPath As String = FindValidDatasetFolder(DSName, "s*.zip")
 
 			Dim ZipFiles() As String
-			Dim DSFolderPath As String
 			Dim ZippedFileName As String
-
-			DSFolderPath = Path.Combine(ServerPath, DSName)
 
 			'Verify dataset folder exists
 			If Not Directory.Exists(DSFolderPath) Then Return False
