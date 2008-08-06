@@ -246,7 +246,7 @@ Public Class clsAnalysisToolRunnerIN
         Dim fastaFilename As String = Path.Combine(orgDbDir, m_jobParams.GetParam("LegacyFastaFileName"))
         Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
         Dim mzXMLFilename As String = Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & ".mzXML")
-        Dim inputFilename As String = Path.Combine(WorkingDir, "input_inspect.txt")
+        Dim inputFilename As String = Path.Combine(WorkingDir, "inspect_input.txt")
         Try
             'add extra lines to the parameter files
             'the parameter file will become the input file for inspect
