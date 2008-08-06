@@ -1,0 +1,5 @@
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\bin\AnalysisManagerInSpecTPlugIn.dll
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\bin\AnalysisManagerInSpecTPlugIn.xml
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Release\ResolveAssemblyReference.cache
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Release\AnalysisManagerInSpecTPlugIn.dll
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Release\AnalysisManagerInSpecTPlugIn.xml

@@ -1,0 +1,89 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerInSpecTPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.OperateAnalysisTool">
+	<summary>
+ Runs InSpecT tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.MakeResultsFolder(System.String)">
+	<summary>
+ Calls base class to make an InSpecT results folder
+ </summary>
+	<param name="AnalysisType">Analysis type prefix for results folder name</param>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreateAndFilterMSMSSpectra">
+	<summary>
+ Override the main function in the analysis manager to by-pass the call
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.DeleteTempAnalFiles">
+	<summary>
+ Cleans up stray analysis files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks>Not presently implemented</remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreateIndexedDbFiles">
+	<summary>
+ Convert .Fasta file to indexed DB files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreatemzXMLFile">
+	<summary>
+ Convert .Raw file to mzXML format
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunInSpecT">
+	<summary>
+ Run InSpecT
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.BuildInspectInputFile">
+	<summary>
+ Build inspect input file from base parameter file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunpValue">
+	<summary>
+ Run pValue program
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.getPthresh">
+	<summary>
+ Run -p threshold value
+ </summary>
+	<returns>Value as a string or empty string means failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunSummary">
+	<summary>
+ Run Summary program
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ZipMainOutputFile">
+	<summary>
+ Zips concatenated XML output file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member>
+</members>
+</doc>

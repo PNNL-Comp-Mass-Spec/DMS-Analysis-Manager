@@ -1,0 +1,7 @@
+bin\AnalysisManagerXTandemPlugIn.dll
+bin\AnalysisManagerXTandemPlugIn.pdb
+bin\AnalysisManagerXTandemPlugIn.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\AnalysisManagerXTandemPlugIn.dll
+obj\Debug\AnalysisManagerXTandemPlugIn.xml
+obj\Debug\AnalysisManagerXTandemPlugIn.pdb

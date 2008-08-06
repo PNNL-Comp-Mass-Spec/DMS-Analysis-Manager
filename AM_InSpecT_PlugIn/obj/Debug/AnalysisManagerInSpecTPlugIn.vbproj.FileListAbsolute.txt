@@ -1,0 +1,7 @@
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\bin\AnalysisManagerInSpecTPlugIn.dll
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\bin\AnalysisManagerInSpecTPlugIn.pdb
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\bin\AnalysisManagerInSpecTPlugIn.xml
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Debug\ResolveAssemblyReference.cache
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Debug\AnalysisManagerInSpecTPlugIn.dll
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Debug\AnalysisManagerInSpecTPlugIn.xml
+C:\Development\Analysis_Manager\AM_InSpecT_PlugIn\obj\Debug\AnalysisManagerInSpecTPlugIn.pdb
