@@ -588,10 +588,12 @@ Namespace AnalysisManagerBase
 					Return IGenerateFile.ParamFileType.BioWorks_Current
 				Case "xtandem"
 					Return IGenerateFile.ParamFileType.X_Tandem
-				Case Else
-					'If we get to here, there's a problem
-					Return Nothing
-			End Select
+                Case "inspect"
+                    Return IGenerateFile.ParamFileType.Inspect
+                Case Else
+                    'If we get to here, there's a problem
+                    Return Nothing
+            End Select
 
 		End Function
 

@@ -295,7 +295,8 @@ Public Class clsAnalysisToolRunnerIN
         Dim fastaFilename As String = Path.Combine(orgDbDir, m_jobParams.GetParam("LegacyFastaFileName"))
         Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
         Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
-        Dim pthresh As String = getPthresh()
+        Dim settingsFilename As String = Path.Combine(WorkingDir, m_jobParams.GetParam("SettingsFileName"))
+        Dim pthresh As String = getPthresh(settingsFilename)
 
         CmdRunner = New clsRunDosProgram(m_logger, InspectDir)
 
@@ -327,9 +328,21 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <returns>Value as a string or empty string means failure</returns>
     ''' <remarks></remarks>
-    Private Function getPthresh() As String
+    Private Function getPthresh(ByVal settingsFilename As String) As String
+        Dim defPvalThresh As String = "0.1"
+        If File.Exists(settingsFilename) Then
+            Dim settings_ini As New PRISM.Files.IniFileReader(settingsFilename, True)
+            Dim tmpPvalThresh As String = ""
+            tmpPvalThresh = settings_ini.GetIniValue("InspectResultsFilter", "InspectPvalueThreshold")
+            If tmpPvalThresh <> "" Then
+                Return tmpPvalThresh 'return pValueThreshold value in settings file
+            Else
+                Return defPvalThresh 'if not found, return default of 0.1
+            End If
+        Else
+            Return defPvalThresh 'if not found, return default of 0.1
+        End If
 
-        Return "0.1"
     End Function
 
     ''' <summary>
