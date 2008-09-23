@@ -4,6 +4,11 @@
 
 <ToolRunners>
 	<ToolRunner 
+		Tool="inspect" 
+		Class="AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN" 
+		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" 
+	/>
+	<ToolRunner 
 		Tool="xtandem" 
 		Class="AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT" 
 		AssemblyFile="AnalysisManagerXTandemPlugIn.dll" 
@@ -106,6 +111,11 @@
 </ToolRunners>
 
 <Resourcers>
+	<Resourcer 
+		Tool="inspect" 
+		Class="AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN" 
+		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" 
+	/>
 	<Resourcer 
 		Tool="xtandem" 
 		Class="AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT" 
