@@ -6,34 +6,23 @@ AnalysisManagerInSpecTPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.OperateAnalysisTool">
+<member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.BuildInspectInputFile">
 	<summary>
- Runs InSpecT tool
+ Build inspect input file from base parameter file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.MakeResultsFolder(System.String)">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CountsSpectraInInspectResultsFile(System.String,AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.udtCachedSpectraCountInfoType@)">
 	<summary>
- Calls base class to make an InSpecT results folder
+ Reads strFilePath and counts the number of spectra files processed; results are returned ByRef in udtCachedSpectraCountInfo
  </summary>
-	<param name="AnalysisType">Analysis type prefix for results folder name</param>
-	<returns>CloseOutType enum indicating success or failure</returns>
+	<param name="strFilePath"></param>
+	<param name="udtCachedSpectraCountInfo"></param>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreateAndFilterMSMSSpectra">
 	<summary>
  Override the main function in the analysis manager to by-pass the call
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.DeleteTempAnalFiles">
-	<summary>
- Cleans up stray analysis files
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks>Not presently implemented</remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreateIndexedDbFiles">
-	<summary>
- Convert .Fasta file to indexed DB files
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
@@ -43,15 +32,56 @@ AnalysisManagerInSpecTPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunInSpecT">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CreateIndexedDbFiles">
 	<summary>
- Run InSpecT
+ Convert .Fasta file to indexed DB files
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.BuildInspectInputFile">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.DeleteTempAnalFiles">
 	<summary>
- Build inspect input file from base parameter file
+ Cleans up stray analysis files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks>Not presently implemented</remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ExtractModInfoFromInspectParamFile(System.String,AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.udtModInfoType[]@)">
+	<summary>
+ Reads the modification information defined in strInspectParameterFilePath, storing it in udtModList
+ </summary>
+	<param name="strInspectParameterFilePath"></param>
+	<param name="udtModList"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.getPthresh(System.String)">
+	<summary>
+ Run -p threshold value
+ </summary>
+	<returns>Value as a string or empty string means failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.MakeResultsFolder(System.String)">
+	<summary>
+ Calls base class to make an InSpecT results folder
+ </summary>
+	<param name="AnalysisType">Analysis type prefix for results folder name</param>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.OperateAnalysisTool">
+	<summary>
+ Runs InSpecT tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ParseInspectErrorsFile(System.String,System.String)">
+	<summary>
+ Looks for the inspect _errors.txt file in the working folder.  If present, reads and parses it
+ </summary>
+	<param name="WorkingDir"></param>
+	<param name="errorFilename"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunInSpecT">
+	<summary>
+ Run InSpecT
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
@@ -61,15 +91,22 @@ AnalysisManagerInSpecTPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.getPthresh">
-	<summary>
- Run -p threshold value
- </summary>
-	<returns>Value as a string or empty string means failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunSummary">
 	<summary>
  Run Summary program
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.UpdatePTModsFile(System.String,System.String)">
+	<summary>
+ Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
+ </summary>
+	<param name="strInspectDir"></param>
+	<param name="strInspectParameterFilePath"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ZipMainOutputFile">
+	<summary>
+ Zips Inspect search result file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
@@ -78,11 +115,12 @@ AnalysisManagerInSpecTPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ZipMainOutputFile">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.mResultsFileWatcher_Changed(System.Object,System.IO.FileSystemEventArgs)">
 	<summary>
- Zips concatenated XML output file
+ Event handler for mResultsFileWatcher.Changed event
  </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
+	<param name="sender"></param>
+	<param name="e"></param>
 	<remarks></remarks>
 </member>
 </members>

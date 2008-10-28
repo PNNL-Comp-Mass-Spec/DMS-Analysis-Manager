@@ -21,8 +21,8 @@ Public Class clsAnalysisResourcesIN
 
         Try
             result = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion("inspect"), _
-             Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
-             WorkDir, m_mgrParams.GetParam("connectionstring"))
+            Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
+            WorkDir, m_mgrParams.GetParam("connectionstring"))
         Catch Ex As Exception
             Dim Msg As String = "clsAnalysisResourcesIN.RetrieveParamFile(), exception generating param file: " & Ex.Message
             m_logger.PostEntry(Msg, ILogger.logMsgType.logError, True)

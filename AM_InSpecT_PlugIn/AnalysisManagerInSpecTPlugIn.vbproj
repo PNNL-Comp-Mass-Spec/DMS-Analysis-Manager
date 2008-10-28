@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{BD78C2C2-9834-47FF-B550-DD48A647F710}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -77,15 +77,21 @@
       <Private>False</Private>
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="ParamFileGenerator">
-      <Name>ParamFileGenerator</Name>
-      <HintPath>..\AM_Program\bin\ParamFileGenerator.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="MSDataFileReader, Version=1.2.3198.21364, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\MSDataFileReaderDLL\bin\MSDataFileReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <Name>PRISM</Name>
-      <HintPath>..\AM_Program\bin\PRISM.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideToProteinMapEngine, Version=1.0.3197.28540, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Protein_Coverage_Summarizer\PeptidetoProteinMapper\bin\PeptideToProteinMapEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
