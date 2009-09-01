@@ -1,0 +1,47 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerMsXmlGenPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Presently not used</remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Initializes class
+ </summary>
+	<param name="mgrParams">Object containing manager parameters</param>
+	<param name="jobParams">Object containing job parameters</param>
+	<param name="StatusTools">Object for updating status file as job progresses</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.RunTool">
+	<summary>
+ Runs InSpecT tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.CreateMZXMLFile">
+	<summary>
+ Generate the MsXML file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member>
+</members>
+</doc>

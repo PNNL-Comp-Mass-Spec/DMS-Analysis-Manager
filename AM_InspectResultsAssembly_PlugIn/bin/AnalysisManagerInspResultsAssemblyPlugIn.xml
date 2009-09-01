@@ -1,0 +1,97 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerInspResultsAssemblyPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.RetrieveMultiInspectResultFiles">
+	<summary>
+ Retrieves inspect and inspect log and error files
+ </summary>
+	<returns>TRUE for success, FALSE for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Initializes classwide variables</remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RunTool">
+	<summary>
+ Runs InSpecT tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.AssembleFiles(System.String,AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ResultFileType,System.Int32)">
+	<summary>
+ Assemble the result files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RescoreAssembledInspectResults">
+	<summary>
+ Uses PValue_MinLength5.py to recompute the p-value and FScore values for Inspect results computed in parallel then reassembled
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RunpValue">
+	<summary>
+ Run pValue.py program
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.getPthresh">
+	<summary>
+ Run -p threshold value
+ </summary>
+	<returns>Value as a string or empty string means failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(System.String,System.String)">
+	<summary>
+ Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
+ </summary>
+	<param name="strInspectDir"></param>
+	<param name="strInspectParameterFilePath"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(System.String,AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.udtModInfoType[]@)">
+	<summary>
+ Reads the modification information defined in strInspectParameterFilePath, storing it in udtModList
+ </summary>
+	<param name="strInspectParameterFilePath"></param>
+	<param name="udtModList"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RunSummary">
+	<summary>
+ Run Summary program
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ZipMainOutputFile(System.String)">
+	<summary>
+ Zips the concatenated result file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
+	<summary>
+ Convert .Fasta file to indexed DB files
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsCreateInspectIndexedDB.CreateLockFile(System.String)">
+	<summary>
+ Creates a lock file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks>Not presently implemented</remarks>
+</member>
+</members>
+</doc>

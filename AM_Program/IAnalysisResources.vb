@@ -7,7 +7,6 @@
 ' Last modified 02/27/2008
 '*********************************************************************************************************
 
-Imports PRISM.Logging
 
 Namespace AnalysisManagerBase
 
@@ -19,11 +18,11 @@ Namespace AnalysisManagerBase
 
 #Region "Properties"
 		ReadOnly Property Message() As String
-		ReadOnly Property DataFileList() As String()
+		'		ReadOnly Property DataFileList() As String()
 #End Region
 
 #Region "Methods"
-		Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal logger As ILogger)
+        Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams)
 
 		Function GetResources() As IJobParams.CloseOutType
 #End Region

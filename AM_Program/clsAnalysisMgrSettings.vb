@@ -4,10 +4,9 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/18/2007
 '
-' Last modified 01/16/2008
+' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports PRISM.Logging
 Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Collections.Specialized
@@ -28,6 +27,8 @@ Namespace AnalysisManagerBase
 		'*********************************************************************************************************
 
 #Region "Module variables"
+		Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
+
 		Private m_ParamDictionary As StringDictionary
 		Private m_ErrMsg As String = ""
 		Private m_EmergencyLogSource As String = ""
@@ -44,6 +45,50 @@ Namespace AnalysisManagerBase
 
 #Region "Methods"
 		''' <summary>
+		''' Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
+		''' </summary>
+		''' <remarks></remarks>
+        Public Sub AckManagerUpdateRequired()
+
+            Dim MyConnection As System.Data.SqlClient.SqlConnection
+            Dim MyCmd As New System.Data.SqlClient.SqlCommand
+            Dim RetVal As Integer
+            Dim ConnectionString As String
+
+            Try
+                ConnectionString = Me.GetParam("MgrCnfgDbConnectStr")
+                MyConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+                MyConnection.Open()
+
+                'Set up the command object prior to SP execution
+                With MyCmd
+                    .CommandType = CommandType.StoredProcedure
+                    .CommandText = SP_NAME_ACKMANAGERUPDATE
+                    .Connection = MyConnection
+
+                    .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+                    .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+                    .Parameters.Add(New SqlClient.SqlParameter("@managerName", SqlDbType.VarChar, 128))
+                    .Parameters.Item("@managerName").Direction = ParameterDirection.Input
+                    .Parameters.Item("@managerName").Value = Me.GetParam("MgrName")
+
+                    .Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
+                    .Parameters.Item("@message").Direction = ParameterDirection.Output
+                    .Parameters.Item("@message").Value = ""
+                End With
+
+                'Execute the SP
+                RetVal = MyCmd.ExecuteNonQuery
+
+            Catch ex As System.Exception
+                Dim strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
+            End Try
+
+        End Sub
+
+		''' <summary>
 		''' Constructor
 		''' </summary>
 		''' <param name="EmergencyLogSource">Source name registered for emergency logging</param>
@@ -53,54 +98,59 @@ Namespace AnalysisManagerBase
 			m_EmergencyLogName = EmergencyLogName
 			m_EmergencyLogSource = EmergencyLogSource
 
-			If Not LoadSettings(Nothing) Then
-				Throw New ApplicationException("Unable to initialize manager settings class")
-			End If
+            If Not LoadSettings() Then
+                Throw New ApplicationException("Unable to initialize manager settings class")
+            End If
 
 		End Sub
 
 		''' <summary>
 		''' Loads manager settings from config file and database
 		''' </summary>
-		''' <param name="MyLogger">Logging object if logger has been loaded; otherwise NOTHING</param>
-		''' <returns>True if successful; False on error</returns>
+        ''' <returns>True if successful; False on error</returns>
 		''' <remarks></remarks>
-		Public Function LoadSettings(ByVal MyLogger As ILogger) As Boolean
+        Public Function LoadSettings() As Boolean
 
-			m_ErrMsg = ""
+            m_ErrMsg = ""
 
-			'If the param dictionary exists, it needs to be cleared out
-			If m_ParamDictionary IsNot Nothing Then
-				m_ParamDictionary.Clear()
-				m_ParamDictionary = Nothing
-			End If
+            'If the param dictionary exists, it needs to be cleared out
+            If m_ParamDictionary IsNot Nothing Then
+                m_ParamDictionary.Clear()
+                m_ParamDictionary = Nothing
+            End If
 
-			'Get settings from config file
-			m_ParamDictionary = LoadMgrSettingsFromFile()
+            ' Note: When you are editing this project using the Visual Studio IDE, if you edit the values
+            '  ->My Project>Settings.settings, then when you run the program (from within the IDE), then it
+            '  will update file AnalysisManagerProg.exe.config with your settings
+            ' The manager will exit if the "UsingDefaults" value is "True", thus you need to have 
+            '  "UsingDefaults" be "False" to run (and/or debug) the application
 
-			'Test the settings retrieved from the config file
-			If Not CheckInitialSettings(m_ParamDictionary) Then
-				'Error logging handled by CheckInitialSettings
-				Return False
-			End If
+            'Get settings from config file
+            m_ParamDictionary = LoadMgrSettingsFromFile()
 
-			'Determine if manager is deactivated locally
-			If Not CBool(m_ParamDictionary("MgrActive_Local")) Then
-				clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, "Manager deactivated locally")
-				m_ErrMsg = "Manager deactivated locally"
-				Return False
-			End If
+            'Test the settings retrieved from the config file
+            If Not CheckInitialSettings(m_ParamDictionary) Then
+                'Error logging handled by CheckInitialSettings
+                Return False
+            End If
 
-			'Get remaining settings from database
-			If Not LoadMgrSettingsFromDB(m_ParamDictionary, MyLogger) Then
-				'Error logging handled by LoadMgrSettingsFromDB
-				Return False
-			End If
+            'Determine if manager is deactivated locally
+            If Not CBool(m_ParamDictionary("MgrActive_Local")) Then
+                clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, "Manager deactivated locally")
+                m_ErrMsg = "Manager deactivated locally"
+                Return False
+            End If
 
-			'No problems found
-			Return True
+            'Get remaining settings from database
+            If Not LoadMgrSettingsFromDB() Then
+                'Error logging handled by LoadMgrSettingsFromDB
+                Return False
+            End If
 
-		End Function
+            'No problems found
+            Return True
+
+        End Function
 
 		''' <summary>
 		''' Loads the initial settings from application config file
@@ -158,104 +208,87 @@ Namespace AnalysisManagerBase
 
 		End Function
 
-		''' <summary>
-		''' Gets remaining manager config settings from config database; 
-		''' Overload to use module-level string dictionary when calling from external method
-		''' </summary>
-		''' <param name="MyLogger">Logging object or NOTHING</param>
-		''' <returns>True for success; False for error</returns>
-		''' <remarks></remarks>
-		Public Overloads Function LoadMgrSettingsFromDB(ByVal MyLogger As ILogger) As Boolean
+        ''' <summary>
+        ''' Gets remaining manager config settings from config database
+        ''' </summary>
+        ''' <returns>True for success; False for error</returns>
+        ''' <remarks></remarks>
+        Public Function LoadMgrSettingsFromDB() As Boolean
 
-			Return LoadMgrSettingsFromDB(m_ParamDictionary, MyLogger)
+            'Requests job parameters from database. Input string specifies view to use. Performs retries if necessary.
 
-		End Function
+            Dim RetryCount As Short = 3
+            Dim MyMsg As String
+            Dim ParamKey As String
+            Dim ParamVal As String
+            Dim ConnectionString As String = Me.GetParam("MgrCnfgDbConnectStr")
 
+            Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams " & _
+                                   "WHERE ManagerName = '" & Me.GetParam("MgrName") & "'"
 
-		''' <summary>
-		''' Gets remaining manager config settings from config database
-		''' </summary>
-		''' <param name="MgrSettingsDict">String dictionary containing parameters that have been loaded so far</param>
-		''' <param name="MyLogger">Logging object or NOTHING</param>
-		''' <returns>True for success; False for error</returns>
-		''' <remarks></remarks>
-		Public Overloads Function LoadMgrSettingsFromDB(ByRef MgrSettingsDict As StringDictionary, ByVal MyLogger As ILogger) As Boolean
+            'Get a table containing data for job
+            Dim Dt As DataTable = Nothing
 
-			'Requests job parameters from database. Input string specifies view to use. Performs retries if necessary.
+            'Get a datatable holding the parameters for one manager
+            While RetryCount > 0
+                Try
+                    Using Cn As SqlConnection = New SqlConnection(ConnectionString)
+                        Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
+                            Using Ds As DataSet = New DataSet
+                                Da.Fill(Ds)
+                                Dt = Ds.Tables(0)
+                            End Using  'Ds
+                        End Using  'Da
+                    End Using  'Cn
+                    Exit While
+                Catch ex As System.Exception
+                    RetryCount -= 1S
+                    MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " & ex.Message & "; ConnectionString: " & ConnectionString
+                    MyMsg &= ", RetryCount = " & RetryCount.ToString
 
-			Dim RetryCount As Short = 3
-			Dim MyMsg As String
-			Dim ParamKey As String
-			Dim ParamVal As String
+                    WriteErrorMsg(MyMsg)
 
-			Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & _
-			  m_ParamDictionary("MgrName") & "'"
+                    System.Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
+                End Try
+            End While
 
-			'Get a table containing data for job
-			Dim Dt As DataTable = Nothing
+            'If loop exited due to errors, return false
+            If RetryCount < 1 Then
+                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database"
+                WriteErrorMsg(MyMsg)
+                Dt.Dispose()
+                Return False
+            End If
 
-			'Get a datatable holding the parameters for one manager
-			While RetryCount > 0
-				Try
-					Using Cn As SqlConnection = New SqlConnection(MgrSettingsDict("MgrCnfgDbConnectStr"))
-						Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
-							Using Ds As DataSet = New DataSet
-								Da.Fill(Ds)
-								Dt = Ds.Tables(0)
-							End Using  'Ds
-						End Using  'Da
-					End Using  'Cn
-					Exit While
-				Catch ex As System.Exception
-					RetryCount -= 1S
-					MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " & ex.Message
-					MyMsg &= ", RetryCount = " & RetryCount.ToString
-					WriteErrorMsg(MyMsg, MyLogger)
-					System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
-				End Try
-			End While
+            'Verify at least one row returned
+            If Dt.Rows.Count < 1 Then
+                ' No data was returned
+                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager '" & Me.GetParam("MgrName") & "' not found using " & ConnectionString
+                WriteErrorMsg(MyMsg)
+                Dt.Dispose()
+                Return False
+            End If
 
-			'If loop exited due to errors, return false
-			If RetryCount < 1 Then
-				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database"
-				WriteErrorMsg(MyMsg, MyLogger)
-				Dt.Dispose()
-				Return False
-			End If
+            'Fill a string dictionary with the manager parameters that have been found
+            Dim CurRow As DataRow
+            Try
+                For Each CurRow In Dt.Rows
+                    'Add the column heading and value to the dictionary
+                    ParamKey = DbCStr(CurRow(Dt.Columns("ParameterName")))
+                    ParamVal = DbCStr(CurRow(Dt.Columns("ParameterValue")))
 
-			'Verify at least one row returned
-			If Dt.Rows.Count < 1 Then
-				'Wrong number of rows returned
-				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Invalid row count retrieving manager settings: RowCount = "
-				MyMsg &= Dt.Rows.Count.ToString
-				WriteErrorMsg(MyMsg, MyLogger)
-				Dt.Dispose()
-				Return False
-			End If
+                    Me.SetParam(ParamKey, ParamVal)
+                Next
+                Return True
+            Catch ex As System.Exception
+                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " & ex.Message
+                WriteErrorMsg(MyMsg)
+                Return False
+            Finally
+                Dt.Dispose()
+            End Try
 
-			'Fill a string dictionary with the manager parameters that have been found
-			Dim CurRow As DataRow
-			Try
-				For Each CurRow In Dt.Rows
-					'Add the column heading and value to the dictionary
-					ParamKey = DbCStr(CurRow(Dt.Columns("ParameterName")))
-					ParamVal = DbCStr(CurRow(Dt.Columns("ParameterValue")))
-					If m_ParamDictionary.ContainsKey(ParamKey) Then
-						m_ParamDictionary(ParamKey) = ParamVal
-					Else
-						m_ParamDictionary.Add(ParamKey, ParamVal)
-					End If
-				Next
-				Return True
-			Catch ex As System.Exception
-				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " & ex.Message
-				WriteErrorMsg(MyMsg, MyLogger)
-				Return False
-			Finally
-				Dt.Dispose()
-			End Try
-
-		End Function
+        End Function
 
 		''' <summary>
 		''' Gets a parameter from the parameters string dictionary
@@ -264,8 +297,14 @@ Namespace AnalysisManagerBase
 		''' <returns>String value associated with specified key</returns>
 		''' <remarks>Returns Nothing if key isn't found</remarks>
 		Public Function GetParam(ByVal ItemKey As String) As String Implements IMgrParams.GetParam
+			Dim Value As String
 
-			Return m_ParamDictionary.Item(ItemKey)
+			Value = m_ParamDictionary.Item(ItemKey)
+			If Value Is Nothing Then
+				Value = String.Empty
+			End If
+
+			Return Value
 
 		End Function
 
@@ -277,7 +316,11 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String) Implements IMgrParams.SetParam
 
-			m_ParamDictionary.Item(ItemKey) = ItemValue
+			If m_ParamDictionary.ContainsKey(ItemKey) Then
+				m_ParamDictionary(ItemKey) = ItemValue
+			Else
+				m_ParamDictionary.Add(ItemKey, ItemValue)
+			End If
 
 		End Sub
 
@@ -285,17 +328,13 @@ Namespace AnalysisManagerBase
 		''' Writes an error message to application log or manager local log
 		''' </summary>
 		''' <param name="ErrMsg">Message to write</param>
-		''' <param name="Logger">Logging object of logger has been created; otherwise NOTHING</param>
-		''' <remarks></remarks>
-		Private Sub WriteErrorMsg(ByVal ErrMsg As String, ByVal Logger As ILogger)
+        ''' <remarks></remarks>
+        Private Sub WriteErrorMsg(ByVal ErrMsg As String)
 
-			If Logger Is Nothing Then
-				clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, ErrMsg)
-			Else
-				Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-			End If
+            clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, ErrMsg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 
-		End Sub
+        End Sub
 
 		''' <summary>
 		''' Converts a database output object that could be dbNull to a string

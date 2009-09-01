@@ -1,6 +1,6 @@
+' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
-Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsMGFtoDtaGenMainProcess
@@ -73,14 +73,7 @@ Public Class clsMGFtoDtaGenMainProcess
 			Return m_Status
 		End If
 
-		'Read the settings file
-		If Not ReadSettingsFile(m_SettingsFileName, m_SourceFolderPath) Then
-			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return m_Status
-		End If
-
-		'Make the DTA files (the process runs in a separate thread)
+        'Make the DTA files (the process runs in a separate thread)
 		Try
 			m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
 			m_thThread.Start()
@@ -97,13 +90,13 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private Function VerifyMGFFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
 		'Verifies a .mgf file exists in specfied directory
-		If File.Exists(Path.Combine(WorkDir, DSName & ".mgf")) Then
-			m_ErrMsg = ""
-			Return True
-		Else
-			m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
-			Return False
-		End If
+        If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & ".mgf")) Then
+            m_ErrMsg = ""
+            Return True
+        Else
+            m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
+            Return False
+        End If
 
 	End Function
 
@@ -114,14 +107,8 @@ Public Class clsMGFtoDtaGenMainProcess
 		'Do tests specfied in base class
 		If Not MyBase.InitSetup Then Return False
 
-		'Misc parameters exist?
-		If m_MiscParams Is Nothing Then
-			m_ErrMsg = "No misc parameters specified"
-			Return False
-		End If
-
-		'MGF data file exists?
-		If Not VerifyMGFFileExists(m_SourceFolderPath, m_DSName) Then Return False 'Error message handled by VerifyMGFFileExists
+        'MGF data file exists?
+		If Not VerifyMGFFileExists(m_WorkDir, m_JobParams.GetParam("DatasetNum")) Then Return False 'Error message handled by VerifyMGFFileExists
 
 		'If we got to here, there was no problem
 		Return True
@@ -156,8 +143,6 @@ Public Class clsMGFtoDtaGenMainProcess
 	End Sub
 
 	Private Function MakeDTAFilesFromMGF() As Boolean
-		Const MGFTODTA_OPTIONS_SECTION As String = "MGFtoDTAOptions"
-		Const MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION As String = "MGFtoDTASpectraFilterOptions"
 
 		Dim MGFFile As String
 
@@ -169,40 +154,40 @@ Public Class clsMGFtoDtaGenMainProcess
 		System.Threading.Thread.CurrentThread.Name = "MakeDTAFilesFromMGF"
 
 		'Get the parameters from the various setup files
-		MGFFile = Path.Combine(m_SourceFolderPath, m_DSName & ".mgf")
-		mScanStart = m_Settings.GetParam("ScanControl", "ScanStart", 1)
-		mScanStop = m_Settings.GetParam("ScanControl", "ScanStop", 1000000)
-		mMWLower = m_Settings.GetParam("MWControl", "MWStart", 200)
-		mMWUpper = m_Settings.GetParam("MWControl", "MWStop", 5000)
+        MGFFile = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("DatasetNum") & ".mgf")
+		mScanStart = CInt(m_JobParams.GetParam("ScanStart"))
+		mScanStop = CInt(m_JobParams.GetParam("ScanStop"))
+		mMWLower = CInt(m_JobParams.GetParam("MWStart"))
+		mMWUpper = CInt(m_JobParams.GetParam("MWStop"))
 
-		CreateDefaultCharges = m_Settings.GetParam("Charges", "CreateDefaultCharges", True)
-		ExplicitChargeStart = m_Settings.GetParam("Charges", "ExplicitChargeStart", 0S)
-		ExplicitChargeEnd = m_Settings.GetParam("Charges", "ExplicitChargeEnd", 0S)
+		CreateDefaultCharges = CBool(m_JobParams.GetParam("CreateDefaultCharges"))
+		ExplicitChargeStart = CShort(m_JobParams.GetParam("ExplicitChargeStart"))
+		ExplicitChargeEnd = CShort(m_JobParams.GetParam("ExplicitChargeEnd"))
 
 		' Spectrum processing options
 		With mSpectrumProcessingOptions
-			.GuesstimateChargeForAllSpectra = m_Settings.GetParam(MGFTODTA_OPTIONS_SECTION, "GuesstimateChargeForAllSpectra", True)
-			.ForceChargeAddnForPredefined2PlusOr3Plus = m_Settings.GetParam(MGFTODTA_OPTIONS_SECTION, "ForceChargeAddnForPredefined2PlusOr3Plus", False)
-			.ThresholdIonPctForSingleCharge = m_Settings.GetParam(MGFTODTA_OPTIONS_SECTION, "ThresholdIonPctForSingleCharge", 10)
-			.ThresholdIonPctForDoubleCharge = m_Settings.GetParam(MGFTODTA_OPTIONS_SECTION, "ThresholdIonPctForDoubleCharge", 25)
-			.MaximumIonsPerSpectrum = m_Settings.GetParam(MGFTODTA_OPTIONS_SECTION, "MaximumIonsPerSpectrum", 0)
+			.GuesstimateChargeForAllSpectra = CBool(m_JobParams.GetParam("GuesstimateChargeForAllSpectra"))
+			.ForceChargeAddnForPredefined2PlusOr3Plus = CBool(m_JobParams.GetParam("ForceChargeAddnForPredefined2PlusOr3Plus"))
+			.ThresholdIonPctForSingleCharge = CInt(m_JobParams.GetParam("ThresholdIonPctForSingleCharge"))
+			.ThresholdIonPctForDoubleCharge = CInt(m_JobParams.GetParam("ThresholdIonPctForDoubleCharge"))
+			.MaximumIonsPerSpectrum = CInt(m_JobParams.GetParam("MaximumIonsPerSpectrum"))
 		End With
 
 		' Spectrum filtering options
 		With mFilterSpectraOptions
-			.FilterSpectra = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "FilterSpectra", True)
-			.MinimumParentIonMZ = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "MinimumParentIonMZ", 300)
-			.MinimumStandardMassSpacingIonPairs = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "MinimumStandardMassSpacingIonPairs", 3)
-			.IonPairMassToleranceHalfWidthDa = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "IonPairMassToleranceHalfWidthDa", CSng(0.1))
-			.NoiseLevelIntensityThreshold = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "NoiseLevelIntensityThreshold", 0)
-			.DataPointCountToConsider = m_Settings.GetParam(MGFTODTA_SPECTRUM_FILTER_OPTIONS_SECTION, "DataPointCountToConsider", 50)
+			.FilterSpectra = CBool(m_JobParams.GetParam("FilterSpectra"))
+			.MinimumParentIonMZ = CInt(m_JobParams.GetParam("MinimumParentIonMZ"))
+			.MinimumStandardMassSpacingIonPairs = CInt(m_JobParams.GetParam("MinimumStandardMassSpacingIonPairs"))
+			.IonPairMassToleranceHalfWidthDa = CSng(m_JobParams.GetParam("IonPairMassToleranceHalfWidthDa"))
+			.NoiseLevelIntensityThreshold = CInt(m_JobParams.GetParam("NoiseLevelIntensityThreshold"))
+			.DataPointCountToConsider = CShort(m_JobParams.GetParam("DataPointCountToConsider"))
 		End With
 
 		'DAC debugging
 		Debug.WriteLine("clsMGFtoDtaGenMainProcess.MakeDTAFilesFromMGF, preparing DTA creation loop, thread " & System.Threading.Thread.CurrentThread.Name)
 
 		'Run the MGF to DTA converter
-		If Not ConvertMGFtoDTA(MGFFile, m_OutFolderPath) Then
+		If Not ConvertMGFtoDTA(MGFFile, m_WorkDir) Then
 			' Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
 			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
@@ -212,7 +197,7 @@ Public Class clsMGFtoDtaGenMainProcess
 		' Possibly generate the explicit charges
 		' If CreateDefaultCharges = False, then the .Dta files that do not qualify for the explicit charges will be deleted
 		If Not m_AbortRequested Then
-			GenerateMissingChargeStateDTAFiles(m_OutFolderPath, "*.dta", ExplicitChargeStart, ExplicitChargeEnd, CreateDefaultCharges)
+			GenerateMissingChargeStateDTAFiles(m_WorkDir, "*.dta", ExplicitChargeStart, ExplicitChargeEnd, CreateDefaultCharges)
 		End If
 
 		If m_AbortRequested Then
@@ -280,9 +265,10 @@ Public Class clsMGFtoDtaGenMainProcess
 			' Define strFileNameBase
 			strFileNameBase = System.IO.Path.GetFileNameWithoutExtension(strInputFilePathFull)
 
-			If Not m_DSName Is Nothing AndAlso m_DSName.Length > 0 Then
-				strFileNameBase = String.Copy(m_DSName)
-			End If
+			'TODO: Fix this later
+			'If Not m_DSName Is Nothing AndAlso m_DSName.Length > 0 Then
+			'	strFileNameBase = String.Copy(m_DSName)
+			'End If
 
 			' Open the input file and parse it
 			If Not objMGFReader.OpenFile(strInputFilePathFull) Then
@@ -348,14 +334,13 @@ Public Class clsMGFtoDtaGenMainProcess
 			blnSuccess = True
 
 			' Make sure scan is between mScanStart and mScanStop
-
-			If mScanStop > 0 AndAlso mScanStop >= mScanStart Then
-				If udtSpectrumHeaderInfo.ScanNumberStart < mScanStart Or udtSpectrumHeaderInfo.ScanNumberStart > mScanStop Then
-					If udtSpectrumHeaderInfo.ScanNumberEnd < mScanStart Or udtSpectrumHeaderInfo.ScanNumberEnd > mScanStop Then
-						blnCreateEntry = False
-					End If
-				End If
-			End If
+            If mScanStop > 0 AndAlso mScanStop >= mScanStart Then
+                If udtSpectrumHeaderInfo.ScanNumberStart < mScanStart Or udtSpectrumHeaderInfo.ScanNumberStart > mScanStop Then
+                    If udtSpectrumHeaderInfo.ScanNumberEnd < mScanStart Or udtSpectrumHeaderInfo.ScanNumberEnd > mScanStop Then
+                        blnCreateEntry = False
+                    End If
+                End If
+            End If
 
 			If blnCreateEntry Then
 				' Populate sngIonMasses() and sngIonIntensities()
@@ -643,7 +628,6 @@ Public Class clsMGFtoDtaGenMainProcess
 					dblNewMH = objMsMsDataFileReader.ConvoluteMass(dblMZ, intChargeIndex, 1)
 
 					' Make sure dblNewMH is between mMWLower and mMWUpper
-
 					blnCreateEntry = True
 					If mMWUpper > 0 AndAlso mMWUpper >= mMWLower Then
 						If dblNewMH < mMWLower Or dblNewMH > mMWUpper Then

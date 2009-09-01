@@ -5,18 +5,22 @@ Option Strict On
 ' can be set from any derived classes.  The derived classes can also set their own local error codes
 '
 ' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-' Copyright 2005, Battelle Memorial Institute
+' Copyright 2005, Battelle Memorial Institute.  All Rights Reserved.
 ' Started November 9, 2003
 
 Public MustInherit Class clsProcessFilesBaseClass
 
     Public Sub New()
-        mFileDate = "August 24, 2005"
+        mFileDate = "June 22, 2009"
         mErrorCode = eProcessFilesErrorCodes.NoError
         mProgressStepDescription = String.Empty
+
+        mOutputFolderPath = String.Empty
+        mLogFolderPath = String.Empty
+        mLogFilePath = String.Empty
     End Sub
 
-#Region "Enums and Classwide Variables"
+#Region "Constants and Enums"
     Public Enum eProcessFilesErrorCodes
         NoError = 0
         InvalidInputFilePath = 1
@@ -28,12 +32,20 @@ Public MustInherit Class clsProcessFilesBaseClass
         UnspecifiedError = -1
     End Enum
 
-    ''' Copy the following to any derived classes
+    Protected Enum eMessageTypeConstants
+        Normal = 0
+        ErrorMsg = 1
+        Warning = 2
+    End Enum
+
+    '' Copy the following to any derived classes
     ''Public Enum eDerivedClassErrorCodes
     ''    NoError = 0
     ''    UnspecifiedError = -1
     ''End Enum
+#End Region
 
+#Region "Classwide Variables"
     ''Private mLocalErrorCode As eDerivedClassErrorCodes
 
     ''Public ReadOnly Property LocalErrorCode() As eDerivedClassErrorCodes
@@ -48,6 +60,15 @@ Public MustInherit Class clsProcessFilesBaseClass
     Protected mFileDate As String
     Protected mAbortProcessing As Boolean
 
+    Protected mLogMessagesToFile As Boolean
+    Protected mLogFilePath As String
+    Protected mLogFile As System.IO.StreamWriter
+
+    ' This variable is updated when CleanupFilePaths() is called
+    Protected mOutputFolderPath As String
+    Protected mLogFolderPath As String          ' If blank, then mOutputFolderPath will be used; if mOutputFolderPath is also blank, then the log is created in the same folder as the executing assembly
+
+    Public Event ProgressReset()
     Public Event ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single)     ' PercentComplete ranges from 0 to 100, but can contain decimal percentage values
     Public Event ProgressComplete()
 
@@ -84,6 +105,30 @@ Public MustInherit Class clsProcessFilesBaseClass
         End Get
     End Property
 
+    Public ReadOnly Property LogFilePath() As String
+        Get
+            Return mLogFilePath
+        End Get
+    End Property
+
+    Public Property LogFolderPath() As String
+        Get
+            Return mLogFolderPath
+        End Get
+        Set(ByVal value As String)
+            mLogFolderPath = value
+        End Set
+    End Property
+
+    Public Property LogMessagesToFile() As Boolean
+        Get
+            Return mLogMessagesToFile
+        End Get
+        Set(ByVal value As Boolean)
+            mLogMessagesToFile = value
+        End Set
+    End Property
+
     Public Overridable ReadOnly Property ProgressStepDescription() As String
         Get
             Return mProgressStepDescription
@@ -107,7 +152,7 @@ Public MustInherit Class clsProcessFilesBaseClass
     End Property
 #End Region
 
-    Public Sub AbortProcessingNow()
+    Public Overridable Sub AbortProcessingNow()
         mAbortProcessing = True
     End Sub
 
@@ -116,6 +161,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         Dim ioFileInfo As System.IO.FileInfo
         Dim ioFolder As System.IO.DirectoryInfo
+        Dim blnSuccess As Boolean
 
         Try
             ' Make sure strInputFilePath points to a valid file
@@ -123,10 +169,13 @@ Public MustInherit Class clsProcessFilesBaseClass
 
             If Not ioFileInfo.Exists() Then
                 If Me.ShowMessages Then
-                    MsgBox("Input file not found: " & ControlChars.NewLine & strInputFilePath, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "File not found")
+                    ShowErrorMessage("Input file not found: " & strInputFilePath)
+                Else
+                    LogMessage("Input file not found: " & strInputFilePath, eMessageTypeConstants.ErrorMsg)
                 End If
+
                 mErrorCode = eProcessFilesErrorCodes.InvalidInputFilePath
-                CleanupFilePaths = False
+                blnSuccess = False
             Else
                 If strOutputFolderPath Is Nothing OrElse strOutputFolderPath.Length = 0 Then
                     ' Define strOutputFolderPath based on strInputFilePath
@@ -141,19 +190,47 @@ Public MustInherit Class clsProcessFilesBaseClass
                     ioFolder.Create()
                 End If
 
-                CleanupFilePaths = True
+                mOutputFolderPath = String.Copy(strOutputFolderPath)
+
+                blnSuccess = True
             End If
 
         Catch ex As Exception
-            If Me.ShowMessages Then
-                MsgBox("Error cleaning up the file paths: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
-            Else
-                Throw New System.Exception("Error cleaning up the file paths", ex)
-            End If
+            HandleException("Error cleaning up the file paths", ex)
         End Try
 
+        Return blnSuccess
     End Function
 
+    Protected Function CleanupInputFilePath(ByRef strInputFilePath As String) As Boolean
+        ' Returns True if success, False if failure
+
+        Dim ioFileInfo As System.IO.FileInfo
+        Dim blnSuccess As Boolean
+
+        Try
+            ' Make sure strInputFilePath points to a valid file
+            ioFileInfo = New System.IO.FileInfo(strInputFilePath)
+
+            If Not ioFileInfo.Exists() Then
+                If Me.ShowMessages Then
+                    ShowErrorMessage("Input file not found: " & strInputFilePath)
+                Else
+                    LogMessage("Input file not found: " & strInputFilePath, eMessageTypeConstants.ErrorMsg)
+                End If
+
+                mErrorCode = eProcessFilesErrorCodes.InvalidInputFilePath
+                blnSuccess = False
+            Else
+                blnSuccess = True
+            End If
+
+        Catch ex As Exception
+            HandleException("Error cleaning up the file paths", ex)
+        End Try
+
+        Return blnSuccess
+    End Function
     Protected Function GetBaseClassErrorMessage() As String
         ' Returns String.Empty if no error
 
@@ -210,6 +287,102 @@ Public MustInherit Class clsProcessFilesBaseClass
 
     Public MustOverride Function GetErrorMessage() As String
 
+    Protected Sub HandleException(ByVal strBaseMessage As String, ByVal ex As System.Exception)
+        If strBaseMessage Is Nothing OrElse strBaseMessage.Length = 0 Then
+            strBaseMessage = "Error"
+        End If
+
+        If Me.ShowMessages Then
+            ' Note that ShowErrorMessage() will call LogMessage()
+            ShowErrorMessage(strBaseMessage & ": " & ex.Message, True)
+        Else
+            LogMessage(strBaseMessage & ": " & ex.Message, eMessageTypeConstants.ErrorMsg)
+            Throw New System.Exception(strBaseMessage, ex)
+        End If
+
+    End Sub
+
+    Protected Sub LogMessage(ByVal strMessage As String)
+        LogMessage(strMessage, eMessageTypeConstants.Normal)
+    End Sub
+
+    Protected Sub LogMessage(ByVal strMessage As String, ByVal eMessageType As eMessageTypeConstants)
+        ' Note that CleanupFilePaths() will update mOutputFolderPath, which is used here if mLogFolderPath is blank
+        ' Thus, be sure to call CleanupFilePaths (or update mLogFolderPath) before the first call to LogMessage
+
+        Dim strMessageType As String
+        Dim blnOpeningExistingFile As Boolean = False
+
+        If mLogFile Is Nothing AndAlso mLogMessagesToFile Then
+            Try
+                mLogFilePath = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                mLogFilePath &= "_log_" & System.DateTime.Now.ToString("yyyy-MM-dd") & ".txt"
+
+                Try
+                    If mLogFolderPath Is Nothing Then mLogFolderPath = String.Empty
+
+                    If mLogFolderPath.Length = 0 Then
+                        ' Log folder is undefined; use mOutputFolderPath if it is defined
+                        If Not mOutputFolderPath Is Nothing AndAlso mOutputFolderPath.Length > 0 Then
+                            mLogFolderPath = String.Copy(mOutputFolderPath)
+                        End If
+                    End If
+
+                    If mLogFolderPath.Length > 0 Then
+                        ' Create the log folder if it doesn't exist
+                        If Not System.IO.Directory.Exists(mLogFolderPath) Then
+                            System.IO.Directory.CreateDirectory(mLogFolderPath)
+                        End If
+                    End If
+                Catch ex As Exception
+                    mLogFolderPath = String.Empty
+                End Try
+
+                If mLogFolderPath.Length > 0 Then
+                    mLogFilePath = System.IO.Path.Combine(mLogFolderPath, mLogFilePath)
+                End If
+
+                blnOpeningExistingFile = System.IO.File.Exists(mLogFilePath)
+
+                mLogFile = New System.IO.StreamWriter(New System.IO.FileStream(mLogFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+                mLogFile.AutoFlush = True
+
+                If Not blnOpeningExistingFile Then
+                    mLogFile.WriteLine("Date" & ControlChars.Tab & _
+                                       "Type" & ControlChars.Tab & _
+                                       "Message")
+                End If
+
+            Catch ex As Exception
+                ' Error creating the log file; set mLogMessagesToFile to false so we don't repeatedly try to create it
+                mLogMessagesToFile = False
+            End Try
+
+        End If
+
+        If Not mLogFile Is Nothing Then
+            Select Case eMessageType
+                Case eMessageTypeConstants.Normal
+                    strMessageType = "Normal"
+                Case eMessageTypeConstants.ErrorMsg
+                    strMessageType = "Error"
+                Case eMessageTypeConstants.Warning
+                    strMessageType = "Warning"
+                Case Else
+                    strMessageType = "Unknown"
+            End Select
+
+            mLogFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & _
+                               strMessageType & ControlChars.Tab & _
+                               strMessage)
+        End If
+
+    End Sub
+
+    Public Function ProcessFilesWildcard(ByVal strInputFolderPath As String) As Boolean
+        Return ProcessFilesWildcard(strInputFolderPath, String.Empty, String.Empty)
+    End Function
+
     Public Function ProcessFilesWildcard(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
         Return ProcessFilesWildcard(strInputFilePath, strOutputFolderPath, String.Empty)
     End Function
@@ -227,8 +400,6 @@ Public MustInherit Class clsProcessFilesBaseClass
         Dim strCleanPath As String
         Dim strInputFolderPath As String
 
-        Dim ioPath As System.IO.Path
-
         Dim ioFileMatch As System.IO.FileInfo
         Dim ioFileInfo As System.IO.FileInfo
         Dim ioFolderInfo As System.IO.DirectoryInfo
@@ -239,7 +410,12 @@ Public MustInherit Class clsProcessFilesBaseClass
             ' Possibly reset the error code
             If blnResetErrorCode Then mErrorCode = eProcessFilesErrorCodes.NoError
 
-            ' See if strInputFilePath contains a wildcard
+            If Not strOutputFolderPath Is Nothing AndAlso strOutputFolderPath.Length > 0 Then
+                ' Update the cached output folder path
+                mOutputFolderPath = String.Copy(strOutputFolderPath)
+            End If
+
+            ' See if strInputFilePath contains a wildcard (* or ?)
             If Not strInputFilePath Is Nothing AndAlso (strInputFilePath.IndexOf("*") >= 0 Or strInputFilePath.IndexOf("?") >= 0) Then
                 ' Obtain a list of the matching  files
 
@@ -252,13 +428,13 @@ Public MustInherit Class clsProcessFilesBaseClass
                     strInputFolderPath = ioFileInfo.DirectoryName
                 Else
                     ' Use the current working directory
-                    strInputFolderPath = ioPath.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                    strInputFolderPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                 End If
 
                 ioFolderInfo = New System.io.DirectoryInfo(strInputFolderPath)
 
                 ' Remove any directory information from strInputFilePath
-                strInputFilePath = ioPath.GetFileName(strInputFilePath)
+                strInputFilePath = System.IO.Path.GetFileName(strInputFilePath)
 
                 intMatchCount = 0
                 For Each ioFileMatch In ioFolderInfo.GetFiles(strInputFilePath)
@@ -272,31 +448,36 @@ Public MustInherit Class clsProcessFilesBaseClass
 
                 Next ioFileMatch
 
-                If intMatchCount = 0 And Me.ShowMessages Then
+                If intMatchCount = 0 Then
                     If mErrorCode = eProcessFilesErrorCodes.NoError Then
-                        MsgBox("No match was found for the input file path:" & ControlChars.NewLine & strInputFilePath, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "File not found")
+                        If Me.ShowMessages Then
+                            ShowErrorMessage("No match was found for the input file path: " & strInputFilePath)
+                        Else
+                            LogMessage("No match was found for the input file path: " & strInputFilePath, eMessageTypeConstants.ErrorMsg)
+                        End If
                     End If
                 Else
                     Console.WriteLine()
                 End If
+
             Else
                 blnSuccess = ProcessFile(strInputFilePath, strOutputFolderPath, strParameterFilePath, blnResetErrorCode)
             End If
 
         Catch ex As Exception
-            If Me.ShowMessages Then
-                MsgBox("Error in ProcessFilesWildcard: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
-            Else
-                Throw New System.Exception("Error in ProcessFilesWildcard", ex)
-            End If
+            HandleException("Error in ProcessFilesWildcard", ex)
         End Try
 
         Return blnSuccess
 
     End Function
 
+    Public Function ProcessFile(ByVal strInputFilePath As String) As Boolean
+        Return ProcessFile(strInputFilePath, String.Empty, String.Empty)
+    End Function
+
     Public Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
-        Return ProcessFile(strInputFilePath, strOutputFolderPath, String.Empty, True)
+        Return ProcessFile(strInputFilePath, strOutputFolderPath, String.Empty)
     End Function
 
     Public Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String) As Boolean
@@ -304,6 +485,11 @@ Public MustInherit Class clsProcessFilesBaseClass
     End Function
 
     Public MustOverride Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String, ByVal blnResetErrorCode As Boolean) As Boolean
+
+
+    Public Function ProcessFilesAndRecurseFolders(ByVal strInputFolderPath As String) As Boolean
+        Return ProcessFilesAndRecurseFolders(strInputFolderPath, String.Empty, String.Empty)
+    End Function
 
     Public Function ProcessFilesAndRecurseFolders(ByVal strInputFilePathOrFolder As String, ByVal strOutputFolderName As String) As Boolean
         Return ProcessFilesAndRecurseFolders(strInputFilePathOrFolder, strOutputFolderName, String.Empty)
@@ -341,7 +527,6 @@ Public MustInherit Class clsProcessFilesBaseClass
         Dim strInputFolderPath As String
 
         Dim ioFileInfo As System.IO.FileInfo
-        Dim ioPath As System.IO.Path
         Dim ioFolderInfo As System.IO.DirectoryInfo
 
         Dim blnSuccess As Boolean
@@ -360,11 +545,11 @@ Public MustInherit Class clsProcessFilesBaseClass
                     strInputFolderPath = ioFileInfo.DirectoryName
                 Else
                     ' Use the current working directory
-                    strInputFolderPath = ioPath.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                    strInputFolderPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                 End If
 
                 ' Remove any directory information from strInputFilePath
-                strInputFilePathOrFolder = ioPath.GetFileName(strInputFilePathOrFolder)
+                strInputFilePathOrFolder = System.IO.Path.GetFileName(strInputFilePathOrFolder)
 
             Else
                 ioFolderInfo = New System.IO.DirectoryInfo(strInputFilePathOrFolder)
@@ -410,7 +595,7 @@ Public MustInherit Class clsProcessFilesBaseClass
             End If
 
         Catch ex As Exception
-            Debug.Assert(False, ex.Message)
+            HandleException("Error in ProcessFilesAndRecurseFolders", ex)
             blnSuccess = False
         End Try
 
@@ -435,7 +620,7 @@ Public MustInherit Class clsProcessFilesBaseClass
             ioInputFolderInfo = New System.IO.DirectoryInfo(strInputFolderPath)
         Catch ex As Exception
             ' Input folder path error
-            Debug.Assert(False, ex.Message)
+            HandleException("Error in RecurseFoldersWork", ex)
             mErrorCode = eProcessFilesErrorCodes.InvalidInputFilePath
             Return False
         End Try
@@ -451,7 +636,7 @@ Public MustInherit Class clsProcessFilesBaseClass
             End If
         Catch ex As Exception
             ' Output file path error
-            Debug.Assert(False, ex.Message)
+            HandleException("Error in RecurseFoldersWork", ex)
             mErrorCode = eProcessFilesErrorCodes.InvalidOutputFolderPath
             Return False
         End Try
@@ -475,13 +660,18 @@ Public MustInherit Class clsProcessFilesBaseClass
                 End If
             Next intExtensionIndex
         Catch ex As Exception
-            Debug.Assert(False, ex.Message)
+            HandleException("Error in RecurseFoldersWork", ex)
             mErrorCode = eProcessFilesErrorCodes.UnspecifiedError
             Return False
         End Try
 
         Try
-            Console.WriteLine("Examining " & strInputFolderPath)
+            If Not strOutputFolderPathToUse Is Nothing AndAlso strOutputFolderPathToUse.Length > 0 Then
+                ' Update the cached output folder path
+                mOutputFolderPath = String.Copy(strOutputFolderPathToUse)
+            End If
+
+            ShowMessage("Examining " & strInputFolderPath)
 
             ' Process any matching files in this folder
             blnSuccess = True
@@ -504,7 +694,7 @@ Public MustInherit Class clsProcessFilesBaseClass
                 Next intExtensionIndex
             Next ioFileMatch
         Catch ex As Exception
-            Debug.Assert(False, ex.Message)
+            HandleException("Error in RecurseFoldersWork", ex)
             mErrorCode = eProcessFilesErrorCodes.InvalidInputFilePath
             Return False
         End Try
@@ -525,12 +715,57 @@ Public MustInherit Class clsProcessFilesBaseClass
 
     End Function
 
+    Protected Sub ResetProgress()
+        RaiseEvent ProgressReset()
+    End Sub
+
     Protected Sub ResetProgress(ByVal strProgressStepDescription As String)
         UpdateProgress(strProgressStepDescription, 0)
+        RaiseEvent ProgressReset()
     End Sub
 
     Protected Sub SetBaseClassErrorCode(ByVal eNewErrorCode As eProcessFilesErrorCodes)
         mErrorCode = eNewErrorCode
+    End Sub
+
+    Protected Sub ShowErrorMessage(ByVal strMessage As String)
+        ShowErrorMessage(strMessage, True)
+    End Sub
+
+    Protected Sub ShowErrorMessage(ByVal strMessage As String, ByVal blnAllowLogToFile As Boolean)
+        Dim strSeparator As String = "------------------------------------------------------------------------------"
+
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strMessage)
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
+
+        If blnAllowLogToFile Then
+            LogMessage(strMessage, eMessageTypeConstants.ErrorMsg)
+        End If
+
+    End Sub
+
+    Protected Sub ShowMessage(ByVal strMessage As String)
+        ShowMessage(strMessage, True, False)
+    End Sub
+
+    Protected Sub ShowMessage(ByVal strMessage As String, ByVal blnAllowLogToFile As Boolean)
+        ShowMessage(strMessage, blnAllowLogToFile, False)
+    End Sub
+
+    Protected Sub ShowMessage(ByVal strMessage As String, ByVal blnAllowLogToFile As Boolean, ByVal blnPrecedeWithNewline As Boolean)
+
+        If blnPrecedeWithNewline Then
+            Console.WriteLine()
+        End If
+        Console.WriteLine(strMessage)
+
+        If blnAllowLogToFile Then
+            LogMessage(strMessage, eMessageTypeConstants.Normal)
+        End If
+
     End Sub
 
     Protected Sub UpdateProgress(ByVal strProgressStepDescription As String)
@@ -542,6 +777,12 @@ Public MustInherit Class clsProcessFilesBaseClass
     End Sub
 
     Protected Sub UpdateProgress(ByVal strProgressStepDescription As String, ByVal sngPercentComplete As Single)
+        Dim blnDescriptionChanged As Boolean = False
+
+        If strProgressStepDescription <> mProgressStepDescription Then
+            blnDescriptionChanged = True
+        End If
+
         mProgressStepDescription = String.Copy(strProgressStepDescription)
         If sngPercentComplete < 0 Then
             sngPercentComplete = 0
@@ -550,7 +791,16 @@ Public MustInherit Class clsProcessFilesBaseClass
         End If
         mProgressPercentComplete = sngPercentComplete
 
+        If blnDescriptionChanged Then
+            If mProgressPercentComplete = 0 Then
+                LogMessage(mProgressStepDescription)
+            Else
+                LogMessage(mProgressStepDescription & " (" & mProgressPercentComplete.ToString("0.0") & "% complete)")
+            End If
+        End If
+
         RaiseEvent ProgressChanged(Me.ProgressStepDescription, Me.ProgressPercentComplete)
+
     End Sub
 
     Protected Sub OperationComplete()

@@ -155,7 +155,16 @@ Module clsDecon2LSCAOServer
 
 		Dim CmdArgs() As String = Environment.GetCommandLineArgs
 
-		If CmdArgs.GetLength(0) <> 3 Then Return -2 'Invalid number of arguments
+        If CmdArgs.Length <> 3 Then
+            ' We should have 3 arguments in CmdArgs (the first "argument" is the program name)
+            If CmdArgs.Length <= 1 Then
+                ShowSyntax()
+            Else
+                ShowSyntax("Invalid number of arguments found at the command line;" & ControlChars.NewLine & " expecting 2 but found " & (CmdArgs.Length - 1).ToString)
+            End If
+            Return -2 'Invalid number of arguments
+        End If
+
 
 		'Fill module variables from command line argurments
 		For Each CmdArg As String In CmdArgs
@@ -165,30 +174,55 @@ Module clsDecon2LSCAOServer
 						Try
 							m_TcpPort = CInt(CmdArg.Remove(0, 2))
 						Catch ex As Exception
-							Return -3
+                            ShowSyntax("Exception defining the TcpPort using the -p switch: " & ControlChars.NewLine & ex.Message)
+                            Return -3
 						End Try
 					Case "-o"
 						Try
 							m_FlagFilePath = CmdArg.Remove(0, 2)
 						Catch ex As Exception
-							Return -4
+                            ShowSyntax("Exception defining the Flag File Folder Path using the -o switch: " & ControlChars.NewLine & ex.Message)
+                            Return -4
 						End Try
 					Case Else
 						'Do nothing - this is the program name argument
 				End Select
-			Catch ex As Exception
-				Return -1
+            Catch ex As Exception
+                ShowSyntax("Exception parsing command line parameters: " & ControlChars.NewLine & ex.Message)
+                Return -1
 			End Try
 		Next
 
 		'Verify that all necessary module variables have been found
-		If (m_TcpPort = 0) Or (m_FlagFilePath = "") Then
-			Return -1
-		Else
-			Return 0
-		End If
+        If m_FlagFilePath = "" Then
+            ShowSyntax("Flag file path is not defined (use the -o switch); unable to continue")
+            Return -1
+        ElseIf m_TcpPort = 0 Then
+            ShowSyntax("TCP Port is not defined (use the -p switch); unable to continue")
+            Return -1
+        Else
+            Return 0
+        End If
 
-	End Function
+    End Function
+
+    Private Sub ShowSyntax()
+        ShowSyntax(String.Empty)
+    End Sub
+
+    Private Sub ShowSyntax(ByVal strErrorMessage As String)
+
+        If strErrorMessage Is Nothing Then strErrorMessage = String.Empty
+
+        If strErrorMessage.Length > 0 Then
+            Console.WriteLine("Error: " & strErrorMessage)
+        End If
+        Console.WriteLine()
+
+        Console.WriteLine("  Syntax: Decon2LSCAOServer.exe -oFlagFileFolderPath -pTCPPort")
+        Console.WriteLine("  Example command: Decon2LSCAOServer.exe -oC:\DMS_Programs -p54321")
+    End Sub
+
 #End Region
 
 End Module

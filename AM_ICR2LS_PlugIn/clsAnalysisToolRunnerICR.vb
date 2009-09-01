@@ -1,13 +1,17 @@
-Imports PRISM.Logging
+' Last modified 06/11/2009 JDS - Added logging using log4net
+Option Strict On
+
 Imports System.IO
 Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerICR
 	Inherits clsAnalysisToolRunnerICRBase
 
 	Public Sub New()
-	End Sub
+
+    End Sub
 
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
@@ -15,7 +19,10 @@ Public Class clsAnalysisToolRunnerICR
 		Dim DSNamePath As String
 		Dim PekRes As Boolean
 
-		'Start with base class function to get settings information
+        'Start the job timer
+        m_StartTime = System.DateTime.Now
+
+        'Start with base class function to get settings information
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
@@ -51,21 +58,21 @@ Public Class clsAnalysisToolRunnerICR
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		'Run the cleanup routine from the base class
-		If PerfPostAnalysisTasks("ICR") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			m_message = AppendToComment(m_message, "Error performing post analysis tasks")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Run the cleanup routine from the base class
+        If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            m_message = AppendToComment(m_message, "Error performing post analysis tasks")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
 
 		'Deletes the dataset folder containing s-folders from the working directory
 		Dim RetryCount As Integer = 0
-		Dim ErrMsg As String
+        Dim ErrMsg As String = String.Empty
 
 		While RetryCount < 3
 			Try
@@ -75,20 +82,19 @@ Public Class clsAnalysisToolRunnerICR
 			Catch Err As IOException
 				'If problem is locked file, retry
 				If m_DebugLevel > 0 Then
-					m_logger.PostEntry("Error deleting data file, attempt #" & RetryCount.ToString, ILogger.logMsgType.logError, True)
-				End If
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting data file, attempt #" & RetryCount.ToString)
+                End If
 				ErrMsg = err.Message
 				RetryCount += 1
 			Catch Err As Exception
-				m_logger.PostError("Error deleting raw data files, job " & m_JobNum, Err, LOG_DATABASE)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & Err.Message)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 		End While
 
 		'If we got to here, then we've exceeded the max retry limit
-		m_logger.PostEntry("Unable to delete raw data file after multiple tries, job " & m_jobnum & _
-		 ", Error " & ErrMsg, ILogger.logMsgType.logError, LOG_DATABASE)
-		Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Unable to delete raw data file after multiple tries, job " & m_JobNum & ", Error " & ErrMsg)
+        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 	End Function
 

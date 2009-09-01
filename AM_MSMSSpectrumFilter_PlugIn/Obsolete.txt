@@ -1,1 +1,0 @@
-This version is now obsolete. Matt is controlling this plugin -- see repository at https://prismsvn.pnl.gov/svn/User_Applications/Monroe_Utilities/MSMSSpectraPreprocessor for source code.

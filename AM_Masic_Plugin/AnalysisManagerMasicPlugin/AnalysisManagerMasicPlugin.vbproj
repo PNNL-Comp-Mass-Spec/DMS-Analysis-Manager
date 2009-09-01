@@ -1,9 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{EC6B65D1-30E9-4AEF-A360-52E99056BD61}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -35,14 +35,17 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\</OutputPath>
     <DocumentationFile>AnalysisManagerMasicPlugin.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
     <DefineDebug>false</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
@@ -55,6 +58,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
@@ -74,6 +81,7 @@
     <Import Include="System.Diagnostics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsAnalysisResourcesMASIC.vb" />
     <Compile Include="clsAnalysisToolRunnerMASICAgilent.vb" />
     <Compile Include="clsAnalysisToolRunnerMASICBase.vb" />
     <Compile Include="clsAnalysisToolRunnerMASICFinnigan.vb" />

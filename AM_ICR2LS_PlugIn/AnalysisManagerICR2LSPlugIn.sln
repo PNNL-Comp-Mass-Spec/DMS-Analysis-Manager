@@ -1,21 +1,19 @@
-Microsoft Visual Studio Solution File, Format Version 8.00
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerICR2LSPlugIn", "AnalysisManagerICR2LSPlugIn.vbproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
 EndProject
 Global
-	GlobalSection(SolutionConfiguration) = preSolution
-		Debug = Debug
-		Release = Release
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(ProjectConfiguration) = postSolution
-		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug.ActiveCfg = Debug|.NET
-		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug.Build.0 = Debug|.NET
-		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release.ActiveCfg = Release|.NET
-		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release.Build.0 = Release|.NET
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-	EndGlobalSection
-	GlobalSection(ExtensibilityAddIns) = postSolution
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

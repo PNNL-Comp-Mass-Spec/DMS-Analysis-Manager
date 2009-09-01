@@ -24,6 +24,7 @@ Namespace AnalysisManagerMSMSResourceBase
 		'*********************************************************************************************************
 
 #Region "Constants"
+		'TODO: What the heck is this?
 		Private Const FASTA_GEN_TIMEOUT_INTERVAL As Integer = 600000	 '10 minutes
 #End Region
 

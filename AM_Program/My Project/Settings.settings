@@ -3,13 +3,13 @@
   <Profiles />
   <Settings>
     <Setting Name="MgrActive_Local" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="MgrCnfgDbConnectStr" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=manager_control_T3;Integrated Security=SSPI</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="MgrName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">WE10129_Analysis</Value>
+      <Value Profile="(Default)">Monroe_Analysis</Value>
+    </Setting>
+    <Setting Name="MgrCnfgDbConnectStr" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI</Value>
     </Setting>
     <Setting Name="UsingDefaults" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>

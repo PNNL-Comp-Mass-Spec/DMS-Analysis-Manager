@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{644CABCC-C3FA-4AA2-B342-500698BCFF14}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -50,6 +50,7 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\</OutputPath>
@@ -69,16 +70,17 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>none</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DeconEngine">
       <Name>DeconEngine</Name>
-      <HintPath>..\..\AM_Common\DeconEngine.dll</HintPath>
+      <HintPath>..\AnalysisManagerDecon2lsPlugIn\bin\DeconEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DMSDecon2LS">
       <Name>DMSDecon2LS</Name>
-      <HintPath>..\..\AM_Common\DMSDecon2LS.dll</HintPath>
+      <HintPath>..\AnalysisManagerDecon2lsPlugIn\bin\DMSDecon2LS.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System">
@@ -105,6 +107,9 @@
     <Compile Include="clsDecon2LSRemoter.vb">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="My Project\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

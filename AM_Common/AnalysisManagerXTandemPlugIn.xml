@@ -6,25 +6,12 @@ AnalysisManagerXTandemPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.OperateAnalysisTool">
+<member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.RunTool">
 	<summary>
  Runs XTandem tool
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.MakeResultsFolder(System.String)">
-	<summary>
- Calls base class to make an XTandem results folder
- </summary>
-	<param name="AnalysisType">Analysis type prefix for results folder name</param>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.DeleteTempAnalFiles">
-	<summary>
- Cleans up stray analysis files
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks>Not presently implemented</remarks>
 </member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ZipMainOutputFile">
 	<summary>
  Zips concatenated XML output file

@@ -1,3 +1,5 @@
+Option Strict On
+
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -5,316 +7,478 @@
 ' Created 06/07/2006
 '
 ' Last modified 01/15/2008
+' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports PRISM.Logging
 Imports PRISM.Files
-Imports System.IO
-Imports System.Threading
 Imports AnalysisManagerBase
 Imports AnalysisManagerBase.clsGlobal
 
 Public MustInherit Class clsAnalysisToolRunnerMASICBase
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
 	'*********************************************************************************************************
 	'Base class for performing MASIC analysis
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	'Job running status variable
+    Protected Const SICS_XML_FILE_SUFFIX As String = "_SICs.xml"
+
+
+    'Job running status variable
 	Protected m_JobRunning As Boolean
 
 	Protected m_ErrorMessage As String = String.Empty
 	Protected m_ProcessStep As String = String.Empty
+    Protected m_MASICStatusFileName As String = String.Empty
+    Protected m_MASICLogFileName As String = String.Empty
 
-	'Failed job cleanup status variable
-	Protected m_FailedJobCleanedUp As Boolean
 #End Region
 
 #Region "Methods"
 	Public Sub New()
 	End Sub
 
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Protected Sub ExtractErrorsFromMASICLogFile(ByVal strLogFilePath As String)
+        ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
+        ' Use clsLogTools.WriteLog to write these to the log
 
-		Dim StepResult As IJobParams.CloseOutType
+        Dim srInFile As System.IO.StreamReader
+        Dim strLineIn As String
+        Dim intErrorCount As Integer
 
-		' Reset this variable
-		m_FailedJobCleanedUp = False
+        Try
+            ' Fix the case of the MASIC LogFile
+            Dim ioFileInfo As New System.IO.FileInfo(strLogFilePath)
+            Dim strLogFileNameCorrectCase As String
 
-		'Get the settings file info via the base class
-		If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            strLogFileNameCorrectCase = System.IO.Path.GetFileName(strLogFilePath)
 
-		'Make the SIC's 
-		m_logger.PostEntry("Calling MASIC to create the SIC files, job " & m_JobNum, ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
-		Try
-			' Note that RunMASIC will populate the File Path variables, then will call 
-			'  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
-			StepResult = RunMASIC()
-			If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				If Not m_FailedJobCleanedUp Then CleanupFailedJob("Error")
-				Return StepResult
-			End If
-		Catch Err As Exception
-			m_logger.PostEntry("clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " & _
-			 Err.Message, ILogger.logMsgType.logError, True)
-			If Not m_FailedJobCleanedUp Then CleanupFailedJob("Exception calling MASIC, " & Err.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking capitalization of the the MASIC Log File: should be " & strLogFileNameCorrectCase & "; is currently " & ioFileInfo.Name)
+            End If
 
-		' Update progress to 100%
-		m_progress = 100
+            If ioFileInfo.Name <> strLogFileNameCorrectCase Then
+                ' Need to fix the case
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fixing capitalization of the MASIC Log File: " & strLogFileNameCorrectCase & " instead of " & ioFileInfo.Name)
+                End If
+                ioFileInfo.MoveTo(System.IO.Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase))
+            End If
 
-		m_StatusTools.UpdateAndWrite(IStatusFile.JobStatus.STATUS_RUNNING, m_progress, 0)
+        Catch ex As Exception
+            ' Ignore errors here
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error fixing capitalization of the MASIC Log File at " & strLogFilePath & ": " & ex.Message)
+        End Try
 
-		'Run the cleanup routine from the base class
-		If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			If Not m_FailedJobCleanedUp Then
-				CleanupFailedJob("Error performing post analysis tasks")
-			Else
-				m_message = AppendToComment(m_message, "Error performing post analysis tasks")
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        Try
+            If strLogFilePath Is Nothing OrElse strLogFilePath.Length = 0 Then
+                Exit Sub
+            End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-	End Function
+            intErrorCount = 0
+            Do While srInFile.Peek >= 0
+                strLineIn = srInFile.ReadLine()
 
-	Protected Function StartMASICAndWait(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String) As IJobParams.CloseOutType
-		' Note that this function is normally called by RunMasic() in the subclass
+                If Not strLineIn Is Nothing Then
+                    If strLineIn.ToLower.Contains("error") Then
+                        If intErrorCount = 0 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Errors found in the MASIC Log File for job " & m_JobNum)
+                        End If
 
-		Dim objMasicProgRunner As PRISM.Processes.clsProgRunner
-		Dim CmdStr As String
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " & strLineIn)
 
-		m_ErrorMessage = String.Empty
-		m_ProcessStep = "NewTask"
+                        intErrorCount += 1
+                    End If
+                End If
+            Loop
 
-		' Call MASIC using the Program Runner class
+            srInFile.Close()
 
-		' Define the parameters to send to Masic.exe
-		CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q"
-		If m_DebugLevel > 0 Then CmdStr &= " /L"
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading MASIC Log File at '" & strLogFilePath & "'; " & ex.Message)
+        End Try
 
-		objMasicProgRunner = New PRISM.Processes.clsProgRunner
-		With objMasicProgRunner
-			.Name = "MASIC"
-			.CreateNoWindow = True
-			.Program = m_mgrParams.GetParam("masicprogloc")
-			.Arguments = CmdStr
-			.WorkDir = m_WorkDir
-		End With
+    End Sub
+  
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		objMasicProgRunner.StartAndMonitorProgram()
+        Dim StepResult As IJobParams.CloseOutType
 
-		'Wait for the job to complete
-		If Not WaitForJobToFinish(objMasicProgRunner) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Reset this variable
 
-		objMasicProgRunner = Nothing
-		System.Threading.Thread.Sleep(3000)				'Delay for 3 seconds to make sure program exits
+        'Start the job timer
+        m_StartTime = System.DateTime.Now
+        m_message = String.Empty
+
+        'Make the SIC's 
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling MASIC to create the SIC files, job " & m_JobNum)
+        Try
+            ' Note that RunMASIC will populate the File Path variables, then will call 
+            '  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
+            StepResult = RunMASIC()
+            If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return StepResult
+            End If
+        Catch Err As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " & Err.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        ' Update progress to 100%
+        m_progress = 100
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+
+        'Run the cleanup routine from the base class
+        If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Make the results folder
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder")
+        End If
+
+        StepResult = MakeResultsFolder()
+        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        StepResult = MoveResultFiles()
+        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MoveResultFiles moves the result files to the result folder
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        StepResult = CopyResultsFolderToServer()
+        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return StepResult
+        End If
+
+        If Not clsGlobal.RemoveNonResultFiles(m_WorkDir, m_DebugLevel) Then
+            'TODO: Figure out what to do here
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 
-		'Verify MASIC exited due to job completion
-		If Not m_ErrorMessage Is Nothing AndAlso m_ErrorMessage.Length > 0 Then
-			If m_DebugLevel > 0 Then
-				m_logger.PostEntry("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep<>COMPLETE", _
-				 ILogger.logMsgType.logDebug, True)
-			End If
-			CleanupFailedJob(m_ErrorMessage)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			If m_DebugLevel > 0 Then
-				m_logger.PostEntry("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=COMPLETE", _
-				 ILogger.logMsgType.logDebug, True)
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Protected MustOverride Function RunMASIC() As IJobParams.CloseOutType
+    Protected Function StartMASICAndWait(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String) As IJobParams.CloseOutType
+        ' Note that this function is normally called by RunMasic() in the subclass
 
-	Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
+        Dim strMASICExePath As String = String.Empty
+        Dim objMasicProgRunner As PRISM.Processes.clsProgRunner
+        Dim CmdStr As String
+        Dim blnSuccess As Boolean
 
-	Protected Overridable Sub CalculateNewStatus(ByVal strMasicProgLoc As String)
+        m_ErrorMessage = String.Empty
+        m_ProcessStep = "NewTask"
 
-		'Calculates status information for progress file
-		'Does this by reading the MasicStatus.xml file
+        Try
+            m_MASICStatusFileName = "MasicStatus_" & m_MachName & ".xml"
+            If m_MASICStatusFileName Is Nothing Then
+                m_MASICStatusFileName = "MasicStatus.xml"
+            End If
+        Catch ex As Exception
+            m_MASICStatusFileName = "MasicStatus.xml"
+        End Try
 
-		Const StatusFileName As String = "MasicStatus.xml"
+        ' Make sure the MASIC.Exe file exists
+        Try
+            strMASICExePath = m_mgrParams.GetParam("masicprogloc")
+            If Not System.IO.File.Exists(strMASICExePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " & strMASICExePath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-		Dim strPath As String
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " & strMASICExePath)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
-		Dim fsInFile As System.IO.FileStream = Nothing
-		Dim objXmlReader As System.Xml.XmlTextReader = Nothing
+        ' Call MASIC using the Program Runner class
 
-		Dim strProgress As String = String.Empty
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MASIC on file " & strInputFilePath)
+        End If
 
-		Try
-			strPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strMasicProgLoc), StatusFileName)
+        ' Define the parameters to send to Masic.exe
+        CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q /SF:" & m_MASICStatusFileName
 
-			If System.IO.File.Exists(strPath) Then
+        If m_DebugLevel >= 3 Then
+            ' Create a MASIC Log File
+            CmdStr &= " /L"
+            m_MASICLogFileName = "MASIC_Log_Job" & m_JobNum & ".txt"
 
-				fsInFile = New System.IO.FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
-				objXmlReader = New System.Xml.XmlTextReader(fsInFile)
-				objXmlReader.WhitespaceHandling = Xml.WhitespaceHandling.None
+            CmdStr &= ":" & System.IO.Path.Combine(m_WorkDir, m_MASICLogFileName)
+        Else
+            m_MASICLogFileName = String.Empty
+        End If
 
-				While objXmlReader.Read()
 
-					If objXmlReader.NodeType = System.Xml.XmlNodeType.Element Then
-						Select Case objXmlReader.Name
-							Case "ProcessingStep"
-								If Not objXmlReader.IsEmptyElement Then
-									If objXmlReader.Read() Then m_ProcessStep = objXmlReader.Value
-								End If
-							Case "Progress"
-								If Not objXmlReader.IsEmptyElement Then
-									If objXmlReader.Read() Then strProgress = objXmlReader.Value
-								End If
-							Case "Error"
-								If Not objXmlReader.IsEmptyElement Then
-									If objXmlReader.Read() Then m_ErrorMessage = objXmlReader.Value
-								End If
-						End Select
-					End If
-				End While
+        objMasicProgRunner = New PRISM.Processes.clsProgRunner
+        With objMasicProgRunner
+            .Name = "MASIC"
+            .CreateNoWindow = True
+            .Program = strMASICExePath
+            .Arguments = CmdStr
+            .WorkDir = m_WorkDir
+        End With
 
-				If strProgress.Length > 0 Then
-					Try
-						m_progress = Single.Parse(strProgress)
-					Catch ex As Exception
-						' Ignore errors
-					End Try
-				End If
+        objMasicProgRunner.StartAndMonitorProgram()
 
-			End If
+        'Wait for the job to complete
+        blnSuccess = WaitForJobToFinish(objMasicProgRunner)
 
-		Catch ex As Exception
-			' Ignore errors
-		Finally
-			If Not objXmlReader Is Nothing Then
-				objXmlReader.Close()
-				objXmlReader = Nothing
-			End If
+        objMasicProgRunner = Nothing
+        System.Threading.Thread.Sleep(3000)             'Delay for 3 seconds to make sure program exits
 
-			If Not fsInFile Is Nothing Then
-				fsInFile.Close()
-				fsInFile = Nothing
-			End If
-		End Try
+        If Not m_MASICLogFileName Is Nothing AndAlso m_MASICLogFileName.Length > 0 Then
+            ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
+            ' Use clsLogTools.WriteLog to write these to the log
+            ExtractErrorsFromMASICLogFile(System.IO.Path.Combine(m_WorkDir, m_MASICLogFileName))
+        End If
 
-	End Sub
+        'Verify MASIC exited due to job completion
+        If Not blnSuccess Then
 
-	Protected Overridable Function PerfPostAnalysisTasks(ByVal ResType As String) As IJobParams.CloseOutType
+            If m_DebugLevel > 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "WaitForJobToFinish returned False")
+            End If
 
-		Dim StepResult As IJobParams.CloseOutType
-		'		Dim Zipper As PRISM.Files.ZipTools
-		Dim Zipper As ZipTools
-		Dim ZippedXMLFileName As String
-		Dim FoundFiles() As String
-		Dim TempFile As String
+            If Not m_ErrorMessage Is Nothing AndAlso m_ErrorMessage.Length > 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " & m_ErrorMessage)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank")
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            If m_DebugLevel > 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" & m_ProcessStep)
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
-		'Stop the job timer
-		m_StopTime = Now()
+    End Function
 
-		'Get rid of raw data file
-		StepResult = DeleteDataFile()
-		If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return StepResult
-		End If
+    Protected MustOverride Function RunMASIC() As IJobParams.CloseOutType
 
-		'Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
-		FoundFiles = Directory.GetFiles(m_WorkDir, "*_SICs.xml")
+    Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
 
-		If FoundFiles.Length > 0 Then
-			'Setup zipper
-			Zipper = New PRISM.Files.ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-			'Zipper = New clsSharpZipWrapper
+    Protected Overridable Sub CalculateNewStatus(ByVal strMasicProgLoc As String)
 
-			ZippedXMLFileName = m_jobParams.GetParam("datasetNum") & "_SICs.zip"
+        'Calculates status information for progress file
+        'Does this by reading the MasicStatus.xml file
 
-			If Not Zipper.MakeZipFile("-normal", Path.Combine(m_WorkDir, ZippedXMLFileName), Path.Combine(m_WorkDir, "*_SICs.xml")) Then
-				'				If Not Zipper.ZipFilesInFolder(Path.Combine(m_WorkDir, ZippedXMLFileName), m_WorkDir, False, ".*_SICs\.xml") Then
-				m_logger.PostEntry("Error zipping *_SICs.xml files, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_message, "Error zipping .ann files")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        Dim strPath As String
 
-			'Delete the unneeded files
-			Try
-				'Delete _SICs.XML files
-				FoundFiles = Directory.GetFiles(m_WorkDir, "*_SICs.xml")
-				For Each TempFile In FoundFiles
-					DeleteFileWithRetries(TempFile)
-				Next
-			Catch Err As Exception
-				m_logger.PostEntry("Error deleting files, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-				m_message = AppendToComment(m_message, "Error deleting files")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
+        Dim fsInFile As System.IO.FileStream = Nothing
+        Dim objXmlReader As System.Xml.XmlTextReader = Nothing
 
-		End If
+        Dim strProgress As String = String.Empty
 
-		'Update the job summary file
-		If Not UpdateSummaryFile() Then
-			m_logger.PostEntry("Error creating summary file, job " & m_JobNum, _
-			 ILogger.logMsgType.logWarning, LOG_DATABASE)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        Try
+            strPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strMasicProgLoc), m_MASICStatusFileName)
 
-		StepResult = MakeResultsFolder(ResType)
-		If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return StepResult
-		End If
+            If System.IO.File.Exists(strPath) Then
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                fsInFile = New System.IO.FileStream(strPath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)
+                objXmlReader = New System.Xml.XmlTextReader(fsInFile)
+                objXmlReader.WhitespaceHandling = Xml.WhitespaceHandling.None
 
-	End Function
+                While objXmlReader.Read()
 
-	Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
+                    If objXmlReader.NodeType = System.Xml.XmlNodeType.Element Then
+                        Select Case objXmlReader.Name
+                            Case "ProcessingStep"
+                                If Not objXmlReader.IsEmptyElement Then
+                                    If objXmlReader.Read() Then m_ProcessStep = objXmlReader.Value
+                                End If
+                            Case "Progress"
+                                If Not objXmlReader.IsEmptyElement Then
+                                    If objXmlReader.Read() Then strProgress = objXmlReader.Value
+                                End If
+                            Case "Error"
+                                If Not objXmlReader.IsEmptyElement Then
+                                    If objXmlReader.Read() Then m_ErrorMessage = objXmlReader.Value
+                                End If
+                        End Select
+                    End If
+                End While
 
-		'		Dim strErrorMessage As String
+                If strProgress.Length > 0 Then
+                    Try
+                        m_progress = Single.Parse(strProgress)
+                    Catch ex As Exception
+                        ' Ignore errors
+                    End Try
+                End If
 
-		'Wait for completion
-		m_JobRunning = True
+            End If
 
-		While m_JobRunning
-			System.Threading.Thread.Sleep(3000)				'Delay for 3 seconds
+        Catch ex As Exception
+            ' Ignore errors
+        Finally
+            If Not objXmlReader Is Nothing Then
+                objXmlReader.Close()
+                objXmlReader = Nothing
+            End If
 
-			If objMasicProgRunner.State = 0 Or objMasicProgRunner.State = 10 Then
-				m_JobRunning = False
-			Else
-				CalculateNewStatus(objMasicProgRunner.Program)						 'Update the status
-				m_StatusTools.UpdateAndWrite(m_progress)
-				If m_DebugLevel > 0 Then
-					m_logger.PostEntry("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
-					 "Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")", _
-					 ILogger.logMsgType.logDebug, True)
-				End If
-			End If
+            If Not fsInFile Is Nothing Then
+                fsInFile.Close()
+                fsInFile = Nothing
+            End If
+        End Try
 
-		End While
+    End Sub
 
-		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); State=COMPLETE", _
-			  ILogger.logMsgType.logDebug, True)
-		End If
+    Protected Overridable Function PerfPostAnalysisTasks(ByVal ResType As String) As IJobParams.CloseOutType
 
-		If objMasicProgRunner.State = 10 Or objMasicProgRunner.ExitCode <> 0 Then
-			Return False
-		Else
-			Return True
-		End If
+        Dim StepResult As IJobParams.CloseOutType
+        '		Dim Zipper As PRISM.Files.ZipTools
+        Dim Zipper As ZipTools
+        Dim ZippedXMLFileName As String
+        Dim FoundFiles() As String
 
-	End Function
+        'Stop the job timer
+        m_StopTime = System.DateTime.Now
 
-	Protected Overrides Sub CleanupFailedJob(ByVal OopsMessage As String)
-		MyBase.CleanupFailedJob(OopsMessage)
-		m_FailedJobCleanedUp = True
-	End Sub
+        'Get rid of raw data file
+        StepResult = DeleteDataFile()
+        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return StepResult
+        End If
+
+        'Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
+        FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX)
+
+        If FoundFiles.Length > 0 Then
+            'Setup zipper
+            Zipper = New PRISM.Files.ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
+            'Zipper = New clsSharpZipWrapper
+
+            ZippedXMLFileName = m_jobParams.GetParam("datasetNum") & "_SICs.zip"
+
+            If Not Zipper.MakeZipFile("-normal", System.IO.Path.Combine(m_WorkDir, ZippedXMLFileName), System.IO.Path.Combine(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX)) Then
+                '				If Not Zipper.ZipFilesInFolder(Path.Combine(m_WorkDir, ZippedXMLFileName), m_WorkDir, False, ".*_SICs\.xml") Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping *" & SICS_XML_FILE_SUFFIX & " files, job " & m_JobNum)
+                m_message = AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+        End If
+
+        'Add all the extensions of the files to delete after run
+        clsGlobal.m_FilesToDeleteExt.Add(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
+
+        Dim ext As String
+        Dim DumFiles() As String
+
+        'update list of files to be deleted after run
+        For Each ext In clsGlobal.m_FilesToDeleteExt
+            DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & ext) 'Zipped DTA
+            For Each FileToDel As String In DumFiles
+                clsGlobal.FilesToDelete.Add(FileToDel)
+            Next
+        Next
+
+        'Add the current job data to the summary file
+        Try
+            If Not UpdateSummaryFile() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            End If
+        Catch Err As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
+        Const MINIMUM_LOG_INTERVAL_SEC As Integer = 120
+        Static dtLastLogTime As DateTime
+        Static sngProgressSaved As Single = -1
+
+        Dim blnSICsXMLFileExists As Boolean
+
+        'Wait for completion
+        m_JobRunning = True
+
+        While m_JobRunning
+            System.Threading.Thread.Sleep(5000)             'Delay for 5 seconds
+
+            If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
+                m_JobRunning = False
+            Else
+
+                ' Synchronize the stored Debug level with the value stored in the database
+                Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+                MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+                CalculateNewStatus(objMasicProgRunner.Program)                       'Update the status
+                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+
+                If m_DebugLevel >= 3 Then
+                    If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+                        m_progress - sngProgressSaved >= 25 Then
+                        dtLastLogTime = System.DateTime.Now
+                        sngProgressSaved = m_progress
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
+                                           "Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")")
+                    End If
+                End If
+            End If
+
+        End While
+
+        If m_DebugLevel > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
+        End If
+
+        If objMasicProgRunner.State = 10 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10")
+            Return False
+        ElseIf objMasicProgRunner.ExitCode <> 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
+
+            ' See if a _SICs.XML file was created
+            If System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
+                blnSICsXMLFileExists = True
+            End If
+
+            If objMasicProgRunner.ExitCode = 32 Then
+                ' FindSICPeaksError
+                ' As long as the _SICs.xml file was created, we can safely ignore this error
+                If blnSICsXMLFileExists Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file found, so ignoring non-zero exit code")
+                    Return True
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file not found")
+                    Return False
+                End If
+            Else
+                ' Return False for any other exit codes
+                Return False
+            End If
+        Else
+            Return True
+        End If
+
+    End Function
+
 #End Region
 
+    Protected Overrides Sub Finalize()
+        MyBase.Finalize()
+    End Sub
 End Class

@@ -8,7 +8,6 @@
 '*********************************************************************************************************
 
 Imports System.Collections.Specialized
-Imports PRISM.Logging
 
 Namespace AnalysisManagerBase
 
@@ -43,7 +42,7 @@ Namespace AnalysisManagerBase
 			Dim OutputFolderPath As String
 			Dim MiscParams As StringDictionary
 			Dim DebugLevel As Integer
-			Dim Logger As ILogger
+            Dim Logger As PRISM.Logging.ILogger
 			Dim MgrParams As IMgrParams
 			Dim JobParams As IJobParams
 			Dim StatusTools As IStatusFile

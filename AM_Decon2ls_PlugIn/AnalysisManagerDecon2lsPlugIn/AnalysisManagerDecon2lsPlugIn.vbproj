@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{4E7586EC-4A03-433B-B98D-393DA95C020C}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -33,7 +33,7 @@
     <OldToolsVersion>2.0</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>..\Bin_Debug\</OutputPath>
+    <OutputPath>Bin\</OutputPath>
     <DocumentationFile>AnalysisManagerDecon2lsPlugIn.xml</DocumentationFile>
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
@@ -50,9 +50,10 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>Bin\</OutputPath>
     <DocumentationFile>AnalysisManagerDecon2lsPlugIn.xml</DocumentationFile>
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
@@ -69,22 +70,24 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>none</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg, Version=1.1.2946.24398, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="AnalysisManagerProg, Version=2.0.3296.19527, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <ExecutableExtension>.exe</ExecutableExtension>
-      <Private>False</Private>
+      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="DeconEngine">
-      <Name>DeconEngine</Name>
-      <HintPath>..\..\AM_Common\DeconEngine.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Decon2LSRemoter, Version=1.0.3350.30516, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Decon2LSRemoter.dll</HintPath>
     </Reference>
-    <Reference Include="DMSDecon2LS">
-      <Name>DMSDecon2LS</Name>
-      <HintPath>..\..\AM_Common\DMSDecon2LS.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="DeconEngine, Version=1.0.2789.18737, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\DeconEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="DMSDecon2LS, Version=1.0.2697.16978, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\DMSDecon2LS.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
       <Name>PRISM</Name>
@@ -103,12 +106,6 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
-    <ProjectReference Include="..\Decon2LSRemoter\Decon2LSRemoter.vbproj">
-      <Name>Decon2LSRemoter</Name>
-      <Project>{644CABCC-C3FA-4AA2-B342-500698BCFF14}</Project>
-      <Package>{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</Package>
-      <Private>False</Private>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -121,6 +118,7 @@
     <Compile Include="AssemblyInfo.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsAnalysisResourcesDecon2ls.vb" />
     <Compile Include="clsAnalysisToolRunnerDecon2lsBase.vb">
       <SubType>Code</SubType>
     </Compile>

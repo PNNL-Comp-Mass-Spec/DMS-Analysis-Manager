@@ -4,11 +4,11 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 01/25/2008
+' Last modified 09/17/2008
+' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports System.IO
-Imports PRISM.Logging
 Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
@@ -39,18 +39,17 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	''' </summary>
 	''' <param name="mgrParams">Object containing manager parameters</param>
 	''' <param name="jobParams">Object containing job parameters</param>
-	''' <param name="logger">Logging object</param>
-	''' <param name="StatusTools">Object providing tools for status file updates</param>
+    ''' <param name="StatusTools">Object providing tools for status file updates</param>
 	''' <remarks></remarks>
-	Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal logger As PRISM.Logging.ILogger, ByVal StatusTools As IStatusFile)
+    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal StatusTools As IStatusFile)
 
-		MyBase.Setup(mgrParams, jobParams, logger, StatusTools)
+        MyBase.Setup(mgrParams, jobParams, StatusTools)
 
-		If m_DebugLevel > 3 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.Setup()", ILogger.logMsgType.logDebug, True)
-		End If
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.Setup()")
+        End If
 
-	End Sub
+    End Sub
 
 	''' <summary>
 	''' Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
@@ -64,18 +63,17 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Dim ResCode As Boolean
 		Dim OutFiles() As String
 
-		m_CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
+        m_CmdRunner = New clsRunDosProgram(m_WorkDir)
 
 		'Run the OUT file generation program
 		CmdStr = " -P" & m_jobParams.GetParam("parmFileName") & " *.dta"
 		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), making files", _
-			 ILogger.logMsgType.logDebug, True)
-		End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), making files")
+        End If
 		ResCode = m_CmdRunner.RunProgram(m_mgrParams.GetParam("seqprogloc"), CmdStr, "Seq", True)
 		If Not ResCode Then
-			m_logger.PostEntry("Unknown error making OUT files", ILogger.logMsgType.logError, True)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unknown error making OUT files")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Make sure objects are released
@@ -85,17 +83,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		'Verify out file creation
 		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), verifying out file creation", _
-			 ILogger.logMsgType.logDebug, True)
-		End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), verifying out file creation")
+        End If
 		OutFiles = Directory.GetFiles(m_WorkDir, "*.out")
 		If m_DebugLevel > 0 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), outfile count: " & OutFiles.GetLength(0).ToString, _
-			 ILogger.logMsgType.logDebug, True)
-		End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), outfile count: " & OutFiles.GetLength(0).ToString)
+        End If
 		If OutFiles.GetLength(0) < 1 Then
-			m_logger.PostEntry("No OUT files created, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-			m_message = AppendToComment(m_message, "No OUT files created")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            m_message = AppendToComment(m_message, "No OUT files created")
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 		End If
 
@@ -108,6 +104,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		If Not ZipConcatOutFile(m_WorkDir, m_mgrParams.GetParam("zipprogram"), m_JobNum) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
+
+		'Add working files to delete list
+		'Individual OUT files
+		Dim OutFileList() As String = Directory.GetFiles(m_WorkDir, "*.out")
+		For Each OutFile As String In OutFileList
+			clsGlobal.FilesToDelete.Add(OutFile)
+		Next
+        'Add .out extension to list of file extensions to delete
+        clsGlobal.m_FilesToDeleteExt.Add(".out")
 
 		'Add cluster statistics to summary file
 		AddClusterStatsToSummaryFile()
@@ -122,10 +127,25 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub m_CmdRunner_LoopWaiting() Handles m_CmdRunner.LoopWaiting
+		Static dtLastOutFileCountTime AS System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
-		'Update the status file
-		CalculateNewStatus()
-		m_StatusTools.UpdateAndWrite(m_progress)
+        ' Synchronize the stored Debug level with the value stored in the database
+        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+        ' Compute the progress by comparing the number of .Out files to the number of .Dta files 
+        ' (only count the files every 10 seconds)
+        If System.DateTime.Now.Subtract(dtLastOutFileCountTime).TotalSeconds >= 10 Then
+            dtLastOutFileCountTime = System.DateTime.Now
+        	CalculateNewStatus()
+        End If
+
+        'Update the status file (limit the updates to every 5 seconds)
+        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.Now
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+        End If
 
 	End Sub
 
@@ -144,8 +164,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		'Verify sequest.log file exists
 		If Not File.Exists(SeqLogFilePath) Then
-			m_logger.PostEntry("Sequest log file not found for job " & m_JobNum, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Sequest log file not found for job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            Exit Sub
 		End If
 
 		'Read the sequest.log file
@@ -154,56 +174,56 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			fileContents = My.Computer.FileSystem.ReadAllText(SeqLogFilePath)
 		Catch ex As Exception
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), Exception reading sequest log file: " & ex.Message
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		End Try
 
 		'Node machine count
 		NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the sequest task on\s+\d+\s+node")
 		If NumNodeMachines = 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), node machine count line not found"
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		ElseIf NumNodeMachines < 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), Exception retrieving node machine count: " & m_ErrMsg
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		End If
 
 		'Sequest process count
 		NumSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\s+\d+\s+slave processes")
 		If NumSlaveProcesses = 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), slave process count line not found"
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		ElseIf NumSlaveProcesses < 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), Exception retrieving slave process count: " & m_ErrMsg
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		End If
 
 		'Total search time
 		TotalSearchTime = GetIntegerFromSeqLogFileString(fileContents, "Total search time:\s+\d+")
 		If TotalSearchTime = 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), total search time line not found"
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		ElseIf TotalSearchTime < 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), Exception retrieving total search time: " & m_ErrMsg
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		End If
 
 		'Searched file count
 		SearchedFileCount = GetIntegerFromSeqLogFileString(fileContents, "secs for\s+\d+\s+files")
 		If SearchedFileCount = 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), searched file count line not found"
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		ElseIf SearchedFileCount < 0 Then
 			Dim Msg As String = "clsAnalysisToolRunnerSeqCluster.AddClusterStatsToSummaryFile(), Exception retrieving searched file count: " & m_ErrMsg
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, False)
-			Exit Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
+            Exit Sub
 		End If
 
 		'Average search time

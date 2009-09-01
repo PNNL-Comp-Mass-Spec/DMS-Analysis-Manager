@@ -3,7 +3,7 @@ Option Strict On
 
 ' This class can be used to search a list of values for a given value, plus or minus a given tolerance
 ' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-' Copyright 2005, Battelle Memorial Institute
+' Copyright 2005, Battelle Memorial Institute.  All Rights Reserved.
 ' Started November 16, 2003
 '
 ' Last modified January 24, 2004

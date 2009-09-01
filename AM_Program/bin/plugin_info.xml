@@ -1,12 +1,16 @@
 <?xml version="1.0"?>
 <Plugins>
 
-
 <ToolRunners>
 	<ToolRunner 
-		Tool="inspect" 
-		Class="AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN" 
-		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" 
+		Tool="dta_gen" 
+		Class="DTASpectraFileGen.clsDtaGenToolRunner" 
+		AssemblyFile="DTASpectraFileGen.dll" 
+	/>
+	<ToolRunner 
+		Tool="dta_gen-cluster" 
+		Class="DTASpectraFileGen.clsDtaGenToolRunner" 
+		AssemblyFile="DTASpectraFileGen.dll" 
 	/>
 	<ToolRunner 
 		Tool="xtandem" 
@@ -15,7 +19,7 @@
 	/>
 	<ToolRunner 
 		Tool="sequest" 
-		Class="AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeq" 
+		Class="AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase" 
 		AssemblyFile="AnalysisManagerSequestPlugin.dll" 
 	/>
 	<ToolRunner 
@@ -30,8 +34,8 @@
 	/>
 	<ToolRunner 
 		Tool="icr2ls" 
-		Class="AnalysisManagerBase.clsAnalysisToolRunnerICR" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR" 
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" 
 	/>
 	<ToolRunner 
 		Tool="tic_icr" 
@@ -75,8 +79,8 @@
 	/>
 	<ToolRunner 
 		Tool="ltq_ftpek" 
-		Class="AnalysisManagerBase.clsAnalysisToolRunnerLTQ_FTPek" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek" 
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" 
 	/>
 	<ToolRunner 
 		Tool="masic_finnigan" 
@@ -108,6 +112,51 @@
 		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC" 
 		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="dataextractor" 
+		Class="AnalysisManagerExtractionPlugin.clsExtractToolRunner" 
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
+	/>
+	<ToolRunner 
+		Tool="results_transfer" 
+		Class="AnalysisManagerResultsXferPlugin.clsResultXferToolRunner" 
+		AssemblyFile="AnalysisManagerResultsXferPlugin.dll" 
+	/>
+	<ToolRunner 
+		Tool="inspect" 
+		Class="AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN" 
+		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msmsspectrapreprocessor" 
+		Class="MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter" 
+		AssemblyFile="MsMsSpectrumFilterAM.dll" 
+	/>
+	<ToolRunner 
+		Tool="dta_split" 
+		Class="AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit" 
+		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="inspectresultsassembly" 
+		Class="AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly" 
+		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msxml_gen" 
+		Class="AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen" 
+		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="dta_import" 
+		Class="AnalysisManagerDtaImportPlugIn.clsAnalysisToolRunnerDtaImport" 
+		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msclusterdtatodat" 
+		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT" 
+		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -115,6 +164,21 @@
 		Tool="inspect" 
 		Class="AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN" 
 		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="results_transfer" 
+		Class="AnalysisManagerResultsXferPlugin.clsAnalysisResourcesResultXfer" 
+		AssemblyFile="AnalysisManagerResultsXferPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="dataextractor" 
+		Class="AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction" 
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="dta_gen" 
+		Class="DTASpectraFileGen.clsDtaGenResources" 
+		AssemblyFile="DTASpectraFileGen.dll" 
 	/>
 	<Resourcer 
 		Tool="xtandem" 
@@ -133,8 +197,8 @@
 	/>
 	<Resourcer 
 		Tool="icr2ls" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls" 
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="tic_icr" 
@@ -178,38 +242,68 @@
 	/>
 	<Resourcer 
 		Tool="ltq_ftpek" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerBase.dll" 
+		Class="AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls" 
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="masic_finnigan" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC" 
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" 
 	/>
 	<Resourcer 
 		Tool="masic_agilent" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC" 
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" 
 	/>
 	<Resourcer 
 		Tool="decon2ls" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="decon2ls_agilent" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="tic_d2l" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="tic_d2l_agilent" 
-		Class="AnalysisManagerBase.clsAnalysisResources" 
-		AssemblyFile="AnalysisManagerProg.exe" 
+		Class="AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls" 
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msmsspectrapreprocessor" 
+		Class="MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter" 
+		AssemblyFile="MsMsSpectrumFilterAM.dll" 
+	/>
+	<Resourcer 
+		Tool="dta_split" 
+		Class="AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit" 
+		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="inspectresultsassembly" 
+		Class="AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly" 
+		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msxml_gen" 
+		Class="AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen" 
+		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="dta_import" 
+		Class="AnalysisManagerDtaImportPlugIn.clsAnalysisResourcesDtaImport" 
+		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msclusterdtatodat" 
+		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT" 
+		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" 
 	/>
 </Resourcers>
 
@@ -242,11 +336,11 @@
 	/>
 </DTAGenerators>
 
-<DTAFilters>
+<DTAFilters Note="This section is obsolete">
 	<DTAFilter 
 		FilterType="msms_spectrum_filter" 
 		Class="MSMSSpectrumFilter.clsAnalysisManagerSpectrumFilter" 
-		AssemblyFile="MsMsSpectrumFilter.dll" 
+		AssemblyFile="MsMsSpectrumFilterAM.dll" 
 	/>
 </DTAFilters>
 

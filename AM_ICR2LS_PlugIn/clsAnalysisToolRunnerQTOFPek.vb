@@ -57,12 +57,12 @@ Public Class clsAnalysisToolRunnerQTOFPek
 		System.Threading.Thread.Sleep(5000)
 
 		'If specified, run Eric's calibration tool
-		If CBool(m_mgrParams.GetParam("qtof", "performcal")) Then
-			If Not PerformEricCal() Then
-				CleanupFailedJob("Error performing post-analysis calibration process")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		End If
+        If CBool(m_mgrParams.GetParam("qtof")) Then  ', "performcal"
+            If Not PerformEricCal() Then
+                CleanupFailedJob("Error performing post-analysis calibration process")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End If
 
 		'Run the cleanup routine from the base class
 		If PerfPostAnalysisTasks("ICR") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then

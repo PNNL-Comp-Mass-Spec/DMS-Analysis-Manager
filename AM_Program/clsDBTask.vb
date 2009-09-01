@@ -4,13 +4,16 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 10/26/2007
 '
-' Last modified 02/14/2008
+' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports System.Collections.Specialized
 Imports System.Data.SqlClient
-Imports PRISM.Logging
 Imports AnalysisManagerBase.clsAnalysisMgrSettings
+Imports System.Xml.XPath
+Imports System.Xml
+Imports System.IO
+
 
 Namespace AnalysisManagerBase
 
@@ -24,20 +27,23 @@ Namespace AnalysisManagerBase
 		Public Enum RequestTaskResult
 			TaskFound = 0
 			NoTaskFound = 1
-			ResultError = 2
+            ResultError = 2
+            TooManyRetries = 3
+            Deadlock = 4
 		End Enum
 #End Region
 
 #Region "Constants"
-		Protected Const RET_VAL_OK As Integer = 0
-		Protected Const RET_VAL_TASK_NOT_AVAILABLE As Integer = 53000
+        Protected Const RET_VAL_OK As Integer = 0
+        Protected Const RET_VAL_EXCESSIVE_RETRIES As Integer = -5           ' Timeout expired
+        Protected Const RET_VAL_DEADLOCK As Integer = -4                    ' Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+        Protected Const RET_VAL_TASK_NOT_AVAILABLE As Integer = 53000
+		Protected Const DEFAULT_SP_RETRY_COUNT As Integer = 3
 #End Region
 
 #Region "Module variables"
-		'Logging
-		Protected m_Logger As ILogger
 
-		'Manager parameters
+        'Manager parameters
 		Protected m_MgrParams As IMgrParams
 		Protected m_ConnStr As String
 		Protected m_BrokerConnStr As String
@@ -45,7 +51,9 @@ Namespace AnalysisManagerBase
 		Protected m_DebugLevel As Integer
 
 		'Job status
-		Protected m_TaskWasAssigned As Boolean = False
+        Protected m_TaskWasAssigned As Boolean = False
+
+        Protected m_Xml_Text As String
 #End Region
 
 #Region "Properties"
@@ -82,17 +90,15 @@ Namespace AnalysisManagerBase
 		''' Constructor
 		''' </summary>
 		''' <param name="MgrParams">An IMgrParams object containing manager parameters</param>
-		''' <param name="Logger">An ILogger object to handle logging</param>
-		''' <remarks></remarks>
-		Protected Sub New(ByVal MgrParams As IMgrParams, ByVal Logger As ILogger, ByVal DebugLvl As Integer)
+        ''' <remarks></remarks>
+        Protected Sub New(ByVal MgrParams As IMgrParams, ByVal DebugLvl As Integer)
 
-			m_MgrParams = MgrParams
-			m_Logger = Logger
-			m_ConnStr = m_MgrParams.GetParam("ConnectionString")
-			m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")
-			m_DebugLevel = DebugLvl
+            m_MgrParams = MgrParams
+            m_ConnStr = m_MgrParams.GetParam("ConnectionString")
+            m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")
+            m_DebugLevel = DebugLvl
 
-		End Sub
+        End Sub
 
 		''' <summary>
 		''' Requests a task
@@ -102,11 +108,12 @@ Namespace AnalysisManagerBase
 		Public MustOverride Function RequestTask() As RequestTaskResult
 
 		''' <summary>
-		''' Closes a task
+		''' Closes out a task
 		''' </summary>
-		''' <param name="Success"></param>
+		''' <param name="CloseOut"></param>
+		''' <param name="CompMsg"></param>
 		''' <remarks></remarks>
-		Public MustOverride Sub CloseTask(ByVal Success As Boolean)
+		Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)
 
 		''' <summary>
 		''' Reports database errors to local log
@@ -114,12 +121,12 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Protected Sub LogErrorEvents()
 			If m_ErrorList.Count > 0 Then
-				m_Logger.PostEntry("Warning messages were posted to local log", ILogger.logMsgType.logWarning, True)
-			End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning messages were posted to local log")
+            End If
 			Dim s As String
 			For Each s In m_ErrorList
-				m_Logger.PostEntry(s, ILogger.logMsgType.logWarning, True)
-			Next
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, s)
+            Next
 		End Sub
 
 		''' <summary>
@@ -147,78 +154,57 @@ Namespace AnalysisManagerBase
 
 		End Sub
 
+        Protected Function FillParamDictXml(ByVal InpXml As String) As StringDictionary
+
+            Dim ErrMsg As String
+
+            Try
+                '' read XML string into XPathDocument object 
+                '' and set up navigation objects to traverse it
+                '                Dim xReader As XmlReader = New XmlTextReader(New StringReader(InpXml))
+
+                Dim xReader As XmlReader = New XmlTextReader(New StringReader(InpXml))
+                Dim xdoc As New XPathDocument(xReader)
+                Dim xpn As XPathNavigator = xdoc.CreateNavigator()
+                Dim nodes As XPathNodeIterator = xpn.Select("//item")
+
+                Dim RetDictXml As New StringDictionary
+                '                ResultField.Clear()
+
+                '' traverse the parsed XML document and extract the key and value for each item
+                While nodes.MoveNext()
+                    '' extract key/value from XML element and dump to output
+                    Dim key As String = nodes.Current.GetAttribute("key", "")
+                    Dim value As String = nodes.Current.GetAttribute("value", "")
+                    '                   ResultField.AppendText(key & "->" & value & vbCrLf)
+                    RetDictXml.Add(key, value)
+
+                    '' extract the section name for the current item and dump it to output
+                    Dim nav2 As Xml.XPath.XPathNavigator = nodes.Current.Clone
+                    nav2.MoveToParent()
+                    Dim sect As String = nav2.GetAttribute("name", "")
+                    '                  ResultField.AppendText("section->" & sect & vbCrLf)
+                End While
+
+                Return RetDictXml
+            Catch ex As System.Exception
+				ErrMsg = "clsDBTask.FillParamDict(), exception filling dictionary; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                Return Nothing
+            End Try
+
+        End Function
+
 		''' <summary>
-		''' Requests task parameters from database
+		''' Method for executing a db stored procedure, assuming no data table is returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
 		''' </summary>
-		''' <param name="SpName">Stored procedure to use for task request</param>
-		''' <param name="EntityKey">Job number or datasetID, depending on task type</param>
-		''' <param name="ConnStr">Connection string for database to be used</param>
-		''' <returns>String dictionary containing task parameters if successful. NOTHING on failure</returns>
+		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
+		''' <param name="ConnStr">Db connection string</param>
+		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overridable Function GetTaskParams(ByVal SpName As String, ByVal EntityKey As Integer, _
-		  ByVal ConnStr As String) As StringDictionary
+		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String) As Integer
 
-			Dim ErrMsg As String
-			Dim ResCode As Integer
-			Dim Dt As New DataTable
-
-			'Get a data table holding the parameters for one job
-			Dim MyCmd As New SqlCommand
-			With MyCmd
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = SpName
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-				.Parameters.Add(New SqlClient.SqlParameter("@EntityId", SqlDbType.Int))
-				.Parameters.Item("@EntityId").Direction = ParameterDirection.Input
-				.Parameters.Item("@EntityId").Value = EntityKey
-				.Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
-				.Parameters.Item("@message").Direction = ParameterDirection.InputOutput
-				.Parameters.Item("@message").Value = ""
-			End With
-
-			If m_DebugLevel > 4 Then
-				Dim MyMsg As String = "clsDbTask.GetTaskParams(), connection string: " & ConnStr
-				m_Logger.PostEntry(MyMsg, ILogger.logMsgType.logDebug, True)
-				MyMsg = "clsDbTask.GetTaskParams(), printing param list"
-				m_Logger.PostEntry(MyMsg, ILogger.logMsgType.logDebug, True)
-				PrintCommandParams(MyCmd)
-			End If
-
-			ResCode = ExecuteSP(MyCmd, Dt, ConnStr)
-
-			'Check for SP errors
-			If ResCode <> 0 Then
-				'Check for SP errors
-				ErrMsg = "clsDBTask.GetTaskParams(), error retrieving job params: " & ResCode.ToString
-				m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-				Return Nothing
-			End If
-
-			'Verify exactly one row returned
-			If Dt.Rows.Count <> 1 Then
-				'Wrong number of rows returned
-				ErrMsg = "clsDBTask.GetTaskParams(), Incorrect row count retrieving parameters: " & Dt.Rows.Count.ToString
-				m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-				Return Nothing
-			End If
-
-			'Fill a string dictionary with the job parameters that have been found
-			Dim MyRow As DataRow = Dt.Rows(0)
-			Dim MyCols As DataColumnCollection = Dt.Columns
-			Dim CurCol As DataColumn
-			Dim RetDict As New StringDictionary
-			Try
-				For Each CurCol In MyCols
-					'Add the column heading and value to the dictionary
-					RetDict.Add(CurCol.ColumnName, DbCStr(MyRow(Dt.Columns(CurCol.ColumnName))))
-				Next
-				Return RetDict
-			Catch ex As System.Exception
-				ErrMsg = "clsDBTask.GetTaskParams(), exception filling dictionary; " & ex.Message
-				m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-				Return Nothing
-			End Try
+			Return ExecuteSP(SpCmd, Nothing, ConnStr, DEFAULT_SP_RETRY_COUNT)
 
 		End Function
 
@@ -227,12 +213,25 @@ Namespace AnalysisManagerBase
 		''' </summary>
 		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
 		''' <param name="ConnStr">Db connection string</param>
+		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String) As Integer
+		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
 
-			Return ExecuteSP(SpCmd, Nothing, ConnStr)
+			Return ExecuteSP(SpCmd, Nothing, ConnStr, MaxRetryCount)
 
+		End Function
+
+		''' <summary>
+		''' Method for executing a db stored procedure if a data table is to be returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
+		''' </summary>
+		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
+		''' <param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
+		''' <param name="ConnStr">Db connection string</param>
+		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String) As Integer
+			Return ExecuteSP(SpCmd, OutTable, ConnStr, DEFAULT_SP_RETRY_COUNT)
 		End Function
 
 		''' <summary>
@@ -241,58 +240,79 @@ Namespace AnalysisManagerBase
 		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
 		''' <param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
 		''' <param name="ConnStr">Db connection string</param>
+		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String) As Integer
+		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
 
 			Dim ResCode As Integer = -9999	'If this value is in error msg, then exception occurred before ResCode was set
 			Dim ErrMsg As String
 			Dim MyTimer As New System.Diagnostics.Stopwatch
-			Dim RetryCount As Integer = 3
-
-			m_ErrorList.Clear()
-			While RetryCount > 0	'Multiple retry loop for handling SP execution failures
-				Try
-					Using Cn As SqlConnection = New SqlConnection(ConnStr)
-						AddHandler Cn.InfoMessage, New SqlInfoMessageEventHandler(AddressOf OnInfoMessage)
-						Using Da As SqlDataAdapter = New SqlDataAdapter(), Ds As DataSet = New DataSet
-							'NOTE: The connection has to be added here because it didn't exist at the time the command object was created
-							SpCmd.Connection = Cn
-							'Change command timeout from 30 second default in attempt to reduce SP execution timeout errors
-							SpCmd.CommandTimeout = CInt(m_MgrParams.GetParam("cmdtimeout"))
-							Da.SelectCommand = SpCmd
-							MyTimer.Start()
-							Da.Fill(Ds)
-							MyTimer.Stop()
-							ResCode = CInt(Da.SelectCommand.Parameters("@Return").Value)
-							If OutTable IsNot Nothing Then OutTable = Ds.Tables(0)
-						End Using  'Ds
-						RemoveHandler Cn.InfoMessage, AddressOf OnInfoMessage
-					End Using  'Cn
-					LogErrorEvents()
-					Exit While
-				Catch ex As System.Exception
-					MyTimer.Stop()
-					RetryCount -= 1
-					ErrMsg = "clsDBTask.ExecuteSP(), exception filling data adapter, " & ex.Message
-					ErrMsg &= ". ResCode = " & ResCode.ToString & ". Retry count = " & RetryCount.ToString
-					m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-				Finally
-					If m_DebugLevel > 1 Then
-						ErrMsg = "SP execution time: " & (CDbl(MyTimer.ElapsedMilliseconds) / 1000.0#).ToString("##0.000") & " seconds "
-						ErrMsg &= "for SP " & SpCmd.CommandText
-						m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logDebug, True)
-					End If
-					MyTimer.Reset()
-				End Try
-				System.Threading.Thread.Sleep(10000)	'Wait 10 seconds before retrying
-			End While
+			Dim RetryCount As Integer = MaxRetryCount
+            Dim blnDeadlockOccurred As Boolean
 
 			If RetryCount < 1 Then
-				'Too many retries, log and return error
-				ErrMsg = "Excessive retries executing SP " & SpCmd.CommandText
-				m_Logger.PostEntry(ErrMsg, ILogger.logMsgType.logError, True)
-				Return -1
+				RetryCount = 1
+			End If
+
+			m_ErrorList.Clear()
+            While RetryCount > 0    'Multiple retry loop for handling SP execution failures
+                blnDeadlockOccurred = False
+                Try
+                    Using Cn As SqlConnection = New SqlConnection(ConnStr)
+                        AddHandler Cn.InfoMessage, New SqlInfoMessageEventHandler(AddressOf OnInfoMessage)
+                        Using Da As SqlDataAdapter = New SqlDataAdapter(), Ds As DataSet = New DataSet
+                            'NOTE: The connection has to be added here because it didn't exist at the time the command object was created
+                            SpCmd.Connection = Cn
+                            'Change command timeout from 30 second default in attempt to reduce SP execution timeout errors
+                            SpCmd.CommandTimeout = CInt(m_MgrParams.GetParam("cmdtimeout"))
+                            Da.SelectCommand = SpCmd
+                            MyTimer.Start()
+                            Da.Fill(Ds)
+                            MyTimer.Stop()
+                            ResCode = CInt(Da.SelectCommand.Parameters("@Return").Value)
+                            If OutTable IsNot Nothing Then OutTable = Ds.Tables(0)
+                        End Using  'Ds
+                        RemoveHandler Cn.InfoMessage, AddressOf OnInfoMessage
+                    End Using  'Cn
+                    LogErrorEvents()
+                    Exit While
+                Catch ex As System.Exception
+                    MyTimer.Stop()
+                    RetryCount -= 1
+                    ErrMsg = "clsDBTask.ExecuteSP(), exception filling data adapter for " & SpCmd.CommandText & ", " & ex.Message
+                    ErrMsg &= ". ResCode = " & ResCode.ToString & ". Retry count = " & RetryCount.ToString
+                    ErrMsg &= "; " & clsGlobal.GetExceptionStackTrace(ex)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                    If ex.Message.StartsWith("Could not find stored procedure " & SpCmd.CommandText) Then
+                        Exit While
+                    ElseIf ex.Message.Contains("was deadlocked") Then
+                        blnDeadlockOccurred = True
+                    End If
+                Finally
+                    If m_DebugLevel > 1 Then
+                        ErrMsg = "SP execution time: " & (CDbl(MyTimer.ElapsedMilliseconds) / 1000.0#).ToString("##0.000") & " seconds "
+                        ErrMsg &= "for SP " & SpCmd.CommandText
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ErrMsg)
+                    End If
+                    MyTimer.Reset()
+                End Try
+                System.Threading.Thread.Sleep(20000)    'Wait 20 seconds before retrying
+            End While
+
+			If RetryCount < 1 Then
+                'Too many retries, log and return error
+                ErrMsg = "Excessive retries"
+                If blnDeadlockOccurred Then
+                    ErrMsg &= " (including deadlock)"
+                End If
+                ErrMsg = " executing SP " & SpCmd.CommandText
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                If blnDeadlockOccurred Then
+                    Return RET_VAL_DEADLOCK
+                Else
+                    Return RET_VAL_EXCESSIVE_RETRIES
+                End If
 			End If
 
 			Return ResCode
@@ -313,89 +333,12 @@ Namespace AnalysisManagerBase
 			Dim MyMsg As String = ""
 
 			For Each MyParam As SqlParameter In InpCmd.Parameters
-				MyMsg &= vbCrLf & "Name= " & MyParam.ParameterName & vbTab & ", Value= " & DbCStr(MyParam.Value)
+				MyMsg &= vbCrLf & "Name= " & MyParam.ParameterName & vbTab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
 			Next
 
-			m_Logger.PostEntry("Parameter list:" & MyMsg, ILogger.logMsgType.logDebug, True)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" & MyMsg)
 
 		End Sub
-
-		Protected Function DbCStr(ByVal InpObj As Object) As String
-
-			'If input object is DbNull, returns "", otherwise returns String representation of object
-			If InpObj Is DBNull.Value Then
-				Return ""
-			Else
-				Return CStr(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCSng(ByVal InpObj As Object) As Single
-
-			'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0.0
-			Else
-				Return CSng(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCDbl(ByVal InpObj As Object) As Double
-
-			'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0.0
-			Else
-				Return CDbl(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCInt(ByVal InpObj As Object) As Integer
-
-			'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CInt(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCLng(ByVal InpObj As Object) As Long
-
-			'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CLng(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCDec(ByVal InpObj As Object) As Decimal
-
-			'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CDec(InpObj)
-			End If
-
-		End Function
-
-		Protected Function DbCShort(ByVal InpObj As Object) As Short
-
-			'If input object is DbNull, returns 0, otherwise returns Short representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CShort(InpObj)
-			End If
-
-		End Function
 #End Region
 
 	End Class

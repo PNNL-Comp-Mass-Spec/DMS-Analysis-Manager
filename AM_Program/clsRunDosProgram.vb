@@ -4,24 +4,21 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 05/09/2008
+' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
-
-Imports PRISM.Logging
 
 Namespace AnalysisManagerBase
 
-	Public Class clsRunDosProgram
+    Public Class clsRunDosProgram
 
-		'*********************************************************************************************************
-		'Provides a looping wrapper around a ProgRunner object for running command-line programs
-		'*********************************************************************************************************
+        '*********************************************************************************************************
+        'Provides a looping wrapper around a ProgRunner object for running command-line programs
+        '*********************************************************************************************************
 
 #Region "Module variables"
-		Private m_CreateNoWindow As Boolean = True
-		Private m_MonitorInterval As Integer = 2000	 'msec
-		Private m_Logger As ILogger
-		Private m_WorkDir As String
+        Private m_CreateNoWindow As Boolean = True
+        Private m_MonitorInterval As Integer = 2000  'msec
+        Private m_WorkDir As String
         Private m_DebugLevel As Integer = 0
         Private m_ExitCode As Integer = 0
 #End Region
@@ -78,12 +75,10 @@ Namespace AnalysisManagerBase
         ''' <summary>
         ''' Constructor
         ''' </summary>
-        ''' <param name="Logger">Logging object</param>
         ''' <param name="WorkDir">Workdirectory for input/output files, if any</param>
         ''' <remarks></remarks>
-        Sub New(ByVal Logger As ILogger, ByVal WorkDir As String)
+        Sub New(ByVal WorkDir As String)
 
-            m_Logger = Logger
             m_WorkDir = WorkDir
 
         End Sub
@@ -109,10 +104,8 @@ Namespace AnalysisManagerBase
             End With
 
             If m_DebugLevel > 3 Then
-                m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), ProgRunner.Arguments = " & ProgRunner.Arguments, _
-                 ILogger.logMsgType.logDebug, True)
-                m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), ProgRunner.Program = " & ProgRunner.Program, _
-                 ILogger.logMsgType.logDebug, True)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsRunDosProgram.RunProgram(), ProgRunner.Arguments = " & ProgRunner.Arguments)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsRunDosProgram.RunProgram(), ProgRunner.Program = " & ProgRunner.Program)
             End If
 
             'DAC debugging
@@ -126,7 +119,7 @@ Namespace AnalysisManagerBase
                     System.Threading.Thread.Sleep(m_MonitorInterval)
                 End While
             Catch ex As Exception
-                m_Logger.PostError("Exception running DOS program " & ProgNameLoc, ex, True)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception running DOS program " & ProgNameLoc & "; " & clsGlobal.GetExceptionStackTrace(ex))
                 Return False
             End Try
 
@@ -134,13 +127,11 @@ Namespace AnalysisManagerBase
             m_ExitCode = ProgRunner.ExitCode
 
             If ProgRunner.State = 10 Then
-                m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), Error: Progrunner.State = 10", _
-                 ILogger.logMsgType.logError, True)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: Progrunner.State = 10" & " for Program = " & ProgNameLoc)
                 Return False
 
             ElseIf (UseResCode And ProgRunner.ExitCode <> 0) Then
-                m_Logger.PostEntry("clsAnalysisToolRunnerSeqBase.RunProgram(), Error: ProgRunner.ExitCode = " & ProgRunner.ExitCode.ToString, _
-                 ILogger.logMsgType.logError, True)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: ProgRunner.ExitCode = " & ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
                 Return False
 
             Else
@@ -156,6 +147,6 @@ Namespace AnalysisManagerBase
         End Function
 #End Region
 
-	End Class
+    End Class
 
 End Namespace

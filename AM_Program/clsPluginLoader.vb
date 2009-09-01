@@ -74,29 +74,36 @@ Namespace AnalysisManagerBase
 			Dim nodeList As XmlNodeList
 			Dim n As XmlElement
 			Dim e As Exception
+            Dim strPluginInfo As String = String.Empty
 
-			Try
-				'read the tool runner info file
-				doc.Load(GetPluginInfoFilePath(m_pluginConfigFile))
-				Dim root As XmlElement = doc.DocumentElement
+            Try
+                If XPath Is Nothing Then XPath = String.Empty
+                If className Is Nothing Then className = String.Empty
+                If assyName Is Nothing Then assyName = String.Empty
 
-				'find the element that matches the tool name
-				nodeList = root.SelectNodes(XPath)
+                strPluginInfo = "XPath=""" & XPath & """; className=""" & className & """; assyName=" & assyName & """"
 
-				' make sure that we found exactly one element, 
-				' and if we did, retrieve its information 
-				If nodeList.Count <> 1 Then
-					Throw New System.Exception("Could not resolve tool name")
-				End If
-				For Each n In nodeList
-					className = n.GetAttribute("Class")
-					assyName = n.GetAttribute("AssemblyFile")
-				Next
-				GetPluginInfo = True
-			Catch e
-				m_msgList.Add(e.Message)
-				GetPluginInfo = False
-			End Try
+                'read the tool runner info file
+                doc.Load(GetPluginInfoFilePath(m_pluginConfigFile))
+                Dim root As XmlElement = doc.DocumentElement
+
+                'find the element that matches the tool name
+                nodeList = root.SelectNodes(XPath)
+
+                ' make sure that we found exactly one element, 
+                ' and if we did, retrieve its information 
+                If nodeList.Count <> 1 Then
+                    Throw New System.Exception("Could not resolve tool name; " & strPluginInfo)
+                End If
+                For Each n In nodeList
+                    className = n.GetAttribute("Class")
+                    assyName = n.GetAttribute("AssemblyFile")
+                Next
+                GetPluginInfo = True
+            Catch e
+                m_msgList.Add("Error in GetPluginInfo:" & e.Message & "; " & strPluginInfo)
+                GetPluginInfo = False
+            End Try
 		End Function
 
 		''' <summary>
@@ -130,31 +137,55 @@ Namespace AnalysisManagerBase
 		''' <param name="clustered">TRUE if tool is running on a sequest cluster, FALSE otherwise</param>
 		''' <returns>An object meeting the IToolRunner interface</returns>
 		''' <remarks></remarks>
-		Public Shared Function GetToolRunner(ByVal ToolName As String, ByVal clustered As Boolean) As IToolRunner
-			' if manager is configured for a cluster, append a suffix to the tool name
-			If clustered Then
-				ToolName &= "-cluster"
-			End If
-			Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower & "']"
+        Public Shared Function GetToolRunner(ByVal ToolName As String, ByVal clustered As Boolean) As IToolRunner
 
-			Dim className As String = ""
-			Dim assyName As String = ""
-			Dim myToolRunner As IToolRunner = Nothing
-			Dim e As Exception
-			If GetPluginInfo(xpath, className, assyName) Then
-				Dim obj As Object = LoadObject(className, assyName)
-				If Not obj Is Nothing Then
-					Try
-						myToolRunner = DirectCast(obj, IToolRunner)
-					Catch e
-						''Catch any exceptions
-						m_msgList.Add(e.Message)
-					End Try
-				End If
-			End If
-			clsSummaryFile.Add("Loaded ToolRunner: " & className & " from " & assyName)
-			GetToolRunner = myToolRunner
-		End Function
+            ' if manager is configured for a cluster, append a suffix to the tool name
+            If clustered Then
+                ToolName &= "-cluster"
+            End If
+            Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower & "']"
+
+            Dim className As String = ""
+            Dim assyName As String = ""
+            Dim myToolRunner As IToolRunner = Nothing
+            Dim e As Exception
+            If GetPluginInfo(xpath, className, assyName) Then
+                ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
+                ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
+                ''    Select Case className.ToLower
+                ''        'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit, IToolRunner)
+                ''        'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN, IToolRunner)
+                ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly, IToolRunner)
+                ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT, IToolRunner)
+                ''        'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower
+                ''        '    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter, IToolRunner)
+                ''        Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower
+                ''            myToolRunner = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan, IToolRunner)
+                ''    End Select
+                ''    If Not myToolRunner Is Nothing Then
+                ''        Return myToolRunner
+                ''    End If
+                ''End If
+
+                Dim obj As Object = LoadObject(className, assyName)
+                If Not obj Is Nothing Then
+                    Try
+                        myToolRunner = DirectCast(obj, IToolRunner)
+                    Catch e
+                        ''Catch any exceptions
+                        m_msgList.Add(e.Message)
+                    End Try
+                End If
+            End If
+            clsSummaryFile.Add("Loaded ToolRunner: " & className & " from " & assyName)
+            GetToolRunner = myToolRunner
+        End Function
 
 		''' <summary>
 		''' Loads a tool spectra file generator object
@@ -183,32 +214,36 @@ Namespace AnalysisManagerBase
 			GetSpectraGenerator = myModule
 		End Function
 
-		''' <summary>
-		''' Loads a spectra filter object
-		''' </summary>
-		''' <param name="FilterType">Name of filter type to load</param>
-		''' <returns>An object meeting the ISpectraFilter interface</returns>
-		''' <remarks></remarks>
-		Public Shared Function GetSpectraFilter(ByVal FilterType As String) As ISpectraFilter
-			Dim xpath As String = "//DTAFilters/DTAFilter[@FilterType='" & FilterType & "']"
-			Dim className As String = ""
-			Dim assyName As String = ""
-			Dim myModule As ISpectraFilter = Nothing
-			Dim e As Exception
-			If GetPluginInfo(xpath, className, assyName) Then
-				Dim obj As Object = LoadObject(className, assyName)
-				If Not obj Is Nothing Then
-					Try
-						myModule = DirectCast(obj, ISpectraFilter)
-					Catch e
-						''Catch any exceptions
-						m_msgList.Add(e.Message)
-					End Try
-				End If
-			End If
-			clsSummaryFile.Add("Loaded DTAFilter: " & className & " from " & assyName)
-			GetSpectraFilter = myModule
-		End Function
+        ''
+        '' The following function is no longer used
+        '' It was used by clsAnalysisToolRunnerMSMS.vb, but that file has been replaced by clsAnalysisToolRunnerBase.vb
+        ''
+        ' <summary>
+        ' Loads a spectra filter object
+        ' </summary>
+        ' <param name="FilterType">Name of filter type to load</param>
+        ' <returns>An object meeting the ISpectraFilter interface</returns>
+        ' <remarks></remarks>
+        ''Public Shared Function GetSpectraFilter(ByVal FilterType As String) As ISpectraFilter
+        ''	Dim xpath As String = "//DTAFilters/DTAFilter[@FilterType='" & FilterType & "']"
+        ''	Dim className As String = ""
+        ''	Dim assyName As String = ""
+        ''	Dim myModule As ISpectraFilter = Nothing
+        ''	Dim e As Exception
+        ''	If GetPluginInfo(xpath, className, assyName) Then
+        ''		Dim obj As Object = LoadObject(className, assyName)
+        ''		If Not obj Is Nothing Then
+        ''			Try
+        ''				myModule = DirectCast(obj, ISpectraFilter)
+        ''			Catch e
+        ''				''Catch any exceptions
+        ''				m_msgList.Add(e.Message)
+        ''			End Try
+        ''		End If
+        ''	End If
+        ''	clsSummaryFile.Add("Loaded DTAFilter: " & className & " from " & assyName)
+        ''	GetSpectraFilter = myModule
+        ''End Function
 
 		''' <summary>
 		''' Loads a resourcer object
@@ -223,20 +258,41 @@ Namespace AnalysisManagerBase
 			Dim assyName As String = ""
 			Dim myModule As IAnalysisResources = Nothing
 			Dim e As Exception
-			If GetPluginInfo(xpath, className, assyName) Then
-				Dim obj As Object = LoadObject(className, assyName)
-				If Not obj Is Nothing Then
-					Try
-						myModule = DirectCast(obj, IAnalysisResources)
-					Catch e
-						''Catch any exceptions
-						m_msgList.Add(e.Message)
-					End Try
-				End If
-			End If
-			clsSummaryFile.Add("Loaded resourcer: " & className & " from " & assyName)
-			GetAnalysisResources = myModule
-		End Function
+            If GetPluginInfo(xpath, className, assyName) Then
+                ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
+                ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
+                ''    Select Case className.ToLower
+                ''        'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit, IAnalysisResources)
+                ''        'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN, IAnalysisResources)
+                ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly, IAnalysisResources)
+                ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT, IAnalysisResources)
+                ''        Case "AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC".ToLower
+                ''            myModule = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC, IAnalysisResources)
+                ''    End Select
+                ''    If Not myModule Is Nothing Then
+                ''        Return myModule
+                ''    End If
+                ''End If
+
+                Dim obj As Object = LoadObject(className, assyName)
+                If Not obj Is Nothing Then
+                    Try
+                        myModule = DirectCast(obj, IAnalysisResources)
+                    Catch e
+                        ''Catch any exceptions
+                        m_msgList.Add(e.Message)
+                    End Try
+                End If
+            End If
+            clsSummaryFile.Add("Loaded resourcer: " & className & " from " & assyName)
+            GetAnalysisResources = myModule
+        End Function
 
 		''' <summary>
 		''' Gets the path to the plugin info config file

@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -50,6 +50,7 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\</OutputPath>
@@ -69,6 +70,7 @@
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032</NoWarn>
     <DebugType>none</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AnalysisManagerProg, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -76,15 +78,13 @@
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ParamFileGenerator">
-      <Name>ParamFileGenerator</Name>
-      <HintPath>..\..\AnalysisManagerCommon\ParamFileGenerator.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="ParamFileGenerator, Version=1.0.2944.19121, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <Name>PRISM</Name>
-      <HintPath>..\..\AnalysisManagerCommon\PRISM.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
@@ -113,15 +113,10 @@
     <Compile Include="clsAnalysisToolRunnerAgilentSeq.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="clsAnalysisToolRunnerSeq.vb">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="clsAnalysisToolRunnerSeqBase.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="clsAnalysisToolRunnerSeqCluster.vb">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="clsAnalysisToolRunnerSeqCluster.vb" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

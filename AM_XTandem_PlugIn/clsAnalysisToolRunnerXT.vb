@@ -5,18 +5,17 @@
 ' Created 06/07/2006
 '
 ' Last modified 02/19/2008
+' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 imports AnalysisManagerBase
-Imports PRISM.Logging
 Imports PRISM.Files
 Imports AnalysisManagerBase.clsGlobal
 Imports System.io
-Imports AnalysisManagerMSMSBase
 Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerXT
-	Inherits clsAnalysisToolRunnerMSMS
+    Inherits clsAnalysisToolRunnerBase
 
 	'*********************************************************************************************************
 	'Class for running XTandem analysis
@@ -44,81 +43,107 @@ Public Class clsAnalysisToolRunnerXT
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
-	Public Overrides Function OperateAnalysisTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim CmdStr As String
+        Dim CmdStr As String
+        Dim result As IJobParams.CloseOutType
 
-		m_logger.PostEntry("Running XTandem", ILogger.logMsgType.logNormal, LOG_LOCAL_ONLY)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
 
-		CmdRunner = New clsRunDosProgram(m_logger, m_WorkDir)
+        'Start the job timer
+        m_StartTime = System.DateTime.Now
 
-		If m_DebugLevel > 4 Then
-			m_logger.PostEntry("clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter", ILogger.logMsgType.logDebug, True)
-		End If
+        CmdRunner = New clsRunDosProgram(m_WorkDir)
 
-		' verify that program file exists
-		Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
-		If Not File.Exists(progLoc) Then
-			m_logger.PostEntry("Cannot find XTandem program file", ILogger.logMsgType.logError, True)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If m_DebugLevel > 4 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter")
+        End If
 
-		'--------------------------------------------------------------------------------------------
-		'Future section to monitor XTandem log file for progress determination
-		'--------------------------------------------------------------------------------------------
-		''Get the XTandem log file name for a File Watcher to monitor
-		'Dim XtLogFileName As String = GetXTLogFileName(Path.Combine(m_WorkDir, m_XtSetupFile))
-		'If XtLogFileName = "" Then
-		'	m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
-		'	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		'End If
+        ' verify that program file exists
+        Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
+        If Not File.Exists(progLoc) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find XTandem program file")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		''Setup and start a File Watcher to monitor the XTandem log file
-		'StartFileWatcher(m_workdir, XtLogFileName)
-		'--------------------------------------------------------------------------------------------
-		'End future section
-		'--------------------------------------------------------------------------------------------
+        '--------------------------------------------------------------------------------------------
+        'Future section to monitor XTandem log file for progress determination
+        '--------------------------------------------------------------------------------------------
+        ''Get the XTandem log file name for a File Watcher to monitor
+        'Dim XtLogFileName As String = GetXTLogFileName(Path.Combine(m_WorkDir, m_XtSetupFile))
+        'If XtLogFileName = "" Then
+        '	m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
+        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        'End If
 
-		'Set up and execute a program runner to run X!Tandem
-		CmdStr = "input.xml"
-		If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
-			m_logger.PostEntry("Error running XTandem" & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ''Setup and start a File Watcher to monitor the XTandem log file
+        'StartFileWatcher(m_workdir, XtLogFileName)
+        '--------------------------------------------------------------------------------------------
+        'End future section
+        '--------------------------------------------------------------------------------------------
 
-		'--------------------------------------------------------------------------------------------
-		'Future section to monitor XTandem log file for progress determination
-		'--------------------------------------------------------------------------------------------
-		''Turn off file watcher
-		'm_StatFileWatch.EnableRaisingEvents = False
-		'--------------------------------------------------------------------------------------------
-		'End future section
-		'--------------------------------------------------------------------------------------------
+        'Set up and execute a program runner to run X!Tandem
+        CmdStr = "input.xml"
+        If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'Zip the output file
-		Dim ZipResult As IJobParams.CloseOutType = ZipMainOutputFile()
-		Return ZipResult
+        '--------------------------------------------------------------------------------------------
+        'Future section to monitor XTandem log file for progress determination
+        '--------------------------------------------------------------------------------------------
+        ''Turn off file watcher
+        'm_StatFileWatch.EnableRaisingEvents = False
+        '--------------------------------------------------------------------------------------------
+        'End future section
+        '--------------------------------------------------------------------------------------------
 
-	End Function
+        'Stop the job timer
+        m_StopTime = System.DateTime.Now
 
-	''' <summary>
-	''' Calls base class to make an XTandem results folder
-	''' </summary>
-	''' <param name="AnalysisType">Analysis type prefix for results folder name</param>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Protected Overrides Function MakeResultsFolder(ByVal AnalysisType As String) As IJobParams.CloseOutType
-		MyBase.MakeResultsFolder("XTM")
-	End Function
+        'Add the current job data to the summary file
+        If Not UpdateSummaryFile() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+        End If
 
-	''' <summary>
-	''' Cleans up stray analysis files
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks>Not presently implemented</remarks>
-	Protected Overrides Function DeleteTempAnalFiles() As IJobParams.CloseOutType
-		'TODO clean up any stray files (.PRO version of FASTA if we use it)
-	End Function
+        'Make sure objects are released
+        System.Threading.Thread.Sleep(2000)        '2 second delay
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
+
+        'Zip the output file
+        result = ZipMainOutputFile()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        result = MakeResultsFolder()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        result = MoveResultFiles()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        result = CopyResultsFolderToServer()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
+            'TODO: Figure out what to do here
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+
+    End Function
 
 	''' <summary>
 	''' Zips concatenated XML output file
@@ -137,15 +162,15 @@ Public Class clsAnalysisToolRunnerXT
 				ZipFileName = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
 				If Not Zipper.MakeZipFile("-fast", ZipFileName, Path.GetFileName(TmpFile)) Then
 					Dim Msg As String = "Error zipping output files, job " & m_JobNum
-					m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
-					m_message = AppendToComment(m_message, "Error zipping output files")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                    m_message = AppendToComment(m_message, "Error zipping output files")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 			Next
 		Catch ex As Exception
-			Dim Msg As String = "Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, LOG_DATABASE)
-			m_message = AppendToComment(m_message, "Error zipping output files")
+			Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = AppendToComment(m_message, "Error zipping output files")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
@@ -157,8 +182,8 @@ Public Class clsAnalysisToolRunnerXT
 				File.Delete(TmpFile)
 			Next
 		Catch Err As Exception
-			m_logger.PostError("Error deleting _xt.xml file, job " & m_JobNum, Err, LOG_DATABASE)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -170,9 +195,17 @@ Public Class clsAnalysisToolRunnerXT
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
-		'Update the status file
-		m_StatusTools.UpdateAndWrite(PROGRESS_PCT_XTANDEM_RUNNING)
+        ' Synchronize the stored Debug level with the value stored in the database
+        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+        'Update the status file (limit the updates to every 5 seconds)
+        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.Now
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_XTANDEM_RUNNING, 0, "", "", "", False)
+        End If
 
 	End Sub
 

@@ -1,0 +1,42 @@
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\ResolveAssemblyReference.cache
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\Interop.icr2ls.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.vbproj.ResolveComReference.cache
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.pdb
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.xml
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.exe
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\PRISM.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\FileConcatenator.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\Protein_Exporter.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\Apache.NMS.ActiveMQ.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\ICSharpCode.SharpZipLib.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\PeptideFileExtractor.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\Apache.NMS.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.pdb
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.xml
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\Interop.icr2ls.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.xml
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.exe
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\PRISM.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\FileConcatenator.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\Protein_Exporter.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\Apache.NMS.ActiveMQ.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\ICSharpCode.SharpZipLib.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\PeptideFileExtractor.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\Apache.NMS.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.xml
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\bin\Interop.icr2ls.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\ResolveAssemblyReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\Interop.icr2ls.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.vbproj.ResolveComReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
+F:\My Documents\Projects\DataMining\DMS_Managers\AnalysisManager_v2.0\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\log4net.dll
+C:\Development\AnalysisManagerRelease\NexGenPipeline\AM_ICR2LS_PlugIn\bin\log4net.xml

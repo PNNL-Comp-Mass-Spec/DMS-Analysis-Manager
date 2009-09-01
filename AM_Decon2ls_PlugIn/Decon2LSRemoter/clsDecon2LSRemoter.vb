@@ -130,16 +130,26 @@ Public Class clsDecon2LSRemoter
 
 		'Overload to allow specifying parameters in method call
 
-		'Reset the object
-		m_DeconObj.ResetState()
-		'Load the parameters
-		With m_DeconObj
-			.DataFile = DataFile
-			.FileType = FileType
-			.OutFile = OutFile
-			.ParameterFile = ParameterFile
-		End With
-		'Make the TIC
+        Try
+            'Reset the object
+            m_DeconObj.ResetState()
+        Catch ex As System.Exception
+            m_ErrMsg = "Error calling m_DeconObj.ResetState: " & ex.Message
+        End Try
+
+        Try
+            'Load the parameters
+            With m_DeconObj
+                .DataFile = DataFile
+                .FileType = FileType
+                .OutFile = OutFile
+                .ParameterFile = ParameterFile
+            End With
+        Catch ex As System.Exception
+            m_ErrMsg = "Error setting the parameters for m_DeconObj: " & ex.Message
+        End Try
+
+        'Make the TIC
 		Me.CreateTIC()
 
 	End Sub
@@ -154,7 +164,7 @@ Public Class clsDecon2LSRemoter
 		Try
 			m_DeconObj.Deconvolute()
 		Catch ex As System.Exception
-			m_ErrMsg = ex.Message
+            m_ErrMsg = "Error calling m_DeconObj.Deconvolute: " & ex.Message
 		End Try
 
 	End Sub
@@ -164,24 +174,39 @@ Public Class clsDecon2LSRemoter
 
 		'Overload to allow specifying parameters in method call
 
-		'Reset the object
-		m_DeconObj.ResetState()
-		'Load the parameters
-		With m_DeconObj
-			.DataFile = DataFile
-			.FileType = FileType
-			.OutFile = OutFile
-			.ParameterFile = ParameterFile
-		End With
-		'Make the TIC
-		Me.DeConvolute()
+        Try
+            'Reset the object
+            m_DeconObj.ResetState()
+        Catch ex As System.Exception
+            m_ErrMsg = "Error calling m_DeconObj.ResetState: " & ex.Message
+        End Try
+
+        Try
+            'Load the parameters
+            With m_DeconObj
+                .DataFile = DataFile
+                .FileType = FileType
+                .OutFile = OutFile
+                .ParameterFile = ParameterFile
+            End With
+        Catch ex As System.Exception
+            m_ErrMsg = "Error setting the parameters for m_DeconObj: " & ex.Message
+        End Try
+
+        'Deisotope each spectrum
+        Me.DeConvolute()
 
 	End Sub
 
 	Public Sub ResetState()
 
 		'Resets the Decon2LS object. Resets internal state to IDLE, stops threaded processes, and sets the parameters to null
-		m_DeconObj.ResetState()
+        Try
+            'Reset the object
+            m_DeconObj.ResetState()
+        Catch ex As System.Exception
+            m_ErrMsg = "Error calling m_DeconObj.ResetState: " & ex.Message
+        End Try
 
 	End Sub
 

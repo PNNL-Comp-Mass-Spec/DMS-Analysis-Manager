@@ -1,7 +1,10 @@
-Imports PRISM.Logging
+' Last modified 06/11/2009 JDS - Added logging using log4net
+Option Strict On
+
 Imports System.IO
 Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerLTQ_FTPek
 	Inherits clsAnalysisToolRunnerICRBase
@@ -34,8 +37,8 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		End If
 
 		'Get scan settings from settings file
-        MinScan = m_settingsFileParams.GetParam("ScanControl", "ScanStart", 1)
-        MaxScan = m_settingsFileParams.GetParam("ScanControl", "ScanStop", 1000000)
+        MinScan = CInt(m_jobParams.GetParam("scanstart"))
+        MaxScan = CInt(m_jobParams.GetParam("ScanStop"))
 		NumScans = MaxScan - MinScan
 		UseAllScans = CBool(IIf(MaxScan > 500000, True, False))
 
@@ -72,10 +75,10 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		End If
 
 		'Run the cleanup routine from the base class
-		If PerfPostAnalysisTasks("ICR") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			m_message = AppendToComment(m_message, "Error performing post analysis tasks")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            m_message = AppendToComment(m_message, "Error performing post analysis tasks")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -91,13 +94,15 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		Try
 			System.Threading.Thread.Sleep(5000)			 'Allow extra time for ICR2LS to release file locks
 			FoundFiles = Directory.GetFiles(m_workdir, "*.raw")
-			For Each MyFile In FoundFiles
-				DeleteFileWithRetries(MyFile)
-			Next
+            For Each MyFile In FoundFiles
+                ' Add the file to .FilesToDelete just in case the deletion fails
+                clsGlobal.FilesToDelete.Add(MyFile)
+                DeleteFileWithRetries(MyFile)
+            Next
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		Catch Err As Exception
-			m_logger.PostError("Error deleting .raw file, job " & m_JobNum, Err, LOG_DATABASE)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .raw file, job " & m_JobNum & Err.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 	End Function

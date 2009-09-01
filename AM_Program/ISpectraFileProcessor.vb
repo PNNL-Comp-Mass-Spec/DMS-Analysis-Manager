@@ -4,11 +4,10 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 01/16/2008
+' Last modified 07/29/2008
 '*********************************************************************************************************
 
 Imports System.Collections.Specialized
-Imports PRISM.Logging
 
 Namespace AnalysisManagerBase
 
@@ -38,23 +37,22 @@ Namespace AnalysisManagerBase
 
 #Region "Structures"
 		Structure InitializationParams
-			Dim SourceFolderPath As String
-			Dim OutputFolderPath As String
-			Dim MiscParams As StringDictionary
+			'Dim SourceFolderPath As String
+			'Dim OutputFolderPath As String
+			'Dim MiscParams As StringDictionary
 			Dim DebugLevel As Integer
-			Dim Logger As ILogger
-			Dim MgrParams As IMgrParams
+            Dim MgrParams As IMgrParams
 			Dim JobParams As IJobParams
 			Dim StatusTools As IStatusFile
 		End Structure
 #End Region
 
 #Region "Properties"
-		Property SourceFolderPath() As String	' (in)  – path to folder containing the raw spectra file
+		'		Property SourceFolderPath() As String	' (in)  – path to folder containing the raw spectra file
 
-		Property OutputFolderPath() As String	' (in) – path to folder where generated DTAs are to be placed
+		'		Property OutputFolderPath() As String	' (in) – path to folder where generated DTAs are to be placed
 
-		WriteOnly Property MiscParams() As StringDictionary	'For passing miscelleneous parameters (not presently used)
+		'		WriteOnly Property MiscParams() As StringDictionary	'For passing miscelleneous parameters (not presently used)
 
 		ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus	'Allows calling program to get current status
 
@@ -64,9 +62,7 @@ Namespace AnalysisManagerBase
 
 		Property DebugLevel() As Integer	'Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
 
-		WriteOnly Property Logger() As ILogger	 'Logger for debug messages
-
-		ReadOnly Property SpectraFileCount() As Integer	'Count of spectra files that have been created
+        ReadOnly Property SpectraFileCount() As Integer 'Count of spectra files that have been created
 
 		WriteOnly Property MgrParams() As IMgrParams	'Machine-specific parameters, such as file locations
 
