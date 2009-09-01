@@ -1,0 +1,1 @@
+xcopy %1 \\gigasax\DMS_Programs\AnalysisToolManagerDistribution\%1 /y
