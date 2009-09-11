@@ -80,6 +80,10 @@ Namespace AnalysisManagerProg
                     If Not m_MainProcess.InitMgr Then Exit Sub
                 End If
                 clsGlobal.AppFilePath = Application.ExecutablePath
+
+                Dim fiExecutable As New FileInfo(AppFilePath)
+                clsGlobal.AppFolderPath = fiExecutable.DirectoryName
+
                 m_MainProcess.DoAnalysis()
 
             Catch Err As System.Exception
@@ -108,15 +112,15 @@ Namespace AnalysisManagerProg
 		''' </summary>
 		''' <returns>TRUE for success, FALSE for failure</returns>
 		''' <remarks></remarks>
-		Private Function InitMgr() As Boolean
+        Private Function InitMgr() As Boolean
 
-			'Get the manager settings
-			Try
-				m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-			Catch ex As System.Exception
-				'Failures are logged by clsMgrSettings to application event logs
-				Return False
-			End Try
+            'Get the manager settings
+            Try
+                m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+            Catch ex As System.Exception
+                'Failures are logged by clsMgrSettings to application event logs
+                Return False
+            End Try
 
             ' Delete any temporary files that may be left in the app directory
             RemoveTempFiles()
@@ -164,8 +168,9 @@ Namespace AnalysisManagerProg
             Dim TasksStartedCount As Integer = 0
             Dim blnErrorDeletingFilesFlagFile As Boolean
 
-            Dim WorkingDir As String = m_MgrSettings.GetParam("workdir")
+            Dim strWorkingDir As String = m_MgrSettings.GetParam("workdir")
             Dim strMessage As String
+            Dim blnMgrCleanupSuccess As Boolean
 
             Try
 
@@ -182,8 +187,8 @@ Namespace AnalysisManagerProg
                         DeleteErrorDeletingFilesFlagFile()
 
                         'There was a problem deleting non result files with the last job.  Attempt to delete files again
-                        If Not CleanWorkDir(WorkingDir) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job") & "; see folder " & WorkingDir)
+                        If Not CleanWorkDir(strWorkingDir) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job") & "; see folder " & strWorkingDir)
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
                             CreateStatusFlagFile()
                             UpdateStatusFlagFileExists()
@@ -195,10 +200,35 @@ Namespace AnalysisManagerProg
 
                     'Verify an error hasn't left the the system in an odd state
                     If DetectStatusFlagFile() Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
-                        UpdateStatusFlagFileExists()
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
-                        Exit Sub
+
+                        Try
+                            Dim objCleanupMgrErrors As New clsCleanupMgrErrors( _
+                                                m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
+                                                m_MgrSettings.GetParam("MgrName"), _
+                                                clsGlobal.AppFolderPath, _
+                                                strWorkingDir)
+
+                            blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode())
+
+                        Catch ex As Exception
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Error calling AutoCleanupManagerErrors, " & _
+                                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
+
+                            blnMgrCleanupSuccess = False
+                        End Try
+
+
+                        If blnMgrCleanupSuccess Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Flag file found; automatically cleaned the work directory and deleted the flag file(s)")
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
+                            UpdateStatusFlagFileExists()
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
+                            Exit Sub
+                        End If
+
                     End If
 
                     'Check to see if the machine settings have changed
@@ -266,7 +296,7 @@ Namespace AnalysisManagerProg
                     'Verify working directory properly specified and empty
                     If Not ValidateWorkingDir() Then
                         'Working directory problem, so exit
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & WorkingDir)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
                         CreateStatusFlagFile()
                         UpdateStatusFlagFileExists()
                         Exit While
@@ -274,9 +304,15 @@ Namespace AnalysisManagerProg
 
                     'Check to see if an excessive number of errors have occurred
                     If m_ErrorCount > MAX_ERROR_COUNT Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager")
-                        DisableManagerLocally()
-                        UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled locally since excessive task failures")
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager via flag file")
+
+                        ' Note: We previously called DisableManagerLocally() to update AnalysisManager.config.exe
+                        ' We now create a flag file instead
+                        ' This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
+
+                        CreateStatusFlagFile()
+                        UpdateStatusFlagFileExists()
+
                         Exit While
                     End If
 
@@ -621,6 +657,27 @@ Namespace AnalysisManagerProg
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
                 Return False
             End Try
+
+        End Function
+
+        Protected Function GetManagerErrorCleanupMode() As clsCleanupMgrErrors.eCleanupModeConstants
+            Dim strManagerErrorCleanupMode As String
+            Dim eManagerErrorCleanupMode As clsCleanupMgrErrors.eCleanupModeConstants
+
+            strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode")
+
+            Select Case strManagerErrorCleanupMode.Trim
+                Case "0"
+                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled
+                Case "1"
+                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce
+                Case "2"
+                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways
+                Case Else
+                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled
+            End Select
+
+            Return eManagerErrorCleanupMode
 
         End Function
 

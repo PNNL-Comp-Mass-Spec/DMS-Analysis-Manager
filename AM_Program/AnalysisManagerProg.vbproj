@@ -90,6 +90,7 @@
     <Compile Include="clsAnalysisResults.vb" />
     <Compile Include="clsAnalysisToolRunnerBase.vb" />
     <Compile Include="clsAssemblyTools.vb" />
+    <Compile Include="clsCleanupMgrErrors.vb" />
     <Compile Include="clsCodeTest.vb" />
     <Compile Include="clsCodeTestAM.vb" />
     <Compile Include="clsConcatToolWrapper.vb" />

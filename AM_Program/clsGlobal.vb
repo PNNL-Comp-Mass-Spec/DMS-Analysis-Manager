@@ -24,28 +24,32 @@ Namespace AnalysisManagerBase
         Public Const XML_FILENAME_PREFIX As String = "JobParameters_"
         Public Const XML_FILENAME_EXTENSION As String = "xml"
         Public Const ERROR_DELETING_FILES_FILENAME As String = "Error_Deleting_Files_Please_Delete_Me.txt"
+
+        Public Const FLAG_FILE_NAME As String = "flagFile.txt"
+        Public Const DECON_SERVER_FLAG_FILE_NAME As String = "flagFile_Svr.txt"
 #End Region
 
 #Region "Module variables"
-		Public Shared AppFilePath As String = ""
-		Public Shared FilesToDelete As New List(Of String)				' List of file names to NOT move to the result folder; this list is used by both MoveResultFiles() and RemoveNonResultFiles()
-		Public Shared m_FilesToDeleteExt As New List(Of String)			' List of file extensions to NOT move to the result folder; Comparison test uses "TmpFile.ToLower.EndsWith(m_FilesToDeleteExt(x).ToLower)"
-		Public Shared m_ExceptionFiles As New List(Of String)			' List of file names that WILL be moved to the result folder, even if they are in FilesToDelete or m_FilesToDeleteExt; Comparison test uses "TmpFile.ToLower.Contains(m_ExceptionFiles(x).ToLower)"
-		Public Shared m_Completions_Msg As String = ""
+        Public Shared AppFilePath As String = ""
+        Public Shared AppFolderPath As String = ""
+        Public Shared FilesToDelete As New List(Of String)              ' List of file names to NOT move to the result folder; this list is used by both MoveResultFiles() and RemoveNonResultFiles()
+        Public Shared m_FilesToDeleteExt As New List(Of String)         ' List of file extensions to NOT move to the result folder; Comparison test uses "TmpFile.ToLower.EndsWith(m_FilesToDeleteExt(x).ToLower)"
+        Public Shared m_ExceptionFiles As New List(Of String)           ' List of file names that WILL be moved to the result folder, even if they are in FilesToDelete or m_FilesToDeleteExt; Comparison test uses "TmpFile.ToLower.Contains(m_ExceptionFiles(x).ToLower)"
+        Public Shared m_Completions_Msg As String = ""
         Public Shared m_ServerFilesToDelete As New List(Of String)      ' List of file names to remove from the server
 #End Region
 
 #Region "Methods"
-		''' <summary>
-		''' Appends a string to a job comment string
-		''' </summary>
-		''' <param name="InpComment">Comment currently in job params</param>
-		''' <param name="NewComment">Comment to be appened</param>
-		''' <returns>String containing both comments</returns>
-		''' <remarks></remarks>
-		Public Shared Function AppendToComment(ByVal InpComment As String, ByVal NewComment As String) As String
+        ''' <summary>
+        ''' Appends a string to a job comment string
+        ''' </summary>
+        ''' <param name="InpComment">Comment currently in job params</param>
+        ''' <param name="NewComment">Comment to be appened</param>
+        ''' <returns>String containing both comments</returns>
+        ''' <remarks></remarks>
+        Public Shared Function AppendToComment(ByVal InpComment As String, ByVal NewComment As String) As String
 
-			'Appends a comment string to an existing comment string
+            'Appends a comment string to an existing comment string
 
             If InpComment Is Nothing OrElse InpComment.Trim(" "c) = String.Empty Then
                 Return NewComment
@@ -58,114 +62,114 @@ Namespace AnalysisManagerBase
                 Return InpComment & NewComment
             End If
 
-		End Function
+        End Function
 
-		''' <summary>
-		''' Parses the .StackTrace text of the given expression to return a compact description of the current stack
-		''' </summary>
-		''' <param name="objException"></param>
+        ''' <summary>
+        ''' Parses the .StackTrace text of the given expression to return a compact description of the current stack
+        ''' </summary>
+        ''' <param name="objException"></param>
         ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-		''' <remarks></remarks>
-		Public Shared Function GetExceptionStackTrace(ByVal objException As System.Exception) As String
-			Const REGEX_FUNCTION_NAME As String = "at ([^(]+)\("
-			Const REGEX_FILE_NAME As String = "in .+\\(.+)"
+        ''' <remarks></remarks>
+        Public Shared Function GetExceptionStackTrace(ByVal objException As System.Exception) As String
+            Const REGEX_FUNCTION_NAME As String = "at ([^(]+)\("
+            Const REGEX_FILE_NAME As String = "in .+\\(.+)"
 
-			Dim trTextReader As System.IO.StringReader
-			Dim intIndex As Integer
+            Dim trTextReader As System.IO.StringReader
+            Dim intIndex As Integer
 
-			Dim intFunctionCount As Integer = 0
-			Dim strFunctions() As String
+            Dim intFunctionCount As Integer = 0
+            Dim strFunctions() As String
 
-			Dim strCurrentFunction As String
-			Dim strFinalFile As String = String.Empty
+            Dim strCurrentFunction As String
+            Dim strFinalFile As String = String.Empty
 
-			Dim strLine As String = String.Empty
-			Dim strStackTrace As String = String.Empty
+            Dim strLine As String = String.Empty
+            Dim strStackTrace As String = String.Empty
 
-			Dim reFunctionName As New System.Text.RegularExpressions.Regex(REGEX_FUNCTION_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-			Dim reFileName As New System.Text.RegularExpressions.Regex(REGEX_FILE_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-			Dim objMatch As System.Text.RegularExpressions.Match
+            Dim reFunctionName As New System.Text.RegularExpressions.Regex(REGEX_FUNCTION_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            Dim reFileName As New System.Text.RegularExpressions.Regex(REGEX_FILE_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            Dim objMatch As System.Text.RegularExpressions.Match
 
-			' Process each line in objException.StackTrace
-			' Populate strFunctions() with the function name of each line
-			trTextReader = New System.IO.StringReader(objException.StackTrace)
+            ' Process each line in objException.StackTrace
+            ' Populate strFunctions() with the function name of each line
+            trTextReader = New System.IO.StringReader(objException.StackTrace)
 
-			intFunctionCount = 0
-			ReDim strFunctions(9)
+            intFunctionCount = 0
+            ReDim strFunctions(9)
 
-			Do While trTextReader.Peek >= 0
-				strLine = trTextReader.ReadLine
+            Do While trTextReader.Peek >= 0
+                strLine = trTextReader.ReadLine
 
-				If Not strLine Is Nothing AndAlso strLine.Length > 0 Then
-					strCurrentFunction = String.Empty
+                If Not strLine Is Nothing AndAlso strLine.Length > 0 Then
+                    strCurrentFunction = String.Empty
 
-					objMatch = reFunctionName.Match(strLine)
-					If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-						strCurrentFunction = objMatch.Groups(1).Value
-					Else
-						' Look for the word " in "
-						intIndex = strLine.ToLower.IndexOf(" in ")
-						If intIndex = 0 Then
-							' " in" not found; look for the first space after startIndex 4
-							intIndex = strLine.IndexOf(" ", 4)
-						End If
-						If intIndex = 0 Then
-							' Space not found; use the entire string
-							intIndex = strLine.Length - 1
-						End If
+                    objMatch = reFunctionName.Match(strLine)
+                    If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
+                        strCurrentFunction = objMatch.Groups(1).Value
+                    Else
+                        ' Look for the word " in "
+                        intIndex = strLine.ToLower.IndexOf(" in ")
+                        If intIndex = 0 Then
+                            ' " in" not found; look for the first space after startIndex 4
+                            intIndex = strLine.IndexOf(" ", 4)
+                        End If
+                        If intIndex = 0 Then
+                            ' Space not found; use the entire string
+                            intIndex = strLine.Length - 1
+                        End If
 
-						If intIndex > 0 Then
-							strCurrentFunction = strLine.Substring(0, intIndex)
-						End If
+                        If intIndex > 0 Then
+                            strCurrentFunction = strLine.Substring(0, intIndex)
+                        End If
 
-					End If
+                    End If
 
-					If Not strCurrentFunction Is Nothing AndAlso strCurrentFunction.Length > 0 Then
-						If intFunctionCount >= strFunctions.Length Then
-							' Reserve more space in strFunctions()
-							ReDim Preserve strFunctions(strFunctions.Length * 2 - 1)
-						End If
+                    If Not strCurrentFunction Is Nothing AndAlso strCurrentFunction.Length > 0 Then
+                        If intFunctionCount >= strFunctions.Length Then
+                            ' Reserve more space in strFunctions()
+                            ReDim Preserve strFunctions(strFunctions.Length * 2 - 1)
+                        End If
 
-						strFunctions(intFunctionCount) = strCurrentFunction
-						intFunctionCount += 1
-					End If
+                        strFunctions(intFunctionCount) = strCurrentFunction
+                        intFunctionCount += 1
+                    End If
 
-					If strFinalFile.Length = 0 Then
-						' Also extract the file name where the Exception occurred
-						objMatch = reFileName.Match(strLine)
-						If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-							strFinalFile = objMatch.Groups(1).Value
-						End If
-					End If
+                    If strFinalFile.Length = 0 Then
+                        ' Also extract the file name where the Exception occurred
+                        objMatch = reFileName.Match(strLine)
+                        If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
+                            strFinalFile = objMatch.Groups(1).Value
+                        End If
+                    End If
 
-				End If
-			Loop
+                End If
+            Loop
 
-			strStackTrace = String.Empty
-			For intIndex = intFunctionCount - 1 To 0 Step -1
-				If Not strFunctions(intIndex) Is Nothing Then
-					If strStackTrace.Length = 0 Then
-						strStackTrace = "Stack trace: " & strFunctions(intIndex)
-					Else
+            strStackTrace = String.Empty
+            For intIndex = intFunctionCount - 1 To 0 Step -1
+                If Not strFunctions(intIndex) Is Nothing Then
+                    If strStackTrace.Length = 0 Then
+                        strStackTrace = "Stack trace: " & strFunctions(intIndex)
+                    Else
                         strStackTrace &= "-:-" & strFunctions(intIndex)
-					End If
-				End If
-			Next intIndex
+                    End If
+                End If
+            Next intIndex
 
-			If Not strStackTrace Is Nothing AndAlso strFinalFile.Length > 0 Then
-				strStackTrace &= " in " & strFinalFile
-			End If
+            If Not strStackTrace Is Nothing AndAlso strFinalFile.Length > 0 Then
+                strStackTrace &= " in " & strFinalFile
+            End If
 
-			Return strStackTrace
+            Return strStackTrace
 
-		End Function
+        End Function
 
-		''' <summary>
-		''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
-		''' </summary>
-		''' <param name="WorkDir">Full path to work directory</param>
+        ''' <summary>
+        ''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
+        ''' </summary>
+        ''' <param name="WorkDir">Full path to work directory</param>
         ''' <returns>TRUE for success; FALSE for failure</returns>
-		''' <remarks></remarks>
+        ''' <remarks></remarks>
         Public Shared Function RemoveNonResultFiles(ByVal WorkDir As String, ByVal DebugLevel As Integer) As Boolean
 
             Dim FileToDelete As String = ""
@@ -237,57 +241,82 @@ Namespace AnalysisManagerBase
 
         End Function
 
-		''' <summary>
-		''' Deletes the entries from the three String Lists used to track which files to delete or keep when packaging the results
-		''' </summary>
-		''' <remarks></remarks>
-		Public Shared Sub ResetFilesToDeleteOrKeep()
-			FilesToDelete.Clear()
-			m_FilesToDeleteExt.Clear()
-			m_ExceptionFiles.Clear()
-		End Sub
+        ''' <summary>
+        ''' Deletes the entries from the three String Lists used to track which files to delete or keep when packaging the results
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public Shared Sub ResetFilesToDeleteOrKeep()
+            FilesToDelete.Clear()
+            m_FilesToDeleteExt.Clear()
+            m_ExceptionFiles.Clear()
+        End Sub
 
-		''' <summary>
-		''' Deletes all files in working directory
-		''' </summary>
-		''' <param name="WorkDir">Full path to working directory</param>
+        ''' <summary>
+        ''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect)
+        ''' </summary>
+        ''' <param name="WorkDir">Full path to working directory</param>
         ''' <returns>TRUE for success; FALSE for failure</returns>
-		''' <remarks></remarks>
+        ''' <remarks></remarks>
         Public Shared Function CleanWorkDir(ByVal WorkDir As String) As Boolean
+            Return CleanWorkDir(WorkDir, 10, "")
+        End Function
+
+        ''' <summary>
+        ''' Deletes all files in working directory
+        ''' </summary>
+        ''' <param name="WorkDir">Full path to working directory</param>
+        ''' <param name="HoldoffSeconds">Number of seconds to wait after calling GC.Collect() and GC.WaitForPendingFinalizers()</param>
+        ''' <returns>TRUE for success; FALSE for failure</returns>
+        ''' <remarks></remarks>
+        Public Shared Function CleanWorkDir(ByVal WorkDir As String, ByVal HoldoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
 
             Dim FoundFiles() As String
             Dim FoundFolders() As String
-            Dim DumName As String
+            Dim HoldoffMilliseconds As Integer
 
+            Dim strCurrentFile As String = String.Empty
+            Dim strCurrentSubfolder As String = String.Empty
+
+            strFailureMessage = String.Empty
             WorkDir = CheckTerminator(WorkDir)
 
             FoundFiles = Directory.GetFiles(WorkDir)
             FoundFolders = Directory.GetDirectories(WorkDir)
 
+            Try
+                HoldoffMilliseconds = CInt(HoldoffSeconds * 1000)
+                If HoldoffMilliseconds < 100 Then HoldoffMilliseconds = 100
+                If HoldoffMilliseconds > 300000 Then HoldoffMilliseconds = 300000
+            Catch ex As Exception
+                HoldoffMilliseconds = 10000
+            End Try
+
             'Try to ensure there are no open objects with file handles
             GC.Collect()
             GC.WaitForPendingFinalizers()
-            System.Threading.Thread.Sleep(10000)        'Move this to before GC after troubleshooting complete
+            System.Threading.Thread.Sleep(HoldoffMilliseconds)
 
             'Delete the files
             Try
-                For Each DumName In FoundFiles
+                For Each strCurrentFile In FoundFiles
                     'Verify file is not set to readonly
-                    File.SetAttributes(DumName, File.GetAttributes(DumName) And (Not FileAttributes.ReadOnly))
-                    File.Delete(DumName)
+                    File.SetAttributes(strCurrentFile, File.GetAttributes(strCurrentFile) And (Not FileAttributes.ReadOnly))
+                    File.Delete(strCurrentFile)
                 Next
             Catch Ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), Error deleting files in working directory " & WorkDir & ": " & Ex.Message)
+                strFailureMessage = "Error deleting file " & System.IO.Path.GetFileName(strCurrentFile) & " in working directory"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " & strFailureMessage & " " & WorkDir & ": " & Ex.Message)
                 Return False
             End Try
 
             'Delete the folders
             Try
-                For Each DumName In FoundFolders
-                    Directory.Delete(DumName, True)
+                For Each strCurrentSubfolder In FoundFolders
+                    Directory.Delete(strCurrentSubfolder, True)
                 Next
             Catch Ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting folders in working directory " & WorkDir & ": " & Ex.Message)
+                strFailureMessage = "Error deleting folder " & strCurrentSubfolder
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory: " & Ex.Message)
                 Return False
             End Try
 
@@ -295,73 +324,101 @@ Namespace AnalysisManagerBase
 
         End Function
 
-		''' <summary>
-		''' Creates a dummy file in the application directory to be used for controlling job request bypass
-		''' </summary>
-		''' <remarks></remarks>
-		Public Shared Sub CreateStatusFlagFile()
+        ''' <summary>
+        ''' Creates a dummy file in the application directory to be used for controlling job request bypass
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public Shared Sub CreateStatusFlagFile()
 
-			Dim ExeFi As New FileInfo(AppFilePath)
-			Dim TestFileFi As New FileInfo(Path.Combine(ExeFi.DirectoryName, "FlagFile.txt"))
-			Dim Sw As StreamWriter = TestFileFi.AppendText()
+            Dim TestFileFi As New FileInfo(Path.Combine(clsGlobal.AppFolderPath, FLAG_FILE_NAME))
+            Dim Sw As StreamWriter = TestFileFi.AppendText()
 
             Sw.WriteLine(System.DateTime.Now().ToString)
-			Sw.Flush()
-			Sw.Close()
+            Sw.Flush()
+            Sw.Close()
 
-			Sw = Nothing
-			TestFileFi = Nothing
-			ExeFi = Nothing
-
-		End Sub
-
-		''' <summary>
-		''' Deletes the flag file
-		''' </summary>
-        ''' <remarks></remarks>
-        Public Shared Sub DeleteStatusFlagFile()
-
-            'Deletes the job request control flag file
-            Dim ExeFi As New FileInfo(AppFilePath)
-            Dim TestFile As String = Path.Combine(ExeFi.DirectoryName, "FlagFile.txt")
-
-            Try
-                If File.Exists(TestFile) Then
-                    File.Delete(TestFile)
-                End If
-            Catch Err As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile, " & Err.Message)
-            End Try
+            Sw = Nothing
+            TestFileFi = Nothing
 
         End Sub
 
-		''' <summary>
-		''' Determines if flag file exists in application directory
-		''' </summary>
-		''' <returns>TRUE if flag file exists; FALSE otherwise</returns>
-		''' <remarks></remarks>
-		Public Shared Function DetectStatusFlagFile() As Boolean
+        ''' <summary>
+        ''' Deletes the analysis manager flag file
+        ''' </summary>
+        ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
+        ''' <remarks></remarks>
+        Public Shared Function DeleteStatusFlagFile() As Boolean
 
-			'Returns True if job request control flag file exists
-			Dim ExeFi As New FileInfo(AppFilePath)
-			Dim TestFile As String = Path.Combine(ExeFi.DirectoryName, "FlagFile.txt")
+            'Deletes the job request control flag file
+            Dim strFlagFilePath As String = Path.Combine(clsGlobal.AppFolderPath, FLAG_FILE_NAME)
 
-			Return File.Exists(TestFile)
+            Return DeleteFlagFile(strFlagFilePath)
 
-		End Function
+        End Function
 
-		Public Shared Function CBoolSafe(ByVal Value As String) As Boolean
-			Dim blnValue As Boolean = False
+        ''' <summary>
+        ''' Deletes the Decon2LS OA Server flag file
+        ''' </summary>
+        ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
+        ''' <remarks></remarks>
+        Public Shared Function DeleteDeconServerFlagFile() As Boolean
 
-			Try
-				blnValue = CBool(Value)
-			Catch ex As Exception
-				blnValue = False
-			End Try
+            'Deletes the job request control flag file
+            Dim strFlagFilePath As String = Path.Combine(clsGlobal.AppFolderPath, DECON_SERVER_FLAG_FILE_NAME)
 
-			Return blnValue
+            Return DeleteFlagFile(strFlagFilePath)
 
-		End Function
+        End Function
+
+
+        ''' <summary>
+        ''' Deletes the file given by strFlagFilePath
+        ''' </summary>
+        ''' <param name="strFlagFilePath">Full path to the file to delete</param>
+        ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
+        ''' <remarks></remarks>
+        Protected Shared Function DeleteFlagFile(ByVal strFlagFilePath As String) As Boolean
+
+            Try
+                If File.Exists(strFlagFilePath) Then
+                    File.Delete(strFlagFilePath)
+                End If
+
+                Return True
+
+            Catch Err As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile, " & Err.Message)
+                Return False
+            End Try
+
+        End Function
+
+        ''' <summary>
+        ''' Determines if flag file exists in application directory
+        ''' </summary>
+        ''' <returns>TRUE if flag file exists; FALSE otherwise</returns>
+        ''' <remarks></remarks>
+        Public Shared Function DetectStatusFlagFile() As Boolean
+
+            'Returns True if job request control flag file exists
+            Dim TestFile As String = Path.Combine(clsGlobal.AppFolderPath, FLAG_FILE_NAME)
+
+            Return File.Exists(TestFile)
+
+        End Function
+
+        Public Shared Function CBoolSafe(ByVal Value As String) As Boolean
+            Dim blnValue As Boolean = False
+
+            Try
+                blnValue = CBool(Value)
+            Catch ex As Exception
+                blnValue = False
+            End Try
+
+            Return blnValue
+
+        End Function
 
         Public Shared Function CBoolSafe(ByVal Value As String, ByVal blnDefaultValue As Boolean) As Boolean
             Dim blnValue As Boolean = False
@@ -427,90 +484,90 @@ Namespace AnalysisManagerBase
 
         End Function
 
-		''' <summary>
-		''' Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
-		''' However, if file TargetFileName already exists, then that file will first be backed up
-		''' Furthermore, up to VersionCountToKeep old versions of the file will be kept
-		''' </summary>
-		''' <param name="SourceFilePath"></param>
-		''' <param name="TargetFolder"></param>
-		''' <param name="TargetFileName"></param>
-		''' <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
-		''' <returns>True if Success, false if failure </returns>
-		''' <remarks></remarks>
-		Public Shared Function CopyAndRenameFileWithBackup( _
-		  ByVal SourceFilePath As String, _
-		  ByVal TargetFolder As String, _
-		  ByVal TargetFileName As String, _
-		  ByVal VersionCountToKeep As Integer) As Boolean
+        ''' <summary>
+        ''' Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
+        ''' However, if file TargetFileName already exists, then that file will first be backed up
+        ''' Furthermore, up to VersionCountToKeep old versions of the file will be kept
+        ''' </summary>
+        ''' <param name="SourceFilePath"></param>
+        ''' <param name="TargetFolder"></param>
+        ''' <param name="TargetFileName"></param>
+        ''' <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
+        ''' <returns>True if Success, false if failure </returns>
+        ''' <remarks></remarks>
+        Public Shared Function CopyAndRenameFileWithBackup( _
+          ByVal SourceFilePath As String, _
+          ByVal TargetFolder As String, _
+          ByVal TargetFileName As String, _
+          ByVal VersionCountToKeep As Integer) As Boolean
 
-			Dim ioSrcFile As System.IO.FileInfo
-			Dim ioFileToRename As System.IO.FileInfo
+            Dim ioSrcFile As System.IO.FileInfo
+            Dim ioFileToRename As System.IO.FileInfo
 
-			Dim strBaseName As String
-			Dim strBaseNameCurrent As String
+            Dim strBaseName As String
+            Dim strBaseNameCurrent As String
 
-			Dim strNewFilePath As String
-			Dim strExtension As String
+            Dim strNewFilePath As String
+            Dim strExtension As String
 
-			Dim intRevision As Integer
+            Dim intRevision As Integer
 
-			Try
-				ioSrcFile = New System.IO.FileInfo(SourceFilePath)
-				If Not ioSrcFile.Exists Then
-					' Source file not found
-					Return False
-				Else
-					strBaseName = System.IO.Path.GetFileNameWithoutExtension(TargetFileName)
-					strExtension = System.IO.Path.GetExtension(TargetFileName)
-					If strExtension Is Nothing OrElse strExtension.Length = 0 Then
-						strExtension = ".bak"
-					End If
-				End If
+            Try
+                ioSrcFile = New System.IO.FileInfo(SourceFilePath)
+                If Not ioSrcFile.Exists Then
+                    ' Source file not found
+                    Return False
+                Else
+                    strBaseName = System.IO.Path.GetFileNameWithoutExtension(TargetFileName)
+                    strExtension = System.IO.Path.GetExtension(TargetFileName)
+                    If strExtension Is Nothing OrElse strExtension.Length = 0 Then
+                        strExtension = ".bak"
+                    End If
+                End If
 
-				If VersionCountToKeep > 9 Then VersionCountToKeep = 9
-				If VersionCountToKeep < 0 Then VersionCountToKeep = 0
+                If VersionCountToKeep > 9 Then VersionCountToKeep = 9
+                If VersionCountToKeep < 0 Then VersionCountToKeep = 0
 
-				' Backup any existing copies of strTargetFilePath
-				For intRevision = VersionCountToKeep - 1 To 0 Step -1
-					Try
-						strBaseNameCurrent = String.Copy(strBaseName)
-						If intRevision > 0 Then
-							strBaseNameCurrent &= "_" & intRevision.ToString
-						End If
-						strBaseNameCurrent &= strExtension
+                ' Backup any existing copies of strTargetFilePath
+                For intRevision = VersionCountToKeep - 1 To 0 Step -1
+                    Try
+                        strBaseNameCurrent = String.Copy(strBaseName)
+                        If intRevision > 0 Then
+                            strBaseNameCurrent &= "_" & intRevision.ToString
+                        End If
+                        strBaseNameCurrent &= strExtension
 
-						ioFileToRename = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolder, strBaseNameCurrent))
-						strNewFilePath = System.IO.Path.Combine(TargetFolder, strBaseName & "_" & (intRevision + 1).ToString & strExtension)
+                        ioFileToRename = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolder, strBaseNameCurrent))
+                        strNewFilePath = System.IO.Path.Combine(TargetFolder, strBaseName & "_" & (intRevision + 1).ToString & strExtension)
 
-						' Confirm that strNewFilePath doesn't exist; delete it if it does
-						If System.IO.File.Exists(strNewFilePath) Then
-							System.IO.File.Delete(strNewFilePath)
-						End If
+                        ' Confirm that strNewFilePath doesn't exist; delete it if it does
+                        If System.IO.File.Exists(strNewFilePath) Then
+                            System.IO.File.Delete(strNewFilePath)
+                        End If
 
-						' Rename the current file to strNewFilePath
-						If ioFileToRename.Exists Then
-							ioFileToRename.MoveTo(strNewFilePath)
-						End If
+                        ' Rename the current file to strNewFilePath
+                        If ioFileToRename.Exists Then
+                            ioFileToRename.MoveTo(strNewFilePath)
+                        End If
 
-					Catch ex As Exception
-						' Ignore errors here; we'll continue on with the next file
-					End Try
+                    Catch ex As Exception
+                        ' Ignore errors here; we'll continue on with the next file
+                    End Try
 
-				Next intRevision
+                Next intRevision
 
-				strNewFilePath = System.IO.Path.Combine(TargetFolder, TargetFileName)
+                strNewFilePath = System.IO.Path.Combine(TargetFolder, TargetFileName)
 
-				' Now copy the file from SourceFilePath to strNewFilePath
-				ioSrcFile.CopyTo(strNewFilePath, True)
+                ' Now copy the file from SourceFilePath to strNewFilePath
+                ioSrcFile.CopyTo(strNewFilePath, True)
 
-			Catch ex As Exception
-				' Ignore errors here
-			End Try
+            Catch ex As Exception
+                ' Ignore errors here
+            End Try
 
-			Return True
+            Return True
 
-		End Function
+        End Function
 
         ''' <summary>
         ''' Creates a dummy file in the application directory when a error has occurred when trying to delete non result files
@@ -518,8 +575,7 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Public Shared Sub CreateErrorDeletingFilesFlagFile()
 
-            Dim ExeFi As New FileInfo(AppFilePath)
-            Dim TestFileFi As New FileInfo(Path.Combine(ExeFi.DirectoryName, ERROR_DELETING_FILES_FILENAME))
+            Dim TestFileFi As New FileInfo(Path.Combine(clsGlobal.AppFolderPath, ERROR_DELETING_FILES_FILENAME))
             Dim Sw As StreamWriter = TestFileFi.AppendText()
 
             Sw.WriteLine(System.DateTime.Now().ToString)
@@ -528,7 +584,6 @@ Namespace AnalysisManagerBase
 
             Sw = Nothing
             TestFileFi = Nothing
-            ExeFi = Nothing
 
         End Sub
 
@@ -539,8 +594,7 @@ Namespace AnalysisManagerBase
         Public Shared Sub DeleteErrorDeletingFilesFlagFile()
 
             'Deletes the job request control flag file
-            Dim ExeFi As New FileInfo(AppFilePath)
-            Dim TestFile As String = Path.Combine(ExeFi.DirectoryName, ERROR_DELETING_FILES_FILENAME)
+            Dim TestFile As String = Path.Combine(clsGlobal.AppFolderPath, ERROR_DELETING_FILES_FILENAME)
 
             Try
                 If File.Exists(TestFile) Then
@@ -560,76 +614,75 @@ Namespace AnalysisManagerBase
         Public Shared Function DetectErrorDeletingFilesFlagFile() As Boolean
 
             'Returns True if job request control flag file exists
-            Dim ExeFi As New FileInfo(AppFilePath)
-            Dim TestFile As String = Path.Combine(ExeFi.DirectoryName, ERROR_DELETING_FILES_FILENAME)
+            Dim TestFile As String = Path.Combine(clsGlobal.AppFolderPath, ERROR_DELETING_FILES_FILENAME)
 
             Return File.Exists(TestFile)
 
         End Function
 
-		Public Shared Function DbCStr(ByVal InpObj As Object) As String
+        Public Shared Function DbCStr(ByVal InpObj As Object) As String
 
-			'If input object is DbNull, returns "", otherwise returns String representation of object
-			If InpObj Is DBNull.Value Then
-				Return ""
-			Else
-				Return CStr(InpObj)
-			End If
+            'If input object is DbNull, returns "", otherwise returns String representation of object
+            If InpObj Is DBNull.Value Then
+                Return ""
+            Else
+                Return CStr(InpObj)
+            End If
 
-		End Function
+        End Function
 
-		Public Shared Function DbCSng(ByVal InpObj As Object) As Single
+        Public Shared Function DbCSng(ByVal InpObj As Object) As Single
 
-			'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0.0
-			Else
-				Return CSng(InpObj)
-			End If
+            'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
+            If InpObj Is DBNull.Value Then
+                Return 0.0
+            Else
+                Return CSng(InpObj)
+            End If
 
-		End Function
+        End Function
 
-		Public Shared Function DbCDbl(ByVal InpObj As Object) As Double
+        Public Shared Function DbCDbl(ByVal InpObj As Object) As Double
 
-			'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0.0
-			Else
-				Return CDbl(InpObj)
-			End If
+            'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
+            If InpObj Is DBNull.Value Then
+                Return 0.0
+            Else
+                Return CDbl(InpObj)
+            End If
 
-		End Function
+        End Function
 
-		Public Shared Function DbCInt(ByVal InpObj As Object) As Integer
+        Public Shared Function DbCInt(ByVal InpObj As Object) As Integer
 
-			'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CInt(InpObj)
-			End If
+            'If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            If InpObj Is DBNull.Value Then
+                Return 0
+            Else
+                Return CInt(InpObj)
+            End If
 
-		End Function
+        End Function
 
-		Public Shared Function DbCLng(ByVal InpObj As Object) As Long
+        Public Shared Function DbCLng(ByVal InpObj As Object) As Long
 
-			'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CLng(InpObj)
-			End If
+            'If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            If InpObj Is DBNull.Value Then
+                Return 0
+            Else
+                Return CLng(InpObj)
+            End If
 
-		End Function
+        End Function
 
-		Public Shared Function DbCDec(ByVal InpObj As Object) As Decimal
+        Public Shared Function DbCDec(ByVal InpObj As Object) As Decimal
 
-			'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-			If InpObj Is DBNull.Value Then
-				Return 0
-			Else
-				Return CDec(InpObj)
-			End If
+            'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
+            If InpObj Is DBNull.Value Then
+                Return 0
+            Else
+                Return CDec(InpObj)
+            End If
 
         End Function
 
@@ -1085,6 +1138,6 @@ Namespace AnalysisManagerBase
 
 #End Region
 
-	End Class
+    End Class
 
 End Namespace
