@@ -139,6 +139,12 @@ Public Class clsPepHitResultsProcWrapper
         'Check for reason peptide hit results processor exited
         If objPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_FAILURE Then
             Msg = "Error calling the peptide hit results processor: " & objPeptideHitResultsProcessor.ErrMsg
+
+            ' Truncate the message if longer than 500 characters (the full message has likely already been logged)
+            If Msg.Length > 500 Then
+                Msg = Msg.Substring(0, 500) & "..."
+            End If
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         ElseIf objPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_ABORTED Then
