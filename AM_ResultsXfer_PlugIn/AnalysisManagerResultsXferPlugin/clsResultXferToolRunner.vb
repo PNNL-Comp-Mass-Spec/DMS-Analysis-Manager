@@ -107,11 +107,15 @@ Public Class clsResultXferToolRunner
 		Dim TargetDir As String
         Dim diDatasetFolder As System.IO.DirectoryInfo
 
+        ' Set this to True to overwrite existing results folders
+        Dim blnOverwriteExisting As Boolean = False
+
 		'Verify input folder exists in storage server xfer folder
         FolderToMove = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))
         FolderToMove = System.IO.Path.Combine(FolderToMove, m_jobParams.GetParam("InputFolderName"))
         If Not System.IO.Directory.Exists(FolderToMove) Then
             Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
+            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "results folder not found")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         ElseIf m_DebugLevel >= 4 Then
@@ -139,17 +143,20 @@ Public Class clsResultXferToolRunner
                     If Not diDatasetFolder.Exists Then
                         ' Creation of the dataset folder failed; unable to continue
                         Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
+                        m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                     End If
                 Else
                     Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
+                    m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
+                m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -160,24 +167,34 @@ Public Class clsResultXferToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder path: " & DatasetDir)
         End If
 
-        'Determine if output folder already exists on storage server
         TargetDir = System.IO.Path.Combine(DatasetDir, m_jobParams.GetParam("inputfoldername"))
+
+
+        'Determine if output folder already exists on storage server
         If System.IO.Directory.Exists(TargetDir) Then
-            Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If blnOverwriteExisting Then
+                Msg = "Warning: overwriting existing results folder: " & TargetDir
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+                Msg = String.Empty
+            Else
+                Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
+                m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
         End If
 
-		'Move the directory
-		Try
+        'Move the directory
+        Try
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Moving '" & FolderToMove & "' to '" & TargetDir & "'")
             End If
 
-            My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, False)
+            My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting)
 
         Catch ex As Exception
             Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
+            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "exception moving results folder")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
