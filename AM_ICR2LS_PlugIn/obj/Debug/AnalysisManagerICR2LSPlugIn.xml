@@ -6,6 +6,16 @@ AnalysisManagerICR2LSPlugIn
 </name>
 </assembly>
 <members>
-
+<member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants)">
+	<summary>
+ Starts ICR-2LS by running the .Exe at the command line
+ </summary>
+	<param name="DSNamePath"></param>
+	<param name="ParamFilePath"></param>
+	<param name="ResultsFileNamePath"></param>
+	<param name="eICR2LSMode"></param>
+	<returns>True if successfully started; otherwise false</returns>
+	<remarks></remarks>
+</member>
 </members>
 </doc>

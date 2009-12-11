@@ -1,7 +1,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
-Imports System.IO
 Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
@@ -9,54 +8,101 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisToolRunnerICR
 	Inherits clsAnalysisToolRunnerICRBase
 
-	Public Sub New()
+    'Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
 
-    End Sub
+    ' Example folder layout when processing S-folders 
+    '
+    ' C:\DMS_WorkDir1\   contains the .Par file
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\   is empty
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s001   contains 100 files (see below)
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s002   contains another 100 files (see below)
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s003
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s004
+    ' C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s005
+    ' etc.
+    ' 
+    ' Files in C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s001\
+    ' 110409_His.00001
+    ' 110409_His.00002
+    ' 110409_His.00003
+    ' ...
+    ' 110409_His.00099
+    ' 110409_His.00100
+    ' 
+    ' Files in C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s002\
+    ' 110409_His.00101
+    ' 110409_His.00102
+    ' 110409_His.00103
+    ' etc.
+    ' 
+    ' 
+	Public Sub New()
+	End Sub
 
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim ResCode As IJobParams.CloseOutType
-		Dim DSNamePath As String
-		Dim PekRes As Boolean
+        Dim ResCode As IJobParams.CloseOutType
+        Dim DatasetName As String
+        Dim DSNamePath As String
 
-        'Start the job timer
-        m_StartTime = System.DateTime.Now
+        Dim MinScan As Integer = 0
+        Dim MaxScan As Integer = 0
+        Dim UseAllScans As Boolean = True
 
-        'Start with base class function to get settings information
+        Dim OutFileNamePath As String
+        Dim ParamFilePath As String
+        Dim blnSuccess As Boolean
+
+		'Start with base class function to get settings information
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-		'Verify a parm file has been specified
-		If Not File.Exists(Path.Combine(m_workdir, m_jobParams.GetParam("parmFileName"))) Then
-			'Parm file wasn't specified, but is required for ICR2LS analysis
-			CleanupFailedJob("Parm file not found")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Verify a parm file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))
+        If Not System.IO.File.Exists(ParamFilePath) Then
+            'Param file wasn't specified, but is required for ICR-2LS analysis
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ICR-2LS Param file not found: " & ParamFilePath)
+
+            CleanupFailedJob("Parm file not found")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		'Add handling of settings file info here if it becomes necessary in the future
 
+		'Get scan settings from settings file
+        MinScan = 0
+        MaxScan = 0
+
+        MinScan = GetJobParameter(m_jobParams, "scanstart", 0)
+        MaxScan = GetJobParameter(m_jobParams, "ScanStop", 0)
+
+        If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
+           MinScan > MaxScan OrElse _
+           MaxScan > 500000 Then
+            UseAllScans = True
+        Else
+            UseAllScans = False
+        End If
+
 		'Assemble the dataset name
-		DSNamePath = CheckTerminator(Path.Combine(m_workdir, m_jobParams.GetParam("datasetNum")))
-		If Not Directory.Exists(DSNamePath) Then
-			CleanupFailedJob("Unable to find data files in working directory")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        DatasetName = m_jobParams.GetParam("datasetNum")
+        DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, DatasetName))
+        If Not System.IO.Directory.Exists(DSNamePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Data file folder not found: " & DSNamePath)
 
-		'Make the PEK file
-		m_JobRunning = True
-		PekRes = m_ICR2LSObj.MakeICRPEKFile(DSNamePath, Path.Combine(m_workdir, m_jobParams.GetParam("parmFileName")), _
-			CheckTerminator(m_workdir))
+            CleanupFailedJob("Unable to find data files in working directory")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		If Not PekRes Then
-			CleanupFailedJob("Error creating PEK file")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Assemble the output file name and path
+        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
 
-		'Wait for the job to complete
-		If Not WaitForJobToFinish() Then
-			CleanupFailedJob("Error waiting for PEK job to finish")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SFoldersPEK, UseAllScans, MinScan, MaxScan)
+
+        If Not blnSuccess Then
+            CleanupFailedJob("Error starting ICR-2LS")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Run the cleanup routine from the base class
         If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -77,15 +123,15 @@ Public Class clsAnalysisToolRunnerICR
 		While RetryCount < 3
 			Try
 				System.Threading.Thread.Sleep(5000)				'Allow extra time for ICR2LS to release file locks
-				Directory.Delete(Path.Combine(m_workdir, m_jobParams.GetParam("datasetNum")), True)
+                System.IO.Directory.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")), True)
 				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-			Catch Err As IOException
-				'If problem is locked file, retry
-				If m_DebugLevel > 0 Then
+            Catch Err As System.IO.IOException
+                'If problem is locked file, retry
+                If m_DebugLevel > 0 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting data file, attempt #" & RetryCount.ToString)
                 End If
-				ErrMsg = err.Message
-				RetryCount += 1
+                ErrMsg = Err.Message
+                RetryCount += 1
 			Catch Err As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & Err.Message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED

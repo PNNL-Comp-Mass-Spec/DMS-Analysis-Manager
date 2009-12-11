@@ -121,13 +121,10 @@
     <Compile Include="clsAnalysisToolRunnerLTQ_FTPek.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="clsICR2LSWrapper.vb">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="icr2ls">
-      <Guid>{C33E32C7-A337-48B5-BE34-C7B60A7A830F}</Guid>
+      <Guid>{96E9E7C0-4582-4F60-85B0-05D3E9402482}</Guid>
       <VersionMajor>1</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>

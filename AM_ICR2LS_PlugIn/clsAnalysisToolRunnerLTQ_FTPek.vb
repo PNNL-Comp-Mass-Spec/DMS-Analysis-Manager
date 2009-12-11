@@ -1,7 +1,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
-Imports System.IO
 Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
@@ -9,80 +8,85 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisToolRunnerLTQ_FTPek
 	Inherits clsAnalysisToolRunnerICRBase
 
-	'Performs PEK analysis using ICR2LS on LTQ-FT MS data
+    'Performs PEK analysis using ICR-2LS on LTQ-FT MS data
 
 	Public Sub New()
 	End Sub
 
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim ResCode As IJobParams.CloseOutType
-		Dim DSNamePath As String
-		Dim PekRes As Boolean
-		Dim MinScan As Integer
-		Dim MaxScan As Integer
-		Dim NumScans As Integer
-		Dim UseAllScans As Boolean
-		Dim OutFileNamePath As String
+        Dim ResCode As IJobParams.CloseOutType
+        Dim DatasetName As String
+        Dim DSNamePath As String
+
+        Dim MinScan As Integer = 0
+        Dim MaxScan As Integer = 0
+        Dim UseAllScans As Boolean = True
+
+        Dim OutFileNamePath As String
+        Dim ParamFilePath As String
+        Dim blnSuccess As Boolean
 
 		'Start with base class function to get settings information
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-		'Verify a parm file has been specified
-		If Not File.Exists(Path.Combine(m_workdir, m_jobParams.GetParam("parmFileName"))) Then
-			'Parm file wasn't specified, but is required for ICR2LS analysis
-			CleanupFailedJob("Parm file not found")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Verify a parm file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))
+        If Not System.IO.File.Exists(ParamFilePath) Then
+            'Param file wasn't specified, but is required for ICR-2LS analysis
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ICR-2LS Param file not found: " & ParamFilePath)
+
+            CleanupFailedJob("Parm file not found")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Add handling of settings file info here if it becomes necessary in the future
 
 		'Get scan settings from settings file
-        MinScan = CInt(m_jobParams.GetParam("scanstart"))
-        MaxScan = CInt(m_jobParams.GetParam("ScanStop"))
-		NumScans = MaxScan - MinScan
-		UseAllScans = CBool(IIf(MaxScan > 500000, True, False))
+        MinScan = 0
+        MaxScan = 0
 
-		'Assemble the data file name and path
-		DSNamePath = Path.Combine(m_workdir, m_JobParams.GetParam("datasetNum") & ".raw")
-		If Not File.Exists(DSNamePath) Then
-			CleanupFailedJob("Unable to find data file in working directory")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        MinScan = GetJobParameter(m_jobParams, "scanstart", 0)
+        MaxScan = GetJobParameter(m_jobParams, "ScanStop", 0)
 
-		'Assemble the output file name and path
-		OutFileNamePath = Path.Combine(m_workdir, m_JobParams.GetParam("datasetNum") & ".pek")
+        If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
+           MinScan > MaxScan OrElse _
+           MaxScan > 500000 Then
+            UseAllScans = True
+        Else
+            UseAllScans = False
+        End If
 
-		'Make the PEK file
-		m_JobRunning = True
-		If UseAllScans Then
-			'Process all scans in input file
-			PekRes = m_ICR2LSObj.MakeLTQ_FTPEKFile(DSNamePath, Path.Combine(m_workdir, m_JobParams.GetParam("parmFileName")), _
-			 OutFileNamePath)
-		Else
-			'Process range of scans
-			PekRes = m_ICR2LSObj.MakeLTQ_FTPEKFile(DSNamePath, Path.Combine(m_workdir, m_JobParams.GetParam("parmFileName")), _
-			 OutFileNamePath, False, NumScans, MinScan)
-		End If
-		If Not PekRes Then
-			CleanupFailedJob("Error creating PEK file")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Assemble the data file name and path
+        DatasetName = m_jobParams.GetParam("datasetNum")
+        DSNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".raw")
+        If Not System.IO.File.Exists(DSNamePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Raw file not found: " & DSNamePath)
 
-		'Wait for the job to complete
-		If Not WaitForJobToFinish() Then
-			CleanupFailedJob("Error waiting for PEK job to finish")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+            CleanupFailedJob("Unable to find data file in working directory")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'Run the cleanup routine from the base class
+        'Assemble the output file name and path
+        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
+
+        blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, UseAllScans, MinScan, MaxScan)
+
+        If Not blnSuccess Then
+            CleanupFailedJob("Error starting ICR-2LS")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Run the cleanup routine from the base class
         If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             m_message = AppendToComment(m_message, "Error performing post analysis tasks")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
 
@@ -93,7 +97,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		'Delete the .raw file
 		Try
 			System.Threading.Thread.Sleep(5000)			 'Allow extra time for ICR2LS to release file locks
-			FoundFiles = Directory.GetFiles(m_workdir, "*.raw")
+            FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.raw")
             For Each MyFile In FoundFiles
                 ' Add the file to .FilesToDelete just in case the deletion fails
                 clsGlobal.FilesToDelete.Add(MyFile)
