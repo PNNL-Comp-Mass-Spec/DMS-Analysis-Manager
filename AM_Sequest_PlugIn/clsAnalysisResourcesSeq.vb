@@ -326,11 +326,14 @@ Public Class clsAnalysisResourcesSeq
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
+        Dim LocOrgDBFolder As String
+
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
 
-        'Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        'Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
+        LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
+        If Not RetrieveOrgDB(LocOrgDBFolder) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'Retrieve param file
         If Not RetrieveGeneratedParamFile( _
@@ -347,6 +350,19 @@ Public Class clsAnalysisResourcesSeq
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' If running on a cluster, then distribute the database file across the nodes
+        ' We do this after we have successfully retrieved the DTA files and unzipped them
+        If CBool(m_mgrParams.GetParam("cluster")) Then
+            'Check the cluster nodes, updating local database copies as necessary
+            If Not VerifyDatabase(m_jobParams.GetParam("generatedFastaName"), LocOrgDBFolder) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+        End If
+
+
 
         'Add all the extensions of the files to delete after run
         clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
@@ -370,29 +386,6 @@ Public Class clsAnalysisResourcesSeq
     End Function
 
     ''' <summary>
-    ''' Provides a function that can copy the org db to the cluster head and distribute it to the nodes
-    ''' </summary>
-    ''' <param name="LocOrgDBFolder">Folder on AM processing machine for orgdb files</param>
-    ''' <returns>TRUE for success: FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Overrides Function RetrieveOrgDB(ByVal LocOrgDBFolder As String) As Boolean
-
-        'Retrieve the OrgDb normally via base class
-        If Not MyBase.RetrieveOrgDB(LocOrgDBFolder) Then Return False
-
-        'If not running on a cluster, then exit. Otherwise, distribute database files across nodes
-        If Not CBool(m_mgrParams.GetParam("cluster")) Then Return True
-
-        'Check the cluster nodes, updating local database copies as necessary
-        If VerifyDatabase(m_jobParams.GetParam("generatedFastaName"), LocOrgDBFolder) Then
-            Return True
-        Else
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
     ''' Verifies the fasta file required by the job is distributed to all the cluster nodes
     ''' </summary>
     ''' <param name="OrgDBName">Fasta file name</param>
@@ -405,18 +398,50 @@ Public Class clsAnalysisResourcesSeq
         Dim Nodes As StringCollection
         Dim NodeDbLoc As String = m_mgrParams.GetParam("nodedblocation")
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying Databases")
+        Dim blnFileAlreadyExists As Boolean
+        Dim intNodeCountProcessed As Integer
+        Dim intNodeCountFileAlreadyExists As Integer
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & System.IO.Path.GetFileName(OrgDBName))
 
         'Get the list of nodes from the hosts file
         Nodes = GetHostList(HostFile)
-        If Nodes Is Nothing Then Return False
+        If Nodes Is Nothing Then
+            If HostFile Is Nothing Then HostFile = ""
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine node names from host file: " & HostFile)
+            Return False
+        End If
 
         'For each node, verify specified database file is present and matches file on host
+
+        blnFileAlreadyExists = False
+        intNodeCountProcessed = 0
+        intNodeCountFileAlreadyExists = 0
+
         For Each NodeName As String In Nodes
-            If Not VerifyRemoteDatabase(OrgDBName, OrgDBPath, "\\" & NodeName & "\" & NodeDbLoc) Then
+            If Not VerifyRemoteDatabase(OrgDBName, OrgDBPath, "\\" & NodeName & "\" & NodeDbLoc, blnFileAlreadyExists) Then
                 Return False
             End If
+
+            intNodeCountProcessed += 1
+            If blnFileAlreadyExists Then intNodeCountFileAlreadyExists += 1
         Next
+
+        If m_DebugLevel >= 1 Then
+            If intNodeCountFileAlreadyExists = 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied database to " & intNodeCountProcessed.ToString & " nodes")
+            Else
+                Dim strLogMessage As String
+
+                strLogMessage = "Verified database exists on " & intNodeCountProcessed.ToString & " nodes"
+
+                If intNodeCountProcessed - intNodeCountFileAlreadyExists > 0 Then
+                    strLogMessage &= " (newly copied to " & (intNodeCountProcessed - intNodeCountFileAlreadyExists).ToString & " nodes)"
+                End If
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage)
+            End If
+        End If
 
         'Databases have been distributed, so return happy
         Return True
@@ -455,7 +480,7 @@ Public Class clsAnalysisResourcesSeq
             End While
             HostFile.Close()
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading cluster config file" & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading cluster config file '" & HostFileNameLoc & "': " & Err.Message)
             Return Nothing
         End Try
 
@@ -468,6 +493,74 @@ Public Class clsAnalysisResourcesSeq
 
     End Function
 
+    Private Function VerifyFilesMatchSizeAndDate(ByVal FileA As String, ByVal FileB As String) As Boolean
+
+        Const DETAILED_LOG_THRESHOLD As Integer = 3
+
+        Dim blnFilesMatch As Boolean
+        Dim ioFileA As System.IO.FileInfo
+        Dim ioFileB As System.IO.FileInfo
+        Dim dblSecondDiff As Double
+
+        blnFilesMatch = False
+        If System.IO.File.Exists(FileA) AndAlso System.IO.File.Exists(FileB) Then
+            ' Files both exist
+            ioFileA = New System.IO.FileInfo(FileA)
+            ioFileB = New System.IO.FileInfo(FileB)
+
+            If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Comparing files: " & ioFileA.FullName & " vs. " & ioFileB.FullName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... file sizes: " & ioFileA.Length.ToString & " vs. " & ioFileB.Length.ToString)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... file dates: " & ioFileA.LastWriteTime.ToString & " vs. " & ioFileB.LastWriteTime.ToString)
+            End If
+
+            If ioFileA.Length = ioFileB.Length Then
+                ' Sizes match
+                If ioFileA.LastWriteTime = ioFileB.LastWriteTime Then
+                    ' Dates match
+                    If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... sizes match and dates match exactly")
+                    End If
+
+                    blnFilesMatch = True
+                Else
+                    ' Dates don't match, are they off by one hour?
+                    dblSecondDiff = Math.Abs(ioFileA.LastWriteTime.Subtract(ioFileB.LastWriteTime).TotalSeconds)
+
+                    If dblSecondDiff <= 2 Then
+                        ' File times differ by less than 2 seconds; count this as the same
+
+                        If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... sizes match and dates match within 2 seconds (" & dblSecondDiff.ToString("0.0") & " seconds apart)")
+                        End If
+
+                        blnFilesMatch = True
+                    ElseIf dblSecondDiff >= 3598 And dblSecondDiff <= 3602 Then
+                        ' File times are an hour apart (give or take 2 seconds); count this as the same
+
+                        If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... sizes match and dates match within 1 hour (" & dblSecondDiff.ToString("0.0") & " seconds apart)")
+                        End If
+
+                        blnFilesMatch = True
+                    Else
+                        If m_DebugLevel >= DETAILED_LOG_THRESHOLD Then
+                            If m_DebugLevel = DETAILED_LOG_THRESHOLD Then
+                                ' This message didn't get logged above; log it now.
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Comparing files: " & ioFileA.FullName & " vs. " & ioFileB.FullName)
+                            End If
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... sizes match but times do not match within 2 seconds or 1 hour (" & dblSecondDiff.ToString("0.0") & " seconds apart)")
+                        End If
+
+                    End If
+                End If
+            End If
+        End If
+
+        Return blnFilesMatch
+
+    End Function
+
     ''' <summary>
     ''' Verifies specified database is present on the node. If present, compares date and size. If not
     '''	present, copies database from master
@@ -477,10 +570,11 @@ Public Class clsAnalysisResourcesSeq
     ''' <param name="DestPath">Fasta storage location on cluster node</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
-    Private Function VerifyRemoteDatabase(ByVal DbName As String, ByVal SourcePath As String, _
-      ByVal DestPath As String) As Boolean
+    Private Function VerifyRemoteDatabase(ByVal DbName As String, ByVal SourcePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean) As Boolean
 
         Dim CopyNeeded As Boolean = False
+
+        blnFileAlreadyExists = False
 
         If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " & DestPath)
@@ -495,10 +589,13 @@ Public Class clsAnalysisResourcesSeq
         Dim DestFile As String = Path.Combine(DestPath, DbName)
         Try
             If File.Exists(DestFile) Then
-                'File was found on node, compare hash with copy on master
-                '					If Not VerifyFastaVersion(DestFile, SourceFile) Then		'Uncomment statement to re-enable verification before copy
-                CopyNeeded = True
-                '			End If		'Uncomment statement to re-enable verification before copy
+                'File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
+                If VerifyFilesMatchSizeAndDate(SourceFile, DestFile) Then
+                    blnFileAlreadyExists = True
+                    CopyNeeded = False
+                Else
+                    CopyNeeded = True
+                End If
             Else
                 'File wasn't on node, we'll have to copy it
                 CopyNeeded = True
@@ -515,8 +612,8 @@ Public Class clsAnalysisResourcesSeq
                 Return True
             Else
                 'File existed and was current, so everybody's happy
-                If m_DebugLevel > 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No copy required, database file " & DestFile)
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Database file at " & DestPath & " matches the source file's date and time; will not re-copy")
                 End If
                 Return True
             End If
