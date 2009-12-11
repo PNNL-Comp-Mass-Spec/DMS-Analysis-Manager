@@ -107,13 +107,24 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public MustOverride Function RequestTask() As RequestTaskResult
 
+
+        ''' <summary>
+        ''' Closes out a task
+        ''' </summary>
+        ''' <param name="CloseOut"></param>
+        ''' <param name="CompMsg"></param>
+        ''' <remarks></remarks>
+        Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)
+
 		''' <summary>
-		''' Closes out a task
+        ''' Closes out a task (includes EvalCode and EvalMessgae)
 		''' </summary>
 		''' <param name="CloseOut"></param>
 		''' <param name="CompMsg"></param>
-		''' <remarks></remarks>
-		Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)
+        ''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+        ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
+        ''' <remarks></remarks>
+        Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMessage As String)
 
 		''' <summary>
 		''' Reports database errors to local log

@@ -104,6 +104,7 @@
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />
+    <Compile Include="clsParseCommandLine.vb" />
     <Compile Include="clsPluginLoader.vb" />
     <Compile Include="clsRunDosProgram.vb" />
     <Compile Include="clsSplitCattedFiles.vb">
@@ -119,6 +120,7 @@
     <Compile Include="ISpectraFilter.vb" />
     <Compile Include="IStatusFile.vb" />
     <Compile Include="IToolRunner.vb" />
+    <Compile Include="modMain.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

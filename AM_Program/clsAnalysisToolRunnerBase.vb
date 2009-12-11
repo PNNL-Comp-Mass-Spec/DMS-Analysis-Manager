@@ -159,6 +159,7 @@ Namespace AnalysisManagerBase
 
             'Make log entry (both locally and in the DB)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+
             'Start the job timer
             m_StartTime = System.DateTime.Now()
 

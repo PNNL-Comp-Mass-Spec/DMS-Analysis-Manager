@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Text.RegularExpressions
 
 Public Class clsCodeTest
     'Imports Protein_Exporter
@@ -15,7 +16,27 @@ Public Class clsCodeTest
 	Protected WithEvents m_FastaTimer As System.Timers.Timer
 	Protected m_FastaGenTimeOut As Boolean = False
 
+    Protected m_mgrParams As AnalysisManagerBase.IMgrParams
+    Protected m_EvalMessage As String
+    Protected m_EvalCode As Integer
+    Protected m_DebugLevel As Integer = 2
+
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450				' 7.5 minutes
+
+    Public Sub New()
+        Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
+        Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
+
+        m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+
+        m_DebugLevel = 2
+
+        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString)
+
+
+    End Sub
 
 	Public Function Test(ByVal DestFolder As String) As Boolean
         Dim HashString As String = String.Empty
@@ -372,19 +393,15 @@ Public Class clsCodeTest
     End Function
 
     Public Sub TestDTASplit()
-        'Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-        'Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
-
         ''Dim intDebugLevel As Integer = 2
 
         ''Dim objToolRunner As clsAnalysisToolRunnerDtaSplit
-        ''Dim objAMSettings As New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-        ''Dim objJobParams As New clsAnalysisJob(objAMSettings, 0)
+        ''Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         ''Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        ''objAMSettings.SetParam("workdir", "D:\Temp\DMS_Work")
-        ''objAMSettings.SetParam("MgrName", "Monroe_Test")
-        ''objAMSettings.SetParam("debuglevel", "2")
+        ''m_mgrParams.SetParam("workdir", "D:\Temp\DMS_Work")
+        ''m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        ''m_mgrParams.SetParam("debuglevel", "2")
 
         ''objJobParams.SetParam("StepTool", "TestStepTool")
         ''objJobParams.SetParam("ToolName", "TestTool")
@@ -396,7 +413,7 @@ Public Class clsCodeTest
         ''objJobParams.SetParam("ClonedStepsHaveEqualNumSpectra", "True")
 
         ''objToolRunner = New clsAnalysisToolRunnerDtaSplit
-        ''objToolRunner.Setup(objAMSettings, objJobParams, objStatusTools)
+        ''objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
 
         ''objToolRunner.RunTool()
 
@@ -404,20 +421,17 @@ Public Class clsCodeTest
 
 
     Public Sub TestDeleteFiles()
-        Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-        Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 
         Dim OutFileName As String = "MyTestDataset_out.txt"
         Dim intDebugLevel As Integer = 2
 
         Dim objToolRunner As clsCodeTestAM
-        Dim objAMSettings As New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-        Dim objJobParams As New clsAnalysisJob(objAMSettings, 0)
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        objAMSettings.SetParam("workdir", "D:\DMS_WorkDir")
-        objAMSettings.SetParam("MgrName", "Monroe_Test")
-        objAMSettings.SetParam("debuglevel", "0")
+        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepTool", "TestStepTool")
         objJobParams.SetParam("ToolName", "TestTool")
@@ -426,7 +440,7 @@ Public Class clsCodeTest
         objJobParams.SetParam("OutputFolderName", "Tst_Results")
 
         objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(objAMSettings, objJobParams, objStatusTools)
+        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
 
         AnalysisManagerBase.clsGlobal.FilesToDelete.Add(OutFileName)
 
@@ -435,20 +449,17 @@ Public Class clsCodeTest
     End Sub
 
     Public Sub TestDeliverResults()
-        Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-        Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 
         Dim OutFileName As String = "MyTestDataset_out.txt"
         Dim intDebugLevel As Integer = 2
 
         Dim objToolRunner As clsCodeTestAM
-        Dim objAMSettings As New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-        Dim objJobParams As New clsAnalysisJob(objAMSettings, 0)
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        objAMSettings.SetParam("workdir", "D:\DMS_WorkDir")
-        objAMSettings.SetParam("MgrName", "Monroe_Test")
-        objAMSettings.SetParam("debuglevel", "0")
+        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepTool", "TestStepTool")
         objJobParams.SetParam("ToolName", "TestTool")
@@ -460,7 +471,7 @@ Public Class clsCodeTest
         objJobParams.SetParam("DatasetNum", "Test_Dataset")
 
         objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(objAMSettings, objJobParams, objStatusTools)
+        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
 
         objToolRunner.RunTool()
 
@@ -487,22 +498,19 @@ Public Class clsCodeTest
     End Sub
 
     Public Function TestUnzip(ByVal strZipFilePath As String, ByVal strOutFolderPath As String) As Boolean
-        Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-        Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 
         Dim intDebugLevel As Integer = 2
 
         Dim objResources As New clsResourceTestClass
 
-        Dim objAMSettings As New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-        Dim objJobParams As New clsAnalysisJob(objAMSettings, 0)
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
         Dim blnSuccess As Boolean
 
-        objAMSettings.SetParam("workdir", "D:\DMS_WorkDir")
-        objAMSettings.SetParam("MgrName", "Monroe_Test")
-        objAMSettings.SetParam("debuglevel", "3")
-        objAMSettings.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
+        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "3")
+        m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
 
         objJobParams.SetParam("StepTool", "TestStepTool")
         objJobParams.SetParam("ToolName", "TestTool")
@@ -510,7 +518,7 @@ Public Class clsCodeTest
         objJobParams.SetParam("Job", "12345")
         objJobParams.SetParam("OutputFolderName", "Tst_Results")
 
-        objResources.Setup(objAMSettings, objJobParams)
+        objResources.Setup(m_mgrParams, objJobParams)
 
         blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", False)
         'blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
@@ -1031,6 +1039,380 @@ Public Class clsCodeTest
 
         Return s
 
+    End Function
+
+    Public Function ValidateSequestNodeCount(ByVal strLogFilePath As String, ByVal blnLogToConsole As Boolean) As Boolean
+        Const ERROR_CODE_A As Integer = 2
+        Const ERROR_CODE_B As Integer = 4
+        Const ERROR_CODE_C As Integer = 8
+        Const ERROR_CODE_D As Integer = 16
+        Const ERROR_CODE_E As Integer = 32
+
+        Dim reStartingTask As System.Text.RegularExpressions.Regex
+        Dim reWaitingForReadyMsg As System.Text.RegularExpressions.Regex
+        Dim reReceivedReadyMsg As System.Text.RegularExpressions.Regex
+        Dim reSpawnedSlaveProcesses As System.Text.RegularExpressions.Regex
+        Dim reSearchedDTAFile As System.Text.RegularExpressions.Regex
+        Dim objMatch As System.Text.RegularExpressions.Match
+
+        Dim srLogFile As System.IO.StreamReader
+
+        Dim strParam As String
+        Dim strLineIn As String
+        Dim strHostName As String
+
+        ' This hash table is a map from host name to an entry in intDTACounts()
+        Dim htHosts As System.Collections.Hashtable
+        Dim htHostNodeCount As System.Collections.Hashtable
+
+        Dim objHostIndex As Object
+        Dim objEnum As System.Collections.IDictionaryEnumerator
+
+        Dim intIndex As Integer
+        Dim intHostIndex As Integer
+        Dim intNodeCountThisHost As Integer
+
+        ' The following array tracks the number of DTAs processed by each host (sum of stats for all nodes on that host)
+        Dim intDTAProcessingStats() As Integer
+        Dim intDTAProcessingStatCount As Integer
+
+        ' This array tracks the number of DTAs processed per node on each host
+        Dim sngHostProcessingRate() As Single
+        Dim sngHostProcessingRateSorted() As Single
+
+        Dim blnShowDetailedRates As Boolean
+
+        Dim intHostCount As Integer
+        Dim intNodeCountStarted As Integer
+        Dim intNodeCountActive As Integer
+        Dim intDTACount As Integer
+
+        Dim intNodeCountExpected As Integer
+
+        Dim strProcessingMsg As String
+
+        Try
+
+            m_EvalMessage = String.Empty
+            m_EvalCode = 0
+            blnShowDetailedRates = False
+
+            If Not System.IO.File.Exists(strLogFilePath) Then
+                strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count"
+                If blnLogToConsole Then Console.WriteLine(strProcessingMsg & ": " & strLogFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                Return False
+            End If
+
+            ' Initialize the RegEx objects
+            reStartingTask = New System.Text.RegularExpressions.Regex("Starting the SEQUEST task on (\d+) node", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reWaitingForReadyMsg = New System.Text.RegularExpressions.Regex("Waiting for ready messages from (\d+) node", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reReceivedReadyMsg = New System.Text.RegularExpressions.Regex("received ready messsage from (.+)\(", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reSpawnedSlaveProcesses = New System.Text.RegularExpressions.Regex("Spawned (\d+) slave processes", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reSearchedDTAFile = New System.Text.RegularExpressions.Regex("Searched dta file .+ on (.+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+
+            intHostCount = 0            ' Value for reStartingTask
+            intNodeCountStarted = 0     ' Value for reWaitingForReadyMsg
+            intNodeCountActive = 0      ' Value for reSpawnedSlaveProcesses
+            intDTACount = 0
+
+            strParam = m_mgrParams.GetParam("SequestNodeCountExpected")
+            If Integer.TryParse(strParam, intNodeCountExpected) Then
+            Else
+                intNodeCountExpected = 0
+            End If
+
+            ' Initialize the hash table that will track the number of spectra processed by each host
+            htHosts = New System.Collections.Hashtable
+
+            ' Initialze the hash table that will track the number of distinct nodes on each host
+            htHostNodeCount = New System.Collections.Hashtable
+
+            ' Initially reserve space for 50 hosts
+            intDTAProcessingStatCount = 0
+            ReDim intDTAProcessingStats(49)
+
+            srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+            ' Read each line from the input file
+            Do While srLogFile.Peek >= 0
+                strLineIn = srLogFile.ReadLine
+
+                If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+
+                    ' See if the line matches one of the expected RegEx values
+                    objMatch = reStartingTask.Match(strLineIn)
+                    If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                        If Not Integer.TryParse(objMatch.Groups(1).Value, intHostCount) Then
+                            strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
+                            If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                        End If
+
+                    Else
+                        objMatch = reWaitingForReadyMsg.Match(strLineIn)
+                        If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                            If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountStarted) Then
+                                strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
+                                If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                            End If
+
+                        Else
+                            objMatch = reReceivedReadyMsg.Match(strLineIn)
+                            If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                strHostName = objMatch.Groups(1).Value
+
+                                If htHostNodeCount.ContainsKey(strHostName) Then
+                                    htHostNodeCount(strHostName) = CInt(htHostNodeCount(strHostName)) + 1
+                                Else
+                                    htHostNodeCount.Add(strHostName, 1)
+                                End If
+
+                            Else
+                                objMatch = reSpawnedSlaveProcesses.Match(strLineIn)
+                                If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                    If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountActive) Then
+                                        strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
+                                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                    End If
+
+                                Else
+                                    objMatch = reSearchedDTAFile.Match(strLineIn)
+                                    If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                        strHostName = objMatch.Groups(1).Value
+
+                                        If Not strHostName Is Nothing Then
+                                            objHostIndex = htHosts(strHostName)
+
+                                            If objHostIndex Is Nothing Then
+                                                ' Host not present in htHosts; add it
+                                                intHostIndex = intDTAProcessingStatCount
+                                                htHosts.Add(strHostName, intHostIndex)
+
+                                                If intDTAProcessingStatCount >= intDTAProcessingStats.Length Then
+                                                    ' Reserve more space
+                                                    ReDim Preserve intDTAProcessingStats(intDTAProcessingStats.Length * 2 - 1)
+                                                End If
+
+                                                intDTAProcessingStats(intHostIndex) = 0
+
+                                                ' Increment the track of the number of entries in intDTAProcessingStats
+                                                intDTAProcessingStatCount += 1
+
+                                            Else
+                                                intHostIndex = CInt(objHostIndex)
+                                            End If
+
+                                            intDTAProcessingStats(intHostIndex) += 1
+
+                                            intDTACount += 1
+                                        End If
+                                    Else
+                                        ' Ignore this line
+                                    End If
+                                End If
+                            End If
+                        End If
+                    End If
+
+                End If
+            Loop
+
+            srLogFile.Close()
+
+            Try
+                ' Validate the stats
+
+                strProcessingMsg = "HostCount=" & intHostCount & "; NodeCountActive=" & intNodeCountActive
+                If m_DebugLevel >= 1 Then
+                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
+                End If
+                m_EvalMessage = String.Copy(strProcessingMsg)
+
+                If intNodeCountActive < intNodeCountExpected OrElse intNodeCountExpected = 0 Then
+                    strProcessingMsg = "Error: NodeCountActive less than expected value (" & intNodeCountExpected & ")"
+                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                    m_EvalMessage &= "; " & strProcessingMsg
+                    m_EvalCode = m_EvalCode Or ERROR_CODE_A
+                Else
+                    If intNodeCountStarted <> intNodeCountActive Then
+                        strProcessingMsg = "Warning: NodeCountStarted (" & intNodeCountStarted & ") <> NodeCountActive"
+                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                        m_EvalMessage &= "; " & strProcessingMsg
+                        m_EvalCode = m_EvalCode Or ERROR_CODE_B
+                    End If
+                End If
+
+                If intDTAProcessingStatCount < intHostCount Then
+                    ' Only record an error here if the number of DTAs processed was at least 2x the number of nodes
+                    If intDTACount >= 2 * intNodeCountActive Then
+                        strProcessingMsg = "Error: only " & intDTAProcessingStatCount & " host" & CheckForPlurality(intDTAProcessingStatCount) & " processed DTAs"
+                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                        m_EvalMessage &= "; " & strProcessingMsg
+                        m_EvalCode = m_EvalCode Or ERROR_CODE_C
+                    End If
+                End If
+
+                ' See if any of the hosts processed far fewer or far more spectra than the other hosts
+                ' When comparing hosts, we need to scale by the number of active nodes on each host
+                ' We'll populate intHostProcessingRate() with the number of DTAs processed per node on each host
+
+                Const LOW_THRESHOLD_MULTIPLIER As Single = 0.33
+                Const HIGH_THRESHOLD_MULTIPLIER As Single = 2
+
+                Dim sngProcessingRateMedian As Single
+                Dim intMidpoint As Integer
+                Dim sngThresholdRate As Single
+                Dim intWarningCount As Integer
+
+                ReDim sngHostProcessingRate(intDTAProcessingStatCount - 1)
+
+                objEnum = htHosts.GetEnumerator
+                Do While objEnum.MoveNext
+                    objHostIndex = objEnum.Value
+
+                    If Not objHostIndex Is Nothing Then
+                        intHostIndex = CInt(objHostIndex)
+
+                        intNodeCountThisHost = CInt(htHostNodeCount(objEnum.Key))
+                        If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
+
+                        sngHostProcessingRate(intHostIndex) = CSng(intDTAProcessingStats(intHostIndex) / intNodeCountThisHost)
+                    End If
+                Loop
+
+                ' Determine the median number of spectra processed
+                ' First duplicate sngHostProcessingRate so that we can sort it
+
+                ReDim sngHostProcessingRateSorted(sngHostProcessingRate.Length - 1)
+
+                Array.Copy(sngHostProcessingRate, sngHostProcessingRateSorted, sngHostProcessingRate.Length)
+
+                ' Now sort sngHostProcessingRateSorted
+                Array.Sort(sngHostProcessingRateSorted, 0, sngHostProcessingRateSorted.Length)
+
+                If sngHostProcessingRateSorted.Length <= 2 Then
+                    intMidpoint = 0
+                Else
+                    intMidpoint = CInt(Math.Floor(sngHostProcessingRateSorted.Length / 2))
+                End If
+
+                sngProcessingRateMedian = sngHostProcessingRateSorted(intMidpoint)
+
+                ' Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
+                intWarningCount = 0
+                sngThresholdRate = CSng(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
+
+                For intIndex = 0 To sngHostProcessingRate.Length - 1
+                    If sngHostProcessingRate(intIndex) < sngThresholdRate Then
+                        intWarningCount += 1
+                    End If
+                Next
+
+                If intWarningCount > 0 Then
+                    strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed fewer than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & LOW_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
+                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+
+                    m_EvalMessage &= "; " & strProcessingMsg
+                    m_EvalCode = m_EvalCode Or ERROR_CODE_D
+                    blnShowDetailedRates = True
+                End If
+
+                ' Count the number of nodes that had a processing rate more than HIGH_THRESHOLD_MULTIPLIER times the median value 
+                ' When comparing hosts, have to scale by the number of active nodes on each host
+                intWarningCount = 0
+                sngThresholdRate = CSng(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
+
+                For intIndex = 0 To sngHostProcessingRate.Length - 1
+                    If sngHostProcessingRate(intIndex) > sngThresholdRate Then
+                        intWarningCount += 1
+                    End If
+                Next
+
+                If intWarningCount > 0 Then
+                    strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed more than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & HIGH_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
+                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+
+                    m_EvalMessage &= "; " & strProcessingMsg
+                    m_EvalCode = m_EvalCode Or ERROR_CODE_E
+                    blnShowDetailedRates = True
+                End If
+
+                If m_DebugLevel >= 2 OrElse blnShowDetailedRates Then
+                    ' Log the number of DTAs processed by each host
+                    Dim strHostNames() As String
+
+                    If htHosts.Count > 0 Then
+                        ' Copy the key names into a string array so that we can sort them alphabetically
+
+                        ReDim strHostNames(htHosts.Count - 1)
+                        htHosts.Keys.CopyTo(strHostNames, 0)
+
+                        Array.Sort(strHostNames, 0, htHosts.Count)
+
+                        For intIndex = 0 To strHostNames.Length - 1
+                            objHostIndex = htHosts(strHostNames(intIndex))
+
+                            If Not objHostIndex Is Nothing Then
+                                intHostIndex = CInt(objHostIndex)
+                                intNodeCountThisHost = CInt(htHostNodeCount(strHostNames(intIndex)))
+
+                                strProcessingMsg = "Host " & strHostNames(intIndex) & " processed " & intDTAProcessingStats(intHostIndex) & " DTA" & CheckForPlurality(intDTAProcessingStats(intHostIndex)) & _
+                                                   " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
+                                                   " (" & sngHostProcessingRate(intIndex).ToString("0.0") & " DTAs/node)"
+                                If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
+                            End If
+                        Next
+                    End If
+                End If
+
+            Catch ex As Exception
+                ' Error occurred
+
+                strProcessingMsg = "Error in validating the stats in ValidateSequestNodeCount" & ex.Message
+                If blnLogToConsole Then
+                    Console.WriteLine("====================================================================")
+                    Console.WriteLine(strProcessingMsg)
+                    Console.WriteLine("====================================================================")
+                End If
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                Return False
+            End Try
+
+        Catch ex As Exception
+            ' Error occurred
+
+            strProcessingMsg = "Error parsing Sequest.log file in ValidateSequestNodeCount" & ex.Message
+            If blnLogToConsole Then
+                Console.WriteLine("====================================================================")
+                Console.WriteLine(strProcessingMsg)
+                Console.WriteLine("====================================================================")
+            End If
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Private Function CheckForPlurality(ByVal intValue As Integer) As String
+        If intValue = 1 Then
+            Return ""
+        Else
+            Return "s"
+        End If
     End Function
 
     Protected Class clsResourceTestClass

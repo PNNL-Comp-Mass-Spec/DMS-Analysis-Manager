@@ -36,6 +36,8 @@ Namespace AnalysisManagerBase
         Public Shared m_FilesToDeleteExt As New List(Of String)         ' List of file extensions to NOT move to the result folder; Comparison test uses "TmpFile.ToLower.EndsWith(m_FilesToDeleteExt(x).ToLower)"
         Public Shared m_ExceptionFiles As New List(Of String)           ' List of file names that WILL be moved to the result folder, even if they are in FilesToDelete or m_FilesToDeleteExt; Comparison test uses "TmpFile.ToLower.Contains(m_ExceptionFiles(x).ToLower)"
         Public Shared m_Completions_Msg As String = ""
+        Public Shared m_EvalCode As Integer = 0                         ' Can be used to pass codes regardng the results of this analysis back to the DMS_Pipeline DB
+        Public Shared m_EvalMessage As String = ""                      ' Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB
         Public Shared m_ServerFilesToDelete As New List(Of String)      ' List of file names to remove from the server
 #End Region
 

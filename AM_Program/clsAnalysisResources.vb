@@ -1288,9 +1288,13 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Protected Overridable Function SetBioworksVersion(ByVal ToolName As String) As IGenerateFile.ParamFileType
 
+            Dim strToolNameLCase As String
+
+            strToolNameLCase = ToolName.ToLower
+
             'Converts the setup file entry for the Bioworks version to a parameter type compatible with the
             '	parameter file generator dll
-            Select Case ToolName.ToLower
+            Select Case strToolNameLCase
                 Case "20"
                     Return IGenerateFile.ParamFileType.BioWorks_20
                 Case "30"
@@ -1306,8 +1310,17 @@ Namespace AnalysisManagerBase
                 Case "inspect"
                     Return IGenerateFile.ParamFileType.Inspect
                 Case Else
-                    'If we get to here, there's a problem
-                    Return Nothing
+                    ' Did not find an exact match
+                    ' Try a substring match
+                    If strToolNameLCase.Contains("sequest") Then
+                        Return IGenerateFile.ParamFileType.BioWorks_Current
+                    ElseIf strToolNameLCase.Contains("xtandem") Then
+                        Return IGenerateFile.ParamFileType.X_Tandem
+                    ElseIf strToolNameLCase.Contains("inspect") Then
+                        Return IGenerateFile.ParamFileType.Inspect
+                    Else
+                        Return Nothing
+                    End If
             End Select
 
         End Function
@@ -1320,25 +1333,54 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Public Overridable Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
 
+            Dim SourceFileName As String
+            Dim SourceFolderPath As String
+
             'Retrieve zipped DTA file
-            Dim ZippedFileName As String = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
-            Dim ZippedFolderName As String = FindDataFile(ZippedFileName)
+            SourceFileName = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
+            SourceFolderPath = FindDataFile(SourceFileName)
 
-            If ZippedFolderName = "" Then Return False 'No folder found containing the zipped DTA files
-            'Copy the file
-            If Not CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & ZippedFileName & " using folder " & ZippedFolderName)
-                End If
-                Return False
-            End If
+            If SourceFolderPath = "" Then
+                ' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
 
-            'Unzip concatenated DTA file
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-            If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), ZippedFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveDtaFiles", False) Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
+                SourceFileName = m_jobParams.GetParam("DatasetNum") & "_dta.txt"
+                SourceFolderPath = FindDataFile(SourceFileName)
+
+                If SourceFolderPath = "" Then
+                    ' No folder found containing the zipped DTA files; return False
+                    ' (the FindDataFile procedure should have already logged an error)
+                    Return False
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: could not find the _dta.zip file, but was able to find " & SourceFileName & " in folder " & SourceFolderPath)
+
+                    'Copy the _dta.txt file
+                    If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+                        If m_DebugLevel >= 2 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
+                        End If
+                        Return False
+                    End If
+
                 End If
+
+            Else
+
+                'Copy the _dta.zip file
+                If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
+                    End If
+                    Return False
+                End If
+
+                'Unzip concatenated DTA file
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
+                If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveDtaFiles", False) Then
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
+                    End If
+                End If
+
             End If
 
             'Unconcatenate DTA file if needed

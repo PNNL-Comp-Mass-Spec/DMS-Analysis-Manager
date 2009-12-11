@@ -114,7 +114,7 @@ Namespace AnalysisManagerBase
                 'Start the program executing
                 ProgRunner.StartAndMonitorProgram()
                 'loop until program is complete
-                While (ProgRunner.State <> 0) And (ProgRunner.State <> 10)
+                While (ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)  ' And (ProgRunner.State <> 10)
                     RaiseEvent LoopWaiting()
                     System.Threading.Thread.Sleep(m_MonitorInterval)
                 End While
@@ -126,14 +126,15 @@ Namespace AnalysisManagerBase
             ' Cache the exit code in m_ExitCode
             m_ExitCode = ProgRunner.ExitCode
 
-            If ProgRunner.State = 10 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: Progrunner.State = 10" & " for Program = " & ProgNameLoc)
-                Return False
+            ''If ProgRunner.State = 10 Then
+            ''    ' Note: State 10 is an old state that doesn't exist any more in PRISM.Processes.clsProgRunner
+            ''    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: Progrunner.State = 10" & " for Program = " & ProgNameLoc)
+            ''    Return False
+            ''ElseIf ...
 
-            ElseIf (UseResCode And ProgRunner.ExitCode <> 0) Then
+            If (UseResCode And ProgRunner.ExitCode <> 0) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: ProgRunner.ExitCode = " & ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
                 Return False
-
             Else
                 Return True
             End If

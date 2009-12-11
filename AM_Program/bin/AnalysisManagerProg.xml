@@ -46,14 +46,20 @@ AnalysisManagerProg
 	<param name="WorkDir">Full path to work directory</param>
 	<param name="paramXml">Contains the xml for all the job parameters</param>
 	<param name="jobNum">Contains the job number</param>
-	<remarks>Overloads the CloseTask sub inherited from base class.</remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String)">
 	<summary>
  Closes an analysis job
  </summary>
 	<param name="CloseOut">IJobParams enum specifying close out type</param>
 	<param name="CompMsg">Completion message to be added to database upon closeout</param>
-	<remarks>Overloads the CloseTask sub inherited from base class.</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
+	<summary>
+ Closes an analysis job
+ </summary>
+	<param name="CloseOut">IJobParams enum specifying close out type</param>
+	<param name="CompMsg">Completion message to be added to database upon closeout</param>
+	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.SetAnalysisJobComplete(System.String,System.Int32,System.String,System.Int32,System.String,System.String)">
 	<summary>
  Communicates with database to perform job closeout
@@ -982,6 +988,15 @@ AnalysisManagerProg
 	<param name="CloseOut"></param>
 	<param name="CompMsg"></param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
+	<summary>
+ Closes out a task (includes EvalCode and EvalMessgae)
+ </summary>
+	<param name="CloseOut"></param>
+	<param name="CompMsg"></param>
+	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsDBTask.LogErrorEvents">
 	<summary>
  Reports database errors to local log
@@ -1291,6 +1306,7 @@ AnalysisManagerProg
 	<summary>
  Starts program execution
  </summary>
+	<returns>0 if no error; error code if an error</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerProg.clsMainProcess.#ctor">
 	<summary>

@@ -30,7 +30,7 @@ Namespace AnalysisManagerProg
 #End Region
 
 #Region "Module variables"
-		Private Shared m_MainProcess As clsMainProcess
+        Private m_MainProcess As clsMainProcess
 		Private m_MgrSettings As clsAnalysisMgrSettings
 		Private m_AnalysisTask As clsAnalysisJob
         Private WithEvents m_FileWatcher As FileSystemWatcher
@@ -51,33 +51,19 @@ Namespace AnalysisManagerProg
 #End Region
 
 #Region "Methods"
-		''' <summary>
-		''' Starts program execution
-		''' </summary>
-		''' <remarks></remarks>
-		Shared Sub Main()
+        ''' <summary>
+        ''' Starts program execution
+        ''' </summary>
+        ''' <returns>0 if no error; error code if an error</returns>
+        ''' <remarks></remarks>
+        Public Function Main() As Integer
 
-			Dim ErrMsg As String
-
-            ''Dim objTest As New clsCodeTest
-            ''Try
-            ''    'objTest.TestFileDateConversion()
-            ''    'objTest.TestArchiveFileStart()
-            ''    'objTest.TestDTASplit()
-            ''    'objTest.TestUncat("ShewCarbF_2_3_04Jan07_Phoenix_06-11-18_trimmed", "D:\DMS_WorkDir")
-            ''    'objTest.TestFileSplitThenCombine()
-            ''    'objTest.TestResultsTransfer()
-            ''    'objTest.TestDeliverResults()
-            ''    objTest.TestGetFileContents()
-            ''Catch ex As Exception
-            ''    Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
-            ''End Try
-            ''Exit Sub
+            Dim ErrMsg As String
 
             Try
                 If IsNothing(m_MainProcess) Then
                     m_MainProcess = New clsMainProcess
-                    If Not m_MainProcess.InitMgr Then Exit Sub
+                    If Not m_MainProcess.InitMgr Then Exit Function
                 End If
                 clsGlobal.AppFilePath = Application.ExecutablePath
 
@@ -86,6 +72,8 @@ Namespace AnalysisManagerProg
 
                 m_MainProcess.DoAnalysis()
 
+                Return 0
+
             Catch Err As System.Exception
                 'Report any exceptions not handled at a lower level to the system application log
                 ErrMsg = "Critical exception starting application: " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err)
@@ -93,25 +81,27 @@ Namespace AnalysisManagerProg
                 Trace.Listeners.Add(New EventLogTraceListener("DMSAnalysisManager"))
                 Trace.WriteLine(ErrMsg)
                 Ev.Close()
-                Exit Sub
+                Return 1
             End Try
 
-		End Sub
+            Return 0
+
+        End Function
 
 
-		''' <summary>
-		''' Constructor
-		''' </summary>
-		''' <remarks>Doesn't do anything at present</remarks>
-		Public Sub New()
+        ''' <summary>
+        ''' Constructor
+        ''' </summary>
+        ''' <remarks>Doesn't do anything at present</remarks>
+        Public Sub New()
 
-		End Sub
+        End Sub
 
-		''' <summary>
-		''' Initializes the manager settings
-		''' </summary>
-		''' <returns>TRUE for success, FALSE for failure</returns>
-		''' <remarks></remarks>
+        ''' <summary>
+        ''' Initializes the manager settings
+        ''' </summary>
+        ''' <returns>TRUE for success, FALSE for failure</returns>
+        ''' <remarks></remarks>
         Private Function InitMgr() As Boolean
 
             'Get the manager settings
@@ -450,8 +440,10 @@ Namespace AnalysisManagerProg
                 InitStatusTools()
             End If
 
-            ' Make sure clsGlobal.m_Completions_Msg is empty
+            ' Reset the completion message, the evaluation code, and the evaluation message
             clsGlobal.m_Completions_Msg = String.Empty
+            clsGlobal.m_EvalCode = 0
+            clsGlobal.m_EvalMessage = String.Empty
 
             ' Update the cached most recent job info
             m_MostRecentJobInfo = ConstructMostRecentJobInfoText(System.DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
@@ -604,7 +596,7 @@ Namespace AnalysisManagerProg
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 0)
             Try
                 'Close out the job as a success
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, m_Completions_Msg)
+                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, m_Completions_Msg, m_EvalCode, m_EvalMessage)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, MgrName & ": Completed job " & JobNum)
 
                 UpdateStatusIdle("Completed job " & JobNum & ", step " & StepNum)
@@ -681,6 +673,10 @@ Namespace AnalysisManagerProg
 
         End Function
 
+        Private Sub InitSummary()
+            clsSummaryFile.Clear()
+        End Sub
+
         Private Function NeedToAbortProcessing() As Boolean
 
             If m_NeedToAbortProcessing Then
@@ -743,10 +739,6 @@ Namespace AnalysisManagerProg
             Return True
 
         End Function
-
-        Private Sub InitSummary()
-            clsSummaryFile.Clear()
-        End Sub
 
         Protected Sub UpdateStatusDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String)
             Dim strErrorMessages() As String
