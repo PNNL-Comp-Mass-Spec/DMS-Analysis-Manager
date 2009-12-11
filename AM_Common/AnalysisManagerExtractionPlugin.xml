@@ -6,7 +6,39 @@ AnalysisManagerExtractionPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerExtractionPlugin.clsExtractToolRunner.RunTool">
+<member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile@)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="MgrParams">IMgrParams object containing manager settings</param>
+	<param name="JobParams">IJobParams object containing job parameters</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.PerformExtraction">
+	<summary>
+ Performs peptide extraction by calling extractor DLL
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.GetResources">
+	<summary>
+ Gets all files needed to perform data extraction
+ </summary>
+	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.GetInputFiles(System.String)">
+	<summary>
+ Retrieves input files (ie, .out files) needed for extraction
+ </summary>
+	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
+	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.RetrieveMiscFiles">
+	<summary>
+ Retrieves misc files (ie, ModDefs) needed for extraction
+ </summary>
+	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsExtractToolRunner.RunTool">
 	<summary>
  Runs the data extraction tool(s)
  </summary>
@@ -53,19 +85,6 @@ AnalysisManagerExtractionPlugin
 	<param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
 	<returns>True if success, false if failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile@)">
-	<summary>
- Constructor
- </summary>
-	<param name="MgrParams">IMgrParams object containing manager settings</param>
-	<param name="JobParams">IJobParams object containing job parameters</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.PerformExtraction">
-	<summary>
- Performs peptide extraction by calling extractor DLL
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams)">
 	<summary>
  Constructor
@@ -84,25 +103,6 @@ AnalysisManagerExtractionPlugin
  Makes flat text file from output file
  </summary>
 	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.GetResources">
-	<summary>
- Gets all files needed to perform data extraction
- </summary>
-	<returns>IJobParams.CloseOutType specifying results</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.GetInputFiles(System.String)">
-	<summary>
- Retrieves input files (ie, .out files) needed for extraction
- </summary>
-	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
-	<returns>IJobParams.CloseOutType specifying results</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.RetrieveMiscFiles">
-	<summary>
- Retrieves misc files (ie, ModDefs) needed for extraction
- </summary>
-	<returns>IJobParams.CloseOutType specifying results</returns>
 	<remarks></remarks>
 </member>
 </members>
