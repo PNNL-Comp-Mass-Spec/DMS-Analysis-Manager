@@ -10,7 +10,7 @@
     </ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
-    <AssemblyName>AnalysisManagerDecon2lsPlugIn</AssemblyName>
+    <AssemblyName>AnalysisManagerDecon2lsV2PlugIn</AssemblyName>
     <AssemblyOriginatorKeyFile>
     </AssemblyOriginatorKeyFile>
     <AssemblyOriginatorKeyMode>None</AssemblyOriginatorKeyMode>
@@ -22,7 +22,7 @@
     <OptionCompare>Binary</OptionCompare>
     <OptionExplicit>On</OptionExplicit>
     <OptionStrict>On</OptionStrict>
-    <RootNamespace>AnalysisManagerDecon2lsPlugIn</RootNamespace>
+    <RootNamespace>AnalysisManagerDecon2lsV2PlugIn</RootNamespace>
     <StartupObject>
     </StartupObject>
     <FileUpgradeFlags>
@@ -34,7 +34,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>Bin\</OutputPath>
-    <DocumentationFile>AnalysisManagerDecon2lsPlugIn.xml</DocumentationFile>
+    <DocumentationFile>AnalysisManagerDecon2lsV2PlugIn.xml</DocumentationFile>
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
@@ -54,7 +54,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>Bin\</OutputPath>
-    <DocumentationFile>AnalysisManagerDecon2lsPlugIn.xml</DocumentationFile>
+    <DocumentationFile>AnalysisManagerDecon2lsV2PlugIn.xml</DocumentationFile>
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>

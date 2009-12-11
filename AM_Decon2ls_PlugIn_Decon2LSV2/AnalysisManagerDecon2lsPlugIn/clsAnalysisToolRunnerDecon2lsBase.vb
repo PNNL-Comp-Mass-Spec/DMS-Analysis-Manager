@@ -323,7 +323,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         ' Get the percent complete status from Decon2LS
         ' Decon2LS reports the percent complete as a value between 0 and 100
-        m_progress = CSng(m_ToolObj.PercentDone)
+        m_progress = m_ToolObj.PercentDone
 
     End Sub
 
@@ -381,7 +381,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             LocScanStop = MAX_SCAN_STOP
         End If
 
-        ' Get file type of the raw adta file
+        ' Get file type of the raw data file
         Dim filetype As DeconToolsV2.Readers.FileType = GetInputFileType(RawDataType)
         If filetype = DeconToolsV2.Readers.FileType.UNDEFINED Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)

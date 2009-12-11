@@ -62,11 +62,11 @@ Public Class clsDecon2LSRemoter
 		End Set
 	End Property
 
-	Public ReadOnly Property PercentDone() As Integer
-		Get
-			Return m_DeconObj.PercentDone
-		End Get
-	End Property
+    Public ReadOnly Property PercentDone() As Single
+        Get
+            Return m_DeconObj.PercentDone
+        End Get
+    End Property
 
     Public ReadOnly Property DeconState() As DMSDeconToolsV2.DeconState
         Get

@@ -2,17 +2,17 @@
 <doc>
 <assembly>
 <name>
-AnalysisManagerDecon2lsPlugIn
+AnalysisManagerDecon2lsV2PlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls.GetResources">
+<member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls.GetResources">
 	<summary>
  Retrieves files necessary for performance of Decon2ls analysis
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsBase.WriteTempParamFileUpdateElementValue(System.Xml.XmlDocument@,System.String,System.String,System.String)">
+</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsBase.WriteTempParamFileUpdateElementValue(System.Xml.XmlDocument@,System.String,System.String,System.String)">
 	<summary>
  Looks for the section specified by parameter XPathForSection.  If found, updates its value to NewElementValue.  If not found, tries to add a new node with name ElementName
  </summary>
