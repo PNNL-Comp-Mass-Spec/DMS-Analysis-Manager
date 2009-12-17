@@ -49,7 +49,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Public StatusDate As DateTime
         Public ScansProcessed As Integer
         Public PercentComplete As Single
-        Public ProcessingState As String
+        Public ProcessingState As String            ' Typical values: Processing, Finished, etc.
+        Public ProcessingStatus As String             ' Typical values: LTQFTPEKGENERATION, GENERATING
         Public ErrorMessage As String
 
         Public Sub Initialize()
@@ -57,6 +58,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             ScansProcessed = 0
             PercentComplete = 0
             ProcessingState = ICR2LS_STATE_UNKNOWN
+            ProcessingStatus = String.Empty
             ErrorMessage = String.Empty
         End Sub
     End Structure
@@ -121,6 +123,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Dim intResult As Integer
         Dim sngResult As Single
         Dim strProcessingState As String = mICR2LSStatus.ProcessingState
+        Dim strProcessingStatus As String = ""
+        Dim intScansProcessed As Integer
 
         Dim strStatusDate As String = ""
         Dim strStatusTime As String = ""
@@ -166,9 +170,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                                     ' When processing a subset of the scans, ICR-2LS reports the "ScansProcessed" starting with the first scan that it is told to process (the /L switch)
                                     ' This can lead to misleading values for ScansProcessed
                                     ' To correct for this, subtract out mMinScanOffset
-                                    mICR2LSStatus.ScansProcessed = intResult - mMinScanOffset
-                                    If mICR2LSStatus.ScansProcessed < 0 Then
-                                        mICR2LSStatus.ScansProcessed = intResult
+                                    intScansProcessed = intResult - mMinScanOffset
+                                    If intScansProcessed < 0 Then
+                                        intScansProcessed = intResult
                                     End If
                                 End If
 
@@ -177,8 +181,13 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                                     mICR2LSStatus.PercentComplete = sngResult
                                 End If
 
-                            Case "processing_state"
+                            Case "state"
+                                ' Example values: Processing, Finished
                                 strProcessingState = String.Copy(strValue)
+
+                            Case "status"
+                                ' Example value: LTQFTPEKGENERATION
+                                strProcessingStatus = String.Copy(strValue)
 
                             Case "errormessage"
                                 mICR2LSStatus.ErrorMessage = String.Copy(strValue)
@@ -198,15 +207,25 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                     End If
                 End If
 
-                If Not strProcessingState Is Nothing AndAlso strProcessingState.Length > 0 Then
-                    mICR2LSStatus.ProcessingState = strProcessingState
+                If intScansProcessed > mICR2LSStatus.ScansProcessed Then
+                    ' Only update .ScansProcessed if the new value is larger than the previous one
+                    ' This is necessary since ICR-2LS will set ScansProcessed to 0 when the state is Finished
+                    mICR2LSStatus.ScansProcessed = intScansProcessed
                 End If
 
-                If Not ValidateICR2LSStatus(strProcessingState) Then
-                    If System.DateTime.Now.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
-                        mLastInvalidStatusFiletime = System.DateTime.Now
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid processing state reported by ICR2LS: " & strProcessingState)
+                If Not strProcessingState Is Nothing AndAlso strProcessingState.Length > 0 Then
+                    mICR2LSStatus.ProcessingState = strProcessingState
+
+                    If Not ValidateICR2LSStatus(strProcessingState) Then
+                        If System.DateTime.Now.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
+                            mLastInvalidStatusFiletime = System.DateTime.Now
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid processing state reported by ICR2LS: " & strProcessingState)
+                        End If
                     End If
+                End If
+
+                If Not strProcessingStatus Is Nothing AndAlso strProcessingStatus.Length > 0 Then
+                    mICR2LSStatus.ProcessingStatus = strProcessingStatus
                 End If
 
                 m_progress = mICR2LSStatus.PercentComplete
@@ -443,24 +462,24 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to ICR2LS.exe failed (but exit code is 0)")
             End If
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Most recent ICR-2LS State: " & mICR2LSStatus.ProcessingState & " with " & mICR2LSStatus.ScansProcessed & " scans processed (" & mICR2LSStatus.PercentComplete.ToString("0.0") & "% done)")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Most recent ICR-2LS State: " & mICR2LSStatus.ProcessingState & " with " & mICR2LSStatus.ScansProcessed & " scans processed (" & mICR2LSStatus.PercentComplete.ToString("0.0") & "% done); Status = " & mICR2LSStatus.ProcessingStatus)
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS.exe : " & m_JobNum)
         Else
 
             'Verify ICR-2LS exited due to job completion
 
-            If mICR2LSStatus.ProcessingState <> ICR2LS_STATE_FINISHED Then
+            If mICR2LSStatus.ProcessingState.ToLower <> ICR2LS_STATE_FINISHED.ToLower Then
 
-                If mICR2LSStatus.ProcessingState = ICR2LS_STATE_ERROR Or _
-                   mICR2LSStatus.ProcessingState = ICR2LS_STATE_KILLED Or _
+                If mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_ERROR.ToLower Or _
+                   mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_KILLED.ToLower Or _
                    m_progress < 100 Then
                     eLogLevel = clsLogTools.LogLevels.ERROR
                 Else
                     eLogLevel = clsLogTools.LogLevels.WARN
                 End If
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogLevel, "ICR-2LS processing state not Finished: " & mICR2LSStatus.ProcessingState & "; Processed " & mICR2LSStatus.ScansProcessed & " scans (" & mICR2LSStatus.PercentComplete.ToString("0.0") & "% complete)")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogLevel, "ICR-2LS processing state not Finished: " & mICR2LSStatus.ProcessingState & "; Processed " & mICR2LSStatus.ScansProcessed & " scans (" & mICR2LSStatus.PercentComplete.ToString("0.0") & "% complete); Status = " & mICR2LSStatus.ProcessingStatus)
 
                 If m_progress >= 100 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Progress reported by ICR-2LS is 100%, so will assume the job is complete")
