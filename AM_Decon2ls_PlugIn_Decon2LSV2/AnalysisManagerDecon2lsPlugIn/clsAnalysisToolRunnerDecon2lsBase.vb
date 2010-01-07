@@ -49,8 +49,13 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Protected m_RemotingTools As clsRemotingTools
     Protected m_ServerRunning As Boolean = False
 
+    Protected m_Decon2LSThread As System.Threading.Thread
+
+    Protected mInputFileName As String = String.Empty
+
     ' The following variable is set to True if Decon2LS fails, but at least one loop of analysis succeeded
     Protected mDecon2LSFailedMidLooping As Boolean = False
+    Protected mDecon2LSThreadAbortedSinceFinished As Boolean
 #End Region
 
 #Region "Enums"
@@ -235,6 +240,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim result As IJobParams.CloseOutType
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
         Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
+        Dim eReturnCode As IJobParams.CloseOutType
+
+        ' Set this to success for now
+        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
@@ -248,15 +257,15 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         mDecon2LSFailedMidLooping = False
 
+        'Run Decon2LS
         result = RunDecon2Ls()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'Run Decon2LS
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
             m_message = "Error running Decon2LS"
 
-            ' Only return Closeout_Failed if mDecon2LSFailedMidLooping is False
-            If Not mDecon2LSFailedMidLooping Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Delete the raw data files
@@ -266,7 +275,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         If DeleteRawDataFiles(m_jobParams.GetParam("RawDataType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
             m_message = "Error deleting raw data files"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Update the job summary file
@@ -291,10 +300,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'MoveResultFiles moves the result files to the result folder
             m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If mDecon2LSFailedMidLooping Then
+        If mDecon2LSFailedMidLooping Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
             Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
@@ -393,8 +402,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
 
         ' Specify Input file or folder
-        Dim InpFileName As String = SpecifyInputFileName(RawDataType)
-        If InpFileName = "" Then
+        mInputFileName = SpecifyInputFileName(RawDataType)
+        If mInputFileName = "" Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & RawDataType)
             m_message = "Invalid raw data type specified"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -438,7 +447,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 m_ToolObj = New Decon2LSRemoter.clsDecon2LSRemoter
                 With m_ToolObj
                     .ResetState()
-                    .DataFile = InpFileName
+                    .DataFile = mInputFileName
                     .DeconFileType = filetype
                     .OutFile = strOutFileCurrentLoop
                     .ParamFile = strParamFileCurrentLoop
@@ -459,36 +468,48 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Exit Do
             End Try
 
+            ' Reset the log file tracking variables
+            mDecon2LSThreadAbortedSinceFinished = False
+
             'Start Decon2LS via the subclass in a separate thread
-            Dim Decon2LSThread As New System.Threading.Thread(AddressOf StartDecon2LS)
-            Decon2LSThread.Start()
+            m_Decon2LSThread = New System.Threading.Thread(AddressOf StartDecon2LS)
+            m_Decon2LSThread.Start()
 
             'Wait for Decon2LS to finish
             System.Threading.Thread.Sleep(3000)       'Pause to ensure Decon2LS has adequate time to start
             WaitForDecon2LSFinish()
 
             ' Stop the analysis timer
-            m_StopTime = Now
+            m_StopTime = System.DateTime.Now
 
             If m_DebugLevel > 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished")
             End If
 
             ' Determine reason for Decon2LS finish
-            Select Case m_ToolObj.DeconState
-                Case DMSDeconToolsV2.DeconState.DONE
-                    'This is normal, do nothing else
-                Case DMSDeconToolsV2.DeconState.ERROR
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & m_ToolObj.ErrMsg)
-                    m_message = "Decon2LS error"
-                    blnDecon2LSError = True
+            If mDecon2LSThreadAbortedSinceFinished Then
+                ' The thread was still reporting a status of RUNNING_DECON or RUNNING_TIC
+                ' However, the log file says things completed successfully
+                ' We'll trust the log file
+                blnDecon2LSError = False
+            Else
+                Select Case m_ToolObj.DeconState
+                    Case DMSDeconToolsV2.DeconState.DONE
+                        'This is normal, do nothing else
+                        blnDecon2LSError = False
 
-                Case DMSDeconToolsV2.DeconState.IDLE
-                    'Shouldn't ever get here
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
-                    m_message = "Decon2LS error"
-                    blnDecon2LSError = True
-            End Select
+                    Case DMSDeconToolsV2.DeconState.ERROR
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & m_ToolObj.ErrMsg)
+                        m_message = "Decon2LS error"
+                        blnDecon2LSError = True
+
+                    Case DMSDeconToolsV2.DeconState.IDLE
+                        'Shouldn't ever get here
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
+                        m_message = "Decon2LS invalid state"
+                        blnDecon2LSError = True
+                End Select
+            End If
 
             'Delay to allow Decon2LS a chance to close all files
             System.Threading.Thread.Sleep(5000)      '5 seconds
@@ -547,6 +568,72 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
+    Protected Function Decon2LSLogFileReportsFinished(ByRef dtFinishTime As DateTime) As Boolean
+
+        Dim fiFileInfo As System.IO.FileInfo
+        Dim srInFile As System.IO.StreamReader
+
+        Dim strLogFilePath As String
+        Dim strLineIn As String
+        Dim blnFinished As Boolean
+        Dim blnDateValid As Boolean
+
+        Dim intCharIndex As Integer
+
+        blnFinished = False
+
+        Try
+            strLogFilePath = System.IO.Path.Combine(m_WorkDir, mInputFileName & "_log.txt")
+
+            If System.IO.File.Exists(strLogFilePath) Then
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+                Do While srInFile.Peek >= 0
+                    strLineIn = srInFile.ReadLine
+
+                    If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+                        intCharIndex = strLineIn.ToLower.IndexOf("finished file processing")
+                        If intCharIndex >= 0 Then
+
+                            blnDateValid = False
+                            If intCharIndex > 1 Then
+                                ' Parse out the date from strLineIn
+                                If System.DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+                                    blnDateValid = True
+                                Else
+                                    ' Unable to parse out the date
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
+                                End If
+                            End If
+
+                            If Not blnDateValid Then
+                                fiFileInfo = New System.IO.FileInfo(strLogFilePath)
+                                dtFinishTime = fiFileInfo.LastWriteTime
+                            End If
+
+                            If m_DebugLevel >= 3 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decon2LS log file reports 'finished file processing' at " & dtFinishTime.ToString())
+                            End If
+
+                            blnFinished = True
+                            Exit Do
+                        End If
+                    End If
+                Loop
+            End If
+
+        Catch ex As System.Exception
+            ' Ignore errors here
+        Finally
+            If Not srInFile Is Nothing Then
+                srInFile.Close()
+            End If
+        End Try
+
+        Return blnFinished
+
+    End Function
+
     Protected Function GetInputFileType(ByVal RawDataType As String) As DeconToolsV2.Readers.FileType
 
         'Gets the Decon2LS file type based on the input data type
@@ -601,6 +688,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     End Function
 
     Protected Sub WaitForDecon2LSFinish()
+        Dim dtFinishTime As DateTime
+        Dim dtLastLogCheckTime As DateTime = System.DateTime.Now
 
         'Loops while waiting for Decon2LS to finish running
 
@@ -623,6 +712,26 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Debug.WriteLine("Current Scan: " & m_ToolObj.CurrentScan)
             If m_DebugLevel >= 5 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
+            End If
+
+            ' Parse the Decon2LS _log.txt file every 30 seconds to see if it reports that things have finished
+            If System.DateTime.Now.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
+                dtLastLogCheckTime = System.DateTime.Now
+
+                If Decon2LSLogFileReportsFinished(dtFinishTime) Then
+                    ' The Decon2LS Log File reports that the task is complete
+                    ' If it finished over 30 seconds ago, then forcibly kill the thread and exit the while loop
+
+                    If System.DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= 30 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Forcibly closed the Decon2LS thread since the log file reports finished and over 30 seconds has elapsed, yet Decon2LS still reports its state as Running")
+
+                        m_Decon2LSThread.Abort()
+                        System.Threading.Thread.Sleep(3000)
+
+                        mDecon2LSThreadAbortedSinceFinished = True
+                        Exit While
+                    End If
+                End If
             End If
 
         End While
