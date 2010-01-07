@@ -108,7 +108,7 @@ Public Class clsResultXferToolRunner
         Dim diDatasetFolder As System.IO.DirectoryInfo
 
         ' Set this to True to overwrite existing results folders
-        Dim blnOverwriteExisting As Boolean = False
+        Dim blnOverwriteExisting As Boolean = True
 
 		'Verify input folder exists in storage server xfer folder
         FolderToMove = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))
