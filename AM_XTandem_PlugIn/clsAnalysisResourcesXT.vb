@@ -1,8 +1,7 @@
+Option Strict On
+
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 Imports AnalysisManagerBase
-Imports System.IO
-Imports System
-Imports ParamFileGenerator.MakeParams
 
 Public Class clsAnalysisResourcesXT
     Inherits clsAnalysisResources
@@ -48,7 +47,7 @@ Public Class clsAnalysisResourcesXT
 
         'update list of files to be deleted after run
         For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
+            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
             For Each FileToDel As String In DumFiles
                 clsGlobal.FilesToDelete.Add(FileToDel)
             Next
@@ -84,7 +83,7 @@ Public Class clsAnalysisResourcesXT
         End If
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        result = result And MakeInputFile()
+        result = MakeInputFile()
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed making input file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -104,14 +103,14 @@ Public Class clsAnalysisResourcesXT
         Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
-        Dim OrgFilePath As String = Path.Combine(LocalOrgDBFolder, OrgDBName)
+        Dim OrgFilePath As String = System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)
 
         'edit base taxonomy file into actual
         Try
             ' Create an instance of StreamWriter to write to a file.
-            Dim inputFile As StreamWriter = New StreamWriter(Path.Combine(WorkingDir, "taxonomy.xml"))
+            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkingDir, "taxonomy.xml"))
             ' Create an instance of StreamReader to read from a file.
-            Dim inputBase As StreamReader = New StreamReader(Path.Combine(WorkingDir, "taxonomy_base.xml"))
+            Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkingDir, "taxonomy_base.xml"))
             Dim inpLine As String
             ' Read and display the lines from the file until the end 
             ' of the file is reached.
@@ -131,7 +130,7 @@ Public Class clsAnalysisResourcesXT
         End Try
 
         'get rid of base file
-        File.Delete(Path.Combine(WorkingDir, "taxonomy_base.xml"))
+        System.IO.File.Delete(System.IO.Path.Combine(WorkingDir, "taxonomy_base.xml"))
 
         Return result
     End Function
@@ -143,10 +142,10 @@ Public Class clsAnalysisResourcesXT
 
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
-        Dim ParamFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
-        Dim SpectrumFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
-        Dim TaxonomyFilePath As String = Path.Combine(WorkingDir, "taxonomy.xml")
-        Dim OutputFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_xt.xml")
+        Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
+        Dim SpectrumFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+        Dim TaxonomyFilePath As String = System.IO.Path.Combine(WorkingDir, "taxonomy.xml")
+        Dim OutputFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_xt.xml")
 
         'make input file
         'start by adding the contents of the parameter file.
@@ -154,10 +153,10 @@ Public Class clsAnalysisResourcesXT
         'and add to input file (in proper XML format)
         Try
             ' Create an instance of StreamWriter to write to a file.
-            Dim inputFile As StreamWriter = New StreamWriter(Path.Combine(WorkingDir, "input.xml"))
+            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkingDir, "input.xml"))
             ' Create an instance of StreamReader to read from a file.
-            Dim inputBase As StreamReader = New StreamReader(Path.Combine(WorkingDir, "input_base.txt"))
-            Dim paramFile As StreamReader = New StreamReader(ParamFilePath)
+            Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkingDir, "input_base.txt"))
+            Dim paramFile As System.IO.StreamReader = New System.IO.StreamReader(ParamFilePath)
             Dim paramLine As String
             Dim inpLine As String
             Dim tmpFlag As Boolean
@@ -193,7 +192,7 @@ Public Class clsAnalysisResourcesXT
         End Try
 
         'get rid of base file
-        File.Delete(Path.Combine(WorkingDir, "input_base.txt"))
+        System.IO.File.Delete(System.IO.Path.Combine(WorkingDir, "input_base.txt"))
 
         Return result
     End Function

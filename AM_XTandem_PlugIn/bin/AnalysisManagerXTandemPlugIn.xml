@@ -12,6 +12,12 @@ AnalysisManagerXTandemPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ValidateCDTAFile">
+	<summary>
+ Make sure the _DTA.txt file exists and has at lease one spectrum in it
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ZipMainOutputFile">
 	<summary>
  Zips concatenated XML output file

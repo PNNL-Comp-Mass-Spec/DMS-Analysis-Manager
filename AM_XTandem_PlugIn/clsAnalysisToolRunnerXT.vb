@@ -1,3 +1,5 @@
+Option Strict On
+
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -11,8 +13,6 @@
 imports AnalysisManagerBase
 Imports PRISM.Files
 Imports AnalysisManagerBase.clsGlobal
-Imports System.io
-Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerXT
     Inherits clsAnalysisToolRunnerBase
@@ -48,10 +48,15 @@ Public Class clsAnalysisToolRunnerXT
         Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
+        'Do the base class stuff
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Start the job timer
-        m_StartTime = System.DateTime.Now
+        ' Make sure the _DTA.txt file is valid
+        If Not ValidateCDTAFile() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+        End If
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
 
         CmdRunner = New clsRunDosProgram(m_WorkDir)
 
@@ -61,7 +66,7 @@ Public Class clsAnalysisToolRunnerXT
 
         ' verify that program file exists
         Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
-        If Not File.Exists(progLoc) Then
+        If Not System.IO.File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find XTandem program file")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -70,7 +75,7 @@ Public Class clsAnalysisToolRunnerXT
         'Future section to monitor XTandem log file for progress determination
         '--------------------------------------------------------------------------------------------
         ''Get the XTandem log file name for a File Watcher to monitor
-        'Dim XtLogFileName As String = GetXTLogFileName(Path.Combine(m_WorkDir, m_XtSetupFile))
+        'Dim XtLogFileName As String = GetXTLogFileName(System.IO.Path.Combine(m_WorkDir, m_XtSetupFile))
         'If XtLogFileName = "" Then
         '	m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
         '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -145,50 +150,96 @@ Public Class clsAnalysisToolRunnerXT
 
     End Function
 
-	''' <summary>
-	''' Zips concatenated XML output file
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Private Function ZipMainOutputFile() As IJobParams.CloseOutType
-		Dim TmpFile As String
-		Dim FileList() As String
-		Dim ZipFileName As String
+    ''' <summary>
+    ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function ValidateCDTAFile() As Boolean
+        Dim strInputFilePath As String
+        Dim srReader As System.IO.StreamReader
 
-		Try
-			Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-			FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml")
-			For Each TmpFile In FileList
-				ZipFileName = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-				If Not Zipper.MakeZipFile("-fast", ZipFileName, Path.GetFileName(TmpFile)) Then
-					Dim Msg As String = "Error zipping output files, job " & m_JobNum
+        Dim blnDataFound As Boolean = False
+
+        Try
+            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+
+            If Not System.IO.File.Exists(strInputFilePath) Then
+                m_message = "_DTA.txt file not found: " & strInputFilePath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+            Do While srReader.Peek >= 0
+                If srReader.ReadLine.Trim.Length > 0 Then
+                    blnDataFound = True
+                    Exit Do
+                End If
+            Loop
+
+            srReader.Close()
+
+            If Not blnDataFound Then
+                m_message = "The _DTA.txt file is empty"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in ValidateCDTAFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+        Return blnDataFound
+
+    End Function
+
+    ''' <summary>
+    ''' Zips concatenated XML output file
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+        Dim TmpFile As String
+        Dim FileList() As String
+        Dim ZipFileName As String
+
+        Try
+            Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
+            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
+            For Each TmpFile In FileList
+                ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
+                If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
+                    Dim Msg As String = "Error zipping output files, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
                     m_message = AppendToComment(m_message, "Error zipping output files")
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			Next
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+            Next
+        Catch ex As Exception
+            Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
             m_message = AppendToComment(m_message, "Error zipping output files")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
-		'Delete the XML output files
-		Try
-			FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml")
-			For Each TmpFile In FileList
-				File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) And (Not FileAttributes.ReadOnly))
-				File.Delete(TmpFile)
-			Next
-		Catch Err As Exception
+        'Delete the XML output files
+        Try
+            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
+            For Each TmpFile In FileList
+                System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
+                System.IO.File.Delete(TmpFile)
+            Next
+        Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Event handler for CmdRunner.LoopWaiting event
