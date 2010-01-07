@@ -162,6 +162,16 @@
 		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT" 
 		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="lcmsfeaturefinder"
+		Class="AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF" 
+		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="omssa"
+		Class="AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM" 
+		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -314,6 +324,16 @@
 		Tool="msclusterdtatodat" 
 		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT" 
 		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="lcmsfeaturefinder"
+		Class="AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF" 
+		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="omssa"
+		Class="AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM" 
+		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" 
 	/>
 </Resourcers>
 

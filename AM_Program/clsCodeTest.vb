@@ -38,64 +38,64 @@ Public Class clsCodeTest
 
     End Sub
 
-	Public Function Test(ByVal DestFolder As String) As Boolean
-        Dim HashString As String = String.Empty
+    'Public Function Test(ByVal DestFolder As String) As Boolean
+    '       Dim HashString As String = String.Empty
 
-		TestException()
-		Return False
+    '	TestException()
+    '	Return False
 
 
-		'Instantiate fasta tool if not already done
-		If m_FastaTools Is Nothing Then
-			If m_FastaToolsCnStr = "" Then
-				Console.WriteLine("Protein database connection string not specified")
-				Return False
-			End If
-			m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
-		End If
+    '	'Instantiate fasta tool if not already done
+    '	If m_FastaTools Is Nothing Then
+    '		If m_FastaToolsCnStr = "" Then
+    '			Console.WriteLine("Protein database connection string not specified")
+    '			Return False
+    '		End If
+    '		m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
+    '	End If
 
-		'Initialize fasta generation state variables
-		m_GenerationStarted = False
-		m_GenerationComplete = False
+    '	'Initialize fasta generation state variables
+    '	m_GenerationStarted = False
+    '	m_GenerationComplete = False
 
-		'Set up variables for fasta creation call
-		Dim LegacyFasta As String = "na"
-		Dim CreationOpts As String = "seq_direction=forward,filetype=fasta"
-		Dim CollectionList As String = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_FRC-32_2007-07-07,Geobacter_sulfurreducens_2006-07-07,Geobacter_uraniumreducens_Rf4_2007-06-19"
+    '	'Set up variables for fasta creation call
+    '       Dim LegacyFasta As String = "na"
+    '	Dim CreationOpts As String = "seq_direction=forward,filetype=fasta"
+    '	Dim CollectionList As String = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_FRC-32_2007-07-07,Geobacter_sulfurreducens_2006-07-07,Geobacter_uraniumreducens_Rf4_2007-06-19"
 
-		' Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
-		CollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_"
+    '	' Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
+    '	CollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_"
 
-		'Setup a timer to prevent an infinite loop if there's a fasta generation problem
-		m_FastaTimer = New System.Timers.Timer
-		m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
-		m_FastaTimer.AutoReset = False
+    '	'Setup a timer to prevent an infinite loop if there's a fasta generation problem
+    '	m_FastaTimer = New System.Timers.Timer
+    '	m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
+    '	m_FastaTimer.AutoReset = False
 
-		'Create the fasta file
-		m_FastaGenTimeOut = False
-		Try
-			m_FastaTimer.Start()
-            HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
-        Catch ex As Exception
-            Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: ", ex.Message)
-            Return False
-		End Try
+    '	'Create the fasta file
+    '	m_FastaGenTimeOut = False
+    '	Try
+    '		m_FastaTimer.Start()
+    '           HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
+    '       Catch ex As Exception
+    '           Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: ", ex.Message)
+    '           Return False
+    '	End Try
 
-		'Wait for fasta creation to finish
-		While Not m_GenerationComplete
-			System.Threading.Thread.Sleep(2000)
-		End While
+    '	'Wait for fasta creation to finish
+    '	While Not m_GenerationComplete
+    '		System.Threading.Thread.Sleep(2000)
+    '	End While
 
-		If m_FastaGenTimeOut Then
-			'Fasta generator hung - report error and exit
-			Console.WriteLine("Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString & " seconds have elapsed)")
-			Return False
-		End If
+    '	If m_FastaGenTimeOut Then
+    '		'Fasta generator hung - report error and exit
+    '		Console.WriteLine("Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString & " seconds have elapsed)")
+    '		Return False
+    '	End If
 
-		'If we got to here, everything worked OK
-		Return True
+    '	'If we got to here, everything worked OK
+    '	Return True
 
-	End Function
+    'End Function
 
     Public Sub TestArchiveFileStart()
         Dim strParamFilePath As String

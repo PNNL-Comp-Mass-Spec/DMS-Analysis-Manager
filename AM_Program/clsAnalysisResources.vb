@@ -156,6 +156,7 @@ Namespace AnalysisManagerBase
             m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
 
+            m_WorkingDir = m_mgrParams.GetParam("workdir")
         End Sub
 
 		Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
@@ -623,6 +624,7 @@ Namespace AnalysisManagerBase
             Dim UnZipper As ZipTools
             Dim TargetFolder As String
             Dim ZipFile As String
+            Dim strZipProgramPath As String
 
             'Copy the zipped s-folders from archive to work directory
             If Not CopySFoldersToWorkDir(WorkDir, CreateStoragePathInfoOnly) Then
@@ -648,8 +650,16 @@ Namespace AnalysisManagerBase
             DSWorkFolder = Path.Combine(WorkDir, DSName)
             Directory.CreateDirectory(DSWorkFolder)
 
-            ''Set up the unzipper
-            UnZipper = New ZipTools(DSWorkFolder, m_mgrParams.GetParam("zipprogram"))
+            'Set up the unzipper
+            strZipProgramPath = m_mgrParams.GetParam("zipprogram")
+
+            If Not System.IO.File.Exists(strZipProgramPath) Then
+                m_message = "Unzip program not found (" & strZipProgramPath & "); unable to continue"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            UnZipper = New ZipTools(DSWorkFolder, strZipProgramPath)
 
             'Unzip each of the zip files to the working directory
             For Each ZipFile In ZipFiles
@@ -1367,10 +1377,14 @@ Namespace AnalysisManagerBase
 
                 'Copy the _dta.zip file
                 If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
-                    If m_DebugLevel >= 2 Then
+                    If m_DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
                     End If
                     Return False
+                Else
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & SourceFileName & " from folder " & SourceFolderPath)
+                    End If
                 End If
 
                 'Unzip concatenated DTA file

@@ -243,8 +243,8 @@ Namespace AnalysisManagerProg
                             'No need to check for mgr control db changes since they were just loaded
                             m_FirstRun = False
                         Else    'm_FirstRun check
-                            'Check if manager control database settings have changed
-                            If Not m_MgrSettings.LoadMgrSettingsFromDB() Then
+                            ' Reload the manager control DB settings in case they have changed
+                            If Not m_MgrSettings.LoadDBSettings() Then
                                 ' Error retrieving settings from the manager control DB
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrSettings.ErrMsg)
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")

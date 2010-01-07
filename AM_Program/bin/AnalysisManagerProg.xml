@@ -112,7 +112,13 @@ AnalysisManagerProg
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadMgrSettingsFromDB">
 	<summary>
- Gets remaining manager config settings from config database
+ Gets manager config settings from manager control DB
+ </summary>
+	<returns>True for success; False for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadBrokerDBSettings">
+	<summary>
+ Gets global settings from Broker DB (aka Pipeline DB)
  </summary>
 	<returns>True for success; False for error</returns>
 	<remarks></remarks>
