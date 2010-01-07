@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerLCMSFeatureFinderPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF.RunTool">
+	<summary>
+ Runs LCMS Feature Finder tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member>
+</members>
+</doc>

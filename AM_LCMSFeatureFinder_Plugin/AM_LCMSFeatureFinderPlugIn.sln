@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{AB8CA6A3-DC09-4CFE-A50C-DC0952F3BB0D}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "AnalysisManagerLCMSFeatureFinderPlugIn.vbproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
