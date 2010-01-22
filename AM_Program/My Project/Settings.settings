@@ -12,7 +12,7 @@
       <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI</Value>
     </Setting>
     <Setting Name="UsingDefaults" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

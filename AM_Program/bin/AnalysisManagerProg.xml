@@ -6,226 +6,19 @@ AnalysisManagerProg
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerBase.clsAnalysisJob.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
+<member name="P:My.Resources.Resources.ResourceManager">
 	<summary>
- Constructor
- </summary>
-	<param name="mgrParams">IMgrParams object containing manager parameters</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetParam(System.String)">
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:My.Resources.Resources.Culture">
 	<summary>
- Gets a task parameter from the task params class
- </summary>
-	<param name="Name">Key name for parameter</param>
-	<returns>Value for specified parameter</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.AddAdditionalParameter(System.String,System.String)">
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="T:My.Resources.Resources">
 	<summary>
- Adds a parameter to the class
- </summary>
-	<param name="ParamName">Name of parameter</param>
-	<param name="ParamValue">Value for parameter</param>
-	<returns>TRUE for success, FALSE for error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.RequestTask">
-	<summary>
- Requests a task from the database
- </summary>
-	<returns>Enum indicating if task was found</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.RequestAnalysisJob">
-	<summary>
- Requests a single analysis job
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SaveJobParameters(System.String,System.String,System.String)">
-	<summary>
- Saves job Parameters to an XML File
- </summary>
-	<param name="WorkDir">Full path to work directory</param>
-	<param name="paramXml">Contains the xml for all the job parameters</param>
-	<param name="jobNum">Contains the job number</param>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String)">
-	<summary>
- Closes an analysis job
- </summary>
-	<param name="CloseOut">IJobParams enum specifying close out type</param>
-	<param name="CompMsg">Completion message to be added to database upon closeout</param>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
-	<summary>
- Closes an analysis job
- </summary>
-	<param name="CloseOut">IJobParams enum specifying close out type</param>
-	<param name="CompMsg">Completion message to be added to database upon closeout</param>
-	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SetAnalysisJobComplete(System.String,System.Int32,System.String,System.Int32,System.String,System.String)">
-	<summary>
- Communicates with database to perform job closeout
- </summary>
-	<param name="SpName">Name of SP in database to call for closeout</param>
-	<param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
-	<param name="CompMsg">Comment to insert in database</param>
-	<param name="EvalCode">Integer results evaluation code</param>
-	<param name="EvalMsg">Message describing evaluation results</param>
-	<param name="ConnStr">Database connection string</param>
-	<returns>True for success, False for failure</returns>
-	<remarks>EvalCode and EvalMsg not presently used</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetCurrentJobToolDescription">
-	<summary>
- Uses the "ToolName" and "StepTool" entries in m_jobParams to generate the tool name for the current analysis job
- Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
- </summary>
-	<returns>Tool name</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.AckManagerUpdateRequired">
-	<summary>
- Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.#ctor(System.String,System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="EmergencyLogSource">Source name registered for emergency logging</param>
-	<param name="EmergencyLogName">Name of system log for emergency logging</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadSettings">
-	<summary>
- Loads manager settings from config file and database
- </summary>
-	<returns>True if successful; False on error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadMgrSettingsFromFile">
-	<summary>
- Loads the initial settings from application config file
- </summary>
-	<returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.CheckInitialSettings(System.Collections.Specialized.StringDictionary@)">
-	<summary>
- Tests initial settings retrieved from config file
- </summary>
-	<param name="InpDict"></param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadMgrSettingsFromDB">
-	<summary>
- Gets manager config settings from manager control DB
- </summary>
-	<returns>True for success; False for error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadBrokerDBSettings">
-	<summary>
- Gets global settings from Broker DB (aka Pipeline DB)
- </summary>
-	<returns>True for success; False for error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetParam(System.String)">
-	<summary>
- Gets a parameter from the parameters string dictionary
- </summary>
-	<param name="ItemKey">Key name for item</param>
-	<returns>String value associated with specified key</returns>
-	<remarks>Returns Nothing if key isn't found</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.SetParam(System.String,System.String)">
-	<summary>
- Sets a parameter in the parameters string dictionary
- </summary>
-	<param name="ItemKey">Key name for the item</param>
-	<param name="ItemValue">Value to assign to the key</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.WriteErrorMsg(System.String)">
-	<summary>
- Writes an error message to application log or manager local log
- </summary>
-	<param name="ErrMsg">Message to write</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.DbCStr(System.Object)">
-	<summary>
- Converts a database output object that could be dbNull to a string
- </summary>
-	<param name="InpObj"></param>
-	<returns>String equivalent of object; empty string if object is dbNull</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetAllKeys">
-	<summary>
- Gets a collection representing all keys in the parameters string dictionary
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.WriteConfigSetting(System.String,System.String)">
-	<summary>
- Writes specfied value to an application config file.
- </summary>
-	<param name="Key">Name for parameter (case sensitive)</param>
-	<param name="Value">New value for parameter</param>
-	<returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
-	<remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadConfigDocument">
-	<summary>
- Loads an app config file for changing parameters
- </summary>
-	<returns>App config file as an XML document if successful; NOTHING on failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetConfigFilePath">
-	<summary>
- Specifies the full name and path for the application config file
- </summary>
-	<returns>String containing full name and path</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.ClearMessageList">
-	<summary>
- Clears internal list of error messages
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetPluginInfo(System.String,System.String@,System.String@)">
-	<summary>
- Retrieves data for specified plugin from plugin info config file
- </summary>
-	<param name="XPath">XPath spec for specified plugin</param>
-	<param name="className">Name of class for plugin (return value) </param>
-	<param name="assyName">Name of assembly for plugin (return value)</param>
-	<returns>TRUE for success, FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.LoadObject(System.String,System.String)">
-	<summary>
- Loads the specifed dll
- </summary>
-	<param name="className">Name of class to load (from GetPluginInfo)</param>
-	<param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
-	<returns>An object referencing the specified dll</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetToolRunner(System.String,System.Boolean)">
-	<summary>
- Loads a tool runner object
- </summary>
-	<param name="ToolName">Name of tool</param>
-	<param name="clustered">TRUE if tool is running on a sequest cluster, FALSE otherwise</param>
-	<returns>An object meeting the IToolRunner interface</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetSpectraGenerator(System.String)">
-	<summary>
- Loads a tool spectra file generator object
- </summary>
-	<param name="SpectraDataType">A spectra data type</param>
-	<returns>Object meeting the ISpectraFileProcessor interface</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetAnalysisResources(System.String)">
-	<summary>
- Loads a resourcer object
- </summary>
-	<param name="ToolName">Name of analysis tool</param>
-	<returns>An object meeting the IAnalysisResources interface</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetPluginInfoFilePath(System.String)">
-	<summary>
- Gets the path to the plugin info config file
- </summary>
-	<param name="PluginInfoFileName">Name of plugin info file</param>
-	<returns>Path to plugin info file</returns>
-	<remarks></remarks>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.#ctor">
 	<summary>
  Constructor
@@ -315,6 +108,15 @@ AnalysisManagerProg
  </summary>
 	<param name="FolderPath">The folder to look in</param>
 	<param name="FileName">The file name to find</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(System.String)">
+	<summary>
+ Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
+ If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
+ If the file named _StoragePathInfo.txt isn't found, then returns an empty string
+ </summary>
+	<param name="FolderPath">The folder to look in</param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveSpectra(System.String,System.String)">
@@ -524,224 +326,13 @@ AnalysisManagerProg
 	<param name="FileNamePath">Name of file to create</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks>XML handling based on code provided by Matt Monroe</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.#ctor">
+</member><member name="M:AnalysisManagerBase.clsEmergencyLog.WriteToLog(System.String,System.String,System.String)">
 	<summary>
- Constructor
+ Writes a message to a custom event log, which is used if standard log file not available
  </summary>
-	<remarks>Does nothing at present</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object holding manager parameters</param>
-	<param name="jobParams">Object holding job parameters</param>
-	<param name="StatusTools">Object for status reporting</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.LoadSettingsFile">
-	<summary>
- Loads the job settings file
- </summary>
-	<returns>TRUE for success, FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.RunTool">
-	<summary>
- Runs the analysis tool
- </summary>
-	<returns>CloseoutType enum representing completion status</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB">
-	<summary>
- Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(System.Int32)">
-	<summary>
- Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
- </summary>
-	<param name="intUpdateIntervalSeconds">The minimum number of seconds between updates; if fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur</param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(System.Int32,AnalysisManagerBase.IMgrParams@,System.Int16@)">
-	<summary>
- Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
- </summary>
-	<param name="DebugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
-	<returns>True for success; False for error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.MakeResultsFolder">
-	<summary>
- Creates a results folder after analysis complete
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.MoveResultFiles">
-	<summary>
- Moves result files after tool has completed
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UpdateSummaryFile">
-	<summary>
- Updates the analysis summary file
- </summary>
-	<returns>TRUE for success, FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CalcElapsedTime(System.DateTime,System.DateTime)">
-	<summary>
- Calculates total run time for a job
- </summary>
-	<param name="StartTime">Time job started</param>
-	<param name="StopTime">Time of job completion</param>
-	<returns>Total job run time (HH:MM)</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CleanupFailedJob(System.String)">
-	<summary>
- Sets return message from analysis error and cleans working directory
- </summary>
-	<param name="OopsMessage">Message to include in job comment field</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.OutputSummary(System.String)">
-	<summary>
- Adds manager assembly data to job summary file
- </summary>
-	<param name="OutputPath">Path to summary file</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.DeleteFileWithRetries(System.String)">
-	<summary>
- Makes multiple tries to delete specified file
- </summary>
-	<param name="FileNamePath">Full path to file for deletion</param>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks>Raises exception if error occurs</remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CopyResultsFolderToServer">
-	<summary>
- Copies the files from the results folder to the transfer folder on the server
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.WriteStatusFile">
-	<summary>
- Writes out a new status file, indicating that the manager is still alive
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.WriteStatusFile(System.Boolean)">
-	<summary>
- Writes the status file
- </summary>
-	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateClose(System.String,System.String[]@,System.String,System.Boolean)">
-	<summary>
-	</summary>
-	<param name="ManagerIdleMessage"></param>
-	<param name="RecentErrorMessages"></param>
-	<param name="MostRecentJobInfo"></param>
-	<param name="ForceLogToBrokerDB"></param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateAndWrite(System.Single)">
-	<summary>
- Update the current status
- </summary>
-	<param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateAndWrite(AnalysisManagerBase.IStatusFile.EnumMgrStatus,AnalysisManagerBase.IStatusFile.EnumTaskStatus,AnalysisManagerBase.IStatusFile.EnumTaskStatusDetail,System.Single)">
-	<summary>
- Update the current status
- </summary>
-	<param name="mgrStatus">Job status code</param>
-	<param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle">
-	<summary>
- Logs to the status file that the manager is idle
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.Boolean)">
-	<summary>
- Logs to the status file that the manager is idle
- </summary>
-	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.String,System.String,System.Boolean)">
-	<summary>
- Logs to the status file that the manager is idle
- </summary>
-	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	<param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
-	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
-	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.String[]@,System.String,System.Boolean)">
-	<summary>
- Logs to the status file that the manager is idle
- </summary>
-	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
-	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus)">
-	<summary>
- Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus,System.String)">
-	<summary>
- Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
- </summary>
-	<param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus,System.String,System.String[]@,System.String)">
-	<summary>
- Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
- </summary>
-	<param name="ManagerStatus">Should be EnumMgrStatus.DISABLED_LOCAL or EnumMgrStatus.DISABLED_MC</param>
-	<param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateFlagFileExists">
-	<summary>
- Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateFlagFileExists(System.String[]@,System.String)">
-	<summary>
- Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
- </summary>
-	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.AMFileNotFoundException.#ctor(System.String,System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="FileName">Name of file being processed when exception occurred</param>
-	<param name="Message">Message to be returned in exception</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.AMFolderNotFoundException.#ctor(System.String,System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="FolderName">Name of unfound folder</param>
-	<param name="Message">Message for exception to return</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.AMFileNotDeletedAfterRetryException.#ctor(System.String,AnalysisManagerBase.AMFileNotDeletedAfterRetryException.RetryExceptionType,System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="FileName">Name of file causing exception</param>
-	<param name="ExceptionType">Exception type</param>
-	<param name="Message">Message to be returned by exception</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.AMFileNotDeletedException.#ctor(System.String,System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="FileName">Name of file causing exception</param>
-	<param name="Message">Message to be returned by exception</param>
+	<param name="SourceName">Name of source (program) using log</param>
+	<param name="LogName">Name of log</param>
+	<param name="ErrMsg">Message to write to log</param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsStatusFile.#ctor(System.String,System.Int32)">
 	<summary>
@@ -919,213 +510,6 @@ AnalysisManagerProg
  </summary>
 	<returns>Number of hours manager has been processing job</returns>
 	<remarks></remarks>
-</member><member name="M:clsCodeTest.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean)">
-	<summary>
- Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
- </summary>
-	<param name="strFile1">First file</param>
-	<param name="strFile2">Second file</param>
-	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:clsCodeTest.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean,System.String[]@)">
-	<summary>
- Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
- </summary>
-	<param name="strFile1">First file</param>
-	<param name="strFile2">Second file</param>
-	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	<param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:clsCodeTest.SplitFileRoundRobin(System.String,System.Int64,System.Boolean,System.String[]@)">
-	<summary>
- Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output 
- files has length greater than lngMaxSizeBytes. It will also check for a header line on the 
- first line; if a header line is found, then all of the split files will be assigned the same header line
- </summary>
-	<param name="strSrcFilePath">FilePath to parse</param>
-	<param name="lngMaxSizeBytes">Maximum size of each file</param>
-	<param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
-	<param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
-	<returns>True if success, False if failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBStatusLogger.#ctor(System.String,System.Single)">
-	<summary>
- Constructor
- </summary>
-	<param name="strDBConnectionString">Database connection string</param>
-	<param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
-	<remarks></remarks>
-</member><member name="P:AnalysisManagerBase.clsDBTask.TaskWasAssigned">
-	<summary>
- Value showing if a transfer task was assigned
- </summary>
-	<value></value>
-	<returns>TRUE if task was assigned; otherwise false</returns>
-	<remarks></remarks>
-</member><member name="P:AnalysisManagerBase.clsDBTask.DebugLevel">
-	<summary>
- Debug level
- </summary>
-	<value></value>
-	<returns></returns>
-	<remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
-	<summary>
- Constructor
- </summary>
-	<param name="MgrParams">An IMgrParams object containing manager parameters</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.RequestTask">
-	<summary>
- Requests a task
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String)">
-	<summary>
- Closes out a task
- </summary>
-	<param name="CloseOut"></param>
-	<param name="CompMsg"></param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
-	<summary>
- Closes out a task (includes EvalCode and EvalMessgae)
- </summary>
-	<param name="CloseOut"></param>
-	<param name="CompMsg"></param>
-	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.LogErrorEvents">
-	<summary>
- Reports database errors to local log
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.OnInfoMessage(System.Object,System.Data.SqlClient.SqlInfoMessageEventArgs)">
-	<summary>
- Event handler for InfoMessage event
- </summary>
-	<param name="sender"></param>
-	<param name="args"></param>
-	<remarks>Errors and warnings from SQL Server are caught here</remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String)">
-	<summary>
- Method for executing a db stored procedure, assuming no data table is returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
- </summary>
-	<param name="SpCmd">SQL command object containing stored procedure params</param>
-	<param name="ConnStr">Db connection string</param>
-	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String,System.Int32)">
-	<summary>
- Method for executing a db stored procedure, assuming no data table is returned
- </summary>
-	<param name="SpCmd">SQL command object containing stored procedure params</param>
-	<param name="ConnStr">Db connection string</param>
-	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
-	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.Data.DataTable@,System.String)">
-	<summary>
- Method for executing a db stored procedure if a data table is to be returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
- </summary>
-	<param name="SpCmd">SQL command object containing stored procedure params</param>
-	<param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
-	<param name="ConnStr">Db connection string</param>
-	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.Data.DataTable@,System.String,System.Int32)">
-	<summary>
- Method for executing a db stored procedure if a data table is to be returned
- </summary>
-	<param name="SpCmd">SQL command object containing stored procedure params</param>
-	<param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
-	<param name="ConnStr">Db connection string</param>
-	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
-	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsDBTask.PrintCommandParams(System.Data.SqlClient.SqlCommand)">
-	<summary>
- Debugging routine for printing SP calling params
- </summary>
-	<param name="InpCmd">SQL command object containing params</param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsRunDosProgram.#ctor(System.String)">
-	<summary>
- Constructor
- </summary>
-	<param name="WorkDir">Workdirectory for input/output files, if any</param>
-	<remarks></remarks>
-</member><member name="M:clsCodeTestAM.#ctor">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
-</member><member name="M:clsCodeTestAM.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object for updating status file as job progresses</param>
-	<remarks></remarks>
-</member><member name="M:clsCodeTestAM.RunTool">
-	<summary>
- Runs the analysis tool
- </summary>
-	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.#ctor(System.String,System.Single)">
-	<summary>
- Constructor
- </summary>
-	<param name="LogFolderPath">Folder in which to write the memory log file(s) </param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetFreeMemoryMB">
-	<summary>
- Returns the amount of free memory on the current machine
- </summary>
-	<returns>Free memory, in MB</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetPoolNonpagedMemory">
-	<summary>
- Returns the amount of pool nonpaged memory on the current machine
- </summary>
-	<returns>Pool Nonpaged memory, in MB</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetPoolPagedMemory">
-	<summary>
- Returns the amount of pool paged memory on the current machine
- </summary>
-	<returns>Pool Paged memory, in MB</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetProcessMemoryUsageMB">
-	<summary>
- Returns the amount of memory that the currently running process is using
- </summary>
-	<returns>Memory usage, in MB</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.InitializePerfCounters">
-	<summary>
- Initializes the performance counters
- </summary>
-	<returns>Any errors that occur; empty string if no errors</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsEmergencyLog.WriteToLog(System.String,System.String,System.String)">
-	<summary>
- Writes a message to a custom event log, which is used if standard log file not available
- </summary>
-	<param name="SourceName">Name of source (program) using log</param>
-	<param name="LogName">Name of log</param>
-	<param name="ErrMsg">Message to write to log</param>
-	<remarks></remarks>
 </member><member name="P:clsLogTools.FileLogDebugEnabled">
 	<summary>
  Tells calling program file debug status
@@ -1173,6 +557,82 @@ AnalysisManagerProg
  Sets file logging level based on enumeration (Overloaded)
  </summary>
 	<param name="InpLevel">LogLevels value defining level (Debug is most verbose)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.Main">
+	<summary>
+ Starts program execution
+ </summary>
+	<returns>0 if no error; error code if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Doesn't do anything at present</remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.InitMgr">
+	<summary>
+ Initializes the manager settings
+ </summary>
+	<returns>TRUE for success, FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.DoAnalysis">
+	<summary>
+ Loop to perform all analysis jobs
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.DisableManagerLocally">
+	<summary>
+ Sets the local mgr_active flag to False for serious problems
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.m_FileWatcher_Changed(System.Object,System.IO.FileSystemEventArgs)">
+	<summary>
+ Event handler for file watcher
+ </summary>
+	<param name="sender"></param>
+	<param name="e"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.InitStatusTools">
+	<summary>
+ Initializes the status file writing tool
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsSummaryFile.Clear">
+	<summary>
+ Clears summary file data
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsSummaryFile.SaveSummaryFile(System.String)">
+	<summary>
+ Writes the summary file to the specified location
+ </summary>
+	<param name="ResultFolderNamePath">Location where summary file is to be written</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsSummaryFile.Add(System.String)">
+	<summary>
+ Adds a line of data to summary file
+ </summary>
+	<param name="line">Data to be added</param>
+	<remarks></remarks>
+</member><member name="M:clsCodeTestAM.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Presently not used</remarks>
+</member><member name="M:clsCodeTestAM.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Initializes class
+ </summary>
+	<param name="mgrParams">Object containing manager parameters</param>
+	<param name="jobParams">Object containing job parameters</param>
+	<param name="StatusTools">Object for updating status file as job progresses</param>
+	<remarks></remarks>
+</member><member name="M:clsCodeTestAM.RunTool">
+	<summary>
+ Runs the analysis tool
+ </summary>
+	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsGlobal.AppendToComment(System.String,System.String)">
 	<summary>
@@ -1308,76 +768,634 @@ AnalysisManagerProg
 	<param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.Main">
-	<summary>
- Starts program execution
- </summary>
-	<returns>0 if no error; error code if an error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.#ctor">
+</member><member name="M:AnalysisManagerBase.clsDBStatusLogger.#ctor(System.String,System.Single)">
 	<summary>
  Constructor
  </summary>
-	<remarks>Doesn't do anything at present</remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.InitMgr">
+	<param name="strDBConnectionString">Database connection string</param>
+	<param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.AMFileNotFoundException.#ctor(System.String,System.String)">
 	<summary>
- Initializes the manager settings
+ Constructor
+ </summary>
+	<param name="FileName">Name of file being processed when exception occurred</param>
+	<param name="Message">Message to be returned in exception</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.AMFolderNotFoundException.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="FolderName">Name of unfound folder</param>
+	<param name="Message">Message for exception to return</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.AMFileNotDeletedAfterRetryException.#ctor(System.String,AnalysisManagerBase.AMFileNotDeletedAfterRetryException.RetryExceptionType,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="FileName">Name of file causing exception</param>
+	<param name="ExceptionType">Exception type</param>
+	<param name="Message">Message to be returned by exception</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.AMFileNotDeletedException.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="FileName">Name of file causing exception</param>
+	<param name="Message">Message to be returned by exception</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="mgrParams">IMgrParams object containing manager parameters</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetParam(System.String)">
+	<summary>
+ Gets a task parameter from the task params class
+ </summary>
+	<param name="Name">Key name for parameter</param>
+	<returns>Value for specified parameter</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.AddAdditionalParameter(System.String,System.String)">
+	<summary>
+ Adds a parameter to the class
+ </summary>
+	<param name="ParamName">Name of parameter</param>
+	<param name="ParamValue">Value for parameter</param>
+	<returns>TRUE for success, FALSE for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.RequestTask">
+	<summary>
+ Requests a task from the database
+ </summary>
+	<returns>Enum indicating if task was found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.RequestAnalysisJob">
+	<summary>
+ Requests a single analysis job
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SaveJobParameters(System.String,System.String,System.String)">
+	<summary>
+ Saves job Parameters to an XML File
+ </summary>
+	<param name="WorkDir">Full path to work directory</param>
+	<param name="paramXml">Contains the xml for all the job parameters</param>
+	<param name="jobNum">Contains the job number</param>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String)">
+	<summary>
+ Closes an analysis job
+ </summary>
+	<param name="CloseOut">IJobParams enum specifying close out type</param>
+	<param name="CompMsg">Completion message to be added to database upon closeout</param>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
+	<summary>
+ Closes an analysis job
+ </summary>
+	<param name="CloseOut">IJobParams enum specifying close out type</param>
+	<param name="CompMsg">Completion message to be added to database upon closeout</param>
+	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SetAnalysisJobComplete(System.String,System.Int32,System.String,System.Int32,System.String,System.String)">
+	<summary>
+ Communicates with database to perform job closeout
+ </summary>
+	<param name="SpName">Name of SP in database to call for closeout</param>
+	<param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
+	<param name="CompMsg">Comment to insert in database</param>
+	<param name="EvalCode">Integer results evaluation code</param>
+	<param name="EvalMsg">Message describing evaluation results</param>
+	<param name="ConnStr">Database connection string</param>
+	<returns>True for success, False for failure</returns>
+	<remarks>EvalCode and EvalMsg not presently used</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetCurrentJobToolDescription">
+	<summary>
+ Uses the "ToolName" and "StepTool" entries in m_jobParams to generate the tool name for the current analysis job
+ Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+ </summary>
+	<returns>Tool name</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.#ctor(System.String,System.Single)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="LogFolderPath">Folder in which to write the memory log file(s) </param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetFreeMemoryMB">
+	<summary>
+ Returns the amount of free memory on the current machine
+ </summary>
+	<returns>Free memory, in MB</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetPoolNonpagedMemory">
+	<summary>
+ Returns the amount of pool nonpaged memory on the current machine
+ </summary>
+	<returns>Pool Nonpaged memory, in MB</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetPoolPagedMemory">
+	<summary>
+ Returns the amount of pool paged memory on the current machine
+ </summary>
+	<returns>Pool Paged memory, in MB</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.GetProcessMemoryUsageMB">
+	<summary>
+ Returns the amount of memory that the currently running process is using
+ </summary>
+	<returns>Memory usage, in MB</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.InitializePerfCounters">
+	<summary>
+ Initializes the performance counters
+ </summary>
+	<returns>Any errors that occur; empty string if no errors</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.ClearMessageList">
+	<summary>
+ Clears internal list of error messages
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetPluginInfo(System.String,System.String@,System.String@)">
+	<summary>
+ Retrieves data for specified plugin from plugin info config file
+ </summary>
+	<param name="XPath">XPath spec for specified plugin</param>
+	<param name="className">Name of class for plugin (return value) </param>
+	<param name="assyName">Name of assembly for plugin (return value)</param>
+	<returns>TRUE for success, FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.LoadObject(System.String,System.String)">
+	<summary>
+ Loads the specifed dll
+ </summary>
+	<param name="className">Name of class to load (from GetPluginInfo)</param>
+	<param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
+	<returns>An object referencing the specified dll</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetToolRunner(System.String,System.Boolean)">
+	<summary>
+ Loads a tool runner object
+ </summary>
+	<param name="ToolName">Name of tool</param>
+	<param name="clustered">TRUE if tool is running on a sequest cluster, FALSE otherwise</param>
+	<returns>An object meeting the IToolRunner interface</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetSpectraGenerator(System.String)">
+	<summary>
+ Loads a tool spectra file generator object
+ </summary>
+	<param name="SpectraDataType">A spectra data type</param>
+	<returns>Object meeting the ISpectraFileProcessor interface</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetAnalysisResources(System.String)">
+	<summary>
+ Loads a resourcer object
+ </summary>
+	<param name="ToolName">Name of analysis tool</param>
+	<returns>An object meeting the IAnalysisResources interface</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsPluginLoader.GetPluginInfoFilePath(System.String)">
+	<summary>
+ Gets the path to the plugin info config file
+ </summary>
+	<param name="PluginInfoFileName">Name of plugin info file</param>
+	<returns>Path to plugin info file</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsRunDosProgram.#ctor(System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="WorkDir">Workdirectory for input/output files, if any</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.WriteStatusFile">
+	<summary>
+ Writes out a new status file, indicating that the manager is still alive
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.WriteStatusFile(System.Boolean)">
+	<summary>
+ Writes the status file
+ </summary>
+	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateClose(System.String,System.String[]@,System.String,System.Boolean)">
+	<summary>
+	</summary>
+	<param name="ManagerIdleMessage"></param>
+	<param name="RecentErrorMessages"></param>
+	<param name="MostRecentJobInfo"></param>
+	<param name="ForceLogToBrokerDB"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateAndWrite(System.Single)">
+	<summary>
+ Update the current status
+ </summary>
+	<param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateAndWrite(AnalysisManagerBase.IStatusFile.EnumMgrStatus,AnalysisManagerBase.IStatusFile.EnumTaskStatus,AnalysisManagerBase.IStatusFile.EnumTaskStatusDetail,System.Single)">
+	<summary>
+ Update the current status
+ </summary>
+	<param name="mgrStatus">Job status code</param>
+	<param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle">
+	<summary>
+ Logs to the status file that the manager is idle
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.Boolean)">
+	<summary>
+ Logs to the status file that the manager is idle
+ </summary>
+	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.String,System.String,System.Boolean)">
+	<summary>
+ Logs to the status file that the manager is idle
+ </summary>
+	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+	<param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
+	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
+	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateIdle(System.String,System.String[]@,System.String,System.Boolean)">
+	<summary>
+ Logs to the status file that the manager is idle
+ </summary>
+	<param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
+	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus)">
+	<summary>
+ Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus,System.String)">
+	<summary>
+ Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+ </summary>
+	<param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateDisabled(AnalysisManagerBase.IStatusFile.EnumMgrStatus,System.String,System.String[]@,System.String)">
+	<summary>
+ Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+ </summary>
+	<param name="ManagerStatus">Should be EnumMgrStatus.DISABLED_LOCAL or EnumMgrStatus.DISABLED_MC</param>
+	<param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateFlagFileExists">
+	<summary>
+ Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.IStatusFile.UpdateFlagFileExists(System.String[]@,System.String)">
+	<summary>
+ Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+ </summary>
+	<param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+	<param name="MostRecentJobInfo">Information on the job that started most recently</param>
+	<remarks></remarks>
+</member><member name="M:clsSplitCattedFiles.LineEndCharacterCount(System.IO.FileInfo)">
+	<summary>
+ This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
+ When found, the next byte is examined
+ If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
+ </summary>
+	<param name="fi"></param>
+	<returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.AckManagerUpdateRequired">
+	<summary>
+ Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="EmergencyLogSource">Source name registered for emergency logging</param>
+	<param name="EmergencyLogName">Name of system log for emergency logging</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadSettings">
+	<summary>
+ Loads manager settings from config file and database
+ </summary>
+	<returns>True if successful; False on error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadMgrSettingsFromFile">
+	<summary>
+ Loads the initial settings from application config file
+ </summary>
+	<returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.CheckInitialSettings(System.Collections.Specialized.StringDictionary@)">
+	<summary>
+ Tests initial settings retrieved from config file
+ </summary>
+	<param name="InpDict"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadMgrSettingsFromDB">
+	<summary>
+ Gets manager config settings from manager control DB
+ </summary>
+	<returns>True for success; False for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadBrokerDBSettings">
+	<summary>
+ Gets global settings from Broker DB (aka Pipeline DB)
+ </summary>
+	<returns>True for success; False for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetParam(System.String)">
+	<summary>
+ Gets a parameter from the parameters string dictionary
+ </summary>
+	<param name="ItemKey">Key name for item</param>
+	<returns>String value associated with specified key</returns>
+	<remarks>Returns Nothing if key isn't found</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.SetParam(System.String,System.String)">
+	<summary>
+ Sets a parameter in the parameters string dictionary
+ </summary>
+	<param name="ItemKey">Key name for the item</param>
+	<param name="ItemValue">Value to assign to the key</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.WriteErrorMsg(System.String)">
+	<summary>
+ Writes an error message to application log or manager local log
+ </summary>
+	<param name="ErrMsg">Message to write</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.DbCStr(System.Object)">
+	<summary>
+ Converts a database output object that could be dbNull to a string
+ </summary>
+	<param name="InpObj"></param>
+	<returns>String equivalent of object; empty string if object is dbNull</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetAllKeys">
+	<summary>
+ Gets a collection representing all keys in the parameters string dictionary
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.WriteConfigSetting(System.String,System.String)">
+	<summary>
+ Writes specfied value to an application config file.
+ </summary>
+	<param name="Key">Name for parameter (case sensitive)</param>
+	<param name="Value">New value for parameter</param>
+	<returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
+	<remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.LoadConfigDocument">
+	<summary>
+ Loads an app config file for changing parameters
+ </summary>
+	<returns>App config file as an XML document if successful; NOTHING on failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetConfigFilePath">
+	<summary>
+ Specifies the full name and path for the application config file
+ </summary>
+	<returns>String containing full name and path</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Does nothing at present</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Initializes class
+ </summary>
+	<param name="mgrParams">Object holding manager parameters</param>
+	<param name="jobParams">Object holding job parameters</param>
+	<param name="StatusTools">Object for status reporting</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.LoadSettingsFile">
+	<summary>
+ Loads the job settings file
  </summary>
 	<returns>TRUE for success, FALSE for failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.DoAnalysis">
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.RunTool">
 	<summary>
- Loop to perform all analysis jobs
+ Runs the analysis tool
+ </summary>
+	<returns>CloseoutType enum representing completion status</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB">
+	<summary>
+ Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(System.Int32)">
+	<summary>
+ Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
+ </summary>
+	<param name="intUpdateIntervalSeconds">The minimum number of seconds between updates; if fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(System.Int32,AnalysisManagerBase.IMgrParams@,System.Int16@)">
+	<summary>
+ Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
+ </summary>
+	<param name="DebugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
+	<returns>True for success; False for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.MakeResultsFolder">
+	<summary>
+ Creates a results folder after analysis complete
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.MoveResultFiles">
+	<summary>
+ Moves result files after tool has completed
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UpdateSummaryFile">
+	<summary>
+ Updates the analysis summary file
+ </summary>
+	<returns>TRUE for success, FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CalcElapsedTime(System.DateTime,System.DateTime)">
+	<summary>
+ Calculates total run time for a job
+ </summary>
+	<param name="StartTime">Time job started</param>
+	<param name="StopTime">Time of job completion</param>
+	<returns>Total job run time (HH:MM)</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CleanupFailedJob(System.String)">
+	<summary>
+ Sets return message from analysis error and cleans working directory
+ </summary>
+	<param name="OopsMessage">Message to include in job comment field</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.OutputSummary(System.String)">
+	<summary>
+ Adds manager assembly data to job summary file
+ </summary>
+	<param name="OutputPath">Path to summary file</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.DeleteFileWithRetries(System.String)">
+	<summary>
+ Makes multiple tries to delete specified file
+ </summary>
+	<param name="FileNamePath">Full path to file for deletion</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks>Raises exception if error occurs</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CopyResultsFolderToServer">
+	<summary>
+ Copies the files from the results folder to the transfer folder on the server
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:clsCodeTest.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean)">
+	<summary>
+ Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
+ </summary>
+	<param name="strFile1">First file</param>
+	<param name="strFile2">Second file</param>
+	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:clsCodeTest.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean,System.String[]@)">
+	<summary>
+ Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
+ </summary>
+	<param name="strFile1">First file</param>
+	<param name="strFile2">Second file</param>
+	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	<param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:clsCodeTest.SplitFileRoundRobin(System.String,System.Int64,System.Boolean,System.String[]@)">
+	<summary>
+ Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output 
+ files has length greater than lngMaxSizeBytes. It will also check for a header line on the 
+ first line; if a header line is found, then all of the split files will be assigned the same header line
+ </summary>
+	<param name="strSrcFilePath">FilePath to parse</param>
+	<param name="lngMaxSizeBytes">Maximum size of each file</param>
+	<param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
+	<param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
+	<returns>True if success, False if failure</returns>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerBase.clsDBTask.TaskWasAssigned">
+	<summary>
+ Value showing if a transfer task was assigned
+ </summary>
+	<value></value>
+	<returns>TRUE if task was assigned; otherwise false</returns>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerBase.clsDBTask.DebugLevel">
+	<summary>
+ Debug level
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="MgrParams">An IMgrParams object containing manager parameters</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.RequestTask">
+	<summary>
+ Requests a task
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String)">
+	<summary>
+ Closes out a task
+ </summary>
+	<param name="CloseOut"></param>
+	<param name="CompMsg"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.CloseTask(AnalysisManagerBase.IJobParams.CloseOutType,System.String,System.Int32,System.String)">
+	<summary>
+ Closes out a task (includes EvalCode and EvalMessgae)
+ </summary>
+	<param name="CloseOut"></param>
+	<param name="CompMsg"></param>
+	<param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+	<param name="EvalMessage">Evaluation message ("" if no special message)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.LogErrorEvents">
+	<summary>
+ Reports database errors to local log
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.DisableManagerLocally">
+</member><member name="M:AnalysisManagerBase.clsDBTask.OnInfoMessage(System.Object,System.Data.SqlClient.SqlInfoMessageEventArgs)">
 	<summary>
- Sets the local mgr_active flag to False for serious problems
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.m_FileWatcher_Changed(System.Object,System.IO.FileSystemEventArgs)">
-	<summary>
- Event handler for file watcher
+ Event handler for InfoMessage event
  </summary>
 	<param name="sender"></param>
-	<param name="e"></param>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerProg.clsMainProcess.InitStatusTools">
+	<param name="args"></param>
+	<remarks>Errors and warnings from SQL Server are caught here</remarks>
+</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String)">
 	<summary>
- Initializes the status file writing tool
+ Method for executing a db stored procedure, assuming no data table is returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
  </summary>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="ConnStr">Db connection string</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsSummaryFile.Clear">
+</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String,System.Int32)">
 	<summary>
- Clears summary file data
+ Method for executing a db stored procedure, assuming no data table is returned
  </summary>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="ConnStr">Db connection string</param>
+	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsSummaryFile.SaveSummaryFile(System.String)">
+</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.Data.DataTable@,System.String)">
 	<summary>
- Writes the summary file to the specified location
+ Method for executing a db stored procedure if a data table is to be returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
  </summary>
-	<param name="ResultFolderNamePath">Location where summary file is to be written</param>
-	<returns>TRUE for success; FALSE for failure</returns>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
+	<param name="ConnStr">Db connection string</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsSummaryFile.Add(System.String)">
+</member><member name="M:AnalysisManagerBase.clsDBTask.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.Data.DataTable@,System.String,System.Int32)">
 	<summary>
- Adds a line of data to summary file
+ Method for executing a db stored procedure if a data table is to be returned
  </summary>
-	<param name="line">Data to be added</param>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
+	<param name="ConnStr">Db connection string</param>
+	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	<remarks></remarks>
-</member><member name="P:My.Resources.Resources.ResourceManager">
+</member><member name="M:AnalysisManagerBase.clsDBTask.PrintCommandParams(System.Data.SqlClient.SqlCommand)">
 	<summary>
-  Returns the cached ResourceManager instance used by this class.
-</summary>
-</member><member name="P:My.Resources.Resources.Culture">
-	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
-</summary>
-</member><member name="T:My.Resources.Resources">
-	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
-</summary>
+ Debugging routine for printing SP calling params
+ </summary>
+	<param name="InpCmd">SQL command object containing params</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResults.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams)">
 	<summary>
  Constructor
@@ -1399,15 +1417,6 @@ AnalysisManagerProg
 	<param name="Overwrite">true if the destination file can be overwritten; otherwise, false.</param>
 	<param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
 	<param name="ContinueOnError">When true, then will continue copying even if an error occurs</param>
-</member><member name="M:clsSplitCattedFiles.LineEndCharacterCount(System.IO.FileInfo)">
-	<summary>
- This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
- When found, the next byte is examined
- If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
- </summary>
-	<param name="fi"></param>
-	<returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
-	<remarks></remarks>
 </member>
 </members>
 </doc>

@@ -421,6 +421,44 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
+        ''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
+        ''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
+        ''' If the file named _StoragePathInfo.txt isn't found, then returns an empty string
+        ''' </summary>
+        ''' <param name="FolderPath">The folder to look in</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
+
+            Dim srInFile As System.IO.StreamReader
+            Dim strPhysicalFilePath As String = String.Empty
+            Dim strFilePath As String
+
+            Dim strLineIn As String
+
+            strFilePath = System.IO.Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
+
+            If System.IO.File.Exists(strFilePath) Then
+                ' The desired file is located in folder FolderPath
+                ' The _StoragePathInfo.txt file is present
+                ' Open that file to read the file path on the first line of the file
+
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                strLineIn = srInFile.ReadLine
+                strPhysicalFilePath = strLineIn
+
+                srInFile.Close()
+            Else
+                ' The desired file was not found
+                strPhysicalFilePath = ""
+            End If
+
+            Return strPhysicalFilePath
+
+        End Function
+
+        ''' <summary>
         ''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         ''' </summary>
         ''' <param name="RawDataType">Type of data to copy</param>
@@ -626,6 +664,20 @@ Namespace AnalysisManagerBase
             Dim ZipFile As String
             Dim strZipProgramPath As String
 
+            'First Check for the existence of a 0.ser Folder
+            'If 0.ser folder exists, then store the 0.ser folder in a file locally
+            Dim DSFolderPath As String = FindValidFolder(DSName, "", "0.ser")
+
+            If Not String.IsNullOrEmpty(DSFolderPath) AndAlso Directory.Exists(Path.Combine(DSFolderPath, "0.ser")) Then
+                DSFolderPath = Path.Combine(DSFolderPath, "0.ser")
+                If CreateStoragePathInfoFile(DSFolderPath, WorkDir & "\") Then
+                    Return True
+                Else
+                    Return False
+                End If
+            End If
+
+            'If the 0.ser folder does not exist, unzip the zipped s-folders
             'Copy the zipped s-folders from archive to work directory
             If Not CopySFoldersToWorkDir(WorkDir, CreateStoragePathInfoOnly) Then
                 'Error messages have already been logged, so just exit
