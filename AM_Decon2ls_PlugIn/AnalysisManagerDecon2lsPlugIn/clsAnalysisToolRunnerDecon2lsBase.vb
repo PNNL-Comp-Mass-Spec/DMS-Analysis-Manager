@@ -384,7 +384,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         ' Get file type of the raw data file
-        Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType)
+        Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType) 'Decon2LS.Readers.FileType.BRUKER 
         If filetype = filetype.UNDEFINED Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)
             m_message = "Invalid raw data type specified"
@@ -561,8 +561,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Return FileType.MICROMASSRAWDATA
             Case "zipped_s_folders"
                 If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
-                    'Data off of Bruker FTICR
-                    Return FileType.ICR2LSRAWDATA
+                    Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
+                    'Check for "0.ser" folder
+                    If Not String.IsNullOrEmpty(NewSourceFolder) Then
+                        Return FileType.BRUKER
+                    Else
+                        'Data off of Bruker FTICR
+                        Return FileType.ICR2LSRAWDATA
+                    End If
                 ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
                     'Data from old Finnigan FTICR
                     Return FileType.SUNEXTREL
@@ -588,7 +594,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Case "dot_raw_folder"
                 Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")) & ".raw/_FUNC001.DAT"
             Case "zipped_s_folders"
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                'Check for "0.ser" folder
+                If Not String.IsNullOrEmpty(NewSourceFolder) Then
+                    Return NewSourceFolder
+                Else
+                    Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                End If
+
             Case Else
                 'Should never get this value
                 Return ""
@@ -629,6 +642,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         'Deletes the raw data files/folders from the working directory
         Dim IsFile As Boolean = True
+        Dim IsNetworkDir As Boolean = False
         Dim FileOrFolderName As String
 
         Select Case RawDataType.ToLower
@@ -642,7 +656,15 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".raw")
                 IsFile = False
             Case "zipped_s_folders"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                'Check for "0.ser" folder
+                If String.IsNullOrEmpty(NewSourceFolder) Then
+                    FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                    IsNetworkDir = False
+                Else
+                    IsNetworkDir = True
+                End If
+
                 IsFile = False
             Case Else
                 'Should never get this value
@@ -658,6 +680,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 m_message = "Error deleting raw data file " & FileOrFolderName
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
+        ElseIf IsNetworkDir Then
+            'The files were on the network and do not need to be deleted
+
         Else
             'Use folder deletion tools
             Try

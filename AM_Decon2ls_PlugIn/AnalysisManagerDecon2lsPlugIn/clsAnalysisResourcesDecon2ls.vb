@@ -1,6 +1,6 @@
 ﻿' Last modified 06/11/2009 JDS - Added logging using log4net
 Imports AnalysisManagerBase
-
+Imports System.IO
 
 Public Class clsAnalysisResourcesDecon2ls
     Inherits clsAnalysisResources
@@ -17,6 +17,11 @@ Public Class clsAnalysisResourcesDecon2ls
         If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+        Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
+        'Check for "0.ser" folder
+        If Not String.IsNullOrEmpty(NewSourceFolder) Then
+            clsGlobal.FilesToDelete.Add(STORAGE_PATH_INFO_FILE_SUFFIX)
         End If
 
         'Retrieve param file
