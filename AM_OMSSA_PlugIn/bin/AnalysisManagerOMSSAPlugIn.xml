@@ -1,0 +1,34 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerOMSSAPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.RunTool">
+	<summary>
+ Runs OMSSA tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.ValidateCDTAFile">
+	<summary>
+ Make sure the _DTA.txt file exists and has at lease one spectrum in it
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.ZipMainOutputFile">
+	<summary>
+ Zips concatenated XML output file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member>
+</members>
+</doc>
