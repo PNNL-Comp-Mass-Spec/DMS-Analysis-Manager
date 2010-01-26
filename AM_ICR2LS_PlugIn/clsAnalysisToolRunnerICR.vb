@@ -87,17 +87,23 @@ Public Class clsAnalysisToolRunnerICR
 		'Assemble the dataset name
         DatasetName = m_jobParams.GetParam("datasetNum")
         DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, DatasetName))
-        If Not System.IO.Directory.Exists(DSNamePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Data file folder not found: " & DSNamePath)
-
-            CleanupFailedJob("Unable to find data files in working directory")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
 
         'Assemble the output file name and path
         OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
 
-        blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SFoldersPEK, UseAllScans, MinScan, MaxScan)
+        Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+        'Check for "0.ser" folder
+        If Not String.IsNullOrEmpty(NewSourceFolder) Then
+            blnSuccess = MyBase.StartICR2LS(NewSourceFolder, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SerFolderPEK, UseAllScans, MinScan, MaxScan)
+        Else
+            If Not System.IO.Directory.Exists(DSNamePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Data file folder not found: " & DSNamePath)
+
+                CleanupFailedJob("Unable to find data files in working directory")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+            blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SFoldersPEK, UseAllScans, MinScan, MaxScan)
+        End If
 
         If Not blnSuccess Then
             CleanupFailedJob("Error starting ICR-2LS")
@@ -122,9 +128,11 @@ Public Class clsAnalysisToolRunnerICR
 
 		While RetryCount < 3
 			Try
-				System.Threading.Thread.Sleep(5000)				'Allow extra time for ICR2LS to release file locks
-                System.IO.Directory.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")), True)
-				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                System.Threading.Thread.Sleep(5000)             'Allow extra time for ICR2LS to release file locks
+                If System.IO.Directory.Exists(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))) Then
+                    System.IO.Directory.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")), True)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Catch Err As System.IO.IOException
                 'If problem is locked file, retry
                 If m_DebugLevel > 0 Then
@@ -132,10 +140,10 @@ Public Class clsAnalysisToolRunnerICR
                 End If
                 ErrMsg = Err.Message
                 RetryCount += 1
-			Catch Err As Exception
+            Catch Err As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & Err.Message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
+            End Try
 		End While
 
 		'If we got to here, then we've exceeded the max retry limit

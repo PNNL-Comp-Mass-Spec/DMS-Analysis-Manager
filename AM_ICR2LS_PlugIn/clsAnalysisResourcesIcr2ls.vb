@@ -22,12 +22,20 @@ Public Class clsAnalysisResourcesIcr2ls
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'Get input data file
-        If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        Else
+        If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
+        'Check for "0.ser" folder
+        If Not String.IsNullOrEmpty(NewSourceFolder) Then
+            clsGlobal.FilesToDelete.Add(STORAGE_PATH_INFO_FILE_SUFFIX)
+        End If
+
+        'If RetrieveSpectra("zipped_s_folders", m_mgrParams.GetParam("workdir")) Then
+        '"zipped_s_folders"
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 #End Region

@@ -43,6 +43,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         LTQFTTIC = 1
         SFoldersPEK = 2
         SFoldersTIC = 3
+        SerFolderPEK = 4
     End Enum
 
     Protected Structure udtICR2LSStatusType
@@ -400,7 +401,11 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ' 
         ' See clsAnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders 
 
-        strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+        If eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK Then
+            strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & "\acqus /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+        Else
+            strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+        End If
 
 
         Select Case eICR2LSMode
@@ -410,6 +415,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 strArguments &= " /M:TIC /T:1"
             Case ICR2LSProcessingModeConstants.SFoldersPEK
                 strArguments &= " /M:PEK /T:2"
+            Case ICR2LSProcessingModeConstants.SFoldersPEK
+                strArguments &= " /M:PEK /T:2"
+            Case ICR2LSProcessingModeConstants.SerFolderPEK
+                strArguments &= " /M:PEK /T:0"
             Case ICR2LSProcessingModeConstants.SFoldersTIC
                 strArguments &= " /M:TIC /T:2"
             Case Else

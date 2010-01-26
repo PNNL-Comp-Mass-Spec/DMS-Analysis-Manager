@@ -64,3 +64,24 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_Plug
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.pdb
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerICR2LSPlugIn.xml
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.exe
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\PRISM.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\FileConcatenator.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\log4net.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Protein_Exporter.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Apache.NMS.ActiveMQ.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\ICSharpCode.SharpZipLib.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\PeptideFileExtractor.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\TableManipulationBase.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Protein_Storage.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Apache.NMS.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\log4net.xml
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.pdb
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.xml
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\ResolveAssemblyReference.cache
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
+C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
