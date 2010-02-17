@@ -83,9 +83,9 @@ Public Class clsAnalysisToolRunnerOM
         '--------------------------------------------------------------------------------------------
         'End future section
         '--------------------------------------------------------------------------------------------
-
+        Dim inputFilename As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), "OMSSA_Input.xml")
         'Set up and execute a program runner to run OMSSA
-        CmdStr = "input.xml"
+        CmdStr = " -pm " & inputFilename
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
