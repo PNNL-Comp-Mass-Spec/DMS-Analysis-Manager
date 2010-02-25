@@ -42,7 +42,6 @@ Public Class clsAnalysisResourcesOM
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
         '         m_jobParams.GetParam("SettingsFileName"), _
@@ -187,6 +186,8 @@ Public Class clsAnalysisResourcesOM
         Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
         Dim MSInfilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & ".xml")
         Dim MSOmxOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om.omx")
+        Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
+        clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
         Dim MSCsvOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om.csv")
 
         Dim result As Boolean = True
@@ -464,6 +465,11 @@ Public Class clsAnalysisResourcesOM
                 Dim objFileNameNodes As System.Xml.XmlNodeList
                 Dim objFileTypeNodes As System.Xml.XmlNodeList
 
+                'If we ever have to change the value of the MSOutFile_includerequest value 
+                'Dim objFileIncludeRequestNodes As System.Xml.XmlNodeList
+                'objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']", objNamespaceMgr)
+                'objFileIncludeRequestNodes.Item(1).InnerXml = "true"
+
                 objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile", objNamespaceMgr)
 
                 objFileTypeNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat", objNamespaceMgr)
@@ -488,9 +494,18 @@ Public Class clsAnalysisResourcesOM
                 objFileTypeNodes.Item(0).InnerXml = "3"
 
                 If objFileNameNodes.Count > 1 Then
+                    ' Note: File type 3 means a xml file
+                    objFileNameNodes.Item(1).InnerXml = MSOmxLargeOutFilename
+                    objFileTypeNodes.Item(1).InnerXml = "3"
+                Else
+                    ' Template only has one MSOutFile node tree defined
+                    ' Nothing else to update
+                End If
+
+                If objFileNameNodes.Count > 2 Then
                     ' Note: File type 4 means a CSV file
-                    objFileNameNodes.Item(1).InnerXml = MSCsvOutFilename
-                    objFileTypeNodes.Item(1).InnerXml = "4"
+                    objFileNameNodes.Item(2).InnerXml = MSCsvOutFilename
+                    objFileTypeNodes.Item(2).InnerXml = "4"
                 Else
                     ' Template only has one MSOutFile node tree defined
                     ' Nothing else to update

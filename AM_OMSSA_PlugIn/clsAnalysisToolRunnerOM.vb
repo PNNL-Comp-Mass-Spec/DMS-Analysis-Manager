@@ -85,11 +85,11 @@ Public Class clsAnalysisToolRunnerOM
         '--------------------------------------------------------------------------------------------
         Dim inputFilename As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), "OMSSA_Input.xml")
         'Set up and execute a program runner to run OMSSA
-        CmdStr = " -pm " & inputFilename
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+        'CmdStr = " -pm " & inputFilename
+        'If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
+        '    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        'End If
 
         '--------------------------------------------------------------------------------------------
         'Future section to monitor OMSSA log file for progress determination
@@ -102,6 +102,12 @@ Public Class clsAnalysisToolRunnerOM
 
         'Stop the job timer
         m_StopTime = System.DateTime.Now
+
+        If Not ConvertOMSSA2PepXmlFile() Then
+            Dim Msg As String = "clsAnalysisToolRunnerOM.RunTool().ConvertOMSSA2PepXmlFile, failed converting OMSSA xml file to OMSSA Pep Xml format."
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -256,6 +262,48 @@ Public Class clsAnalysisToolRunnerOM
         End If
 
 	End Sub
+
+    Protected Function ConvertOMSSA2PepXmlFile() As Boolean
+        Dim CmdStr As String
+        Dim result As Boolean = True
+
+        Try
+            ' set up formatdb.exe to reference the organsim DB file (fasta)
+            Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA2PepXml")
+
+            CmdRunner = New clsRunDosProgram(WorkingDir)
+
+            If m_DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter")
+            End If
+
+            ' verify that program formatdb.exe file exists
+            Dim progLoc As String = m_mgrParams.GetParam("omssa2pepprogloc")
+            If Not System.IO.File.Exists(progLoc) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA2PepXml program file")
+                Return False
+            End If
+
+            Dim outputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_pepxml.xml")
+            Dim inputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
+            'Set up and execute a program runner to run Omssa2PepXml.exe
+            'omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
+            CmdStr = "-xml -o " & outputFilename & " " & inputFilename
+            If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA2PepXml, job " & m_JobNum)
+                Return False
+            End If
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, The file could converted. " & E.Message)
+        End Try
+
+        Return result
+    End Function
+
 
 	'--------------------------------------------------------------------------------------------
 	'Future section to monitor OMSSA log file for progress determination
