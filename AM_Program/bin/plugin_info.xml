@@ -172,6 +172,11 @@
 		Class="AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM" 
 		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="dta_refinery"
+		Class="AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery" 
+		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -334,6 +339,11 @@
 		Tool="omssa"
 		Class="AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM" 
 		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="dta_refinery"
+		Class="AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery" 
+		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" 
 	/>
 </Resourcers>
 
