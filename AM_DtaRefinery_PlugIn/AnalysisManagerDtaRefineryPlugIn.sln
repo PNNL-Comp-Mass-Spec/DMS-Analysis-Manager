@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FC46CD6E-042E-4E5D-B854-FEB205CC5165}") = "AnalysisManagerOMSSAPlugIn", "AnalysisManagerOMSSAPlugIn.vbproj", "{E5D7B07E-CB50-4098-8849-7ADA965C642F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E5D7B07E-CB50-4098-8849-7ADA965C642F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5D7B07E-CB50-4098-8849-7ADA965C642F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5D7B07E-CB50-4098-8849-7ADA965C642F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5D7B07E-CB50-4098-8849-7ADA965C642F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
