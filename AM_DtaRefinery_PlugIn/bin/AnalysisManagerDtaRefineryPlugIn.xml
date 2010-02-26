@@ -8,7 +8,7 @@ AnalysisManagerDtaRefineryPlugIn
 <members>
 <member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.RunTool">
 	<summary>
- Runs OMSSA tool
+ Runs DTA_Refinery tool
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>

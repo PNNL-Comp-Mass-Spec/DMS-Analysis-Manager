@@ -1,6 +1,7 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{FC46CD6E-042E-4E5D-B854-FEB205CC5165}") = "AnalysisManagerOMSSAPlugIn", "AnalysisManagerOMSSAPlugIn.vbproj", "{E5D7B07E-CB50-4098-8849-7ADA965C642F}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDtaRefineryPlugIn", "AnalysisManagerDtaRefineryPlugIn.vbproj", "{E5D7B07E-CB50-4098-8849-7ADA965C642F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

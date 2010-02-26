@@ -114,7 +114,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             Return result
         End If
 
-        'result = CopyResultsFolderToServer()
+        result = CopyResultsFolderToServer()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
@@ -196,9 +196,25 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         ' * log10 of ion intensity in the ICR/Orbitrap cell: _logTrappedIonInt.png
         ' * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
 
+        'Delete the original DTA files
+        Try
+            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.*")
+            For Each TmpFile In FileList
+                If Not TmpFile.Contains("FIXED") Then
+                    System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
+                    System.IO.File.Delete(TmpFile)
+                End If
+            Next
+        Catch Err As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
         Try
             Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_FIXED_dta.txt")
+            Dim fi As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_FIXED_dta.txt"))
+            fi.MoveTo(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
             For Each TmpFile In FileList
                 ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
                 If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
@@ -217,7 +233,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         'Delete the output files
         Try
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_FIXED_dta.txt")
+            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
             For Each TmpFile In FileList
                 System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
                 System.IO.File.Delete(TmpFile)

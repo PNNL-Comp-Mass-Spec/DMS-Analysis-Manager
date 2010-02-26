@@ -76,7 +76,7 @@ Public Class clsAnalysisResourcesDtaRefinery
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
         clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & ".xml")
 
-        clsGlobal.m_ExceptionFiles.Add(m_jobParams.GetParam("DatasetNum") & "_FIXED_dta.zip")
+        clsGlobal.m_ExceptionFiles.Add(m_jobParams.GetParam("DatasetNum") & "_dta.zip")
 
         Dim ext As String
         Dim DumFiles() As String
