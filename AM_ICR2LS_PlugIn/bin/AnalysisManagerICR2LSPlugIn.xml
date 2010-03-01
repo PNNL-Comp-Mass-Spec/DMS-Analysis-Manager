@@ -6,7 +6,15 @@ AnalysisManagerICR2LSPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants)">
+<member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR.FixICR2LSResultFileNames(System.String,System.String)">
+	<summary>
+ Look for the .PEK and .PAR files in the specified folder
+ Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
+ </summary>
+	<param name="strFolderPath">Folder to examine</param>
+	<param name="strDatasetName">Dataset name</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants)">
 	<summary>
  Starts ICR-2LS by running the .Exe at the command line
  </summary>

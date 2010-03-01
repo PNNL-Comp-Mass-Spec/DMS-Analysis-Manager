@@ -398,8 +398,11 @@ Public Class clsAnalysisResourcesSeq
         Dim Nodes As StringCollection
         Dim NodeDbLoc As String = m_mgrParams.GetParam("nodedblocation")
 
+        Dim strLogMessage As String
+
         Dim blnFileAlreadyExists As Boolean
         Dim intNodeCountProcessed As Integer
+        Dim intNodeCountFailed As Integer
         Dim intNodeCountFileAlreadyExists As Integer
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & System.IO.Path.GetFileName(OrgDBName))
@@ -412,27 +415,63 @@ Public Class clsAnalysisResourcesSeq
             Return False
         End If
 
-        'For each node, verify specified database file is present and matches file on host
+
+        ' Define the path to the database on the head node
+        Dim OrgDBFilePath As String = System.IO.Path.Combine(OrgDBPath, OrgDBName)
+        If Not File.Exists(OrgDBFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Database file can't be found on master")
+            Return False
+        End If
+
+        ' For each node, verify specified database file is present and matches file on host
+        ' Allow up to 25% of the nodes to fail (they should just get skipped when the Sequest search occurs)
 
         blnFileAlreadyExists = False
         intNodeCountProcessed = 0
+        intNodeCountFailed = 0
         intNodeCountFileAlreadyExists = 0
 
         For Each NodeName As String In Nodes
-            If Not VerifyRemoteDatabase(OrgDBName, OrgDBPath, "\\" & NodeName & "\" & NodeDbLoc, blnFileAlreadyExists) Then
-                Return False
+            If Not VerifyRemoteDatabase(OrgDBFilePath, "\\" & NodeName & "\" & NodeDbLoc, blnFileAlreadyExists) Then
+                intNodeCountFailed += 1
+                blnFileAlreadyExists = True
             End If
 
             intNodeCountProcessed += 1
             If blnFileAlreadyExists Then intNodeCountFileAlreadyExists += 1
         Next
 
+        If intNodeCountProcessed = 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "The Nodes collection is empty; unable to continue")
+            Return False
+        End If
+
+        If intNodeCountFailed > 0 Then
+            Const MINIMUM_NODE_SUCCESS_PCT As Integer = 75
+            Dim dblNodeCountSuccessPct As Double
+            dblNodeCountSuccessPct = (intNodeCountProcessed - intNodeCountFailed) / intNodeCountProcessed * 100
+
+            strLogMessage = "Error, unable to verify database on " & intNodeCountFailed.ToString & " node"
+            If intNodeCountFailed > 1 Then strLogMessage &= "s"
+            strLogMessage &= " (" & dblNodeCountSuccessPct.ToString("0") & "% succeeded)"
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strLogMessage)
+
+            If dblNodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since did not succeed on at least " & MINIMUM_NODE_SUCCESS_PCT.ToString & "% of the nodes")
+                Return False
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Warning, will continue analysis using the reamining nodes")
+
+                ' Decrement intNodeCountProcessed by intNodeCountFailed so the stats in the next If / EndIf block are valid
+                intNodeCountProcessed -= intNodeCountFailed
+            End If
+        End If
+
         If m_DebugLevel >= 1 Then
             If intNodeCountFileAlreadyExists = 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied database to " & intNodeCountProcessed.ToString & " nodes")
             Else
-                Dim strLogMessage As String
-
                 strLogMessage = "Verified database exists on " & intNodeCountProcessed.ToString & " nodes"
 
                 If intNodeCountProcessed - intNodeCountFileAlreadyExists > 0 Then
@@ -443,7 +482,7 @@ Public Class clsAnalysisResourcesSeq
             End If
         End If
 
-        'Databases have been distributed, so return happy
+        'Database file has been distributed, so return happy
         Return True
 
     End Function
@@ -565,12 +604,11 @@ Public Class clsAnalysisResourcesSeq
     ''' Verifies specified database is present on the node. If present, compares date and size. If not
     '''	present, copies database from master
     ''' </summary>
-    ''' <param name="DbName">Fasta file name to be verified</param>
-    ''' <param name="SourcePath">Fasta storage location on cluster head</param>
+    ''' <param name="OrgDBFilePath">Full path to the source file</param>
     ''' <param name="DestPath">Fasta storage location on cluster node</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
-    Private Function VerifyRemoteDatabase(ByVal DbName As String, ByVal SourcePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean) As Boolean
+    Private Function VerifyRemoteDatabase(ByVal OrgDBFilePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean) As Boolean
 
         Dim CopyNeeded As Boolean = False
 
@@ -580,17 +618,11 @@ Public Class clsAnalysisResourcesSeq
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " & DestPath)
         End If
 
-        Dim SourceFile As String = Path.Combine(SourcePath, DbName)
-        If Not File.Exists(SourceFile) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Database file can't be found on master")
-            Return False
-        End If
-
-        Dim DestFile As String = Path.Combine(DestPath, DbName)
+        Dim DestFile As String = Path.Combine(DestPath, System.IO.Path.GetFileName(OrgDBFilePath))
         Try
             If File.Exists(DestFile) Then
                 'File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
-                If VerifyFilesMatchSizeAndDate(SourceFile, DestFile) Then
+                If VerifyFilesMatchSizeAndDate(OrgDBFilePath, DestFile) Then
                     blnFileAlreadyExists = True
                     CopyNeeded = False
                 Else
@@ -607,7 +639,7 @@ Public Class clsAnalysisResourcesSeq
                 If m_DebugLevel > 3 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database file " & DestFile)
                 End If
-                File.Copy(SourceFile, DestFile, True)
+                File.Copy(OrgDBFilePath, DestFile, True)
                 'Now everything is in its proper place, so return
                 Return True
             Else

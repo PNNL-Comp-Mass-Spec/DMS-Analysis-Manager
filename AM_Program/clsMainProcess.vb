@@ -522,7 +522,12 @@ Namespace AnalysisManagerProg
 
                 m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources")
 
-                clsGlobal.CleanWorkDir(WorkDirPath)
+                If CleanWorkDir(WorkDirPath) Then
+                    DeleteStatusFlagFile()
+                Else
+                    CreateErrorDeletingFilesFlagFile()
+                End If
+
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
                 Return False
             End Try

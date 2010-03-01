@@ -175,9 +175,8 @@ Namespace AnalysisManagerBase
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
                 ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
-                ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
-                ''            myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-
+                ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
                 ''    End Select
                 ''    If Not myToolRunner Is Nothing Then
                 ''        Return myToolRunner
@@ -293,9 +292,8 @@ Namespace AnalysisManagerBase
                 ''        '    myModule = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF, IAnalysisResources)
                 ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
-                ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
-                ''            myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-
+                ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                ''        'myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
                 ''    End Select
                 ''    If Not myModule Is Nothing Then
                 ''        Return myModule

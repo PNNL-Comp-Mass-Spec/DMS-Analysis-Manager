@@ -1013,6 +1013,65 @@ Public Class clsCodeTest
 
     End Sub
 
+    ''' <summary>
+    ''' Look for the .PEK and .PAR files in the specified folder
+    ''' Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
+    ''' </summary>
+    ''' <param name="strFolderPath">Folder to examine</param>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <remarks></remarks>
+    Public Sub FixICR2LSResultFileNames(ByVal strFolderPath As String, ByVal strDatasetName As String)
+
+        Dim objExtensionsToCheck As New System.Collections.Generic.List(Of String)
+
+        Dim fiFolder As System.IO.DirectoryInfo
+        Dim fiFile As System.IO.FileInfo
+
+        Dim strDSNameLCase As String
+        Dim strExtension As String
+
+        Dim strDesiredName As String
+
+        Try
+
+            objExtensionsToCheck.Add("PAR")
+            objExtensionsToCheck.Add("Pek")
+
+            strDSNameLCase = strDatasetName.ToLower()
+
+            fiFolder = New System.IO.DirectoryInfo(strFolderPath)
+
+            If fiFolder.Exists Then
+                For Each strExtension In objExtensionsToCheck
+
+                    For Each fiFile In fiFolder.GetFiles("*." & strExtension)
+                        If fiFile.Name.ToLower.StartsWith(strDSNameLCase) Then
+                            strDesiredName = strDatasetName & "_" & System.DateTime.Now.ToString("M_d_yyyy") & "." & strExtension
+
+                            If fiFile.Name.ToLower <> strDesiredName.ToLower Then
+                                Try
+                                    fiFile.MoveTo(System.IO.Path.Combine(fiFolder.FullName, strDesiredName))
+                                Catch ex As Exception
+                                    ' Rename failed; that means the correct file already exists; this is OK
+                                End Try
+
+                            End If
+
+                            Exit For
+                        End If
+                    Next fiFile
+
+                Next strExtension
+
+            End If
+
+
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+    End Sub
+
     Public Sub TestGetFileContents()
 
         Dim strFilePath As String = "TestInputFile.txt"

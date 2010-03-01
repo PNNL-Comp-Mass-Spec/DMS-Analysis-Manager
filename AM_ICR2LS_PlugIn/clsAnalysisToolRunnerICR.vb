@@ -106,8 +106,11 @@ Public Class clsAnalysisToolRunnerICR
         End If
 
         If Not blnSuccess Then
-            CleanupFailedJob("Error starting ICR-2LS")
+            CleanupFailedJob("Error running ICR-2LS")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            ' Make sure the .pek file and .Par file are named properly
+            FixICR2LSResultFileNames(m_WorkDir, DatasetName)
         End If
 
         'Run the cleanup routine from the base class
@@ -151,5 +154,73 @@ Public Class clsAnalysisToolRunnerICR
         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 	End Function
+
+    ''' <summary>
+    ''' Look for the .PEK and .PAR files in the specified folder
+    ''' Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
+    ''' </summary>
+    ''' <param name="strFolderPath">Folder to examine</param>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <remarks></remarks>
+    Protected Sub FixICR2LSResultFileNames(ByVal strFolderPath As String, ByVal strDatasetName As String)
+
+        Dim objExtensionsToCheck As New System.Collections.Generic.List(Of String)
+
+        Dim fiFolder As System.IO.DirectoryInfo
+        Dim fiFile As System.IO.FileInfo
+
+        Dim strDSNameLCase As String
+        Dim strExtension As String
+
+        Dim strDesiredName As String
+
+        Try
+
+            objExtensionsToCheck.Add("PAR")
+            objExtensionsToCheck.Add("Pek")
+
+            strDSNameLCase = strDatasetName.ToLower()
+
+            fiFolder = New System.IO.DirectoryInfo(strFolderPath)
+
+            If fiFolder.Exists Then
+                For Each strExtension In objExtensionsToCheck
+
+                    For Each fiFile In fiFolder.GetFiles("*." & strExtension)
+                        If fiFile.Name.ToLower.StartsWith(strDSNameLCase) Then
+
+                            ' Name should be of the form: Dataset_1_24_2010.PAR
+                            ' The datestamp in the name is month_day_year
+                            strDesiredName = strDatasetName & "_" & System.DateTime.Now.ToString("M_d_yyyy") & "." & strExtension
+
+                            If fiFile.Name.ToLower <> strDesiredName.ToLower Then
+                                Try
+                                    If m_DebugLevel >= 1 Then
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & strExtension & " file from " & fiFile.Name & " to " & strDesiredName)
+                                    End If
+
+                                    fiFile.MoveTo(System.IO.Path.Combine(fiFolder.FullName, strDesiredName))
+                                Catch ex As Exception
+                                    ' Rename failed; that means the correct file already exists; this is OK
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Rename failed: " & ex.Message)
+                                End Try
+
+                            End If
+
+                            Exit For
+                        End If
+                    Next fiFile
+
+                Next strExtension
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in FixICR2LSResultFileNames; folder not found: " & strFolderPath)
+            End If
+
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FixICR2LSResultFileNames: " & ex.Message)
+        End Try
+
+    End Sub
 
 End Class

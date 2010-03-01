@@ -50,13 +50,12 @@ AnalysisManagerSequestPlugin
 	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
 	<returns>returns a string collection containing IP addresses for each node</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.String,System.Boolean@)">
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.Boolean@)">
 	<summary>
  Verifies specified database is present on the node. If present, compares date and size. If not
 	present, copies database from master
  </summary>
-	<param name="DbName">Fasta file name to be verified</param>
-	<param name="SourcePath">Fasta storage location on cluster head</param>
+	<param name="OrgDBFilePath">Full path to the source file</param>
 	<param name="DestPath">Fasta storage location on cluster node</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>

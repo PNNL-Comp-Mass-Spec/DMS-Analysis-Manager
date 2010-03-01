@@ -57,10 +57,7 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_Plug
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\log4net.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.pdb
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\AnalysisManagerProg.xml
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Interop.icr2ls.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\ResolveAssemblyReference.cache
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\Interop.icr2ls.dll
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.vbproj.ResolveComReference.cache
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
@@ -85,3 +82,4 @@ C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\ResolveAssemblyRefere
 C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
 C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Protein_Storage.dll

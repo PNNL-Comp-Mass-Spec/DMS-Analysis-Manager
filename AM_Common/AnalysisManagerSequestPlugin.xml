@@ -35,13 +35,6 @@ AnalysisManagerSequestPlugin
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.RetrieveOrgDB(System.String)">
-	<summary>
- Provides a function that can copy the org db to the cluster head and distribute it to the nodes
- </summary>
-	<param name="LocOrgDBFolder">Folder on AM processing machine for orgdb files</param>
-	<returns>TRUE for success: FALSE for failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyDatabase(System.String,System.String)">
 	<summary>
  Verifies the fasta file required by the job is distributed to all the cluster nodes
@@ -57,13 +50,12 @@ AnalysisManagerSequestPlugin
 	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
 	<returns>returns a string collection containing IP addresses for each node</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.String)">
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.Boolean@)">
 	<summary>
  Verifies specified database is present on the node. If present, compares date and size. If not
 	present, copies database from master
  </summary>
-	<param name="DbName">Fasta file name to be verified</param>
-	<param name="SourcePath">Fasta storage location on cluster head</param>
+	<param name="OrgDBFilePath">Full path to the source file</param>
 	<param name="DestPath">Fasta storage location on cluster node</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
@@ -161,6 +153,24 @@ AnalysisManagerSequestPlugin
  </summary>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ValidateSequestNodeCount(System.String)">
+	<summary>
+ Opens the sequest.log file in the working directory
+ Parses out the number of nodes used and the number of slave processes spawned
+ Counts the number of DTA files analyzed by each process
+ </summary>
+	<remarks></remarks>
+	<returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ValidateSequestNodeCount(System.String,System.Boolean)">
+	<summary>
+ Opens the sequest.log file in the working directory
+ Parses out the number of nodes used and the number of slave processes spawned
+ Counts the number of DTA files analyzed by each process
+ </summary>
+	<param name="strLogFilePath">Path to the sequest.log file to parse</param>
+	<param name="blnLogToConsole">If true, then displays the various status messages at the console</param>
+	<remarks></remarks>
+	<returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(System.String,System.String,System.String)">
 	<summary>
  Zips the concatenated .out file

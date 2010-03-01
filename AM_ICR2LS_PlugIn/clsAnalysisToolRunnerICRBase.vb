@@ -44,6 +44,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         SFoldersPEK = 2
         SFoldersTIC = 3
         SerFolderPEK = 4
+        SerFolderTIC = 5
     End Enum
 
     Protected Structure udtICR2LSStatusType
@@ -401,7 +402,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ' 
         ' See clsAnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders 
 
-        If eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK Then
+        If eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK Or eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderTIC Then
             strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & "\acqus /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
         Else
             strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
@@ -417,10 +418,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 strArguments &= " /M:PEK /T:2"
             Case ICR2LSProcessingModeConstants.SFoldersPEK
                 strArguments &= " /M:PEK /T:2"
-            Case ICR2LSProcessingModeConstants.SerFolderPEK
-                strArguments &= " /M:PEK /T:0"
             Case ICR2LSProcessingModeConstants.SFoldersTIC
                 strArguments &= " /M:TIC /T:2"
+            Case ICR2LSProcessingModeConstants.SerFolderPEK
+                strArguments &= " /M:PEK /T:0"
+            Case ICR2LSProcessingModeConstants.SerFolderTIC
+                strArguments &= " /M:TIC /T:0"
             Case Else
                 ' Unknown mode
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unknown mode ICR2LS processing Mode: " & eICR2LSMode.ToString)
