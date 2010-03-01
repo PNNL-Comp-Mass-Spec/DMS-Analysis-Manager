@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
     Public Sub New()
-        mFileDate = "June 22, 2009"
+        mFileDate = "February 9, 2010"
         mErrorCode = eProcessFilesErrorCodes.NoError
         mProgressStepDescription = String.Empty
 
@@ -201,6 +201,17 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         Return blnSuccess
     End Function
+
+    Public Sub CloseLogFileNow()
+        If Not mLogFile Is Nothing Then
+            mLogFile.Close()
+            mLogFile = Nothing
+
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            System.Threading.Thread.Sleep(100)
+        End If
+    End Sub
 
     Protected Function CleanupInputFilePath(ByRef strInputFilePath As String) As Boolean
         ' Returns True if success, False if failure

@@ -174,6 +174,11 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
             ' Pre-read the parameter file now, so that we can override some of the settings
             strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_SettingsFileName)
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Loading parameter file: " & strParameterFilePath)
+            End If
+
             If Not m_MsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath) Then
                 m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage
                 If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
@@ -188,19 +193,42 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                 .OverwriteExistingFiles = True
                 .OverwriteReportFile = True
                 .AutoCloseReportFile = False
+                .LogMessagesToFile = True
+                .LogFolderPath = m_WorkDir
+                .MaximumProgressUpdateIntervalSeconds = 10
             End With
 
             ' Determine if we need to generate a _ScanStats.txt file
             If m_MsMsSpectrumFilter.ScanStatsFileIsRequired Then
-                If Not GenerateFinniganScanStatsFiles Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling GenerateFinniganScanStatsFiles")
+                End If
+
+                If Not GenerateFinniganScanStatsFiles() Then
+                    If m_DebugLevel >= 4 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
+                    End If
+
                     m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
                     Return m_Status
+                Else
+                    If m_DebugLevel >= 4 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
+                    End If
                 End If
+            End If
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Instantiate the thread to run MsMsSpectraFilter")
             End If
 
             'Instantiate the thread to run MsMsSpectraFilter
             m_thThread = New System.Threading.Thread(AddressOf FilterDTATextFileWork)
             m_thThread.Start()
+
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Thread started")
+            End If
 
             Do While m_thThread.IsAlive
                 System.Threading.Thread.Sleep(2000)                 'Delay for 2 seconds
@@ -236,8 +264,21 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         Try
 
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " & m_MsMsSpectrumFilter.SpectrumFilterMode)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " & m_MsMsSpectrumFilter.MSLevelFilter)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " & m_MsMsSpectrumFilter.IonFilter_RemovePrecursor)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)
+            End If
+
             ' Define the input file name
             strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_DTATextFileName)
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Call ProcessFilesWildcard for: " & strInputFilePath)
+            End If
 
             blnSuccess = m_MsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, m_WorkDir, "")
 
@@ -245,6 +286,10 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             Try
 
                 If blnSuccess Then
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile")
+                    End If
+
                     ' Sort the report file (this also closes the file)
                     m_MsMsSpectrumFilter.SortSpectrumQualityTextFile()
 
@@ -273,6 +318,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                         m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
                     End If
                 End If
+
+                m_MsMsSpectrumFilter.CloseLogFileNow()
 
             Catch ex As Exception
                 LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex)
@@ -335,6 +382,10 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                     End If
 
                     If Not m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir) Then
+                        If m_DebugLevel >= 3 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
+                        End If
+
                         m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage()
                         If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
                             m_ErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated"
@@ -342,6 +393,11 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
                         LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
                         blnSuccess = False
+                    Else
+                        If m_DebugLevel >= 4 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
+                        End If
+                        blnSuccess = True
                     End If
                 End If
 

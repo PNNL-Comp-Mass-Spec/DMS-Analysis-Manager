@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "August 10, 2009"
+        MyBase.mFileDate = "February 9, 2010"
         InitializeVariables()
     End Sub
 
@@ -33,7 +33,8 @@ Public Class clsMsMsSpectrumFilter
     Protected Const MGF_EXTENSION As String = ".MGF"
 
     Public Const MASS_PHOSPHORYLATION As Double = 97.9768968        ' H3PO4
-    Public Const MASS_WATER As Double = 18.0105642                  ' H2O
+    Public Const MASS_WATER As Double = 18.0105642                  ' H2O, 15.9949141 + 2*1.0078246
+    Public Const MASS_PROTON As Double = 1.00727649               ' Note that this is the mass of hydrogen minus the mass of one electron
 
     Public Const DEFAULT_STANDARDMASSSPACING_1PLUS_MINIMUM As Integer = 2        ' 2
     Public Const DEFAULT_STANDARDMASSSPACING_1PLUS_MAXIMUM As Integer = 12       ' 4
@@ -46,6 +47,9 @@ Public Class clsMsMsSpectrumFilter
 
     Public Const DEFAULT_STANDARDMASSSPACING_4PLUS_MINIMUM As Integer = 7        ' 7
     Public Const DEFAULT_STANDARDMASSSPACING_4PLUS_MAXIMUM As Integer = 50       ' 17
+
+    Public Const DEFAULT_IONFILTER_PRECURSOR_TOLERANCE_MZ As Double = 3.1
+    Public Const DEFAULT_IONFILTER_PRECURSOR_NL_CLEANING_WINDOW_DA As Double = 60
 
     Public Enum eFilterMsMsSpectraErrorCodes
         NoError = 0
@@ -65,7 +69,7 @@ Public Class clsMsMsSpectrumFilter
         NoFilter = 0
         mode1 = 1               ' Simple filter, only looks at spacing between ions
         mode2 = 2               ' Filter based on Spequal, by Sam Purvine
-        mode3 = 3               ' Filter from Eric Stritmatter
+        mode3 = 3               ' Phosphorylation Neutral Loss filter
     End Enum
 
     Public Enum FilterMode1Options
@@ -152,6 +156,12 @@ Public Class clsMsMsSpectrumFilter
         Exact = 1
         RegEx = 2
     End Enum
+
+    Protected Enum eInputFileModeConstants
+        IndividualDTAs = 0
+        ConcatenatedDTA = 1
+        MGF = 2
+    End Enum
 #End Region
 
 #Region "Structures"
@@ -209,6 +219,14 @@ Public Class clsMsMsSpectrumFilter
         Public LimitToChargeSpecificIons As Boolean             ' When true, then only considers the ions appropriate for the charge state associated with the spectrum
         Public ConsiderWaterLoss As Boolean                     ' When true, then looks for loss of water in addition to loss of Phosphate (98)
         Public SpecificMZLosses As String                       ' Comma separated list of specific m/z loss values to search for.  When defined (and non-zero) then only looks for parent ion losses matching these m/z values
+    End Structure
+
+    Protected Structure IonFilterOptionsType
+        Public RemovePrecursor As Boolean
+        Public RemoveChargeReducedPrecursors As Boolean
+        Public PrecursorCleaningToleranceMZ As Double
+        Public RemoveNeutralLossesFromChargeReducedPrecursors As Boolean
+        Public NeutralLossCleaningWindowDa As Double
     End Structure
 
     ' Scores:
@@ -318,6 +336,8 @@ Public Class clsMsMsSpectrumFilter
     Private mMSCollisionModeFilter As String = String.Empty     ' If empty, then keeps all spectra; if defined, then only keeps spectra with this collision mode (e.g. cid, etd, etc.)
     Private mMSCollisionModeMatchType As eTextMatchTypeConstants    ' Affects the method used to compare mMSCollisionModeFilter to the actual collision mode
 
+    Private mIonFilterOptions As IonFilterOptionsType
+
     ' Filter Mode-specific settings
     Private mFilterMode1Options As FilterMode1OptionsType
     Private mFilterMode2Options As FilterMode2OptionsType
@@ -336,13 +356,14 @@ Public Class clsMsMsSpectrumFilter
     Private mOverwriteReportFile As Boolean                     ' Set to true to re-create the spectrum quality report file
     Private mAutoCloseReportFile As Boolean                     ' This is typically set to false when processing .Dta files; True for other files
 
+    Private mMaximumProgressUpdateIntervalSeconds As Single     ' Maximum time, in seconds, between calling UpdateProgress() to report the progress via Event ProgressChanged (and optionally to the log file)
+
     Private mMSLevelInfoLoaded As Boolean
     Private mMSLevelInfo As Hashtable                           ' Hash table with scan number as the key and MSLevel as the value
 
     Private mExtendedStatsInfoLoaded As Boolean                 ' When True, then mExtendedStatsInfo() and mMSLevelInfo are valid
     Private mExtendedStatsInfo() As udtExtendedStatsInfoType
     Private mExtendedStatsPointer As Hashtable                  ' Hash table with scan number as the key and an index of the given scan in mExtendedStatsInfo() as the value
-
 
     Private mDebugMode As Boolean
 #End Region
@@ -413,13 +434,21 @@ Public Class clsMsMsSpectrumFilter
         End Set
     End Property
 
-
     Public ReadOnly Property LocalErrorCode() As eFilterMsMsSpectraErrorCodes
         Get
             Return mLocalErrorCode
         End Get
     End Property
 
+    Public Property MaximumProgressUpdateIntervalSeconds() As Single
+        Get
+            Return mMaximumProgressUpdateIntervalSeconds
+        End Get
+        Set(ByVal value As Single)
+            If value < 0.2 Then value = 0.2
+            mMaximumProgressUpdateIntervalSeconds = value
+        End Set
+    End Property
     Public Property MinimumQualityScore() As Single
         Get
             Return mMinimumQualityScore
@@ -440,7 +469,11 @@ Public Class clsMsMsSpectrumFilter
 
     Public Property MSCollisionModeFilter() As String
         Get
-            Return mMSCollisionModeFilter
+            If mMSCollisionModeFilter Is Nothing Then
+                Return String.Empty
+            Else
+                Return mMSCollisionModeFilter
+            End If
         End Get
         Set(ByVal value As String)
             If Not value Is Nothing Then
@@ -539,6 +572,52 @@ Public Class clsMsMsSpectrumFilter
             End If
         End Set
     End Property
+
+    Public Property IonFilter_RemovePrecursor() As Boolean
+        Get
+            Return mIonFilterOptions.RemovePrecursor
+        End Get
+        Set(ByVal value As Boolean)
+            mIonFilterOptions.RemovePrecursor = value
+        End Set
+    End Property
+
+    Public Property IonFilter_RemoveChargeReducedPrecursors() As Boolean
+        Get
+            Return mIonFilterOptions.RemoveChargeReducedPrecursors
+        End Get
+        Set(ByVal value As Boolean)
+            mIonFilterOptions.RemoveChargeReducedPrecursors = value
+        End Set
+    End Property
+
+    Public Property IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors() As Boolean
+        Get
+            Return mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors
+        End Get
+        Set(ByVal value As Boolean)
+            mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors = value
+        End Set
+    End Property
+
+    Public Property IonFilter_PrecursorCleaningToleranceMZ() As Double
+        Get
+            Return mIonFilterOptions.PrecursorCleaningToleranceMZ
+        End Get
+        Set(ByVal value As Double)
+            mIonFilterOptions.PrecursorCleaningToleranceMZ = value
+        End Set
+    End Property
+
+    Public Property IonFilter_NeutralLossCleaningWindowDa() As Double
+        Get
+            Return mIonFilterOptions.NeutralLossCleaningWindowDa
+        End Get
+        Set(ByVal value As Double)
+            mIonFilterOptions.NeutralLossCleaningWindowDa = value
+        End Set
+    End Property
+
 
     Public Function GetFilterMode1MassSpacingOption(ByVal intCharge As Integer, ByVal SwitchName As FilterMode1MassSpacingOption) As Integer
         Try
@@ -707,6 +786,7 @@ Public Class clsMsMsSpectrumFilter
             mSpectrumFilterMode = Value
         End Set
     End Property
+
 #End Region
 
     Private Sub AppendToNeutralLossMassList(ByRef udtNeutralLossMasses() As udtNeutralLossMassesType, ByRef intNeutralLossMassCount As Integer, ByVal dblNewMass As Double, ByVal eNeutralLossCode As eNeutralLossCodeConstants)
@@ -726,7 +806,19 @@ Public Class clsMsMsSpectrumFilter
         End Try
     End Sub
 
-    Private Sub AppendReportLine(ByVal strReportFileName As String, ByVal ScanNumberStart As Integer, ByVal ScanNumberEnd As Integer, ByVal Charge As Integer, ByVal udtSpectrumQualityScore As udtSpectrumQualityScoreType, ByVal sngPrecursorMZ As Single, ByVal sngBPI As Single, ByVal blnIncludeNLStats As Boolean, ByRef udtNLStats As udtNLStatsType)
+    Private Sub AppendReportLine(ByVal strReportFileName As String, _
+                                 ByVal ScanNumberStart As Integer, _
+                                 ByVal ScanNumberEnd As Integer, _
+                                 ByVal Charge As Integer, _
+                                 ByVal udtSpectrumQualityScore As udtSpectrumQualityScoreType, _
+                                 ByVal sngPrecursorMZ As Single, _
+                                 ByVal sngBPI As Single, _
+                                 ByVal blnIncludeNLStats As Boolean, _
+                                 ByRef udtNLStats As udtNLStatsType, _
+                                 ByVal blnIonFilteringEnabled As Boolean, _
+                                 ByVal intPositiveDataCountBeforeFilter As Integer, _
+                                 ByVal intPositiveDataCountAfterFilter As Integer)
+
         Dim chTab As Char = ControlChars.Tab
 
         Dim blnWriteHeaders As Boolean
@@ -764,6 +856,12 @@ Public Class clsMsMsSpectrumFilter
                          "Quality_Score" & chTab & _
                          "Precursor_MZ" & chTab & _
                          "BPI"
+
+            If blnIonFilteringEnabled Then
+                strLineOut &= chTab & _
+                              "Positive_Count_Before_Filter" & chTab & _
+                              "Positive_Count_After_Filter"
+            End If
 
             If mSpectrumFilterMode = eSpectrumFilterMode.mode1 Or mSpectrumFilterMode = eSpectrumFilterMode.mode2 Then
                 ' Include the extended headers for Filter Mode 1
@@ -806,6 +904,13 @@ Public Class clsMsMsSpectrumFilter
                      Math.Round(sngBPI, 1).ToString
 
 
+        If blnIonFilteringEnabled Then
+            strLineOut &= chTab & _
+                          intPositiveDataCountBeforeFilter.ToString & chTab & _
+                          intPositiveDataCountAfterFilter.ToString
+        End If
+
+
         If mSpectrumFilterMode = eSpectrumFilterMode.mode1 Or mSpectrumFilterMode = eSpectrumFilterMode.mode2 Then
             ' Include the extended score data
             With udtSpectrumQualityScore
@@ -842,11 +947,11 @@ Public Class clsMsMsSpectrumFilter
 
     End Sub
 
-    Private Function BackupFileWithRevisioning(ByVal strReportFilePath As String) As Boolean
+    Private Function BackupFileWithRevisioning(ByVal strFileToBackup As String) As Boolean
         ' Returns True if file successfully backed up
         ' Returns False if an error
 
-        Dim strBackupFilePath As String
+        Dim strNewFilePath As String
         Dim strCheckPath, strCheckPathNew As String
 
         Dim intIndex As Integer
@@ -857,16 +962,16 @@ Public Class clsMsMsSpectrumFilter
 
         Try
             ' See if any .bak files exist
-            strBackupFilePath = strReportFilePath & ".bak"
+            strNewFilePath = strFileToBackup & ".bak"
 
-            If System.IO.File.Exists(strBackupFilePath) Then
+            If System.IO.File.Exists(strNewFilePath) Then
                 ' Need to find all matching .bak? files and rename; e.g. .bak1-> .bak2, .bak2 -> .bak3, etc.
                 ' Must work in reverse order
                 For intIndex = 8 To 1 Step -1
-                    strCheckPath = strBackupFilePath & intIndex.ToString
+                    strCheckPath = strNewFilePath & intIndex.ToString
 
                     If System.IO.File.Exists(strCheckPath) Then
-                        strCheckPathNew = strBackupFilePath & (intIndex + 1).ToString
+                        strCheckPathNew = strNewFilePath & (intIndex + 1).ToString
                         If System.IO.File.Exists(strCheckPathNew) Then
                             System.IO.File.Delete(strCheckPathNew)
                         End If
@@ -874,13 +979,14 @@ Public Class clsMsMsSpectrumFilter
                     End If
                 Next intIndex
 
-                strCheckPath = strBackupFilePath
-                strCheckPathNew = strBackupFilePath & "1"
+                strCheckPath = String.Copy(strNewFilePath)
+                strCheckPathNew = strNewFilePath & "1"
 
                 System.IO.File.Move(strCheckPath, strCheckPathNew)
             End If
 
-            System.IO.File.Copy(strReportFilePath, strBackupFilePath, True)
+            System.IO.File.Copy(strFileToBackup, strNewFilePath, True)
+            LogMessage("Renamed " & System.IO.Path.GetFileName(strFileToBackup) & " to " & strNewFilePath)
 
         Catch ex As Exception
             SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileBackupAccessError)
@@ -925,6 +1031,8 @@ Public Class clsMsMsSpectrumFilter
         If Not mOverwriteExistingFiles Then
             Try
                 If System.IO.File.Exists(strFilePathToOverwrite) Then
+                    LogMessage("File exists: " & strFilePathToOverwrite)
+
                     ' File already exists in destination; query user about overriding if mShowMessages = True
                     If MyBase.ShowMessages Then
                         eResponse = MsgBox("Overwrite the existing file: " & strFilePathToOverwrite, MsgBoxStyle.Question Or MsgBoxStyle.YesNoCancel Or MsgBoxStyle.DefaultButton2, "File Exists")
@@ -935,7 +1043,9 @@ Public Class clsMsMsSpectrumFilter
                     If eResponse = MsgBoxResult.Yes Then
                         ' Ok to overwrite the file; possibly always overwrite from now on (typically used when processing individual .dta files)
                         If blnAlwaysOverwriteFromNowOnIfOKd Then mOverwriteExistingFiles = True
+                        LogMessage("  file will be overwritten")
                     Else
+                        LogMessage("  existing file will not be overwritten")
                         SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.UserCancelledFileOverwrite)
                         blnProceed = False
                     End If
@@ -966,6 +1076,10 @@ Public Class clsMsMsSpectrumFilter
 
         Return False
 
+    End Function
+
+    Private Function CheckIonFilteringEnabled() As Boolean
+        Return mIonFilterOptions.RemovePrecursor OrElse mIonFilterOptions.RemoveChargeReducedPrecursors OrElse mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors
     End Function
 
     Public Shared Function ConstructScanStatsFilePath(ByVal FolderPath As String, ByVal BaseDatasetName As String) As String
@@ -1077,6 +1191,51 @@ Public Class clsMsMsSpectrumFilter
         Loop While intIndexPointer >= 0
 
         Return strSequenceTag
+
+    End Function
+
+    Public Shared Function ConvoluteMass(ByVal dblMassMZ As Double, ByVal intCurrentCharge As Integer, Optional ByVal intDesiredCharge As Integer = 1) As Double
+        ' Converts dblMassMZ to the MZ that would appear at the given intDesiredCharge
+        ' If intCurrentCharge = 0, then assumes dblMassMZ is the neutral, monoisotopic mass
+        ' To return the neutral mass, set intDesiredCharge to 0
+
+        Dim dblNewMZ As Double
+
+        Try
+            If intCurrentCharge = intDesiredCharge Then
+                dblNewMZ = dblMassMZ
+            Else
+                If intCurrentCharge = 1 Then
+                    dblNewMZ = dblMassMZ
+                ElseIf intCurrentCharge > 1 Then
+                    ' Convert dblMassMZ to M+H
+                    dblNewMZ = (dblMassMZ * intCurrentCharge) - MASS_PROTON * (intCurrentCharge - 1)
+                ElseIf intCurrentCharge = 0 Then
+                    ' Convert dblMassMZ (which is neutral) to M+H and store in dblNewMZ
+                    dblNewMZ = dblMassMZ + MASS_PROTON
+                Else
+                    ' Negative charges are not supported; return 0
+                    Return 0
+                End If
+
+                If intDesiredCharge > 1 Then
+                    dblNewMZ = (dblNewMZ + MASS_PROTON * (intDesiredCharge - 1)) / intDesiredCharge
+                ElseIf intDesiredCharge = 1 Then
+                    ' Return M+H, which is currently stored in dblNewMZ
+                ElseIf intDesiredCharge = 0 Then
+                    ' Return the neutral mass
+                    dblNewMZ -= MASS_PROTON
+                Else
+                    ' Negative charges are not supported; return 0
+                    dblNewMZ = 0
+                End If
+            End If
+        Catch ex As Exception
+            ' Error occurred
+            dblNewMZ = 0
+        End Try
+
+        Return dblNewMZ
 
     End Function
 
@@ -2233,6 +2392,179 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
+    ''' <summary>
+    ''' Looks for ions that are within certain m/z ranges
+    ''' Will remove the ions if blnRemoveIons = True; otherwise, changes their intensity to a value between 0 and 1
+    ''' </summary>
+    ''' <param name="intDataCount">Number of data points in sngMassList</param>
+    ''' <param name="sngMassList">Array of m/z values</param>
+    ''' <param name="sngIntensityList">Array of intensity values</param>
+    ''' <param name="udtSpectrumHeaderInfo">Spectrum Header Info</param>
+    ''' <param name="blnRemoveIons">True to remove ions; False to change their intensity to between 0 and 1</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function FilterIonsByMZ(ByVal intDataCount As Integer, _
+                                      ByRef sngMassList() As Single, _
+                                      ByRef sngIntensityList() As Single, _
+                                      ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
+                                      ByVal blnRemoveIons As Boolean, _
+                                      ByRef intPositiveDataCountBeforeFilter As Integer, _
+                                      ByRef intPositiveDataCountAfterFilter As Integer) As Boolean
+
+        Dim intIndex As Integer
+        Dim intTargetIndex As Integer
+
+        Dim intParentCharge As Integer
+        Dim intChargeIndex As Integer
+
+        Dim blnKeepIon As Boolean
+        Dim blnSpectralDataUpdated As Boolean
+
+        Dim dblParentIonMZ As Double
+        Dim dblParentIonMonoMass As Double
+
+        Dim dblnCurrentParentExclusionMZ As Double
+
+        Dim objCharges As New Generic.List(Of Integer)
+
+
+        blnSpectralDataUpdated = False
+        intPositiveDataCountBeforeFilter = 0
+        intPositiveDataCountAfterFilter = 0
+
+        Try
+            ' Count the number of positive intensity values
+            intPositiveDataCountBeforeFilter = 0
+            For intIndex = 0 To intDataCount - 1
+                If sngIntensityList(intIndex) > 0 Then
+                    intPositiveDataCountBeforeFilter += 1
+                End If
+            Next intIndex
+
+            If Not CheckIonFilteringEnabled() Then
+                ' Nothing to filter
+                blnSpectralDataUpdated = False
+                intPositiveDataCountAfterFilter = intPositiveDataCountBeforeFilter
+            Else
+                ' The following is equivalent to: ConvoluteMass(udtSpectrumHeaderInfo.ParentIonMH, 1, 0)
+                dblParentIonMonoMass = udtSpectrumHeaderInfo.ParentIonMH - MASS_PROTON
+                dblParentIonMZ = udtSpectrumHeaderInfo.ParentIonMZ
+
+
+                For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+                    objCharges.Add(udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
+                Next
+
+                If udtSpectrumHeaderInfo.ChargeIs2And3Plus Then
+                    If Not objCharges.Contains(2) Then
+                        objCharges.Add(2)
+                    End If
+
+                    If Not objCharges.Contains(3) Then
+                        objCharges.Add(3)
+                    End If
+                End If
+
+                If objCharges.Count = 0 Then
+                    ' This is unexpected
+                    ' Assume the charge state is 2 or 3
+                    objCharges.Add(2)
+                    objCharges.Add(3)
+                End If
+
+                ' Step through the data
+                ' Check whether any points should be removed
+                ' If we keep them, then copy from intIndex to intTargetIndex and increment intTargetIndex
+                ' Otherwise, don't increment intTargetIndex (meaning the data point will get replaced on a subsequent copy)
+
+                For Each intParentCharge In objCharges
+
+                    intTargetIndex = 0
+                    For intIndex = 0 To intDataCount - 1
+
+                        blnKeepIon = True
+
+                        If mIonFilterOptions.RemovePrecursor Then
+                            If Math.Abs(dblParentIonMZ - sngMassList(intIndex)) <= mIonFilterOptions.PrecursorCleaningToleranceMZ Then
+                                blnKeepIon = False
+                            End If
+                        End If
+
+                        If blnKeepIon AndAlso (mIonFilterOptions.RemoveChargeReducedPrecursors OrElse mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors) Then
+
+                            ' Note: in the Coon lab's code, they use intParentCharge-1, which means you won't filter out neutral losses from the parent
+                            ' I have updated the code to filter out neutral losses from the parent m/z and from the charge reduced m/z values
+                            For intChargeIndex = 1 To intParentCharge
+                                dblnCurrentParentExclusionMZ = ConvoluteMass(dblParentIonMonoMass, 0, intChargeIndex)
+
+                                If mIonFilterOptions.RemoveChargeReducedPrecursors Then
+                                    If Math.Abs(dblnCurrentParentExclusionMZ - sngMassList(intIndex)) <= mIonFilterOptions.PrecursorCleaningToleranceMZ Then
+                                        blnKeepIon = False
+                                    End If
+                                End If
+
+                                If blnKeepIon AndAlso mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors Then
+                                    If sngMassList(intIndex) >= ConvoluteMass(dblParentIonMonoMass - mIonFilterOptions.NeutralLossCleaningWindowDa, 0, intChargeIndex) AndAlso _
+                                       sngMassList(intIndex) <= dblnCurrentParentExclusionMZ + mIonFilterOptions.PrecursorCleaningToleranceMZ Then
+                                        blnKeepIon = False
+                                    End If
+                                End If
+                            Next
+                        End If
+
+                        If blnKeepIon Then
+                            If intTargetIndex <> intIndex Then
+                                sngMassList(intTargetIndex) = sngMassList(intIndex)
+                                sngIntensityList(intTargetIndex) = sngIntensityList(intIndex)
+                            End If
+                            intTargetIndex += 1
+                        Else
+                            blnSpectralDataUpdated = True
+
+                            If Not blnRemoveIons Then
+                                ' Instead of removing the ion, change its intensity to 0
+
+                                'If sngIntensityList(intTargetIndex) > 0 Then
+                                '    ' First divide the intensity by 10000
+                                '    sngIntensityList(intTargetIndex) /= 10000
+
+                                '    ' If the intensity is still 1 or larger, then divide by 10 until it drops below one
+                                '    Do While sngIntensityList(intTargetIndex) >= 1
+                                '        sngIntensityList(intTargetIndex) /= 10
+                                '    Loop
+                                'End If
+
+                                sngIntensityList(intTargetIndex) = 0
+                                intTargetIndex += 1
+                            End If
+                        End If
+
+                    Next intIndex
+
+                    ' Update intDataCount
+                    If intDataCount > intTargetIndex Then
+                        intDataCount = intTargetIndex
+                    End If
+                Next
+
+                ' Count the number of positive intensity values now that the filter has been applied
+                intPositiveDataCountAfterFilter = 0
+                For intIndex = 0 To intDataCount - 1
+                    If sngIntensityList(intIndex) > 0 Then
+                        intPositiveDataCountAfterFilter += 1
+                    End If
+                Next intIndex
+
+            End If
+
+        Catch ex As Exception
+            Throw New Exception("Error in FilterIonsByMZ: " & ex.Message, ex)
+        End Try
+
+        Return blnSpectralDataUpdated
+
+    End Function
+
     Protected Function FilterModeOptionBoolToSng(ByVal blnOption As Boolean) As Single
         If blnOption Then
             Return -1
@@ -2325,7 +2657,6 @@ Public Class clsMsMsSpectrumFilter
             If Not System.IO.File.Exists(strExeFilePath) Then
                 strMessage = FINNIGAN_DATAFILE_INFO_SCANNER & " application not found in the program folder (" & GetAppFolderPath() & "); unable to generate the ScanStats.txt file"
                 mErrorMessage = String.Copy(strMessage)
-
                 LogMessage(strMessage, eMessageTypeConstants.ErrorMsg)
                 Console.WriteLine(strMessage)
                 TraceLog(strMessage)
@@ -2339,6 +2670,9 @@ Public Class clsMsMsSpectrumFilter
 
                 ' Define the output folder path
                 strArgs &= " /O:" & PossiblyQuoteName(strOutputFolderPath)
+
+                LogMessage("Generating Finnigan Scan Stats file using " & strExeFilePath)
+                LogMessage("CmdLine: " & strArgs)
 
                 TraceLog("Call RunProgram with " & strExeFilePath & " " & strArgs)
                 blnSuccess = Me.RunProgram(strExeFilePath, String.Empty, strArgs, False, True, ProcessWindowStyle.Minimized)
@@ -2479,7 +2813,8 @@ Public Class clsMsMsSpectrumFilter
                 ByVal udtSpectrumQualityScore As udtSpectrumQualityScoreType, ByVal sngBPI As Single, _
                 ByVal blnIncludeNLStats As Boolean, ByRef udtNLStats As udtNLStatsType, _
                 ByVal intMSLevelFilter As Integer, ByVal strCollisionModeFilter As String, ByRef reCollisionModeFilter As System.Text.RegularExpressions.Regex, _
-                ByRef blnKeepSpectrum As Boolean)
+                ByRef blnKeepSpectrum As Boolean, _
+                ByVal blnIonFilteringEnabled As Boolean, ByVal intPositiveDataCountBeforeFilter As Integer, ByVal intPositiveDataCountAfterFilter As Integer)
 
         Dim blnPassesFilter As Boolean
 
@@ -2493,7 +2828,8 @@ Public Class clsMsMsSpectrumFilter
             AppendReportLine(strReportFilePath, _
                             udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ScanNumberEnd, _
                             udtSpectrumHeaderInfo.ParentIonCharges(0), udtSpectrumQualityScore, _
-                            udtSpectrumHeaderInfo.ParentIonMZ, sngBPI, blnIncludeNLStats, udtNLStats)
+                            udtSpectrumHeaderInfo.ParentIonMZ, sngBPI, blnIncludeNLStats, udtNLStats, _
+                            blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
         End If
 
         If Not mEvaluateSpectrumQualityOnly Then
@@ -2620,11 +2956,21 @@ Public Class clsMsMsSpectrumFilter
         mOverwriteReportFile = True
         mAutoCloseReportFile = True
 
+        mMaximumProgressUpdateIntervalSeconds = 1       ' Default to 1 second; use a larger number to decrease the number of entries to the log file
+
         mDiscardValidSpectra = False
         mDeleteBadDTAFiles = False
         mEvaluateSpectrumQualityOnly = False
 
         mMSLevelFilter = 0
+
+        With mIonFilterOptions
+            .RemovePrecursor = False
+            .RemoveChargeReducedPrecursors = False
+            .RemoveNeutralLossesFromChargeReducedPrecursors = False
+            .PrecursorCleaningToleranceMZ = DEFAULT_IONFILTER_PRECURSOR_TOLERANCE_MZ
+            .NeutralLossCleaningWindowDa = DEFAULT_IONFILTER_PRECURSOR_NL_CLEANING_WINDOW_DA
+        End With
 
         ' Filter mode 1
         ' Initialize the values for mFilterMode1Options.StandardMassSpacingCounts()
@@ -2691,6 +3037,7 @@ Public Class clsMsMsSpectrumFilter
         ' If strParameterFilePath is blank, then returns True since this isn't an error
 
         Const FILTER_OPTIONS_SECTION As String = "FilterOptions"
+        Const ION_FILTER_OPTIONS_SECTION As String = "IonFilterOptions"
         Const FILTER_MODE1 As String = "FilterMode1"
         Const FILTER_MODE2 As String = "FilterMode2"
         Const FILTER_MODE3 As String = "FilterMode3"
@@ -2741,6 +3088,16 @@ Public Class clsMsMsSpectrumFilter
                     Me.MSLevelFilter = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSLevelFilter", Me.MSLevelFilter)
                     Me.MSCollisionModeFilter = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSCollisionModeFilter", Me.MSCollisionModeFilter)
                     Me.MSCollisionModeMatchType = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSCollisionModeMatchType", Me.MSCollisionModeMatchType)
+                End If
+
+                If Not objSettingsFile.SectionPresent(ION_FILTER_OPTIONS_SECTION) Then
+                    ' It's OK if this section is missing
+                Else
+                    Me.IonFilter_RemovePrecursor = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "RemovePrecursor", Me.IonFilter_RemovePrecursor)
+                    Me.IonFilter_RemoveChargeReducedPrecursors = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "RemoveChargeReducedPrecursors", Me.IonFilter_RemoveChargeReducedPrecursors)
+                    Me.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "RemoveNeutralLossesFromChargeReducedPrecursors", Me.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)
+                    Me.IonFilter_PrecursorCleaningToleranceMZ = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "PrecursorCleaningToleranceMZ", Me.IonFilter_PrecursorCleaningToleranceMZ)
+                    Me.IonFilter_NeutralLossCleaningWindowDa = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "NeutralLossCleaningWindowDa", Me.IonFilter_NeutralLossCleaningWindowDa)
                 End If
 
                 If Not objSettingsFile.SectionPresent(FILTER_MODE1) Then
@@ -3067,6 +3424,120 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
+    ''' <summary>
+    ''' This sub will populate a m/z and intensity array with fake data from 50 to 2500 m/z, at an interval of 0.1 m/z units
+    ''' It next calls FilterIonsByMZ for the given parent mono mass and charge
+    ''' Finally, it will examine the data
+    ''' </summary>
+    ''' <param name="dblParentMonoMass"></param>
+    ''' <param name="intCharge"></param>
+    ''' <remarks></remarks>
+    Private Sub LogMatchingIonFilterRange(ByVal dblParentMonoMass As Single, ByVal intCharge As Integer)
+
+        Dim dblMZ As Double
+        Dim dblMZStart As Double
+        Dim dblMZEnd As Double
+        Dim dblMZInterval As Double
+
+        Dim intIndex As Integer
+        Dim intDataCount As Integer
+        Dim sngMZList() As Single
+        Dim sngIntensityList() As Single
+
+        Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+        Dim blnSpectralDataUpdated As Boolean
+
+        Dim sngFilterRangeStart As Single
+        Dim sngFilterRangeEnd As Single
+        Dim blnInsideFilterRange As Boolean
+
+        Dim objFilteredRanges As Generic.Dictionary(Of Single, Single)
+        Dim objEnum As Generic.Dictionary(Of Single, Single).Enumerator
+
+        Dim strParentDesc As String
+
+        Try
+
+            dblMZStart = 50
+            dblMZEnd = 2500
+            dblMZInterval = 0.1
+
+            ' Compute the expected number of data points
+            intDataCount = CInt(Math.Ceiling(dblMZEnd - dblMZStart) / dblMZInterval) + 1
+
+            ReDim sngMZList(intDataCount)
+            ReDim sngIntensityList(intDataCount)
+
+            ' Reset the data count and initialize dblMZ
+            intDataCount = 0
+            dblMZ = dblMZStart
+
+            Do While dblMZ <= dblMZEnd AndAlso intDataCount < sngMZList.Length
+
+                sngMZList(intDataCount) = CSng(dblMZ)
+                sngIntensityList(intDataCount) = 10
+
+                dblMZ += dblMZInterval
+                intDataCount += 1
+            Loop
+
+            With udtSpectrumHeaderInfo
+                .ChargeIs2And3Plus = False
+                .ParentIonChargeCount = 1
+                ReDim .ParentIonCharges(0)
+                .ParentIonCharges(0) = intCharge
+                .ParentIonMH = CSng(ConvoluteMass(dblParentMonoMass, 0, 1))
+                .ParentIonMZ = CSng(ConvoluteMass(dblParentMonoMass, 0, intCharge))
+            End With
+
+            ' Filter the data
+            blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMZList, sngIntensityList, udtSpectrumHeaderInfo, False, 0, 0)
+
+            ' Now determine which ranges of data have an intensity of 0
+            sngFilterRangeStart = 0
+            sngFilterRangeEnd = 0
+            blnInsideFilterRange = False
+
+            objFilteredRanges = New Generic.Dictionary(Of Single, Single)
+
+            For intIndex = 0 To intDataCount - 1
+                If sngIntensityList(intIndex) <= 0 Then
+                    If blnInsideFilterRange Then
+                        sngFilterRangeEnd = sngMZList(intIndex)
+                    Else
+                        ' New filter range
+                        blnInsideFilterRange = True
+                        sngFilterRangeStart = sngMZList(intIndex)
+                        sngFilterRangeEnd = sngMZList(intIndex)
+                    End If
+                Else
+                    ' Non-zero intensity
+                    If blnInsideFilterRange Then
+                        blnInsideFilterRange = False
+
+                        objFilteredRanges.add(sngFilterRangeStart, sngFilterRangeEnd)
+                    End If
+                End If
+            Next
+
+            strParentDesc = dblParentMonoMass.ToString("0.0") & " Da parent ion observed as " & intCharge.ToString("0") & "+ at " & udtSpectrumHeaderInfo.ParentIonMZ.ToString("0.00") & " m/z"
+            If objFilteredRanges.Count = 0 Then
+                LogMessage("Current ion filtering options would not remove any ions for " & strParentDesc)
+            Else
+                LogMessage("Ranges of m/z values that would be removed for " & strParentDesc)
+            End If
+
+            objEnum = objFilteredRanges.GetEnumerator
+            Do While objEnum.MoveNext
+                LogMessage(" " & objEnum.Current.Key.ToString("0.0") & " to " & objEnum.Current.Value.ToString("0.0"))
+            Loop
+
+        Catch ex As Exception
+            HandleException("Error in LogMatchingIonFilterRange", ex)
+        End Try
+
+    End Sub
+
     Private Function LookupSplitLineValue(ByRef strSplitLine() As String, ByRef intColumnMap() As Integer, ByVal eScanStatsExColumn As eScanStatsExColumns) As String
 
         If intColumnMap(eScanStatsExColumn) >= 0 AndAlso intColumnMap(eScanStatsExColumn) < strSplitLine.Length Then
@@ -3380,6 +3851,9 @@ Public Class clsMsMsSpectrumFilter
 
         Dim sngBPI As Single
 
+        Dim intPositiveDataCountBeforeFilter As Integer
+        Dim intPositiveDataCountAfterFilter As Integer
+
         Dim blnSuccess As Boolean
         Dim blnIncludeNLStats As Boolean
         Dim blnValidOutputFolder As Boolean
@@ -3387,6 +3861,8 @@ Public Class clsMsMsSpectrumFilter
         Dim strNewFilePath As String
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
+        Dim blnSpectralDataUpdated As Boolean
+        Dim blnIonFilteringEnabled As Boolean
 
         Dim strInputFileBaseName As String
 
@@ -3397,6 +3873,8 @@ Public Class clsMsMsSpectrumFilter
         Static intMSLevelFilter As Integer = 0
         Static strCollisionModeFilter As String = String.Empty
         Static reCollisionModeFilter As System.Text.RegularExpressions.Regex
+
+        blnIonFilteringEnabled = CheckIonFilteringEnabled()
 
         blnSuccess = True
 
@@ -3425,6 +3903,8 @@ Public Class clsMsMsSpectrumFilter
                 If mMSCollisionModeMatchType = eTextMatchTypeConstants.RegEx Then
                     reCollisionModeFilter = New System.Text.RegularExpressions.Regex(strCollisionModeFilter, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
                 End If
+
+                WriteSettingsToLog(strInputFilePath, "", intMSLevelFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
             End If
 
             intFilesProcessed += 1
@@ -3438,19 +3918,36 @@ Public Class clsMsMsSpectrumFilter
             If objDtaTextFileReader.ReadSingleDtaFile(strInputFilePath, strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo) Then
                 ' Populate sngMassList and sngIntensityList
                 intDataCount = objDtaTextFileReader.ParseMsMsDataList(strMSMSDataList, intMsMsDataCount, sngMassList, sngIntensityList)
+                intPositiveDataCountBeforeFilter = 0
+                intPositiveDataCountAfterFilter = 0
 
                 If intDataCount > 0 Then
                     udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+
+                    If blnIonFilteringEnabled Then
+                        Const blnRemoveIons As Boolean = False
+                        blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
+                    Else
+                        blnIonFilteringEnabled = False
+                    End If
+
+                    If blnSpectralDataUpdated Then
+                        ' Need to re-create the .DTA file
+                        WriteDTAFile(strInputFilePath, udtSpectrumHeaderInfo.ParentIonLineText, intDataCount, sngMassList, sngIntensityList)
+                    End If
                 Else
                     udtSpectrumQualityScore.Initialize()
                     udtSpectrumQualityScore.SpectrumQualityScore = -1
+                    blnSpectralDataUpdated = False
                 End If
 
                 HandleEvaluationResults(GetReportFileName(strInputFilePath, strOutputFolderPath), _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
                                    blnIncludeNLStats, udtNLStats, _
                                    intMSLevelFilter, strCollisionModeFilter, reCollisionModeFilter, _
-                                   blnKeepSpectrum)
+                                   blnKeepSpectrum, _
+                                   blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
+
 
                 If blnKeepSpectrum Then
 
@@ -3560,7 +4057,7 @@ Public Class clsMsMsSpectrumFilter
         Dim objDtaTextFileReader As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass
         objDtaTextFileReader = New MsMsDataFileReader.clsDtaTextFileReader(blnCombineIdenticalSpectra)
 
-        Return ProcessDTATextOrMGF(objDtaTextFileReader, strInputFilePath, strOutputFolderPath)
+        Return ProcessDTATextOrMGF(objDtaTextFileReader, eInputFileModeConstants.ConcatenatedDTA, strInputFilePath, strOutputFolderPath)
 
     End Function
 
@@ -3569,11 +4066,12 @@ Public Class clsMsMsSpectrumFilter
         Dim objMGFReader As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass
         objMGFReader = New MsMsDataFileReader.clsMGFReader
 
-        Return ProcessDTATextOrMGF(objMGFReader, strInputFilePath, strOutputFolderPath)
+        Return ProcessDTATextOrMGF(objMGFReader, eInputFileModeConstants.MGF, strInputFilePath, strOutputFolderPath)
 
     End Function
 
     Private Function ProcessDTATextOrMGF(ByRef objFileReader As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass, _
+                                         ByVal eInputFileMode As eInputFileModeConstants, _
                                          ByVal strInputFilePath As String, _
                                          ByVal strOutputFolderPath As String) As Boolean
 
@@ -3582,7 +4080,14 @@ Public Class clsMsMsSpectrumFilter
         Dim strMSMSDataList() As String
         Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
-        Dim intDataCount, intProcessCount, intMsMsDataCount As Integer
+        Dim intDataCount, intMsMsDataCount As Integer
+        Dim intProcessCount As Integer
+        Dim intMSSpectraCountIonFiltered As Integer
+        Dim intMSSpectraCountPassingFilter As Integer
+
+        Dim intPositiveDataCountBeforeFilter As Integer
+        Dim intPositiveDataCountAfterFilter As Integer
+
         Dim sngMassList() As Single
         Dim sngIntensityList() As Single
         Dim udtNLStats As udtNLStatsType
@@ -3603,7 +4108,10 @@ Public Class clsMsMsSpectrumFilter
         Dim blnSpectrumFound As Boolean
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
+        Dim blnSpectralDataUpdated As Boolean
+        Dim blnIonFilteringEnabled As Boolean
 
+        Dim dtLastProgressUpdate As DateTime
         Dim intSpectraRead As Integer
         Dim intProgressPercentComplete As Integer
 
@@ -3664,12 +4172,22 @@ Public Class clsMsMsSpectrumFilter
 
             ' Open the input file and parse it
             If Not objFileReader.OpenFile(strInputFilePath) Then
+                LogMessage("Error opening " & strInputFilePath)
                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.InputFileAccessError)
                 blnSuccess = False
                 Exit Try
             End If
 
+            WriteSettingsToLog(strInputFilePath, strOutputFilePath, intMSLevelFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
+
             intProcessCount = 0
+            intMSSpectraCountIonFiltered = 0
+            intMSSpectraCountPassingFilter = 0
+
+            blnIonFilteringEnabled = CheckIonFilteringEnabled()
+
+            If mMaximumProgressUpdateIntervalSeconds < 0.2 Then mMaximumProgressUpdateIntervalSeconds = 0.2
+
             Console.Write("  ")
 
             If blnValidOutputFolder Then
@@ -3685,30 +4203,73 @@ Public Class clsMsMsSpectrumFilter
                     blnSpectrumFound = objFileReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
                     intSpectraRead += 1
 
-                    If intSpectraRead Mod 25 = 0 Then
+                    If intSpectraRead Mod 1000 = 1 OrElse System.DateTime.Now.Subtract(dtLastProgressUpdate).TotalSeconds >= mMaximumProgressUpdateIntervalSeconds Then
+                        dtLastProgressUpdate = System.DateTime.Now
+
                         ' Update the label with the progress
                         intProgressPercentComplete = CInt(Math.Round(objFileReader.ProgressPercentComplete(), 0))
-                        UpdateProgress("Filtering Concatenated File: " & intProgressPercentComplete.ToString & " % complete", intProgressPercentComplete)
+                        UpdateProgress("Filtering Concatenated File: " & intProcessCount.ToString & " spectra processed", intProgressPercentComplete)
                     End If
 
                     If blnSpectrumFound Then
                         ' Populate sngMassList and sngIntensityList
                         intDataCount = objFileReader.ParseMsMsDataList(strMSMSDataList, intMsMsDataCount, sngMassList, sngIntensityList)
+                        intPositiveDataCountBeforeFilter = 0
+                        intPositiveDataCountAfterFilter = 0
 
                         ' Call EvaluateMsMsSpectrum()
                         If intDataCount > 0 Then
                             udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
 
+                            If blnIonFilteringEnabled Then
+                                Const blnRemoveIons As Boolean = False
+                                blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
+                            Else
+                                blnSpectralDataUpdated = False
+                            End If
+
+                            If blnSpectralDataUpdated Then
+                                intMSSpectraCountIonFiltered += 1
+
+                                ' Need to re-create the .DTA file
+                                Select Case eInputFileMode
+                                    Case eInputFileModeConstants.ConcatenatedDTA
+                                        strMostRecentSpectrumText = ControlChars.NewLine & _
+                                                                    udtSpectrumHeaderInfo.SpectrumTitleWithCommentChars & ControlChars.NewLine
+
+                                        strMostRecentSpectrumText &= WriteDTAFileToString(udtSpectrumHeaderInfo.ParentIonLineText, intDataCount, sngMassList, sngIntensityList)
+
+                                    Case eInputFileModeConstants.MGF
+                                        strMostRecentSpectrumText = ControlChars.NewLine & _
+                                                                    WriteMGFEntryToString(udtSpectrumHeaderInfo, intDataCount, sngMassList, sngIntensityList)
+
+                                    Case Else
+                                        ' Unknown mode
+                                        strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
+                                End Select
+                            Else
+                                strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
+                            End If
+
+
                             HandleEvaluationResults(strReportFilePath, _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
                                    blnIncludeNLStats, udtNLStats, _
                                    intMSLevelFilter, strCollisionModeFilter, reCollisionModeFilter, _
-                                   blnKeepSpectrum)
+                                   blnKeepSpectrum, _
+                                   blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
 
                             If blnKeepSpectrum Then
+                                intMSSpectraCountPassingFilter += 1
+
                                 If Not srOutFile Is Nothing Then
-                                    strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
-                                    srOutFile.Write(strMostRecentSpectrumText)
+
+                                    If strMostRecentSpectrumText.StartsWith(ControlChars.NewLine) AndAlso strMostRecentSpectrumText.Length > 2 Then
+                                        ' Skip the first two characters since we don't want to blank lines between DTA entries; just one blank line
+                                        srOutFile.Write(strMostRecentSpectrumText.Substring(2))
+                                    Else
+                                        srOutFile.Write(strMostRecentSpectrumText)
+                                    End If
 
                                     If Not strMostRecentSpectrumText.EndsWith(ControlChars.NewLine & ControlChars.NewLine) Then
                                         srOutFile.WriteLine()
@@ -3738,6 +4299,10 @@ Public Class clsMsMsSpectrumFilter
             If Not srOutFile Is Nothing Then
                 srOutFile.Close()
             End If
+
+            LogMessage("Processing complete; processed " & intProcessCount & " spectra")
+            LogMessage("Spectrum count passing filters: " & intMSSpectraCountPassingFilter)
+            LogMessage("Spectrum count with m/z values removed by ion filtering: " & intMSSpectraCountIonFiltered)
 
             blnSuccess = True
 
@@ -3875,7 +4440,6 @@ Public Class clsMsMsSpectrumFilter
         ' Will update strCollisionModeFilter to mMSCollisionModeFilter if the ScanStatsEx file is successfully loaded; otherwise sets strCollisionModeFilter to ""
 
         Dim blnScanStatsFilesExist As Boolean
-
         Dim ioFile As System.IO.FileInfo
 
         Dim strBaseDatasetName As String
@@ -3895,8 +4459,11 @@ Public Class clsMsMsSpectrumFilter
         If mMSLevelFilter > 0 Or mMSCollisionModeFilter.Length > 0 Then
 
             Try
+                strMessage = "Looking for ScanStats files for " & strInputFilePath
+
                 TraceLog("")
-                TraceLog("Looking for ScanStats files for " & strInputFilePath)
+                TraceLog(strMessage)
+                LogMessage(strMessage)
 
                 ioFile = New System.IO.FileInfo(strInputFilePath)
 
@@ -3909,7 +4476,6 @@ Public Class clsMsMsSpectrumFilter
                 strScanStatsExFilePath = ConstructScanStatsExFilePath(ioFile.DirectoryName, strBaseDatasetName)
 
                 If Not blnScanStatsFilesExist Then
-
                     ' See if a .Raw file matching strInputFileBaseName exists
                     ' If it does, process the .Raw file using Finnigan_Datafile_Info_Scanner.exe 
                     '  so that we can obtain MSLevel and collision mode information
@@ -3919,11 +4485,10 @@ Public Class clsMsMsSpectrumFilter
                     TraceLog("ScanStats.txt file not found at: " & strScanStatsFilePath)
 
                     If System.IO.File.Exists(strFinniganRawFilePath) Then
-                        TraceLog("Generating _ScanStats.txt file using " & strFinniganRawFilePath)
-
-                        strMessage = "Generating ScanStats file using " & System.IO.Path.GetFileName(strFinniganRawFilePath)
-                        Console.WriteLine(strMessage)
+                        strMessage = "Generating _ScanStats.txt file using " & strFinniganRawFilePath
                         TraceLog(strMessage)
+                        LogMessage(strMessage)
+                        Console.WriteLine(strMessage)
 
                         UpdateProgress("Generating ScanStats file; please wait ", 0)
 
@@ -3932,7 +4497,9 @@ Public Class clsMsMsSpectrumFilter
                             strScanStatsFilePath = String.Empty
                         End If
                     Else
-                        TraceLog("Raw file not found at: " & strFinniganRawFilePath)
+                        strMessage = "Raw file not found at: " & strFinniganRawFilePath
+                        LogMessage(strMessage)
+                        TraceLog(strMessage)
                     End If
                 End If
 
@@ -3941,9 +4508,15 @@ Public Class clsMsMsSpectrumFilter
                     If LoadScanStatsFile(strScanStatsFilePath, mMSLevelInfo) Then
                         mMSLevelInfoLoaded = True
                         intMSLevelFilter = mMSLevelFilter
+
+                        LogMessage("MSLevel info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsFilePath))
+                    Else
+                        LogMessage("Load failed for: " & strScanStatsFilePath)
                     End If
                 Else
-                    TraceLog("ScanStats.txt file not found; unable to load it")
+                    strMessage = "ScanStats.txt file still not found after calling GenerateFinniganScanStatsFiles"
+                    LogMessage(strMessage)
+                    TraceLog(strMessage)
                 End If
 
                 If System.IO.File.Exists(strScanStatsExFilePath) Then
@@ -3951,11 +4524,16 @@ Public Class clsMsMsSpectrumFilter
                     If LoadScanStatsExFile(strScanStatsExFilePath) Then
                         mExtendedStatsInfoLoaded = True
                         strCollisionModeFilter = String.Copy(mMSCollisionModeFilter)
+
+                        LogMessage("Collision mode info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsExFilePath))
+                    Else
+                        LogMessage("Load failed for: " & strScanStatsExFilePath)
                     End If
                 Else
-                    TraceLog("ScanStatsEx.txt file not found; unable to load it")
+                    strMessage = "ScanStatsEx.txt file not found at " & strScanStatsExFilePath
+                    LogMessage(strMessage)
+                    TraceLog(strMessage)
                 End If
-
 
             Catch ex As Exception
                 HandleException("Error in ProcessWorkCheckForAndGenerateScanStatsFile", ex)
@@ -3979,12 +4557,12 @@ Public Class clsMsMsSpectrumFilter
         ' Initialize objProgramRunner
 
         Const MAX_PROGRESS_DOTS As Integer = 10
-
         Dim ioFileInfo As System.IO.FileInfo
         Dim objProgramRunner As clsProgRunnerThreaded
 
         Dim blnSuccess As Boolean
         Dim intWaitIteration As Integer
+        Dim intSleepTimeMSec As Integer
 
         Try
             TraceLog("Instantiate objProgRunner")
@@ -4018,10 +4596,18 @@ Public Class clsMsMsSpectrumFilter
             'Start the program executing
             .StartAndMonitorProgram()
 
+            intSleepTimeMSec = CInt(mMaximumProgressUpdateIntervalSeconds * 1000)
+            If intSleepTimeMSec < 500 Then
+                intSleepTimeMSec = 500
+            ElseIf intSleepTimeMSec > 15000 Then
+                intSleepTimeMSec = 15000
+            End If
+
             'loop until program is complete
             intWaitIteration = 0
             While (.State <> 0) And (.State <> 10)
-                System.Threading.Thread.Sleep(500)
+
+                System.Threading.Thread.Sleep(intSleepTimeMSec)
 
                 intWaitIteration += 1
                 If intWaitIteration > MAX_PROGRESS_DOTS AndAlso intWaitIteration Mod MAX_PROGRESS_DOTS = 0 Then
@@ -4177,6 +4763,21 @@ Public Class clsMsMsSpectrumFilter
 
     End Sub
 
+    Public Shared Function SpectrumFilterModeTypeToString(ByVal eSpectrumFilterMode As eSpectrumFilterMode) As String
+        Select Case eSpectrumFilterMode
+            Case clsMsMsSpectrumFilter.eSpectrumFilterMode.NoFilter
+                Return "Fragmentation pattern filter disabled"
+            Case clsMsMsSpectrumFilter.eSpectrumFilterMode.mode1
+                Return "Mode 1: Amino Acid Spacing Filter"
+            Case clsMsMsSpectrumFilter.eSpectrumFilterMode.mode2
+                Return "Mode 2: Intensity Threshold Filter"
+            Case clsMsMsSpectrumFilter.eSpectrumFilterMode.mode3
+                Return "Mode 3: Phosph Neutral Loss Filter"
+            Case Else
+                Return String.Empty
+        End Select
+    End Function
+
     Public Shared Function TextMatchTypeCodeToString(ByVal eTextMatchTypeCode As eTextMatchTypeConstants) As String
         Select Case eTextMatchTypeCode
             Case eTextMatchTypeConstants.Contains
@@ -4317,6 +4918,153 @@ Public Class clsMsMsSpectrumFilter
         Return True
 
     End Function
+
+    Protected Sub WriteDTAFile(ByVal strDTAFilePath As String, _
+                               ByVal strParentIonLineText As String, _
+                               ByVal intDataCount As Integer, _
+                               ByRef sngMassList() As Single, _
+                               ByRef sngIntensityList() As Single)
+
+        Dim swOutfile As System.IO.StreamWriter
+
+
+        Try
+            swOutfile = New System.IO.StreamWriter(New System.IO.FileStream(strDTAFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+            swOutfile.Write(WriteDTAFileToString(strParentIonLineText, intDataCount, sngMassList, sngIntensityList))
+
+            swOutfile.Close()
+
+        Catch ex As Exception
+
+            mErrorMessage = "Error in writing DTA file " & strDTAFilePath & ": " & ex.Message
+            If MyBase.ShowMessages Then
+                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
+            Else
+                Throw New System.Exception(mErrorMessage, ex)
+            End If
+
+        End Try
+
+    End Sub
+
+    Protected Function WriteDTAFileToString(ByVal strParentIonLineText As String, _
+                                            ByVal intDataCount As Integer, _
+                                            ByRef sngMassList() As Single, _
+                                            ByRef sngIntensityList() As Single) As String
+
+        Dim sbStringBuilder As New System.Text.StringBuilder
+        Dim intIndex As Integer
+
+        ' Define the parent ion line
+        sbStringBuilder.AppendLine(strParentIonLineText)
+
+        ' Append in m/z and intensity data
+        For intIndex = 0 To intDataCount - 1
+            If sngIntensityList(intIndex) > 1 Then
+                sbStringBuilder.AppendLine(sngMassList(intIndex).ToString & " " & sngIntensityList(intIndex).ToString("0.00"))
+            Else
+                sbStringBuilder.AppendLine(sngMassList(intIndex).ToString & " " & sngIntensityList(intIndex).ToString)
+            End If
+        Next
+
+        Return sbStringBuilder.ToString
+
+    End Function
+
+    Protected Function WriteMGFEntryToString(ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
+                                            ByVal intDataCount As Integer, _
+                                            ByRef sngMassList() As Single, _
+                                            ByRef sngIntensityList() As Single) As String
+
+        Dim sbStringBuilder As New System.Text.StringBuilder
+        Dim strLineOut As String
+
+        Dim intIndex As Integer
+
+        sbStringBuilder.AppendLine("BEGIN IONS")
+
+        If Not udtSpectrumHeaderInfo.SpectrumTitle Is Nothing AndAlso udtSpectrumHeaderInfo.SpectrumTitle.Length > 0 Then
+            sbStringBuilder.AppendLine(udtSpectrumHeaderInfo.SpectrumTitle)
+        Else
+            sbStringBuilder.AppendLine("TITLE=Spectrum")
+        End If
+
+        If Not udtSpectrumHeaderInfo.ParentIonLineText Is Nothing AndAlso udtSpectrumHeaderInfo.ParentIonLineText.Length > 0 Then
+            sbStringBuilder.AppendLine(udtSpectrumHeaderInfo.ParentIonLineText)
+        Else
+            sbStringBuilder.AppendLine("PEPMASS=" & udtSpectrumHeaderInfo.ParentIonMZ)
+        End If
+
+        If udtSpectrumHeaderInfo.ParentIonChargeCount >= 1 Then
+            strLineOut = "CHARGE=" & udtSpectrumHeaderInfo.ParentIonCharges(0) & "+"
+
+            If udtSpectrumHeaderInfo.ParentIonChargeCount > 1 Then
+                For intIndex = 1 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+                    strLineOut &= " and " & udtSpectrumHeaderInfo.ParentIonCharges(intIndex) & "+"
+                Next
+            End If
+
+            sbStringBuilder.AppendLine(strLineOut)
+        Else
+            ' Unknown charge; assume 2+ and 3+
+            sbStringBuilder.AppendLine("CHARGE=2+ and 3+")
+        End If
+
+        ' Append in m/z and intensity data
+        For intIndex = 0 To intDataCount - 1
+            If sngIntensityList(intIndex) > 1 Then
+                sbStringBuilder.AppendLine(sngMassList(intIndex).ToString & " " & sngIntensityList(intIndex).ToString("0.0"))
+            Else
+                sbStringBuilder.AppendLine(sngMassList(intIndex).ToString & " " & sngIntensityList(intIndex).ToString)
+            End If
+        Next
+
+        sbStringBuilder.AppendLine("END IONS")
+
+        Return sbStringBuilder.ToString
+
+    End Function
+
+    Private Sub WriteSettingsToLog(ByVal strInputFilePath As String, _
+                                   ByVal strOutputFilePath As String, _
+                                   ByVal intMSLevelFilter As Integer, _
+                                   ByVal strCollisionModeFilter As String, _
+                                   ByVal blnEvaluateSpectrumQualityOnly As Boolean)
+
+        Dim blnIonFilteringEnabled As Boolean
+
+        blnIonFilteringEnabled = CheckIonFilteringEnabled()
+
+        LogMessage("Reading " & strInputFilePath)
+        If Not strOutputFilePath Is Nothing AndAlso strOutputFilePath.Length > 0 Then
+            LogMessage("Writing " & strOutputFilePath)
+        End If
+
+        LogMessage("Current settings")
+        LogMessage(" EvaluateSpectrumQualityOnly: " & blnEvaluateSpectrumQualityOnly)
+        LogMessage(" MSLevelFilter: " & intMSLevelFilter)
+        If strCollisionModeFilter.Length = 0 Then
+            LogMessage(" MSCollisionModeFilter: ''")
+        Else
+            LogMessage(" MSCollisionModeFilter: '" & strCollisionModeFilter & "' (match type " & TextMatchTypeCodeToString(mMSCollisionModeMatchType) & ")")
+        End If
+
+        LogMessage(" Filter mode: " & SpectrumFilterModeTypeToString(mSpectrumFilterMode))
+        LogMessage(" Ion filtering enabled: " & blnIonFilteringEnabled)
+
+        If blnIonFilteringEnabled Then
+            LogMessage("  RemovePrecursor: " & mIonFilterOptions.RemovePrecursor)
+            LogMessage("  RemoveChargeReducedPrecursors: " & mIonFilterOptions.RemoveChargeReducedPrecursors)
+            LogMessage("  RemoveNeutralLossesFromChargeReducedPrecursors: " & mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors)
+
+            ' Write to the log the m/z ranges that would be filtered out for four theoretical mass spectra
+            LogMatchingIonFilterRange(1000, 2)
+            LogMatchingIonFilterRange(1000, 3)
+            LogMatchingIonFilterRange(1000, 4)
+        End If
+
+    End Sub
 
     Protected Overrides Sub Finalize()
         CloseReportFile()
