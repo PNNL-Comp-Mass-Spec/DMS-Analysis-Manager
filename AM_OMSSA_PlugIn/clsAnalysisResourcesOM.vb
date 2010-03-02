@@ -114,13 +114,19 @@ Public Class clsAnalysisResourcesOM
             ' verify that program formatdb.exe file exists
             Dim progLoc As String = m_mgrParams.GetParam("formatdbprogloc")
             If Not System.IO.File.Exists(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file")
+                If progLoc.Length = 0 Then progLoc = "Parameter 'formatdbprogloc' not defined for this manager"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
                 Return False
             End If
 
             'Set up and execute a program runner to run FormatDb.exe
             'formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
             CmdStr = "-i" & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName) & " -p T -o T"
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "FormatDb", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running FormatDb for fasta file " & OrgDBName)
                 Return False
@@ -154,13 +160,19 @@ Public Class clsAnalysisResourcesOM
             ' verify that program formatdb.exe file exists
             Dim progLoc As String = m_mgrParams.GetParam("dtatoxmlprogloc")
             If Not System.IO.File.Exists(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file")
+                If progLoc.Length = 0 Then progLoc = "Parameter 'dtatoxmlprogloc' not defined for this manager"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
                 Return False
             End If
 
             'Set up and execute a program runner to run FormatDb.exe
             'C:\OMSSA\DtaTextToDtaXML\DtaTextToDtaXML.exe /i:C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
             CmdStr = " /i:" & System.IO.Path.Combine(WorkingDir, SourceFileName)
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting DtaToXml: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "DtaToXml", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DtaToXml for Dta file " & SourceFileName)
                 Return False

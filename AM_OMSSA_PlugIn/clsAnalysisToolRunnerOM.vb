@@ -64,7 +64,8 @@ Public Class clsAnalysisToolRunnerOM
         ' verify that program file exists
         Dim progLoc As String = m_mgrParams.GetParam("OMSSAprogloc")
         If Not System.IO.File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file")
+            If progLoc.Length = 0 Then progLoc = "Parameter 'OMSSAprogloc' not defined for this manager"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -86,6 +87,11 @@ Public Class clsAnalysisToolRunnerOM
         Dim inputFilename As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), "OMSSA_Input.xml")
         'Set up and execute a program runner to run OMSSA
         CmdStr = " -pm " & inputFilename
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA: " & progLoc & " " & CmdStr)
+        End If
+
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -106,6 +112,11 @@ Public Class clsAnalysisToolRunnerOM
         If Not ConvertOMSSA2PepXmlFile() Then
             Dim Msg As String = "clsAnalysisToolRunnerOM.RunTool().ConvertOMSSA2PepXmlFile, failed converting OMSSA xml file to OMSSA Pep Xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -282,15 +293,22 @@ Public Class clsAnalysisToolRunnerOM
             ' verify that program formatdb.exe file exists
             Dim progLoc As String = m_mgrParams.GetParam("omssa2pepprogloc")
             If Not System.IO.File.Exists(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA2PepXml program file")
+                If progLoc.Length = 0 Then progLoc = "Parameter 'omssa2pepprogloc' not defined for this manager"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA2PepXml program file: " & progLoc)
                 Return False
             End If
 
             Dim outputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_pepxml.xml")
             Dim inputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
+
             'Set up and execute a program runner to run Omssa2PepXml.exe
             'omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
             CmdStr = "-xml -o " & outputFilename & " " & inputFilename
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA2PepXml: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA2PepXml, job " & m_JobNum)
                 Return False
