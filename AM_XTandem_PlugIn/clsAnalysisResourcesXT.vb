@@ -9,9 +9,12 @@ Public Class clsAnalysisResourcesXT
 	Friend Const MOD_DEFS_FILE_SUFFIX As String = "_ModDefs.txt"
 	Friend Const MASS_CORRECTION_TAGS_FILENAME As String = "Mass_Correction_Tags.txt"
 
+    Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
+
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
         Dim result As Boolean
+        Dim strWorkDir As String
 
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
@@ -24,11 +27,13 @@ Public Class clsAnalysisResourcesXT
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
+        strWorkDir = m_mgrParams.GetParam("workdir")
+
         'Retrieve param file
         If Not RetrieveGeneratedParamFile( _
          m_jobParams.GetParam("ParmFileName"), _
          m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_mgrParams.GetParam("workdir")) _
+         strWorkDir) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'Retrieve unzipped dta files (do not unconcatenate since X!Tandem uses the _Dta.txt file directly)
@@ -42,32 +47,38 @@ Public Class clsAnalysisResourcesXT
         clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
 
+        ' If the _dta.txt file is over 2 GB in size, then condense it
+        If Not ValidateDTATextFileSize(strWorkDir) Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
         Dim ext As String
         Dim DumFiles() As String
 
         'update list of files to be deleted after run
         For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
+            DumFiles = System.IO.Directory.GetFiles(strWorkDir, "*" & ext) 'Zipped DTA
             For Each FileToDel As String In DumFiles
                 clsGlobal.FilesToDelete.Add(FileToDel)
             Next
         Next
 
         Dim parmfilestore As String = m_jobParams.GetParam("ParmFileStoragePath")
-        result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_mgrParams.GetParam("WorkDir"))
+        result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
-        result = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_mgrParams.GetParam("WorkDir"))
+        result = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_mgrParams.GetParam("WorkDir"))
+        result = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -200,5 +211,100 @@ Public Class clsAnalysisResourcesXT
     Friend Shared Function ConstructModificationDefinitionsFilename(ByVal ParameterFileName As String) As String
         Return System.IO.Path.GetFileNameWithoutExtension(ParameterFileName) & MOD_DEFS_FILE_SUFFIX
     End Function
+
+    Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String) As Boolean
+        Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
+
+        Dim ioFileInfo As System.IO.FileInfo
+        Dim strInputFilePath As String
+        Dim strFilePathOld As String
+
+        Dim strMessage As String
+
+        Dim blnSuccess As Boolean
+
+        Try
+            strInputFilePath = System.IO.Path.Combine(strWorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+            ioFileInfo = New System.IO.FileInfo(strInputFilePath)
+
+            If Not ioFileInfo.Exists Then
+                m_message = "_DTA.txt file not found: " & strInputFilePath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            If ioFileInfo.Length >= FILE_SIZE_THRESHOLD Then
+                ' Need to condense the file
+
+                strMessage = ioFileInfo.Name & " is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB in size; will now condense it by combining data points with consecutive zero-intensity values"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
+
+                mCDTACondenser = New CondenseCDTAFile.clsCDTAFileCondenser
+
+                blnSuccess = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName)
+
+                If Not blnSuccess Then
+                    m_message = "Error condensing _DTA.txt file: " & mCDTACondenser.GetErrorMessage()
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                Else
+                    ' Wait 500 msec, then check the size of the new _dta.txt file
+                    System.Threading.Thread.Sleep(500)
+
+                    ioFileInfo.Refresh()
+
+                    If m_DebugLevel >= 1 Then
+                        strMessage = "Condensing complete; size of the new _dta.txt file is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
+                    End If
+
+                    Try
+                        strFilePathOld = System.IO.Path.Combine(strWorkDir, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")
+
+                        If m_DebugLevel >= 2 Then
+                            strMessage = "Now deleting file " & strFilePathOld
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
+                        End If
+
+                        ioFileInfo = New System.IO.FileInfo(strFilePathOld)
+                        If ioFileInfo.Exists Then
+                            ioFileInfo.Delete()
+                        Else
+                            strMessage = "Old _DTA.txt file not found:" & ioFileInfo.FullName & "; cannot delete"
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+                        End If
+
+                    Catch ex As Exception
+                        ' Error deleting the file; log it but keep processing
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting _dta_old.txt file: " & ex.Message)
+                    End Try
+
+                End If
+            End If
+
+            blnSuccess = True
+
+        Catch ex As Exception
+            m_message = "Exception in ValidateDTATextFileSize"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+        Return blnSuccess
+
+    End Function
+
+    Private Sub mCDTACondenser_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mCDTACondenser.ProgressChanged
+        Static dtLastUpdateTime As System.DateTime
+
+        If m_DebugLevel >= 1 Then
+            If m_DebugLevel = 1 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+               m_DebugLevel > 1 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+                dtLastUpdateTime = System.DateTime.Now
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & percentComplete.ToString("0.00") & "% complete")
+            End If
+        End If
+    End Sub
 
 End Class

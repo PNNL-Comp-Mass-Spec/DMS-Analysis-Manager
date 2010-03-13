@@ -67,7 +67,8 @@ Public Class clsAnalysisToolRunnerXT
         ' verify that program file exists
         Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
         If Not System.IO.File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find XTandem program file")
+            If progLoc.Length = 0 Then progLoc = "Parameter 'xtprogloc' not defined for this manager"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find XTandem program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -91,7 +92,21 @@ Public Class clsAnalysisToolRunnerXT
         CmdStr = "input.xml"
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
+
+            If CmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tandem.exe returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Tandem.exe failed (but exit code is 0)")
+            End If
+
+            ' Note: Job 553883 returned error code -1073740777, which indicated that the _xt.xml file was not fully written
+
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging XTandem problems
+            CopyFailedResultsToArchiveFolder()
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
         End If
 
         '--------------------------------------------------------------------------------------------
@@ -150,8 +165,47 @@ Public Class clsAnalysisToolRunnerXT
 
     End Function
 
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "XTandem results file was found; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        Try
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            If result = MoveResultFiles() Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+
+    End Sub
     ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it
+    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>

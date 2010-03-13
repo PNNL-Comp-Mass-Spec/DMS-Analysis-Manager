@@ -14,7 +14,7 @@ AnalysisManagerXTandemPlugIn
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ValidateCDTAFile">
 	<summary>
- Make sure the _DTA.txt file exists and has at lease one spectrum in it
+ Make sure the _DTA.txt file exists and has at least one spectrum in it
  </summary>
 	<returns></returns>
 	<remarks></remarks>
