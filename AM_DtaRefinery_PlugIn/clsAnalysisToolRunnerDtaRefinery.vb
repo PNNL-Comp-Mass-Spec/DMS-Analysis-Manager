@@ -62,12 +62,12 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDtaRefinery.RunTool(): Enter")
         End If
 
+        ' verify that program file exists
         ' DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
         Dim progLoc As String = m_mgrParams.GetParam("DTARefineryLoc")
-
-        ' verify that program file exists
         If Not System.IO.File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file")
+            If progLoc.Length = 0 Then progLoc = "Parameter 'DTARefineryLoc' not defined for this manager"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
