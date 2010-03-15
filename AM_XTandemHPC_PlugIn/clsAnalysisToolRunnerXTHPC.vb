@@ -143,13 +143,13 @@ Public Class clsAnalysisToolRunnerXTHPC
         Next
 
         'All files have been copied, now run the command to start the jobs
-        'For i = 1 To ParallelZipNum
-        '    CmdStr = "-l " & HPC_NAME & " -m " & "StartXT_Job" & m_JobNum & "_" & i
-        '    If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-        '        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to schedule the jobs on the super computer, job " & m_JobNum)
-        '        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        '    End If
-        'Next
+        For i = 1 To ParallelZipNum
+            CmdStr = "-l " & HPC_NAME & " -m " & "StartXT_Job" & m_JobNum & "_" & i
+            If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to schedule the jobs on the super computer, job " & m_JobNum)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        Next
 
         'Get job number from supercomputer and append to filename.
         For i = 1 To ParallelZipNum
