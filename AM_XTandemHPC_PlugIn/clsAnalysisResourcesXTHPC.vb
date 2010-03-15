@@ -433,7 +433,7 @@ Public Class clsAnalysisResourcesXTHPC
             inpLine = "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & JobNum & "_" & File_Index & "/"
             inputFile.Write(WriteUnix(inpLine))
 
-            inpLine = "msub ../Job" & JobNum & "_msub" & File_Index & "/" & MsubFilename & " -A emsl33210 > ../Job" & JobNum & "_msub" & File_Index & "/" & MsubOutFilename & " 2>&1"
+            inpLine = "/apps/moab/current/bin/msub ../Job" & JobNum & "_msub" & File_Index & "/" & MsubFilename & " -A emsl33210 > ../Job" & JobNum & "_msub" & File_Index & "/" & MsubOutFilename & " 2>&1"
             inputFile.Write(WriteUnix(inpLine))
 
             inputFile.Close()
