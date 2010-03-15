@@ -172,6 +172,7 @@ Public Class clsAnalysisResourcesXTHPC
             Get_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateFastaFileList.txt")
             MakeListFastaFilesCmdFile(Get_FastaFileList_CmdFile)
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Get_FastaFileList_CmdFile))
+            clsGlobal.m_FilesToDeleteExt.Add("fastafiles.txt")
 
             Create_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "GetFastaFileList.txt")
             MakeGetFastaFilesListCmdFile(Create_FastaFileList_CmdFile)
