@@ -23,7 +23,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected Const PROGRESS_PCT_XTANDEM_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
-    Protected Const HPC_NAME As String = "svc-dms chinook.emsl.pnl.gov -pw Amt22Proc" '" svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk"
+    Protected Const HPC_NAME As String = " svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk" '"svc-dms chinook.emsl.pnl.gov -pw PUT_PASSWORD_HERE" '
     Protected WithEvents CmdRunner As clsRunDosProgram
     Private m_HPCJobNumber As String()
     '--------------------------------------------------------------------------------------------
