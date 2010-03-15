@@ -1,0 +1,54 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerXTandemHPCPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisResourcesXTHPC.RetrieveDtaFiles(System.Boolean)">
+	<summary>
+ Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
+ </summary>
+	<param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
+	<returns>TRUE for success, FALSE for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.RunTool">
+	<summary>
+ Runs XTandem tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.BuildGetOutputFilesCmdFile(System.String)">
+	<summary>
+	</summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGetOutputFilesCmdFile(System.String,System.String,System.String)">
+	<summary>
+	</summary>
+	<param name="inputFilename"></param>
+	<param name="HPCJobNumber"></param>
+	<param name="File_Index"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ValidateCDTAFile">
+	<summary>
+ Make sure the _DTA.txt file exists and has at lease one spectrum in it
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ZipMainOutputFile">
+	<summary>
+ Zips concatenated XML output file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member>
+</members>
+</doc>
