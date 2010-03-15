@@ -177,6 +177,11 @@
 		Class="AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery" 
 		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="xtandem_hpc" 
+		Class="AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC" 
+		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -344,6 +349,11 @@
 		Tool="dta_refinery"
 		Class="AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery" 
 		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="xtandem_hpc" 
+		Class="AnalysisManagerXTandemHPCPlugIn.clsAnalysisResourcesXTHPC" 
+		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" 
 	/>
 </Resourcers>
 
