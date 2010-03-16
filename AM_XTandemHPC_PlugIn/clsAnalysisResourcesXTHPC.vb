@@ -171,12 +171,12 @@ Public Class clsAnalysisResourcesXTHPC
             Next
 
             Get_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateFastaFileList.txt")
-            MakeListFastaFilesCmdFile(Get_FastaFileList_CmdFile)
+            MakeListFastaFilesCmdFile(Get_FastaFileList_CmdFile, JobNum)
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Get_FastaFileList_CmdFile))
             clsGlobal.m_FilesToDeleteExt.Add("fastafiles.txt")
 
             Create_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "GetFastaFileList.txt")
-            MakeGetFastaFilesListCmdFile(Create_FastaFileList_CmdFile)
+            MakeGetFastaFilesListCmdFile(Create_FastaFileList_CmdFile, JobNum)
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Create_FastaFileList_CmdFile))
 
             CreateDir_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateDir_Job" & JobNum)
@@ -682,7 +682,7 @@ Public Class clsAnalysisResourcesXTHPC
 
     End Sub
 
-    Protected Function MakeListFastaFilesCmdFile(ByVal inputFilename As String) As Boolean
+    Protected Function MakeListFastaFilesCmdFile(ByVal inputFilename As String, ByVal JobNum As String) As Boolean
         Dim result As Boolean = True
 
         Try
@@ -691,7 +691,7 @@ Public Class clsAnalysisResourcesXTHPC
 
             WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "fasta/")
 
-            WriteUnix(swOut, "ls -lrt " & m_jobParams.GetParam("generatedFastaName") & " | awk '{print $5}' > fastafiles.txt")
+            WriteUnix(swOut, "ls -lrt " & m_jobParams.GetParam("generatedFastaName") & " | awk '{print $5}' > fastafiles_Job" & JobNum & ".txt")
 
             swOut.Close()
 
@@ -705,7 +705,7 @@ Public Class clsAnalysisResourcesXTHPC
         Return result
     End Function
 
-    Protected Function MakeGetFastaFilesListCmdFile(ByVal inputFilename As String) As Boolean
+    Protected Function MakeGetFastaFilesListCmdFile(ByVal inputFilename As String, ByVal JobNum As String) As Boolean
         Dim result As Boolean = True
 
         Try
@@ -714,7 +714,7 @@ Public Class clsAnalysisResourcesXTHPC
 
             WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "fasta/")
 
-            WriteUnix(swOut, "get fastafiles.txt")
+            WriteUnix(swOut, "get fastafiles_Job" & JobNum & ".txt")
 
             swOut.Close()
 
@@ -754,6 +754,8 @@ Public Class clsAnalysisResourcesXTHPC
                 WriteUnix(swOut, "rm Job" & JobNum & "_msub" & i & "/* Job" & JobNum & "_" & i & "/.*")
                 WriteUnix(swOut, "rmdir Job" & JobNum & "_msub" & i)
             Next
+
+            WriteUnix(swOut, "rm fasta/fastafiles_Job" & JobNum & ".txt")
 
             swOut.Close()
 

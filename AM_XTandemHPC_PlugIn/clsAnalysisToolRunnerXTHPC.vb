@@ -738,7 +738,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                 'Check to see if file is empty or less than 100 Mb.  If so, just copy fasta
                 Dim fiFastaLocalHPC As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "fastafiles.txt"))
-                If (fiFastaLocal.Length = 0) Or (fiFastaLocal.Length < 100000000) Then
+                If (fiFastaLocalHPC.Length = 0) Or (fiFastaLocal.Length < 100000000) Then
                     Return False
                 End If
 
