@@ -13,6 +13,15 @@ AnalysisManagerXTandemHPCPlugIn
 	<param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
 	<returns>TRUE for success, FALSE for error</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisResourcesXTHPC.RetrieveZippedDtaFile(System.String,System.String,System.String,System.String)">
+	<summary>
+ Copies file DtaResultFileName from SourceFolderPath to WorkingDir
+ </summary>
+	<param name="WorkingDir"></param>
+	<param name="DatasetName"></param>
+	<param name="SourceFolderPath"></param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.RunTool">
 	<summary>
  Runs XTandem tool
