@@ -883,8 +883,11 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim NewLabelReplaceText As String = ""
 
         Dim EndOfFile As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
+        Dim CachedPerformanceParameters As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
+
         Dim i As Integer
         Dim j As Integer
+        Dim k As Integer
 
         Try
 
@@ -909,52 +912,65 @@ Public Class clsAnalysisToolRunnerXTHPC
                         Else
                             If lineText.Contains("<group label=""input parameters""") Then
                                 StopWriting = True
-                            End If
+                            Else
+                                If lineText.Contains("<group id=""") Then
+                                    OriginalGroupID = RetrieveGroupIDNumber(lineText)
+                                    NewMaxNum = ComputeNewMaxNumber(OriginalGroupID, NewMaxNum, CurrentMaxNum)
 
-                            If lineText.Contains("<group id=""") Then
-                                OriginalGroupID = RetrieveGroupIDNumber(lineText)
-                                NewMaxNum = ComputeNewMaxNumber(OriginalGroupID, NewMaxNum, CurrentMaxNum)
+                                    lineText = lineText.Replace("<group id=""" & OriginalGroupID.ToString, "<group id=""" & (OriginalGroupID + CurrentMaxNum).ToString)
 
-                                lineText = lineText.Replace("<group id=""" & OriginalGroupID.ToString, "<group id=""" & (OriginalGroupID + CurrentMaxNum).ToString)
+                                    NewIDMatchText = "id=""" & OriginalGroupID.ToString
+                                    NewIDReplaceText = "id=""" & (OriginalGroupID + CurrentMaxNum).ToString
 
-                                NewIDMatchText = "id=""" & OriginalGroupID.ToString
-                                NewIDReplaceText = "id=""" & (OriginalGroupID + CurrentMaxNum).ToString
+                                    NewLabelMatchText = "label=""" & OriginalGroupID.ToString
+                                    NewLabelReplaceText = "label=""" & (OriginalGroupID + CurrentMaxNum).ToString
+                                End If
 
-                                NewLabelMatchText = "label=""" & OriginalGroupID.ToString
-                                NewLabelReplaceText = "label=""" & (OriginalGroupID + CurrentMaxNum).ToString
-                            End If
+                                If NewLabelMatchText.Length > 0 Then
+                                    FindAndReplace(lineText, NewLabelMatchText, NewLabelReplaceText)
+                                End If
 
-                            If NewLabelMatchText.Length > 0 Then
-                                FindAndReplace(lineText, NewLabelMatchText, NewLabelReplaceText)
-                            End If
+                                If NewIDMatchText.Length > 0 Then
+                                    FindAndReplace(lineText, NewIDMatchText, NewIDReplaceText)
+                                End If
 
-                            If NewIDMatchText.Length > 0 Then
-                                FindAndReplace(lineText, NewIDMatchText, NewIDReplaceText)
-                            End If
-
-                            If Not StopWriting Then
                                 swConcatenatedResultFile.WriteLine(lineText)
                             End If
                         End If
                         intLinesProcessed += 1
+
+                        If StopWriting Then
+                            ' The "input parameters" section has been reached
+                            ' Read forward until we find the "performance parameters" line
+                            ' Once that line is found, read forward until </group> is found
+                            ' Cache this info in CachedPerformanceParameters()
+                            ' When caching, we'll update the label for "performance parameters" to be "performance parameters, part i"
+
+                            CachedPerformanceParameters(i) = ReadXTandemPerformanceParameters(srCurrentResultFile, i)
+                        End If
                     Else
                         lineText = srCurrentResultFile.ReadLine
-                        If lineText.Contains("<group label=""input parameters""") Then
-                            StopWriting = True
-                        End If
-
-                        If m_NumClonedSteps > 1 Then
-                            If lineText.Contains("<group id=""") Then
-                                CurrentMaxNum = ComputeNewMaxNumber(lineText, CurrentMaxNum, 0)
-                            End If
-                        End If
-
-                        If Not StopWriting Then
-                            ' Append this line to the output file
-                            swConcatenatedResultFile.WriteLine(lineText)
-                        Else
+                        If StopWriting Then
                             ' Cache this line in EndOfFile
                             EndOfFile.Add(lineText)
+                        Else
+                            If lineText.Contains("<group label=""input parameters""") Then
+                                StopWriting = True
+                            Else
+                                If m_NumClonedSteps > 1 Then
+                                    If lineText.Contains("<group id=""") Then
+                                        CurrentMaxNum = ComputeNewMaxNumber(lineText, CurrentMaxNum, 0)
+                                    End If
+                                End If
+                            End If
+
+                            If StopWriting Then
+                                ' Cache this line in EndOfFile
+                                EndOfFile.Add(lineText)
+                            Else
+                                ' Append this line to the output file
+                                swConcatenatedResultFile.WriteLine(lineText)
+                            End If
                         End If
                     End If
                 Loop
@@ -968,6 +984,12 @@ Public Class clsAnalysisToolRunnerXTHPC
 
             ' Now write out the contents in EndOfFile to swConcatenatedResultFile
             For j = 0 To EndOfFile.Count - 1
+                If m_NumClonedSteps > 1 AndAlso EndOfFile(j).IndexOf("</bioml>") >= 0 Then
+                    ' Write out the cached Performance Parameter values for the other parts
+                    For k = 0 To CachedPerformanceParameters.Count - 1
+                        swConcatenatedResultFile.WriteLine(CachedPerformanceParameters(k))
+                    Next
+                End If
                 swConcatenatedResultFile.WriteLine(EndOfFile(j))
             Next
             swConcatenatedResultFile.Close()
@@ -1009,6 +1031,41 @@ Public Class clsAnalysisToolRunnerXTHPC
             lineText = strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
         End If
     End Sub
+
+    Protected Function ReadXTandemPerformanceParameters(ByRef srCurrentResultFile As System.IO.StreamReader, ByVal intSegment As Integer) As String
+        Const PERF_PARAMS As String = "label=""performance parameters"
+
+        Dim sbCache As System.Text.StringBuilder
+        Dim lineText As String
+        Dim blnCacheLines As Boolean
+
+        sbCache = New System.Text.StringBuilder
+
+        Do While srCurrentResultFile.Peek >= 0
+
+            lineText = srCurrentResultFile.ReadLine
+
+            If Not blnCacheLines Then
+                If lineText.Contains(PERF_PARAMS) Then
+                    ' Update this line to show the segment number, then start caching
+                    lineText = lineText.Replace(PERF_PARAMS, PERF_PARAMS & ", part " & intSegment.ToString)
+
+                    sbCache.AppendLine(lineText)
+                    blnCacheLines = True
+                End If
+            Else
+                If lineText.Contains("</bioml>") Then
+                    ' Do not cache this line; stop reading the file
+                    Exit Do
+                Else
+                    sbCache.AppendLine(lineText)
+                End If
+            End If
+        Loop
+
+        Return sbCache.ToString
+
+    End Function
 
     Protected Function RetrieveGroupIDNumber(ByVal LineOfText As String) As Integer
 
