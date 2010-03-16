@@ -68,12 +68,17 @@ Namespace AnalysisManagerBase
 
 		End Function
 
-		Public Sub SetParam(ByVal KeyName As String, ByVal Value As String) Implements IJobParams.SetParam
+        Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 
-            If Value Is Nothing Then Value = String.Empty
-			m_JobParams(KeyName) = Value
+            If ParamValue Is Nothing Then ParamValue = String.Empty
 
-		End Sub
+            If m_JobParams.ContainsKey(ParamName) Then
+                m_JobParams(ParamName) = ParamValue
+            Else
+                m_JobParams.Add(ParamName, ParamValue)
+            End If
+
+        End Sub
 
 		''' <summary>
 		''' Adds a parameter to the class
@@ -85,14 +90,17 @@ Namespace AnalysisManagerBase
 		Public Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean _
 		 Implements IJobParams.AddAdditionalParameter
 
-			Try
-				m_JobParams.Add(ParamName, ParamValue)
-				Return True
-			Catch ex As Exception
-				Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Try
+                If ParamValue Is Nothing Then ParamValue = String.Empty
+
+                Me.SetParam(ParamName, ParamValue)
+
+                Return True
+            Catch ex As Exception
+                Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-				Return False
-			End Try
+                Return False
+            End Try
 
 		End Function
 

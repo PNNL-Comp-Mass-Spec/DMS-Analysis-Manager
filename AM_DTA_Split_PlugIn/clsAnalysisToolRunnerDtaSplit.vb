@@ -82,12 +82,12 @@ Public Class clsAnalysisToolRunnerDtaSplit
             Try
                 intSegmentCountToCreate = clsGlobal.GetJobParameter(m_jobParams, "NumberOfClonedSteps", 0)
                 If intSegmentCountToCreate = 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=20")
-                    intSegmentCountToCreate = 20
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4")
+                    intSegmentCountToCreate = 4
                 End If
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=20")
-                intSegmentCountToCreate = 20
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4")
+                intSegmentCountToCreate = 4
             End Try
 
             Try
@@ -186,7 +186,9 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
         Try
-            If blnSplitToEqualScanCounts Then
+            If intSegmentCountToCreate < 1 Then intSegmentCountToCreate = 1
+
+            If blnSplitToEqualScanCounts AndAlso intSegmentCountToCreate > 1 Then
                 ' Need to prescan the file to count the number of spectra in it
                 intSpectraCountExpected = CountSpectraInCattedDtaFile(strSourceFilePath)
 
@@ -197,9 +199,28 @@ Public Class clsAnalysisToolRunnerDtaSplit
             End If
 
             fi = New System.IO.FileInfo(strSourceFilePath)
-            lineEndCharCount = LineEndCharacterCount(fi)
 
-            If intSegmentCountToCreate < 1 Then intSegmentCountToCreate = 1
+            If intSegmentCountToCreate = 1 Then
+                ' Nothing to do except create a file named Dataset_1_dta.txt
+                ' Simply rename the input file
+
+                Try
+                    Dim strDestFileName As String
+                    strDestFileName = GetNewSplitDTAFileName(1)
+
+                    fi.MoveTo(strDestFileName)
+
+                Catch ex As Exception
+                    If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SplitCattedDtaFileIntoSegments renaming file: " & strSourceFilePath & " to _1_dta.txt; " & ex.Message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End Try
+
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            End If
+
+
+            lineEndCharCount = LineEndCharacterCount(fi)
 
             intTargetSpectraPerSegment = CInt(Math.Ceiling(intSpectraCountExpected / CDbl(intSegmentCountToCreate)))
             If intTargetSpectraPerSegment < 1 Then intTargetSpectraPerSegment = 1
@@ -382,10 +403,9 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim swOutFile As System.IO.StreamWriter = Nothing
 
         Try
-            strFileName = m_jobParams.GetParam("DatasetNum") + "_" + CStr(fileNameCounter) + "_dta.txt"
-            m_ExceptionFiles.Add(strFileName)
+            strFilePath = GetNewSplitDTAFileName(fileNameCounter)
 
-            strFilePath = System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), strFileName)
+            strFileName = System.IO.Path.GetFileName(strFilePath)
 
             If System.IO.File.Exists(strFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: Split DTA file already exists " & strFilePath)
@@ -403,6 +423,19 @@ Public Class clsAnalysisToolRunnerDtaSplit
         End Try
 
         Return swOutFile
+
+    End Function
+
+    Private Function GetNewSplitDTAFileName(ByVal fileNameCounter As Integer) As String
+        Dim strFileName As String
+        Dim strFilePath As String
+
+        strFileName = m_jobParams.GetParam("DatasetNum") + "_" + CStr(fileNameCounter) + "_dta.txt"
+        m_ExceptionFiles.Add(strFileName)
+
+        strFilePath = System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), strFileName)
+
+        Return strFilePath
 
     End Function
 

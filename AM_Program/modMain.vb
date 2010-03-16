@@ -82,7 +82,8 @@ Module modMain
                         '    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-9\VOrbiETD01_DMS1\QC_Shew_08_05_pt5_c_2Dec09_Griffin_09-11-17\Seq200912031043_Auto551470\sequest.log", true)
                         'End If
 
-                        objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
+                        'objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
+                        objTest.TestFindAndReplace()
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

@@ -48,7 +48,8 @@ Public Class clsAnalysisResourcesXT
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
-        If Not ValidateDTATextFileSize(strWorkDir) Then
+
+        If Not ValidateDTATextFileSize(strWorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt") Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -212,7 +213,7 @@ Public Class clsAnalysisResourcesXT
         Return System.IO.Path.GetFileNameWithoutExtension(ParameterFileName) & MOD_DEFS_FILE_SUFFIX
     End Function
 
-    Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String) As Boolean
+    Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
         Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
 
         Dim ioFileInfo As System.IO.FileInfo
@@ -224,7 +225,7 @@ Public Class clsAnalysisResourcesXT
         Dim blnSuccess As Boolean
 
         Try
-            strInputFilePath = System.IO.Path.Combine(strWorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+            strInputFilePath = System.IO.Path.Combine(strWorkDir, strInputFileName)
             ioFileInfo = New System.IO.FileInfo(strInputFilePath)
 
             If Not ioFileInfo.Exists Then
@@ -302,7 +303,7 @@ Public Class clsAnalysisResourcesXT
                m_DebugLevel > 1 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
                 dtLastUpdateTime = System.DateTime.Now
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & percentComplete.ToString("0.00") & "% complete")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & percentComplete.ToString("0.00") & "% complete")
             End If
         End If
     End Sub

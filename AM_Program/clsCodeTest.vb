@@ -1013,6 +1013,77 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Sub TestFindAndReplace()
+        Dim strTest As String
+
+
+        Const HPCMaxHours As Double = 2.75
+        Const PPN_VALUE As Integer = 8
+
+        Dim HPCNodeCount As String = "3"
+
+        Dim WallTimeMax As Date = CDate("1/1/2010").AddHours(CDbl(HPCMaxHours))
+        Dim WallTimeResult As String
+
+        Dim intNodeCount As Integer
+        Dim intTotalCores As Integer
+
+
+        intNodeCount = CInt(HPCNodeCount)
+        intTotalCores = intNodeCount * PPN_VALUE
+
+        If intNodeCount = 1 Then
+            ' Always use a wall-time value of 30 minutes when only using one node
+            WallTimeResult = "00:30:00"
+        Else
+            WallTimeResult = WallTimeMax.ToString("T", System.Globalization.CultureInfo.CreateSpecificCulture("fr-FR"))
+            WallTimeResult = WallTimeMax.ToString("HH:mm:ss")
+        End If
+
+
+
+        Dim NewIDMatchText As String = ""
+        Dim NewIDReplaceText As String = ""
+
+        Dim NewLabelMatchText As String = ""
+        Dim NewLabelReplaceText As String = ""
+
+        Dim OriginalGroupID As Integer = 7432
+        Dim CurrentMaxNum As Integer = 10000
+
+        NewIDMatchText = "id=""" & OriginalGroupID.ToString
+        NewIDReplaceText = "id=""" & (OriginalGroupID + CurrentMaxNum).ToString
+
+        NewLabelMatchText = "label=""" & OriginalGroupID.ToString
+        NewLabelReplaceText = "label=""" & (OriginalGroupID + CurrentMaxNum).ToString
+
+        strTest = "<group id=""7432"" mh=""1055.228000"" z=""2"" rt="""" expect=""1.1e-01"" label=""SbaltOS185_c39_1:236893-241128 Shewanella_baltica_OS185_contig39 236893..241128"" type=""model"" sumI=""5.75"" maxI=""105413"" fI=""1054.13"" >"
+        FindAndReplace(strTest, NewIDMatchText, NewIDReplaceText)
+        FindAndReplace(strTest, NewLabelMatchText, NewLabelReplaceText)
+
+        strTest = "<protein expect=""-306.9"" id=""7432.1"" uid=""1471"" label=""SbaltOS185_c39_1:236893-241128 Shewanella_baltica_OS185_contig39 236893..241128"" sumI=""7.12"" >"
+        FindAndReplace(strTest, NewIDMatchText, NewIDReplaceText)
+        FindAndReplace(strTest, NewLabelMatchText, NewLabelReplaceText)
+
+        strTest = "<GAML:Xdata label=""7432.hyper"" units=""score"">"
+        FindAndReplace(strTest, NewIDMatchText, NewIDReplaceText)
+        FindAndReplace(strTest, NewLabelMatchText, NewLabelReplaceText)
+
+    End Sub
+
+    Protected Sub FindAndReplace(ByRef lineText As String, ByRef strOldValue As String, ByRef strNewValue As String)
+        Dim intMatchIndex As Integer
+
+        intMatchIndex = lineText.IndexOf(strOldValue)
+
+        If intMatchIndex > 0 Then
+            lineText = lineText.Substring(0, intMatchIndex) + strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
+        ElseIf intMatchIndex = 0 Then
+            lineText = strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
+        End If
+    End Sub
+
+
     ''' <summary>
     ''' Look for the .PEK and .PAR files in the specified folder
     ''' Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek

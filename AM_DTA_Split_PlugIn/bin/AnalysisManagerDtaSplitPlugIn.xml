@@ -6,13 +6,7 @@ AnalysisManagerDtaSplitPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.#ctor">
+<member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.#ctor">
 	<summary>
  Constructor
  </summary>
@@ -62,6 +56,12 @@ AnalysisManagerDtaSplitPlugIn
  </summary>
 	<param name="fi"></param>
 	<returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>
