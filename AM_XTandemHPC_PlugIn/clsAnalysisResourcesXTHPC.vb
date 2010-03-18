@@ -606,8 +606,11 @@ Public Class clsAnalysisResourcesXTHPC
         Dim intNodeCount As Integer
         Dim intTotalCores As Integer
 
-        Dim WallTimeMax As Date = CDate("1/1/2010").AddHours(CDbl(HPCMaxHours))
-        Dim WallTimeResult As String
+        Dim dblWallTimeHours As Double
+        Dim intDays As Integer
+        Dim intHours As Integer
+        Dim intMinutes As Integer
+        Dim WallTimeText As String
 
         Try
             intNodeCount = CInt(HPCNodeCount)
@@ -615,9 +618,41 @@ Public Class clsAnalysisResourcesXTHPC
 
             If intNodeCount = 1 Then
                 ' Always use a wall-time value of 30 minutes when only using one node
-                WallTimeResult = "00:30:00"
+                WallTimeText = "00:30:00"
             Else
-                WallTimeResult = WallTimeMax.ToString("HH:mm:ss")
+                ' Convert the number of hours specified by HPCMaxHours into a string; examples:
+                '  HPCMaxHours of 2   will become   02:00:00
+                '  HPCMaxHours of 2.5 will become   02:30:00
+                '  HPCMaxHours of 18  will become   18:00:00
+                '  HPCMaxHours of 24  will become 1:00:00:00
+                '  HPCMaxHours of 30  will become 1:06:00:00
+
+                dblWallTimeHours = CDbl(HPCMaxHours)
+
+                If dblWallTimeHours >= 24 Then
+                    intDays = CInt(Math.Floor(dblWallTimeHours / 24))
+                    dblWallTimeHours -= intDays * 24
+                Else
+                    intDays = 0
+                End If
+
+                intHours = CInt(Math.Floor(dblWallTimeHours))
+
+                dblWallTimeHours -= intHours
+                If dblWallTimeHours < 0 Then dblWallTimeHours = 0
+                intMinutes = CInt(dblWallTimeHours * 60)
+                If intMinutes >= 60 Then
+                    intHours += 1
+                    intMinutes = 0
+                End If
+
+                If intDays > 0 Then
+                    WallTimeText = intDays.ToString("0") & ":"
+                Else
+                    WallTimeText = String.Empty
+                End If
+                WallTimeText &= intHours.ToString("00") & ":" & intMinutes.ToString("00") & ":00"
+
             End If
 
             ' Create an instance of StreamWriter to write to a file.
@@ -627,7 +662,7 @@ Public Class clsAnalysisResourcesXTHPC
             WriteUnix(swOut, "#!/bin/bash")
 
             ' Number of nodes, number of processors (cores) per node (ppn), and max job length ("hh:mm:ss")
-            strOut = "#MSUB -l nodes=" & HPCNodeCount & ":ppn=" & PPN_VALUE & ",walltime=" & WallTimeResult
+            strOut = "#MSUB -l nodes=" & HPCNodeCount & ":ppn=" & PPN_VALUE & ",walltime=" & WallTimeText
             WriteUnix(swOut, strOut)
 
             strOut = "#MSUB -o " & JobNum & "_Part" & File_Index & ".output.%j"
@@ -662,6 +697,11 @@ Public Class clsAnalysisResourcesXTHPC
             WriteUnix(swOut, strOut)
 
             swOut.Close()
+
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MSub file created; will reserve " & intNodeCount.ToString & " nodes (" & intTotalCores.ToString & " cores) for a maximum WallTime of " & WallTimeText)
+            End If
+
         Catch ex As Exception
             ' Let the user know what went wrong.
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXT.MakeMSubFile, Error generating msub file: " & ex.Message)
