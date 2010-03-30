@@ -16,6 +16,7 @@ Public Class clsAnalysisResourcesDtaRefinery
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
         Dim result As Boolean
+        Dim strErrorMessage As String
 
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
@@ -46,23 +47,17 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
-        If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, _
-         strDtaRefineryParmFileStoragePath, _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_DEFAULT_INPUT_FILE)
+        If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath, m_mgrParams.GetParam("workdir")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-        If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, _
-         strDtaRefineryParmFileStoragePath, _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_TAXONOMY_LIST_FILE)
+        If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath, m_mgrParams.GetParam("workdir")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-        If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), _
-         strDtaRefineryParmFileStoragePath, _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_TAXONOMY_LIST_FILE)
+        If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath, m_mgrParams.GetParam("workdir")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Retrieve unzipped dta files (do not unconcatenate since DTA Refinery reads the _DTA.txt file)
         If Not RetrieveDtaFiles(False) Then
@@ -70,7 +65,15 @@ Public Class clsAnalysisResourcesDtaRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        ' Retrieve DeconMSn Log file and DeconMSn Profile File
+        If Not RetrieveDeconMSnLogFiles() Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
         'Add all the extensions of the files to delete after run
+        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_DEFAULT_INPUT_FILE)
+        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_TAXONOMY_LIST_FILE)
         clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
         clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
@@ -90,9 +93,10 @@ Public Class clsAnalysisResourcesDtaRefinery
         Next
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        result = UpdateParameterFile()
+        strErrorMessage = String.Empty
+        result = UpdateParameterFile(strErrorMessage)
         If Not result Then
-            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file."
+            Dim Msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -101,21 +105,83 @@ Public Class clsAnalysisResourcesDtaRefinery
 
     End Function
 
-    Protected Function UpdateParameterFile() As Boolean
-        'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, ByRef strErrorMessage As String
+    Protected Function RetrieveDeconMSnLogFiles()  As Boolean
+
+        Dim strFileNameToFind As String
+        Dim SourceFolderPath As String
+
+        Dim WorkingDir As String
+        Dim DatasetName As String
+
+        Try
+            WorkingDir = m_mgrParams.GetParam("WorkDir")
+            DatasetName = m_jobParams.GetParam("DatasetNum")
+
+            strFileNameToFind = DatasetName & "_DeconMSn_log.txt"
+            SourceFolderPath = FindDataFile(strFileNameToFind)
+
+            If SourceFolderPath = "" Then
+                ' Could not find the file (error will have already been logged)
+                ' We'll continue on, but log a warning
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Log file named " & strFileNameToFind)
+                End If
+            Else
+                If Not CopyFileToWorkDir(strFileNameToFind, SourceFolderPath, WorkingDir) Then
+                    ' Error copying file (error will have already been logged)
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileNameToFind & " using folder " & SourceFolderPath)
+                    End If
+                    ' Ignore the error and continue
+                End If
+            End If
+
+
+            strFileNameToFind = DatasetName & "_profile.txt"
+            SourceFolderPath = FindDataFile(strFileNameToFind)
+
+            If SourceFolderPath = "" Then
+                ' Could not find the file (error will have already been logged)
+                ' We'll continue on, but log a warning
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Profile file named " & strFileNameToFind)
+                End If
+            Else
+                If Not CopyFileToWorkDir(strFileNameToFind, SourceFolderPath, WorkingDir) Then
+                    ' Error copying file (error will have already been logged)
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileNameToFind & " using folder " & SourceFolderPath)
+                    End If
+                    ' Ignore the error and continue
+                End If
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsAnalysisResourcesXT.RetrieveDtaFiles: " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Function UpdateParameterFile(ByRef strErrorMessage As String) As Boolean
+        'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, 
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
+        Dim XTandemExePath As String
         Dim XtandemDefaultInput As String = System.IO.Path.Combine(WorkingDir, XTANDEM_DEFAULT_INPUT_FILE)
         Dim XtandemTaxonomyList As String = System.IO.Path.Combine(WorkingDir, XTANDEM_TAXONOMY_LIST_FILE)
         Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
         Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
         Dim tmpDir As String
-        Dim strErrorMessage As String
 
         Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
 
         Dim result As Boolean = True
         Dim fiTemplateFile As System.IO.FileInfo
         Dim objTemplate As System.Xml.XmlDocument
+        strErrorMessage = String.Empty
+
         Try
             fiTemplateFile = New System.IO.FileInfo(ParamFilePath)
 
@@ -138,9 +204,10 @@ Public Class clsAnalysisResourcesDtaRefinery
             Try
                 Dim par As System.Xml.XmlNode
                 Dim root As System.Xml.XmlElement = objTemplate.DocumentElement
+
+                XTandemExePath = System.IO.Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
                 par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']")
-                tmpDir = par.InnerXml.Substring(par.InnerXml.IndexOf("."c) + 2, Len(par.InnerXml) - (par.InnerXml.IndexOf("."c) + 2))
-                par.InnerXml = System.IO.Path.Combine(DtaRefineryDirectory, tmpDir)
+                par.InnerXml = XTandemExePath
 
                 par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']")
                 par.InnerXml = XtandemDefaultInput
