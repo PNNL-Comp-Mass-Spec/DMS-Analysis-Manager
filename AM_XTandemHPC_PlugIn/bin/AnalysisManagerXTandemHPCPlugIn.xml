@@ -40,19 +40,21 @@ AnalysisManagerXTandemHPCPlugIn
 	<param name="progloc"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateJobStatus(System.String,System.String)">
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateCheckJobStatus(System.String,System.String,System.Int32)">
 	<summary>
-	</summary>
-	<param name="progSftpLoc"></param>
-	<param name="progloc"></param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateCheckJobStatus(System.String,System.String,System.String)">
-	<summary>
-	</summary>
+ Reads the CheckJobStatus file for job m_HPCJobStatus(indexNum, 0))
+ </summary>
 	<param name="progSftpLoc"></param>
 	<param name="progloc"></param>
 	<param name="indexNum"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateJobStatus(System.String,System.String)">
+	<summary>
+ Reads the ShowQ results file to parse out the jobs in the queue
+ </summary>
+	<param name="progSftpLoc"></param>
+	<param name="progloc"></param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.DeleteZeroByteErrorFiles">
@@ -144,6 +146,22 @@ AnalysisManagerXTandemHPCPlugIn
 	<summary>
 	</summary>
 	<param name="LineOfText"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.RetrieveGBalanceData(System.String,System.String@)">
+	<summary>
+ This function extracts out the account name and remaining available balance by parsing a line of data from the GBalance output file
+ </summary>
+	<param name="LineOfText">Line to parse</param>
+	<param name="strAccountName">Account name (output)</param>
+	<returns>Remaining balance, in hours</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.RetrieveJobQueueStatus(System.String,System.Int32)">
+	<summary>
+ Parses a line from the showq output to determine the job number and the job state
+ </summary>
+	<param name="LineOfText">Line to parse</param>
+	<param name="intJobNumber">Job number (output)</param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ComputeNewMaxNumber(System.String,System.Int32,System.Int32)">

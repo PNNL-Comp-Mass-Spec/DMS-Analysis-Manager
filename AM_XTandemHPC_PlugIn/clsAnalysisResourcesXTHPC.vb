@@ -11,6 +11,9 @@ Public Class clsAnalysisResourcesXTHPC
     Friend Const TAXONOMY_FILENAME As String = "taxonomy.xml"
     Friend Const DEFAULT_INPUT As String = "default_input.xml"
 
+    ' This is currently hard-coded; we may need to retrieve this from DMS on a per-job basis
+    Friend Const HPC_ACCOUNT_NAME As String = "emsl33210"
+
     Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
@@ -469,7 +472,9 @@ Public Class clsAnalysisResourcesXTHPC
             strOut = "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & JobNum & "_" & File_Index & "/"
             WriteUnix(swOut, strOut)
 
-            strOut = "/apps/moab/current/bin/msub ../Job" & JobNum & "_msub" & File_Index & "/" & MsubFilename & " -A emsl33210 > ../Job" & JobNum & "_msub" & File_Index & "/" & MsubOutFilename & " 2>&1"
+            m_jobParams.AddAdditionalParameter("HPCAccountName", HPC_ACCOUNT_NAME)
+
+            strOut = "/apps/moab/current/bin/msub ../Job" & JobNum & "_msub" & File_Index & "/" & MsubFilename & " -A " & HPC_ACCOUNT_NAME & " > ../Job" & JobNum & "_msub" & File_Index & "/" & MsubOutFilename & " 2>&1"
             WriteUnix(swOut, strOut)
 
             swOut.Close()

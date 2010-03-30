@@ -23,12 +23,27 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected Const PROGRESS_PCT_XTANDEM_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
-    Protected Const HPC_NAME As String = "svc-dms chinook.emsl.pnl.gov -pw Amt22Proc " '" svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk " '
+
+    ' Use the following when connecting to Chinook via chinook.emsl.pnl.gov
+    'Protected Const HPC_NAME As String = "svc-dms chinook.emsl.pnl.gov -pw Password_Here "
+
+    ' Use the following when connecting to Chinook via Pub-88 (which is hard-wired to cu0login1)
+    Protected Const HPC_NAME As String = " svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk "
+
     Protected WithEvents CmdRunner As clsRunDosProgram
 
     Private m_NumClonedSteps As Integer = 1
     Private m_Dataset As String = ""
+
+    ' 2D array, with the first dimension going from 1 to m_NumClonedSteps and the second dimension going from 0 to 1
+    '   m_NumClonedSteps(1,0) holds the job number for the first step
+    '   m_NumClonedSteps(1,1) holds the status for the first step
+
+    '   m_NumClonedSteps(2,0) holds the job number for the second step (if m_NumClonedSteps > 1)
+    '   m_NumClonedSteps(2,1) holds the status for the second step (if m_NumClonedSteps > 1)
+
     Private m_HPCJobStatus(1, 1) As String
+    Private m_HPCAccountName As String = "Undefined"
 
     '--------------------------------------------------------------------------------------------
     'Future section to monitor XTandem log file for progress determination
@@ -64,6 +79,12 @@ Public Class clsAnalysisToolRunnerXTHPC
         ' Update m_NumClonedSteps
         m_NumClonedSteps = CInt(m_jobParams.GetParam("NumberOfClonedSteps"))
         m_Dataset = m_jobParams.GetParam("datasetNum")
+
+        ' Update the account name
+        m_HPCAccountName = m_jobParams.GetParam("HPCAccountName")
+        If m_HPCAccountName Is Nothing OrElse m_HPCAccountName.Length = 0 Then
+            m_HPCAccountName = clsAnalysisResourcesXTHPC.HPC_ACCOUNT_NAME
+        End If
 
         ' '' Make sure the _DTA.txt file is valid
         ' ''If Not ValidateCDTAFile() Then
@@ -181,6 +202,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         System.Threading.Thread.Sleep(MonitorInterval)
 
         ReDim m_HPCJobStatus(m_NumClonedSteps, 1)
+
         'Next we need to open each output file and see if a job number was assigned.
         HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -559,7 +581,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     Private Function MonitorHPCJobs(ByVal progSftpLoc As String, ByVal progloc As String) As IJobParams.CloseOutType
         Dim i As Integer
 
-        Dim CompletedFlag As Boolean = False
+        Dim intStepsCompleted As Integer = 0
 
         Try
 
@@ -572,7 +594,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                     Case "idle", "scheduled"  'Job hasn't started
                         'Update the status using checkjob
-                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i)
 
                     Case "blocked"  'Job is blocked
                         'GetBalance to see number of hours remaining
@@ -580,10 +602,10 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                     Case "batchhold", "systemhold", "userhold"  'Job is on hold so break since we can be waiting indefinitely
                         'Perform clean up here
-                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i)
 
                     Case "starting", "running", "notfound"  'Job is running or no longer in list, we can now use checkjob
-                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i)
 
                     Case "removed", "vacated"  'Job is done, now we can check for results
                         ' set job to exit
@@ -594,7 +616,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                     Case Else
                         'Unknown state, try to update the status using checkjob
-                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i)
 
                 End Select
 
@@ -602,20 +624,29 @@ Public Class clsAnalysisToolRunnerXTHPC
 
             'Now check to see if all HPC job statuses are complete
             For i = 1 To m_NumClonedSteps
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "... Current state for step " & i.ToString & ": " & m_HPCJobStatus(i, 1))
+                End If
+
                 If m_HPCJobStatus(i, 1).ToLower = "done" Then
-                    CompletedFlag = True
+                    intStepsCompleted += 1
+
                 ElseIf m_HPCJobStatus(i, 1).ToLower = "exit" Then
                     'This may be where we want to exit if in an "unwanted" state
-                Else
-
-                    CompletedFlag = False
-                    Exit For
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Step " & i & " has state " & m_HPCJobStatus(i, 1) & "; will abort processing")
+                    End If
                 End If
             Next
 
-            If CompletedFlag Then
+            If intStepsCompleted >= m_NumClonedSteps Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisResourcesXTHPC.MonitorHPCJobs, HPC processing is now complete")
+                End If
+
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Else
+                ' Need to continue processing
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
             End If
 
@@ -636,25 +667,25 @@ Public Class clsAnalysisToolRunnerXTHPC
     ''' <returns></returns>
     ''' <remarks></remarks>
     Private Function GetCurrentBalance(ByVal progSftpLoc As String, ByVal progloc As String, ByVal File_Index As Integer) As IJobParams.CloseOutType
+
+        Static dtLastWarnTimeEmptyFile As DateTime
+
         Dim CmdStr As String
 
         Dim CommandfileName As String
 
         Dim HPCgBalanceFilePath As String
 
-        Dim i As Integer
-
         Dim srReader As System.IO.StreamReader
 
         Dim lineText As String
 
-        Dim HPCJobNum As String
-
-        Dim HPCBalance As String
+        Dim strAccountName As String = String.Empty
+        Dim sngBalanceHours As Single
 
         Dim LineCnt As Integer = 1
 
-        Dim ThresholdValue As Integer = 50
+        Dim HPCBalanceThresholdValueHours As Single = 5
 
         Try
             HPCgBalanceFilePath = System.IO.Path.Combine(m_WorkDir, "ShowBalance_Job" & m_JobNum & ".txt")
@@ -685,13 +716,27 @@ Public Class clsAnalysisToolRunnerXTHPC
                     srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCgBalanceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
                     Do While srReader.Peek >= 0
-                        lineText = srReader.ReadLine.Trim 'Header Line
+                        lineText = srReader.ReadLine.Trim
+
+                        ' Skip the first two lines (they are header lines)
                         If lineText.Length > 0 AndAlso LineCnt > 2 Then
-                            HPCJobNum = lineText.Substring(0, lineText.IndexOf(" "))
-                            HPCBalance = Trim(lineText.Substring(lineText.LastIndexOf(" "), lineText.Length - lineText.LastIndexOf(" ")))
-                            If IsNumeric(HPCJobNum) Then
-                                If CInt(HPCBalance) < ThresholdValue Then
+                            ' Parse this to determine the account name and available hours
+
+                            
+                            sngBalanceHours = RetrieveGBalanceData(lineText, strAccountName)
+                            If sngBalanceHours < 0 Then
+                                ' Error parsing out the available hours; a warning has already been logged
+                            Else
+
+                                If strAccountName.ToLower = m_HPCAccountName.ToLower AndAlso _
+                                   sngBalanceHours < HPCBalanceThresholdValueHours Then
+
+                                    '  EMSL user proposal m_HPCAccountName, which is associated with the svc-dms user, has fewer than HPCBalanceThresholdValueHours CPU-hours remaining
+
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.GetCurrentBalance, Remaining balance for account " & strAccountName & " is less than " & HPCBalanceThresholdValueHours & " hours; aborting job")
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesXTHPC.GetCurrentBalance, GBalance data: " & lineText)
                                     m_HPCJobStatus(File_Index, 1) = "exit"
+
                                 End If
                             End If
                         End If
@@ -700,10 +745,13 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                     srReader.Close()
                 Else
-                    'If file is empty, then set status to "exit"
-                    'Means there is no time left
-                    m_HPCJobStatus(i, 1) = "exit"
-
+                    ' File is empty
+                    ' This might mean there is no time left, but it could also indicate another error
+                    ' Will continue waiting, but post a log message
+                    If System.DateTime.Now.Subtract(dtLastWarnTimeEmptyFile).TotalMinutes >= 5 Then
+                        dtLastWarnTimeEmptyFile = System.DateTime.Now
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisResourcesXTHPC.GetCurrentBalance, GBalance result file is empty; this likely indicates no hours are available for HPC account " & m_HPCAccountName)
+                    End If
                 End If
 
             End If
@@ -717,8 +765,84 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+
     ''' <summary>
-    ''' 
+    ''' Reads the CheckJobStatus file for job m_HPCJobStatus(indexNum, 0))
+    ''' </summary>
+    ''' <param name="progSftpLoc"></param>
+    ''' <param name="progloc"></param>
+    ''' <param name="indexNum"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function UpdateCheckJobStatus(ByVal progSftpLoc As String, ByVal progloc As String, ByVal indexNum As Integer) As Boolean
+        Dim CmdStr As String
+
+        Dim CommandfileName As String
+
+        Dim HPCCheckjobFilePath As String
+
+        Dim srReader As System.IO.StreamReader
+
+        Dim lineText As String
+
+        Dim HPCStatus As String
+
+        Try
+
+            HPCCheckjobFilePath = System.IO.Path.Combine(m_WorkDir, "CheckjobStatus_" & m_HPCJobStatus(indexNum, 0))
+
+            CommandfileName = "CreateCheckjob_Job" & m_JobNum & "_" & indexNum.ToString
+            CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
+            If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return False
+            End If
+
+            'Make sure checkjob file was created.
+            System.Threading.Thread.Sleep(15000)
+
+            CommandfileName = "GetCheckjob_HPCJob" & m_HPCJobStatus(indexNum, 0)
+            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
+            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return False
+            End If
+
+            If System.IO.File.Exists(HPCCheckjobFilePath) Then
+
+                Dim fiQResultsLocal As New System.IO.FileInfo(HPCCheckjobFilePath)
+
+                If fiQResultsLocal.Length > 0 Then
+
+                    srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCCheckjobFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+                    Do While srReader.Peek >= 0
+                        lineText = srReader.ReadLine.Trim
+                        If lineText.Length > 0 AndAlso lineText.StartsWith("State:") Then
+                            HPCStatus = lineText.Substring(6)
+                            m_HPCJobStatus(indexNum, 1) = HPCStatus.Trim
+                            Exit Do
+                        End If
+                    Loop
+
+                    srReader.Close()
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateCheckJobStatus, An error occurred while trying to retrieve job status files" & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+
+    ''' <summary>
+    ''' Reads the ShowQ results file to parse out the jobs in the queue
     ''' </summary>
     ''' <param name="progSftpLoc"></param>
     ''' <param name="progloc"></param>
@@ -737,9 +861,8 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         Dim lineText As String
 
-        Dim HPCJobNum As String
-
-        Dim HPCStatus As String
+        Dim intHPCJobNum As Integer
+        Dim strHPCStatus As String
 
         Try
             HPCQueueFilePath = System.IO.Path.Combine(m_WorkDir, "ShowQ_ResultsJob" & m_JobNum & ".txt")
@@ -771,15 +894,14 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                     Do While srReader.Peek >= 0
                         lineText = srReader.ReadLine.Trim
-                        If lineText.Length > 0 AndAlso lineText.Length > 30 Then
-                            HPCJobNum = lineText.Substring(0, lineText.IndexOf(" "))
-                            HPCStatus = Trim(lineText.Substring(lineText.IndexOf(" "), lineText.Length - lineText.IndexOf(" ")))
-                            If IsNumeric(HPCJobNum) Then
-                                HPCStatus = Trim(HPCStatus.Substring(HPCStatus.IndexOf(" "), HPCStatus.Length - HPCStatus.IndexOf(" ")))
-                                HPCStatus = HPCStatus.Substring(0, HPCStatus.IndexOf(" "))
-                                For i = 1 To 4
-                                    If HPCJobNum = m_HPCJobStatus(i, 0) Then
-                                        m_HPCJobStatus(i, 1) = HPCStatus
+                        If lineText.Length > 0 Then
+                            strHPCStatus = RetrieveJobQueueStatus(lineText, intHPCJobNum)
+
+                            If intHPCJobNum > 0 Then
+                                For i = 1 To m_NumClonedSteps
+                                    If intHPCJobNum.ToString = m_HPCJobStatus(i, 0) Then
+                                        ' Update the status
+                                        m_HPCJobStatus(i, 1) = strHPCStatus
                                     End If
                                 Next
                             End If
@@ -801,88 +923,13 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateJobStatus, An error occurred while trying to retrieve job status file" & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateJobStatus, An error occurred while trying to retrieve job status file: " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
-
-    ''' <summary>
-    ''' 
-    ''' </summary>
-    ''' <param name="progSftpLoc"></param>
-    ''' <param name="progloc"></param>
-    ''' <param name="indexNum"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function UpdateCheckJobStatus(ByVal progSftpLoc As String, ByVal progloc As String, ByVal indexNum As String) As IJobParams.CloseOutType
-        Dim CmdStr As String
-
-        Dim CommandfileName As String
-
-        Dim HPCCheckjobFilePath As String
-
-        Dim srReader As System.IO.StreamReader
-
-        Dim lineText As String
-
-        Dim HPCStatus As String
-
-        Try
-
-            HPCCheckjobFilePath = System.IO.Path.Combine(m_WorkDir, "CheckjobStatus_" & m_HPCJobStatus(CInt(indexNum), 0))
-
-            CommandfileName = "CreateCheckjob_Job" & m_JobNum & "_" & indexNum
-            CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
-            If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            'Make sure checkjob file was created.
-            System.Threading.Thread.Sleep(15000)
-
-            CommandfileName = "GetCheckjob_HPCJob" & m_HPCJobStatus(CInt(indexNum), 0)
-            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
-            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If System.IO.File.Exists(HPCCheckjobFilePath) Then
-
-                Dim fiQResultsLocal As New System.IO.FileInfo(HPCCheckjobFilePath)
-
-                If fiQResultsLocal.Length > 0 Then
-
-                    srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCCheckjobFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-                    Do While srReader.Peek >= 0
-                        lineText = srReader.ReadLine.Trim
-                        If lineText.Length > 0 AndAlso lineText.Substring(0, 6) = "State:" Then
-                            HPCStatus = lineText.Substring(6, lineText.Length - 6)
-                            m_HPCJobStatus(CInt(indexNum), 1) = HPCStatus.Trim
-                            Exit Do
-                        End If
-                    Loop
-
-                    srReader.Close()
-
-                End If
-
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateCheckJobStatus, An error occurred while trying to retrieve job status files" & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
 
     Private Function RetrieveJobResultFilesFromHPC(ByVal progSftpLoc As String, ByVal CloneStepNum As Integer) As IJobParams.CloseOutType
         Dim CmdStr As String
@@ -890,23 +937,27 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim CommandfileName As String
 
         Dim JobOutputFilePath As String
-
         Dim ErrorResultFilePath As String
-
         Dim XTResultsFilePath As String
+
+        Dim fiResultsFile As System.IO.FileInfo
+
+        Dim dtTransferStartTime As System.DateTime
+
+        Dim sngFileSizeMB As Single
+        Dim sngTransferTimeSeconds As Single
+        Dim sngTransferRate As Single
 
         Dim strErrorResult As String
 
         Try
-            ' TODO: make sure job is complete before grabbing the _xt.xml files
 
-            ' Step 1: Run an 'ls m_Dataset & "_*_xt.xml"' command using Putty and redirect to a text file
-            ' Step 2: Append to this file the results of an 'ls m_JobNum & "_Part" & i & ".output." & m_HPCJobStatus(i, 0)' command
-            ' Step 3: grab the text file using GetResultFilesCmds_Job
-            ' Step 4: Count the number of _xt.xml files in the file that have a modification date > 30 seconds aftr the last mod time of the .output. file
-            ' Step 5: Once we have m_NumClonedSteps valid _xt.xml files, then grab them using PuttySFTP
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, retrieving results from HPC for step " & CloneStepNum)
+            End If
 
-            ' Use CheckJob to determine job state
+            dtTransferStartTime = System.DateTime.Now
+
             CommandfileName = "GetResultFilesCmds_Job" & m_JobNum & "_" & CloneStepNum
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
@@ -914,15 +965,40 @@ Public Class clsAnalysisToolRunnerXTHPC
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            ' Define the file paths
             JobOutputFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & CloneStepNum & ".output." & m_HPCJobStatus(CloneStepNum, 0))
             ErrorResultFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & CloneStepNum & ".err." & m_HPCJobStatus(CloneStepNum, 0))
             XTResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_" & CloneStepNum & "_xt.xml")
 
+            ' Make sure the Results file exists
+            fiResultsFile = New System.IO.FileInfo(XTResultsFilePath)
+
+            If Not fiResultsFile.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, X!Tandem results file not found: " & XTResultsFilePath)
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            End If
+
+            If m_DebugLevel >= 1 Then
+                ' Log the transfer stats
+                sngFileSizeMB = CSng(fiResultsFile.Length / 1024.0 / 1024.0)
+                sngTransferTimeSeconds = CSng(System.DateTime.Now.Subtract(dtTransferStartTime).TotalSeconds)
+
+                If sngTransferTimeSeconds > 0 Then
+                    sngTransferRate = sngFileSizeMB / sngTransferTimeSeconds
+                Else
+                    sngTransferRate = 0
+                End If
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "... X!Tandem results file retrieved from HPC; " & sngFileSizeMB.ToString("0.0") & " MB transferred in " & sngTransferTimeSeconds.ToString("0.0") & " seconds (" & sngTransferRate.ToString("0.00") & " MB/sec)")
+            End If
+
             If Not System.IO.File.Exists(JobOutputFilePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, Job output file not found: " & JobOutputFilePath)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
             If Not System.IO.File.Exists(ErrorResultFilePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, Error result file not found: " & ErrorResultFilePath)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             Else
                 Dim fiErrorLocal As New System.IO.FileInfo(ErrorResultFilePath)
@@ -933,11 +1009,6 @@ Public Class clsAnalysisToolRunnerXTHPC
                     m_HPCJobStatus(CloneStepNum, 1) = "error"
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
-            End If
-
-            ' If the LS command
-            If Not System.IO.File.Exists(XTResultsFilePath) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
         Catch ex As Exception
@@ -1650,12 +1721,127 @@ Public Class clsAnalysisToolRunnerXTHPC
                 intGroupdID = 0
             End If
 
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGroupIdNumber, Error obtaining group id from *_xt.xml files, job " & m_JobNum & Err.Message)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGroupIdNumber, Error obtaining group id from *_xt.xml files, job " & m_JobNum & ex.Message)
             intGroupdID = 0
         End Try
 
         Return intGroupdID
+
+    End Function
+
+    ''' <summary>
+    ''' This function extracts out the account name and remaining available balance by parsing a line of data from the GBalance output file
+    ''' </summary>
+    ''' <param name="LineOfText">Line to parse</param>
+    ''' <param name="strAccountName">Account name (output)</param>
+    ''' <returns>Remaining balance, in hours</returns>
+    ''' <remarks></remarks>
+    Protected Function RetrieveGBalanceData(ByVal LineOfText As String, ByRef strAccountName As String) As Single
+
+        ' Example file contents:
+
+        ' Id  Name                 Amount   Reserved Balance  CreditLimit Available
+        ' --- -------------------- -------- -------- -------- ----------- ---------
+        ' 648 emsl33210 on Chinook 62267456        0 62267456           0  62267456
+
+        Const REGEX_GBALANCE As String = "^\s*\d+ ([^ ]+) .+(\d+)"
+
+        Static reMatch As System.Text.RegularExpressions.Regex
+
+        Dim objMatch As System.Text.RegularExpressions.Match
+
+        Dim intBalanceSeconds As System.Int64
+        Dim sngBalanceHours As Single
+
+        Dim strErrorMessage As String
+
+        sngBalanceHours = -1
+        strAccountName = String.Empty
+
+        If reMatch Is Nothing Then
+            reMatch = New System.Text.RegularExpressions.Regex(REGEX_GBALANCE, Text.RegularExpressions.RegexOptions.IgnoreCase Or Text.RegularExpressions.RegexOptions.Compiled)
+        End If
+
+        Try
+            ' Make sure the line starts with a number, then extract out the propsal name and the available hours
+            objMatch = reMatch.Match(LineOfText)
+            If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                strAccountName = objMatch.Groups(1).Value
+
+                If System.Int64.TryParse(objMatch.Groups(2).Value, intBalanceSeconds) Then
+                    ' Match Succcess; intBalanceSeconds now contains the balance, in seconds
+                    ' Convert to hours
+                    sngBalanceHours = CSng(intBalanceSeconds / 60.0 / 60.0)
+                Else
+                    strErrorMessage = "Could not extract out the proposal name and available hours from GBalance line: " & LineOfText
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+                End If
+            Else
+                strErrorMessage = "GBalance line is not of the expected form: " & LineOfText
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGBalanceData, Error parsing GBalance info, job " & m_JobNum & ex.Message)
+        End Try
+
+        Return sngBalanceHours
+
+    End Function
+
+    ''' <summary>
+    ''' Parses a line from the showq output to determine the job number and the job state
+    ''' </summary>
+    ''' <param name="LineOfText">Line to parse</param>
+    ''' <param name="intJobNumber">Job number (output)</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function RetrieveJobQueueStatus(ByVal LineOfText As String, ByVal intJobNumber As Integer) As String
+
+        ' Example file contents:
+
+        ' 1329458             svc-dms    Running    32     3:57:59  Tue Mar 30 12:01:54
+        ' 1329461             svc-dms    Running    32     3:58:36  Tue Mar 30 12:02:31
+
+
+        Const REGEX_JOBQ As String = "^\s*(\d+)\s+[^ ]+\s+([^ ]+)"
+
+        Static reMatch As System.Text.RegularExpressions.Regex
+
+        Dim objMatch As System.Text.RegularExpressions.Match
+
+        Dim strState As String
+
+        Dim strErrorMessage As String
+
+        strState = ""
+        intJobNumber = 0
+
+        If reMatch Is Nothing Then
+            reMatch = New System.Text.RegularExpressions.Regex(REGEX_JOBQ, Text.RegularExpressions.RegexOptions.IgnoreCase Or Text.RegularExpressions.RegexOptions.Compiled)
+        End If
+
+        Try
+            ' See if the line is of the expected form
+            objMatch = reMatch.Match(LineOfText)
+            If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                If Integer.TryParse(objMatch.Groups(1).Value, intJobNumber) Then
+                    strState = objMatch.Groups(2).Value
+                Else
+                    strErrorMessage = "Could not extract out the job number and state from ShowQ line: " & LineOfText
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+                End If
+            Else
+                strErrorMessage = "ShowQ line is not of the expected form: " & LineOfText
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveJobQueueStatus, Error parsing ShowQ info, job " & m_JobNum & ex.Message)
+        End Try
+
+        Return strState
 
     End Function
 
