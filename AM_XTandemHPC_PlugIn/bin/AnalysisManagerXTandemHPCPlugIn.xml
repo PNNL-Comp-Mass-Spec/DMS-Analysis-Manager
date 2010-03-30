@@ -28,7 +28,59 @@ AnalysisManagerXTandemHPCPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.BuildGetOutputFilesCmdFile(System.String)">
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGetOutputFilesCmdFile(System.String)">
+	<summary>
+	</summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.GetCurrentBalance(System.String,System.String,System.Int32)">
+	<summary>
+	</summary>
+	<param name="progSftpLoc"></param>
+	<param name="progloc"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateJobStatus(System.String,System.String)">
+	<summary>
+	</summary>
+	<param name="progSftpLoc"></param>
+	<param name="progloc"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.UpdateCheckJobStatus(System.String,System.String,System.String)">
+	<summary>
+	</summary>
+	<param name="progSftpLoc"></param>
+	<param name="progloc"></param>
+	<param name="indexNum"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.DeleteZeroByteErrorFiles">
+	<summary>
+	</summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.DeleteDTATextFilesInTransferFolder">
+	<summary>
+	</summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeShowQCmdFile">
+	<summary>
+	</summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGBalanceCmdFile">
+	<summary>
+ Makes the file to obtain the balance for the svc-dms user's account
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGetBalanceFileCmdFile">
+	<summary>
+ Retrives the file containing the balance for the user svc-dms
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGetShowQResultFileCmdFile">
 	<summary>
 	</summary>
 	<returns></returns>
@@ -39,6 +91,22 @@ AnalysisManagerXTandemHPCPlugIn
 	<param name="inputFilename"></param>
 	<param name="HPCJobNumber"></param>
 	<param name="File_Index"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.WriteUnix(System.IO.StreamWriter@)">
+	<summary>
+	</summary>
+	<param name="swOut"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.WriteUnix(System.IO.StreamWriter@,System.String)">
+	<summary>
+	</summary>
+	<param name="swOut"></param>
+	<param name="inputString"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.FastaFilesEqual">
+	<summary>
+	</summary>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ValidateCDTAFile">
@@ -52,6 +120,57 @@ AnalysisManagerXTandemHPCPlugIn
  Zips concatenated XML output file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ConstructSingleXTandemResultFile">
+	<summary>
+	</summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.FindAndReplace(System.String@,System.String@,System.String@)">
+	<summary>
+	</summary>
+	<param name="lineText"></param>
+	<param name="strOldValue"></param>
+	<param name="strNewValue"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ReadXTandemPerformanceParameters(System.IO.StreamReader@,System.Int32)">
+	<summary>
+	</summary>
+	<param name="srCurrentResultFile"></param>
+	<param name="intSegment"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.RetrieveGroupIDNumber(System.String)">
+	<summary>
+	</summary>
+	<param name="LineOfText"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ComputeNewMaxNumber(System.String,System.Int32,System.Int32)">
+	<summary>
+	</summary>
+	<param name="LineOfText"></param>
+	<param name="CurrentMaxNum"></param>
+	<param name="OffsetNum"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ComputeNewMaxNumber(System.Int32,System.Int32,System.Int32)">
+	<summary>
+	</summary>
+	<param name="intGroupID"></param>
+	<param name="CurrentMaxNum"></param>
+	<param name="OffsetNum"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeCheckJobCmdFiles">
+	<summary>
+	</summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.MakeGetCheckjobStatusFilesCmdFile">
+	<summary>
+	</summary>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.CmdRunner_LoopWaiting">
 	<summary>

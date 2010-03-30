@@ -23,12 +23,12 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected Const PROGRESS_PCT_XTANDEM_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
-    Protected Const HPC_NAME As String = " svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk " '"svc-dms chinook.emsl.pnl.gov -pw PASSWORD_HERE " 
+    Protected Const HPC_NAME As String = "svc-dms chinook.emsl.pnl.gov -pw Amt22Proc " '" svc-dms cu0login1 -i C:\DMS_Programs\Chinook\SSH_Keys\Chinook.ppk " '
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-    Private m_HPCJobNumber As String()
     Private m_NumClonedSteps As Integer = 1
     Private m_Dataset As String = ""
+    Private m_HPCJobStatus(1, 1) As String
 
     '--------------------------------------------------------------------------------------------
     'Future section to monitor XTandem log file for progress determination
@@ -65,10 +65,10 @@ Public Class clsAnalysisToolRunnerXTHPC
         m_NumClonedSteps = CInt(m_jobParams.GetParam("NumberOfClonedSteps"))
         m_Dataset = m_jobParams.GetParam("datasetNum")
 
-        ' Make sure the _DTA.txt file is valid
-        'If Not ValidateCDTAFile() Then
-        '    Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-        'End If
+        ' '' Make sure the _DTA.txt file is valid
+        ' ''If Not ValidateCDTAFile() Then
+        ' ''    Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+        ' ''End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
 
@@ -127,7 +127,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         'Compare fasta files to see if we need to copy it over
         If Not FastaFilesEqual() Then
             'Set up and execute a program runner to run PuttySFTP program to transfer fasta file to Supercomputer
-            CmdStr = "-l " & HPC_NAME & " -b " & "PutFastaJob" & m_JobNum
+            CmdStr = "-l " & HPC_NAME & " -b " & "PutFasta_Job" & m_JobNum
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy fasta file to super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -180,33 +180,80 @@ Public Class clsAnalysisToolRunnerXTHPC
         End If
         System.Threading.Thread.Sleep(MonitorInterval)
 
-        ReDim m_HPCJobNumber(m_NumClonedSteps)
+        ReDim m_HPCJobStatus(m_NumClonedSteps, 1)
         'Next we need to open each output file and see if a job number was assigned.
         HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            HPC_Result = BuildGetOutputFilesCmdFile(progSftpLoc)
+            HPC_Result = MakeGetOutputFilesCmdFile(progSftpLoc)
             If HPC_Result = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
             System.Threading.Thread.Sleep(MonitorInterval)
         End While
 
-        'Build the cancel job command files in case we have to cancel the jobs
-        HPC_Result = BuildCancelJobFilesCmdFile()
+        'Build the check job command file so we can check the status of the job(s)
+        HPC_Result = MakeCheckJobCmdFiles()
         If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'Not sure if we can cancel jobs at this point
-            'CancelHPCRunningJobs(progLoc)
+            'Need to cancel jobs at this point if an error occurred
+            CancelHPCRunningJobs(progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Now we need to wait for the result files to appear.  We'll also check to make sure the error file is empty
+        'Build the get check job command file so we can check the status of each job
+        HPC_Result = MakeGetCheckjobStatusFilesCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'Need to cancel jobs at this point if an error occurred
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Build the cancel job command files in case we have to cancel the jobs
+        HPC_Result = MakeCancelJobFilesCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Build the showq command file to check the status of all the jobs scheduled for svc-dms user
+        HPC_Result = MakeShowQCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Build the get showq files from HPC
+        HPC_Result = MakeGetShowQResultFileCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Build the gbalance command file
+        HPC_Result = MakeGBalanceCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Build the get gbalance command file
+        HPC_Result = MakeGetBalanceFileCmdFile()
+        If HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            CancelHPCRunningJobs(progLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Now we need to wait for the status to change to complete for each job submitted.  
+        ' If status other than Completed, Idle, or Running appear, then quit job
         ' Increase MonitorInterval to 30 seconds
         MonitorInterval = 30000
 
+        ' This where we will monitor the status of the job(s), cancel assigned jobs if an error occurs, and copy 
+        ' result files if job(s) are successful.  A status could still indicate 'Complete' so we need to 
+        ' check for errors. We'll also check to make sure the error file is empty
         HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             System.Threading.Thread.Sleep(MonitorInterval)
-            HPC_Result = RetrieveJobResultFilesFromHPC(progSftpLoc)
+            HPC_Result = MonitorHPCJobs(progSftpLoc, progLoc)
             If HPC_Result = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
                 'If error is detected, the Cancel all jobs that are running.
                 CancelHPCRunningJobs(progLoc)
@@ -350,15 +397,13 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected Function MakeGetJobOutputFilesCmdFile(ByVal inputFilename As String, ByVal File_Index As String) As Boolean
         Dim result As Boolean = True
 
-        Dim JobNum As String = m_jobParams.GetParam("Job")
-
         Try
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(inputFilename)
 
-            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "/Job" & JobNum & "_msub" & File_Index & "/")
+            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "/Job" & m_JobNum & "_msub" & File_Index & "/")
 
-            WriteUnix(swOut, "get X-Tandem_Job" & JobNum & "_" & File_Index & ".output")
+            WriteUnix(swOut, "get X-Tandem_Job" & m_JobNum & "_" & File_Index & ".output")
 
             swOut.Close()
 
@@ -442,12 +487,46 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    Protected Function MakeCancelJobFilesCmdFile() As IJobParams.CloseOutType
+
+        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "Cancel_Job" & m_JobNum)
+
+        Dim i As Integer
+
+        Try
+            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+
+            ' Create an instance of StreamWriter to write to a file.
+            Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY)
+
+            For i = 1 To m_NumClonedSteps
+
+                WriteUnix(swOut, "canceljob " & m_HPCJobStatus(i, 0))
+
+            Next
+
+            swOut.Close()
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.BuildCancelJobFilesCmdFile, The Cancel jobs file could not be written: " & E.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
     ''' <summary>
     ''' 
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function BuildGetOutputFilesCmdFile(ByVal progSftpLoc As String) As IJobParams.CloseOutType
+    Protected Function MakeGetOutputFilesCmdFile(ByVal progSftpLoc As String) As IJobParams.CloseOutType
         Dim Get_CmdFile As String
         Dim i As Integer
 
@@ -455,12 +534,13 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         Try
             For i = 1 To m_NumClonedSteps
-                HPC_JobNum = GetHPCJobNumber(i.ToString)
+                HPC_JobNum = RetrieveHPCJobNumber(i.ToString)
                 If Not String.IsNullOrEmpty(HPC_JobNum) AndAlso IsNumeric(HPC_JobNum) Then
                     Get_CmdFile = System.IO.Path.Combine(m_WorkDir, "GetResultFilesCmds_Job" & m_JobNum & "_" & i)
                     MakeGetOutputFilesCmdFile(Get_CmdFile, HPC_JobNum, CStr(i))
                     clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Get_CmdFile))
-                    m_HPCJobNumber(i) = HPC_JobNum
+                    m_HPCJobStatus(i, 0) = HPC_JobNum
+                    m_HPCJobStatus(i, 1) = "scheduled"
                 Else
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
@@ -475,12 +555,344 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
-    Private Function RetrieveJobResultFilesFromHPC(ByVal progSftpLoc As String) As IJobParams.CloseOutType
-        Dim CmdStr As String
+
+    Private Function MonitorHPCJobs(ByVal progSftpLoc As String, ByVal progloc As String) As IJobParams.CloseOutType
         Dim i As Integer
+
+        Dim CompletedFlag As Boolean = False
+
+        Try
+
+            'Now Read the ShowQ_Jobxxxx file to update status
+            UpdateJobStatus(progSftpLoc, progloc)
+
+            'Now we need to determine what to do based on the status of the job
+            For i = 1 To m_NumClonedSteps
+                Select Case m_HPCJobStatus(i, 1).ToLower
+
+                    Case "idle", "scheduled"  'Job hasn't started
+                        'Update the status using checkjob
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+
+                    Case "blocked"  'Job is blocked
+                        'GetBalance to see number of hours remaining
+                        GetCurrentBalance(progSftpLoc, progloc, i)
+
+                    Case "batchhold", "systemhold", "userhold"  'Job is on hold so break since we can be waiting indefinitely
+                        'Perform clean up here
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+
+                    Case "starting", "running", "notfound"  'Job is running or no longer in list, we can now use checkjob
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+
+                    Case "removed", "vacated"  'Job is done, now we can check for results
+                        ' set job to exit
+                        m_HPCJobStatus(i, 1) = "exit"
+
+                    Case "completed"  'Job is done, now we can check for results
+                        RetrieveJobResultFilesFromHPC(progSftpLoc, i)
+
+                    Case Else
+                        'Unknown state, try to update the status using checkjob
+                        UpdateCheckJobStatus(progSftpLoc, progloc, i.ToString)
+
+                End Select
+
+            Next
+
+            'Now check to see if all HPC job statuses are complete
+            For i = 1 To m_NumClonedSteps
+                If m_HPCJobStatus(i, 1).ToLower = "done" Then
+                    CompletedFlag = True
+                ElseIf m_HPCJobStatus(i, 1).ToLower = "exit" Then
+                    'This may be where we want to exit if in an "unwanted" state
+                Else
+
+                    CompletedFlag = False
+                    Exit For
+                End If
+            Next
+
+            If CompletedFlag Then
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Else
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MonitorHPCJobs, An error occurred while trying to retrieve job result files" & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="progSftpLoc"></param>
+    ''' <param name="progloc"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function GetCurrentBalance(ByVal progSftpLoc As String, ByVal progloc As String, ByVal File_Index As Integer) As IJobParams.CloseOutType
+        Dim CmdStr As String
+
         Dim CommandfileName As String
+
+        Dim HPCgBalanceFilePath As String
+
+        Dim i As Integer
+
+        Dim srReader As System.IO.StreamReader
+
+        Dim lineText As String
+
+        Dim HPCJobNum As String
+
+        Dim HPCBalance As String
+
+        Dim LineCnt As Integer = 1
+
+        Dim ThresholdValue As Integer = 50
+
+        Try
+            HPCgBalanceFilePath = System.IO.Path.Combine(m_WorkDir, "ShowBalance_Job" & m_JobNum & ".txt")
+
+            CommandfileName = "CreateShowBalance_Job" & m_JobNum
+            CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
+            If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            'Make sure showqresults file was created.
+            System.Threading.Thread.Sleep(15000)
+
+            CommandfileName = "GetBalance_Job" & m_JobNum
+            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
+            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If System.IO.File.Exists(HPCgBalanceFilePath) Then
+
+                Dim fiQResultsLocal As New System.IO.FileInfo(HPCgBalanceFilePath)
+
+                If fiQResultsLocal.Length > 0 Then
+
+                    srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCgBalanceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+                    Do While srReader.Peek >= 0
+                        lineText = srReader.ReadLine.Trim 'Header Line
+                        If lineText.Length > 0 AndAlso LineCnt > 2 Then
+                            HPCJobNum = lineText.Substring(0, lineText.IndexOf(" "))
+                            HPCBalance = Trim(lineText.Substring(lineText.LastIndexOf(" "), lineText.Length - lineText.LastIndexOf(" ")))
+                            If IsNumeric(HPCJobNum) Then
+                                If CInt(HPCBalance) < ThresholdValue Then
+                                    m_HPCJobStatus(File_Index, 1) = "exit"
+                                End If
+                            End If
+                        End If
+                        LineCnt += 1
+                    Loop
+
+                    srReader.Close()
+                Else
+                    'If file is empty, then set status to "exit"
+                    'Means there is no time left
+                    m_HPCJobStatus(i, 1) = "exit"
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.GetCurrentBalance, An error occurred while trying to gbalance status file" & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="progSftpLoc"></param>
+    ''' <param name="progloc"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function UpdateJobStatus(ByVal progSftpLoc As String, ByVal progloc As String) As IJobParams.CloseOutType
+        Dim CmdStr As String
+
+        Dim CommandfileName As String
+
+        Dim HPCQueueFilePath As String
+
+        Dim i As Integer
+
+        Dim srReader As System.IO.StreamReader
+
+        Dim lineText As String
+
+        Dim HPCJobNum As String
+
+        Dim HPCStatus As String
+
+        Try
+            HPCQueueFilePath = System.IO.Path.Combine(m_WorkDir, "ShowQ_ResultsJob" & m_JobNum & ".txt")
+
+            CommandfileName = "CreateShowQ_Job" & m_JobNum
+            CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
+            If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            'Make sure showqresults file was created.
+            System.Threading.Thread.Sleep(15000)
+
+            CommandfileName = "GetShowQResults_Job" & m_JobNum
+            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
+            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If System.IO.File.Exists(HPCQueueFilePath) Then
+
+                Dim fiQResultsLocal As New System.IO.FileInfo(HPCQueueFilePath)
+
+                If fiQResultsLocal.Length > 0 Then
+
+                    srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCQueueFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+                    Do While srReader.Peek >= 0
+                        lineText = srReader.ReadLine.Trim
+                        If lineText.Length > 0 AndAlso lineText.Length > 30 Then
+                            HPCJobNum = lineText.Substring(0, lineText.IndexOf(" "))
+                            HPCStatus = Trim(lineText.Substring(lineText.IndexOf(" "), lineText.Length - lineText.IndexOf(" ")))
+                            If IsNumeric(HPCJobNum) Then
+                                HPCStatus = Trim(HPCStatus.Substring(HPCStatus.IndexOf(" "), HPCStatus.Length - HPCStatus.IndexOf(" ")))
+                                HPCStatus = HPCStatus.Substring(0, HPCStatus.IndexOf(" "))
+                                For i = 1 To 4
+                                    If HPCJobNum = m_HPCJobStatus(i, 0) Then
+                                        m_HPCJobStatus(i, 1) = HPCStatus
+                                    End If
+                                Next
+                            End If
+                        End If
+                    Loop
+
+                    srReader.Close()
+                Else
+                    'Check to make sure a job is not stuck in "idle" or "Scheduled"
+                    'If in that state and file is empty, set to running so checkjob can be used
+                    For i = 1 To m_NumClonedSteps
+                        If m_HPCJobStatus(i, 1).ToLower = "idle" Or m_HPCJobStatus(i, 1).ToLower = "scheduled" Then
+                            m_HPCJobStatus(i, 1) = "running"
+                        End If
+                    Next
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateJobStatus, An error occurred while trying to retrieve job status file" & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="progSftpLoc"></param>
+    ''' <param name="progloc"></param>
+    ''' <param name="indexNum"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function UpdateCheckJobStatus(ByVal progSftpLoc As String, ByVal progloc As String, ByVal indexNum As String) As IJobParams.CloseOutType
+        Dim CmdStr As String
+
+        Dim CommandfileName As String
+
+        Dim HPCCheckjobFilePath As String
+
+        Dim srReader As System.IO.StreamReader
+
+        Dim lineText As String
+
+        Dim HPCStatus As String
+
+        Try
+
+            HPCCheckjobFilePath = System.IO.Path.Combine(m_WorkDir, "CheckjobStatus_" & m_HPCJobStatus(CInt(indexNum), 0))
+
+            CommandfileName = "CreateCheckjob_Job" & m_JobNum & "_" & indexNum
+            CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
+            If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            'Make sure checkjob file was created.
+            System.Threading.Thread.Sleep(15000)
+
+            CommandfileName = "GetCheckjob_HPCJob" & m_HPCJobStatus(CInt(indexNum), 0)
+            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
+            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If System.IO.File.Exists(HPCCheckjobFilePath) Then
+
+                Dim fiQResultsLocal As New System.IO.FileInfo(HPCCheckjobFilePath)
+
+                If fiQResultsLocal.Length > 0 Then
+
+                    srReader = New System.IO.StreamReader(New System.IO.FileStream(HPCCheckjobFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+                    Do While srReader.Peek >= 0
+                        lineText = srReader.ReadLine.Trim
+                        If lineText.Length > 0 AndAlso lineText.Substring(0, 6) = "State:" Then
+                            HPCStatus = lineText.Substring(6, lineText.Length - 6)
+                            m_HPCJobStatus(CInt(indexNum), 1) = HPCStatus.Trim
+                            Exit Do
+                        End If
+                    Loop
+
+                    srReader.Close()
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.UpdateCheckJobStatus, An error occurred while trying to retrieve job status files" & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+
+    Private Function RetrieveJobResultFilesFromHPC(ByVal progSftpLoc As String, ByVal CloneStepNum As Integer) As IJobParams.CloseOutType
+        Dim CmdStr As String
+
+        Dim CommandfileName As String
+
         Dim JobOutputFilePath As String
+
         Dim ErrorResultFilePath As String
+
         Dim XTResultsFilePath As String
 
         Dim strErrorResult As String
@@ -489,59 +901,57 @@ Public Class clsAnalysisToolRunnerXTHPC
             ' TODO: make sure job is complete before grabbing the _xt.xml files
 
             ' Step 1: Run an 'ls m_Dataset & "_*_xt.xml"' command using Putty and redirect to a text file
-            ' Step 2: Append to this file the results of an 'ls m_JobNum & "_Part" & i & ".output." & m_HPCJobNumber(i)' command
+            ' Step 2: Append to this file the results of an 'ls m_JobNum & "_Part" & i & ".output." & m_HPCJobStatus(i, 0)' command
             ' Step 3: grab the text file using GetResultFilesCmds_Job
             ' Step 4: Count the number of _xt.xml files in the file that have a modification date > 30 seconds aftr the last mod time of the .output. file
             ' Step 5: Once we have m_NumClonedSteps valid _xt.xml files, then grab them using PuttySFTP
 
             ' Use CheckJob to determine job state
+            CommandfileName = "GetResultFilesCmds_Job" & m_JobNum & "_" & CloneStepNum
+            CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
+            If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get results files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-            For i = 1 To m_NumClonedSteps
+            JobOutputFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & CloneStepNum & ".output." & m_HPCJobStatus(CloneStepNum, 0))
+            ErrorResultFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & CloneStepNum & ".err." & m_HPCJobStatus(CloneStepNum, 0))
+            XTResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_" & CloneStepNum & "_xt.xml")
 
+            If Not System.IO.File.Exists(JobOutputFilePath) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            End If
 
-                CommandfileName = "GetResultFilesCmds_Job" & m_JobNum & "_" & i
-                CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
-                If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get results files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+            If Not System.IO.File.Exists(ErrorResultFilePath) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            Else
+                Dim fiErrorLocal As New System.IO.FileInfo(ErrorResultFilePath)
+                If fiErrorLocal.Length > 0 Then
+                    '***********Log error to log file here***********
+                    strErrorResult = ReadEntireFile(ErrorResultFilePath)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error file " & ErrorResultFilePath & " contains the following error: " & strErrorResult)
+                    m_HPCJobStatus(CloneStepNum, 1) = "error"
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
+            End If
 
-                JobOutputFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & i & ".output." & m_HPCJobNumber(i))
-                ErrorResultFilePath = System.IO.Path.Combine(m_WorkDir, m_JobNum & "_Part" & i & ".err." & m_HPCJobNumber(i))
-                XTResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_" & i & "_xt.xml")
-
-                If Not System.IO.File.Exists(JobOutputFilePath) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-                End If
-
-                If Not System.IO.File.Exists(ErrorResultFilePath) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-                Else
-                    Dim fiErrorLocal As New System.IO.FileInfo(ErrorResultFilePath)
-                    If fiErrorLocal.Length > 0 Then
-                        '***********Log error to log file here***********
-                        strErrorResult = ReadEntireFile(ErrorResultFilePath)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error file " & ErrorResultFilePath & " contains the following error: " & strErrorResult)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    End If
-                End If
-
-                ' If the LS command
-                If Not System.IO.File.Exists(XTResultsFilePath) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-                End If
-            Next
+            ' If the LS command
+            If Not System.IO.File.Exists(XTResultsFilePath) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, An error occurred while trying to retrieve job result files" & ex.Message)
+            m_HPCJobStatus(CloneStepNum, 1) = "error"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
+        m_HPCJobStatus(CloneStepNum, 1) = "done"
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Protected Function GetHPCJobNumber(ByVal File_Index As String) As String
+    Protected Function RetrieveHPCJobNumber(ByVal File_Index As String) As String
         Dim HPC_JobNum As String = ""
         Dim HPC_JobError As String = ""
         Dim HPC_OutputFilename As String = ""
@@ -594,6 +1004,10 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <remarks></remarks>
     Protected Sub DeleteZeroByteErrorFiles()
         Dim ioFolder As System.IO.DirectoryInfo
         Dim ioFileInfo As System.IO.FileInfo
@@ -611,26 +1025,34 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <remarks></remarks>
     Protected Sub DeleteDTATextFilesInTransferFolder()
 
         Dim strTransferFolderPath As String
-        Dim strDtaFileName As String
+        Dim strDtaFilePath As String
 
         Dim i As Integer
         Dim ioFileInfo As System.IO.FileInfo
 
         Try
             strTransferFolderPath = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset)
+            strTransferFolderPath = System.IO.Path.Combine(strTransferFolderPath, m_ResFolderName)
 
             ' Now that we have successfully concatenated things, delete each of the input files
             For i = 1 To m_NumClonedSteps
 
-                strDtaFileName = m_Dataset & "_" & i.ToString & "_dta.txt"
-                System.IO.Path.Combine(strTransferFolderPath, strDtaFileName)
+                strDtaFilePath = System.IO.Path.Combine(strTransferFolderPath, m_Dataset & "_" & i.ToString & "_dta.txt")
 
-                ioFileInfo = New System.IO.FileInfo(strDtaFileName)
+                ioFileInfo = New System.IO.FileInfo(strDtaFilePath)
                 If ioFileInfo.Exists Then
                     ioFileInfo.Delete()
+                Else
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisResourcesXTHPC.DeleteDTATextFilesInTransferFolder, File not found; unable to delete it: " & strDtaFilePath)
+                    End If
                 End If
 
             Next i
@@ -641,38 +1063,128 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Sub
 
-    Protected Function BuildCancelJobFilesCmdFile() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeShowQCmdFile() As IJobParams.CloseOutType
+        Dim result As Boolean = True
 
-        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "Cancel_Job" & m_JobNum)
-
-        Dim i As Integer
+        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateShowQ_Job" & m_JobNum)
 
         Try
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
 
-
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
 
-            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY)
-
-            For i = 1 To m_NumClonedSteps
-
-                WriteUnix(swOut, "canceljob " & m_HPCJobNumber(i))
-
-            Next
+            WriteUnix(swOut, "/apps/moab/current/bin/showq | grep ""svc-dms"" > " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub1" & "/" & "ShowQ_ResultsJob" & m_JobNum & ".txt")
 
             swOut.Close()
 
         Catch E As Exception
             ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.BuildCancelJobFilesCmdFile, The Cancel jobs file could not be written: " & E.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MakeShowQCmdFile, The file could not be written: " & E.Message)
+            result = False
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
+
+    ''' <summary>
+    ''' Makes the file to obtain the balance for the svc-dms user's account
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeGBalanceCmdFile() As IJobParams.CloseOutType
+        Dim result As Boolean = True
+
+        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateShowBalance_Job" & m_JobNum)
+
+        Try
+            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+            ' Create an instance of StreamWriter to write to a file.
+            Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+            WriteUnix(swOut, "/mscf/mscf/gold/bin/gbalance -u svc-dms -h > " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub1" & "/" & "Show_BalanceJob" & m_JobNum & ".txt")
+
+            swOut.Close()
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MakeGetBalanceCmdFile, The file could not be written: " & E.Message)
+            result = False
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
 
+    ''' <summary>
+    ''' Retrives the file containing the balance for the user svc-dms
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeGetBalanceFileCmdFile() As IJobParams.CloseOutType
+        Dim result As Boolean = True
+
+        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "GetBalance_Job" & m_JobNum)
+
+        Try
+            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+            ' Create an instance of StreamWriter to write to a file.
+            Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub1" & "/")
+
+            WriteUnix(swOut, "get " & "ShowBalance_Job" & m_JobNum & ".txt")
+
+            swOut.Close()
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MakeGetBalanceFileCmdFile, The file could not be written: " & E.Message)
+            result = False
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeGetShowQResultFileCmdFile() As IJobParams.CloseOutType
+        Dim result As Boolean = True
+
+        Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "GetShowQResults_Job" & m_JobNum)
+
+        Try
+            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+            ' Create an instance of StreamWriter to write to a file.
+            Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+            WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub1" & "/")
+
+            WriteUnix(swOut, "get " & "ShowQ_ResultsJob" & m_JobNum & ".txt")
+
+            swOut.Close()
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MakeGetShowQResultFileCmdFile, The file could not be written: " & E.Message)
+            result = False
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
     End Function
 
     ''' <summary>
@@ -698,6 +1210,8 @@ Public Class clsAnalysisToolRunnerXTHPC
 
             WriteUnix(swOut, "get " & m_Dataset & "_" & File_Index & "_xt.xml")
 
+            WriteUnix(swOut, "get " & "XTandem_Processing_Log.txt")
+
             swOut.Close()
 
         Catch E As Exception
@@ -710,16 +1224,32 @@ Public Class clsAnalysisToolRunnerXTHPC
         Return result
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="swOut"></param>
+    ''' <remarks></remarks>
     Protected Sub WriteUnix(ByRef swOut As System.IO.StreamWriter)
         WriteUnix(swOut, String.Empty)
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="swOut"></param>
+    ''' <param name="inputString"></param>
+    ''' <remarks></remarks>
     Protected Sub WriteUnix(ByRef swOut As System.IO.StreamWriter, ByVal inputString As String)
 
         swOut.Write(inputString & ControlChars.Lf)
 
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function FastaFilesEqual() As Boolean
         Dim result As Boolean = False
 
@@ -857,7 +1387,11 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
-
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function ConstructSingleXTandemResultFile() As IJobParams.CloseOutType
 
         Const DELETE_INPUT_FILES As Boolean = False
@@ -946,7 +1480,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                             ' Cache this info in CachedPerformanceParameters()
                             ' When caching, we'll update the label for "performance parameters" to be "performance parameters, part i"
 
-                            CachedPerformanceParameters(i) = ReadXTandemPerformanceParameters(srCurrentResultFile, i)
+                            CachedPerformanceParameters.Add(ReadXTandemPerformanceParameters(srCurrentResultFile, i)) '(i)
                         End If
                     Else
                         lineText = srCurrentResultFile.ReadLine
@@ -1020,6 +1554,13 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="lineText"></param>
+    ''' <param name="strOldValue"></param>
+    ''' <param name="strNewValue"></param>
+    ''' <remarks></remarks>
     Protected Sub FindAndReplace(ByRef lineText As String, ByRef strOldValue As String, ByRef strNewValue As String)
         Dim intMatchIndex As Integer
 
@@ -1032,6 +1573,13 @@ Public Class clsAnalysisToolRunnerXTHPC
         End If
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="srCurrentResultFile"></param>
+    ''' <param name="intSegment"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function ReadXTandemPerformanceParameters(ByRef srCurrentResultFile As System.IO.StreamReader, ByVal intSegment As Integer) As String
         Const PERF_PARAMS As String = "label=""performance parameters"
 
@@ -1067,6 +1615,12 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="LineOfText"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function RetrieveGroupIDNumber(ByVal LineOfText As String) As Integer
 
         Static reMatchNum As System.Text.RegularExpressions.Regex
@@ -1105,6 +1659,14 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="LineOfText"></param>
+    ''' <param name="CurrentMaxNum"></param>
+    ''' <param name="OffsetNum"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function ComputeNewMaxNumber(ByVal LineOfText As String, ByVal CurrentMaxNum As Integer, ByVal OffsetNum As Integer) As Integer
         Dim intGroupID As Integer
 
@@ -1118,6 +1680,14 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="intGroupID"></param>
+    ''' <param name="CurrentMaxNum"></param>
+    ''' <param name="OffsetNum"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function ComputeNewMaxNumber(ByVal intGroupID As Integer, ByVal CurrentMaxNum As Integer, ByVal OffsetNum As Integer) As Integer
 
         Try
@@ -1133,7 +1703,83 @@ Public Class clsAnalysisToolRunnerXTHPC
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeCheckJobCmdFiles() As IJobParams.CloseOutType
 
+        Dim i As Integer
+
+        Try
+            For i = 1 To m_NumClonedSteps
+
+                Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateCheckjob_Job" & m_JobNum & "_" & i.ToString)
+
+                clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+                ' Create an instance of StreamWriter to write to a file.
+                Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+                WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY)
+
+                WriteUnix(swOut, "/apps/moab/current/bin/checkjob " & m_HPCJobStatus(i, 0) & " > " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub" & i & "/" & "CheckjobStatus_" & m_HPCJobStatus(i, 0))
+
+                swOut.Close()
+
+                clsGlobal.m_FilesToDeleteExt.Add("CheckjobStatus_" & m_HPCJobStatus(i, 0))
+
+            Next
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.BuildCheckJobCmdFile, The Check job file could not be written: " & E.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function MakeGetCheckjobStatusFilesCmdFile() As IJobParams.CloseOutType
+        Dim result As Boolean = True
+
+        Dim InputFilename As String
+
+        Dim i As Integer
+
+        Try
+            For i = 1 To m_NumClonedSteps
+
+                InputFilename = System.IO.Path.Combine(m_WorkDir, "GetCheckjob_HPCJob" & m_HPCJobStatus(i, 0))
+
+                clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+
+                ' Create an instance of StreamWriter to write to a file.
+                Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
+
+                WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & m_JobNum & "_msub" & i & "/")
+
+                WriteUnix(swOut, "get " & "CheckjobStatus_" & m_HPCJobStatus(i, 0))
+
+                swOut.Close()
+            Next
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.MakeGetShowQResultFileCmdFile, The file could not be written: " & E.Message)
+            result = False
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
@@ -1179,6 +1825,23 @@ Public Class clsAnalysisToolRunnerXTHPC
     '--------------------------------------------------------------------------------------------
     'End future section
     '--------------------------------------------------------------------------------------------
+
 #End Region
+
+
+
+    ' '' Result files should now be available.  A status could still indicate 'Complete' so we need to 
+    ' '' check for errors. We'll also check to make sure the error file is empty
+    ''HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+    ''While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    ''    System.Threading.Thread.Sleep(MonitorInterval)
+    ''    HPC_Result = RetrieveJobResultFilesFromHPC(progSftpLoc)
+    ''    If HPC_Result = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+    ''        'If error is detected, the Cancel all jobs that are running.
+    ''        CancelHPCRunningJobs(progLoc)
+    ''        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+    ''    End If
+    ''End While
+
 
 End Class

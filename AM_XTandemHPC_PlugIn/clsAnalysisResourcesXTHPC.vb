@@ -187,7 +187,7 @@ Public Class clsAnalysisResourcesXTHPC
             MakeRemoveDirectorysCmdFile(RemoveDir_CmdFile)
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(RemoveDir_CmdFile))
 
-            Put_CmdFastaFile = System.IO.Path.Combine(WorkingDir, "PutFastaJob" & JobNum)
+            Put_CmdFastaFile = System.IO.Path.Combine(WorkingDir, "PutFasta_Job" & JobNum)
             MakePutFastaCmdFile(Put_CmdFastaFile)
             clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Put_CmdFastaFile))
 
