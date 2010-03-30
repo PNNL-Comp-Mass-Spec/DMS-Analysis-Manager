@@ -176,7 +176,7 @@ Public Class clsAnalysisToolRunnerXT
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "XTandem results file was found; copying results to archive folder: " & strFailedResultsFolderPath)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
         ' Bump up the debug level if less than 2
         If m_DebugLevel < 2 Then m_DebugLevel = 2
@@ -208,6 +208,7 @@ Public Class clsAnalysisToolRunnerXT
 
 
     End Sub
+
     ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
     ''' </summary>

@@ -79,6 +79,11 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "DTARefinery", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
+
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging DTA_Refinery problems
+            CopyFailedResultsToArchiveFolder()
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -98,7 +103,9 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         'Zip the output file
         result = ZipMainOutputFile()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging DTA_Refinery problems
+            CopyFailedResultsToArchiveFolder()
             Return result
         End If
 
@@ -111,12 +118,14 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         result = MoveResultFiles()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
+            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
         result = CopyResultsFolderToServer()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
+            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
@@ -128,6 +137,46 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
+
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        Try
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            If result = MoveResultFiles() Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+
+    End Sub
 
     ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it
@@ -206,7 +255,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                 End If
             Next
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -225,7 +274,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                 End If
             Next
         Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerOM.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
             m_message = AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -239,7 +288,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                 System.IO.File.Delete(TmpFile)
             Next
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

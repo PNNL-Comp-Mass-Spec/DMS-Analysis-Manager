@@ -177,6 +177,9 @@ Namespace AnalysisManagerBase
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
                 ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                ''        Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
+                ''            myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
+
                 ''    End Select
                 ''    If Not myToolRunner Is Nothing Then
                 ''        Return myToolRunner
@@ -294,6 +297,8 @@ Namespace AnalysisManagerBase
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
                 ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
                 ''        'myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                ''        Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
+                ''            myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
                 ''    End Select
                 ''    If Not myModule Is Nothing Then
                 ''        Return myModule
