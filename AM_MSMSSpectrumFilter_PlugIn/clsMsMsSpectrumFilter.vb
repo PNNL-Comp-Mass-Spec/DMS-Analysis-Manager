@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "February 9, 2010"
+        MyBase.mFileDate = "April 22, 2010"
         InitializeVariables()
     End Sub
 
@@ -947,7 +947,14 @@ Public Class clsMsMsSpectrumFilter
 
     End Sub
 
-    Private Function BackupFileWithRevisioning(ByVal strFileToBackup As String) As Boolean
+    ''' <summary>
+    ''' Makes a copy (or renames a file), naming the backup copy OriginalFileName.bak.  If other .Bak files already exist, they are renamed before strFileToBackup is backed up
+    ''' </summary>
+    ''' <param name="strFileToBackup">File to backup</param>
+    ''' <param name="blnDuplicateFile">When true, then makes a copy of the original file.  Otherwise, just renames the original file to .bak</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function BackupFileWithRevisioning(ByVal strFileToBackup As String, ByVal blnDuplicateFile As Boolean) As Boolean
         ' Returns True if file successfully backed up
         ' Returns False if an error
 
@@ -985,7 +992,14 @@ Public Class clsMsMsSpectrumFilter
                 System.IO.File.Move(strCheckPath, strCheckPathNew)
             End If
 
-            System.IO.File.Copy(strFileToBackup, strNewFilePath, True)
+            If blnDuplicateFile Then
+                System.IO.File.Copy(strFileToBackup, strNewFilePath, True)
+            Else
+                If System.IO.File.Exists(strNewFilePath) Then
+                    System.IO.File.Delete(strNewFilePath)
+                End If
+                System.IO.File.Move(strFileToBackup, strNewFilePath)
+            End If
             LogMessage("Renamed " & System.IO.Path.GetFileName(strFileToBackup) & " to " & strNewFilePath)
 
         Catch ex As Exception
@@ -4139,7 +4153,7 @@ Public Class clsMsMsSpectrumFilter
                     strOutputFilePath = String.Empty
                     blnProceed = True
                 Else
-                    blnProceed = BackupFileWithRevisioning(strInputFilePath)
+                    blnProceed = BackupFileWithRevisioning(strInputFilePath, False)
 
                     ' Switch around the filenames as needed
                     strOutputFilePath = strInputFilePath
@@ -4212,45 +4226,59 @@ Public Class clsMsMsSpectrumFilter
                     End If
 
                     If blnSpectrumFound Then
-                        ' Populate sngMassList and sngIntensityList
-                        intDataCount = objFileReader.ParseMsMsDataList(strMSMSDataList, intMsMsDataCount, sngMassList, sngIntensityList)
-                        intPositiveDataCountBeforeFilter = 0
-                        intPositiveDataCountAfterFilter = 0
 
-                        ' Call EvaluateMsMsSpectrum()
+                        If mSpectrumFilterMode = eSpectrumFilterMode.NoFilter AndAlso Not blnIonFilteringEnabled Then
+                            ' We do not need to populate sngMassList or sngIntensityList
+                            ' Simply call EvaluateMsMsSpectrumStart so that udtSpectrumQualityScore gets updated
+                            udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(Nothing, Nothing, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+
+                            intDataCount = intMsMsDataCount
+                            strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
+
+                        Else
+                            ' Populate sngMassList and sngIntensityList
+                            intDataCount = objFileReader.ParseMsMsDataList(strMSMSDataList, intMsMsDataCount, sngMassList, sngIntensityList)
+                            intPositiveDataCountBeforeFilter = 0
+                            intPositiveDataCountAfterFilter = 0
+
+                            If intDataCount > 0 Then
+                                ' Call EvaluateMsMsSpectrum()
+                                udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+
+                                If blnIonFilteringEnabled Then
+                                    Const blnRemoveIons As Boolean = False
+                                    blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
+                                Else
+                                    blnSpectralDataUpdated = False
+                                End If
+
+                                If blnSpectralDataUpdated Then
+                                    intMSSpectraCountIonFiltered += 1
+
+                                    ' Need to re-create the .DTA file
+                                    Select Case eInputFileMode
+                                        Case eInputFileModeConstants.ConcatenatedDTA
+                                            strMostRecentSpectrumText = ControlChars.NewLine & _
+                                                                        udtSpectrumHeaderInfo.SpectrumTitleWithCommentChars & ControlChars.NewLine
+
+                                            strMostRecentSpectrumText &= WriteDTAFileToString(udtSpectrumHeaderInfo.ParentIonLineText, intDataCount, sngMassList, sngIntensityList)
+
+                                        Case eInputFileModeConstants.MGF
+                                            strMostRecentSpectrumText = ControlChars.NewLine & _
+                                                                        WriteMGFEntryToString(udtSpectrumHeaderInfo, intDataCount, sngMassList, sngIntensityList)
+
+                                        Case Else
+                                            ' Unknown mode
+                                            strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
+                                    End Select
+                                Else
+                                    strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
+                                End If
+                            End If
+                        End If
+
+
                         If intDataCount > 0 Then
-                            udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
-
-                            If blnIonFilteringEnabled Then
-                                Const blnRemoveIons As Boolean = False
-                                blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
-                            Else
-                                blnSpectralDataUpdated = False
-                            End If
-
-                            If blnSpectralDataUpdated Then
-                                intMSSpectraCountIonFiltered += 1
-
-                                ' Need to re-create the .DTA file
-                                Select Case eInputFileMode
-                                    Case eInputFileModeConstants.ConcatenatedDTA
-                                        strMostRecentSpectrumText = ControlChars.NewLine & _
-                                                                    udtSpectrumHeaderInfo.SpectrumTitleWithCommentChars & ControlChars.NewLine
-
-                                        strMostRecentSpectrumText &= WriteDTAFileToString(udtSpectrumHeaderInfo.ParentIonLineText, intDataCount, sngMassList, sngIntensityList)
-
-                                    Case eInputFileModeConstants.MGF
-                                        strMostRecentSpectrumText = ControlChars.NewLine & _
-                                                                    WriteMGFEntryToString(udtSpectrumHeaderInfo, intDataCount, sngMassList, sngIntensityList)
-
-                                    Case Else
-                                        ' Unknown mode
-                                        strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
-                                End Select
-                            Else
-                                strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
-                            End If
-
 
                             HandleEvaluationResults(strReportFilePath, _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _

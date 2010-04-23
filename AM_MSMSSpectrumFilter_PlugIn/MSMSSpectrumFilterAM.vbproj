@@ -92,9 +92,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="MsMsDataFileReader, Version=1.0.2203.32730, Culture=neutral">
+    <Reference Include="MsMsDataFileReader, Version=1.1.3764.31027, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
+      <HintPath>..\..\..\MsMsDataFileReaderDLL\bin\MsMsDataFileReader.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
