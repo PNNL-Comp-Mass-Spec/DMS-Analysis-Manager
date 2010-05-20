@@ -306,7 +306,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return result
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
+        If Not clsGlobal.RemoveNonResultFiles(m_WorkDir, m_DebugLevel) Then
             'TODO: Figure out what to do here
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -561,20 +561,23 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Return FileType.MICROMASSRAWDATA
             Case "zipped_s_folders"
                 If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
-                    Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
+                    Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
                     'Check for "0.ser" folder
                     If Not String.IsNullOrEmpty(NewSourceFolder) Then
+                        ' _StoragePathInfo.txt file is present
+                        'Data off of Bruker FTICR, in ser file format
                         Return FileType.BRUKER
                     Else
-                        'Data off of Bruker FTICR
+                        ' _StoragePathInfo.txt file is not present
+                        'Data off of Bruker FTICR, in zipped s-folder format
                         Return FileType.ICR2LSRAWDATA
                     End If
                 ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
-                    'Data from old Finnigan FTICR
-                    Return FileType.SUNEXTREL
+                'Data from old Finnigan FTICR
+                Return FileType.SUNEXTREL
                 Else
-                    'Should never get here
-                    Return FileType.UNDEFINED
+                'Should never get here
+                Return FileType.UNDEFINED
                 End If
             Case Else
                 'Should never get this value

@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg", "AnalysisManagerProg.vbproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDecon2lsPlugIn", "..\AM_Decon2ls_PlugIn_Decon2LSV2\AnalysisManagerDecon2lsPlugIn\AnalysisManagerDecon2lsPlugIn.vbproj", "{4E7586EC-4A03-433B-B98D-393DA95C020C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

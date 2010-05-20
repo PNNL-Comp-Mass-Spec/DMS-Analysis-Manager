@@ -49,13 +49,15 @@ Public Class clsAnalysisToolRunnerICR
         Dim MaxScan As Integer = 0
         Dim UseAllScans As Boolean = True
 
+        Dim SerFolderPath As String
+
         Dim OutFileNamePath As String
         Dim ParamFilePath As String
         Dim blnSuccess As Boolean
 
-		'Start with base class function to get settings information
-		ResCode = MyBase.RunTool()
-		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
+        'Start with base class function to get settings information
+        ResCode = MyBase.RunTool()
+        If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
         'Verify a parm file has been specified
         ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))
@@ -67,9 +69,9 @@ Public Class clsAnalysisToolRunnerICR
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		'Add handling of settings file info here if it becomes necessary in the future
+        'Add handling of settings file info here if it becomes necessary in the future
 
-		'Get scan settings from settings file
+        'Get scan settings from settings file
         MinScan = 0
         MaxScan = 0
 
@@ -84,29 +86,62 @@ Public Class clsAnalysisToolRunnerICR
             UseAllScans = False
         End If
 
-		'Assemble the dataset name
+        'Assemble the dataset name
         DatasetName = m_jobParams.GetParam("datasetNum")
         DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, DatasetName))
 
         'Assemble the output file name and path
         OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
 
-        Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
-        'Check for "0.ser" folder
-        If Not String.IsNullOrEmpty(NewSourceFolder) Then
-            blnSuccess = MyBase.StartICR2LS(NewSourceFolder, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SerFolderPEK, UseAllScans, MinScan, MaxScan)
+        ' Determine the location of the "0.ser" folder
+        If clsAnalysisResourcesIcr2ls.PROCESS_SER_FOLDER_OVER_NETWORK Then
+            SerFolderPath = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
         Else
+            ' Look for the "0.ser" folder in the working directory
+            SerFolderPath = System.IO.Path.Combine(m_WorkDir, "0.ser")
+            If Not System.IO.Directory.Exists(SerFolderPath) Then
+                ' Folder does not exist
+                ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+                '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+                SerFolderPath = String.Empty
+            End If
+        End If
+
+        If Not String.IsNullOrEmpty(SerFolderPath) Then
+            blnSuccess = MyBase.StartICR2LS(SerFolderPath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SerFolderPEK, UseAllScans, MinScan, MaxScan)
+            If Not blnSuccess Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on folder " & SerFolderPath)
+            End If
+        Else
+            ' Processing zipped s-folders
             If Not System.IO.Directory.Exists(DSNamePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Data file folder not found: " & DSNamePath)
 
                 CleanupFailedJob("Unable to find data files in working directory")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
+
             blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SFoldersPEK, UseAllScans, MinScan, MaxScan)
+
+            If Not blnSuccess Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on zipped s-files in " & DSNamePath)
+            End If
         End If
 
         If Not blnSuccess Then
-            CleanupFailedJob("Error running ICR-2LS")
+            ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
+            If VerifyPEKFileExists(m_WorkDir, DatasetName) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
+
+                PerfPostAnalysisTasks(False)
+
+                ' Try to save whatever files were moved into the results folder
+                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+            Else
+                CleanupFailedJob("Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")")
+            End If
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
             ' Make sure the .pek file and .Par file are named properly
@@ -114,7 +149,7 @@ Public Class clsAnalysisToolRunnerICR
         End If
 
         'Run the cleanup routine from the base class
-        If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             m_message = AppendToComment(m_message, "Error performing post analysis tasks")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

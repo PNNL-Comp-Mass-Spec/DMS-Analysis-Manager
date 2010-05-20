@@ -150,6 +150,7 @@ Namespace AnalysisManagerBase
             Dim myToolRunner As IToolRunner = Nothing
             Dim e As Exception
             If GetPluginInfo(xpath, className, assyName) Then
+                ''<UncommentForDebugging>
                 ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
                 ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
                 ''    Select Case className.ToLower
@@ -160,6 +161,8 @@ Namespace AnalysisManagerBase
                 ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly, IToolRunner)
                 ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC".ToLower
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
                 ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT, IToolRunner)
@@ -175,16 +178,17 @@ Namespace AnalysisManagerBase
                 ''        '    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
                 ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
-                ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
-                ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-                ''        Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
-                ''            myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
+                ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                ''            myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                ''            'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
+                ''            '    myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
 
                 ''    End Select
                 ''    If Not myToolRunner Is Nothing Then
                 ''        Return myToolRunner
                 ''    End If
                 ''End If
+                ''</UncommentForDebugging>
 
                 Dim obj As Object = LoadObject(className, assyName)
                 If Not obj Is Nothing Then
@@ -272,6 +276,7 @@ Namespace AnalysisManagerBase
 			Dim myModule As IAnalysisResources = Nothing
 			Dim e As Exception
             If GetPluginInfo(xpath, className, assyName) Then
+                ''<UncommentForDebugging>
                 ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
                 ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
                 ''    Select Case className.ToLower
@@ -281,6 +286,8 @@ Namespace AnalysisManagerBase
                 ''        '    myModule = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN, IAnalysisResources)
                 ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly, IAnalysisResources)
+                ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                ''        '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
                 ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
                 ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower
@@ -295,15 +302,16 @@ Namespace AnalysisManagerBase
                 ''        '    myModule = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF, IAnalysisResources)
                 ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower
                 ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
-                ''        'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
-                ''        'myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-                ''        Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
-                ''            myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
+                ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                ''            myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                ''            'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
+                ''            '    myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
                 ''    End Select
                 ''    If Not myModule Is Nothing Then
                 ''        Return myModule
                 ''    End If
                 ''End If
+                ''</UncommentForDebugging>
 
                 Dim obj As Object = LoadObject(className, assyName)
                 If Not obj Is Nothing Then

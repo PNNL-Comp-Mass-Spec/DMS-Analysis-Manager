@@ -308,7 +308,10 @@ Namespace AnalysisManagerBase
                     End If
                     MyTimer.Reset()
                 End Try
-                System.Threading.Thread.Sleep(20000)    'Wait 20 seconds before retrying
+
+                If RetryCount > 0 Then
+                    System.Threading.Thread.Sleep(20000)    'Wait 20 seconds before retrying
+                End If
             End While
 
 			If RetryCount < 1 Then

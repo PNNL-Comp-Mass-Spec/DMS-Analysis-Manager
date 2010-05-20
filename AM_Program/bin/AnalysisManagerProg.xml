@@ -321,7 +321,8 @@ AnalysisManagerProg
 	<summary>
  Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
  If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
- If the file named _StoragePathInfo.txt isn't found, then returns an empty string
+ If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
+ If a 0.ser folder is found, then returns the path to the 0.ser folder
  </summary>
 	<param name="FolderPath">The folder to look in</param>
 	<returns></returns>

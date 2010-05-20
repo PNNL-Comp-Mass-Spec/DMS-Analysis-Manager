@@ -74,12 +74,27 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, UseAllScans, MinScan, MaxScan)
 
         If Not blnSuccess Then
-            CleanupFailedJob("Error starting ICR-2LS")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on file " & DSNamePath)
+
+            ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
+            If VerifyPEKFileExists(m_WorkDir, DatasetName) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
+
+                PerfPostAnalysisTasks(False)
+
+                ' Try to save whatever files were moved into the results folder
+                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+            Else
+                CleanupFailedJob("Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")")
+            End If
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Run the cleanup routine from the base class
-        If PerfPostAnalysisTasks() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             m_message = AppendToComment(m_message, "Error performing post analysis tasks")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

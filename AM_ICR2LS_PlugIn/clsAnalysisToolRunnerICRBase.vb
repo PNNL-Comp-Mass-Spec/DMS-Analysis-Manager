@@ -274,7 +274,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End With
     End Sub
 
-    Protected Overridable Function PerfPostAnalysisTasks() As IJobParams.CloseOutType
+    Protected Overridable Function PerfPostAnalysisTasks(ByVal blnCopyResultsToServer As Boolean) As IJobParams.CloseOutType
 
         Dim result As IJobParams.CloseOutType
 
@@ -304,11 +304,15 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             Return result
         End If
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+        If blnCopyResultsToServer Then
+            result = CopyResultsFolderToServer()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'TODO: What do we do here?
+                Return result
+            End If
         End If
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -546,6 +550,31 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End Select
 
         Return blnValid
+    End Function
+
+    Protected Function VerifyPEKFileExists(ByVal strFolderPath As String, ByVal strDatasetName As String) As Boolean
+
+        Dim fiFolder As System.IO.DirectoryInfo
+        Dim blnMatchFound As Boolean
+
+        Try
+
+            fiFolder = New System.IO.DirectoryInfo(strFolderPath)
+
+            If fiFolder.Exists Then
+                If fiFolder.GetFiles(strDatasetName & "*.pek").Length > 0 Then
+                    blnMatchFound = True
+                End If
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in VerifyPEKFileExists; folder not found: " & strFolderPath)
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in VerifyPEKFileExists: " & ex.Message)
+        End Try
+
+        Return blnMatchFound
+
     End Function
 
     ''Protected Function WaitForJobToFinish() As Boolean

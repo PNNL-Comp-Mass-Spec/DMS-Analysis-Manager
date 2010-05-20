@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "April 22, 2010"
+        MyBase.mFileDate = "May 5, 2010"
         InitializeVariables()
     End Sub
 
@@ -227,6 +227,8 @@ Public Class clsMsMsSpectrumFilter
         Public PrecursorCleaningToleranceMZ As Double
         Public RemoveNeutralLossesFromChargeReducedPrecursors As Boolean
         Public NeutralLossCleaningWindowDa As Double
+        Public CondenseData As Boolean                          ' If True, then condenses regions where adjacent m/z values have an intensity of 0
+        Public CondenseDataMaxIonCount As Integer               ' If > 0, then will only keep the top CondenseDataMaxIonCount points in each mass spectrum (sorted by descending intensity)
     End Structure
 
     ' Scores:
@@ -618,6 +620,23 @@ Public Class clsMsMsSpectrumFilter
         End Set
     End Property
 
+    Public Property IonFilter_CondenseData() As Boolean
+        Get
+            Return mIonFilterOptions.CondenseData
+        End Get
+        Set(ByVal value As Boolean)
+            mIonFilterOptions.CondenseData = value
+        End Set
+    End Property
+
+    Public Property IonFilter_CondenseDataMaxIonCount() As Integer
+        Get
+            Return mIonFilterOptions.CondenseDataMaxIonCount
+        End Get
+        Set(ByVal value As Integer)
+            mIonFilterOptions.CondenseDataMaxIonCount = value
+        End Set
+    End Property
 
     Public Function GetFilterMode1MassSpacingOption(ByVal intCharge As Integer, ByVal SwitchName As FilterMode1MassSpacingOption) As Integer
         Try
@@ -1093,7 +1112,159 @@ Public Class clsMsMsSpectrumFilter
     End Function
 
     Private Function CheckIonFilteringEnabled() As Boolean
-        Return mIonFilterOptions.RemovePrecursor OrElse mIonFilterOptions.RemoveChargeReducedPrecursors OrElse mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors
+
+        If mIonFilterOptions.RemovePrecursor OrElse _
+           mIonFilterOptions.RemoveChargeReducedPrecursors OrElse _
+           mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors OrElse _
+           mIonFilterOptions.CondenseData Then
+            Return True
+        Else
+            Return False
+        End If
+
+    End Function
+
+    Protected Function CondenseData(ByRef intDataCount As Integer, _
+                                    ByRef sngMassList() As Single, _
+                                    ByRef sngIntensityList() As Single, _
+                                    ByRef intPositiveDataCountAfterFilter As Integer) As Boolean
+
+        Dim intIndex As Integer
+        Dim intTargetIndex As Integer
+
+        Dim intZeroIntensityPointsToKeep As Integer
+        Dim intZeroIntensityPointsKept As Integer
+
+        Dim blnSpectralDataUpdated As Boolean
+        Dim blnZeroIntensityLineFound As Boolean
+        Dim blnKeepPoint As Boolean
+
+        blnSpectralDataUpdated = False
+        intPositiveDataCountAfterFilter = 0
+
+        Try
+
+            If Not mIonFilterOptions.CondenseData Then
+                ' Nothing to filter
+                blnSpectralDataUpdated = False
+            Else
+
+                ' Step through the data
+                ' Look for data points with an intensity value of 0
+                ' When found, either set blnZeroIntensityLineFound to true, or skip the line if blnZeroIntensityLineFound is already true
+
+                intTargetIndex = 0
+                blnZeroIntensityLineFound = False
+
+                intIndex = 0
+                Do While intIndex < intDataCount - 1
+                    If intTargetIndex <> intIndex Then
+                        sngMassList(intTargetIndex) = sngMassList(intIndex)
+                        sngIntensityList(intTargetIndex) = sngIntensityList(intIndex)
+                    End If
+                    intTargetIndex += 1
+
+                    If sngIntensityList(intIndex) = 0 AndAlso Not blnZeroIntensityLineFound Then
+                        ' This data point has an intensity of 0
+                        ' Advance intIndex to one item before the next non-zero intensity value
+                        Do
+                            intIndex += 1
+                        Loop While intIndex < intDataCount - 2 AndAlso sngIntensityList(intIndex + 1) = 0
+                        blnZeroIntensityLineFound = True
+                    Else
+                        intIndex += 1
+                        blnZeroIntensityLineFound = False
+                    End If
+                Loop
+
+                ' Update intDataCount
+                If intDataCount > intTargetIndex Then
+                    blnSpectralDataUpdated = True
+                    intDataCount = intTargetIndex
+                End If
+
+                If mIonFilterOptions.CondenseDataMaxIonCount > 0 Then
+                    If intDataCount > mIonFilterOptions.CondenseDataMaxIonCount Then
+                        ' Only keep the top mIonFilterOptions.CondenseDataMaxIonCount points
+                        ' Determine the intensity threshold that would give us mIonFilterOptions.CondenseDataMaxIonCount points
+
+                        Dim sngIntensityListSorted() As Single
+                        Dim sngThreshold As Single
+
+                        ReDim sngIntensityListSorted(intDataCount - 1)
+
+                        Array.Copy(sngIntensityList, sngIntensityListSorted, intDataCount)
+
+                        Array.Sort(sngIntensityListSorted)
+
+                        sngThreshold = sngIntensityListSorted(intDataCount - mIonFilterOptions.CondenseDataMaxIonCount)
+
+                        If sngThreshold = 0 Then
+                            ' When the threshold is zero, then need to compute the number of
+                            ' zero-intensity data points that we should keep
+
+                            intPositiveDataCountAfterFilter = 0
+                            For intIndex = 0 To intDataCount - 1
+                                If sngIntensityList(intIndex) > 0 Then
+                                    intPositiveDataCountAfterFilter += 1
+                                End If
+                            Next
+
+                            intZeroIntensityPointsToKeep = mIonFilterOptions.CondenseDataMaxIonCount - intPositiveDataCountAfterFilter
+                        End If
+
+                        ' Now step through the data and only keep the points with an intensity >= sngThreshold
+                        intTargetIndex = 0
+                        intZeroIntensityPointsKept = 0
+
+                        For intIndex = 0 To intDataCount - 1
+                            blnKeepPoint = False
+                            If sngThreshold = 0 Then
+                                If sngIntensityList(intIndex) > 0 Then
+                                    blnKeepPoint = True
+                                Else
+                                    If intZeroIntensityPointsKept < intZeroIntensityPointsToKeep Then
+                                        blnKeepPoint = True
+                                        intZeroIntensityPointsKept += 1
+                                    End If
+                                End If
+                            Else
+                                If sngIntensityList(intIndex) >= sngThreshold Then
+                                    blnKeepPoint = True
+                                End If
+                            End If
+
+                            If blnKeepPoint Then
+                                sngMassList(intTargetIndex) = sngMassList(intIndex)
+                                sngIntensityList(intTargetIndex) = sngIntensityList(intIndex)
+                                intTargetIndex += 1
+                            End If
+                        Next
+
+                        ' Update intDataCount
+                        If intDataCount > intTargetIndex Then
+                            blnSpectralDataUpdated = True
+                            intDataCount = intTargetIndex
+                        End If
+
+                    End If
+                End If
+            End If
+
+            ' Count the number of positive intensity values now that the filter has been applied
+            intPositiveDataCountAfterFilter = 0
+            For intIndex = 0 To intDataCount - 1
+                If sngIntensityList(intIndex) > 0 Then
+                    intPositiveDataCountAfterFilter += 1
+                End If
+            Next intIndex
+
+        Catch ex As Exception
+            Throw New Exception("Error in CondenseData: " & ex.Message, ex)
+        End Try
+
+        Return blnSpectralDataUpdated
+
     End Function
 
     Public Shared Function ConstructScanStatsFilePath(ByVal FolderPath As String, ByVal BaseDatasetName As String) As String
@@ -2417,7 +2588,7 @@ Public Class clsMsMsSpectrumFilter
     ''' <param name="blnRemoveIons">True to remove ions; False to change their intensity to between 0 and 1</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function FilterIonsByMZ(ByVal intDataCount As Integer, _
+    Protected Function FilterIonsByMZ(ByRef intDataCount As Integer, _
                                       ByRef sngMassList() As Single, _
                                       ByRef sngIntensityList() As Single, _
                                       ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
@@ -2984,6 +3155,8 @@ Public Class clsMsMsSpectrumFilter
             .RemoveNeutralLossesFromChargeReducedPrecursors = False
             .PrecursorCleaningToleranceMZ = DEFAULT_IONFILTER_PRECURSOR_TOLERANCE_MZ
             .NeutralLossCleaningWindowDa = DEFAULT_IONFILTER_PRECURSOR_NL_CLEANING_WINDOW_DA
+            .CondenseData = False
+            .CondenseDataMaxIonCount = 0
         End With
 
         ' Filter mode 1
@@ -3112,6 +3285,8 @@ Public Class clsMsMsSpectrumFilter
                     Me.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "RemoveNeutralLossesFromChargeReducedPrecursors", Me.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)
                     Me.IonFilter_PrecursorCleaningToleranceMZ = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "PrecursorCleaningToleranceMZ", Me.IonFilter_PrecursorCleaningToleranceMZ)
                     Me.IonFilter_NeutralLossCleaningWindowDa = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "NeutralLossCleaningWindowDa", Me.IonFilter_NeutralLossCleaningWindowDa)
+                    Me.IonFilter_CondenseData = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "CondenseData", Me.IonFilter_CondenseData)
+                    Me.IonFilter_CondenseDataMaxIonCount = objSettingsFile.GetParam(ION_FILTER_OPTIONS_SECTION, "CondenseDataMaxIonCount", Me.IonFilter_CondenseDataMaxIonCount)
                 End If
 
                 If Not objSettingsFile.SectionPresent(FILTER_MODE1) Then
@@ -3875,8 +4050,10 @@ Public Class clsMsMsSpectrumFilter
         Dim strNewFilePath As String
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
-        Dim blnSpectralDataUpdated As Boolean
+
         Dim blnIonFilteringEnabled As Boolean
+        Dim blnSpectralDataUpdated As Boolean
+        Dim blnDataCondensed As Boolean
 
         Dim strInputFileBaseName As String
 
@@ -3941,8 +4118,16 @@ Public Class clsMsMsSpectrumFilter
                     If blnIonFilteringEnabled Then
                         Const blnRemoveIons As Boolean = False
                         blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
+
+                        If mIonFilterOptions.CondenseData Then
+                            blnDataCondensed = CondenseData(intDataCount, sngMassList, sngIntensityList, intPositiveDataCountAfterFilter)
+                            If blnDataCondensed Then
+                                blnSpectralDataUpdated = True
+                            End If
+                        End If
+
                     Else
-                        blnIonFilteringEnabled = False
+                        blnSpectralDataUpdated = False
                     End If
 
                     If blnSpectralDataUpdated Then
@@ -4122,8 +4307,10 @@ Public Class clsMsMsSpectrumFilter
         Dim blnSpectrumFound As Boolean
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
-        Dim blnSpectralDataUpdated As Boolean
+
         Dim blnIonFilteringEnabled As Boolean
+        Dim blnSpectralDataUpdated As Boolean
+        Dim blnDataCondensed As Boolean
 
         Dim dtLastProgressUpdate As DateTime
         Dim intSpectraRead As Integer
@@ -4250,6 +4437,13 @@ Public Class clsMsMsSpectrumFilter
                                     blnSpectralDataUpdated = FilterIonsByMZ(intDataCount, sngMassList, sngIntensityList, udtSpectrumHeaderInfo, blnRemoveIons, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
                                 Else
                                     blnSpectralDataUpdated = False
+                                End If
+
+                                If mIonFilterOptions.CondenseData Then
+                                    blnDataCondensed = CondenseData(intDataCount, sngMassList, sngIntensityList, intPositiveDataCountAfterFilter)
+                                    If blnDataCondensed Then
+                                        blnSpectralDataUpdated = True
+                                    End If
                                 End If
 
                                 If blnSpectralDataUpdated Then
@@ -5090,6 +5284,10 @@ Public Class clsMsMsSpectrumFilter
             LogMatchingIonFilterRange(1000, 2)
             LogMatchingIonFilterRange(1000, 3)
             LogMatchingIonFilterRange(1000, 4)
+
+            LogMessage("  CondenseData: " & mIonFilterOptions.CondenseData)
+            LogMessage("  CondenseDataMaxIonCount: " & mIonFilterOptions.CondenseDataMaxIonCount)
+
         End If
 
     End Sub

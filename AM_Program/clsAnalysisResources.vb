@@ -55,6 +55,7 @@ Namespace AnalysisManagerBase
 
         Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
+        Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 #End Region
 
 #Region "Module variables"
@@ -423,12 +424,15 @@ Namespace AnalysisManagerBase
         ''' <summary>
         ''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
         ''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
-        ''' If the file named _StoragePathInfo.txt isn't found, then returns an empty string
+        ''' If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
+        ''' If a 0.ser folder is found, then returns the path to the 0.ser folder
         ''' </summary>
         ''' <param name="FolderPath">The folder to look in</param>
         ''' <returns></returns>
         ''' <remarks></remarks>
         Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
+
+            Dim ioFolder As System.IO.DirectoryInfo
 
             Dim srInFile As System.IO.StreamReader
             Dim strPhysicalFilePath As String = String.Empty
@@ -451,7 +455,14 @@ Namespace AnalysisManagerBase
                 srInFile.Close()
             Else
                 ' The desired file was not found
-                strPhysicalFilePath = ""
+                ' See if a folder named 0.ser exists in FolderPath
+
+                strPhysicalFilePath = System.IO.Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
+                ioFolder = New System.IO.DirectoryInfo(strPhysicalFilePath)
+                If Not ioFolder.Exists Then
+                    strPhysicalFilePath = ""
+                End If
+
             End If
 
             Return strPhysicalFilePath
@@ -664,89 +675,121 @@ Namespace AnalysisManagerBase
             Dim ZipFile As String
             Dim strZipProgramPath As String
 
-            'First Check for the existence of a 0.ser Folder
-            'If 0.ser folder exists, then store the 0.ser folder in a file locally
-            Dim DSFolderPath As String = FindValidFolder(DSName, "", "0.ser")
+            Try
 
-            If Not String.IsNullOrEmpty(DSFolderPath) AndAlso Directory.Exists(Path.Combine(DSFolderPath, "0.ser")) Then
-                DSFolderPath = Path.Combine(DSFolderPath, "0.ser")
-                If CreateStoragePathInfoFile(DSFolderPath, WorkDir & "\") Then
-                    Return True
-                Else
-                    Return False
-                End If
-            End If
+                'First Check for the existence of a 0.ser Folder
+                'If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
+                Dim DSFolderPath As String = FindValidFolder(DSName, "", BRUKER_ZERO_SER_FOLDER)
 
-            'If the 0.ser folder does not exist, unzip the zipped s-folders
-            'Copy the zipped s-folders from archive to work directory
-            If Not CopySFoldersToWorkDir(WorkDir, CreateStoragePathInfoOnly) Then
-                'Error messages have already been logged, so just exit
-                Return False
-            End If
+                If Not String.IsNullOrEmpty(DSFolderPath) Then
+                    Dim diSourceFolder As System.IO.DirectoryInfo
+                    Dim diTargetFolder As System.IO.DirectoryInfo
+                    Dim fiFile As System.IO.FileInfo
 
-            If CreateStoragePathInfoOnly Then
-                ' Nothing was copied locally, so nothing to unzip
-                Return True
-            End If
+                    diSourceFolder = New System.IO.DirectoryInfo(System.IO.Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER))
 
+                    If diSourceFolder.Exists Then
+                        If CreateStoragePathInfoOnly Then
+                            If CreateStoragePathInfoFile(diSourceFolder.FullName, WorkDir & "\") Then
+                                Return True
+                            Else
+                                Return False
+                            End If
+                        Else
+                            ' Copy the 0.ser folder to the Work directory
+                            ' First create the 0.ser subfolder
+                            diTargetFolder = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(WorkDir, BRUKER_ZERO_SER_FOLDER))
 
-            'Get a listing of the zip files to process
-            ZipFiles = Directory.GetFiles(WorkDir, "s*.zip")
-            If ZipFiles.GetLength(0) < 1 Then
-                m_message = "No zipped s-folders found in working directory"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False            'No zipped data files found
-            End If
+                            ' Now copy the files from the source 0.ser folder to the target folder
+                            ' Typically there will only be two files: ACQUS and ser
+                            For Each fiFile In diSourceFolder.GetFiles()
+                                If Not CopyFileToWorkDir(fiFile.Name, diSourceFolder.FullName, diTargetFolder.FullName) Then
+                                    ' Error has alredy been logged
+                                    Return False
+                                End If
+                            Next
 
-            'Create a dataset subdirectory under the working directory
-            DSWorkFolder = Path.Combine(WorkDir, DSName)
-            Directory.CreateDirectory(DSWorkFolder)
-
-            'Set up the unzipper
-            strZipProgramPath = m_mgrParams.GetParam("zipprogram")
-
-            If Not System.IO.File.Exists(strZipProgramPath) Then
-                m_message = "Unzip program not found (" & strZipProgramPath & "); unable to continue"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            UnZipper = New ZipTools(DSWorkFolder, strZipProgramPath)
-
-            'Unzip each of the zip files to the working directory
-            For Each ZipFile In ZipFiles
-                If m_DebugLevel > 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file " & ZipFile)
-                End If
-                Try
-                    TargetFolder = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
-                    Directory.CreateDirectory(TargetFolder)
-                    If Not UnZipper.UnzipFile("", ZipFile, TargetFolder) Then
-                        m_message = "Error unzipping file " & ZipFile
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        Return False
+                            Return True
+                        End If
                     End If
-                Catch ex As Exception
-                    m_message = "Exception while unzipping s-folders"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                    Return False
-                End Try
-            Next
 
-            'Delete all s*.zip files in working directory
-            For Each ZipFile In ZipFiles
-                Try
-                    File.Delete(ZipFile)
-                Catch ex As Exception
-                    m_message = "Exception deleting file " & ZipFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                End If
+
+                'If the 0.ser folder does not exist, unzip the zipped s-folders
+                'Copy the zipped s-folders from archive to work directory
+                If Not CopySFoldersToWorkDir(WorkDir, CreateStoragePathInfoOnly) Then
+                    'Error messages have already been logged, so just exit
                     Return False
-                End Try
-            Next
+                End If
+
+                If CreateStoragePathInfoOnly Then
+                    ' Nothing was copied locally, so nothing to unzip
+                    Return True
+                End If
+
+
+                'Get a listing of the zip files to process
+                ZipFiles = Directory.GetFiles(WorkDir, "s*.zip")
+                If ZipFiles.GetLength(0) < 1 Then
+                    m_message = "No zipped s-folders found in working directory"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False            'No zipped data files found
+                End If
+
+                'Create a dataset subdirectory under the working directory
+                DSWorkFolder = Path.Combine(WorkDir, DSName)
+                Directory.CreateDirectory(DSWorkFolder)
+
+                'Set up the unzipper
+                strZipProgramPath = m_mgrParams.GetParam("zipprogram")
+
+                If Not System.IO.File.Exists(strZipProgramPath) Then
+                    m_message = "Unzip program not found (" & strZipProgramPath & "); unable to continue"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                End If
+
+                UnZipper = New ZipTools(DSWorkFolder, strZipProgramPath)
+
+                'Unzip each of the zip files to the working directory
+                For Each ZipFile In ZipFiles
+                    If m_DebugLevel > 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file " & ZipFile)
+                    End If
+                    Try
+                        TargetFolder = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
+                        Directory.CreateDirectory(TargetFolder)
+                        If Not UnZipper.UnzipFile("", ZipFile, TargetFolder) Then
+                            m_message = "Error unzipping file " & ZipFile
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                            Return False
+                        End If
+                    Catch ex As Exception
+                        m_message = "Exception while unzipping s-folders"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                        Return False
+                    End Try
+                Next
+
+                'Delete all s*.zip files in working directory
+                For Each ZipFile In ZipFiles
+                    Try
+                        File.Delete(ZipFile)
+                    Catch ex As Exception
+                        m_message = "Exception deleting file " & ZipFile
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                        Return False
+                    End Try
+                Next
+
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveSFolders: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Return False
+            End Try
+
 
             'Got to here, so everything must have worked
             Return True
-
         End Function
 
         ''' <summary>
