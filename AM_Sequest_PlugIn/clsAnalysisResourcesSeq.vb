@@ -651,7 +651,7 @@ Public Class clsAnalysisResourcesSeq
             End If
         Catch Err As Exception
             'Something bad happened
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying database file to node " & DestPath)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying database file to " & DestFile & "; " & Err.Message)
             Return False
         End Try
 

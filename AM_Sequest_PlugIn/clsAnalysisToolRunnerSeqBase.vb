@@ -66,8 +66,15 @@ Public Class clsAnalysisToolRunnerSeqBase
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
+        ' Count the number of .Dta files and cache in m_DtaCount
+        CalculateNewStatus(True)
+
+        ' Check whether or not we are resuming a job that stopped prematurely
+        ' Look for a folder in the FailedResultsFolder that is named the same as the ResultsFolder for this job
+        ' If that folder contains a file named "Resume.txt", then copy any .Out files from that folder to the work directory, then delete the corresponding .Dta files
+        CheckForExistingOutFiles()
+
         'Run Sequest
-        CalculateNewStatus()
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
         'Make the .out files
@@ -133,35 +140,151 @@ Public Class clsAnalysisToolRunnerSeqBase
 
     End Function
 
-	''' <summary>
-	''' Calculates status information for progress file
-	''' </summary>
-	''' <remarks>
-	''' Calculation in this class is based on Sequest processing. For other processing types,
-	'''	override this function in derived class
-	'''</remarks>
-	Protected Overridable Sub CalculateNewStatus()
+    ''' <summary>
+    ''' Calculates status information for progress file
+    ''' </summary>
+    ''' <remarks>
+    ''' Calculation in this class is based on Sequest processing. For other processing types,
+    '''	override this function in derived class
+    '''</remarks>
+    Protected Overridable Sub CalculateNewStatus()
+        CalculateNewStatus(True)
+    End Sub
 
-		Dim FileArray() As String
-		Dim OutFileCount As Integer
+    ''' <summary>
+    ''' Calculates status information for progress file
+    ''' </summary>
+    ''' <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
+    ''' <remarks>
+    ''' Calculation in this class is based on Sequest processing. For other processing types,
+    '''	override this function in derived class
+    '''</remarks>
+    Protected Overridable Sub CalculateNewStatus(ByVal blnUpdateDTACount As Boolean)
 
-		'Get DTA count
-		m_WorkDir = CheckTerminator(m_WorkDir)
-		FileArray = Directory.GetFiles(m_WorkDir, "*.dta")
-		m_DtaCount = FileArray.GetLength(0)
+        Dim FileArray() As String
+        Dim OutFileCount As Integer
 
-		'Get OUT file count
-		FileArray = Directory.GetFiles(m_WorkDir, "*.out")
-		OutFileCount = FileArray.GetLength(0)
+        m_WorkDir = CheckTerminator(m_WorkDir)
 
-		'Calculate % complete
-		If m_DtaCount > 0 Then
-			m_progress = 100.0! * CSng(OutFileCount / m_DtaCount)
-		Else
-			m_progress = 0
-		End If
+        If blnUpdateDTACount Then
+            'Get DTA count
+            FileArray = Directory.GetFiles(m_WorkDir, "*.dta")
+            m_DtaCount = FileArray.GetLength(0)
+        End If
 
-	End Sub
+        'Get OUT file count
+        FileArray = Directory.GetFiles(m_WorkDir, "*.out")
+        OutFileCount = FileArray.GetLength(0)
+
+        'Calculate % complete
+        If m_DtaCount > 0 Then
+            m_progress = 100.0! * CSng(OutFileCount / m_DtaCount)
+        Else
+            m_progress = 0
+        End If
+
+    End Sub
+
+    Protected Sub CheckForExistingOutFiles()
+
+        Const RESUME_FILE_NAME As String = "Resume.txt"
+
+        Dim strFailedResultsFolderPath As String
+        Dim ioSourceFolder As System.IO.DirectoryInfo
+        Dim ioFileList() As System.IO.FileInfo
+        Dim ioDtaFile As System.IO.FileInfo
+
+        Dim strDTAFilePath As String
+        Dim strExistingSeqLogFileRenamed As String
+
+        Dim intIndex As Integer
+        Dim intOutFilesCopied As Integer
+        Dim intDtaFilesDeleted As Integer
+
+        Try
+
+            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
+
+            If strFailedResultsFolderPath Is Nothing OrElse strFailedResultsFolderPath.Length = 0 Then
+                ' Failed results folder path is not defined; cannot continue
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot look for existing .Out files for resuming Sequest")
+                Exit Try
+            End If
+
+            If m_ResFolderName Is Nothing OrElse m_ResFolderName.Length = 0 Then
+                ' Results folder name is not defined
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "m_ResFolderName is empty; this is unexpected")
+                Exit Try
+            End If
+
+            strFailedResultsFolderPath = System.IO.Path.Combine(strFailedResultsFolderPath, m_ResFolderName)
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for existing .Out files at " & strFailedResultsFolderPath)
+            End If
+
+            ioSourceFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
+            If ioSourceFolder.Exists Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archived results folder found for job " & m_JobNum & "; checking for a file named " & RESUME_FILE_NAME)
+                End If
+
+                If ioSourceFolder.GetFiles(RESUME_FILE_NAME).Length > 0 Then
+                    ' Yes, folder contains a Resume file
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, RESUME_FILE_NAME & " file found in archived results folder (" & ioSourceFolder.FullName & "); will copy any .Out files to " & m_WorkDir)
+
+                    ' Look for all of the existing .Out files
+                    ' Copy all non-empty .Out files to the Work Directory
+
+                    ioFileList = ioSourceFolder.GetFiles("*.out")
+                    intOutFilesCopied = 0
+                    intDtaFilesDeleted = 0
+
+                    For intIndex = 0 To ioFileList.Length - 1
+                        With ioFileList(intIndex)
+                            If .Length > 0 Then
+                                .CopyTo(System.IO.Path.Combine(m_WorkDir, .Name), True)
+                                intOutFilesCopied += 1
+
+                                ' Delete the corresponding .Dta file in m_Workdir
+                                strDTAFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(.Name) & ".dta")
+                                ioDtaFile = New System.IO.FileInfo(strDTAFilePath)
+                                If ioDtaFile.Exists Then
+                                    ioDtaFile.Delete()
+                                    intDtaFilesDeleted += 1
+                                End If
+                            End If
+                        End With
+                    Next intIndex
+
+                    If intOutFilesCopied = 0 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Warning: did not find any existing .Out files in the archived results folder")
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & intOutFilesCopied & " .Out files to the Work Directory; deleted " & intDtaFilesDeleted & " corresponding .Dta files in the Work Directory")
+
+                        ioFileList = ioSourceFolder.GetFiles("sequest.log")
+                        If ioFileList.Length > 0 Then
+                            With ioFileList(0)
+                                ' Copy the sequest.log file to the work directory, but rename it to include a time stamp
+                                strExistingSeqLogFileRenamed = System.IO.Path.GetFileNameWithoutExtension(.Name) & "_" & _
+                                                               .LastWriteTime.ToString("yyyyMMdd_HHmm") & _
+                                                               System.IO.Path.GetExtension(.Name)
+
+                                .CopyTo(System.IO.Path.Combine(m_WorkDir, strExistingSeqLogFileRenamed), True)
+                            End With
+
+                        End If
+                    End If
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)
+        End Try
+
+    End Sub
 
 	''' <summary>
 	''' Runs Sequest to make .out files
@@ -252,7 +375,7 @@ Public Class clsAnalysisToolRunnerSeqBase
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
             MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-            CalculateNewStatus()
+            CalculateNewStatus(False)
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
 			For ProcIndx = 0 To RunProgs.GetUpperBound(0)
@@ -531,6 +654,12 @@ Public Class clsAnalysisToolRunnerSeqBase
             intNodeCountActive = 0      ' Value for reSpawnedSlaveProcesses
             intDTACount = 0
 
+            ' Note: This value is obtained when the manager params are grabbed from the Manager Control DB
+            ' Use this query to view/update expected node counts'
+            '  SELECT M.M_Name, PV.MgrID, PV.Value
+            '  FROM T_ParamValue AS PV INNER JOIN T_Mgrs AS M ON PV.MgrID = M.M_ID
+            '  WHERE (PV.TypeID = 122)
+
             strParam = m_mgrParams.GetParam("SequestNodeCountExpected")
             If Integer.TryParse(strParam, intNodeCountExpected) Then
             Else
@@ -651,6 +780,14 @@ Public Class clsAnalysisToolRunnerSeqBase
                     strProcessingMsg = "Error: NodeCountActive less than expected value (" & intNodeCountExpected & ")"
                     If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+
+                    ' Update the evaluation message and evaluation code
+                    ' These will be used by sub CloseTask in clsAnalysisJob
+                    '
+                    ' An evaluation code with bit ERROR_CODE_A set will result in DMS_Pipeline DB views
+                    '  V_Job_Steps_Stale_and_Failed and V_Sequest_Cluster_Warnings showing this message:
+                    '  "SEQUEST node count is less than the expected value"
+
                     m_EvalMessage &= "; " & strProcessingMsg
                     m_EvalCode = m_EvalCode Or ERROR_CODE_A
                 Else
@@ -660,6 +797,12 @@ Public Class clsAnalysisToolRunnerSeqBase
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
                         m_EvalMessage &= "; " & strProcessingMsg
                         m_EvalCode = m_EvalCode Or ERROR_CODE_B
+
+                        ' Update the evaluation message and evaluation code
+                        ' These will be used by sub CloseTask in clsAnalysisJob
+                        ' An evaluation code with bit ERROR_CODE_A set will result in view V_Sequest_Cluster_Warnings in the DMS_Pipeline DB showing this message:
+                        '  "SEQUEST node count is less than the expected value"
+
                     End If
                 End If
 

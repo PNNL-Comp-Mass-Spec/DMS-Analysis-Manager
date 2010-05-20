@@ -131,6 +131,15 @@ AnalysisManagerSequestPlugin
  Calculation in this class is based on Sequest processing. For other processing types,
 	override this function in derived class
 </remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.CalculateNewStatus(System.Boolean)">
+	<summary>
+ Calculates status information for progress file
+ </summary>
+	<param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
+	<remarks>
+ Calculation in this class is based on Sequest processing. For other processing types,
+	override this function in derived class
+</remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.MakeOUTFiles">
 	<summary>
  Runs Sequest to make .out files
