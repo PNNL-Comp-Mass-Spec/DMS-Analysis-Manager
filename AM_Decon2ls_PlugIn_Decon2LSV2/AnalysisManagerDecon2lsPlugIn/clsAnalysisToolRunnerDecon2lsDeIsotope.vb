@@ -27,16 +27,37 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
 
 	End Sub
 
-    Protected Overrides Sub StartDecon2LS()
+    Protected Overrides Sub StartDecon2LS(ByRef bw As System.ComponentModel.BackgroundWorker, _
+                                          ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)
 
         If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(), Starting deconvolution")
         End If
 
         Try
-            m_ToolObj.DeConvolute()
+
+
+            Dim objDeconTools As DeconTools.Backend.OldSchoolProcRunner
+
+            ' ToDo: Specify the output file path
+            objDeconTools = New DeconTools.Backend.OldSchoolProcRunner(udtCurrentLoopParams.InputFilePath, _
+                                                                       udtCurrentLoopParams.DeconFileType, _
+                                                                       udtCurrentLoopParams.ParamFilePath, _
+                                                                       bw)
+
+            ''objDeconTools = New DeconTools.Backend.OldSchoolProcRunner(udtCurrentLoopParams.InputFilePath, _
+            ''                                               udtCurrentLoopParams.OutputFilePath, _
+            ''                                               udtCurrentLoopParams.DeconFileType, _
+            ''                                               udtCurrentLoopParams.ParamFilePath, _
+            ''                                               bw)
+
+            mDeconToolsStatus.CurrentState = DeconToolsStateType.Running
+
+            objDeconTools.IsosResultThreshold = 25000
+            objDeconTools.Execute()
+
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception from m_ToolObj.DeConvolute in clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(): " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconTools.Backend.OldSchoolProcRunner in StartDecon2LS(): " & ex.Message)
         End Try
 
     End Sub

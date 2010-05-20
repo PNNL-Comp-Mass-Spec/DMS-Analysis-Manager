@@ -27,14 +27,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     'Base class for Decon2LS-specific tasks. Handles tasks common to using Decon2LS for deisotoping and TIC 
     'generation
     '
-    'This version uses .Net remoting to communicate with a separate process that runs Decon2LS. The separate
-    'process is required due to Decon2LS' use of a Finnigan library that puts a lock on the raw data file, preventing
-    'cleanup of the working directory after a job completes. Killing the Decon2LS process will
-    'release the file lock.
     '*********************************************************************************************************
 
 #Region "Constants"
-    Private Const DECON2LS_FATAL_REMOTING_ERROR As String = "Fatal remoting error"
     Private Const DECON2LS_CORRUPTED_MEMORY_ERROR As String = "Corrupted memory error"
 
     Private Const DECON2LS_SCANS_FILE_SUFFIX As String = "_scans.csv"
@@ -44,33 +39,84 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 #End Region
 
 #Region "Module variables"
-    Protected m_ToolObj As Decon2LSRemoter.clsDecon2LSRemoter    'Remote class for execution of Decon2LS via .Net remoting
-    Protected m_AnalysisType As String
-    Protected m_RemotingTools As clsRemotingTools
-    Protected m_ServerRunning As Boolean = False
 
-    Protected m_Decon2LSThread As System.Threading.Thread
+    ' This will be TDL or DLS (though I'm not sure it's actually used anywhere
+    Protected m_AnalysisType As String
 
     Protected mInputFileName As String = String.Empty
+
+    Protected mCurrentLoopParams As udtCurrentLoopParamsType
 
     ' The following variable is set to True if Decon2LS fails, but at least one loop of analysis succeeded
     Protected mDecon2LSFailedMidLooping As Boolean = False
     Protected mDecon2LSThreadAbortedSinceFinished As Boolean
+
+
+    Private WithEvents mDeconToolsBackgroundWorker As System.ComponentModel.BackgroundWorker
+
+    Protected mDeconToolsStatus As udtDeconToolsStatusType
+   
 #End Region
 
-#Region "Enums"
+#Region "Enums and Structures"
     'Used for result file type
     Enum Decon2LSResultFileType
         DECON2LS_ISOS = 0
         DECON2LS_SCANS = 1
     End Enum
 
+    Enum DeconToolsStateType
+        Idle = 0
+        Running = 1
+        Complete = 2
+        Cancelled = 3
+        ErrorCaught = 4
+    End Enum
+
+    Protected Structure udtCurrentLoopParamsType
+        Public InputFilePath As String
+        Public OutputFilePath As String
+        Public ParamFilePath As String
+        Public DeconFileType As DeconTools.Backend.Globals.MSFileType
+    End Structure
+
+    Protected Structure udtDeconToolsStatusType
+        Public CurrentState As DeconToolsStateType
+        Public ErrorMessage As String
+        Public CurrentLCScan As Integer     ' LC Scan number or IMS Frame Number
+        Public CurrentIMSScan As Integer    ' Only used if IsUIMF = True
+        Public IsUIMF As Boolean
+        Public Sub Clear()
+            CurrentState = DeconToolsStateType.Idle
+            ErrorMessage = String.Empty
+            CurrentLCScan = 0
+            CurrentIMSScan = 0
+            IsUIMF = False
+        End Sub
+
+    End Structure
 #End Region
 
 #Region "Methods"
     Public Sub New()
 
     End Sub
+
+    Private Sub mDeconToolsBackgroundWorker_DoWork(ByVal sender As Object, _
+                                                   ByVal e As System.ComponentModel.DoWorkEventArgs) Handles mDeconToolsBackgroundWorker.DoWork
+
+        Dim bw As System.ComponentModel.BackgroundWorker
+
+        bw = DirectCast(sender, System.ComponentModel.BackgroundWorker)
+
+        StartDecon2LS(bw, mCurrentLoopParams)
+
+        If bw.CancellationPending Then
+            e.Cancel = True
+        End If
+
+    End Sub
+
 
     Private Function AssembleFiles(ByVal strCombinedFileName As String, _
                                    ByVal resFileType As Decon2LSResultFileType, _
@@ -239,7 +285,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Dim result As IJobParams.CloseOutType
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
+        'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
         Dim eReturnCode As IJobParams.CloseOutType
 
         ' Set this to success for now
@@ -326,15 +372,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Protected MustOverride Sub StartDecon2LS()   'Uses overrides in subclasses to handle details of starting Decon2LS
-
-    Protected Overridable Sub CalculateNewStatus()
-
-        ' Get the percent complete status from Decon2LS
-        ' Decon2LS reports the percent complete as a value between 0 and 100
-        m_progress = m_ToolObj.PercentDone
-
-    End Sub
+    Protected MustOverride Sub StartDecon2LS(ByRef bw As System.ComponentModel.BackgroundWorker, _
+                                             ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)   'Uses overrides in subclasses to handle details of starting Decon2LS
 
     Protected Function RunDecon2Ls() As IJobParams.CloseOutType
         Const DEFAULT_LOOPING_CHUNK_SIZE As Integer = 25000
@@ -349,7 +388,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim intLoopChunkSize As Integer = DEFAULT_LOOPING_CHUNK_SIZE
 
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
+        'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
 
         Dim strParamFile As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim strParamFileCurrentLoop As String = System.IO.Path.Combine(m_WorkDir, PARAM_FILE_NAME_TEMP)
@@ -391,8 +430,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         ' Get file type of the raw data file
-        Dim filetype As DeconToolsV2.Readers.FileType = GetInputFileType(RawDataType)
-        If filetype = DeconToolsV2.Readers.FileType.UNDEFINED Then
+        Dim filetype As DeconTools.Backend.Globals.MSFileType = GetInputFileType(RawDataType)
+        If filetype = DeconTools.Backend.Globals.MSFileType.Undefined Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)
             m_message = "Invalid raw data type specified"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -414,8 +453,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             ' Increment the loop counter
             intLoopNum += 1
 
-            'Create an object to handle the .Net Remoting tasks
-            m_RemotingTools = New clsRemotingTools(m_DebugLevel, TcpPort)
+            ' Instantiate the Background worker
+            mDeconToolsBackgroundWorker = New System.ComponentModel.BackgroundWorker
+
+            mDeconToolsBackgroundWorker.WorkerReportsProgress = True
+            mDeconToolsBackgroundWorker.WorkerSupportsCancellation = True
+
 
             If blnLoopingEnabled Then
                 ' Save as a new temporary parameter file, strParamFile  
@@ -430,53 +473,25 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Processing scans " & LocScanStart.ToString & " to " & LocScanStop.ToString)
             End If
 
-            'Start the remoting server
-            If Not m_RemotingTools.StartSvr Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Remoting server startup failed")
-                m_message = "Remoting server startup problem"
-                blnDecon2LSError = True
-                Exit Do
-            End If
-
-            'Delay 5 seconds to allow server to start up
-            System.Threading.Thread.Sleep(5000)
-
-            'Init the Decon2LS wrapper
-            Try
-                'Instantiate the remote object
-                m_ToolObj = New Decon2LSRemoter.clsDecon2LSRemoter
-                With m_ToolObj
-                    .ResetState()
-                    .DataFile = mInputFileName
-                    .DeconFileType = filetype
-                    .OutFile = strOutFileCurrentLoop
-                    .ParamFile = strParamFileCurrentLoop
-                End With
-            Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Error initializing Decon2LS: " & _
-                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                m_message = "Error initializing Decon2LS"
-                If ex.Message.Contains("No connection could be made because the target machine actively refused it") Then
-                    m_message &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
-                ElseIf ex.Message.Contains("Requested Service not found") Then
-                    m_message &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
-                ElseIf ex.Message.Contains("memory is corrupt") Then
-                    m_message &= " (" & DECON2LS_CORRUPTED_MEMORY_ERROR & ")"
-                End If
-
-                blnDecon2LSError = True
-                Exit Do
-            End Try
-
+          
             ' Reset the log file tracking variables
             mDecon2LSThreadAbortedSinceFinished = False
 
-            'Start Decon2LS via the subclass in a separate thread
-            m_Decon2LSThread = New System.Threading.Thread(AddressOf StartDecon2LS)
-            m_Decon2LSThread.Start()
+            ' Initialize mCurrentLoopParams
+            With mCurrentLoopParams
+                .InputFilePath = mInputFileName
+                .OutputFilePath = strOutFileCurrentLoop
+                .ParamFilePath = strParamFileCurrentLoop
+                .DeconFileType = filetype
+            End With
+
+            ' Reset the state variables
+            mDeconToolsStatus.Clear()
+
+            'Start Decon2LS via the backgroundworker
+            mDeconToolsBackgroundWorker.RunWorkerAsync()
 
             'Wait for Decon2LS to finish
-            System.Threading.Thread.Sleep(3000)       'Pause to ensure Decon2LS has adequate time to start
             WaitForDecon2LSFinish()
 
             ' Stop the analysis timer
@@ -488,22 +503,22 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
             ' Determine reason for Decon2LS finish
             If mDecon2LSThreadAbortedSinceFinished Then
-                ' The thread was still reporting a status of RUNNING_DECON or RUNNING_TIC
+                ' The background worker is still running
                 ' However, the log file says things completed successfully
                 ' We'll trust the log file
                 blnDecon2LSError = False
             Else
-                Select Case m_ToolObj.DeconState
-                    Case DMSDeconToolsV2.DeconState.DONE
+                Select Case mDeconToolsStatus.CurrentState
+                    Case DeconToolsStateType.Complete
                         'This is normal, do nothing else
                         blnDecon2LSError = False
 
-                    Case DMSDeconToolsV2.DeconState.ERROR
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & m_ToolObj.ErrMsg)
+                    Case DeconToolsStateType.ErrorCaught
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & mDeconToolsStatus.ErrorMessage)
                         m_message = "Decon2LS error"
                         blnDecon2LSError = True
 
-                    Case DMSDeconToolsV2.DeconState.IDLE
+                    Case DeconToolsStateType.Idle
                         'Shouldn't ever get here
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
                         m_message = "Decon2LS invalid state"
@@ -514,8 +529,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             'Delay to allow Decon2LS a chance to close all files
             System.Threading.Thread.Sleep(5000)      '5 seconds
 
-            'Kill the Decon2LS object and stop the remoting server
-            KillDecon2LSObject()
+            ' Dispose of the background worker
+            mDeconToolsBackgroundWorker.Dispose()
+
             If blnDecon2LSError Then Exit Do
 
             If blnLoopingEnabled AndAlso ScanStart < 10000 AndAlso LocScanStart >= 50000 Then
@@ -634,34 +650,34 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Protected Function GetInputFileType(ByVal RawDataType As String) As DeconToolsV2.Readers.FileType
+    Protected Function GetInputFileType(ByVal RawDataType As String) As DeconTools.Backend.Globals.MSFileType
 
         'Gets the Decon2LS file type based on the input data type
         Select Case RawDataType.ToLower
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
-                Return DeconToolsV2.Readers.FileType.FINNIGAN
+                Return DeconTools.Backend.Globals.MSFileType.Finnigan
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
-                Return DeconToolsV2.Readers.FileType.AGILENT_TOF
+                Return DeconTools.Backend.Globals.MSFileType.Agilent_WIFF
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
-                Return DeconToolsV2.Readers.FileType.PNNL_UIMF
+                Return DeconTools.Backend.Globals.MSFileType.PNNL_UIMF
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
-                Return DeconToolsV2.Readers.FileType.MICROMASSRAWDATA
+                Return DeconTools.Backend.Globals.MSFileType.Micromass_Rawdata
             Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
                 If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
                     'Data off of Bruker FTICR
-                    Return DeconToolsV2.Readers.FileType.ICR2LSRAWDATA
+                    Return DeconTools.Backend.Globals.MSFileType.Bruker
                 ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
                     'Data from old Finnigan FTICR
-                    Return DeconToolsV2.Readers.FileType.SUNEXTREL
+                    Return DeconTools.Backend.Globals.MSFileType.SUNEXTREL
                 Else
                     'Should never get here
-                    Return DeconToolsV2.Readers.FileType.UNDEFINED
+                    Return DeconTools.Backend.Globals.MSFileType.Undefined
                 End If
             Case "dot_mzxml_files"
-                Return DeconToolsV2.Readers.FileType.MZXMLRAWDATA
+                Return DeconTools.Backend.Globals.MSFileType.MZXML_Rawdata
             Case Else
                 'Should never get this value
-                Return DeconToolsV2.Readers.FileType.UNDEFINED
+                Return DeconTools.Backend.Globals.MSFileType.Undefined
         End Select
 
     End Function
@@ -688,50 +704,72 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     End Function
 
     Protected Sub WaitForDecon2LSFinish()
+        Dim dtLastStatusUpdate As System.DateTime
+
         Dim dtFinishTime As DateTime
         Dim dtLastLogCheckTime As DateTime = System.DateTime.Now
 
+        Dim blnCheckLogFile As Boolean
+
         'Loops while waiting for Decon2LS to finish running
 
-        Dim CurState As DMSDeconToolsV2.DeconState = m_ToolObj.DeconState
-        While (CurState = DMSDeconToolsV2.DeconState.RUNNING_DECON) Or (CurState = DMSDeconToolsV2.DeconState.RUNNING_TIC)
+        dtLastStatusUpdate = System.DateTime.Now
 
-            ' Synchronize the stored Debug level with the value stored in the database
-            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-            MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        While mDeconToolsBackgroundWorker.IsBusy
 
-            'Update the % completion
-            CalculateNewStatus()
+            ' Update the status every 5 seconds
+            If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+                dtLastStatusUpdate = System.DateTime.Now
 
-            'Update the status file
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
+                ' Synchronize the stored Debug level with the value stored in the database
+                Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+                MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-            'Wait 5 seconds, then get a new Decon2LS state
-            System.Threading.Thread.Sleep(5000)
-            CurState = m_ToolObj.DeconState
-            Debug.WriteLine("Current Scan: " & m_ToolObj.CurrentScan)
-            If m_DebugLevel >= 5 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
-            End If
+                'Update the status file
+                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
 
-            ' Parse the Decon2LS _log.txt file every 30 seconds to see if it reports that things have finished
-            If System.DateTime.Now.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
-                dtLastLogCheckTime = System.DateTime.Now
+                If System.DateTime.Now.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
+                    blnCheckLogFile = True
+                Else
+                    blnCheckLogFile = False
+                End If
 
-                If Decon2LSLogFileReportsFinished(dtFinishTime) Then
-                    ' The Decon2LS Log File reports that the task is complete
-                    ' If it finished over 30 seconds ago, then forcibly kill the thread and exit the while loop
+                Debug.WriteLine("Current Scan: " & mDeconToolsStatus.CurrentLCScan)
+                If m_DebugLevel >= 5 OrElse (m_DebugLevel >= 2 And blnCheckLogFile) Then
 
-                    If System.DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= 30 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Forcibly closed the Decon2LS thread since the log file reports finished and over 30 seconds has elapsed, yet Decon2LS still reports its state as Running")
+                    Dim strProgressMessage As String
 
-                        m_Decon2LSThread.Abort()
-                        System.Threading.Thread.Sleep(3000)
+                    If mDeconToolsStatus.IsUIMF Then
+                        strProgressMessage = "Frame=" & mDeconToolsStatus.CurrentLCScan & ", Scan=" & mDeconToolsStatus.CurrentIMSScan
+                    Else
+                        strProgressMessage = "Scan=" & mDeconToolsStatus.CurrentLCScan
+                    End If
 
-                        mDecon2LSThreadAbortedSinceFinished = True
-                        Exit While
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), State=" & mDeconToolsStatus.CurrentState & ", " & strProgressMessage & ", " & m_progress.ToString("0.0") & "% complete")
+
+                End If
+
+                ' Parse the Decon2LS _log.txt file every 30 seconds to see if it reports that things have finished
+                If blnCheckLogFile Then
+                    dtLastLogCheckTime = System.DateTime.Now
+
+                    If Decon2LSLogFileReportsFinished(dtFinishTime) Then
+                        ' The Decon2LS Log File reports that the task is complete
+                        ' If it finished over 30 seconds ago, then forcibly kill the background worker and exit the while loop
+
+                        If System.DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= 30 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Forcibly closed the Decon2LS thread since the log file reports finished and over 30 seconds has elapsed, yet Decon2LS still reports its state as Running")
+
+                            mDeconToolsBackgroundWorker.CancelAsync()
+
+                            System.Threading.Thread.Sleep(3000)
+
+                            mDecon2LSThreadAbortedSinceFinished = True
+                            Exit While
+                        End If
                     End If
                 End If
+
             End If
 
         End While
@@ -844,19 +882,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Protected Sub KillDecon2LSObject()
-
-        'Removes the Decon2LS object
-        If Not IsNothing(m_ToolObj) Then
-            m_ToolObj.Dispose()
-            m_ToolObj = Nothing
-        End If
-
-        'Stop remoting server
-        m_RemotingTools.StopSvr()        'At present, no action other than logging is being taken if there is a problem stopping the server.
-
-    End Sub
-
 
     Private Function WriteTempParamFile(ByVal strParamFile As String, ByVal strParamFileTemp As String, ByVal NewMinScanValue As Integer, ByRef NewMaxScanValue As Integer) As Boolean
         Dim objParamFile As System.Xml.XmlDocument
@@ -949,4 +974,41 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
 #End Region
 
+    Private Sub mDeconToolsBackgroundWorker_ProgressChanged(ByVal sender As Object, ByVal e As System.ComponentModel.ProgressChangedEventArgs) Handles mDeconToolsBackgroundWorker.ProgressChanged
+
+        ' Get the progress complete (integer between 0 and 100)
+        m_progress = e.ProgressPercentage
+
+        Dim objState As DeconTools.Backend.Core.UserState
+        objState = DirectCast(e.UserState, DeconTools.Backend.Core.UserState)
+
+        'objState.CurrentRun.CurrentScanSet.NumIsotopicProfiles
+
+        ' Get the progress complete (decimal value between 0 and 100)
+        m_progress = objState.PercentDone
+
+        If TypeOf objState.CurrentRun Is DeconTools.Backend.Runs.UIMFRun Then
+            ' Processing an IMS UIMF file
+            mDeconToolsStatus.CurrentLCScan = objState.CurrentFrameSet.PrimaryFrame
+            mDeconToolsStatus.CurrentIMSScan = objState.CurrentScanSet.PrimaryScanNumber
+            mDeconToolsStatus.IsUIMF = True
+        Else
+            mDeconToolsStatus.CurrentLCScan = objState.CurrentScanSet.PrimaryScanNumber
+        End If
+
+    End Sub
+
+    Private Sub mDeconToolsBackgroundWorker_RunWorkerCompleted(ByVal sender As Object, ByVal e As System.ComponentModel.RunWorkerCompletedEventArgs) Handles mDeconToolsBackgroundWorker.RunWorkerCompleted
+
+        If (e.Cancelled) Then
+            mDeconToolsStatus.CurrentState = DeconToolsStateType.Cancelled
+        ElseIf Not e.Error Is Nothing Then
+            mDeconToolsStatus.CurrentState = DeconToolsStateType.ErrorCaught
+            mDeconToolsStatus.ErrorMessage = e.Error.Message
+        Else
+            mDeconToolsStatus.CurrentState = DeconToolsStateType.Complete
+            m_progress = 100
+        End If
+
+    End Sub
 End Class

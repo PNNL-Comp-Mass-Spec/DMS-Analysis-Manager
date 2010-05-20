@@ -26,18 +26,44 @@ Public Class clsAnalysisToolRunnerDecon2lsTIC
 
 	End Sub
 
-	Protected Overrides Sub StartDecon2LS()
+    Protected Overrides Sub StartDecon2LS(ByRef bw As System.ComponentModel.BackgroundWorker, _
+                                          ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)
 
-		'TIC generation requires its own file extension creation
-		m_ToolObj.OutFile = m_ToolObj.OutFile & "_scans.csv"
-
-		'Start Decon2LS
-		If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsTIC.StartDecon2LS(), Starting TIC processing")
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(), Starting TIC processing")
         End If
-		m_ToolObj.CreateTIC()
 
-	End Sub
+        Try
+
+            ' TIC generation requires its own file extension creation
+            ' We may need to add it
+            'udtCurrentLoopParams.OutputFilePath &= "_scans.csv"
+
+            Dim objDeconTools As DeconTools.Backend.OldSchoolProcRunner
+
+            ' ToDo: Specify the output file path
+            objDeconTools = New DeconTools.Backend.OldSchoolProcRunner(udtCurrentLoopParams.InputFilePath, _
+                                                                       udtCurrentLoopParams.DeconFileType, _
+                                                                       udtCurrentLoopParams.ParamFilePath, _
+                                                                       bw)
+
+            ''objDeconTools = New DeconTools.Backend.OldSchoolProcRunner(udtCurrentLoopParams.InputFilePath, _
+            ''                                               udtCurrentLoopParams.OutputFilePath, _
+            ''                                               udtCurrentLoopParams.DeconFileType, _
+            ''                                               udtCurrentLoopParams.ParamFilePath, _
+            ''                                               bw)
+
+            mDeconToolsStatus.CurrentState = DeconToolsStateType.Running
+
+            objDeconTools.IsosResultThreshold = 25000
+            objDeconTools.Execute()
+
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconTools.Backend.OldSchoolProcRunner in StartDecon2LS(): " & ex.Message)
+        End Try
+
+    End Sub
+
 #End Region
 
 End Class
