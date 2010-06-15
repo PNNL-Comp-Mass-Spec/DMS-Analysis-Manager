@@ -411,7 +411,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 ScanStop = MAX_SCAN_STOP
             End If
 
-            If ScanStart < 0 Then ScanStart = 0
+            If ScanStart < 1 Then ScanStart = 1
             If ScanStop > MAX_SCAN_STOP Then
                 ScanStop = MAX_SCAN_STOP
             End If
@@ -425,7 +425,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 LocScanStop = ScanStop
             End If
         Else
-            LocScanStart = 0
+            LocScanStart = 1
             LocScanStop = MAX_SCAN_STOP
         End If
 
