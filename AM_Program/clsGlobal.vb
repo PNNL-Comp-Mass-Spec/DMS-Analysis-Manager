@@ -39,6 +39,7 @@ Namespace AnalysisManagerBase
         Public Shared m_EvalCode As Integer = 0                         ' Can be used to pass codes regardng the results of this analysis back to the DMS_Pipeline DB
         Public Shared m_EvalMessage As String = ""                      ' Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB
         Public Shared m_ServerFilesToDelete As New List(Of String)      ' List of file names to remove from the server
+        Public Shared m_DatasetInfoList As New ArrayList                ' List of dataset names and dataset IDs
 #End Region
 
 #Region "Methods"

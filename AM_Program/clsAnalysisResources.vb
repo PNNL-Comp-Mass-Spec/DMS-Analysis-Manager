@@ -16,11 +16,12 @@ Imports Protein_Exporter
 Imports Protein_Exporter.ExportProteinCollectionsIFC
 Imports System.Timers
 Imports System.Collections.Specialized
+Imports System.Data.SqlClient
 
 Namespace AnalysisManagerBase
 
 	Public MustInherit Class clsAnalysisResources
-		Implements IAnalysisResources
+        Implements IAnalysisResources
 
 		'*********************************************************************************************************
 		'Base class for job resource class
@@ -1803,7 +1804,201 @@ Namespace AnalysisManagerBase
             Return blnSuccess
 
         End Function
+
+        Public Function RetrieveAggregateFiles(ByVal FilesToRetrieveExt As String()) As Boolean
+
+            Dim SourceFolderPath As String = ""
+            Dim DatasetName As String
+            Dim SourceFilename As String = ""
+            Dim DatasetInformation As New DataTable
+            Dim SplitString As String()
+            Dim Tool As String
+            Dim blnsuccess As Boolean = False
+            Dim WorkDir As String = m_mgrParams.GetParam("WorkDir")
+            Dim FilterValue As String = ""
+            Dim i As Integer = 0
+            If Not LoadDatasetLocationsFromDB(DatasetInformation) Then Return False
+
+            Dim CurRow As DataRow
+            Try
+                For Each CurRow In DatasetInformation.Rows
+                    DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
+                    'Add all potential paths to job params
+                    If Not m_jobParams.AddAdditionalParameter("DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then Return False
+                    If Not m_jobParams.AddAdditionalParameter("DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then Return False
+                    If Not m_jobParams.AddAdditionalParameter("inputFolderName", DbCStr(CurRow(DatasetInformation.Columns("ResultsFolder")))) Then Return False
+                    If Not m_jobParams.AddAdditionalParameter("DatasetFolderName", DbCStr(CurRow(DatasetInformation.Columns("DatasetFolder")))) Then Return False
+
+                    clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
+
+                    FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName")))
+                    Tool = DbCStr(CurRow(DatasetInformation.Columns("Tool")))
+
+                    For Each FileNameExt As String In FilesToRetrieveExt
+                        SplitString = FileNameExt.Split(":"c)
+                        SourceFilename = DatasetName & SplitString(1)
+                        If SplitString(0) = Tool.ToLower Then
+                            SourceFolderPath = FindDataFile(SourceFilename)
+                            If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, WorkDir, clsLogTools.LogLevels.ERROR) Then
+                                If m_DebugLevel >= 1 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFilename & " using folder " & SourceFolderPath)
+                                End If
+                                Return False
+                            Else
+                                If m_DebugLevel >= 1 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & SourceFilename & " from folder " & SourceFolderPath)
+                                End If
+                            End If
+                            If SourceFilename.ToLower.Contains(".zip") Then
+                                'Unzip file
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " & SourceFilename)
+                                If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFilename), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveAggregateFiles", False) Then
+                                    If m_DebugLevel >= 1 Then
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
+                                    End If
+                                    clsGlobal.m_FilesToDeleteExt.Add(SourceFilename)
+                                    RenameCopiedFile(WorkDir, System.IO.Path.GetFileNameWithoutExtension(SourceFilename) & ".txt", FilterValue, SplitString(2))
+                                Else
+                                    Return False
+                                End If
+
+                            End If
+                            'Rename the files where dataset name will cause collisions
+                            RenameCopiedFile(WorkDir, SourceFilename, FilterValue, SplitString(2))
+                        End If
+                    Next
+                Next
+
+            Catch ex As System.Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath & ex.Message)
+                blnsuccess = False
+            Finally
+                DatasetInformation.Dispose()
+            End Try
+            blnsuccess = True
+
+            Return blnsuccess
+
+        End Function
+
+        Private Function RenameCopiedFile(ByVal workDir As String, ByVal FileNamePath As String, ByVal filterValue As String, ByVal SaveFile As String) As Boolean
+            Dim newFilename As String = ""
+            Dim ext As String = ""
+            Dim filenameNoExt As String = "'"
+
+            Try
+                Select Case m_jobParams.GetParam("StepTool").ToLower
+                    Case "phospho_fdr_aggregator"
+                        Dim fi As New FileInfo(Path.Combine(workDir, FileNamePath))
+                        ext = System.IO.Path.GetExtension(FileNamePath)
+                        filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(FileNamePath)
+                        If filterValue.ToLower.Contains("_hcd") Then
+                            newFilename = filenameNoExt & "_hcd" & ext
+
+                        ElseIf filterValue.ToLower.Contains("_etd") Then
+                            newFilename = filenameNoExt & "_etd" & ext
+
+                        ElseIf filterValue.ToLower.Contains("_cid") Then
+                            newFilename = filenameNoExt & "_cid" & ext
+                        Else
+                            newFilename = FileNamePath
+                        End If
+
+                        fi.MoveTo(Path.Combine(workDir, newFilename))
+                        If SaveFile = "nocopy" Then
+                            clsGlobal.m_FilesToDeleteExt.Add(newFilename)
+                        End If
+
+                        Return True
+
+                End Select
+
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RenameCopiedFile; Exception during renaming of file: " & newFilename & " from folder " & workDir & ex.Message)
+                Return False
+
+            End Try
+
+            Return True
+
+        End Function
+
+        Protected Function DbCStr(ByVal InpObj As Object) As String
+
+            'If input object is DbNull, returns "", otherwise returns String representation of object
+            If InpObj Is DBNull.Value Then
+                Return ""
+            Else
+                Return CStr(InpObj)
+            End If
+
+        End Function
+
+        Protected Function LoadDatasetLocationsFromDB(ByRef ResultTable As DataTable) As Boolean
+
+            'Requests Dataset information from a data package
+            Dim RetryCount As Short = 3
+            Dim MyMsg As String
+            Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+
+            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SettingsFileName, DatasetID " & _
+                                   "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
+                                   "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
+                                   "Order by Dataset, Tool"
+            Dim Dt As DataTable = Nothing
+            Dim blnsuccess As Boolean = False
+
+            'Get a table to hold the results of the query
+            While RetryCount > 0
+                Try
+                    Using Cn As SqlConnection = New SqlConnection(ConnectionString)
+                        Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
+                            Using Ds As DataSet = New DataSet
+                                Da.Fill(Ds)
+                                Dt = Ds.Tables(0)
+                            End Using  'Ds
+                        End Using  'Da
+                    End Using  'Cn
+                    Exit While
+                Catch ex As System.Exception
+                    RetryCount -= 1S
+                    MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; Exception getting aggregate list from database: " & ex.Message & "; ConnectionString: " & ConnectionString
+                    MyMsg &= ", RetryCount = " & RetryCount.ToString
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                    System.Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
+                End Try
+            End While
+
+            'If loop exited due to errors, return false
+            If RetryCount < 1 Then
+                MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; Excessive failures attempting to retrieve aggregate list from database"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                Dt.Dispose()
+                Return False
+            End If
+
+            'Verify at least one row returned
+            If Dt.Rows.Count < 1 Then
+                ' No data was returned
+                MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; The file paths return from the database was empty."
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                Dt.Dispose()
+                Return False
+            End If
+
+            ResultTable = Dt
+
+            Dt.Dispose()
+
+            blnsuccess = True
+
+            Return blnsuccess
+
+        End Function
+
+
 #End Region
+
 
     End Class
 
