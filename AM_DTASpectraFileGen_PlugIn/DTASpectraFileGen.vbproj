@@ -124,6 +124,16 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <COMReference Include="XRAWFILE2Lib">
+      <Guid>{5FE970A2-29C3-11D3-811D-00104B304896}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="My Project\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />

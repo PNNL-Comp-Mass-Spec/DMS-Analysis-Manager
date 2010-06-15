@@ -21,14 +21,15 @@ Public Class clsDtaGenMainProcess
 	Private m_NumScans As Integer
 	Private m_AbortRequested As Boolean = False
 	Private WithEvents m_RunProgTool As clsRunDosProgram
-	Private m_thThread As System.Threading.Thread
+    Private m_thThread As System.Threading.Thread
+
 #End Region
 
 #Region "API Declares"
 	'Used for getting dta count in spectra file via ICR2LS
-	Private Declare Function lopen Lib "kernel32" Alias "_lopen" (ByVal lpPathName As String, ByVal iReadWrite As Integer) As Integer
-	Private Declare Function lclose Lib "kernel32" Alias "_lclose" (ByVal hFile As Integer) As Integer
-	Private Declare Function XnumScans Lib "icr2ls32.dll" (ByVal FileHandle As Integer) As Integer
+    'Private Declare Function lopen Lib "kernel32" Alias "_lopen" (ByVal lpPathName As String, ByVal iReadWrite As Integer) As Integer
+    'Private Declare Function lclose Lib "kernel32" Alias "_lclose" (ByVal hFile As Integer) As Integer
+    'Private Declare Function XnumScans Lib "icr2ls32.dll" (ByVal FileHandle As Integer) As Integer
 
 	'API constants
 	Private Const OF_READ As Short = &H0S
@@ -39,6 +40,8 @@ Public Class clsDtaGenMainProcess
 	Private Const OF_SHARE_DENY_READ As Short = &H30S
 	Private Const OF_SHARE_DENY_WRITE As Short = &H20S
 	Private Const OF_SHARE_EXCLUSIVE As Short = &H10S
+
+    Public Const EXTRACT_MSN_FILENAME As String = "extract_msn.exe"
 #End Region
 
 #Region "Methods"
@@ -96,7 +99,7 @@ Public Class clsDtaGenMainProcess
 
         strDTAGenProgram = m_JobParams.GetParam("DtaGenerator")
 
-        If strDTAGenProgram.ToLower = "extract_msn.exe" Then
+        If strDTAGenProgram.ToLower = EXTRACT_MSN_FILENAME.ToLower Then
             ' Extract_MSn uses the lcqdtaloc folder path
             strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("lcqdtaloc"), strDTAGenProgram)
         Else
@@ -161,50 +164,48 @@ Public Class clsDtaGenMainProcess
 	''' </summary>
 	''' <param name="RawFile">Data file name</param>
 	''' <returns>Number of scans found</returns>
-	''' <remarks>Uses ICR2LS function to read data file</remarks>
-	Protected Overridable Function GetMaxScan(ByVal RawFile As String) As Integer
+    Protected Overridable Function GetMaxScan(ByVal RawFile As String) As Integer
 
-		'Uses ICR2LS to get the maximum number of scans in a .raw file
-		Dim FileHandle As Integer
-		Dim NumScans As Integer
-		Dim Dummy As Integer
+        '**************************************************************************************************************************************************************
+        '	Alternate method of determining Max Scan using ICR2LS
+        '**************************************************************************************************************************************************************
+        '      'Uses ICR2LS to get the maximum number of scans in a .raw file
+        'Dim FileHandle As Integer
+        'Dim NumScans As Integer
+        'Dim Dummy As Integer
 
-		FileHandle = lopen(RawFile, OF_READ)
-		If FileHandle = 0 Then Return -1 'Bad lopen
-		NumScans = XnumScans(FileHandle)
-		Dummy = lclose(FileHandle)
-		If Dummy <> 0 Then Return -1 'Bad lclose
+        'FileHandle = lopen(RawFile, OF_READ)
+        'If FileHandle = 0 Then Return -1 'Bad lopen
+        'NumScans = XnumScans(FileHandle)
+        'Dummy = lclose(FileHandle)
+        'If Dummy <> 0 Then Return -1 'Bad lclose
 
-		Return NumScans
+        'Return NumScans
 
-		'**************************************************************************************************************************************************************
-		'	Alternate method of generating DTA files using XCalibur OCX. Causes .raw file lock. Code left in place in case file lock problem solved by an update to OCX
-		'**************************************************************************************************************************************************************
-		'Dim NumScans As Integer
-		'Dim StartScan As Integer
-		'Dim StopScan As Integer
+        '**************************************************************************************************************************************************************
+        '	Alternate method of determining MaxScan using XCalibur OCX. 
+        '   Possibly causes .raw file lock. 
+        '**************************************************************************************************************************************************************
+        Dim NumScans As Integer
 
-		'Dim XRawFile As XRAWFILE2Lib.XRawfile
-		'XRawFile = New XRAWFILE2Lib.XRawfile
-		'XRawFile.Open(RawFile)
-		'XRawFile.SetCurrentController(0, 1)
-		'XRawFile.GetNumSpectra(NumScans)
-		'XRawFile.GetFirstSpectrumNumber(StartScan)
-		'XRawFile.GetLastSpectrumNumber(StopScan)
-		'XRawFile.Close()
+        Dim XRawFile As XRAWFILE2Lib.XRawfile
+        XRawFile = New XRAWFILE2Lib.XRawfile
+        XRawFile.Open(RawFile)
+        XRawFile.SetCurrentController(0, 1)
+        XRawFile.GetNumSpectra(NumScans)
+        'XRawFile.GetFirstSpectrumNumber(StartScan)
+        'XRawFile.GetLastSpectrumNumber(StopScan)
+        XRawFile.Close()
 
-		'XRawFile = Nothing
-		''Pause and garbage collect to allow release of file lock on .raw file
-        'System.Threading.Thread.Sleep(20000)		'20 second delay
-		'GC.Collect()
-		'GC.WaitForPendingFinalizers()
-		'**************************************************************************************************************************************************************
-		'End alternate method of DTA creation
-		'**************************************************************************************************************************************************************
+        XRawFile = Nothing
+        'Pause and garbage collect to allow release of file lock on .raw file
+        System.Threading.Thread.Sleep(3000)     ' 3 second delay
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
 
-		Return NumScans
+        Return NumScans
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Thread for creation of DTA files
@@ -306,22 +307,25 @@ Public Class clsDtaGenMainProcess
 		MaxScanInFile = GetMaxScan(RawFile)
 
 		Select Case MaxScanInFile
-			Case -1			'Generic error getting number of scans
-				m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & MaxScanInFile.ToString
-				Return False
-			Case 0			'ICR2LS unable to read file
-				m_ErrMsg = "Unable to get maxscan; Maxscan = " & MaxScanInFile.ToString
-				Return False
-			Case Is > 0
-				'This is normal, do nothing
+            Case -1
+                ' Generic error getting number of scans
+                m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & MaxScanInFile.ToString
+                Return False
+            Case 0
+                ' Unable to read file; treat this is a warning
+                m_ErrMsg = "Warning: unable to get maxscan; Maxscan = 0"
+            Case Is > 0
+                ' This is normal, do nothing
 			Case Else
-				'This should never happen
+                ' This should never happen
 				m_ErrMsg = "Critical error getting number of scans; Maxscan = " & MaxScanInFile.ToString
 				Return False
 		End Select
 
-		'Verify max scan specified is in file
-		If ScanStop > MaxScanInFile Then ScanStop = MaxScanInFile
+        'Verify max scan specified is in file
+        If MaxScanInFile > 0 Then
+            If ScanStop > MaxScanInFile Then ScanStop = MaxScanInFile
+        End If
 
 		'Determine max number of scans to be performed
 		m_NumScans = ScanStop - ScanStart + 1
@@ -356,15 +360,15 @@ Public Class clsDtaGenMainProcess
 				' (only used if selected in manager settings)
 				LocScanStart = ScanStart
 
-				If CBool(m_MgrParams.GetParam("UseDTALooping")) Then
+                If CBool(m_MgrParams.GetParam("UseDTALooping")) And m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower) Then
                     If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
                         LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
                     Else
                         LocScanStop = ScanStop
                     End If
-				Else
-					LocScanStop = ScanStop
-				End If
+                Else
+                    LocScanStop = ScanStop
+                End If
 
 				'Loop until no more .dta files are created or ScanStop is reached
 				Do While (LocScanStart <= ScanStop)

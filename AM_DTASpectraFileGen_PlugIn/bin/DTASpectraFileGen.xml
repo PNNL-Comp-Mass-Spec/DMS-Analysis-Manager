@@ -6,7 +6,61 @@ DTASpectraFileGen
 </name>
 </assembly>
 <members>
-<member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
+<member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Abort">
+	<summary>
+ Aborts processing
+ </summary>
+	<returns>ProcessStatus value indicating process was aborted</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Start">
+	<summary>
+ Starts DTA creation
+ </summary>
+	<returns>ProcessStatus value indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.VerifyRawFileExists(System.String,System.String)">
+	<summary>
+ Tests for existence of .raw file in specified location
+ </summary>
+	<param name="WorkDir">Directory where .raw file should be found</param>
+	<param name="DSName">Name of dataset being processed</param>
+	<returns>TRUE if file found; FALSE otherwise</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.InitSetup">
+	<summary>
+ Initializes the class
+ </summary>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.GetMaxScan(System.String)">
+	<summary>
+ Determines the maximum scan number in the .raw file
+ </summary>
+	<param name="RawFile">Data file name</param>
+	<returns>Number of scans found</returns>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.MakeDTAFilesThreaded">
+	<summary>
+ Thread for creation of DTA files
+ </summary>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.MakeDTAFiles">
+	<summary>
+ Method that actually makes the DTA files
+ </summary>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.VerifyDtaCreation">
+	<summary>
+ Verifies at least one DTA file was created
+ </summary>
+	<returns>TRUE if at least 1 file created; FALSE otherwise</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.m_RunProgTool_LoopWaiting">
+	<summary>
+ Event handler for LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
 	<summary>
  Runs the analysis tool
  </summary>
@@ -47,61 +101,6 @@ DTASpectraFileGen
  Zips concatenated DTA file to reduce size
  </summary>
 	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Abort">
-	<summary>
- Aborts processing
- </summary>
-	<returns>ProcessStatus value indicating process was aborted</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Start">
-	<summary>
- Starts DTA creation
- </summary>
-	<returns>ProcessStatus value indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.VerifyRawFileExists(System.String,System.String)">
-	<summary>
- Tests for existence of .raw file in specified location
- </summary>
-	<param name="WorkDir">Directory where .raw file should be found</param>
-	<param name="DSName">Name of dataset being processed</param>
-	<returns>TRUE if file found; FALSE otherwise</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.InitSetup">
-	<summary>
- Initializes the class
- </summary>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.GetMaxScan(System.String)">
-	<summary>
- Determines the maximum scan number in the .raw file
- </summary>
-	<param name="RawFile">Data file name</param>
-	<returns>Number of scans found</returns>
-	<remarks>Uses ICR2LS function to read data file</remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.MakeDTAFilesThreaded">
-	<summary>
- Thread for creation of DTA files
- </summary>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.MakeDTAFiles">
-	<summary>
- Method that actually makes the DTA files
- </summary>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.VerifyDtaCreation">
-	<summary>
- Verifies at least one DTA file was created
- </summary>
-	<returns>TRUE if at least 1 file created; FALSE otherwise</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.m_RunProgTool_LoopWaiting">
-	<summary>
- Event handler for LoopWaiting event
- </summary>
 	<remarks></remarks>
 </member>
 </members>
