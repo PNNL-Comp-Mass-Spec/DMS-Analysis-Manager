@@ -20,6 +20,8 @@ Public Class clsAnalysisResourcesDecon2ls
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
+
         'Retrieve param file
         If Not RetrieveFile( _
          m_jobParams.GetParam("ParmFileName"), _

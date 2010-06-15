@@ -318,10 +318,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
         End If
+
         If DeleteRawDataFiles(m_jobParams.GetParam("RawDataType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
             m_message = "Error deleting raw data files"
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            ' Don't treat this as a critical error
+            'eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Update the job summary file
@@ -806,12 +808,22 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         If IsFile Then
             'Data is a file, so use file deletion tools
-            If DeleteFileWithRetries(FileOrFolderName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            Else
-                m_message = "Error deleting raw data file " & FileOrFolderName
+            Try
+                ' DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
+                ' Thus, need to wrap it with an Exception handler
+
+                If DeleteFileWithRetries(FileOrFolderName) Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Else
+                    m_message = "Error deleting raw data file " & FileOrFolderName
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+            Catch ex As Exception
+                m_message = "Exception deleting raw data file " & FileOrFolderName & ": " & _
+                ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+            End Try
         Else
             'Use folder deletion tools
             Try
