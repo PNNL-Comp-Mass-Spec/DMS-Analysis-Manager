@@ -255,7 +255,7 @@ Public Class clsDtaGenMainProcess
 
         Const LOOPING_CHUNK_SIZE As Integer = 25000
 
-		'Makes DTA files using extract_msn.exe
+        'Makes DTA files using extract_msn.exe or DeconMSn.exe
 		Dim CmdStr As String
 		Dim RawFile As String
 
@@ -275,6 +275,8 @@ Public Class clsDtaGenMainProcess
 		Dim LocScanStop As Integer
 		Dim MaxScanInFile As Integer
 		Dim OutDirParam As String = " -P"		'Output directory parameter, dependent on xcalibur version
+
+        Dim blnRunningExtractMSn As Boolean
 
 		'DAC debugging
 		System.Threading.Thread.CurrentThread.Name = "MakeDTAFiles"
@@ -352,6 +354,8 @@ Public Class clsDtaGenMainProcess
              ExplicitChargeEnd.ToString & ", m_AbortRequested=" & m_AbortRequested.ToString)
         End If
 
+        blnRunningExtractMSn = m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower)
+
 		Do While LocCharge <= ExplicitChargeEnd And Not m_AbortRequested
 			If LocCharge = 0 And CreateDefaultCharges OrElse LocCharge > 0 Then
 
@@ -360,7 +364,7 @@ Public Class clsDtaGenMainProcess
 				' (only used if selected in manager settings)
 				LocScanStart = ScanStart
 
-                If CBool(m_MgrParams.GetParam("UseDTALooping")) And m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower) Then
+                If CBool(m_MgrParams.GetParam("UseDTALooping")) AndAlso blnRunningExtractMSn Then
                     If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
                         LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
                     Else
@@ -396,6 +400,22 @@ Public Class clsDtaGenMainProcess
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenMainProcess.MakeDTAFiles, starting RunProgram, thread " _
                           & System.Threading.Thread.CurrentThread.Name)
                     End If
+
+                    With m_RunProgTool
+                        If blnRunningExtractMSn Then
+                            ' If running Extract_MSn, then cannot cache the standard output; clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
+                            .CreateNoWindow = False
+                            .CacheStandardOutput = False
+                            .EchoOutputToConsole = False
+                        Else
+                            .CreateNoWindow = True
+                            .CacheStandardOutput = True
+                            .EchoOutputToConsole = True
+
+                            .WriteConsoleOutputToFile = False
+                            .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
+                        End If
+                    End With
 
                     If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
                         ' .RunProgram returned False

@@ -20,7 +20,7 @@ Public Class clsDtaGenToolRunner
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Dim WithEvents m_CmdRunner As clsRunDosProgram
+    'Dim WithEvents m_CmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
