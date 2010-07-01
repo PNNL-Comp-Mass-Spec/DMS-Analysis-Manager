@@ -1,9 +1,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.Xml.XPath
-Imports System.Xml
-Imports System.Collections.Specialized
 
 Public Class clsAnalysisResourcesDtaRefinery
     Inherits clsAnalysisResources
