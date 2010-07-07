@@ -1,7 +1,0 @@
-bin\DTASpectraFileGen.dll
-bin\DTASpectraFileGen.pdb
-bin\DTASpectraFileGen.xml
-obj\Debug\ResolveAssemblyReference.cache
-obj\Debug\DTASpectraFileGen.dll
-obj\Debug\DTASpectraFileGen.xml
-obj\Debug\DTASpectraFileGen.pdb
