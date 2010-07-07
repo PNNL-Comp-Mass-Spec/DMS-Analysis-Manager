@@ -82,9 +82,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
-    <Reference Include="MSMSSpectrumFilter, Version=1.3.2979.19285, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MsMsSpectrumFilter, Version=1.4.3840.23010, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\MSMSSpectrumFilter.dll</HintPath>
+      <HintPath>..\AM_Common\MsMsSpectrumFilter.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
