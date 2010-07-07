@@ -51,7 +51,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Protected mDecon2LSFailedMidLooping As Boolean = False
     Protected mDecon2LSThreadAbortedSinceFinished As Boolean
 
-
     Private WithEvents mDeconToolsBackgroundWorker As System.ComponentModel.BackgroundWorker
 
     Protected mDeconToolsStatus As udtDeconToolsStatusType
@@ -322,8 +321,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         If DeleteRawDataFiles(m_jobParams.GetParam("RawDataType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
             m_message = "Error deleting raw data files"
-            ' Don't treat this as a critical error
-            'eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            ' Don't treat this as a critical error; leave eReturnCode unchanged
         End If
 
         'Update the job summary file
@@ -347,7 +345,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         result = MoveResultFiles()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'MoveResultFiles moves the result files to the result folder
-            m_message = "Error making results folder"
+            m_message = "Error moving files into results folder"
             eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -366,10 +364,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            'TODO: Figure out what to do here
+            Dim Msg As String
+            Msg = "Error removing non result files"
+            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(); " & Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        'If we get to here, everything worked so exit happily
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
@@ -401,6 +403,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         clsGlobal.FilesToDelete.Add(PARAM_FILE_NAME_TEMP)
 
+        ' See if Decon2LS Looping is enabled
+        ' If True, then we will call Decon2LS repeatedly, processing a limited range of scans for each loop
         If clsGlobal.CBoolSafe(m_jobParams.GetParam("UseDecon2LSLooping"), False) Then
             blnLoopingEnabled = True
 
@@ -430,6 +434,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             LocScanStart = 1
             LocScanStop = MAX_SCAN_STOP
         End If
+
+        ' '' See if the PickPeaksOnly mode is enabled
+        ' '' If enabled, then Decon2LS will run the peak-picking algorithm, but will not deisotope spectra
+        ''If clsGlobal.CBoolSafe(m_jobParams.GetParam("Decon2LSPickPeaksOnly"), False) Then
+        ''    mPickPeaksOnly = True
+        ''Else
+        ''    mPickPeaksOnly = False
+        ''End If
 
         ' Get file type of the raw data file
         Dim filetype As DeconTools.Backend.Globals.MSFileType = GetInputFileType(RawDataType)

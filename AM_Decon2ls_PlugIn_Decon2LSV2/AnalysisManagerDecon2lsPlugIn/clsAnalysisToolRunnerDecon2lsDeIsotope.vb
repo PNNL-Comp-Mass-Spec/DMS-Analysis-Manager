@@ -34,8 +34,30 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(), Starting deconvolution")
         End If
 
-        Try
+        ''If mPickPeaksOnly Then
+        ''    Try
 
+        ''        Dim objDeconTools As DeconTools.Backend.ProjectControllers.UIMFMSOnlyProjectController
+
+        ''        objDeconTools = New DeconTools.Backend.ProjectControllers.UIMFMSOnlyProjectController( _
+        ''                                                                   udtCurrentLoopParams.InputFilePath, _
+        ''                                                                   udtCurrentLoopParams.DeconFileType, _
+        ''                                                                   udtCurrentLoopParams.ParamFilePath, _
+        ''                                                                   bw)
+
+        ''        mDeconToolsStatus.CurrentState = DeconToolsStateType.Running
+
+        ''        objDeconTools.IsosResultThreshold = 25000
+        ''        objDeconTools.Execute()
+
+        ''    Catch ex As System.Exception
+        ''        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconTools.Backend.OldSchoolProcRunner in StartDecon2LS(): " & ex.Message)
+        ''    End Try
+
+        ''Else
+        ''End If
+
+        Try
 
             Dim objDeconTools As DeconTools.Backend.OldSchoolProcRunner
 
@@ -46,7 +68,7 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
                                                                        bw)
 
             ''objDeconTools = New DeconTools.Backend.OldSchoolProcRunner(udtCurrentLoopParams.InputFilePath, _
-            ''                                               udtCurrentLoopParams.OutputFilePath, _
+            ''                                               udtCurrentLoopParams.OutputFolderPath, _
             ''                                               udtCurrentLoopParams.DeconFileType, _
             ''                                               udtCurrentLoopParams.ParamFilePath, _
             ''                                               bw)
@@ -59,6 +81,7 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
         Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconTools.Backend.OldSchoolProcRunner in StartDecon2LS(): " & ex.Message)
         End Try
+
 
     End Sub
 #End Region
