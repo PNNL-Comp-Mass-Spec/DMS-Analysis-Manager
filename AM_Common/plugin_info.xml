@@ -182,6 +182,16 @@
 		Class="AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC" 
 		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="mzxml_aggregator" 
+		Class="AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML" 
+		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="phospho_fdr_aggregator" 
+		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator" 
+		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -354,6 +364,16 @@
 		Tool="xtandem_hpc" 
 		Class="AnalysisManagerXTandemHPCPlugIn.clsAnalysisResourcesXTHPC" 
 		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="mzxml_aggregator" 
+		Class="AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML" 
+		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="phospho_fdr_aggregator" 
+		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator" 
+		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" 
 	/>
 </Resourcers>
 
