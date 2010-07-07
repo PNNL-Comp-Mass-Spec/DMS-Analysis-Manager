@@ -61,6 +61,96 @@ Namespace AnalysisManagerBase
 
 		End Sub
 
+        ''' <summary>
+        ''' Set the following to True if debugging
+        ''' </summary>
+        ''' <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
+        Private Const PLUGIN_DEBUG_MODE_ENABLED As Boolean = True
+
+        Private Shared Function DebugModeGetToolRunner(ByVal className As String) As IToolRunner
+
+            Dim myToolRunner As IToolRunner = Nothing
+
+            Select Case className.ToLower
+                'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit, IToolRunner)
+                'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower
+                '   myToolRunner = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN, IToolRunner)
+                'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly, IToolRunner)
+                'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT, IToolRunner)
+                'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower
+                '    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter, IToolRunner)
+                'Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan, IToolRunner)
+                'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR, IToolRunner)
+                'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek, IToolRunner)
+                'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
+                'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
+                '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
+                'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
+                'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML, IToolRunner)
+                'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator, IToolRunner)
+            End Select
+
+            Return myToolRunner
+        End Function
+
+        Private Shared Function DebugModeGetAnalysisResources(ByVal className As String) As IAnalysisResources
+
+            Dim myModule As IAnalysisResources
+
+            Select Case className.ToLower
+                'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower
+                '    myModule = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit, IAnalysisResources)
+                'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower
+                '   myModule = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN, IAnalysisResources)
+                'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower
+                '    myModule = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly, IAnalysisResources)
+                'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower
+                '    myModule = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT, IAnalysisResources)
+                'Case "AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC".ToLower
+                '    myModule = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC, IAnalysisResources)
+                'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls".ToLower
+                '    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls, IAnalysisResources)
+                'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek".ToLower
+                '    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek, IAnalysisResources)
+                'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF".ToLower
+                '    myModule = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF, IAnalysisResources)
+                'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower
+                '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
+                'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
+                '    myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
+                'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
+                '    myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
+                'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML".ToLower
+                '    myModule = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML, IAnalysisResources)
+
+                'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator".ToLower
+                '    myModule = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator, IAnalysisResources)
+            End Select
+
+            Return myModule
+
+        End Function
+
 		''' <summary>
 		''' Retrieves data for specified plugin from plugin info config file
 		''' </summary>
@@ -150,180 +240,77 @@ Namespace AnalysisManagerBase
             Dim myToolRunner As IToolRunner = Nothing
             Dim e As Exception
             If GetPluginInfo(xpath, className, assyName) Then
-                ''<UncommentForDebugging>
-                ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
-                ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
-                Select Case className.ToLower
-                    ''        'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit, IToolRunner)
-                    ''        'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN, IToolRunner)
-                    ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly, IToolRunner)
-                    ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-                    ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-                    ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT, IToolRunner)
-                    ''        'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower
-                    ''        '    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter, IToolRunner)
-                    ''        'Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan, IToolRunner)
-                    ''        'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR, IToolRunner)
-                    ''        'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek, IToolRunner)
-                    ''        'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF".ToLower
-                    ''        '    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
-                    ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
-                    ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
-                    ''            myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-                    ''            'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
-                    ''            '    myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
 
-                    'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML".ToLower
-                    '    myToolRunner = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML, IToolRunner)
+                If PLUGIN_DEBUG_MODE_ENABLED Then
+                    myToolRunner = DebugModeGetToolRunner(className)
+                    If Not myToolRunner Is Nothing Then
+                        Return myToolRunner
+                    End If
+                End If
 
-                    'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator".ToLower
-                    '    myToolRunner = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator, IToolRunner)
-                End Select
-                If Not myToolRunner Is Nothing Then
-                    Return myToolRunner
+                Dim obj As Object = LoadObject(className, assyName)
+                If Not obj Is Nothing Then
+                    Try
+                        myToolRunner = DirectCast(obj, IToolRunner)
+                    Catch e
+                        ''Catch any exceptions
+                        m_msgList.Add(e.Message)
+                    End Try
                 End If
             End If
-            ''</UncommentForDebugging>
-
-            Dim obj As Object = LoadObject(className, assyName)
-            If Not obj Is Nothing Then
-                Try
-                    myToolRunner = DirectCast(obj, IToolRunner)
-                Catch e
-                    ''Catch any exceptions
-                    m_msgList.Add(e.Message)
-                End Try
-            End If
-            'End If
             clsSummaryFile.Add("Loaded ToolRunner: " & className & " from " & assyName)
-            GetToolRunner = myToolRunner
+            Return myToolRunner
         End Function
 
-		''' <summary>
-		''' Loads a tool spectra file generator object
-		''' </summary>
-		''' <param name="SpectraDataType">A spectra data type</param>
-		''' <returns>Object meeting the ISpectraFileProcessor interface</returns>
-		''' <remarks></remarks>
-		Public Shared Function GetSpectraGenerator(ByVal SpectraDataType As String) As ISpectraFileProcessor
-			Dim xpath As String = "//DTAGenerators/DTAGenerator[@DataType='" & SpectraDataType & "']"
-			Dim className As String = ""
-			Dim assyName As String = ""
-			Dim myModule As ISpectraFileProcessor = Nothing
-			Dim e As Exception
-			If GetPluginInfo(xpath, className, assyName) Then
-				Dim obj As Object = LoadObject(className, assyName)
-				If Not obj Is Nothing Then
-					Try
-						myModule = DirectCast(obj, ISpectraFileProcessor)
-					Catch e
-						''Catch any exceptions
-						m_msgList.Add(e.Message)
-					End Try
-				End If
-			End If
-			clsSummaryFile.Add("Loaded DTAGenerator: " & className & " from " & assyName)
-			GetSpectraGenerator = myModule
-		End Function
-
-        ''
-        '' The following function is no longer used
-        '' It was used by clsAnalysisToolRunnerMSMS.vb, but that file has been replaced by clsAnalysisToolRunnerBase.vb
-        ''
-        ' <summary>
-        ' Loads a spectra filter object
-        ' </summary>
-        ' <param name="FilterType">Name of filter type to load</param>
-        ' <returns>An object meeting the ISpectraFilter interface</returns>
-        ' <remarks></remarks>
-        ''Public Shared Function GetSpectraFilter(ByVal FilterType As String) As ISpectraFilter
-        ''	Dim xpath As String = "//DTAFilters/DTAFilter[@FilterType='" & FilterType & "']"
-        ''	Dim className As String = ""
-        ''	Dim assyName As String = ""
-        ''	Dim myModule As ISpectraFilter = Nothing
-        ''	Dim e As Exception
-        ''	If GetPluginInfo(xpath, className, assyName) Then
-        ''		Dim obj As Object = LoadObject(className, assyName)
-        ''		If Not obj Is Nothing Then
-        ''			Try
-        ''				myModule = DirectCast(obj, ISpectraFilter)
-        ''			Catch e
-        ''				''Catch any exceptions
-        ''				m_msgList.Add(e.Message)
-        ''			End Try
-        ''		End If
-        ''	End If
-        ''	clsSummaryFile.Add("Loaded DTAFilter: " & className & " from " & assyName)
-        ''	GetSpectraFilter = myModule
-        ''End Function
-
-		''' <summary>
-		''' Loads a resourcer object
-		''' </summary>
-		''' <param name="ToolName">Name of analysis tool</param>
-		''' <returns>An object meeting the IAnalysisResources interface</returns>
-		''' <remarks></remarks>
-		Public Shared Function GetAnalysisResources(ByVal ToolName As String) As IAnalysisResources
-
-			Dim xpath As String = "//Resourcers/Resourcer[@Tool='" & ToolName & "']"
-			Dim className As String = ""
-			Dim assyName As String = ""
-			Dim myModule As IAnalysisResources = Nothing
-			Dim e As Exception
+        ''' <summary>
+        ''' Loads a tool spectra file generator object
+        ''' </summary>
+        ''' <param name="SpectraDataType">A spectra data type</param>
+        ''' <returns>Object meeting the ISpectraFileProcessor interface</returns>
+        ''' <remarks></remarks>
+        Public Shared Function GetSpectraGenerator(ByVal SpectraDataType As String) As ISpectraFileProcessor
+            Dim xpath As String = "//DTAGenerators/DTAGenerator[@DataType='" & SpectraDataType & "']"
+            Dim className As String = ""
+            Dim assyName As String = ""
+            Dim myModule As ISpectraFileProcessor = Nothing
+            Dim e As Exception
             If GetPluginInfo(xpath, className, assyName) Then
-                ''<UncommentForDebugging>
-                ''Const DEBUGGING_MGR_AS_INCLUDED_PROJECT As Boolean = True
-                ''If DEBUGGING_MGR_AS_INCLUDED_PROJECT Then
-                Select Case className.ToLower
-                    ''        'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit, IAnalysisResources)
-                    ''        'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN, IAnalysisResources)
-                    ''        'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly, IAnalysisResources)
-                    ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-                    ''        'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-                    ''        'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT, IAnalysisResources)
-                    ''        'Case "AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC, IAnalysisResources)
-                    ''        'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls, IAnalysisResources)
-                    ''        'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek, IAnalysisResources)
-                    ''        'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF, IAnalysisResources)
-                    ''        'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower
-                    ''        '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
-                    ''        Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
-                    ''            myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-                    ''            'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
-                    ''            '    myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
-
-                    'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML".ToLower
-                    '    myModule = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML, IAnalysisResources)
-
-                    'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator".ToLower
-                    '    myModule = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator, IAnalysisResources)
-                End Select
-
-                If Not myModule Is Nothing Then
-                    Return myModule
+                Dim obj As Object = LoadObject(className, assyName)
+                If Not obj Is Nothing Then
+                    Try
+                        myModule = DirectCast(obj, ISpectraFileProcessor)
+                    Catch e
+                        ''Catch any exceptions
+                        m_msgList.Add(e.Message)
+                    End Try
                 End If
-                ''End If
-                ''</UncommentForDebugging>
+            End If
+            clsSummaryFile.Add("Loaded DTAGenerator: " & className & " from " & assyName)
+            GetSpectraGenerator = myModule
+        End Function
+
+        ''' <summary>
+        ''' Loads a resourcer object
+        ''' </summary>
+        ''' <param name="ToolName">Name of analysis tool</param>
+        ''' <returns>An object meeting the IAnalysisResources interface</returns>
+        ''' <remarks></remarks>
+        Public Shared Function GetAnalysisResources(ByVal ToolName As String) As IAnalysisResources
+
+            Dim xpath As String = "//Resourcers/Resourcer[@Tool='" & ToolName & "']"
+            Dim className As String = ""
+            Dim assyName As String = ""
+            Dim myModule As IAnalysisResources = Nothing
+            Dim e As Exception
+
+            If GetPluginInfo(xpath, className, assyName) Then
+
+                If PLUGIN_DEBUG_MODE_ENABLED Then
+                    myModule = DebugModeGetAnalysisResources(className)
+                    If Not myModule Is Nothing Then
+                        Return myModule
+                    End If
+                End If
 
                 Dim obj As Object = LoadObject(className, assyName)
                 If Not obj Is Nothing Then
@@ -336,7 +323,7 @@ Namespace AnalysisManagerBase
                 End If
             End If
             clsSummaryFile.Add("Loaded resourcer: " & className & " from " & assyName)
-            GetAnalysisResources = myModule
+            Return myModule
         End Function
 
 		''' <summary>

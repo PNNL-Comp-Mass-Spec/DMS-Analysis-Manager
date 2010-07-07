@@ -1460,7 +1460,7 @@ Namespace AnalysisManagerBase
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: could not find the _dta.zip file, but was able to find " & SourceFileName & " in folder " & SourceFolderPath)
 
                     'Copy the _dta.txt file
-                    If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+                    If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
                         If m_DebugLevel >= 2 Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
                         End If
@@ -1472,7 +1472,7 @@ Namespace AnalysisManagerBase
             Else
 
                 'Copy the _dta.zip file
-                If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+                If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
                     If m_DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
                     End If
@@ -1485,7 +1485,7 @@ Namespace AnalysisManagerBase
 
                 'Unzip concatenated DTA file
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-                If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveDtaFiles", False) Then
+                If UnzipFileStart(Path.Combine(m_WorkingDir, SourceFileName), m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
                     If m_DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
                     End If
@@ -1498,7 +1498,7 @@ Namespace AnalysisManagerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
                 Dim BackWorker As New System.ComponentModel.BackgroundWorker
                 Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
-                FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), m_mgrParams.GetParam("WorkDir"))
+                FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), m_WorkingDir)
 
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file")
@@ -1560,42 +1560,78 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Protected Overridable Function FindDataFile(ByVal FileToFind As String) As String
 
-            Dim FoldersToSearch As New StringCollection
-            Dim TempDir As String
+            Dim FoldersToSearch As New System.Collections.Generic.List(Of String)
+            Dim TempDir As String = String.Empty
             Dim FileFound As Boolean = False
+
+            Dim strParentFolderPath As String = String.Empty
+            Dim strDatasetFolderName As String
+            Dim strInputFolderName As String
+
+            Dim strSharedResultFolders As String
+
+            Dim SharedResultFolderNames As New System.Collections.Generic.List(Of String)
 
             'NOTE: Someday this will have to be able to handle a list as the SharedResultsFolders value
 
             Try
-                'Fill collection with possible folder locations
-                TempDir = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))    'Xfer folder/Dataset folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("inputFolderName"))     'Xfer folder (cont)
-                FoldersToSearch.Add(TempDir)
+                ' Fill collection with possible folder locations
+                ' The order of searching is:
+                '  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
+                '  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
+                '  c. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
+                '
+                ' Note that "SharedResultsFolders" will typically only contain one folder path, 
+                '  but can contain a comma-separated list of folders
 
-                TempDir = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))    'Xfer folder/Shared results folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("SharedResultsFolders"))
-                FoldersToSearch.Add(TempDir)
+                strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
+                strInputFolderName = m_jobParams.GetParam("inputFolderName")
+                strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
 
-                TempDir = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), m_jobParams.GetParam("DatasetFolderName"))    'Storage server/Dataset folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("inputFolderName"))
-                FoldersToSearch.Add(TempDir)
+                If strSharedResultFolders.Contains(",") Then
 
-                TempDir = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), m_jobParams.GetParam("DatasetFolderName"))    'Storage server/Shared results folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("SharedResultsFolders"))
-                FoldersToSearch.Add(TempDir)
+                    ' Split on commas and populate SharedResultFolderNames
+                    For Each strItem As String In strSharedResultFolders.Split(","c)
+                        If strItem.Trim.Length > 0 Then
+                            SharedResultFolderNames.Add(strItem.Trim)
+                        End If
+                    Next
 
-                TempDir = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))    'Archive/Dataset folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("inputFolderName"))
-                FoldersToSearch.Add(TempDir)
+                    ' Reverse the list so that the last item in strSharedResultFolders is the first item in SharedResultFolderNames
+                    SharedResultFolderNames.Reverse()
+                Else
+                    ' Just one item in strSharedResultFolders
+                    SharedResultFolderNames.Add(strSharedResultFolders)
+                End If
 
-                TempDir = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))    'Archive/Shared results folder
-                TempDir = Path.Combine(TempDir, m_jobParams.GetParam("SharedResultsFolders"))
-                FoldersToSearch.Add(TempDir)
 
+                For intParentFolderIndex As Integer = 0 To 2
+
+                    Select Case intParentFolderIndex
+                        Case 0
+                            strParentFolderPath = m_jobParams.GetParam("transferFolderPath")    'Xfer folder
+                        Case 1
+                            strParentFolderPath = m_jobParams.GetParam("DatasetStoragePath")    'Storage server
+                        Case 2
+                            strParentFolderPath = m_jobParams.GetParam("DatasetArchivePath")    'Archive
+                        Case Else
+                            ' Programming bug
+                            strParentFolderPath = String.Empty
+                    End Select
+
+                    FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder / Input folder
+
+                    For Each strItem As String In SharedResultFolderNames
+                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strItem))          ' Parent Folder / Shared results folder
+                    Next
+
+                Next
+
+                ' Now search for FileToFind in each folder in FoldersToSearch
                 For Each TempDir In FoldersToSearch
                     Try
                         If System.IO.Directory.Exists(TempDir) Then
-                            If File.Exists(Path.Combine(TempDir, FileToFind)) Then
+                            If System.IO.File.Exists(System.IO.Path.Combine(TempDir, FileToFind)) Then
                                 FileFound = True
                                 Exit For
                             End If
@@ -1629,6 +1665,17 @@ Namespace AnalysisManagerBase
 
         End Function
 
+        Private Function FindDataFileAddFolder(ByVal strParentFolderPath As String, _
+                                               ByVal strDatasetFolderName As String, _
+                                               ByVal strInputFolderName As String) As String
+            Dim strTargetFolderPath As String
+
+            strTargetFolderPath = System.IO.Path.Combine(strParentFolderPath, strDatasetFolderName)
+            strTargetFolderPath = System.IO.Path.Combine(strTargetFolderPath, strInputFolderName)
+
+            Return strTargetFolderPath
+
+        End Function
         ''' <summary>
         ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         ''' </summary>

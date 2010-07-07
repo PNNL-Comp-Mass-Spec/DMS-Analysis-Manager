@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "December 10, 2009"
+    Public Const PROGRAM_DATE As String = "June 26, 2010"
 
     Private mInputFilePath As String
 
@@ -39,7 +39,6 @@ Module modMain
         Dim intReturnCode As Integer
         Dim objParseCommandLine As New clsParseCommandLine
         Dim blnProceed As Boolean
-        Dim blnSuccess As Boolean
 
         intReturnCode = 0
         mInputFilePath = String.Empty
@@ -56,6 +55,7 @@ Module modMain
                 intReturnCode = -1
             Else
 
+                ' Note: CodeTestMode is enabled using command line switch /T
                 If mCodeTestMode Then
 
                     Dim objTest As New clsCodeTest
@@ -83,7 +83,9 @@ Module modMain
                         'End If
 
                         'objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
-                        objTest.TestFindAndReplace()
+                        'objTest.TestFindAndReplace()
+
+                        objTest.TestProgRunner()
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

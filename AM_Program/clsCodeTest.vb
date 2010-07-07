@@ -31,7 +31,7 @@ Public Class clsCodeTest
 
         m_DebugLevel = 2
 
-        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
         m_mgrParams.SetParam("MgrName", "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString)
 
@@ -429,7 +429,7 @@ Public Class clsCodeTest
         Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
         m_mgrParams.SetParam("MgrName", "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
@@ -457,7 +457,7 @@ Public Class clsCodeTest
         Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
         m_mgrParams.SetParam("MgrName", "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
@@ -507,7 +507,7 @@ Public Class clsCodeTest
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
         Dim blnSuccess As Boolean
 
-        m_mgrParams.SetParam("workdir", "D:\DMS_WorkDir")
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
         m_mgrParams.SetParam("MgrName", "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "3")
         m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
@@ -1081,6 +1081,51 @@ Public Class clsCodeTest
         ElseIf intMatchIndex = 0 Then
             lineText = strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
         End If
+    End Sub
+
+    Public Sub TestProgRunner()
+
+        Dim strAppPath As String
+
+        Dim strWorkDir As String
+        Dim blnSuccess As Boolean
+
+
+        strAppPath = "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\XTandem\tandem.exe"
+
+        strWorkDir = System.IO.Path.GetDirectoryName(strAppPath)
+
+        Dim objProgRunner As clsRunDosProgram
+
+        objProgRunner = New clsRunDosProgram(strWorkDir)
+
+        With objProgRunner
+            .CacheStandardOutput = True
+            .CreateNoWindow = True
+            .EchoOutputToConsole = True
+            .WriteConsoleOutputToFile = True
+
+            .DebugLevel = 1
+            .MonitorInterval = 1000
+        End With
+
+        blnSuccess = objProgRunner.RunProgram( _
+                                 strAppPath, _
+                                 "input.xml", "X!Tandem", False)
+
+
+        If objProgRunner.CacheStandardOutput And Not objProgRunner.EchoOutputToConsole Then
+            Console.WriteLine(objProgRunner.CachedConsoleOutput)
+        End If
+
+        If objProgRunner.CachedConsoleError.Length > 0 Then
+            Console.WriteLine("Console error output")
+            Console.WriteLine(objProgRunner.CachedConsoleError)
+        End If
+
+        Console.WriteLine()
+
+
     End Sub
 
 
