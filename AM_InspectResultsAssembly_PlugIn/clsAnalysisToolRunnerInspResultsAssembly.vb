@@ -58,6 +58,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         INSPECT_RESULT = 0
         INSPECT_ERROR = 1
         INSPECT_SEARCH = 2
+        INSPECT_CONSOLE = 3
     End Enum
 
     ' Note: if you add/remove any steps, then update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
@@ -259,8 +260,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     Private Function AssembleResults(ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
-        Dim InspectErrorResultFile As String = ""
-        Dim InspectSearchLogFile As String = ""
+        Dim strFileName As String = ""
 
         Try
 
@@ -277,27 +277,41 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Now that the combined Inspect Results file has been made, we need to rescore it using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
             RescoreAssembledInspectResults()
 
+
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect error files")
             End If
 
-            InspectErrorResultFile = m_jobParams.GetParam("datasetNum") & "_error.txt"
-            result = AssembleFiles(InspectErrorResultFile, ResultFileType.INSPECT_ERROR, intNumResultFiles)
+            strFileName = m_jobParams.GetParam("datasetNum") & "_error.txt"
+            result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
-            clsGlobal.m_ExceptionFiles.Add(InspectErrorResultFile)
+            clsGlobal.m_ExceptionFiles.Add(strFileName)
+
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect search log files")
             End If
 
-            InspectSearchLogFile = "InspectSearchLog.txt"
-            result = AssembleFiles(InspectSearchLogFile, ResultFileType.INSPECT_SEARCH, intNumResultFiles)
+            strFileName = "InspectSearchLog.txt"
+            result = AssembleFiles(strFileName, ResultFileType.INSPECT_SEARCH, intNumResultFiles)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
-            clsGlobal.m_ExceptionFiles.Add(InspectSearchLogFile)
+            clsGlobal.m_ExceptionFiles.Add(strFileName)
+
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect console output files")
+            End If
+
+            strFileName = "InspectConsoleOutput.txt"
+            result = AssembleFiles(strFileName, ResultFileType.INSPECT_CONSOLE, intNumResultFiles)
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
+            End If
+            clsGlobal.m_ExceptionFiles.Add(strFileName)
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.AssembleResults, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
@@ -328,7 +342,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim blnFilesContainHeaderLine As Boolean
         Dim blnHeaderLineWritten As Boolean
-        Dim blnAddSegmentNumberToEachLine As Boolean = False
+        Dim blnAddSegmentNumberToEachLine As Boolean
+        Dim blnAddBlankLineBetweenFiles As Boolean
 
         Dim intTabIndex As Integer
         Dim intSlashIndex As Integer
@@ -347,16 +362,25 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                         InspectResultsFile = DatasetName & "_" & fileNameCounter & "_inspect.txt"
                         blnFilesContainHeaderLine = True
                         blnAddSegmentNumberToEachLine = False
+                        blnAddBlankLineBetweenFiles = False
 
                     Case ResultFileType.INSPECT_ERROR
                         InspectResultsFile = DatasetName & "_" & fileNameCounter & "_error.txt"
                         blnFilesContainHeaderLine = False
                         blnAddSegmentNumberToEachLine = True
+                        blnAddBlankLineBetweenFiles = False
 
                     Case ResultFileType.INSPECT_SEARCH
                         InspectResultsFile = "InspectSearchLog_" & fileNameCounter & ".txt"
                         blnFilesContainHeaderLine = True
                         blnAddSegmentNumberToEachLine = True
+                        blnAddBlankLineBetweenFiles = False
+
+                    Case ResultFileType.INSPECT_CONSOLE
+                        InspectResultsFile = "InspectConsoleOutput_" & fileNameCounter & ".txt"
+                        blnFilesContainHeaderLine = False
+                        blnAddSegmentNumberToEachLine = False
+                        blnAddBlankLineBetweenFiles = True
 
                     Case Else
                         ' Unknown ResultFileType
@@ -375,6 +399,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                         If intLinesRead = 1 Then
 
                             If blnFilesContainHeaderLine Then
+                                ' Handle the header line
                                 If Not blnHeaderLineWritten Then
                                     If blnAddSegmentNumberToEachLine Then
                                         s = "Segment" & ControlChars.Tab & s
@@ -382,10 +407,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                                     tw.WriteLine(s)
                                 End If
                             Else
-                                If Not blnHeaderLineWritten Then
-                                    tw.WriteLine("Segment" & ControlChars.Tab & "Message")
-                                End If
                                 If blnAddSegmentNumberToEachLine Then
+                                    If Not blnHeaderLineWritten Then
+                                        tw.WriteLine("Segment" & ControlChars.Tab & "Message")
+                                    End If
                                     tw.WriteLine(fileNameCounter.ToString & ControlChars.Tab & s)
                                 Else
                                     tw.WriteLine(s)
@@ -421,6 +446,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                         s = tr.ReadLine
                     Loop
                     tr.Close()
+
+                    If blnAddBlankLineBetweenFiles Then
+                        Console.WriteLine()
+                    End If
                 End If
             Next
 

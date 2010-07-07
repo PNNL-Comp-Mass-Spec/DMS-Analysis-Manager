@@ -6,19 +6,7 @@ AnalysisManagerInspResultsAssemblyPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.RetrieveMultiInspectResultFiles">
-	<summary>
- Retrieves inspect and inspect log and error files
- </summary>
-	<returns>TRUE for success, FALSE for error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.#ctor">
+<member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.#ctor">
 	<summary>
  Constructor
  </summary>
@@ -79,6 +67,18 @@ AnalysisManagerInspResultsAssemblyPlugIn
  Zips the concatenated result file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.RetrieveMultiInspectResultFiles">
+	<summary>
+ Retrieves inspect and inspect log and error files
+ </summary>
+	<returns>TRUE for success, FALSE for error</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
 	<summary>

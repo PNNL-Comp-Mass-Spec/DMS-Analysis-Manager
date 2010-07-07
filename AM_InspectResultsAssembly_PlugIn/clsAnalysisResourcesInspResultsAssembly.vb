@@ -108,15 +108,17 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 
         'Retrieve zipped DTA file
         Dim InspectResultsFile As String
-        Dim ErrorFilename As String
-        Dim InspectSearchLogFile As String
+        Dim strFileName As String = String.Empty
+
         Dim numOfResultFiles As Integer
         Dim fileNum As Integer
         Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
         Dim WorkingDir As String = m_mgrParams.GetParam("workdir")
         Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
         Dim dtaFilename As String
+
         Dim intFileCopyCount As Integer = 0
+        Dim intLogFileIndex As Integer
 
         transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))
 
@@ -149,33 +151,34 @@ Public Class clsAnalysisResourcesInspResultsAssembly
                 clsGlobal.m_ServerFilesToDelete.Add(Path.Combine(transferFolderName, dtaFilename))
             End If
 
-            'Copy the Inspect error file from the transfer directory
-            ErrorFilename = DatasetName & "_" & fileNum & "_error.txt"
-            If File.Exists(Path.Combine(transferFolderName, ErrorFilename)) Then
-                If Not CopyFileToWorkDir(ErrorFilename, transferFolderName, WorkingDir) Then
-                    ' Error copying file (error will have already been logged)
-                    If m_DebugLevel >= 3 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & ErrorFilename & " using folder " & transferFolderName)
-                    End If
-                    Return False
-                End If
-                intFileCopyCount += 1
-                clsGlobal.m_ServerFilesToDelete.Add(Path.Combine(transferFolderName, ErrorFilename))
-            End If
+            ' Copy the various log files
+            For intLogFileIndex = 1 To 3
+                Select Case intLogFileIndex
+                    Case 1
+                        'Copy the Inspect error file from the transfer directory
+                        strFileName = DatasetName & "_" & fileNum & "_error.txt"                         
+                    Case 2
+                        'Copy each Inspect search log file from the transfer directory
+                        strFileName = "InspectSearchLog_" & fileNum & ".txt"
+                    Case 3
+                        'Copy each Inspect console output file from the transfer directory
+                        strFileName = "InspectConsoleOutput_" & fileNum & ".txt"
+                End Select
 
-            'Copy each Inspect search log file from the transfer directory
-            InspectSearchLogFile = "InspectSearchLog_" & fileNum & ".txt"
-            If File.Exists(Path.Combine(transferFolderName, InspectSearchLogFile)) Then
-                If Not CopyFileToWorkDir(InspectSearchLogFile, transferFolderName, WorkingDir) Then
-                    ' Error copying file (error will have already been logged)
-                    If m_DebugLevel >= 3 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & InspectSearchLogFile & " using folder " & transferFolderName)
+                If File.Exists(Path.Combine(transferFolderName, strFileName)) Then
+                    If Not CopyFileToWorkDir(strFileName, transferFolderName, WorkingDir) Then
+                        ' Error copying file (error will have already been logged)
+                        If m_DebugLevel >= 3 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileName & " using folder " & transferFolderName)
+                        End If
+                        Return False
                     End If
-                    Return False
+                    intFileCopyCount += 1
+                    clsGlobal.m_ServerFilesToDelete.Add(Path.Combine(transferFolderName, strFileName))
                 End If
-                intFileCopyCount += 1
-                clsGlobal.m_ServerFilesToDelete.Add(Path.Combine(transferFolderName, InspectSearchLogFile))
-            End If
+
+            Next intLogFileIndex
+
         Next
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Multi Inspect Result Files copied to local working directory; copied " & intFileCopyCount & " files")
