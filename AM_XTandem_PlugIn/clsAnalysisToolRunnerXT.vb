@@ -90,6 +90,16 @@ Public Class clsAnalysisToolRunnerXT
 
         'Set up and execute a program runner to run X!Tandem
         CmdStr = "input.xml"
+
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "XTandem_ConsoleOutput.txt")
+        End With
+
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
 
