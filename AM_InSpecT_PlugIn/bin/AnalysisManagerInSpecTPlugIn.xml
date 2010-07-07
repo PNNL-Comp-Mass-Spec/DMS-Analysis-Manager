@@ -6,18 +6,19 @@ AnalysisManagerInSpecTPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
+<member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN.GetResources">
 	<summary>
- Convert .Fasta file to indexed DB files
+ Retrieves files necessary for performance of Inspect analysis
  </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateLockFile(System.String)">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN.RetrieveDtaFiles(System.Boolean)">
 	<summary>
- Creates a lock file
+ Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
  </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks>Not presently implemented</remarks>
+	<param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
+	<returns>TRUE for success, FALSE for error</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.#ctor">
 	<summary>
  Constructor
@@ -81,19 +82,18 @@ AnalysisManagerInSpecTPlugIn
 	<param name="sender"></param>
 	<param name="e"></param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN.GetResources">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
 	<summary>
- Retrieves files necessary for performance of Inspect analysis
+ Convert .Fasta file to indexed DB files
  </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN.RetrieveDtaFiles(System.Boolean)">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateLockFile(System.String)">
 	<summary>
- Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
+ Creates a lock file
  </summary>
-	<param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
-	<returns>TRUE for success, FALSE for error</returns>
-	<remarks></remarks>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks>Not presently implemented</remarks>
 </member>
 </members>
 </doc>

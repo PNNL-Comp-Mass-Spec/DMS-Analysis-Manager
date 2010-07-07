@@ -91,7 +91,7 @@ Public Class clsAnalysisResourcesIN
         stepNum = m_jobParams.GetParam("Step")
 
         'Determine if this is parallelized inspect job
-        If [String].IsNullOrEmpty(CloneStepRenum) Then
+        If System.String.IsNullOrEmpty(CloneStepRenum) Then
             DtaResultFileName = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
             strUnzippedFileNameRoot = m_jobParams.GetParam("DatasetNum")
         Else

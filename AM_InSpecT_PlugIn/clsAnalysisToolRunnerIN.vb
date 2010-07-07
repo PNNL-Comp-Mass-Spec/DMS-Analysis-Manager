@@ -52,6 +52,8 @@ Public Class clsAnalysisToolRunnerIN
     Protected mInspectSearchLogFilePath As String = "InspectSearchLog.txt"      ' This value gets updated in function RunTool
     Protected mInspectSearchLogMostRecentEntry As String = String.Empty
 
+    Protected mInspectConsoleOutputFilePath As String
+
     Protected WithEvents mSearchLogFileWatcher As System.IO.FileSystemWatcher
     Protected m_CloneStepRenum As String
     Protected m_StepNum As String
@@ -91,9 +93,11 @@ Public Class clsAnalysisToolRunnerIN
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
         Dim OrgDbName As String
-        Dim parallelResultNum As Integer
         Dim strBaseFilePath As String
         Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
+
+        Dim strFileNameAdder As String
+        Dim strParallelizedText As String
 
         Try
             If m_DebugLevel > 4 Then
@@ -116,27 +120,24 @@ Public Class clsAnalysisToolRunnerIN
             strBaseFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
 
             'Determine if this is parallelized inspect job
-            If [String].IsNullOrEmpty(m_CloneStepRenum) Then
-                mInspectConcatenatedDtaFilePath = strBaseFilePath & "_dta.txt"
-                mInspectResultsFilePath = strBaseFilePath & "_inspect.txt"
-                mInspectErrorFilePath = strBaseFilePath & "_error.txt"
-                mInspectSearchLogFilePath = Path.Combine(m_WorkDir, "InspectSearchLog.txt")
+            If System.String.IsNullOrEmpty(m_CloneStepRenum) Then
+                strFileNameAdder = ""
+                strParallelizedText = "non-parallelized"
                 m_isParallelInspect = False
-
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running non-parallelized inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
-                End If
             Else
-                parallelResultNum = CInt(m_StepNum) - CInt(m_CloneStepRenum) + 1
-                mInspectConcatenatedDtaFilePath = strBaseFilePath & "_" & parallelResultNum & "_dta.txt"
-                mInspectResultsFilePath = strBaseFilePath & "_" & parallelResultNum & "_inspect.txt"
-                mInspectErrorFilePath = strBaseFilePath & "_" & parallelResultNum & "_error.txt"
-                mInspectSearchLogFilePath = Path.Combine(m_WorkDir, "InspectSearchLog_" & parallelResultNum & ".txt")
+                strFileNameAdder = "_" & (CInt(m_StepNum) - CInt(m_CloneStepRenum) + 1).ToString()
+                strParallelizedText = "parallelized"
                 m_isParallelInspect = True
+            End If
 
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running parallelized inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
-                End If
+            mInspectConcatenatedDtaFilePath = strBaseFilePath & strFileNameAdder & "_dta.txt"
+            mInspectResultsFilePath = strBaseFilePath & strFileNameAdder & "_inspect.txt"
+            mInspectErrorFilePath = strBaseFilePath & strFileNameAdder & "_error.txt"
+            mInspectSearchLogFilePath = System.IO.Path.Combine(m_WorkDir, "InspectSearchLog" & strFileNameAdder & ".txt")
+            mInspectConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "InspectConsoleOutput" & strFileNameAdder & ".txt")
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running " & strParallelizedText & " inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
             End If
 
             result = RunInSpecT()
@@ -467,7 +468,16 @@ Public Class clsAnalysisToolRunnerIN
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
         End If
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "Inspect.exe", True) Then
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = mInspectConsoleOutputFilePath
+        End With
+
+        If Not CmdRunner.RunProgram(progLoc, CmdStr, "Inspect", True) Then
 
             If CmdRunner.ExitCode <> 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect.exe returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
