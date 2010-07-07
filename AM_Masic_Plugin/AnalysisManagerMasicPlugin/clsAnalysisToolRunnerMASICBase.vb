@@ -226,8 +226,12 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         objMasicProgRunner = New PRISM.Processes.clsProgRunner
         With objMasicProgRunner
-            .Name = "MASIC"
             .CreateNoWindow = True
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = True             ' Echo the output to the console
+            .WriteConsoleOutputToFile = False       ' Do not write the console output to a file
+
+            .Name = "MASIC"
             .Program = strMASICExePath
             .Arguments = CmdStr
             .WorkDir = m_WorkDir
