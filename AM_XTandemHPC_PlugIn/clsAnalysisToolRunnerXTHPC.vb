@@ -727,6 +727,10 @@ Public Class clsAnalysisToolRunnerXTHPC
                             If sngBalanceHours < 0 Then
                                 ' Error parsing out the available hours; a warning has already been logged
                             Else
+                                If strAccountName = "Idle on MPP3" Then
+                                    ' Need to override this name
+                                    strAccountName = "mscfidle"
+                                End If
 
                                 If strAccountName.ToLower = m_HPCAccountName.ToLower AndAlso _
                                    sngBalanceHours < HPCBalanceThresholdValueHours Then

@@ -180,6 +180,11 @@ AnalysisManagerProg
  Clears internal list of error messages
  </summary>
 	<remarks></remarks>
+</member><member name="F:AnalysisManagerBase.clsPluginLoader.PLUGIN_DEBUG_MODE_ENABLED">
+	<summary>
+ Set the following to True if debugging
+ </summary>
+	<remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
 </member><member name="M:AnalysisManagerBase.clsPluginLoader.GetPluginInfo(System.String,System.String@,System.String@)">
 	<summary>
  Retrieves data for specified plugin from plugin info config file
@@ -321,7 +326,8 @@ AnalysisManagerProg
 	<summary>
  Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
  If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
- If the file named _StoragePathInfo.txt isn't found, then returns an empty string
+ If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
+ If a 0.ser folder is found, then returns the path to the 0.ser folder
  </summary>
 	<param name="FolderPath">The folder to look in</param>
 	<returns></returns>
@@ -1074,11 +1080,74 @@ AnalysisManagerProg
  </summary>
 	<param name="InpCmd">SQL command object containing params</param>
 	<remarks></remarks>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.CachedConsoleOutput">
+	<summary>
+ Text written to the Console by the external program (including carriage returns)
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.CachedConsoleError">
+	<summary>
+ Any text written to the Error buffer by the external program
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.CacheStandardOutput">
+	<summary>
+ When true then will cache the text the external program writes to the console
+ Can retrieve using the CachedConsoleOutput readonly property
+ Will also fire event ConsoleOutputEvent as new text is written to the console
+ </summary>
+	<remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.ConsoleOutputFilePath">
+	<summary>
+ File path to which the console output will be written if WriteConsoleOutputToFile is true
+ If blank, then file path will be auto-defined in the WorkDir  when program execution starts
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.CreateNoWindow">
+	<summary>
+ Determine if window should be displayed.
+ Will be forced to True if CacheStandardOutput = True
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.EchoOutputToConsole">
+	<summary>
+ When true, then echoes, in real time, text written to the Console by the external program 
+ Ignored if CreateNoWindow = False
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.ExitCode">
+	<summary>
+ Exit code when process completes.
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.MonitorInterval">
+	<summary>
+ How often (milliseconds) internal monitoring thread checks status of external program
+ Minimum allowed value is 50 milliseconds
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.WorkDir">
+	<summary>
+ Working directory for process execution.
+ </summary>
+</member><member name="P:AnalysisManagerBase.clsRunDosProgram.WriteConsoleOutputToFile">
+	<summary>
+ When true then will write the standard output to a file in real-time
+ Will also fire event ConsoleOutputEvent as new text is written to the console
+ Define the path to the file using property ConsoleOutputFilePath; if not defined, the file
+ will be created in the WorkDir (though, if WorkDir is blank, then will be created in the folder with the Program we're running)
+ </summary>
+	<remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
 </member><member name="M:AnalysisManagerBase.clsRunDosProgram.#ctor(System.String)">
 	<summary>
  Constructor
  </summary>
 	<param name="WorkDir">Workdirectory for input/output files, if any</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsRunDosProgram.RunProgram(System.String,System.String,System.String,System.Boolean)">
+	<summary>
+	</summary>
+	<param name="ProgNameLoc">The path to the program to run</param>
+	<param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
+	<param name="ProgName">The name of the program to use for the Window title</param>
+	<param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
+	<returns>True if success, false if an error</returns>
 	<remarks></remarks>
 </member><member name="M:clsCodeTestAM.#ctor">
 	<summary>

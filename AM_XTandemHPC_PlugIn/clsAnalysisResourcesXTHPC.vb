@@ -11,8 +11,13 @@ Public Class clsAnalysisResourcesXTHPC
     Friend Const TAXONOMY_FILENAME As String = "taxonomy.xml"
     Friend Const DEFAULT_INPUT As String = "default_input.xml"
 
-    ' This is currently hard-coded; we may need to retrieve this from DMS on a per-job basis
-    Friend Const HPC_ACCOUNT_NAME As String = "emsl33210"
+    ' The HPC account name is currently hard-coded; we may need to retrieve this from DMS on a per-job basis
+
+    ' User proposal emsl33210 expired April 1, 2010
+    'Friend Const HPC_ACCOUNT_NAME As String = "emsl33210"
+
+    ' This is the MPP3 idle account (enabled June 2, 2010 by Erich Vorpagel)
+    Friend Const HPC_ACCOUNT_NAME As String = "mscfidle"
 
     Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
 
