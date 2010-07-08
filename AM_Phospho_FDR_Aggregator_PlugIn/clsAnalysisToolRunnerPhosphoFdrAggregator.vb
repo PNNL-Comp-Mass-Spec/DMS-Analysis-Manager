@@ -19,9 +19,9 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     '*********************************************************************************************************
 
 #Region "Module Variables"
-    Protected Const PROGRESS_PCT_DTA_REFINERY_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
-    Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
+    Protected Const PROGRESS_PCT_PHOSPHO_FDR_RUNNING As Single = 5
+    Protected Const PROGRESS_PCT_PHOSPHO_FDR_START As Single = 95
+    Protected Const PROGRESS_PCT_PHOSPHO_FDR_COMPLETE As Single = 99
 
     Protected WithEvents CmdRunner As clsRunDosProgram
     '--------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         CmdStr = "AScoreBatch.xml"
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "AScoreprogloc", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running AScore, job " & m_JobNum)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -84,6 +84,25 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         System.Threading.Thread.Sleep(2000)        '2 second delay
         GC.Collect()
         GC.WaitForPendingFinalizers()
+
+        result = ConcatenateResultFiles("_cid_outputAScore.txt")
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        result = ConcatenateResultFiles("_etd_outputAScore.txt")
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
+        result = ConcatenateResultFiles("_hcd_outputAScore.txt")
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
+
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -120,6 +139,49 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
+    Protected Function ConcatenateResultFiles(ByVal FilterExtension As String) As IJobParams.CloseOutType
+        Dim result As Boolean = True
+        Dim ConcatenateAScoreFiles() As String
+        Dim WorkDir As String = m_mgrParams.GetParam("workdir")
+        Dim FileToConcatenate As String
+        Dim ReadFirstLine As Boolean = False
+        Try
+
+            ConcatenateAScoreFiles = System.IO.Directory.GetFiles(WorkDir, "*" & FilterExtension)
+            ' Create an instance of StreamWriter to write to a file.
+            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkDir, "Concatenated" & FilterExtension))
+
+            For Each FullFileToConcatenate As String In ConcatenateAScoreFiles
+                FileToConcatenate = System.IO.Path.GetFileName(FullFileToConcatenate)
+
+                ' Create an instance of StreamReader to read from a file.
+                Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkDir, FileToConcatenate))
+
+                Dim inpLine As String
+                If ReadFirstLine Then
+                    inputBase.ReadLine()
+                End If
+                Do
+                    inpLine = inputBase.ReadLine()
+                    If Not inpLine Is Nothing Then
+                        inputFile.WriteLine(inpLine)
+                    End If
+                Loop Until inpLine Is Nothing
+                inputBase.Close()
+                ReadFirstLine = True
+
+            Next
+            inputFile.Close()
+
+        Catch E As Exception
+            ' Let the user know what went wrong.
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateResultFiles, The file could not be concatenated: " & FileToConcatenate & E.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
+
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
@@ -134,7 +196,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.Now
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_DTA_REFINERY_RUNNING, 0, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_PHOSPHO_FDR_RUNNING, 0, "", "", "", False)
         End If
 
     End Sub

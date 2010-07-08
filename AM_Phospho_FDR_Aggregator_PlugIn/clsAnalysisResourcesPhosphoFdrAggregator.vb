@@ -112,6 +112,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
                 inputFile.WriteLine("    <dta_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_dta" & DatasetType & ".txt") & "</dta_file>")
                 inputFile.WriteLine("    <fht_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_fht" & DatasetType & ".txt") & "</fht_file>")
                 inputFile.WriteLine("    <syn_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_syn" & DatasetType & ".txt") & "</syn_file>")
+                inputFile.WriteLine("    <scan_stats_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_ScanStatsEx" & ".txt") & "</scan_stats_file>")
                 inputFile.WriteLine("    <dataset_id>" & DatasetID & "</dataset_id>")
                 inputFile.WriteLine("  </run>")
             Next
