@@ -14,14 +14,12 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "May 5, 2010"
+        MyBase.mFileDate = "July 7, 2010"
         InitializeVariables()
     End Sub
 
 #Region "Constants and Enums"
     Protected Const FINNIGAN_DATAFILE_INFO_SCANNER As String = "Finnigan_Datafile_Info_Scanner.exe"
-    Protected Const SCAN_STATS_COL_SCAN_NUMBER As Integer = 1
-    Protected Const SCAN_STATS_COL_MSLEVEL As Integer = 3
 
     Protected Const SCAN_STATS_EX_COL_COLLISION_MODE As String = "Collision Mode"
 
@@ -124,6 +122,14 @@ Public Class clsMsMsSpectrumFilter
         NL71 = 9            ' loss of (98*2+18)/3 = 71.32
     End Enum
 
+    ' The ScanStats file has additional columns, but these are the only ones we care about
+    Protected Const SCANSTATS_COL_COUNT As Integer = 3
+    Protected Enum eScanStatsColumns
+        ScanNumber
+        ScanType            ' aka MSLevel
+        ScanTypeName
+    End Enum
+
     Protected Const SCANSTATS_EX_COL_COUNT As Integer = 9
     Protected Enum eScanStatsExColumns
         Dataset
@@ -137,8 +143,13 @@ Public Class clsMsMsSpectrumFilter
         ScanFilterText
     End Enum
 
-    Protected Const SCANSTATS_COL_DATASET As String = "Dataset"
-    Protected Const SCANSTATS_COL_SCANNUM As String = "ScanNumber"
+    ' Column names in the ScanStats file that we need to read; other columns are ignored
+    'Protected Const SCANSTATS_COL_DATASET As String = "Dataset"
+    Protected Const SCANSTATS_COL_SCAN_NUM As String = "ScanNumber"
+    Protected Const SCANSTATS_COL_SCAN_TYPE As String = "ScanType"
+    Protected Const SCANSTATS_COL_SCAN_TYPE_NAME As String = "ScanTypeName"
+
+    ' Column names in the ScanStatsEx file that we need to read; other columns are ignored
     Protected Const SCANSTATS_COL_ION_INJECTION_TIME As String = "Ion Injection Time (ms)"
     Protected Const SCANSTATS_COL_SCAN_SEGMENT As String = "Scan Segment"
     Protected Const SCANSTATS_COL_SCAN_EVENT As String = "Scan Event"
@@ -309,6 +320,12 @@ Public Class clsMsMsSpectrumFilter
         Public NeutralLossIntensitiesNormalized() As Single     ' Values between 0 and 100, computed via peak intensity / BPI * 100; use eNeutralLossCodeConstants to determine which index corresponds to which neutral loss value
     End Structure
 
+    Protected Structure udtScanStatsInfoType
+        Public ScanNumber As Integer
+        Public MSLevel As Integer
+        Public ScanTypeName As String
+    End Structure
+
     Protected Structure udtExtendedStatsInfoType
         Public ScanNumber As Integer
         Public IonInjectionTime As String
@@ -335,6 +352,10 @@ Public Class clsMsMsSpectrumFilter
     Private mDeleteBadDTAFiles As Boolean
 
     Private mMSLevelFilter As Integer                           ' If 0 then keeps all spectra; if 2 then only keeps MS2 spectra; if 3, then only keeps MS3 spectra.  Only works with Finnigan .Raw files and requires that the .Raw file be available
+
+    Private mScanTypeFilter As String = String.Empty            ' If empty, then keeps all spectra; if defined, then only keeps spectra with this scan type (e.g. MSn, HMSn, CID-MSn, CID-HMSn, etc.)
+    Private mScanTypeMatchType As eTextMatchTypeConstants       ' Affects the method used to compare mScanTypeFilter to the actual scan type
+
     Private mMSCollisionModeFilter As String = String.Empty     ' If empty, then keeps all spectra; if defined, then only keeps spectra with this collision mode (e.g. cid, etd, etc.)
     Private mMSCollisionModeMatchType As eTextMatchTypeConstants    ' Affects the method used to compare mMSCollisionModeFilter to the actual collision mode
 
@@ -360,10 +381,11 @@ Public Class clsMsMsSpectrumFilter
 
     Private mMaximumProgressUpdateIntervalSeconds As Single     ' Maximum time, in seconds, between calling UpdateProgress() to report the progress via Event ProgressChanged (and optionally to the log file)
 
-    Private mMSLevelInfoLoaded As Boolean
-    Private mMSLevelInfo As Hashtable                           ' Hash table with scan number as the key and MSLevel as the value
+    Private mScanStatsInfoLoaded As Boolean                 ' When True, then mScanStatsInfo() and mScanStatsPointer are valid
+    Private mScanStatsInfo() As udtScanStatsInfoType
+    Private mScanStatsPointer As Hashtable                  ' Hash table with scan number as the key and an index of the given scan in mScanStatsInfo() as the value
 
-    Private mExtendedStatsInfoLoaded As Boolean                 ' When True, then mExtendedStatsInfo() and mMSLevelInfo are valid
+    Private mExtendedStatsInfoLoaded As Boolean                 ' When True, then mExtendedStatsInfo() and mExtendedStatsPointer are valid
     Private mExtendedStatsInfo() As udtExtendedStatsInfoType
     Private mExtendedStatsPointer As Hashtable                  ' Hash table with scan number as the key and an index of the given scan in mExtendedStatsInfo() as the value
 
@@ -757,6 +779,42 @@ Public Class clsMsMsSpectrumFilter
         End Select
     End Sub
 
+    Public Property ScanTypeFilter() As String
+        Get
+            If mScanTypeFilter Is Nothing Then
+                Return String.Empty
+            Else
+                Return mScanTypeFilter
+            End If
+        End Get
+        Set(ByVal value As String)
+            If Not value Is Nothing Then
+                mScanTypeFilter = String.Copy(value)
+            End If
+        End Set
+    End Property
+
+    Public Property ScanTypeMatchType() As String
+        Get
+            Return TextMatchTypeCodeToString(mScanTypeMatchType)
+        End Get
+        Set(ByVal value As String)
+            ' Value should be: Exact, Contains, or RegEx
+            ' If blank, will set to "Contains"
+            mScanTypeMatchType = TextMatchTypeStringToCode(value)
+        End Set
+    End Property
+
+    Public Property ScanTypeMatchTypeCode() As eTextMatchTypeConstants
+        Get
+            Return mScanTypeMatchType
+        End Get
+        Set(ByVal value As eTextMatchTypeConstants)
+            mScanTypeMatchType = value
+        End Set
+    End Property
+
+
     Public Sub SetFilterMode2Option(ByVal SwitchName As FilterMode2Options, ByVal Value As Single)
         Select Case SwitchName
             Case FilterMode2Options.SignificantIntensityFractionBasePeak
@@ -1022,6 +1080,7 @@ Public Class clsMsMsSpectrumFilter
             LogMessage("Renamed " & System.IO.Path.GetFileName(strFileToBackup) & " to " & strNewFilePath)
 
         Catch ex As Exception
+            ShowErrorMessage("Error backing up " & strFileToBackup & ": " & ex.Message)
             SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileBackupAccessError)
             blnSuccess = False
         End Try
@@ -1084,6 +1143,7 @@ Public Class clsMsMsSpectrumFilter
                     End If
                 End If
             Catch ex As Exception
+                ShowErrorMessage("Error checking for file at " & strFilePathToOverwrite & ": " & ex.Message)
                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileBackupAccessError)
                 blnProceed = False
             End Try
@@ -1886,11 +1946,13 @@ Public Class clsMsMsSpectrumFilter
 
                     If Not objRangeSearch.FillWithData(sngWorkingMasses) Then
                         mErrorMessage = "Error calling objRangeSearch.FillWithData in EvaluateMsMsSpectrumMode1 (Filter Mode 1)"
-                        If MyBase.ShowMessages Then
-                            Debug.Assert(False, mErrorMessage)
-                        Else
+
+                        Try
                             Throw New Exception(mErrorMessage)
-                        End If
+                        Catch ex As Exception
+                            HandleException(mErrorMessage, ex)
+                        End Try
+
                     Else
                         ' Look for points in sngWorkingMasses() that are spaced apart by the standard amino acid masses
                         ' Note that sngWorkingMasses is sorted ascending
@@ -2124,11 +2186,7 @@ Public Class clsMsMsSpectrumFilter
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
                 mErrorMessage = "Error in EvaluateMsMsSpectrumMode1: " & ex.Message
             End If
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
             udtSpectrumQualityScore.SpectrumQualityScore = 0
         End Try
 
@@ -2325,11 +2383,7 @@ Public Class clsMsMsSpectrumFilter
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
                 mErrorMessage = "Error in EvaluateMsMsSpectrumMode2: " & ex.Message
             End If
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
         Return udtScoreDetails
@@ -2469,11 +2523,7 @@ Public Class clsMsMsSpectrumFilter
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
                 mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 2): " & ex.Message
             End If
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
         Try
@@ -2517,11 +2567,7 @@ Public Class clsMsMsSpectrumFilter
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
                 mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 3): " & ex.Message
             End If
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
         If blnPassesFilter Then
@@ -2806,7 +2852,6 @@ Public Class clsMsMsSpectrumFilter
 
     Public Function GenerateFinniganScanStatsFiles(ByVal strFinniganRawFilePath As String) As Boolean
         Dim ioFile As System.IO.FileInfo
-        Dim strMessage As String
         Dim blnsuccess As Boolean
 
         Try
@@ -2815,10 +2860,9 @@ Public Class clsMsMsSpectrumFilter
             blnsuccess = GenerateFinniganScanStatsFiles(strFinniganRawFilePath, ioFile.DirectoryName)
 
         Catch ex As Exception
-            strMessage = "Error obtaining FileInfo on file " & strFinniganRawFilePath & "; " & ex.Message
-            mErrorMessage = String.Copy(strMessage)
-            Console.WriteLine(strMessage)
-            TraceLog("Exception occurred: " & strMessage)
+            mErrorMessage = "Error obtaining FileInfo on file " & strFinniganRawFilePath & "; " & ex.Message
+            ShowErrorMessage(mErrorMessage)
+            TraceLog("Exception occurred: " & mErrorMessage)
             blnsuccess = False
         End Try
 
@@ -2832,7 +2876,6 @@ Public Class clsMsMsSpectrumFilter
         Dim blnSuccess As Boolean
         Dim strExeFilePath As String
         Dim strArgs As String = String.Empty
-        Dim strMessage As String
 
         ' Call Finnigan_Datafile_Info_Scanner.exe to parse strFinniganRawFilePath
 
@@ -2840,11 +2883,9 @@ Public Class clsMsMsSpectrumFilter
             strExeFilePath = System.IO.Path.Combine(GetAppFolderPath, FINNIGAN_DATAFILE_INFO_SCANNER)
 
             If Not System.IO.File.Exists(strExeFilePath) Then
-                strMessage = FINNIGAN_DATAFILE_INFO_SCANNER & " application not found in the program folder (" & GetAppFolderPath() & "); unable to generate the ScanStats.txt file"
-                mErrorMessage = String.Copy(strMessage)
-                LogMessage(strMessage, eMessageTypeConstants.ErrorMsg)
-                Console.WriteLine(strMessage)
-                TraceLog(strMessage)
+                mErrorMessage = FINNIGAN_DATAFILE_INFO_SCANNER & " application not found in the program folder (" & GetAppFolderPath() & "); unable to generate the ScanStats.txt file"
+                ShowErrorMessage(mErrorMessage)
+                TraceLog(mErrorMessage)
 
                 blnSuccess = False
             Else
@@ -2860,15 +2901,17 @@ Public Class clsMsMsSpectrumFilter
                 LogMessage("CmdLine: " & strArgs)
 
                 TraceLog("Call RunProgram with " & strExeFilePath & " " & strArgs)
-                blnSuccess = Me.RunProgram(strExeFilePath, String.Empty, strArgs, False, True, ProcessWindowStyle.Minimized)
+
+                Dim blnCreateWindow As Boolean = False
+                blnSuccess = Me.RunProgram(strExeFilePath, String.Empty, strArgs, False, blnCreateWindow, ProcessWindowStyle.Minimized)
+
                 TraceLog("RunProgram complete; blnSuccess = " & blnSuccess.ToString)
 
             End If
         Catch ex As Exception
-            strMessage = "Error calling " & FINNIGAN_DATAFILE_INFO_SCANNER & " with arguments '" & strArgs & "'; " & ex.Message
-            mErrorMessage = String.Copy(strMessage)
-            Console.WriteLine(strMessage)
-            TraceLog("Exception occurred: " & strMessage)
+            mErrorMessage = "Error calling " & FINNIGAN_DATAFILE_INFO_SCANNER & " with arguments '" & strArgs & "'; " & ex.Message
+            ShowErrorMessage(mErrorMessage)
+            TraceLog("Exception occurred: " & mErrorMessage)
             blnSuccess = False
         End Try
 
@@ -2911,10 +2954,14 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
-    Public Shared Function GetAllowedMSCollisionModeMatchTypes() As String
+    Public Shared Function GetAllowedFilterMatchTypes() As String
         Return TEXT_MATCH_TYPE_CONTAINS & ", " & _
                TEXT_MATCH_TYPE_EXACT & ", " & _
                TEXT_MATCH_TYPE_REGEX
+    End Function
+
+    Public Shared Function GetAllowedMSCollisionModeMatchTypes() As String
+        Return GetAllowedFilterMatchTypes()
     End Function
 
     Public Overrides Function GetDefaultExtensionsToParse() As String()
@@ -2997,13 +3044,16 @@ Public Class clsMsMsSpectrumFilter
                 ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
                 ByVal udtSpectrumQualityScore As udtSpectrumQualityScoreType, ByVal sngBPI As Single, _
                 ByVal blnIncludeNLStats As Boolean, ByRef udtNLStats As udtNLStatsType, _
-                ByVal intMSLevelFilter As Integer, ByVal strCollisionModeFilter As String, ByRef reCollisionModeFilter As System.Text.RegularExpressions.Regex, _
+                ByVal intMSLevelFilter As Integer, _
+                ByVal strScanTypeFilter As String, ByRef reScanTypeFilter As System.Text.RegularExpressions.Regex, _
+                ByVal strCollisionModeFilter As String, ByRef reCollisionModeFilter As System.Text.RegularExpressions.Regex, _
                 ByRef blnKeepSpectrum As Boolean, _
                 ByVal blnIonFilteringEnabled As Boolean, ByVal intPositiveDataCountBeforeFilter As Integer, ByVal intPositiveDataCountAfterFilter As Integer)
 
         Dim blnPassesFilter As Boolean
 
         Dim intMSLevel As Integer
+        Dim strScanTypeName As String
         Dim strCollisionMode As String
 
         Dim objMatch As Object
@@ -3029,22 +3079,60 @@ Public Class clsMsMsSpectrumFilter
             If blnPassesFilter AndAlso intMSLevelFilter <> 0 Then
                 ' Make sure this spectrum matches intMSLevelFilter
                 Try
-                    objMatch = mMSLevelInfo(udtSpectrumHeaderInfo.ScanNumberStart)
+                    objMatch = mScanStatsPointer(udtSpectrumHeaderInfo.ScanNumberStart)
 
                     If objMatch Is Nothing Then
-                        ' Match not found in mMSLevelInfo; include the spectrum in the file anyway for safety
+                        ' Match not found in mScanStatsPointer; include the spectrum in the file anyway for safety
                     Else
-                        intMSLevel = CInt(objMatch)
+                        intMSLevel = mScanStatsInfo(CInt(objMatch)).MSLevel
                         If intMSLevel <> intMSLevelFilter Then
                             blnPassesFilter = False
                         End If
                     End If
 
                 Catch ex As Exception
-                    ' mMSLevelInfo doesn't contain scan .ScanNumberStart
+                    ' mScanStatsInfo doesn't contain scan .ScanNumberStart
                     ' We'll include it in the output file anyway for safety
                 End Try
             End If
+
+
+            If blnPassesFilter AndAlso strScanTypeFilter.Length > 0 Then
+                ' Make sure this spectrum matches strScanTypeFilter
+                Try
+                    objMatch = mScanStatsPointer(udtSpectrumHeaderInfo.ScanNumberStart)
+
+                    If objMatch Is Nothing Then
+                        ' Match not found in mScanStatsPointer; include the spectrum in the file anyway for safety
+                    Else
+                        strScanTypeName = mScanStatsInfo(CInt(objMatch)).ScanTypeName
+                        Select Case mScanTypeMatchType
+                            Case eTextMatchTypeConstants.Exact
+                                If strScanTypeName.ToLower <> strScanTypeFilter.ToLower Then
+                                    blnPassesFilter = False
+                                End If
+
+                            Case eTextMatchTypeConstants.RegEx
+                                If Not reScanTypeFilter.Match(strScanTypeName).Success Then
+                                    blnPassesFilter = False
+                                End If
+
+                            Case Else
+                                ' Includes eTextMatchTypeConstants.Contains
+
+                                If strScanTypeName.ToLower.IndexOf(strScanTypeFilter.ToLower) < 0 Then
+                                    blnPassesFilter = False
+                                End If
+
+                        End Select
+                    End If
+
+                Catch ex As Exception
+                    ' mScanStatsInfo doesn't contain scan .ScanNumberStart
+                    ' We'll include it in the output file anyway for safety
+                End Try
+            End If
+
 
             ' Note that strCollisionModeFilter gets populated using mMSCollisionModeFilter
             '  if this program is able to generate the scan stats file
@@ -3148,6 +3236,8 @@ Public Class clsMsMsSpectrumFilter
         mEvaluateSpectrumQualityOnly = False
 
         mMSLevelFilter = 0
+        mScanTypeFilter = String.Empty
+        mMSCollisionModeFilter = String.Empty
 
         With mIonFilterOptions
             .RemovePrecursor = False
@@ -3211,9 +3301,9 @@ Public Class clsMsMsSpectrumFilter
     End Sub
 
     Public Shared Function IsNumber(ByVal strValue As String) As Boolean
-        Dim objFormatProvider As System.Globalization.NumberFormatInfo
+        Dim dblResult As Double
         Try
-            Return Double.TryParse(strValue, Globalization.NumberStyles.Any, objFormatProvider, 0)
+            Return Double.TryParse(strValue, dblResult)
         Catch ex As Exception
             Return False
         End Try
@@ -3259,9 +3349,7 @@ Public Class clsMsMsSpectrumFilter
             If objSettingsFile.LoadSettings(strParameterFilePath) Then
                 If Not objSettingsFile.SectionPresent(FILTER_OPTIONS_SECTION) Then
                     mErrorMessage = "The node '<section name=""" & FILTER_OPTIONS_SECTION & """> was not found in the parameter file: " & strParameterFilePath
-                    If MyBase.ShowMessages Then
-                        MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Invalid File")
-                    End If
+                    ShowErrorMessage(mErrorMessage)
                     MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                     Return False
                 Else
@@ -3273,6 +3361,10 @@ Public Class clsMsMsSpectrumFilter
                     Me.DiscardValidSpectra = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "DiscardValidSpectra", Me.DiscardValidSpectra)
                     Me.EvaluateSpectrumQualityOnly = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "EvaluateSpectrumQualityOnly", Me.EvaluateSpectrumQualityOnly)
                     Me.MSLevelFilter = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSLevelFilter", Me.MSLevelFilter)
+
+                    Me.ScanTypeFilter = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "ScanTypeFilter", Me.ScanTypeFilter)
+                    Me.ScanTypeMatchType = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "ScanTypeMatchType", Me.ScanTypeMatchType)
+
                     Me.MSCollisionModeFilter = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSCollisionModeFilter", Me.MSCollisionModeFilter)
                     Me.MSCollisionModeMatchType = objSettingsFile.GetParam(FILTER_OPTIONS_SECTION, "MSCollisionModeMatchType", Me.MSCollisionModeMatchType)
                 End If
@@ -3292,9 +3384,7 @@ Public Class clsMsMsSpectrumFilter
                 If Not objSettingsFile.SectionPresent(FILTER_MODE1) Then
                     If SpectrumFilterMode = eSpectrumFilterMode.mode1 Then
                         mErrorMessage = "The node '<section name=""" & FILTER_MODE1 & """> was not found in the parameter file: " & strParameterFilePath
-                        If MyBase.ShowMessages Then
-                            MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Invalid File")
-                        End If
+                        ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
                     End If
@@ -3329,9 +3419,7 @@ Public Class clsMsMsSpectrumFilter
                 If Not objSettingsFile.SectionPresent(FILTER_MODE2) Then
                     If SpectrumFilterMode = eSpectrumFilterMode.mode2 Then
                         mErrorMessage = "The node '<section name=""" & FILTER_MODE2 & """> was not found in the parameter file: " & strParameterFilePath
-                        If MyBase.ShowMessages Then
-                            MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Invalid File")
-                        End If
+                        ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
                     End If
@@ -3356,9 +3444,7 @@ Public Class clsMsMsSpectrumFilter
                 If Not objSettingsFile.SectionPresent(FILTER_MODE3) Then
                     If SpectrumFilterMode = eSpectrumFilterMode.mode3 Then
                         mErrorMessage = "The node '<section name=""" & FILTER_MODE3 & """> was not found in the parameter file: " & strParameterFilePath
-                        If MyBase.ShowMessages Then
-                            MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Invalid File")
-                        End If
+                        ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
                     End If
@@ -3376,11 +3462,7 @@ Public Class clsMsMsSpectrumFilter
 
         Catch ex As Exception
             mErrorMessage = "Error in LoadParameterFileSettings: " & ex.Message
-            If MyBase.ShowMessages Then
-                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-            Else
-                Throw New System.Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
             Return False
         End Try
 
@@ -3388,26 +3470,44 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
-    Private Function LoadScanStatsFile(ByVal strScanStatsFilePath As String, ByRef htMSLevelInfo As Hashtable) As Boolean
+    Private Function LoadScanStatsFile(ByVal strScanStatsFilePath As String) As Boolean
         Dim blnSuccess As Boolean
 
         Dim srInFile As System.IO.StreamReader
         Dim strLineIn As String
         Dim strSplitLine() As String
 
-        Dim intScanNumber As Integer
-        Dim intMSLevel As Integer
+        Dim blnHeadersDefined As Boolean
+        Dim intColumnMap() As Integer
 
+        Dim intIndex As Integer
+        Dim intScanStatsInfoCount As Integer
+        Dim intScanNumber As Integer
+
+        Dim strValue As String
         Dim intValue As Integer
 
+        Dim strMessage As String
+
         Try
-            If htMSLevelInfo Is Nothing Then
-                htMSLevelInfo = New Hashtable
-            Else
-                htMSLevelInfo.Clear()
-            End If
 
             ' Read the _ScanStats file
+
+            ReDim intColumnMap(SCANSTATS_COL_COUNT - 1)
+            For intIndex = 0 To intColumnMap.Length - 1
+                intColumnMap(intIndex) = -1
+            Next
+
+            ' Initially reserve space for 1000 scans
+            intScanStatsInfoCount = 0
+            ReDim mScanStatsInfo(999)
+
+            If mScanStatsPointer Is Nothing Then
+                mScanStatsPointer = New Hashtable
+            Else
+                mScanStatsPointer.Clear()
+            End If
+
 
             If System.IO.File.Exists(strScanStatsFilePath) Then
                 srInFile = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
@@ -3419,23 +3519,91 @@ Public Class clsMsMsSpectrumFilter
 
                         Try
                             strSplitLine = strLineIn.Split(ControlChars.Tab)
-                            If strSplitLine.Length >= 4 Then
-                                If Integer.TryParse(strSplitLine(SCAN_STATS_COL_SCAN_NUMBER), intValue) Then
+
+                            If Not blnHeadersDefined Then
+                                ' Parse the header line to define the column mapping
+                                For intIndex = 0 To strSplitLine.Length - 1
+
+                                    Select Case strSplitLine(intIndex).ToLower
+                                        Case SCANSTATS_COL_SCAN_NUM.ToLower
+                                            intColumnMap(eScanStatsColumns.ScanNumber) = intIndex
+
+                                        Case SCANSTATS_COL_SCAN_TYPE.ToLower
+                                            intColumnMap(eScanStatsColumns.ScanType) = intIndex
+
+                                        Case SCANSTATS_COL_SCAN_TYPE_NAME.ToLower
+                                            intColumnMap(eScanStatsColumns.ScanTypeName) = intIndex
+
+                                        Case Else
+                                            ' Ignore this column
+                                    End Select
+                                Next intIndex
+
+                                If intColumnMap(eScanStatsColumns.ScanNumber) < 0 Then
+                                    ' Scan Number column was not found; this is a fatal error
+                                    strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsFilePath & "; unable to continue"
+                                    TraceLog(strMessage)
+                                    ShowErrorMessage(strMessage)
+                                    blnSuccess = False
+                                    Exit Try
+                                End If
+
+                                If mScanTypeFilter.Length > 0 AndAlso intColumnMap(eScanStatsColumns.ScanTypeName) < 0 Then
+                                    ' Scan Type Name column was not found; this is a fatal error
+                                    strMessage = "'" & SCANSTATS_COL_SCAN_TYPE_NAME & "' column not found in " & strScanStatsFilePath & "; unable to continue"
+                                    TraceLog(strMessage)
+                                    ShowErrorMessage(strMessage)
+                                    blnSuccess = False
+                                    Exit Try
+                                End If
+                                blnHeadersDefined = True
+                            Else
+
+                                If intScanStatsInfoCount >= mScanStatsInfo.Length Then
+                                    ' Reserve more space in mScanStatsInfo
+                                    ReDim Preserve mScanStatsInfo(mScanStatsInfo.Length * 2 - 1)
+                                End If
+
+                                strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanNumber)
+                                If Integer.TryParse(strValue, intValue) Then
                                     intScanNumber = intValue
 
-                                    If Integer.TryParse(strSplitLine(SCAN_STATS_COL_MSLEVEL), intValue) Then
-                                        intMSLevel = intValue
+                                    If mScanStatsPointer.Contains(intScanNumber) Then
+                                        ' The same scan is present multiple times in the ScanStatsEx file; this is unexpected
+                                        ' We will skip this duplicate entry
+                                    Else
+                                        ' Make a new entry in mScanStatsInfo
+                                        With mScanStatsInfo(intScanStatsInfoCount)
 
-                                        htMSLevelInfo.Add(intScanNumber, intMSLevel)
+                                            .ScanNumber = intScanNumber
+
+                                            strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanType)
+                                            If Not Int32.TryParse(strValue, .MSLevel) Then
+                                                ShowErrorMessage("Error: ScanType column is not an integer in line " & strLineIn)
+                                                .MSLevel = 0
+                                            End If
+
+                                            .ScanTypeName = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanTypeName)
+                                        End With
+
+                                        ' Store a mapping between intScanNumber and intScanStatsInfoCount
+                                        mScanStatsPointer.Add(intScanNumber, intScanStatsInfoCount)
+
+                                        intScanStatsInfoCount += 1
                                     End If
                                 End If
+
                             End If
+
                         Catch ex As Exception
-                            Console.WriteLine("Error parsing line " & strLineIn & "; " & ex.Message)
+                            ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
                         End Try
                     End If
 
                 Loop
+
+                ' Shrink mScanStatsInfo
+                ReDim Preserve mScanStatsInfo(intScanStatsInfoCount - 1)
 
                 blnSuccess = True
             Else
@@ -3443,7 +3611,7 @@ Public Class clsMsMsSpectrumFilter
             End If
 
         Catch ex As Exception
-            Console.WriteLine("Error reading the ScanStats file (" & strScanStatsFilePath & "); " & ex.Message)
+            ShowErrorMessage("Error reading the ScanStats file (" & strScanStatsFilePath & "); " & ex.Message)
             blnSuccess = False
         Finally
             If Not srInFile Is Nothing Then
@@ -3510,7 +3678,7 @@ Public Class clsMsMsSpectrumFilter
                                 For intIndex = 0 To strSplitLine.Length - 1
 
                                     Select Case strSplitLine(intIndex).ToLower
-                                        Case SCANSTATS_COL_SCANNUM.ToLower
+                                        Case SCANSTATS_COL_SCAN_NUM.ToLower
                                             intColumnMap(eScanStatsExColumns.ScanNumber) = intIndex
 
                                         Case SCANSTATS_COL_ION_INJECTION_TIME.ToLower
@@ -3534,14 +3702,26 @@ Public Class clsMsMsSpectrumFilter
                                         Case SCANSTATS_COL_SCAN_FILTER_TEXT.ToLower
                                             intColumnMap(eScanStatsExColumns.ScanFilterText) = intIndex
 
+                                        Case Else
+                                            ' Ignore this column
+
                                     End Select
                                 Next intIndex
 
                                 If intColumnMap(eScanStatsExColumns.ScanNumber) < 0 Then
                                     ' Scan Number column was not found; this is a fatal error
-                                    strMessage = "Scan number column not found in " & strScanStatsExFilePath & "; unable to continue"
+                                    strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
                                     TraceLog(strMessage)
-                                    Console.WriteLine(strMessage)
+                                    ShowErrorMessage(strMessage)
+                                    blnSuccess = False
+                                    Exit Try
+                                End If
+
+                                If mMSCollisionModeFilter.Length > 0 AndAlso intColumnMap(eScanStatsExColumns.CollisionMode) < 0 Then
+                                    ' Collision mode column was not found; this is a fatal error
+                                    strMessage = "'" & SCANSTATS_COL_COLLISION_MODE & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
+                                    TraceLog(strMessage)
+                                    ShowErrorMessage(strMessage)
                                     blnSuccess = False
                                     Exit Try
                                 End If
@@ -3586,7 +3766,7 @@ Public Class clsMsMsSpectrumFilter
                             End If
 
                         Catch ex As Exception
-                            Console.WriteLine("Error parsing line " & strLineIn & "; " & ex.Message)
+                            ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
                         End Try
                     End If
 
@@ -3601,7 +3781,7 @@ Public Class clsMsMsSpectrumFilter
             End If
 
         Catch ex As Exception
-            Console.WriteLine("Error reading the ScanStatsEx file (" & strScanStatsExFilePath & "); " & ex.Message)
+            ShowErrorMessage("Error reading the ScanStatsEx file (" & strScanStatsExFilePath & "); " & ex.Message)
             blnSuccess = False
         Finally
             If Not srInFile Is Nothing Then
@@ -3704,7 +3884,7 @@ Public Class clsMsMsSpectrumFilter
                     If blnInsideFilterRange Then
                         blnInsideFilterRange = False
 
-                        objFilteredRanges.add(sngFilterRangeStart, sngFilterRangeEnd)
+                        objFilteredRanges.Add(sngFilterRangeStart, sngFilterRangeEnd)
                     End If
                 End If
             Next
@@ -3727,100 +3907,15 @@ Public Class clsMsMsSpectrumFilter
 
     End Sub
 
-    Private Function LookupSplitLineValue(ByRef strSplitLine() As String, ByRef intColumnMap() As Integer, ByVal eScanStatsExColumn As eScanStatsExColumns) As String
+    Private Function LookupSplitLineValue(ByRef strSplitLine() As String, ByRef intColumnMap() As Integer, ByVal intColIndex As Integer) As String
 
-        If intColumnMap(eScanStatsExColumn) >= 0 AndAlso intColumnMap(eScanStatsExColumn) < strSplitLine.Length Then
-            Return strSplitLine(intColumnMap(eScanStatsExColumn))
+        If intColumnMap(intColIndex) >= 0 AndAlso intColumnMap(intColIndex) < strSplitLine.Length Then
+            Return strSplitLine(intColumnMap(intColIndex))
         Else
             Return String.Empty
         End If
 
     End Function
-
-    'Private Function MedianIntensityDTATextOrMGF(ByRef objFileReader As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass, ByVal strInputFilePath As String, ByRef blnSuccess As Boolean) As Single
-    '    ' Pre-read the entire file to determine the median intensity of all of the data
-
-    '    Dim sngMedianIntensity As Single
-    '    Dim blnSpectrumFound As Boolean
-
-    '    Dim alMSMSData As New ArrayList
-    '    Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-
-    '    Dim sngMassList() As Single
-    '    Dim sngIntensityList() As Single
-    '    Dim intDataCount As Integer
-    '    Dim intProcessCount As Integer
-
-    '    Dim sngGlobalIntensityList() As Single
-
-    '    Dim intIndex, intGlobalDataCount, intMidpointIndex As Integer
-
-    '    sngMedianIntensity = 0
-    '    ReDim sngGlobalIntensityList(0)
-    '    intGlobalDataCount = 0
-
-    '    Try
-    '        ' Open the input file and parse it
-    '        If Not objFileReader.OpenFile(strInputFilePath) Then
-    '            SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.InputFileAccessError)
-    '            blnSuccess = False
-    '            Exit Try
-    '        End If
-
-    '        intProcessCount = 0
-    '        Console.WriteLine("  Determining median data intensity for file")
-    '        Console.Write("  ")
-
-    '        Do
-
-    '            ' Look for the next spectrum
-    '            blnSpectrumFound = objFileReader.ReadNextSpectrum(alMSMSData, udtSpectrumHeaderInfo)
-    '            If blnSpectrumFound Then
-    '                ' Populate sngMassList and sngIntensityList
-    '                intDataCount = objFileReader.ParseMsMsDataList(alMSMSData, sngMassList, sngIntensityList)
-
-    '                ' Append the data to sngGlobalIntensityList
-    '                ReDim Preserve sngGlobalIntensityList(intGlobalDataCount + intDataCount)
-
-    '                For intIndex = 0 To intDataCount - 1
-    '                    sngGlobalIntensityList(intGlobalDataCount + intIndex) = sngIntensityList(intIndex)
-    '                Next intIndex
-    '                intGlobalDataCount += intDataCount
-
-    '                intProcessCount += 1
-    '                If intProcessCount Mod 100 = 0 Then
-    '                    Console.Write(".")
-    '                End If
-
-    '            End If
-    '        Loop While blnSpectrumFound
-
-    '        If intProcessCount >= 100 Then Console.WriteLine()
-
-    '        objFileReader.CloseFile()
-    '        blnSuccess = True
-
-    '        ' Find the median
-    '        If intGlobalDataCount > 0 Then
-    '            ReDim Preserve sngGlobalIntensityList(intGlobalDataCount - 1)
-
-    '            Array.Sort(sngGlobalIntensityList)
-
-    '            intMidpointIndex = CInt(intGlobalDataCount / 2)
-    '            If intMidpointIndex < 0 Then intMidpointIndex = 0
-    '            sngMedianIntensity = sngGlobalIntensityList(intMidpointIndex)
-
-    '        Else
-    '            sngMedianIntensity = 0
-    '        End If
-
-    '    Catch ex As Exception
-    '        SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.InputFileAccessError)
-    '        blnSuccess = False
-    '    End Try
-
-    '    Return sngMedianIntensity
-    'End Function
 
     Public Sub ModifyStandardAminoAcidMass(ByVal strAminoAcidSymbolOneLetter As String, ByVal sngModMass As Single)
 
@@ -3834,11 +3929,7 @@ Public Class clsMsMsSpectrumFilter
             End If
         Catch ex As Exception
             mErrorMessage = "Error in ModifyStandardAminoAcidMass: " & ex.Message
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
     End Sub
@@ -3884,9 +3975,7 @@ Public Class clsMsMsSpectrumFilter
                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.SequestParamFileReadError)
                 blnSuccess = False
                 mErrorMessage = "Sequest param file not found " & strSequestParamFilePathFull
-                If MyBase.ShowMessages Then
-                    MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Missing file")
-                End If
+                ShowErrorMessage(mErrorMessage)
             Else
                 srInFile = New System.IO.StreamReader(strSequestParamFilePathFull)
 
@@ -3939,11 +4028,7 @@ Public Class clsMsMsSpectrumFilter
             blnSuccess = False
 
             mErrorMessage = "Error reading the Sequest param file: " & ex.Message
-            If MyBase.ShowMessages Then
-                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
         Return blnSuccess
@@ -4062,7 +4147,11 @@ Public Class clsMsMsSpectrumFilter
         Static intFileCount As Integer = 0
 
         Static intMSLevelFilter As Integer = 0
+
+        Static strScanTypeFilter As String = String.Empty
         Static strCollisionModeFilter As String = String.Empty
+
+        Static reScanTypeFilter As System.Text.RegularExpressions.Regex
         Static reCollisionModeFilter As System.Text.RegularExpressions.Regex
 
         blnIonFilteringEnabled = CheckIonFilteringEnabled()
@@ -4086,16 +4175,20 @@ Public Class clsMsMsSpectrumFilter
                 intFileCount = System.IO.Directory.GetFiles(System.IO.Path.GetDirectoryName(strInputFilePath), "*.dta").GetLength(0)
                 intFilesProcessed = 0
 
-                ' Examine mMSLevelFilter and mMSCollisionModeFilter
-                ' If mMSLevelFilter is > 0 or if mMSCollisionModeFilter is not blank, then look for or generate the scan stats files
-                ' If the scan stats file is found (or generated), then loads it and populates strCollisionModeFilter using mMSCollisionModeFilter
-                ProcessWorkCheckForAndGenerateScanStatsFile(strInputFilePath, intMSLevelFilter, strCollisionModeFilter)
+                ' Examine mMSLevelFilter, mScanTypeFilter, and mMSCollisionModeFilter
+                ' If mMSLevelFilter is > 0, or is not blank, or mMSCollisionModeFilter is not blank, then look for or generate the scan stats files
+                ' If the scan stats ex file is found (or generated), then loads it and populates strCollisionModeFilter using mMSCollisionModeFilter
+                ProcessWorkCheckForAndGenerateScanStatsFile(strInputFilePath, intMSLevelFilter, strScanTypeFilter, strCollisionModeFilter)
+
+                If mScanTypeMatchType = eTextMatchTypeConstants.RegEx Then
+                    reScanTypeFilter = New System.Text.RegularExpressions.Regex(strScanTypeFilter, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+                End If
 
                 If mMSCollisionModeMatchType = eTextMatchTypeConstants.RegEx Then
                     reCollisionModeFilter = New System.Text.RegularExpressions.Regex(strCollisionModeFilter, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
                 End If
 
-                WriteSettingsToLog(strInputFilePath, "", intMSLevelFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
+                WriteSettingsToLog(strInputFilePath, "", intMSLevelFilter, strScanTypeFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
             End If
 
             intFilesProcessed += 1
@@ -4143,7 +4236,9 @@ Public Class clsMsMsSpectrumFilter
                 HandleEvaluationResults(GetReportFileName(strInputFilePath, strOutputFolderPath), _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
                                    blnIncludeNLStats, udtNLStats, _
-                                   intMSLevelFilter, strCollisionModeFilter, reCollisionModeFilter, _
+                                   intMSLevelFilter, _
+                                   strScanTypeFilter, reScanTypeFilter, _
+                                   strCollisionModeFilter, reCollisionModeFilter, _
                                    blnKeepSpectrum, _
                                    blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
 
@@ -4162,11 +4257,7 @@ Public Class clsMsMsSpectrumFilter
                             Catch ex As Exception
                                 mErrorMessage = "Error copying " & strInputFilePath & " to " & strNewFilePath
                                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileCopyError)
-                                If MyBase.ShowMessages Then
-                                    Debug.Assert(False, mErrorMessage)
-                                Else
-                                    Throw New Exception(mErrorMessage, ex)
-                                End If
+                                HandleException(mErrorMessage, ex)
                             End Try
                         End If
                     Else
@@ -4186,11 +4277,7 @@ Public Class clsMsMsSpectrumFilter
                             Catch ex As Exception
                                 mErrorMessage = "Error deleting " & strInputFilePath
                                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileDeleteError)
-                                If MyBase.ShowMessages Then
-                                    Debug.Assert(False, mErrorMessage)
-                                Else
-                                    Throw New Exception(mErrorMessage, ex)
-                                End If
+                                HandleException(mErrorMessage, ex)
                             End Try
                         Else
                             'no output folder was provided so we rename the unwanted spectra to .bad since mDeleteBadDTAFiles = False
@@ -4207,21 +4294,13 @@ Public Class clsMsMsSpectrumFilter
                                     Catch ex As Exception
                                         mErrorMessage = "Error deleting " & strInputFilePath
                                         SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileDeleteError)
-                                        If MyBase.ShowMessages Then
-                                            Debug.Assert(False, mErrorMessage)
-                                        Else
-                                            Throw New Exception(mErrorMessage, ex)
-                                        End If
+                                        HandleException(mErrorMessage, ex)
                                     End Try
 
                                 Catch ex As Exception
                                     mErrorMessage = "Error copying " & strInputFilePath & " to " & strNewFilePath
                                     SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.FileCopyError)
-                                    If MyBase.ShowMessages Then
-                                        Debug.Assert(False, mErrorMessage)
-                                    Else
-                                        Throw New Exception(mErrorMessage, ex)
-                                    End If
+                                    HandleException(mErrorMessage, ex)
                                 End Try
                             End If
 
@@ -4236,11 +4315,8 @@ Public Class clsMsMsSpectrumFilter
         Catch ex As Exception
             mErrorMessage = "Error in ProcessDtaFile: " & ex.Message
             SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.InputFileAccessError)
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+
+            HandleException(mErrorMessage, ex)
             blnSuccess = False
         End Try
 
@@ -4317,7 +4393,11 @@ Public Class clsMsMsSpectrumFilter
         Dim intProgressPercentComplete As Integer
 
         Dim intMSLevelFilter As Integer = 0
+
+        Dim strScanTypeFilter As String = String.Empty
         Dim strCollisionModeFilter As String = String.Empty
+
+        Dim reScanTypeFilter As System.Text.RegularExpressions.Regex
         Dim reCollisionModeFilter As System.Text.RegularExpressions.Regex
 
         Try
@@ -4350,10 +4430,14 @@ Public Class clsMsMsSpectrumFilter
 
             If Not blnProceed Then Exit Try
 
-            ' Examine mMSLevelFilter and mMSCollisionModeFilter
-            ' If mMSLevelFilter is > 0 or if mMSCollisionModeFilter is not blank, then look for the scan stats files (generate them if missing)
-            ' If the scan stats file is found (or generated), then loads it and populates strCollisionModeFilter using mMSCollisionModeFilter
-            ProcessWorkCheckForAndGenerateScanStatsFile(strInputFilePathOriginal, intMSLevelFilter, strCollisionModeFilter)
+            ' Examine mMSLevelFilter, mScanTypeFilter, and mMSCollisionModeFilter
+            ' If mMSLevelFilter is > 0, or is not blank, or mMSCollisionModeFilter is not blank, then look for or generate the scan stats files
+            ' If the scan stats ex file is found (or generated), then loads it and populates strCollisionModeFilter using mMSCollisionModeFilter
+            ProcessWorkCheckForAndGenerateScanStatsFile(strInputFilePathOriginal, intMSLevelFilter, strScanTypeFilter, strCollisionModeFilter)
+
+            If mScanTypeMatchType = eTextMatchTypeConstants.RegEx Then
+                reScanTypeFilter = New System.Text.RegularExpressions.Regex(strScanTypeFilter, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+            End If
 
             If mMSCollisionModeMatchType = eTextMatchTypeConstants.RegEx Then
                 reCollisionModeFilter = New System.Text.RegularExpressions.Regex(strCollisionModeFilter, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
@@ -4367,10 +4451,6 @@ Public Class clsMsMsSpectrumFilter
                 srOutFile.WriteLine()
             End If
 
-            '' Pre-read the entire file to determine the median intensity of all of the data
-            ''sngMedianIntensity = MedianIntensityDTATextOrMGF(objFileReader, strInputFilePath, blnSuccess)
-            ''If sngMedianIntensity > 0 Then mNoiseLevelIntensityThreshold = sngMedianIntensity
-
             ' Open the input file and parse it
             If Not objFileReader.OpenFile(strInputFilePath) Then
                 LogMessage("Error opening " & strInputFilePath)
@@ -4379,7 +4459,9 @@ Public Class clsMsMsSpectrumFilter
                 Exit Try
             End If
 
-            WriteSettingsToLog(strInputFilePath, strOutputFilePath, intMSLevelFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
+            MyBase.ShowMessage("Filtering MsMs Spectra: ", False, True)
+
+            WriteSettingsToLog(strInputFilePath, strOutputFilePath, intMSLevelFilter, strScanTypeFilter, strCollisionModeFilter, mEvaluateSpectrumQualityOnly)
 
             intProcessCount = 0
             intMSSpectraCountIonFiltered = 0
@@ -4477,7 +4559,9 @@ Public Class clsMsMsSpectrumFilter
                             HandleEvaluationResults(strReportFilePath, _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
                                    blnIncludeNLStats, udtNLStats, _
-                                   intMSLevelFilter, strCollisionModeFilter, reCollisionModeFilter, _
+                                   intMSLevelFilter, _
+                                   strScanTypeFilter, reScanTypeFilter, _
+                                   strCollisionModeFilter, reCollisionModeFilter, _
                                    blnKeepSpectrum, _
                                    blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
 
@@ -4509,10 +4593,13 @@ Public Class clsMsMsSpectrumFilter
                     End If
                 Catch ex As Exception
                     ' Error reading or parsing this spectrum; go on to the next one
-                    Console.WriteLine("Error reading spectrum (intSpectraRead = " & intSpectraRead.ToString & ": " & ex.Message)
+                    ShowErrorMessage("Error reading spectrum (intSpectraRead = " & intSpectraRead.ToString & ": " & ex.Message)
                 End Try
 
-                If mAbortProcessing Then Exit Do
+                If mAbortProcessing Then
+                    ShowMessage("Processing aborted", True, True)
+                    Exit Do
+                End If
             Loop While blnSpectrumFound
 
             If intProcessCount >= 100 Then Console.WriteLine()
@@ -4522,20 +4609,16 @@ Public Class clsMsMsSpectrumFilter
                 srOutFile.Close()
             End If
 
-            LogMessage("Processing complete; processed " & intProcessCount & " spectra")
-            LogMessage("Spectrum count passing filters: " & intMSSpectraCountPassingFilter)
-            LogMessage("Spectrum count with m/z values removed by ion filtering: " & intMSSpectraCountIonFiltered)
+            ShowMessage("Processing complete; processed " & intProcessCount & " spectra")
+            ShowMessage("Spectrum count passing filters: " & intMSSpectraCountPassingFilter)
+            ShowMessage("Spectrum count with m/z values removed by ion filtering: " & intMSSpectraCountIonFiltered)
 
             blnSuccess = True
 
         Catch ex As Exception
             mErrorMessage = "Error in ProcessDTATextOrMGF: " & ex.Message
             SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.InputFileAccessError)
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, mErrorMessage)
-            Else
-                Throw New Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
             blnSuccess = False
         End Try
 
@@ -4564,11 +4647,7 @@ Public Class clsMsMsSpectrumFilter
 
         If Not LoadParameterFileSettings(strParameterFilePath) Then
             mErrorMessage = "Parameter file load error: " & strParameterFilePath
-            If MyBase.ShowMessages Then
-                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-            End If
-
-            Console.WriteLine(mErrorMessage)
+            ShowErrorMessage(mErrorMessage)
             If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
                 MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
             End If
@@ -4577,7 +4656,7 @@ Public Class clsMsMsSpectrumFilter
 
         Try
             If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
-                Console.WriteLine("Input file name is empty")
+                ShowErrorMessage("Input file name is empty")
                 MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidInputFilePath)
             Else
 
@@ -4599,17 +4678,16 @@ Public Class clsMsMsSpectrumFilter
 
                         If System.IO.Path.GetExtension(strInputFilePathFull).ToUpper = DTA_EXTENSION Then
                             blnSuccess = ProcessDtaFile(strInputFilePathFull, strOutputFolderPath)
+
                         ElseIf strInputFilePathFull.ToUpper.EndsWith(DTA_TXT_EXTENSION) OrElse _
                                strInputFilePathFull.ToUpper.EndsWith(FHT_TXT_EXTENSION) Then
-                            Console.WriteLine("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
-                            Console.WriteLine()
-                            Console.WriteLine("Filtering MsMs Spectra: ")
+                            MyBase.ShowMessage("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
                             blnSuccess = ProcessDtaTxtFile(strInputFilePathFull, strOutputFolderPath)
+
                         ElseIf strInputFilePathFull.ToUpper.EndsWith(MGF_EXTENSION) Then
-                            Console.WriteLine("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
-                            Console.WriteLine()
-                            Console.WriteLine("Filtering MsMs Spectra: ")
+                            MyBase.ShowMessage("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
                             blnSuccess = ProcessMascotGenericFile(strInputFilePathFull, strOutputFolderPath)
+
                         Else
                             ' Unknown file extension
                             mErrorMessage = "Unknown file extension: " & System.IO.Path.GetExtension(strInputFilePathFull)
@@ -4625,21 +4703,13 @@ Public Class clsMsMsSpectrumFilter
 
                     Catch ex As Exception
                         mErrorMessage = "Error calling ProcessDtaFile or ProcessDtaTxtFile: " & ex.Message
-                        If MyBase.ShowMessages Then
-                            MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-                        Else
-                            Throw New System.Exception(mErrorMessage, ex)
-                        End If
+                        HandleException(mErrorMessage, ex)
                     End Try
                 End If
             End If
         Catch ex As Exception
             mErrorMessage = "Error in ProcessFile: " & ex.Message
-            If MyBase.ShowMessages Then
-                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-            Else
-                Throw New System.Exception(mErrorMessage, ex)
-            End If
+            HandleException(mErrorMessage, ex)
         End Try
 
         Return blnSuccess
@@ -4648,6 +4718,7 @@ Public Class clsMsMsSpectrumFilter
 
     Private Sub ProcessWorkCheckForAndGenerateScanStatsFile(ByVal strInputFilePath As String, _
                                                             ByRef intMSLevelFilter As Integer, _
+                                                            ByRef strScanTypeFilter As String, _
                                                             ByRef strCollisionModeFilter As String)
 
         ' Examines mMSLevelFilter and mMSCollisionModeFilter
@@ -4659,6 +4730,7 @@ Public Class clsMsMsSpectrumFilter
         ' If a scan stats ex file is found (or successfully created), then loads the file, populating mExtendedStatsInfo
 
         ' Will update intMSLevelFilter to mMSLevelFilter if the ScanStats file is successfully loaded; otherwise sets intMSLevelFilter to 0
+        ' Will update strScanTypeFilter to mScanTypeFilter if the ScanStats file is successfully loaded; otherwise, sets strScanTypeFilter to ""
         ' Will update strCollisionModeFilter to mMSCollisionModeFilter if the ScanStatsEx file is successfully loaded; otherwise sets strCollisionModeFilter to ""
 
         Dim blnScanStatsFilesExist As Boolean
@@ -4673,19 +4745,20 @@ Public Class clsMsMsSpectrumFilter
         Dim strMessage As String
 
         intMSLevelFilter = 0
+        strScanTypeFilter = String.Empty
         strCollisionModeFilter = String.Empty
 
-        mMSLevelInfoLoaded = False
+        mScanStatsInfoLoaded = False
         mExtendedStatsInfoLoaded = False
 
-        If mMSLevelFilter > 0 Or mMSCollisionModeFilter.Length > 0 Then
+        If mMSLevelFilter > 0 OrElse mScanTypeFilter.Length > 0 OrElse mMSCollisionModeFilter.Length > 0 Then
 
             Try
                 strMessage = "Looking for ScanStats files for " & strInputFilePath
+                ShowMessage("  " & strMessage)
 
                 TraceLog("")
                 TraceLog(strMessage)
-                LogMessage(strMessage)
 
                 ioFile = New System.IO.FileInfo(strInputFilePath)
 
@@ -4700,7 +4773,7 @@ Public Class clsMsMsSpectrumFilter
                 If Not blnScanStatsFilesExist Then
                     ' See if a .Raw file matching strInputFileBaseName exists
                     ' If it does, process the .Raw file using Finnigan_Datafile_Info_Scanner.exe 
-                    '  so that we can obtain MSLevel and collision mode information
+                    '  so that we can obtain MSLevel, Scan Type, and collision mode information
 
                     strFinniganRawFilePath = System.IO.Path.Combine(ioFile.DirectoryName, strBaseDatasetName & ".raw")
 
@@ -4708,9 +4781,8 @@ Public Class clsMsMsSpectrumFilter
 
                     If System.IO.File.Exists(strFinniganRawFilePath) Then
                         strMessage = "Generating _ScanStats.txt file using " & strFinniganRawFilePath
+                        ShowMessage("  " & strMessage)
                         TraceLog(strMessage)
-                        LogMessage(strMessage)
-                        Console.WriteLine(strMessage)
 
                         UpdateProgress("Generating ScanStats file; please wait ", 0)
 
@@ -4719,25 +4791,27 @@ Public Class clsMsMsSpectrumFilter
                             strScanStatsFilePath = String.Empty
                         End If
                     Else
-                        strMessage = "Raw file not found at: " & strFinniganRawFilePath
-                        LogMessage(strMessage)
+                        strMessage = "Warning, raw file not found at: " & strFinniganRawFilePath
+                        ShowMessage(strMessage)
                         TraceLog(strMessage)
                     End If
                 End If
 
                 If System.IO.File.Exists(strScanStatsFilePath) Then
                     TraceLog("Loading " & strScanStatsFilePath)
-                    If LoadScanStatsFile(strScanStatsFilePath, mMSLevelInfo) Then
-                        mMSLevelInfoLoaded = True
-                        intMSLevelFilter = mMSLevelFilter
+                    If LoadScanStatsFile(strScanStatsFilePath) Then
+                        mScanStatsInfoLoaded = True
 
-                        LogMessage("MSLevel info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsFilePath))
+                        intMSLevelFilter = mMSLevelFilter
+                        strScanTypeFilter = String.Copy(mScanTypeFilter)
+
+                        ShowMessage("  MSLevel info and Scan Type info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsFilePath))
                     Else
                         LogMessage("Load failed for: " & strScanStatsFilePath)
                     End If
                 Else
                     strMessage = "ScanStats.txt file still not found after calling GenerateFinniganScanStatsFiles"
-                    LogMessage(strMessage)
+                    ShowMessage(strMessage)
                     TraceLog(strMessage)
                 End If
 
@@ -4747,13 +4821,13 @@ Public Class clsMsMsSpectrumFilter
                         mExtendedStatsInfoLoaded = True
                         strCollisionModeFilter = String.Copy(mMSCollisionModeFilter)
 
-                        LogMessage("Collision mode info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsExFilePath))
+                        ShowMessage("  Collision mode info successfully loaded from " & System.IO.Path.GetFileName(strScanStatsExFilePath))
                     Else
                         LogMessage("Load failed for: " & strScanStatsExFilePath)
                     End If
                 Else
                     strMessage = "ScanStatsEx.txt file not found at " & strScanStatsExFilePath
-                    LogMessage(strMessage)
+                    ShowMessage(strMessage)
                     TraceLog(strMessage)
                 End If
 
@@ -4800,8 +4874,8 @@ Public Class clsMsMsSpectrumFilter
             TraceLog("strArguments = " & strArguments)
 
         Catch ex As Exception
-            Console.WriteLine("Error instantiating objProgramRunner: " & ex.Message)
-            blnSuccess = False
+            ShowErrorMessage("Error instantiating objProgramRunner: " & ex.Message)
+            Return False
         End Try
 
         With objProgramRunner
@@ -4809,6 +4883,7 @@ Public Class clsMsMsSpectrumFilter
             .WorkDir = strWorkingDirectory
             .Arguments = strArguments
             .CreateNoWindow = Not blnCreateWindow
+            .EchoOutputToConsole = True
             .WindowStyle = eWindowStyle
 
             .MonitoringInterval = 500               ' msec
@@ -4853,15 +4928,16 @@ Public Class clsMsMsSpectrumFilter
     End Function
 
     ''' <summary>
-    ''' Looks at the current settings to determine if the _ScanStats.txt files are required in order to perform the filtering
+    ''' Looks at the current settings to determine if the _ScanStats.txt and _ScanStatsEx.txt files are required in order to perform the filtering
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Function ScanStatsFileIsRequired() As Boolean
 
+        If mScanTypeFilter Is Nothing Then mScanTypeFilter = String.Empty
         If mMSCollisionModeFilter Is Nothing Then mMSCollisionModeFilter = String.Empty
 
-        If mMSLevelFilter > 0 Or mMSCollisionModeFilter.Length > 0 Then
+        If mMSLevelFilter > 0 OrElse mScanTypeFilter.Length > 0 OrElse mMSCollisionModeFilter.Length > 0 Then
             Return True
         Else
             Return False
@@ -4977,9 +5053,7 @@ Public Class clsMsMsSpectrumFilter
             End If
 
         Catch ex As Exception
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, "Error in SortSpectrumQualityTextFile: " & ex.Message)
-            End If
+            ShowErrorMessage("Error in SortSpectrumQualityTextFile: " & ex.Message)
         End Try
 
 
@@ -5057,7 +5131,7 @@ Public Class clsMsMsSpectrumFilter
             swOutFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & ControlChars.Tab & strMessage)
 
         Catch ex As Exception
-            Console.WriteLine("Error in TraceLog")
+            ShowErrorMessage("Error in TraceLog: " & ex.Message)
         Finally
             If Not swOutFile Is Nothing Then
                 swOutFile.Close()
@@ -5074,9 +5148,7 @@ Public Class clsMsMsSpectrumFilter
                 mAminoAcidMassList(strAminoAcidSymbolOneLetter) = sngNewMass
             End If
         Catch ex As Exception
-            If MyBase.ShowMessages Then
-                Debug.Assert(False, "Error in UpdateAminoAcidMass: " & ex.Message)
-            End If
+            ShowErrorMessage("Error in UpdateAminoAcidMass: " & ex.Message)
         End Try
 
     End Sub
@@ -5129,9 +5201,7 @@ Public Class clsMsMsSpectrumFilter
             If Not System.IO.File.Exists(strFilePath) Then
                 mErrorMessage = "DLL not found: " & strFilePath
                 SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.MissingRequiredDLL)
-                If MyBase.ShowMessages Then
-                    Debug.Assert(False, mErrorMessage)
-                End If
+                ShowErrorMessage(mErrorMessage)
                 Return False
             End If
         Next intIndex
@@ -5160,12 +5230,7 @@ Public Class clsMsMsSpectrumFilter
         Catch ex As Exception
 
             mErrorMessage = "Error in writing DTA file " & strDTAFilePath & ": " & ex.Message
-            If MyBase.ShowMessages Then
-                MsgBox(mErrorMessage, MsgBoxStyle.Exclamation Or MsgBoxStyle.OkOnly, "Error")
-            Else
-                Throw New System.Exception(mErrorMessage, ex)
-            End If
-
+            HandleException(mErrorMessage, ex)
         End Try
 
     End Sub
@@ -5251,6 +5316,7 @@ Public Class clsMsMsSpectrumFilter
     Private Sub WriteSettingsToLog(ByVal strInputFilePath As String, _
                                    ByVal strOutputFilePath As String, _
                                    ByVal intMSLevelFilter As Integer, _
+                                   ByVal strScanTypeFilter As String, _
                                    ByVal strCollisionModeFilter As String, _
                                    ByVal blnEvaluateSpectrumQualityOnly As Boolean)
 
@@ -5266,6 +5332,13 @@ Public Class clsMsMsSpectrumFilter
         LogMessage("Current settings")
         LogMessage(" EvaluateSpectrumQualityOnly: " & blnEvaluateSpectrumQualityOnly)
         LogMessage(" MSLevelFilter: " & intMSLevelFilter)
+
+        If strScanTypeFilter.Length = 0 Then
+            LogMessage(" ScanTypeFilter: ''")
+        Else
+            LogMessage(" ScanTypeFilter: '" & strScanTypeFilter & "' (match type " & TextMatchTypeCodeToString(mScanTypeMatchType) & ")")
+        End If
+
         If strCollisionModeFilter.Length = 0 Then
             LogMessage(" MSCollisionModeFilter: ''")
         Else

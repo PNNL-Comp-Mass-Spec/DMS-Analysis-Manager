@@ -267,7 +267,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             If m_DebugLevel >= 2 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " & m_MsMsSpectrumFilter.SpectrumFilterMode)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " & m_MsMsSpectrumFilter.MSLevelFilter)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ScanTypeFilter: " & m_MsMsSpectrumFilter.ScanTypeFilter & " (match type " & m_MsMsSpectrumFilter.ScanTypeMatchType & ")")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter & " (match type " & m_MsMsSpectrumFilter.MSCollisionModeMatchType & ")")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " & m_MsMsSpectrumFilter.IonFilter_RemovePrecursor)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)

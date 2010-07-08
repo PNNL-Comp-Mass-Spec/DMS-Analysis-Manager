@@ -42,17 +42,27 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 
 
         ' Look at the job parameterse
-        ' If MSCollisionModeFilter is defined or MSLevelFilter is defined, then we need either of the following
+        ' If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
         '  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
         '       This is essentially a job-depending-on a job
         '  b) The .Raw file
+        '
+        ' For safety, we will re-generate the _ScanStats.txt and _ScanStatsEx.txt files in case the MASIC versions are out-of-date or missing the ScanTypeName column (which was added around January 2010)
 
         Dim strMSLevelFilter As String
+
+        Dim strScanTypeFilter As String
+        Dim strScanTypeMatchType As String
+
         Dim strMSCollisionModeFilter As String
         Dim strMSCollisionModeMatchType As String
         Dim blnNeedScanStatsFiles As Boolean = False
 
         strMSLevelFilter = clsGlobal.GetJobParameter(m_jobParams, "MSLevelFilter", "0")
+
+        strScanTypeFilter = clsGlobal.GetJobParameter(m_jobParams, "ScanTypeFilter", "")
+        strScanTypeMatchType = clsGlobal.GetJobParameter(m_jobParams, "ScanTypeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+
         strMSCollisionModeFilter = clsGlobal.GetJobParameter(m_jobParams, "MSCollisionModeFilter", "")
         strMSCollisionModeMatchType = clsGlobal.GetJobParameter(m_jobParams, "MSCollisionModeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
@@ -60,6 +70,13 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         If Not strMSLevelFilter Is Nothing AndAlso strMSLevelFilter.Length > 0 AndAlso strMSLevelFilter <> "0" Then
             If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSLevelFilter is defined (" & strMSLevelFilter & "); will retrieve or generate the ScanStats files")
+            End If
+            blnNeedScanStatsFiles = True
+        End If
+
+        If Not strScanTypeFilter Is Nothing AndAlso strScanTypeFilter.Length > 0 Then
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: ScanTypeFilter is defined (" & strScanTypeFilter & " with match type " & strScanTypeMatchType & "); will retrieve or generate the ScanStats files")
             End If
             blnNeedScanStatsFiles = True
         End If

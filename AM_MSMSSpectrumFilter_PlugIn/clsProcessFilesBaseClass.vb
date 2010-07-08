@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
     Public Sub New()
-        mFileDate = "February 9, 2010"
+        mFileDate = "June 24, 2010"
         mErrorCode = eProcessFilesErrorCodes.NoError
         mProgressStepDescription = String.Empty
 
@@ -105,10 +105,14 @@ Public MustInherit Class clsProcessFilesBaseClass
         End Get
     End Property
 
-    Public ReadOnly Property LogFilePath() As String
+    Public Property LogFilePath() As String
         Get
             Return mLogFilePath
         End Get
+        Set(ByVal value As String)
+            If value Is Nothing Then value = String.Empty
+            mLogFilePath = value
+        End Set
     End Property
 
     Public Property LogFolderPath() As String
@@ -326,8 +330,11 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         If mLogFile Is Nothing AndAlso mLogMessagesToFile Then
             Try
-                mLogFilePath = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                mLogFilePath &= "_log_" & System.DateTime.Now.ToString("yyyy-MM-dd") & ".txt"
+                If mLogFilePath Is Nothing OrElse mLogFilePath.Length = 0 Then
+                    ' Auto-name the log file
+                    mLogFilePath = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                    mLogFilePath &= "_log_" & System.DateTime.Now.ToString("yyyy-MM-dd") & ".txt"
+                End If
 
                 Try
                     If mLogFolderPath Is Nothing Then mLogFolderPath = String.Empty
@@ -586,8 +593,8 @@ Public MustInherit Class clsProcessFilesBaseClass
                         ioFolderInfo = New System.IO.DirectoryInfo(strOutputFolderAlternatePath)
                         If Not ioFolderInfo.Exists Then ioFolderInfo.Create()
                     Catch ex As Exception
-                        Debug.Assert(False, ex.Message)
                         mErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidOutputFolderPath
+                        ShowErrorMessage("Error validating the alternate output folder path in ProcessFilesAndRecurseFolders:" & ex.Message)
                         Return False
                     End Try
                 End If
@@ -804,9 +811,9 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         If blnDescriptionChanged Then
             If mProgressPercentComplete = 0 Then
-                LogMessage(mProgressStepDescription)
+                LogMessage(mProgressStepDescription.Replace(ControlChars.NewLine, "; "))
             Else
-                LogMessage(mProgressStepDescription & " (" & mProgressPercentComplete.ToString("0.0") & "% complete)")
+                LogMessage(mProgressStepDescription & " (" & mProgressPercentComplete.ToString("0.0") & "% complete)".Replace(ControlChars.NewLine, "; "))
             End If
         End If
 
