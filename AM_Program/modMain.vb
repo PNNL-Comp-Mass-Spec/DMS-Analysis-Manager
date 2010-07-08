@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "June 26, 2010"
+    Public Const PROGRAM_DATE As String = "July 7, 2010"
 
     Private mInputFilePath As String
 
@@ -85,7 +85,8 @@ Module modMain
                         'objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
                         'objTest.TestFindAndReplace()
 
-                        objTest.TestProgRunner()
+                        'objTest.TestProgRunner()
+                        objTest.TestUnzip("f:\temp\QC_Shew_500_100_fr720_c2_Ek_0000_isos.zip", "f:\temp")
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

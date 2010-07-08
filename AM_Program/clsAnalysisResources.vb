@@ -33,7 +33,14 @@ Namespace AnalysisManagerBase
         Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
 		Protected Const SHARPZIPLIB_HANDLES_ZIP64 As Boolean = True
-		Protected Const SHARPZIPLIB_MAX_FILESIZE_MB As Integer = 1024				' Maximum file size to process using SharpZipLib; the reason we don't want to process larger files is that SharpZipLib is at least 2x slower than Pkzip
+
+        ' Define the maximum file size to process using SharpZipLib; 
+        '  the reason we don't want to process larger files is that SharpZipLib is 1.5x to 2x slower than PkZip
+        '  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
+        '   SharpZipLib unzips the file in 130 seconds
+        '   WinRar      unzips the file in 120 seconds
+        '   PKZipC      unzips the file in  84 seconds
+        Protected Const SHARPZIPLIB_MAX_FILESIZE_MB As Integer = 1024
 
         ' Note: These constants need to be all lower    case
         Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data
