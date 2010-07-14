@@ -42,21 +42,22 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
+        Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
 
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running AScore")
 
         CmdRunner = New clsRunDosProgram(m_WorkDir)
 
         If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter")
         End If
 
         ' verify that program file exists
-        ' DTARefineryLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
+        ' AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
         Dim progLoc As String = m_mgrParams.GetParam("AScoreprogloc")
         If Not System.IO.File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'AScoreprogloc' not defined for this manager"
@@ -64,11 +65,26 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim CmdStr As String
+        'Set up and execute a program runner to run AScore
         CmdStr = "AScoreBatch.xml"
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "AScoreprogloc", True) Then
+        With CmdRunner
+            ' Must set this to "False" so that a window Does appear; otherwise, AScore_Console.exe crashes
+            ' In addition, cannot capture the text written to the console
+            .CreateNoWindow = False
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = False
+
+            .WriteConsoleOutputToFile = False
+        End With
+
+        If Not CmdRunner.RunProgram(progLoc, CmdStr, "AScore", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running AScore, job " & m_JobNum)
+
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging XTandem problems
+            CopyFailedResultsToArchiveFolder()
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -181,6 +197,45 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
     End Function
+
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory (however, delete the _dta.zip file first)
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        Try
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
+            'System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            If result = MoveResultFiles() Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event

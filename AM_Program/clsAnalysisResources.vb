@@ -1871,12 +1871,21 @@ Namespace AnalysisManagerBase
             Dim WorkDir As String = m_mgrParams.GetParam("WorkDir")
             Dim FilterValue As String = ""
             Dim i As Integer = 0
-            If Not LoadDatasetLocationsFromDB(DatasetInformation) Then Return False
+
+            Try
+                If Not LoadDatasetLocationsFromDB(DatasetInformation) Then
+                    Return False
+                End If
+            Catch ex As System.Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDatasetLocationsFromDB: " & ex.Message)
+                Return False
+            End Try
 
             Dim CurRow As DataRow
             Try
                 For Each CurRow In DatasetInformation.Rows
                     DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
+
                     'Add all potential paths to job params
                     If Not m_jobParams.AddAdditionalParameter("DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then Return False
                     If Not m_jobParams.AddAdditionalParameter("DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then Return False
@@ -1903,6 +1912,7 @@ Namespace AnalysisManagerBase
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & SourceFilename & " from folder " & SourceFolderPath)
                                 End If
                             End If
+
                             If SourceFilename.ToLower.Contains(".zip") Then
                                 'Unzip file
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " & SourceFilename)
@@ -1911,31 +1921,36 @@ Namespace AnalysisManagerBase
                                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
                                     End If
                                     clsGlobal.m_FilesToDeleteExt.Add(SourceFilename)
-                                    RenameCopiedFile(WorkDir, System.IO.Path.GetFileNameWithoutExtension(SourceFilename) & ".txt", FilterValue, SplitString(2))
+                                    RetrieveAggregateFilesRename(WorkDir, System.IO.Path.GetFileNameWithoutExtension(SourceFilename) & ".txt", FilterValue, SplitString(2))
                                 Else
                                     Return False
                                 End If
 
                             End If
+
                             'Rename the files where dataset name will cause collisions
-                            RenameCopiedFile(WorkDir, SourceFilename, FilterValue, SplitString(2))
+                            RetrieveAggregateFilesRename(WorkDir, SourceFilename, FilterValue, SplitString(2))
                         End If
                     Next
                 Next
 
+                blnsuccess = True
+
             Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath & ": " & ex.Message)
                 blnsuccess = False
             Finally
                 DatasetInformation.Dispose()
             End Try
-            blnsuccess = True
 
             Return blnsuccess
 
         End Function
 
-        Private Function RenameCopiedFile(ByVal workDir As String, ByVal FileNamePath As String, ByVal filterValue As String, ByVal SaveFile As String) As Boolean
+        Private Function RetrieveAggregateFilesRename(ByVal workDir As String, _
+                                                      ByVal SourceFilename As String, _
+                                                      ByVal filterValue As String, _
+                                                      ByVal SaveFile As String) As Boolean
             Dim newFilename As String = ""
             Dim ext As String = ""
             Dim filenameNoExt As String = "'"
@@ -1943,9 +1958,10 @@ Namespace AnalysisManagerBase
             Try
                 Select Case m_jobParams.GetParam("StepTool").ToLower
                     Case "phospho_fdr_aggregator"
-                        Dim fi As New FileInfo(Path.Combine(workDir, FileNamePath))
-                        ext = System.IO.Path.GetExtension(FileNamePath)
-                        filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(FileNamePath)
+                        Dim fi As New FileInfo(Path.Combine(workDir, SourceFilename))
+                        ext = System.IO.Path.GetExtension(SourceFilename)
+                        filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(SourceFilename)
+
                         If filterValue.ToLower.Contains("_hcd") Then
                             newFilename = filenameNoExt & "_hcd" & ext
 
@@ -1954,12 +1970,16 @@ Namespace AnalysisManagerBase
 
                         ElseIf filterValue.ToLower.Contains("_cid") Then
                             newFilename = filenameNoExt & "_cid" & ext
+
                         Else
-                            newFilename = FileNamePath
+                            newFilename = SourceFilename
                         End If
 
-                        fi.MoveTo(Path.Combine(workDir, newFilename))
-                        If SaveFile = "nocopy" Then
+                        If newFilename <> SourceFilename Then
+                            fi.MoveTo(Path.Combine(workDir, newFilename))
+                        End If
+
+                        If SaveFile.ToLower = "nocopy" Then
                             clsGlobal.m_FilesToDeleteExt.Add(newFilename)
                         End If
 
@@ -1968,9 +1988,8 @@ Namespace AnalysisManagerBase
                 End Select
 
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RenameCopiedFile; Exception during renaming of file: " & newFilename & " from folder " & workDir & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " & newFilename & " from folder " & workDir & ex.Message)
                 Return False
-
             End Try
 
             Return True
@@ -1981,7 +2000,7 @@ Namespace AnalysisManagerBase
 
             'If input object is DbNull, returns "", otherwise returns String representation of object
             If InpObj Is DBNull.Value Then
-                Return ""
+                Return String.Empty
             Else
                 Return CStr(InpObj)
             End If
@@ -1999,8 +2018,8 @@ Namespace AnalysisManagerBase
                                    "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
                                    "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
                                    "Order by Dataset, Tool"
+
             Dim Dt As DataTable = Nothing
-            Dim blnsuccess As Boolean = False
 
             'Get a table to hold the results of the query
             While RetryCount > 0
@@ -2044,9 +2063,7 @@ Namespace AnalysisManagerBase
 
             Dt.Dispose()
 
-            blnsuccess = True
-
-            Return blnsuccess
+            Return True
 
         End Function
 

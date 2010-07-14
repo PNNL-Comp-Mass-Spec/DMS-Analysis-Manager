@@ -29,23 +29,28 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
-        clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("AScoreCIDParamFile"))
         If Not RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), _
-         m_jobParams.GetParam("transferFolderPath"), _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            m_jobParams.GetParam("transferFolderPath"), _
+                            m_mgrParams.GetParam("workdir")) _
+        Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-        clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("AScoreETDParamFile"))
         If Not RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), _
-         m_jobParams.GetParam("transferFolderPath"), _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            m_jobParams.GetParam("transferFolderPath"), _
+                            m_mgrParams.GetParam("workdir")) _
+        Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-        clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("AScoreHCDParamFile"))
+
         If Not RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), _
-         m_jobParams.GetParam("transferFolderPath"), _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            m_jobParams.GetParam("transferFolderPath"), _
+                            m_mgrParams.GetParam("workdir")) _
+        Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
 
@@ -88,7 +93,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             inputFile.WriteLine("<?xml version=""1.0"" encoding=""UTF-8"" ?>")
             inputFile.WriteLine("<ascore_batch>")
             inputFile.WriteLine("  <settings>")
-            inputFile.WriteLine("    <max_threads>1</max_threads>")
+            inputFile.WriteLine("    <max_threads>4</max_threads>")
             inputFile.WriteLine("  </settings>")
 
             'update list of files to be deleted after run
