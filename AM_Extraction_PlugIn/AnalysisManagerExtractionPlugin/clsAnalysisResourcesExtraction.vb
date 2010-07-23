@@ -69,7 +69,9 @@ Public Class clsAnalysisResourcesExtraction
 	Private Function GetInputFiles(ByVal ResultType As String) As AnalysisManagerBase.IJobParams.CloseOutType
 
 		Dim ExtractionSkipsCDTAFile As Boolean
-		Dim FileToGet As String
+        Dim FileToGet As String
+
+        Dim strDataset As String = m_jobParams.GetParam("DatasetNum")
 
 		Select Case ResultType
 			Case "Peptide_Hit"	'Sequest
@@ -107,19 +109,8 @@ Public Class clsAnalysisResourcesExtraction
 				clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
 				clsGlobal.m_FilesToDeleteExt.Add(".out")  'DTA files
 
-				Dim ext As String
-				Dim DumFiles() As String
-
-				'update list of files to be deleted after run
-				For Each ext In clsGlobal.m_FilesToDeleteExt
-					DumFiles = Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA (and others)
-					For Each FileToDel As String In DumFiles
-						clsGlobal.FilesToDelete.Add(FileToDel)
-					Next
-				Next
-
 			Case "XT_Peptide_Hit"
-                FileToGet = m_jobParams.GetParam("DatasetNum") & "_xt.zip"
+                FileToGet = strDataset & "_xt.zip"
                 If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
                     'Errors were reported in function call, so just return
                     Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
@@ -127,7 +118,7 @@ Public Class clsAnalysisResourcesExtraction
                 clsGlobal.FilesToDelete.Add(FileToGet)
 
                 'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
-                clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("DatasetNum") & "_xt.xml")
+                clsGlobal.FilesToDelete.Add(strDataset & "_xt.xml")
 
                 ' Get the X!Tandem parameter file
                 FileToGet = m_jobParams.GetParam("ParmFileName")
@@ -138,19 +129,26 @@ Public Class clsAnalysisResourcesExtraction
                 clsGlobal.FilesToDelete.Add(FileToGet)
 
             Case "IN_Peptide_Hit"
-                ' Get the Inspect results file
-                FileToGet = m_jobParams.GetParam("DatasetNum") & "_inspect.zip"
-                If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+                ' Get the zipped Inspect results files
+
+                ' This file contains the p-value filtered results
+                FileToGet = strDataset & "_inspect.zip"
+                If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                     'Errors were reported in function call, so just return
                     Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
                 End If
                 clsGlobal.FilesToDelete.Add(FileToGet)
 
-                'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
-                clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("DatasetNum") & "_inspect.txt")
+                ' This file contains top hit for each scan (no filters)
+                FileToGet = strDataset & "_inspect_fht.zip"
+                If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                    'Errors were reported in function call
+                    ' Don't treat this as a critical error
+                End If
+                clsGlobal.FilesToDelete.Add(FileToGet)
 
                 ' Get the peptide to protein mapping file
-                FileToGet = m_jobParams.GetParam("DatasetNum") & "_inspect_PepToProtMap.txt"
+                FileToGet = strDataset & "_inspect_PepToProtMap.txt"
                 If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                     'Errors were reported in function call
 

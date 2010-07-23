@@ -130,12 +130,6 @@ Public Class clsAnalysisToolRunnerSeqBase
             Return Result
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            m_message = AppendToComment(m_message, "Error deleting non-result files")
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function

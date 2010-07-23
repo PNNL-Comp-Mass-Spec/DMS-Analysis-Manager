@@ -9,8 +9,6 @@
 '*********************************************************************************************************
 Imports AnalysisManagerBase
 Imports PeptideFileExtractor
-Imports System.Text.RegularExpressions
-Imports System.IO
 
 Public Class clsPeptideExtractWrapper
 
@@ -166,12 +164,12 @@ Public Class clsPeptideExtractWrapper
 		Dim FoundFile As Boolean = False
 
 		'Test for presence of _syn.txt file
-		Dim WorkFiles() As String = Directory.GetFiles(m_MgrParams.GetParam("workdir"))
+        Dim WorkFiles() As String = System.IO.Directory.GetFiles(m_MgrParams.GetParam("workdir"))
 		For Each WorkFile In WorkFiles
-			If Regex.IsMatch(WorkFile, "_syn.txt$", RegexOptions.IgnoreCase) Then
-				FoundFile = True
-				Exit For
-			End If
+            If System.Text.RegularExpressions.Regex.IsMatch(WorkFile, "_syn.txt$", System.Text.RegularExpressions.RegexOptions.IgnoreCase) Then
+                FoundFile = True
+                Exit For
+            End If
 		Next
 		If Not FoundFile Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found")
@@ -179,7 +177,7 @@ Public Class clsPeptideExtractWrapper
 		End If
 
 		'Get the _syn.txt file size and verify it's > 0 bytes
-		Dim Fi As FileInfo = New FileInfo(WorkFile)
+        Dim Fi As System.IO.FileInfo = New System.IO.FileInfo(WorkFile)
 		If Fi.Length > 0 Then
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		Else

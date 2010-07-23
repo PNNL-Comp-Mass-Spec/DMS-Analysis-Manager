@@ -79,6 +79,10 @@
       <Private>False</Private>
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="PeptideToProteinMapEngine, Version=1.0.3264.34166, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
@@ -115,7 +119,6 @@
     <Compile Include="clsAnalysisToolRunnerInspResultsAssembly.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="clsCreateInspectIndexedDB.vb" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

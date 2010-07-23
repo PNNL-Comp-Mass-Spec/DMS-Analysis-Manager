@@ -192,6 +192,11 @@
 		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator" 
 		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="msgf" 
+		Class="AnalysisManagerMSGFPlugin.clsMSGFRunner" 
+		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -375,6 +380,12 @@
 		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator" 
 		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" 
 	/>
+	<Resourcer 
+		Tool="msgf" 
+		Class="AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF" 
+		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
+	/>
+
 </Resourcers>
 
 <DTAGenerators>

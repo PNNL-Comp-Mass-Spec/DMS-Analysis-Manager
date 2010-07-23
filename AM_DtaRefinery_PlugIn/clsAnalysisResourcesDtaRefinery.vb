@@ -78,17 +78,6 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         clsGlobal.m_ExceptionFiles.Add(m_jobParams.GetParam("DatasetNum") & "_dta.zip")
 
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         strErrorMessage = String.Empty
         result = UpdateParameterFile(strErrorMessage)

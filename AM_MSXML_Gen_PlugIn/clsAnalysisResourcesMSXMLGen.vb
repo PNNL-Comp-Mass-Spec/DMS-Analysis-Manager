@@ -19,16 +19,21 @@ Public Class clsAnalysisResourcesMSXMLGen
         clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Get input data file
-        If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
-            Dim rawFilename As String = Path.Combine(m_mgrParams.GetParam("workdir"), m_jobParams.GetParam("datasetNum") & ".raw")
-            clsGlobal.m_FilesToDeleteExt.Add(".raw")  'Raw file
-            clsGlobal.FilesToDelete.Add(rawFilename)
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
+        Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+
+        If strRawDataType.ToLower <> RAW_DATA_TYPE_DOT_RAW_FILES Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Dataset type " & strRawDataType & " is not supported; must be " & RAW_DATA_TYPE_DOT_RAW_FILES)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            If RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
+                clsGlobal.m_FilesToDeleteExt.Add(".raw")  'Raw file
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
         End If
 
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 #End Region

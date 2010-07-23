@@ -363,14 +363,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return result
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            Dim Msg As String
-            Msg = "Error removing non result files"
-            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(); " & Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         'If we get to here, everything worked so exit happily
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

@@ -67,17 +67,6 @@ Public Class clsDtaGenToolRunner
         'Add any files that are an exception to the captured files to delete list
         clsGlobal.m_ExceptionFiles.add("lcq_dta.txt")
 
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
@@ -94,11 +83,6 @@ Public Class clsDtaGenToolRunner
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             '    'TODO: What do we do here?
             Return result
-        End If
-
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Make results folder and transfer results

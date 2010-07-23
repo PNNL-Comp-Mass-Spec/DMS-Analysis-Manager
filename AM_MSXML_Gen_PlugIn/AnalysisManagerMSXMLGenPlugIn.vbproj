@@ -110,6 +110,7 @@
     <Compile Include="clsAnalysisToolRunnerMSXMLGen.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsMSXMLGenReadW.vb" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

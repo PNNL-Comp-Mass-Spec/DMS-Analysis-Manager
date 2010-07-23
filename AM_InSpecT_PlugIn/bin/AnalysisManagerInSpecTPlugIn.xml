@@ -64,12 +64,6 @@ AnalysisManagerInSpecTPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ZipMainOutputFile">
-	<summary>
- Zips Inspect search result file
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.CmdRunner_LoopWaiting">
 	<summary>
  Event handler for CmdRunner.LoopWaiting event

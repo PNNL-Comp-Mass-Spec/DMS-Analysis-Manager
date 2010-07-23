@@ -358,11 +358,6 @@ Public Class clsAnalysisToolRunnerXTHPC
             Return result
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_WorkDir, m_DebugLevel) Then
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function

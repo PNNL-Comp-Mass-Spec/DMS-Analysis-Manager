@@ -51,17 +51,6 @@ Public Class clsAnalysisResourcesIN
         clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
 
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

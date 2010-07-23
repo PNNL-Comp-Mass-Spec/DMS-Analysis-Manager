@@ -9,11 +9,7 @@
 
 imports AnalysisManagerBase
 Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
-Imports AnalysisManagerBase.clsGlobal
-Imports System.io
-Imports System.Text.RegularExpressions
-Imports System.Collections.Generic
+
 
 Public Class clsAnalysisToolRunnerMSXMLGen
     Inherits clsAnalysisToolRunnerBase
@@ -26,7 +22,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected WithEvents mMSXmlGenReadW As clsMSXMLGenReadW
 
 #End Region
 
@@ -55,8 +51,9 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.Setup()")
         End If
     End Sub
+
     ''' <summary>
-    ''' Runs InSpecT tool
+    ''' Runs ReadW tool
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -100,68 +97,74 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Return result
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            m_message = AppendToComment(m_message, "Error deleting non-result files")
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
     ''' <summary>
-    ''' Generate the MsXML file
+    ''' Generate the mzXML or mzML file
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Private Function CreateMZXMLFile() As IJobParams.CloseOutType
-        Dim CmdStr As String
-        Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-        Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
-        Dim rawFilename As String = Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & ".raw")
-        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")
-        Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")
-        Dim centroidOption As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
-
-        CmdRunner = New clsRunDosProgram(InspectDir)
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMZXMLFile(): Enter")
         End If
 
-        ' verify that program file exists
-        Dim progLoc As String = Path.Combine(InspectDir, msXmlGenerator)
-        If Not File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSXmlGenerator exe program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+        Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
+        Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
 
-        'Set up and execute a program runner to run MS XML executable
-        If centroidOption Then
-            CmdStr = " --" & msXmlFormat & " " & " -c " & rawFilename
-        Else
-            CmdStr = " --" & msXmlFormat & " " & rawFilename
-        End If
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, msXmlGenerator, True) Then
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msXmlGenerator & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & msXmlGenerator & " failed (but exit code is 0)")
-            End If
+        Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically ReadW.exe
+
+        Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
+        Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
+
+        Dim ReadWProgramPath As String
+        Dim eOutputType As clsMSXMLGenReadW.MSXMLOutputTypeConstants
+
+        Dim blnSuccess As Boolean
+
+        ReadWProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
+
+        Select Case msXmlFormat.ToLower
+            Case "mzxml"
+                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
+            Case "mzml"
+                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzML
+            Case Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not mzXML or mzML (" & msXmlFormat & "); will default to mzXML")
+                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
+        End Select
+
+        ' Instantiate the processing class
+        mMSXmlGenReadW = New clsMSXMLGenReadW(WorkingDir, ReadWProgramPath, DatasetName, eOutputType, CentroidMSXML)
+
+        ' Create the file
+        blnSuccess = mMSXmlGenReadW.CreateMSXMLFile
+
+        If Not blnSuccess Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        ElseIf mMSXmlGenReadW.ErrorMessage.Length > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
+#End Region
+
+#Region "Event Handlers"
     ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' Event handler for MSXmlGenReadW.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGenReadW.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
         ' Synchronize the stored Debug level with the value stored in the database
@@ -173,7 +176,15 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             dtLastStatusUpdate = System.DateTime.Now
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MSXML_GEN_RUNNING, 0, "", "", "", False)
         End If
+    End Sub
 
+    ''' <summary>
+    ''' Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+    ''' </summary>
+    ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
+    ''' <remarks></remarks>
+    Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGenReadW.ProgRunnerStarting
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 #End Region
 

@@ -66,17 +66,6 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function

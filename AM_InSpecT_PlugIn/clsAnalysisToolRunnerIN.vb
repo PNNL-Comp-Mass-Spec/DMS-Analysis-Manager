@@ -1,3 +1,5 @@
+Option Strict On
+
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -10,10 +12,7 @@
 
 imports AnalysisManagerBase
 Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
 Imports AnalysisManagerBase.clsGlobal
-Imports System.io
-Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerIN
     Inherits clsAnalysisToolRunnerBase
@@ -117,7 +116,7 @@ Public Class clsAnalysisToolRunnerIN
             'Determine if this is a parallelized job
             m_CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart")
             m_StepNum = m_jobParams.GetParam("Step")
-            strBaseFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+            strBaseFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
 
             'Determine if this is parallelized inspect job
             If System.String.IsNullOrEmpty(m_CloneStepRenum) Then
@@ -145,10 +144,14 @@ Public Class clsAnalysisToolRunnerIN
                 Return result
             End If
 
-            'If not a parallelized job, run as normal
+            'If not a parallelized job, then zip the _Inspect.txt file
             If Not m_isParallelInspect Then
                 'Zip the output file
-                Dim ZipResult As IJobParams.CloseOutType = ZipMainOutputFile()
+                Dim blnSuccess As Boolean
+                blnSuccess = MyBase.ZipFile(mInspectResultsFilePath, True)
+                If Not blnSuccess Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
             End If
 
             'Stop the job timer
@@ -182,12 +185,6 @@ Public Class clsAnalysisToolRunnerIN
                 Return result
             End If
 
-            If Not clsGlobal.RemoveNonResultFiles(m_WorkDir, m_DebugLevel) Then
-                m_message = AppendToComment(m_message, "Error deleting non-result files")
-                'TODO: Figure out what to do here
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
         Catch ex As Exception
             m_message = "Error in InspectPlugin->RunTool: " & ex.Message
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -215,20 +212,25 @@ Public Class clsAnalysisToolRunnerIN
         Dim strInputSpectra As String
 
         Try
-            ParamFilename = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+            ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
-            fastaFilename = Path.Combine(orgDbDir, m_jobParams.GetParam("generatedFastaName"))
+            fastaFilename = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("generatedFastaName"))
             dbFilename = fastaFilename.Replace("fasta", "trie")
-            mzXMLFilename = Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".mzXML")
-            inputFilename = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
+            mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".mzXML")
+            inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
+
+            ' ToDo: Add support for dbFileName being a decoy database created by shuffleDB.py
 
             'add extra lines to the parameter files
             'the parameter file will become the input file for inspect
-            Dim swInspectInputFile As StreamWriter = New StreamWriter((New System.IO.FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            Dim swInspectInputFile As System.IO.StreamWriter
+            swInspectInputFile = New System.IO.StreamWriter((New System.IO.FileStream(inputFilename, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
 
             ' Create an instance of StreamReader to read from a file.
-            Dim srInputBase As StreamReader = New StreamReader((New System.IO.FileStream(ParamFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            Dim srInputBase As System.IO.StreamReader
+            srInputBase = New System.IO.StreamReader((New System.IO.FileStream(ParamFilename, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
+
             Dim strParamLine As String
 
             swInspectInputFile.WriteLine("#Use the following to define the name of the log file created by Inspect (default is InspectSearchLog.txt if not defined)")
@@ -341,7 +343,7 @@ Public Class clsAnalysisToolRunnerIN
             .Path = strWorkDir
             .IncludeSubdirectories = False
             .Filter = System.IO.Path.GetFileName(mInspectSearchLogFilePath)
-            .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
+            .NotifyFilter = System.IO.NotifyFilters.LastWrite Or System.IO.NotifyFilters.Size
             .EndInit()
             .EnableRaisingEvents = True
         End With
@@ -370,7 +372,7 @@ Public Class clsAnalysisToolRunnerIN
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " & errorFilename)
             End If
 
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, errorFilename)
+            strInputFilePath = System.IO.Path.Combine(m_workdir, errorFilename)
 
             If Not System.IO.File.Exists(strInputFilePath) Then
                 ' File not found; that means no errors occurred
@@ -382,7 +384,7 @@ Public Class clsAnalysisToolRunnerIN
                 If fi.Length = 0 Then
                     ' Error file is 0 bytes, which means no errors occurred 
                     ' Delete the file
-                    File.Delete(errorFilename)
+                    System.IO.File.Delete(errorFilename)
                     Return True
                 End If
             End If
@@ -391,7 +393,7 @@ Public Class clsAnalysisToolRunnerIN
             htMessages = New System.Collections.Hashtable
 
             ' Read the contents of strInputFilePath
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
             Do While srInFile.Peek <> -1
                 strLineIn = srInFile.ReadLine
@@ -432,7 +434,7 @@ Public Class clsAnalysisToolRunnerIN
     Private Function RunInSpecT() As IJobParams.CloseOutType
         Dim CmdStr As String
         Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
-        Dim ParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+        Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim blnSuccess As Boolean = False
 
         ' Build the Inspect Input Parameters file
@@ -449,7 +451,7 @@ Public Class clsAnalysisToolRunnerIN
 
         ' verify that program file exists
         Dim progLoc As String = System.IO.Path.Combine(InspectDir, "inspect.exe")
-        If Not File.Exists(progLoc) Then
+        If Not System.IO.File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find inspect.exe program file")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -528,7 +530,7 @@ Public Class clsAnalysisToolRunnerIN
         ParseInspectErrorsFile(m_WorkDir, mInspectErrorFilePath)
 
         'even though success is returned, check for the result file
-        If File.Exists(mInspectResultsFilePath) Then
+        If System.IO.File.Exists(mInspectResultsFilePath) Then
             blnSuccess = True
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Inspect results file not found; job failed: " & System.IO.Path.GetFileName(mInspectResultsFilePath))
@@ -541,51 +543,6 @@ Public Class clsAnalysisToolRunnerIN
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-
-    End Function
-
-    ''' <summary>
-    ''' Zips Inspect search result file
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
-        Dim TmpFile As String
-        Dim FileList() As String
-        Dim ZipFileName As String
-
-        Try
-            Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-            FileList = Directory.GetFiles(m_WorkDir, "*_inspect.txt")
-            For Each TmpFile In FileList
-                ZipFileName = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-                If Not Zipper.MakeZipFile("-fast", ZipFileName, Path.GetFileName(TmpFile)) Then
-                    Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = AppendToComment(m_message, "Error zipping output files")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
-            Next
-        Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerIN.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error zipping output files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'Delete the Inspect search result file
-        Try
-            FileList = Directory.GetFiles(m_WorkDir, "*_inspect.txt")
-            For Each TmpFile In FileList
-                File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) And (Not FileAttributes.ReadOnly))
-                File.Delete(TmpFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerIN.ZipMainOutputFile, Error deleting _inspect.txt file, job " & m_JobNum & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -623,7 +580,7 @@ Public Class clsAnalysisToolRunnerIN
                 ' Search log file has been updated
                 ' Open the file and read the contents
 
-                srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchLogFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Write))
 
                 ' Read to the end of the file
                 Do While srLogFile.Peek >= 0

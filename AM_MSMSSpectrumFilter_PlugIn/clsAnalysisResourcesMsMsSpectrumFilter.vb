@@ -125,18 +125,6 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_CDF_EXTENSION)
         End If
 
-
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(strWorkDir, "*" & ext)
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

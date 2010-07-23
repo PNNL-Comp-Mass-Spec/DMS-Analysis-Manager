@@ -161,12 +161,6 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             Return StepResult
         End If
 
-        If Not clsGlobal.RemoveNonResultFiles(m_WorkDir, m_DebugLevel) Then
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
@@ -382,17 +376,6 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         'Add all the extensions of the files to delete after run
         clsGlobal.m_FilesToDeleteExt.Add(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
-
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
 
         'Add the current job data to the summary file
         Try

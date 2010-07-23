@@ -79,6 +79,10 @@
       <Private>False</Private>
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="MSDataFileReader, Version=1.2.3198.21364, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\MSDataFileReader.dll</HintPath>
@@ -86,10 +90,6 @@
     <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
-    </Reference>
-    <Reference Include="PeptideToProteinMapEngine, Version=1.0.3201.25217, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>

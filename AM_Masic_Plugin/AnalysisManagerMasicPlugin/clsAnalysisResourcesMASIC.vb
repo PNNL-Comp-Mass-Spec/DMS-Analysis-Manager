@@ -66,18 +66,6 @@ Public Class clsAnalysisResourcesMASIC
          strWorkDir) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(strWorkDir, "*" & ext)
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

@@ -17,36 +17,19 @@ AnalysisManagerInspResultsAssemblyPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+	<summary>
+ Initializes class
+ </summary>
+	<param name="mgrParams">Object containing manager parameters</param>
+	<param name="jobParams">Object containing job parameters</param>
+	<param name="StatusTools">Object for updating status file as job progresses</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.AssembleFiles(System.String,AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ResultFileType,System.Int32)">
 	<summary>
  Assemble the result files
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RescoreAssembledInspectResults">
-	<summary>
- Uses PValue_MinLength5.py to recompute the p-value and FScore values for Inspect results computed in parallel then reassembled
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RunpValue">
-	<summary>
- Run pValue.py program
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.getPthresh">
-	<summary>
- Run -p threshold value
- </summary>
-	<returns>Value as a string or empty string means failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(System.String,System.String)">
-	<summary>
- Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
- </summary>
-	<param name="strInspectDir"></param>
-	<param name="strInspectParameterFilePath"></param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(System.String,AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.udtModInfoType[]@)">
 	<summary>
@@ -56,17 +39,40 @@ AnalysisManagerInspResultsAssemblyPlugIn
 	<param name="udtModList"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RunSummary">
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.FilterInspectResultsByFirstHits">
 	<summary>
- Run Summary program
+ Use PValue_MinLength5.py to only retain the top hit for each scan (no p-value filtering is actually applied)
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ZipMainOutputFile(System.String)">
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.FilterInspectResultsByPValue">
 	<summary>
- Zips the concatenated result file
+ Filters the inspect results using PValue_MinLength5.py"
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.RescoreAssembledInspectResults">
+	<summary>
+ Uses PValue_MinLength5.py to recompute the p-value and FScore values for Inspect results computed in parallel then reassembled
+ In addition, filters the data on p-value of 0.1 or smaller
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(System.String,System.String)">
+	<summary>
+ Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
+ Note: We run the risk that two InspectResultsAssembly tasks will run simultaneously and will both try to update PTMods.txt
+ </summary>
+	<param name="strInspectDir"></param>
+	<param name="strInspectParameterFilePath"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.ZipInspectResults">
+	<summary>
+ Stores the _inspect.txt file in _inspect_all.zip
+ Stores the _inspect_fht.txt file in _inspect_fht.zip (but renames it to _inspect.txt before storing)
+ Stores the _inspect_filtered.txt file in _inspect.zip (but renames it to _inspect.txt before storing)
+ </summary>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
 	<summary>
@@ -80,18 +86,6 @@ AnalysisManagerInspResultsAssemblyPlugIn
  </summary>
 	<returns>TRUE for success, FALSE for error</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
-	<summary>
- Convert .Fasta file to indexed DB files
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsCreateInspectIndexedDB.CreateLockFile(System.String)">
-	<summary>
- Creates a lock file
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks>Not presently implemented</remarks>
 </member>
 </members>
 </doc>

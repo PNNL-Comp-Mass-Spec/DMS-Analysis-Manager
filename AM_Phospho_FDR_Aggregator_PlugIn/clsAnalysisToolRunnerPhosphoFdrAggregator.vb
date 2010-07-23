@@ -129,7 +129,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Dim DumFiles() As String
 
         'update list of files to be deleted after run
-        DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*_outputAScore*") 'Zipped DTA
+        DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*_outputAScore*")
         For Each FileToSave As String In DumFiles
             clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(FileToSave))
         Next
@@ -144,11 +144,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
-        End If
-
-        If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-            'TODO: Figure out what to do here
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult

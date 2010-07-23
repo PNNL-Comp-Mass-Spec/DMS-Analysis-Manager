@@ -40,6 +40,9 @@ Public Class clsCreateInspectIndexedDB
         Dim currentTime As DateTime
 
         Try
+            ' ToDo: Add support for creating a decoy database using shuffleDB.py
+            ' The Pvalue.py script does much better at computing p-values if you run a decoy search (and shuffleDB.py properly labels the proteins with XXX
+
             CmdRunner = New clsRunDosProgram(InspectDir & System.IO.Path.DirectorySeparatorChar)
 
             If DebugLevel > 4 Then

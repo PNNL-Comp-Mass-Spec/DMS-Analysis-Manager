@@ -70,17 +70,6 @@ Public Class clsAnalysisResourcesOM
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
         clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & ".xml")
 
-        Dim ext As String
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        For Each ext In clsGlobal.m_FilesToDeleteExt
-            DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*" & ext) 'Zipped DTA
-            For Each FileToDel As String In DumFiles
-                clsGlobal.FilesToDelete.Add(FileToDel)
-            Next
-        Next
-
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         result = MakeInputFile()
         If Not result Then

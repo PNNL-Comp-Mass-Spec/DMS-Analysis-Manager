@@ -134,12 +134,6 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 Return result
             End If
 
-            If Not clsGlobal.RemoveNonResultFiles(m_mgrParams.GetParam("workdir"), m_DebugLevel) Then
-                m_message = AppendToComment(m_message, "Error deleting non-result files")
-                'TODO: Figure out what to do here
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
         Catch ex As Exception
             m_message = "Error in DtaSplitPlugin->RunTool: " & ex.Message
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
