@@ -119,6 +119,8 @@ AnalysisManagerMSGFPlugin
  Examples:
    N/A: unrecognizable annotation
    N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
+ Will create a new file that guarantees that the SpecProb column has a number, 
+   but has an additional column called SpecProbNotes with any notes or warnings
  </summary>
 	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
 	<returns>True if success; false if one or more errors</returns>

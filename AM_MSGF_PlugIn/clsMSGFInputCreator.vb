@@ -51,6 +51,8 @@ Public MustInherit Class clsMSGFInputCreator
 
     Protected mColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
 
+    Protected mSkippedLineInfo As System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
+
     Protected mErrorMessage As String = String.Empty
 
     Protected mPHRPResultFilePath As String = String.Empty
@@ -107,6 +109,8 @@ Public MustInherit Class clsMSGFInputCreator
         ' Initialize the column mapping object
         ' Using a case-insensitive comparer
         mColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+
+        mSkippedLineInfo = New System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
 
         ' The following will be overridden by a derived form of this class
         DefineColumnHeaders()
@@ -219,7 +223,6 @@ Public MustInherit Class clsMSGFInputCreator
 
         Dim strMzXMLFileName As String = String.Empty
         Dim strPeptideWithMods As String = String.Empty
-        Dim strTitle As String
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -232,6 +235,8 @@ Public MustInherit Class clsMSGFInputCreator
 
         Dim udtPHRPDataPrevious As udtPHRPDataLine
         Dim udtPHRPData As udtPHRPDataLine
+
+        Dim objSkipList As System.Collections.Generic.List(Of String)
 
         Try
             If String.IsNullOrEmpty(mDatasetName) Then
@@ -255,7 +260,7 @@ Public MustInherit Class clsMSGFInputCreator
             swMSGFInputFile = New System.IO.StreamWriter(New System.IO.FileStream(mMSGFInputFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
 
             ' Write out the headers
-            ' Note that if the peptide has any dynamic or static mods, then we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
+            ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
             swMSGFInputFile.WriteLine("#SpectrumFile" & ControlChars.Tab & _
                                       "Title" & ControlChars.Tab & _
                                       "Scan#" & ControlChars.Tab & _
@@ -270,6 +275,8 @@ Public MustInherit Class clsMSGFInputCreator
 
             udtPHRPDataPrevious.Clear()
             udtPHRPData.Clear()
+
+            mSkippedLineInfo.Clear()
 
             Do While srPHRPFile.Peek >= 0
                 strLineIn = srPHRPFile.ReadLine
@@ -303,6 +310,18 @@ Public MustInherit Class clsMSGFInputCreator
                                    .Peptide = udtPHRPData.Peptide Then
 
                                     blnSuccess = False
+
+                                    If mSkippedLineInfo.TryGetValue(.ResultID, objSkipList) Then
+                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
+                                    Else
+                                        objSkipList = New System.Collections.Generic.List(Of String)
+                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
+                                        mSkippedLineInfo.Add(.ResultID, objSkipList)
+                                    End If
+                                Else
+                                    ' Update udtPHRPDataPrevious
+                                    ' Since this is a structure, "=" will result in a member-by-member copy
+                                    udtPHRPDataPrevious = udtPHRPData
                                 End If
                             End With
                         End If
@@ -315,15 +334,11 @@ Public MustInherit Class clsMSGFInputCreator
                         If blnSuccess And udtPHRPData.PassesFilters Then
                             With udtPHRPData
 
-                                If udtPHRPData.Peptide = strPeptideWithMods Then
-                                    ' No mods
-                                    strTitle = ""
-                                Else
-                                    strTitle = udtPHRPData.Peptide
-                                End If
+                                ' The title column holds the original peptide sequence
+                                ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
 
                                 swMSGFInputFile.WriteLine(strMzXMLFileName & ControlChars.Tab & _
-                                                          strTitle & ControlChars.Tab & _
+                                                          udtPHRPData.Peptide & ControlChars.Tab & _
                                                           .ScanNumber & ControlChars.Tab & _
                                                           strPeptideWithMods & ControlChars.Tab & _
                                                           .Charge & ControlChars.Tab & _
@@ -333,10 +348,6 @@ Public MustInherit Class clsMSGFInputCreator
                                 mMSGFInputFileLineCount += 1
                             End With
                         End If
-
-                        ' Update udtPHRPDataPrevious
-                        ' Since this is a structure, "=" will result in a member-by-member copy
-                        udtPHRPDataPrevious = udtPHRPData
 
                     End If
                 End If
@@ -356,6 +367,18 @@ Public MustInherit Class clsMSGFInputCreator
         End Try
 
         Return True
+
+    End Function
+
+    Public Function GetSkippedInfoByResultId(ByVal intResultID As Integer) As System.Collections.Generic.List(Of String)
+
+        Dim objSkipList As System.Collections.Generic.List(Of String)
+
+        If mSkippedLineInfo.TryGetValue(intResultID, objSkipList) Then
+            Return objSkipList
+        Else
+            Return New System.Collections.Generic.List(Of String)()
+        End If
 
     End Function
 
