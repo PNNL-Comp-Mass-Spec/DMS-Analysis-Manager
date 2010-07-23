@@ -65,7 +65,7 @@ Namespace AnalysisManagerBase
         ''' Set the following to True if debugging
         ''' </summary>
         ''' <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
-        Private Const PLUGIN_DEBUG_MODE_ENABLED As Boolean = True
+        Private Const PLUGIN_DEBUG_MODE_ENABLED As Boolean = False
 
         Private Shared Function DebugModeGetToolRunner(ByVal className As String) As IToolRunner
 

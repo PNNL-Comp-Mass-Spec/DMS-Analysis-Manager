@@ -20,9 +20,9 @@ Public Class clsMSGFRunner
 #Region "Constants and enums"
 
     Protected Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2     
-    Protected Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 5
-    Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 10
-    Protected Const PROGRESS_PCT_MZXML_CREATED As Single = 15
+    Protected Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 3
+    Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 6
+    Protected Const PROGRESS_PCT_MZXML_CREATED As Single = 10
     Protected Const PROGRESS_PCT_MSGF_START As Single = PROGRESS_PCT_MZXML_CREATED
     Protected Const PROGRESS_PCT_MSGF_COMPLETE As Single = 95
     Protected Const PROGRESS_PCT_MSGF_VALIDATION_IN_PROGRESS As Single = 97

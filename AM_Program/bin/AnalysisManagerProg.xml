@@ -365,6 +365,17 @@ AnalysisManagerProg
 	<param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
+	<summary>
+ Looks for this dataset's mzXML file
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+ If the MSXML folder (or the .mzXML file) cannot be found, then returns False
+ </summary>
+	<param name="WorkDir"></param>
+	<param name="CreateStoragePathInfoOnly"></param>
+	<param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
+	<returns>True if the file was found and retrieved, otherwise False</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
 	<summary>
  Retrieves a .raw folder from Micromass TOF for the analysis job in progress

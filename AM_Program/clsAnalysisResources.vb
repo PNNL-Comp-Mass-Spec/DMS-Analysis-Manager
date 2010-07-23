@@ -624,6 +624,48 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
+        ''' Looks for this dataset's mzXML file
+        ''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+        ''' If the MSXML folder (or the .mzXML file) cannot be found, then returns False
+        ''' </summary>
+        ''' <param name="WorkDir"></param>
+        ''' <param name="CreateStoragePathInfoOnly"></param>
+        ''' <param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
+        ''' <returns>True if the file was found and retrieved, otherwise False</returns>
+        ''' <remarks></remarks>
+        Protected Overridable Function RetrieveMZXmlFile(ByVal WorkDir As String, _
+                                                         ByVal CreateStoragePathInfoOnly As Boolean, _
+                                                         ByRef SourceFilePath As String) As Boolean
+
+            ' Copies this dataset's .mzXML file to the working directory
+            Dim DSName As String = m_jobParams.GetParam("datasetNum")
+            Dim DatasetID As String = m_jobParams.GetParam("DatasetID")
+            Dim MSXmlFoldername As String = "MSXML_Gen_1_39_" & DatasetID
+            Dim MzXMLFilename As String = DSName & ".mzXML"
+            Dim ServerPath As String
+
+            SourceFilePath = String.Empty
+
+            ' Look for the MSXmlFolder
+            ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+            ServerPath = FindValidFolder(DSName, "", MSXmlFoldername)
+
+            'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, MSXmlFoldername)
+            If RemFolders.GetLength(0) <> 1 Then Return False
+
+            ' MSXmlFolder found; copy the .mzXML file
+            ServerPath = System.IO.Path.Combine(ServerPath, MSXmlFoldername)
+            SourceFilePath = System.IO.Path.Combine(ServerPath, MzXMLFilename)
+            If CopyFileToWorkDir(MzXMLFilename, ServerPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+                Return True
+            Else
+                Return False
+            End If
+
+        End Function
+
+        ''' <summary>
         ''' Retrieves a .raw folder from Micromass TOF for the analysis job in progress
         ''' </summary>
         ''' <param name="WorkDir">Destination directory for copy</param>
@@ -1583,8 +1625,6 @@ Namespace AnalysisManagerBase
 
             Dim SharedResultFolderNames As New System.Collections.Generic.List(Of String)
 
-            'NOTE: Someday this will have to be able to handle a list as the SharedResultsFolders value
-
             Try
                 ' Fill collection with possible folder locations
                 ' The order of searching is:
@@ -1687,6 +1727,7 @@ Namespace AnalysisManagerBase
             Return strTargetFolderPath
 
         End Function
+
         ''' <summary>
         ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         ''' </summary>

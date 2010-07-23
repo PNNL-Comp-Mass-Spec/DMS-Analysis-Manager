@@ -63,7 +63,9 @@ Public Class clsAnalysisResourcesMSGF
         Dim DatasetName As String
         Dim RawDataType As String
 
-		Dim FileToGet As String
+        Dim FileToGet As String
+        Dim strMzXMLFilePath As String = String.Empty
+
         Dim blnSuccess As Boolean = False
 
         ' Cache the dataset name
@@ -120,16 +122,26 @@ Public Class clsAnalysisResourcesMSGF
         End If
         clsGlobal.FilesToDelete.Add(FileToGet)
 
+        ' See if a .mzXML file already exists for this dataset
+        blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
 
-        ' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-        If RetrieveSpectra(RawDataType, m_WorkingDir) Then
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)            ' Raw file
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)          ' mzXML file
+        If blnSuccess Then
+            ' .mzXML file found and copied locally; no need to retrieve the .Raw file
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Existing .mzXML file found: " & strMzXMLFilePath)
+            End If
         Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+            ' .mzXML file not found
+            ' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
+            If RetrieveSpectra(RawDataType, m_WorkingDir) Then
+                clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)            ' Raw file
+                clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)          ' mzXML file
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
+        End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
