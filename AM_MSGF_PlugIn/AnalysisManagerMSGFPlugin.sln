@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{E5E5143B-81BA-41A7-933B-0017CD9D413C}") = "AnalysisManagerMSGFPlugin", "AnalysisManagerMSGFPlugin.vbproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

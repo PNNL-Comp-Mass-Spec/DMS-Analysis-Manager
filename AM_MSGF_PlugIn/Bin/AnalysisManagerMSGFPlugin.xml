@@ -1,0 +1,163 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerMSGFPlugin
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.#ctor(System.String,System.String,System.String,AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.MSXMLOutputTypeConstants,System.Boolean)">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Presently not used</remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.CreateMSXMLFile">
+	<summary>
+ Generate the mzXML or mzML file
+ </summary>
+	<returns>True if success; false if a failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.AddDynamicAndStaticMods(System.String,System.String@)">
+	<summary>
+ Look for dynamic mod symbols in the peptide sequence; replace with the corresponding mod masses
+ </summary>
+	<returns>True if success, false if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@)">
+	<summary>
+ Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
+ </summary>
+	<returns>The text in the specified column; an empty string if the specific column name is not recognized</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.String)">
+	<summary>
+ Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
+ </summary>
+	<returns>The text in the specified column; strValueIfMissing if the specific column name is not recognized</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.Int32)">
+	<summary>
+ Returns the value stored in the given named column (using objColumnHeaders to dereference column name with column index)
+ </summary>
+	<returns>The number in the specified column; 0 if the specific column name is not recognized or the column does not contain a number</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.Double)">
+	<summary>
+ Returns the value stored in the given named column (using objColumnHeaders to dereference column name with column index)
+ </summary>
+	<returns>The number in the specified column; 0 if the specific column name is not recognized or the column does not contain a number</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.ParseColumnHeaders(System.String[],System.Collections.Generic.SortedDictionary{System.String,System.Int32}@)">
+	<summary>
+ Updates the column name to column index mapping in objColumnHeaders
+ </summary>
+	<param name="strColumns">Column names read from the input file</param>
+	<param name="objColumnHeaders">Column mapping dictionary object to update</param>
+	<remarks>The SortedDictionary object should be instantiated using a case-insensitive comparer, i.e. (StringComparer.CurrentCultureIgnoreCase)</remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.UpdateMSGFInputOutputFilePaths">
+	<summary>
+ Define the MSGF input and output file paths
+ </summary>
+	<remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.RunTool">
+	<summary>
+ Runs MSGF
+ </summary>
+	<returns>IJobParams.CloseOutType representing success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabled(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.String)">
+	<summary>
+ Examines the Sequest, X!Tandem, or Inspect param file to determine if ETD mode is enabled
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strParamFilePath"></param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabledSequest(System.String)">
+	<summary>
+ Examines the Sequest param file to determine if ETD mode is enabled
+ If it is, then sets m_ETDMode to True
+ </summary>
+	<param name="strParamFilePath">Sequest parameter file to read</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabledXTandem(System.String)">
+	<summary>
+ Examines the X!Tndem param file to determine if ETD mode is enabled
+ If it is, then sets m_ETDMode to True
+ </summary>
+	<param name="strParamFilePath">X!Tandem XML parameter file to read</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType)">
+	<summary>
+ Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
+ Uses the ModSummary.txt file to determine the dynamic and static mods used
+ </summary>
+	<param name="eResultType"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMZXMLFile">
+	<summary>
+ Generate the mzXML
+ </summary>
+	<returns>True if success; false if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ReadModSummaryFile(System.String,System.Collections.Generic.SortedDictionary{System.String,System.String}@,System.Collections.Generic.SortedDictionary{System.String,System.String}@)">
+	<summary>
+ Reads the data in strModSummaryFilePath.  Populates objDynamicMods and objStaticMods with the modification definitions
+ </summary>
+	<param name="strModSummaryFilePath">Path to the PHRP Mod Summary file to read</param>
+	<param name="objDynamicMods">List with mod symbols as the key and the corresponding mod mass</param>
+	<param name="objStaticMods">List with amino acid names as the key and the corresponding mod mass</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ValidateMSGFResults(System.String)">
+	<summary>
+ Look for non-numeric values in the SpecProb column
+ Examples:
+   N/A: unrecognizable annotation
+   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
+ </summary>
+	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
+	<returns>True if success; false if one or more errors</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.MSXmlGenReadW_LoopWaiting">
+	<summary>
+ Event handler for MSXmlGenReadW.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.mMSXmlGenReadW_ProgRunnerStarting(System.String)">
+	<summary>
+ Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+ </summary>
+	<param name="CommandLine">The command being executed (program path plus command line arguments)</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.mMSGFInputCreator_ErrorEvent(System.String)">
+	<summary>
+ Event handler for Error Events reported by the MSGF Input Creator
+ </summary>
+	<param name="strErrorMessage"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.mMSGFRunner_LoopWaiting">
+	<summary>
+ Event handler that fires while MSGF is processing
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF.GetResources">
+	<summary>
+ Gets all files needed by MSGF
+ </summary>
+	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF.GetInputFiles(System.String)">
+	<summary>
+ Retrieves input files needed for MSGF
+ </summary>
+	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
+	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member>
+</members>
+</doc>
