@@ -32,7 +32,7 @@ Namespace AnalysisManagerBase
 #Region "Module variables"
         Public Shared AppFilePath As String = ""
         Public Shared AppFolderPath As String = ""
-        Public Shared FilesToDelete As New List(Of String)              ' List of file names to NOT move to the result folder; this list is used by both MoveResultFiles() and RemoveNonResultFiles()
+        Public Shared FilesToDelete As New List(Of String)              ' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
         Public Shared m_FilesToDeleteExt As New List(Of String)         ' List of file extensions to NOT move to the result folder; Comparison test uses "TmpFile.ToLower.EndsWith(m_FilesToDeleteExt(x).ToLower)"
         Public Shared m_ExceptionFiles As New List(Of String)           ' List of file names that WILL be moved to the result folder, even if they are in FilesToDelete or m_FilesToDeleteExt; Comparison test uses "TmpFile.ToLower.Contains(m_ExceptionFiles(x).ToLower)"
         Public Shared m_Completions_Msg As String = ""
@@ -169,41 +169,42 @@ Namespace AnalysisManagerBase
 
         ''' <summary>
         ''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
+        ''' This function does not need to be called, since function MoveResultFiles ignores files in list FilesToDelete
         ''' </summary>
         ''' <param name="WorkDir">Full path to work directory</param>
         ''' <returns>TRUE for success; FALSE for failure</returns>
         ''' <remarks></remarks>
         Public Shared Function RemoveNonResultFiles(ByVal WorkDir As String, ByVal DebugLevel As Integer) As Boolean
 
-            Dim FileToDelete As String = ""
+            ''Dim FileToDelete As String = ""
 
-            Try
-                'Log status
-                If DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Non Result Files in " & WorkDir & "; FilesToDelete contains " & FilesToDelete.Count.ToString & " entries")
-                End If
+            ''Try
+            ''    'Log status
+            ''    If DebugLevel >= 3 Then
+            ''        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Non Result Files in " & WorkDir & "; FilesToDelete contains " & FilesToDelete.Count.ToString & " entries")
+            ''    End If
 
-                For Each FileName As String In FilesToDelete
-                    FileToDelete = Path.GetFileName(FileName)
-                    If DebugLevel >= 5 Then 'Log file to be deleted
-                        If (Not FileToDelete.ToLower.Contains(".dta")) And (Not FileToDelete.ToLower.Contains(".out")) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
-                        End If
-                    End If
-                    FileToDelete = Path.Combine(WorkDir, FileToDelete)
-                    If File.Exists(FileToDelete) Then
-                        'Verify file is not set to readonly, then delete it
-                        File.SetAttributes(FileToDelete, File.GetAttributes(FileToDelete) And (Not FileAttributes.ReadOnly))
-                        File.Delete(FileToDelete)
-                    End If
-                Next
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultFiles(), Error deleting file " & FileToDelete & ":" & ex.Message)
-                'Create a flag file if there was trouble deleting the files
-                CreateErrorDeletingFilesFlagFile()
-                'Even if an exception occurred, return true since the results were already copied back to the server
-                Return True
-            End Try
+            ''    For Each FileName As String In FilesToDelete
+            ''        FileToDelete = Path.GetFileName(FileName)
+            ''        If DebugLevel >= 5 Then 'Log file to be deleted
+            ''            If (Not FileToDelete.ToLower.Contains(".dta")) And (Not FileToDelete.ToLower.Contains(".out")) Then
+            ''                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
+            ''            End If
+            ''        End If
+            ''        FileToDelete = Path.Combine(WorkDir, FileToDelete)
+            ''        If File.Exists(FileToDelete) Then
+            ''            'Verify file is not set to readonly, then delete it
+            ''            File.SetAttributes(FileToDelete, File.GetAttributes(FileToDelete) And (Not FileAttributes.ReadOnly))
+            ''            File.Delete(FileToDelete)
+            ''        End If
+            ''    Next
+            ''Catch ex As Exception
+            ''    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultFiles(), Error deleting file " & FileToDelete & ":" & ex.Message)
+            ''    'Create a flag file if there was trouble deleting the files
+            ''    CreateErrorDeletingFilesFlagFile()
+            ''    'Even if an exception occurred, return true since the results were already copied back to the server
+            ''    Return True
+            ''End Try
 
             Return True
 

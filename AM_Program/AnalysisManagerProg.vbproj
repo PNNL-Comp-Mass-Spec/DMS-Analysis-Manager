@@ -113,6 +113,7 @@
     <Compile Include="clsParseCommandLine.vb" />
     <Compile Include="clsPluginLoader.vb" />
     <Compile Include="clsRunDosProgram.vb" />
+    <Compile Include="clsSharpZipTools.vb" />
     <Compile Include="clsSplitCattedFiles.vb">
       <SubType>Code</SubType>
     </Compile>

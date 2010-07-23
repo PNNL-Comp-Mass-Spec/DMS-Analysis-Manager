@@ -20,19 +20,19 @@ Imports System.Data.SqlClient
 
 Namespace AnalysisManagerBase
 
-	Public MustInherit Class clsAnalysisResources
+    Public MustInherit Class clsAnalysisResources
         Implements IAnalysisResources
 
-		'*********************************************************************************************************
-		'Base class for job resource class
-		'*********************************************************************************************************
+        '*********************************************************************************************************
+        'Base class for job resource class
+        '*********************************************************************************************************
 
 #Region "Constants"
-		Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
-		Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
+        Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
+        Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
         Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
-		Protected Const SHARPZIPLIB_HANDLES_ZIP64 As Boolean = True
+        Protected Const SHARPZIPLIB_HANDLES_ZIP64 As Boolean = True
 
         ' Define the maximum file size to process using SharpZipLib; 
         '  the reason we don't want to process larger files is that SharpZipLib is 1.5x to 2x slower than PkZip
@@ -42,7 +42,7 @@ Namespace AnalysisManagerBase
         '   PKZipC      unzips the file in  84 seconds
         Protected Const SHARPZIPLIB_MAX_FILESIZE_MB As Integer = 1024
 
-        ' Note: These constants need to be all lower    case
+        ' Note: These constants need to be all lowercase
         Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data
         Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"      'FTICR data
         Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"          'Micromass QTOF data
@@ -67,37 +67,37 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Module variables"
-		Protected m_jobParams As IJobParams
+        Protected m_jobParams As IJobParams
         Protected m_mgrParams As IMgrParams
-		Protected m_WorkingDir As String
-		'		Protected m_JobNum As String
-		'		Protected m_MachName As String
-		Protected m_message As String
-		Protected m_DebugLevel As Short
-		'Protected m_DataFileList() As String
-		Protected WithEvents m_FastaTools As ExportProteinCollectionsIFC.IGetFASTAFromDMS
-		Protected m_GenerationStarted As Boolean = False
-		Protected m_GenerationComplete As Boolean = False
-		Protected m_FastaToolsCnStr As String = ""
-		Protected m_FastaFileName As String = ""
-		Protected WithEvents m_FastaTimer As Timer
+        Protected m_WorkingDir As String
+        Protected m_message As String
+        Protected m_DebugLevel As Short
+
+        Protected m_GenerationStarted As Boolean = False
+        Protected m_GenerationComplete As Boolean = False
+        Protected m_FastaToolsCnStr As String = ""
+        Protected m_FastaFileName As String = ""
         Protected m_FastaGenTimeOut As Boolean = False
         Protected m_FastaGenStartTime As DateTime = System.DateTime.Now
+
+        Protected WithEvents m_FastaTools As ExportProteinCollectionsIFC.IGetFASTAFromDMS
+        Protected WithEvents m_FastaTimer As Timer
+        Protected m_SharpZipTools As clsSharpZipTools
 #End Region
 
 #Region "Properties"
-		' explanation of what happened to last operation this class performed
-		Public Overridable ReadOnly Property Message() As String Implements IAnalysisResources.Message
-			Get
-				Return m_message
-			End Get
-		End Property
+        ' explanation of what happened to last operation this class performed
+        Public Overridable ReadOnly Property Message() As String Implements IAnalysisResources.Message
+            Get
+                Return m_message
+            End Get
+        End Property
 
-		'Public ReadOnly Property DataFileList() As String() Implements IAnalysisResources.DataFileList
-		'	Get
-		'		Return m_DataFileList
-		'	End Get
-		'End Property
+        'Public ReadOnly Property DataFileList() As String() Implements IAnalysisResources.DataFileList
+        '	Get
+        '		Return m_DataFileList
+        '	End Get
+        'End Property
 #End Region
 
 #Region "Event handlers"
@@ -107,14 +107,14 @@ Namespace AnalysisManagerBase
 
         End Sub
 
-		Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
+        Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
-			m_FastaFileName = Path.GetFileName(FullOutputPath)		'Get the name of the fasta file that was generated
+            m_FastaFileName = Path.GetFileName(FullOutputPath)      'Get the name of the fasta file that was generated
             m_GenerationComplete = True     'Set the completion flag
 
-		End Sub
+        End Sub
 
-		Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
+        Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
             Const MINIMUM_LOG_INTERVAL_SEC As Integer = 10
             Static dtLastLogTime As DateTime
             Static dblFractionDoneSaved As Double = -1
@@ -129,9 +129,9 @@ Namespace AnalysisManagerBase
                 End If
             End If
 
-		End Sub
+        End Sub
 
-		Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
+        Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
 
             If System.DateTime.Now.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
                 m_FastaGenTimeOut = True      'Set the timeout flag so an error will be reported
@@ -142,19 +142,19 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Methods"
-		''' <summary>
-		''' Constructor
-		''' </summary>
-		''' <remarks>Does nothing at present</remarks>
-		Public Sub New()
+        ''' <summary>
+        ''' Constructor
+        ''' </summary>
+        ''' <remarks>Does nothing at present</remarks>
+        Public Sub New()
 
-		End Sub
+        End Sub
 
-		''' <summary>
-		''' Initialize class
-		''' </summary>
-		''' <param name="mgrParams">Manager parameter object</param>
-		''' <param name="jobParams">Job parameter object</param>
+        ''' <summary>
+        ''' Initialize class
+        ''' </summary>
+        ''' <param name="mgrParams">Manager parameter object</param>
+        ''' <param name="jobParams">Job parameter object</param>
         ''' <remarks></remarks>
         Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams) Implements IAnalysisResources.Setup
 
@@ -166,9 +166,12 @@ Namespace AnalysisManagerBase
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
 
             m_WorkingDir = m_mgrParams.GetParam("workdir")
+
+            m_SharpZipTools = New clsSharpZipTools(m_DebugLevel, m_WorkingDir)
+
         End Sub
 
-		Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
+        Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
 
         ''' <summary>
         ''' Copies specified file from storage server to local working directory
@@ -1344,6 +1347,7 @@ Namespace AnalysisManagerBase
                 ParFileGen = New clsMakeParameterFile
                 ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
 
+                ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
                 blnSuccess = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion(m_jobParams.GetParam("ToolName")), _
                  Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
                  WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("DatasetID")))
@@ -1752,11 +1756,14 @@ Namespace AnalysisManagerBase
 
         End Function
 
-        Public Function UnzipFileStart(ByVal ZipFilePath As String, ByVal OutFolderPath As String, ByVal CallingFunctionName As String, ByVal ForceExternalZipProgramUse As Boolean) As Boolean
+        Public Function UnzipFileStart(ByVal ZipFilePath As String, _
+                                       ByVal OutFolderPath As String, _
+                                       ByVal CallingFunctionName As String, _
+                                       ByVal ForceExternalZipProgramUse As Boolean) As Boolean
 
             Const TWO_GB As Long = 2L * 1024 * 1024 * 1024
 
-            Dim fi As System.IO.FileInfo
+            Dim fiFileInfo As System.IO.FileInfo
             Dim sngFileSizeMB As Single
 
             Dim blnUseExternalUnzipper As Boolean = False
@@ -1767,8 +1774,7 @@ Namespace AnalysisManagerBase
 
             Dim dtStartTime As DateTime
             Dim dtEndTime As DateTime
-            Dim dblUnzipTimeSeconds As Double
-            Dim dblUnzipSpeedMBPerSec As Double
+            
             Try
                 If ZipFilePath Is Nothing Then ZipFilePath = String.Empty
 
@@ -1779,11 +1785,10 @@ Namespace AnalysisManagerBase
                 strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram")
                 If strExternalUnzipperFilePath Is Nothing Then strExternalUnzipperFilePath = String.Empty
 
+                fiFileInfo = New System.IO.FileInfo(ZipFilePath)
+                sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
 
-                fi = New System.IO.FileInfo(ZipFilePath)
-                sngFileSizeMB = CSng(fi.Length / 1024 / 1024)
-
-                If Not fi.Exists Then
+                If Not fiFileInfo.Exists Then
                     ' File not found
                     m_message = "Error unzipping '" & ZipFilePath & "': File not found (called from " & CallingFunctionName & ")"
 
@@ -1795,7 +1800,7 @@ Namespace AnalysisManagerBase
                     blnUseExternalUnzipper = True
                 Else
                     ' Examine the size of ZipFilePath
-                    If fi.Length >= TWO_GB Then
+                    If fiFileInfo.Length >= TWO_GB Then
                         ' File is over 2 GB in size; use the external unzipper if SharpZipLib cannot handle Zip64 files
                         blnUseExternalUnzipper = Not SHARPZIPLIB_HANDLES_ZIP64
                     End If
@@ -1818,33 +1823,18 @@ Namespace AnalysisManagerBase
                     blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
                     dtEndTime = DateTime.Now
 
-                    If Not blnSuccess Then
+                    If blnSuccess Then
+                        m_SharpZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
+                    Else
                         m_message = "Error unzipping " & System.IO.Path.GetFileName(ZipFilePath)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName & ": " & m_message)
                         UnZipper = Nothing
                     End If
                 Else
                     ' Use SharpZipLib
-
                     strUnzipperName = "SharpZipLib"
-
-                    Dim UnZipper As New ICSharpCode.SharpZipLib.Zip.FastZip
-
-                    dtStartTime = DateTime.Now
-                    UnZipper.ExtractZip(ZipFilePath, OutFolderPath, String.Empty)
-                    dtEndTime = DateTime.Now
-
-                    blnSuccess = True
-                End If
-
-                If blnSuccess Then
-                    dblUnzipTimeSeconds = dtEndTime.Subtract(dtStartTime).TotalSeconds
-                    dblUnzipSpeedMBPerSec = sngFileSizeMB / dblUnzipTimeSeconds
-
-                    If m_DebugLevel >= 2 Then
-                        m_message = "Unzipped " & System.IO.Path.GetFileName(ZipFilePath) & " using " & strUnzipperName & "; elapsed time = " & dblUnzipTimeSeconds.ToString("0.0") & " seconds; rate = " & dblUnzipSpeedMBPerSec.ToString("0.0") & " MB/sec; calling function = " & CallingFunctionName
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
-                    End If
+                    m_SharpZipTools.DebugLevel = m_DebugLevel
+                    blnSuccess = m_SharpZipTools.UnzipFile(ZipFilePath, OutFolderPath)
                 End If
 
             Catch ex As Exception

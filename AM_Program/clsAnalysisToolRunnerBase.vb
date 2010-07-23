@@ -64,7 +64,9 @@ Namespace AnalysisManagerBase
 		Protected m_FileVersion As String
 		Protected m_FileDate As String
 
-		Protected m_ResourcerDataFileList() As String
+        Protected m_ResourcerDataFileList() As String
+
+        Protected m_SharpZipTools As clsSharpZipTools
 #End Region
 
 #Region "Properties"
@@ -122,6 +124,8 @@ Namespace AnalysisManagerBase
             If m_DebugLevel > 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.Setup()")
             End If
+
+            m_SharpZipTools = New clsSharpZipTools(m_DebugLevel, m_WorkDir)
 
         End Sub
 
@@ -892,6 +896,61 @@ Namespace AnalysisManagerBase
             End If
 
         End Function
+
+        Protected Function UnzipFile(ByVal ZipFilePath As String) As Boolean
+            Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
+        End Function
+
+        Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
+            Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
+        End Function
+
+        Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
+            m_SharpZipTools.DebugLevel = m_DebugLevel
+            Return m_SharpZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
+        End Function
+
+        ''' <summary>
+        ''' Stores SourceFilePath in a zip file with the same name, but extension .zip
+        ''' </summary>
+        ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+        ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        ''' <returns>True if success; false if an error</returns>
+        Protected Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+
+            m_SharpZipTools.DebugLevel = m_DebugLevel
+
+            If m_SharpZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip) Then
+                Return True
+                clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(m_SharpZipTools.MostRecentZipFilePath))
+            Else
+                Return False
+            End If
+
+        End Function
+
+        ''' <summary>
+        ''' Stores SourceFilePath in a zip file named ZipfilePath
+        ''' </summary>
+        ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+        ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        ''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+        ''' <returns>True if success; false if an error</returns>
+        Protected Function ZipFile(ByVal SourceFilePath As String, _
+                                   ByVal DeleteSourceAfterZip As Boolean, _
+                                   ByVal ZipFilePath As String) As Boolean
+
+            m_SharpZipTools.DebugLevel = m_DebugLevel
+
+            If m_SharpZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath) Then
+                Return True
+                clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(ZipFilePath))
+            Else
+                Return False
+            End If
+
+        End Function
+
 #End Region
 
     End Class

@@ -591,6 +591,51 @@ Namespace AnalysisManagerBase
 
         End Sub
 
+        Protected Sub LogStatusToBrokerDatabase(ByVal ForceLogToBrokerDB As Boolean)
+
+            Dim intIndex As Integer
+
+            Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
+            With udtStatusInfo
+                .MgrName = m_MgrName
+                .MgrStatus = m_MgrStatus
+                .LastUpdate = System.DateTime.Now()
+                .LastStartTime = m_TaskStartTime
+                .CPUUtilization = m_CpuUtilization
+                .FreeMemoryMB = m_FreeMemoryMB
+
+                If m_RecentErrorMessageCount = 0 Then
+                    .MostRecentErrorMessage = String.Empty
+                Else
+                    .MostRecentErrorMessage = m_RecentErrorMessages(0)
+                    If m_RecentErrorMessageCount > 1 Then
+                        ' Append the next two error messages
+                        For intIndex = 1 To m_RecentErrorMessageCount - 1
+                            .MostRecentErrorMessage &= ControlChars.NewLine & m_RecentErrorMessages(intIndex)
+                            If intIndex >= 2 Then Exit For
+                        Next
+                    End If
+                End If
+
+                .Task.Tool = m_Tool
+                .Task.Status = m_TaskStatus
+                .Task.DurationHours = GetRunTime()
+                .Task.Progress = m_Progress
+                .Task.CurrentOperation = m_CurrentOperation
+
+                .Task.TaskDetails.Status = m_TaskStatusDetail
+                .Task.TaskDetails.Job = m_JobNumber
+                .Task.TaskDetails.JobStep = m_JobStep
+                .Task.TaskDetails.Dataset = m_Dataset
+                .Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
+                .Task.TaskDetails.MostRecentJobInfo = m_MostRecentJobInfo
+                .Task.TaskDetails.SpectrumCount = m_SpectrumCount
+
+            End With
+
+            m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
+        End Sub
+
         Protected Sub StoreRecentJobInfo(ByVal MostRecentJobInfo As String)
             If Not MostRecentJobInfo Is Nothing AndAlso MostRecentJobInfo.Length > 0 Then
                 m_MostRecentJobInfo = MostRecentJobInfo
@@ -662,7 +707,7 @@ Namespace AnalysisManagerBase
         End Sub
 
         ''' <summary>
-        ''' Writes the status file
+        ''' Updates the status in various locations, including on disk and with the message broker and/or broker DB
         ''' </summary>
         ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         ''' <remarks></remarks>
@@ -674,8 +719,6 @@ Namespace AnalysisManagerBase
 
             Dim objMemoryStream As System.IO.MemoryStream
             Dim srMemoryStreamReader As System.IO.StreamReader
-
-            Dim strTempStatusFilePath As String
 
             Dim strXMLText As String = String.Empty
             Dim intIndex As Integer
@@ -765,30 +808,7 @@ Namespace AnalysisManagerBase
                 XWriter.Close()
                 XWriter = Nothing
 
-                strTempStatusFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(m_FileNamePath), _
-                                                               System.IO.Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
-
-                ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
-
-                If WriteStatusFileWork(strTempStatusFilePath, strXMLText) Then
-                    Try
-                        System.IO.File.Copy(strTempStatusFilePath, m_FileNamePath, True)
-                    Catch ex As Exception
-                        ' Log a warning that the file copy failed
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & " to " & System.IO.Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
-                    End Try
-
-                    Try
-                        System.IO.File.Delete(strTempStatusFilePath)
-                    Catch ex As Exception
-                        ' Log a warning that the file delete failed
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
-                    End Try
-
-                Else
-                    ' Error writing to the temporary status file; try the primary file
-                    WriteStatusFileWork(m_FileNamePath, strXMLText)
-                End If
+                WriteStatusFileToDisk(strXMLText)
 
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating status info: " & ex.Message)
@@ -810,49 +830,56 @@ Namespace AnalysisManagerBase
                 ' Send the status info to the Broker DB
                 ' Note that m_BrokerDBLogger() only logs the status every x minutes (unless ForceLogToBrokerDB = True)
 
-                Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
-                With udtStatusInfo
-                    .MgrName = m_MgrName
-                    .MgrStatus = m_MgrStatus
-                    .LastUpdate = dtLastUpdate
-                    .LastStartTime = m_TaskStartTime
-                    .CPUUtilization = m_CpuUtilization
-                    .FreeMemoryMB = m_FreeMemoryMB
-
-                    If m_RecentErrorMessageCount = 0 Then
-                        .MostRecentErrorMessage = String.Empty
-                    Else
-                        .MostRecentErrorMessage = m_RecentErrorMessages(0)
-                        If m_RecentErrorMessageCount > 1 Then
-                            ' Append the next two error messages
-                            For intIndex = 1 To m_RecentErrorMessageCount - 1
-                                .MostRecentErrorMessage &= ControlChars.NewLine & m_RecentErrorMessages(intIndex)
-                                If intIndex >= 2 Then Exit For
-                            Next
-                        End If
-                    End If
-
-                    .Task.Tool = m_Tool
-                    .Task.Status = m_TaskStatus
-                    .Task.DurationHours = sngRunTimeHours
-                    .Task.Progress = m_Progress
-                    .Task.CurrentOperation = m_CurrentOperation
-
-                    .Task.TaskDetails.Status = m_TaskStatusDetail
-                    .Task.TaskDetails.Job = m_JobNumber
-                    .Task.TaskDetails.JobStep = m_JobStep
-                    .Task.TaskDetails.Dataset = m_Dataset
-                    .Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
-                    .Task.TaskDetails.MostRecentJobInfo = m_MostRecentJobInfo
-                    .Task.TaskDetails.SpectrumCount = m_SpectrumCount
-
-                End With
-
-                m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
+                LogStatusToBrokerDatabase(ForceLogToBrokerDB)
             End If
         End Sub
 
-        Protected Function WriteStatusFileWork(ByVal strFilePath As String, ByVal strXMLText As String) As Boolean
+        Protected Function WriteStatusFileToDisk(ByRef strXMLText As String) As Boolean
+
+            Const MIN_FILE_WRITE_INTERVAL_SECONDS As Integer = 2
+
+            Static dtLastFileWriteTime As System.DateTime = System.DateTime.Now
+
+            Dim strTempStatusFilePath As String
+            Dim blnSuccess As Boolean
+
+            blnSuccess = True
+
+            If System.DateTime.Now.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
+                ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
+
+                strTempStatusFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(m_FileNamePath), _
+                                                               System.IO.Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
+
+                dtLastFileWriteTime = System.DateTime.Now
+
+                blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText)
+                If blnSuccess Then
+                    Try
+                        System.IO.File.Copy(strTempStatusFilePath, m_FileNamePath, True)
+                    Catch ex As Exception
+                        ' Log a warning that the file copy failed
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & " to " & System.IO.Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
+                    End Try
+
+                    Try
+                        System.IO.File.Delete(strTempStatusFilePath)
+                    Catch ex As Exception
+                        ' Log a warning that the file delete failed
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
+                    End Try
+
+                Else
+                    ' Error writing to the temporary status file; try the primary file
+                    blnSuccess = WriteStatusFileToDisk(m_FileNamePath, strXMLText)
+                End If
+            End If
+
+            Return blnSuccess
+
+        End Function
+
+        Protected Function WriteStatusFileToDisk(ByVal strFilePath As String, ByVal strXMLText As String) As Boolean
             Const WRITE_FAILURE_LOG_THRESHOLD As Integer = 5
 
             Static intWritingErrorCountSaved As Integer = 0

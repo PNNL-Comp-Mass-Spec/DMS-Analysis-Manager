@@ -763,6 +763,75 @@ Public Class clsCodeTest
     End Function
 
     ''' <summary>
+    ''' Examines the X!Tndem param file to determine if ETD mode is enabled
+    ''' If it is, then sets m_ETDMode to True
+    ''' </summary>
+    ''' <param name="strParamFilePath">X!Tandem XML parameter file to read</param>
+    ''' <returns>True if success; false if an error</returns>
+    Public Function CheckETDModeEnabledXTandem(ByVal strParamFilePath As String, ByRef blnEtdMode As Boolean) As Boolean
+
+        Dim objParamFile As System.Xml.XmlDocument
+
+        Dim objSelectedNodes As System.Xml.XmlNodeList
+        Dim objAttributeNode As System.Xml.XmlNode
+
+        Dim intSettingIndex As Integer
+        Dim intMatchIndex As Integer
+
+        Try
+            blnEtdMode = False
+
+            ' Open the parameter file
+            ' Look for either of these lines:
+            '   <note type="input" label="scoring, c ions">yes</note>
+            '   <note type="input" label="scoring, z ions">yes</note>
+
+            objParamFile = New System.Xml.XmlDocument
+            objParamFile.PreserveWhitespace = True
+            objParamFile.Load(strParamFilePath)
+
+            For intSettingIndex = 0 To 1
+                Select Case intSettingIndex
+                    Case 0
+                        objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']")
+                    Case 1
+                        objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']")
+                End Select
+
+                If Not objSelectedNodes Is Nothing Then
+
+                    For intMatchIndex = 0 To objSelectedNodes.Count - 1
+                        ' Make sure this node has an attribute of type="input"
+                        objAttributeNode = objSelectedNodes.Item(intMatchIndex).Attributes.GetNamedItem("type")
+
+                        If objAttributeNode Is Nothing Then
+                            ' Node does not have an attribute named "type"; ignore it
+                        Else
+                            If objAttributeNode.Value.ToLower = "input" Then
+                                ' Node does have attribute type="input"
+                                ' Now examine the node's InnerText value
+                                If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
+                                    blnEtdMode = True
+                                End If
+                            End If
+                        End If
+                    Next intMatchIndex
+
+                End If
+
+                If blnEtdMode Then Exit For
+            Next intSettingIndex
+
+        Catch ex As Exception
+            Console.WriteLine("Error: " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
     ''' Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output 
     ''' files has length greater than lngMaxSizeBytes. It will also check for a header line on the 
     ''' first line; if a header line is found, then all of the split files will be assigned the same header line
