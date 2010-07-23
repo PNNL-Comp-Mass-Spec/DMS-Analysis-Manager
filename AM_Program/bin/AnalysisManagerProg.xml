@@ -1226,6 +1226,42 @@ AnalysisManagerProg
 	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
 	<param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
 	<returns>True if success; false if an error</returns>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Status">
+	<summary>
+ Allows calling program to get current status
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Results">
+	<summary>
+ Allows calling program to determine if DTA creation succeeded
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.ErrMsg">
+	<summary>
+ Error message describing any errors encountered
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.DebugLevel">
+	<summary>
+ Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.SpectraFileCount">
+	<summary>
+ Count of spectra files that have been created
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Progress">
+	<summary>
+  Percent complete (Value between 0 and 100)
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.MgrParams">
+	<summary>
+ Machine-specific parameters, such as file locations
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.JobParams">
+	<summary>
+ Job-specific parameters
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.StatusTools">
+	<summary>
+ Interface for updating task status
+ </summary>
 </member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.#ctor(System.String,System.Single)">
 	<summary>
  Constructor

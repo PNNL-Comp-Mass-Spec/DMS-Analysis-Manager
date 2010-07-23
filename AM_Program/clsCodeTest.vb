@@ -21,6 +21,10 @@ Public Class clsCodeTest
     Protected m_EvalCode As Integer
     Protected m_DebugLevel As Integer = 2
 
+    Protected m_Progress As Single
+    Protected m_MaxScanInFile As Integer
+    Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
+
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450				' 7.5 minutes
 
     Public Sub New()
@@ -1256,6 +1260,58 @@ Public Class clsCodeTest
         End Try
 
     End Sub
+
+    Public Sub TestDTAWatcher(ByVal strWorkDir As String, ByVal sngWaitTimeMinutes As Single)
+
+        m_Progress = 0
+        m_MaxScanInFile = 10000
+
+        ' Setup a FileSystemWatcher to watch for new .Dta files being created
+        ' We can compare the scan number of new .Dta files to the m_MaxScanInFile value to determine % complete
+        mDTAWatcher = New System.IO.FileSystemWatcher(strWorkDir, "*.dta")
+
+        mDTAWatcher.IncludeSubdirectories = False
+        mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
+
+        mDTAWatcher.EnableRaisingEvents = True
+
+        Dim dtStartTime As System.DateTime = System.DateTime.Now
+
+        Do
+            System.Threading.Thread.Sleep(2000)
+            Console.WriteLine("Current progress: " & m_Progress)
+        Loop While System.DateTime.Now.Subtract(dtStartTime).TotalMinutes < sngWaitTimeMinutes
+
+    End Sub
+
+    Private Sub UpdateDTAProgress(ByVal DTAFileName As String)
+        Static reDTAFile As System.Text.RegularExpressions.Regex
+
+        Dim reMatch As System.Text.RegularExpressions.Match
+        Dim intScanNumber As Integer
+
+        If reDTAFile Is Nothing Then
+            reDTAFile = New System.Text.RegularExpressions.Regex("(\d+)\.\d+\.\d\.dta$", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+        End If
+
+        Try
+            ' Extract out the scan number from the DTA filename
+            reMatch = reDTAFile.Match(DTAFileName)
+            If reMatch.Success Then
+                If Integer.TryParse(reMatch.Groups.Item(1).Value, intScanNumber) Then
+                    m_Progress = CSng(intScanNumber / m_MaxScanInFile * 100)
+                End If
+            End If
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+    End Sub
+
+    Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mDTAWatcher.Created
+        UpdateDTAProgress(e.Name)
+    End Sub
+
 
     Public Sub TestGetFileContents()
 

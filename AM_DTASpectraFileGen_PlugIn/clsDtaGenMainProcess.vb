@@ -23,6 +23,10 @@ Public Class clsDtaGenMainProcess
 	Private WithEvents m_RunProgTool As clsRunDosProgram
     Private m_thThread As System.Threading.Thread
 
+    Private m_MaxScanInFile As Integer
+    Private m_RunningExtractMSn As Boolean
+
+    Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
 #End Region
 
 #Region "API Declares"
@@ -84,7 +88,7 @@ Public Class clsDtaGenMainProcess
             m_thThread.Start()
             m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
         Catch ex As Exception
-            m_ErrMsg = "Error calling MakeDTAFiles"
+            m_ErrMsg = "Error calling MakeDTAFilesThreaded"
             m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
         End Try
 
@@ -247,7 +251,8 @@ Public Class clsDtaGenMainProcess
 	End Sub
 
 	''' <summary>
-	''' Method that actually makes the DTA files
+    ''' Method that actually makes the DTA files
+    ''' This functon is called by MakeDTAFilesThreaded
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
@@ -273,10 +278,7 @@ Public Class clsDtaGenMainProcess
 		Dim LocCharge As Short
 		Dim LocScanStart As Integer
 		Dim LocScanStop As Integer
-		Dim MaxScanInFile As Integer
-		Dim OutDirParam As String = " -P"		'Output directory parameter, dependent on xcalibur version
-
-        Dim blnRunningExtractMSn As Boolean
+        Dim OutDirParam As String = " -P"       'Output directory parameter, dependent on xcalibur version
 
 		'DAC debugging
 		System.Threading.Thread.CurrentThread.Name = "MakeDTAFiles"
@@ -306,27 +308,27 @@ Public Class clsDtaGenMainProcess
         ExplicitChargeEnd = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "ExplicitChargeEnd", CShort(0))
 
 		'Get the maximum number of scans in the file
-		MaxScanInFile = GetMaxScan(RawFile)
+        m_MaxScanInFile = GetMaxScan(RawFile)
 
-		Select Case MaxScanInFile
+        Select Case m_MaxScanInFile
             Case -1
                 ' Generic error getting number of scans
-                m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & MaxScanInFile.ToString
+                m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
                 Return False
             Case 0
                 ' Unable to read file; treat this is a warning
                 m_ErrMsg = "Warning: unable to get maxscan; Maxscan = 0"
             Case Is > 0
                 ' This is normal, do nothing
-			Case Else
+            Case Else
                 ' This should never happen
-				m_ErrMsg = "Critical error getting number of scans; Maxscan = " & MaxScanInFile.ToString
-				Return False
-		End Select
+                m_ErrMsg = "Critical error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
+                Return False
+        End Select
 
         'Verify max scan specified is in file
-        If MaxScanInFile > 0 Then
-            If ScanStop > MaxScanInFile Then ScanStop = MaxScanInFile
+        If m_MaxScanInFile > 0 Then
+            If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
         End If
 
 		'Determine max number of scans to be performed
@@ -354,17 +356,27 @@ Public Class clsDtaGenMainProcess
              ExplicitChargeEnd.ToString & ", m_AbortRequested=" & m_AbortRequested.ToString)
         End If
 
-        blnRunningExtractMSn = m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower)
+        m_RunningExtractMSn = m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower)
 
-		Do While LocCharge <= ExplicitChargeEnd And Not m_AbortRequested
-			If LocCharge = 0 And CreateDefaultCharges OrElse LocCharge > 0 Then
+        ' Setup a FileSystemWatcher to watch for new .Dta files being created
+        ' We can compare the scan number of new .Dta files to the m_MaxScanInFile value to determine % complete
+        mDTAWatcher = New System.IO.FileSystemWatcher(m_WorkDir, "*.dta")
 
-				'Set up parameters to loop through .dta creation until no more files are created
+        mDTAWatcher.IncludeSubdirectories = False
+        mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
+
+        mDTAWatcher.EnableRaisingEvents = True
+
+        Do While LocCharge <= ExplicitChargeEnd And Not m_AbortRequested
+            If LocCharge = 0 And CreateDefaultCharges OrElse LocCharge > 0 Then
+
+                ' If we are using extract_msn.exe, then need to loop through .dta creation until no more files are created
                 ' Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
-				' (only used if selected in manager settings)
-				LocScanStart = ScanStart
+                ' (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
-                If CBool(m_MgrParams.GetParam("UseDTALooping")) AndAlso blnRunningExtractMSn Then
+                LocScanStart = ScanStart
+
+                If m_RunningExtractMSn AndAlso clsGlobal.CBoolSafe(m_MgrParams.GetParam("UseDTALooping")) Then
                     If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
                         LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
                     Else
@@ -374,26 +386,26 @@ Public Class clsDtaGenMainProcess
                     LocScanStop = ScanStop
                 End If
 
-				'Loop until no more .dta files are created or ScanStop is reached
-				Do While (LocScanStart <= ScanStop)
-					' Check for abort
-					If m_AbortRequested Then
-						m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
-						Exit Do
-					End If
+                'Loop until no more .dta files are created or ScanStop is reached
+                Do While (LocScanStart <= ScanStop)
+                    ' Check for abort
+                    If m_AbortRequested Then
+                        m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+                        Exit Do
+                    End If
 
-					'Set up command
-					CmdStr = "-I" & IonCount & " -G1"
-					If LocCharge > 0 Then
-						CmdStr &= " -C" & LocCharge.ToString
-					End If
+                    'Set up command
+                    CmdStr = "-I" & IonCount & " -G1"
+                    If LocCharge > 0 Then
+                        CmdStr &= " -C" & LocCharge.ToString
+                    End If
 
-					CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
-					CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
-					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
-					CmdStr &= " -D" & m_WorkDir & " " & RawFile
+                    CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
+                    CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
+                    CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
+                    CmdStr &= " -D" & m_WorkDir & " " & RawFile
 
-					'DAC debugging
+                    'DAC debugging
                     If m_DebugLevel > 0 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenMainProcess.MakeDTAFiles, DtaToolNameLoc=" & m_DtaToolNameLoc)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenMainProcess.MakeDTAFiles, CmdStr=" & CmdStr)
@@ -402,7 +414,7 @@ Public Class clsDtaGenMainProcess
                     End If
 
                     With m_RunProgTool
-                        If blnRunningExtractMSn Then
+                        If m_RunningExtractMSn Then
                             ' If running Extract_MSn, then cannot cache the standard output; clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
                             .CreateNoWindow = False
                             .CacheStandardOutput = False
@@ -425,44 +437,47 @@ Public Class clsDtaGenMainProcess
                         Return False
                     End If
 
-					'DAC debugging
-					If m_DebugLevel > 0 Then
+                    'DAC debugging
+                    If m_DebugLevel > 0 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenMainProcess.MakeDTAFiles, RunProgram complete, thread " _
                          & System.Threading.Thread.CurrentThread.Name)
                     End If
 
-					'Update loopy parameters
-					LocScanStart = LocScanStop + 1
+                    'Update loopy parameters
+                    LocScanStart = LocScanStop + 1
                     LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
-					If LocScanStop > ScanStop Then
-						LocScanStop = ScanStop
-					End If
-				Loop
+                    If LocScanStop > ScanStop Then
+                        LocScanStop = ScanStop
+                    End If
+                Loop
 
-			End If
+            End If
 
-			If LocCharge = 0 Then
-				If ExplicitChargeStart <= 0 Or ExplicitChargeEnd <= 0 Then
-					Exit Do
-				Else
-					LocCharge = ExplicitChargeStart
-				End If
-			Else
-				LocCharge += 1S
-			End If
-		Loop
+            If LocCharge = 0 Then
+                If ExplicitChargeStart <= 0 Or ExplicitChargeEnd <= 0 Then
+                    Exit Do
+                Else
+                    LocCharge = ExplicitChargeStart
+                End If
+            Else
+                LocCharge += 1S
+            End If
+        Loop
 
-		If m_AbortRequested Then
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
-		End If
+        If m_AbortRequested Then
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+        End If
 
-		'DAC debugging
-		If m_DebugLevel > 0 Then
+        ' Disable the DTA watcher
+        mDTAWatcher.EnableRaisingEvents = False
+
+        'DAC debugging
+        If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenMainProcess.MakeDTAFiles, DTA creation loop complete, thread " _
               & System.Threading.Thread.CurrentThread.Name)
         End If
 
-		'We got this far, everything must have worked
+        'We got this far, everything must have worked
         If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
             LogDTACreationStats("clsDtaGenmainProcess.MakeDTAFiles", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
             Return False
@@ -476,6 +491,32 @@ Public Class clsDtaGenMainProcess
         End If
 
 	End Function
+
+    Private Sub UpdateDTAProgress(ByVal DTAFileName As String)
+        Static reDTAFile As System.Text.RegularExpressions.Regex
+
+        Dim reMatch As System.Text.RegularExpressions.Match
+        Dim intScanNumber As Integer
+
+        If reDTAFile Is Nothing Then
+            reDTAFile = New System.Text.RegularExpressions.Regex("(\d+)\.\d+\.\d+\.dta$", _
+                                                                   System.Text.RegularExpressions.RegexOptions.Compiled Or _
+                                                                   System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+        End If
+
+        Try
+            ' Extract out the scan number from the DTA filename
+            reMatch = reDTAFile.Match(DTAFileName)
+            If reMatch.Success Then
+                If Integer.TryParse(reMatch.Groups.Item(1).Value, intScanNumber) Then
+                    m_Progress = CSng(intScanNumber / m_MaxScanInFile * 100)
+                End If
+            End If
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+    End Sub
 
 	''' <summary>
 	''' Verifies at least one DTA file was created
@@ -494,10 +535,14 @@ Public Class clsDtaGenMainProcess
 
 	End Function
 
-	''' <summary>
-	''' Event handler for LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
+#End Region
+
+#Region "Event Handlers"
+
+    ''' <summary>
+    ''' Event handler for LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
 	Private Sub m_RunProgTool_LoopWaiting() Handles m_RunProgTool.LoopWaiting
 
         Static dtLastDtaCountTime As System.DateTime = System.DateTime.Now
@@ -517,9 +562,13 @@ Public Class clsDtaGenMainProcess
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.Now
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0, m_SpectraFileCount, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
         End If
 
+    End Sub
+
+    Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mDTAWatcher.Created
+        UpdateDTAProgress(e.Name)
     End Sub
 
 #End Region

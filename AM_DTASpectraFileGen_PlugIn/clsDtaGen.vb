@@ -29,7 +29,10 @@ Public Class clsDtaGen
 	Protected m_JobParams As IJobParams
     Protected m_DebugLevel As Short = 0
     Protected m_SpectraFileCount As Integer
-	Protected m_StatusTools As IStatusFile
+    Protected m_StatusTools As IStatusFile
+
+    ' The following is a value between 0 and 100
+    Protected m_Progress As Single = 0
 #End Region
 
 #Region "Properties"
@@ -82,7 +85,13 @@ Public Class clsDtaGen
 		Get
 			Return m_SpectraFileCount
 		End Get
-	End Property
+    End Property
+
+    Public ReadOnly Property Progress() As Single Implements ISpectraFileProcessor.Progress
+        Get
+            Return m_Progress
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
@@ -105,6 +114,7 @@ Public Class clsDtaGen
 		End With
 
 		m_WorkDir = m_MgrParams.GetParam("workdir")
+        m_Progress = 0
 
 	End Sub
 

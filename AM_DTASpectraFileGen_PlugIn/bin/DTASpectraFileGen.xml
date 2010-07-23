@@ -46,6 +46,7 @@ DTASpectraFileGen
 </member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.MakeDTAFiles">
 	<summary>
  Method that actually makes the DTA files
+ This functon is called by MakeDTAFilesThreaded
  </summary>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>

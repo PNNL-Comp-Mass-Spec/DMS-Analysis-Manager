@@ -48,27 +48,50 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Properties"
-		'		Property SourceFolderPath() As String	' (in)  – path to folder containing the raw spectra file
+        ''' <summary>
+        ''' Allows calling program to get current status
+        ''' </summary>
+        ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus
 
-		'		Property OutputFolderPath() As String	' (in) – path to folder where generated DTAs are to be placed
+        ''' <summary>
+        ''' Allows calling program to determine if DTA creation succeeded
+        ''' </summary>
+        ReadOnly Property Results() As ISpectraFileProcessor.ProcessResults
 
-		'		WriteOnly Property MiscParams() As StringDictionary	'For passing miscelleneous parameters (not presently used)
+        ''' <summary>
+        ''' Error message describing any errors encountered
+        ''' </summary>
+        ReadOnly Property ErrMsg() As String
 
-		ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus	'Allows calling program to get current status
+        ''' <summary>
+        ''' Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
+        ''' </summary>
+        Property DebugLevel() As Integer
 
-		ReadOnly Property Results() As ISpectraFileProcessor.ProcessResults	 'Allows calling program to determine if DTA creation succeeded
+        ''' <summary>
+        ''' Count of spectra files that have been created
+        ''' </summary>
+        ReadOnly Property SpectraFileCount() As Integer
 
-		ReadOnly Property ErrMsg() As String	 'Error message describing any errors encountered
+        ''' <summary>
+        '''  Percent complete (Value between 0 and 100)
+        ''' </summary>
+        ReadOnly Property Progress() As Single
 
-		Property DebugLevel() As Integer	'Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
+        ''' <summary>
+        ''' Machine-specific parameters, such as file locations
+        ''' </summary>
+        WriteOnly Property MgrParams() As IMgrParams    '
 
-        ReadOnly Property SpectraFileCount() As Integer 'Count of spectra files that have been created
+        ''' <summary>
+        ''' Job-specific parameters
+        ''' </summary>
+        WriteOnly Property JobParams() As IJobParams    '
 
-		WriteOnly Property MgrParams() As IMgrParams	'Machine-specific parameters, such as file locations
-
-		WriteOnly Property JobParams() As IJobParams	'Job-specific parameters
-
-		WriteOnly Property StatusTools() As IStatusFile	 'Interface for updating task status
+        ''' <summary>
+        ''' Interface for updating task status
+        ''' </summary>
+        WriteOnly Property StatusTools() As IStatusFile  '
 #End Region
 
 #Region "Methods"

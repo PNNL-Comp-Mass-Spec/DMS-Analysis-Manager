@@ -90,6 +90,11 @@ Public Class clsAnalysisToolRunnerDtaImport
         Dim CompleteFolderNamePath As String = String.Empty
 
         Try
+            ' Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
+            '       for example: \\pnl\projects\MSSHARE\SPurvine
+            ' This folder must contain subfolders whose name matches the output_folder name assigned to each job
+            ' Furthermore, each subfolder must have a file named Dataset_dta.zip
+
             SourceFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
             CompleteFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
 

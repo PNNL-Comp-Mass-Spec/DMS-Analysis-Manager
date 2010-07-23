@@ -721,7 +721,6 @@ Namespace AnalysisManagerBase
             Dim srMemoryStreamReader As System.IO.StreamReader
 
             Dim strXMLText As String = String.Empty
-            Dim intIndex As Integer
 
             Dim dtLastUpdate As System.DateTime
             Dim sngRunTimeHours As Single

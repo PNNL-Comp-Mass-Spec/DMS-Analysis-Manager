@@ -250,12 +250,14 @@ Public Class clsDtaGenToolRunner
             End If
 
 			'Loop until the spectra generator finishes
-			While (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or _
-			 (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING)
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0, SpectraGen.SpectraFileCount, "", "", "", False)
+            While (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or _
+                  (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING)
+
+                m_progress = SpectraGen.Progress
+                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, SpectraGen.SpectraFileCount, "", "", "", False)
                 System.Threading.Thread.Sleep(5000)              'Delay for 5 seconds
 
-			End While
+            End While
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files: " & ex.Message)
             m_message = AppendToComment(m_message, "Exception while generating dta files")
@@ -264,8 +266,9 @@ Public Class clsDtaGenToolRunner
 
 		'Set internal spectra file count to that returned by the spectra generator
 		m_DtaCount = SpectraGen.SpectraFileCount
+        m_progress = SpectraGen.Progress
 
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0, m_DtaCount, "", "", "", False)
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
 		'Check for reason spectra generator exited
         If SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE Then
