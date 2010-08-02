@@ -23,6 +23,8 @@ Public Class clsAnalysisToolRunnerOM
 	Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
 	Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
 
+    Protected m_DatasetName As String = String.Empty
+
 	Protected WithEvents CmdRunner As clsRunDosProgram
 	'--------------------------------------------------------------------------------------------
 	'Future section to monitor OMSSA log file for progress determination
@@ -44,6 +46,15 @@ Public Class clsAnalysisToolRunnerOM
 
         Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
+
+        Dim blnProcessingError As Boolean
+        Dim eReturnCode As IJobParams.CloseOutType
+
+        ' Set this to success for now
+        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+        ' Cache the dataset name
+        m_DatasetName = m_jobParams.GetParam("datasetNum")
 
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -84,17 +95,27 @@ Public Class clsAnalysisToolRunnerOM
         '--------------------------------------------------------------------------------------------
         'End future section
         '--------------------------------------------------------------------------------------------
-        Dim inputFilename As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), "OMSSA_Input.xml")
+
+        Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, "OMSSA_Input.xml")
         'Set up and execute a program runner to run OMSSA
         CmdStr = " -pm " & inputFilename
 
-        If m_DebugLevel >= 2 Then
+        If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA: " & progLoc & " " & CmdStr)
         End If
 
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
+        End With
+
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            blnProcessingError = True
         End If
 
         '--------------------------------------------------------------------------------------------
@@ -109,15 +130,19 @@ Public Class clsAnalysisToolRunnerOM
         'Stop the job timer
         m_StopTime = System.DateTime.Now
 
-        If Not ConvertOMSSA2PepXmlFile() Then
-            Dim Msg As String = "clsAnalysisToolRunnerOM.RunTool().ConvertOMSSA2PepXmlFile, failed converting OMSSA xml file to OMSSA Pep Xml format."
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 
-            ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+        If blnProcessingError Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        If Not blnProcessingError Then
+            If Not ConvertOMSSA2PepXmlFile() Then
+                blnProcessingError = True
+            End If
         End If
 
         'Add the current job data to the summary file
@@ -130,23 +155,34 @@ Public Class clsAnalysisToolRunnerOM
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
-        'Zip the output file
-        result = ZipMainOutputFile()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+        If Not blnProcessingError Then
+            'Zip the output file
+            result = ZipMainOutputFile()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                blnProcessingError = True
+            End If
         End If
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = MoveResultFiles()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+            'MoveResultFiles moves the result files to the result folder
+            m_message = "Error moving files into results folder"
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = CopyResultsFolderToServer()
@@ -155,7 +191,9 @@ Public Class clsAnalysisToolRunnerOM
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+        'If we get to here, everything worked so exit happily
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
 
     End Function
 
@@ -171,7 +209,7 @@ Public Class clsAnalysisToolRunnerOM
         Dim blnDataFound As Boolean = False
 
         Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_dta.txt")
 
             If Not System.IO.File.Exists(strInputFilePath) Then
                 m_message = "_DTA.txt file not found: " & strInputFilePath
@@ -206,47 +244,22 @@ Public Class clsAnalysisToolRunnerOM
     End Function
 
 	''' <summary>
-	''' Zips concatenated XML output file
+    ''' Zips OMSSA XML output file
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Private Function ZipMainOutputFile() As IJobParams.CloseOutType
-		Dim TmpFile As String
-		Dim FileList() As String
-		Dim ZipFileName As String
 
-		Try
-			Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_om.omx")
-			For Each TmpFile In FileList
-                ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-                If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
-                    Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = AppendToComment(m_message, "Error zipping output files")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
-			Next
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerOM.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error zipping output files")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        'Zip the output file
+        Dim strOMSSAResultsFilePath As String
+        Dim blnSuccess As Boolean
 
-		'Delete the XML output files
-		Try
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_om.omx")
-			For Each TmpFile In FileList
-                System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
-                System.IO.File.Delete(TmpFile)
-			Next
-		Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+        strOMSSAResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_om.omx")
+
+        blnSuccess = MyBase.ZipFile(strOMSSAResultsFilePath, True)
+        If Not blnSuccess Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
 	End Function
 
@@ -275,11 +288,10 @@ Public Class clsAnalysisToolRunnerOM
 
         Try
             ' set up formatdb.exe to reference the organsim DB file (fasta)
-            Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA2PepXml")
 
-            CmdRunner = New clsRunDosProgram(WorkingDir)
+            CmdRunner = New clsRunDosProgram(m_WorkDir)
 
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter")
@@ -293,25 +305,33 @@ Public Class clsAnalysisToolRunnerOM
                 Return False
             End If
 
-            Dim outputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_pepxml.xml")
-            Dim inputFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
+            Dim outputFilename As String = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_pepxml.xml")
+            Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_om_large.omx")
 
             'Set up and execute a program runner to run Omssa2PepXml.exe
             'omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
             CmdStr = "-xml -o " & outputFilename & " " & inputFilename
 
-            If m_DebugLevel >= 2 Then
+            If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA2PepXml: " & progLoc & " " & CmdStr)
             End If
+
+            With CmdRunner
+                .CreateNoWindow = True
+                .CacheStandardOutput = True
+                .EchoOutputToConsole = True
+
+                .WriteConsoleOutputToFile = True
+                .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
+            End With
 
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA2PepXml, job " & m_JobNum)
                 Return False
             End If
 
-        Catch E As Exception
-            ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, The file could converted. " & E.Message)
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " & ex.Message)
         End Try
 
         Return result

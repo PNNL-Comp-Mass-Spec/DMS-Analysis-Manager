@@ -77,6 +77,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
+    <Reference Include="DtaTextConverter, Version=1.1.3862.32418, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\DtaTextConverter.dll</HintPath>
+    </Reference>
     <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>

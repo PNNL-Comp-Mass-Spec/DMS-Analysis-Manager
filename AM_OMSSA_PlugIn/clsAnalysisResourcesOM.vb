@@ -1,9 +1,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.Xml.XPath
-Imports System.Xml
-Imports System.Collections.Specialized
 
 Public Class clsAnalysisResourcesOM
     Inherits clsAnalysisResources
@@ -12,9 +9,14 @@ Public Class clsAnalysisResourcesOM
     Friend Const OMSSA_INPUT_FILE As String = "OMSSA_input.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
+    Private mDataset As String = String.Empty
+
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
-        Dim result As Boolean
+        Dim strErrorMessage As String = String.Empty
+        Dim blnSuccess As Boolean
+
+        mDataset = m_jobParams.GetParam("DatasetNum")
 
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
@@ -31,12 +33,12 @@ Public Class clsAnalysisResourcesOM
         If Not RetrieveFile( _
          m_jobParams.GetParam("ParmFileName"), _
          m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_mgrParams.GetParam("workdir")) _
+         m_WorkingDir) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'convert the .fasta file to OMSSA format using formatdb.exe
-        result = ConvertOMSSAFastaFile()
-        If Not result Then
+        blnSuccess = ConvertOMSSAFastaFile()
+        If Not blnSuccess Then
             Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -47,18 +49,18 @@ Public Class clsAnalysisResourcesOM
         '         m_jobParams.GetParam("SettingsFileName"), _
         If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, _
          m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_mgrParams.GetParam("workdir")) _
+         m_WorkingDir) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         clsGlobal.m_FilesToDeleteExt.Add(OMSSA_DEFAULT_INPUT_FILE)
 
-        'Retrieve unzipped dta files (do not unconcatenate since OMSSA we will convert the _DTA.txt file to a _DTA.xml file, which OMSSA will read)
+        'Retrieve unzipped dta files (do not unconcatenate since we will convert the _DTA.txt file to a _DTA.xml file, which OMSSA will read)
         If Not RetrieveDtaFiles(False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = ConvertDtaToXml()
-        If Not result Then
+        blnSuccess = ConvertDtaToXml()
+        If Not blnSuccess Then
             Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -68,12 +70,13 @@ Public Class clsAnalysisResourcesOM
         clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
         clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
         clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
-        clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & ".xml")
+        clsGlobal.m_FilesToDeleteExt.Add(mDataset & ".xml")
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        result = MakeInputFile()
-        If Not result Then
-            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file."
+        blnSuccess = MakeInputFile(strErrorMessage)
+
+        If Not blnSuccess Then
+            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file: " & strErrorMessage
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -88,13 +91,12 @@ Public Class clsAnalysisResourcesOM
 
         Try
             ' set up formatdb.exe to reference the organsim DB file (fasta)
-            Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
             Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
             Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running formatdb.exe")
 
-            CmdRunner = New clsRunDosProgram(WorkingDir)
+            CmdRunner = New clsRunDosProgram(m_WorkingDir)
 
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter")
@@ -121,75 +123,67 @@ Public Class clsAnalysisResourcesOM
                 Return False
             End If
 
-        Catch E As Exception
-            ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertOMSSAFastaFile, The file could converted. " & E.Message)
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " & ex.Message)
         End Try
 
         Return result
     End Function
 
     Protected Function ConvertDtaToXml() As Boolean
-        Dim CmdStr As String
-        Dim result As Boolean = True
+
+        Dim objDtaConverter As DtaTextConverter.clsDtaTextToDtaXML
+
+        Dim SourceFilePath As String
+
+        Dim blnSuccess As Boolean = False
 
         Try
-            ' set up formatdb.exe to reference the organsim DB file (fasta)
-            Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-            Dim SourceFileName As String = m_jobParams.GetParam("DatasetNum") & "_dta.txt"
+            ' Convert the _DTA.txt file to a DTA .XML file
+            SourceFilePath = System.IO.Path.Combine(m_WorkingDir, mDataset & "_dta.txt")
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA")
+            objDtaConverter = New DtaTextConverter.clsDtaTextToDtaXML
 
-            CmdRunner = New clsRunDosProgram(WorkingDir)
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter")
-            End If
-
-            ' verify that program formatdb.exe file exists
-            Dim progLoc As String = m_mgrParams.GetParam("dtatoxmlprogloc")
-            If Not System.IO.File.Exists(progLoc) Then
-                If progLoc.Length = 0 Then progLoc = "Parameter 'dtatoxmlprogloc' not defined for this manager"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
-                Return False
-            End If
-
-            'Set up and execute a program runner to run FormatDb.exe
-            'C:\OMSSA\DtaTextToDtaXML\DtaTextToDtaXML.exe /i:C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
-            CmdStr = " /i:" & System.IO.Path.Combine(WorkingDir, SourceFileName)
+            ' Make sure this is 0 so that all data in the _dta.txt file is transferred to the DTA .xml file
+            objDtaConverter.MaximumIonsPerSpectrum = 0
+            objDtaConverter.ShowMessages = False
+            objDtaConverter.LogMessagesToFile = False
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting DtaToXml: " & progLoc & " " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting _DTA.txt file to DTA XML file using the DtaTextConverter")
             End If
 
-            If Not CmdRunner.RunProgram(progLoc, CmdStr, "DtaToXml", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DtaToXml for Dta file " & SourceFileName)
-                Return False
+            blnSuccess = objDtaConverter.ProcessFile(SourceFilePath, m_WorkingDir)
+
+            If Not blnSuccess Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling DtaTextConverter: " & objDtaConverter.GetErrorMessage())
+            Else
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DTA XML file created for " & System.IO.Path.GetFileName(SourceFilePath))
+                End If
             End If
 
-        Catch E As Exception
-            ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertDtaToXml, The file could converted. " & E.Message)
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " & ex.Message)
         End Try
 
-        Return result
+        Return blnSuccess
+
     End Function
 
-    Protected Function MakeInputFile() As Boolean
-        'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, ByRef strErrorMessage As String
-        Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-        Dim OmssaDefaultInput As String = System.IO.Path.Combine(WorkingDir, OMSSA_DEFAULT_INPUT_FILE)
-        Dim OmssaInput As String = System.IO.Path.Combine(WorkingDir, OMSSA_INPUT_FILE)
-        Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
-        Dim FastaFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
-        Dim strErrorMessage As String
+    Protected Function MakeInputFile(ByRef strErrorMessage As String) As Boolean
+
+        Dim OmssaDefaultInput As String = System.IO.Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE)
+        Dim OmssaInput As String = System.IO.Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE)
+        Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
+        Dim FastaFilename As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 
         Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
-        Dim MSInfilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & ".xml")
-        Dim MSOmxOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om.omx")
-        Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
-        clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & "_om_large.omx")
-        Dim MSCsvOutFilename As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DatasetNum") & "_om.csv")
+        Dim MSInfilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & ".xml")
+        Dim MSOmxOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om.omx")
+        Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om_large.omx")
+        clsGlobal.m_FilesToDeleteExt.Add(mDataset & "_om_large.omx")
+        Dim MSCsvOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om.csv")
 
         Dim result As Boolean = True
 
@@ -538,7 +532,7 @@ Public Class clsAnalysisResourcesOM
             End Try
 
         Catch ex As Exception
-            strErrorMessage = "Error: " & ex.Message
+            strErrorMessage = "General exception: " & ex.Message
             Return False
         End Try
 

@@ -135,6 +135,11 @@ Public Class clsPepHitResultsProcWrapper
 
         'Start the peptide hit results processor
         Try
+            If m_DebugLevel >= 3 Then
+                Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Analyzing " & PeptideSearchResultsFileName & " with PHRP"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+            End If
+
             Dim RetVal As PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus
             RetVal = mPeptideHitResultsProcessor.Start()
             If RetVal = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus.PH_ERROR Then
@@ -179,8 +184,18 @@ Public Class clsPepHitResultsProcWrapper
         'Return results
         If mPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_SUCCESS Then
             mPeptideHitResultsProcessor = Nothing
+
+            If m_DebugLevel >= 3 Then
+                Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Peptide hit results processor complete"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+            End If
+
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         Else
+            Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Peptide hit results processor ended with an unknown state, " & mPeptideHitResultsProcessor.Results.ToString
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+        
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 

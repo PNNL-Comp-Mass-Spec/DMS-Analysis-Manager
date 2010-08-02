@@ -20,7 +20,7 @@ AnalysisManagerOMSSAPlugIn
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.ZipMainOutputFile">
 	<summary>
- Zips concatenated XML output file
+ Zips OMSSA XML output file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>

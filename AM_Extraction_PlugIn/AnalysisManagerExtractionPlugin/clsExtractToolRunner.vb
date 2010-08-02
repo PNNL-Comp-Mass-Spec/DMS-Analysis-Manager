@@ -43,7 +43,10 @@ Public Class clsExtractToolRunner
 	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
 
 		Dim Msg As String = ""
-		Dim Result As IJobParams.CloseOutType
+        Dim Result As IJobParams.CloseOutType
+        Dim eReturnCode As IJobParams.CloseOutType
+
+        Dim blnProcessingError As Boolean
 
 		'Call base class for initial setup
 		MyBase.RunTool()
@@ -65,7 +68,7 @@ Public Class clsExtractToolRunner
                         Msg = "Error running peptide extraction for sequest"
                         m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        blnProcessingError = True
                     Else
                         m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE     ' 33% done
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -77,7 +80,7 @@ Public Class clsExtractToolRunner
                         Msg = "Error running peptide hits result processor for sequest"
                         m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        blnProcessingError = True
                     Else
                         m_progress = SEQUEST_PROGRESS_PHRP_DONE     ' 66% done
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -89,7 +92,7 @@ Public Class clsExtractToolRunner
                         Msg = "Error running peptide prophet for sequest"
                         m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        blnProcessingError = True
                     Else
                         m_progress = SEQUEST_PROGRESS_PEPPROPHET_DONE     ' 100% done
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -102,7 +105,7 @@ Public Class clsExtractToolRunner
                         Msg = "Error running peptide hits result processor for Xtandem"
                         m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        blnProcessingError = True
                     Else
                         m_progress = 100    ' 100% done
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -115,7 +118,7 @@ Public Class clsExtractToolRunner
                         Msg = "Error running peptide hits result processor for inspect"
                         m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        blnProcessingError = True
                     Else
                         m_progress = 100    ' 100% done
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -132,6 +135,13 @@ Public Class clsExtractToolRunner
             'Stop the job timer
             m_StopTime = Now
 
+            If blnProcessingError Then
+                ' Something went wrong
+                ' In order to help diagnose things, we will move whatever files were created into the Result folder, 
+                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
@@ -139,14 +149,24 @@ Public Class clsExtractToolRunner
 
             Result = MakeResultsFolder()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return Result
+                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             Result = MoveResultFiles()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return Result
+                'MoveResultFiles moves the Result files to the Result folder
+                m_message = "Error moving files into results folder"
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+                ' Try to save whatever files were moved into the results folder
+                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             Result = CopyResultsFolderToServer()
@@ -385,7 +405,7 @@ Public Class clsExtractToolRunner
 
         m_PeptideProphet = New clsPeptideProphetWrapper
 
-        If m_DebugLevel > 3 Then
+        If m_DebugLevel >= 3 Then
             Msg = "clsExtractToolRunner.RunPeptideProphet(); Starting Peptide Prophet"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
         End If
@@ -452,6 +472,11 @@ Public Class clsExtractToolRunner
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running peptide prophet on file " & strSynFileNameAndSize)
             End If
 
+            If m_DebugLevel >= 3 Then
+                Msg = "clsExtractToolRunner.RunPeptideProphet(); Analyzing " & strFileList(intFileIndex) & " with peptide prophet"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+            End If
+
             eResult = m_PeptideProphet.CallPeptideProphet()
 
             If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -461,7 +486,7 @@ Public Class clsExtractToolRunner
                                                                 System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
                                                                 PEPPROPHET_RESULT_FILE_SUFFIX)
 
-                If m_DebugLevel >= 4 Then
+                If m_DebugLevel >= 3 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide prophet processing complete; checking for file " & strPepProphetOutputFilePath)
                 End If
 
@@ -478,6 +503,7 @@ Public Class clsExtractToolRunner
                     If blnIgnorePeptideProphetErrors Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True")
                     Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True")
                         eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
                         Exit For
                     End If
