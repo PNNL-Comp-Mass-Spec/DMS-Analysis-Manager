@@ -126,6 +126,72 @@ Public Class clsAnalysisResourcesSeq
 
     End Sub
 
+    Protected Sub CheckForExistingOutFiles()
+
+        ' Note that this sub is similar to CheckForExistingOutFiles() in clsAnalysisToolRunnerSeqBase
+        '  but this sub only looks for the .out files; it doesn't move them.
+
+        Const RESUME_FILE_NAME As String = "Resume.txt"
+
+        Dim strResultFolderName As String
+        Dim strFailedResultsFolderPath As String
+        Dim ioSourceFolder As System.IO.DirectoryInfo
+        Dim ioFileList() As System.IO.FileInfo
+
+        Dim intIndex As Integer
+        Dim intValidOutFiles As Integer
+
+        Try
+            strResultFolderName = m_jobParams.GetParam("OutputFolderName")
+            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
+
+            If strResultFolderName Is Nothing OrElse strResultFolderName.Length = 0 Then
+                ' Results folder name is not defined
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "m_ResFolderName is empty; this is unexpected")
+                Exit Try
+            End If
+
+            strFailedResultsFolderPath = System.IO.Path.Combine(strFailedResultsFolderPath, strResultFolderName)
+
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for existing .Out files at " & strFailedResultsFolderPath)
+            End If
+
+            ioSourceFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
+            If ioSourceFolder.Exists Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archived results folder found for job " & m_jobParams.GetParam("Job") & "; checking for a file named " & RESUME_FILE_NAME)
+                End If
+
+                If ioSourceFolder.GetFiles(RESUME_FILE_NAME).Length > 0 Then
+                    ' Yes, folder contains a file named Resume.txt
+                    ' Are there any non-empty .Out files?
+
+                    ioFileList = ioSourceFolder.GetFiles("*.out")
+                    intValidOutFiles = 0
+
+                    For intIndex = 0 To ioFileList.Length - 1
+                        If ioFileList(intIndex).Length > 0 Then
+                            intValidOutFiles += 1
+                        End If
+                    Next intIndex
+
+                    If intValidOutFiles = 0 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Warning: did not find any existing .Out files in the archived results folder (" & strFailedResultsFolderPath & ")")
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found " & intValidOutFiles & " .Out files in " & strFailedResultsFolderPath & "; these will be moved to the Work Directory prior to starting Sequest")
+                    End If
+
+                End If
+
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)
+        End Try
+
+    End Sub
+
     ''' <summary>
     ''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
     ''' </summary>
@@ -330,6 +396,10 @@ Public Class clsAnalysisResourcesSeq
 
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
+
+        ' Look for existing .Out files in the Failed Results Folder; 
+        ' if any are found, we'll post an entry to the log
+        CheckForExistingOutFiles()
 
         'Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
         LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
