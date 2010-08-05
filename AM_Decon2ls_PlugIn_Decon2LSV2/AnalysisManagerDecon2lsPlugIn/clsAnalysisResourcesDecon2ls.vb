@@ -21,6 +21,9 @@ Public Class clsAnalysisResourcesDecon2ls
         End If
 
         clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
+        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)
+        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_WIFF_EXTENSION)
+        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
         'Retrieve param file
         If Not RetrieveFile( _
