@@ -1261,6 +1261,49 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Sub SystemMemoryUsage()
+
+        ' The following reports various memory stats
+        ' However, it doesn't report the available physical memory
+
+        'Dim winQuery As System.Management.ObjectQuery
+        'Dim searcher As System.Management.ManagementObjectSearcher
+
+        'winQuery = New System.Management.ObjectQuery("SELECT * FROM Win32_LogicalMemoryConfiguration")
+
+        'searcher = New System.Management.ManagementObjectSearcher(winQuery)
+
+        'For Each item As System.Management.ManagementObject In searcher.Get()
+        '    Console.WriteLine("Total Space = " & item("TotalPageFileSpace").ToString)
+        '    Console.WriteLine("Total Physical Memory = " & item("TotalPhysicalMemory").ToString)
+        '    Console.WriteLine("Total Virtual Memory = " & item("TotalVirtualMemory").ToString)
+        '    Console.WriteLine("Available Virtual Memory = " & item("AvailableVirtualMemory").ToString)
+        'Next
+
+
+        Dim mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+        Dim sngFreeMemory As Single
+
+        Try
+            mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+            mFreeMemoryPerformanceCounter.ReadOnly = True
+
+            sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+
+            Console.WriteLine()
+            Console.WriteLine("Available memory (MB) = " & sngFreeMemory.ToString)
+
+        Catch ex As Exception
+            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+            If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+            End If
+
+        End Try
+
+
+    End Sub
+
     Public Sub TestDTAWatcher(ByVal strWorkDir As String, ByVal sngWaitTimeMinutes As Single)
 
         m_Progress = 0

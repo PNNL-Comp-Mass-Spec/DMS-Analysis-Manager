@@ -536,7 +536,7 @@ Namespace AnalysisManagerBase
         ''' </summary>
         ''' <returns>Amount of free memory, in MB</returns>
         ''' <remarks></remarks>
-        Private Function GetFreeMemoryMB() As Single
+        Public Function GetFreeMemoryMB() As Single
             Dim sngFreeMemory As Single
 
             Try

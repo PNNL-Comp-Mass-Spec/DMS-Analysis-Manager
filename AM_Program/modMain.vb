@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "July 22, 2010"
+    Public Const PROGRAM_DATE As String = "August 10, 2010"
 
     Private mInputFilePath As String
 
@@ -89,8 +89,9 @@ Module modMain
                         'objTest.TestUnzip("f:\'temp\QC_Shew_500_100_fr720_c2_Ek_0000_isos.zip", "f:\temp")
 
                         'objTest.CheckETDModeEnabledXTandem("input.xml", False)
-                        objTest.TestDTAWatcher("E:\DMS_WorkDir", 5)
+                        'objTest.TestDTAWatcher("E:\DMS_WorkDir", 5)
 
+                        objTest.SystemMemoryUsage()
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
                     End Try

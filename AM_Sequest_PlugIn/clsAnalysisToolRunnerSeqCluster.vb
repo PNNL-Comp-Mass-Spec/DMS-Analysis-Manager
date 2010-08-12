@@ -138,7 +138,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         ' (only count the files every 10 seconds)
         If System.DateTime.Now.Subtract(dtLastOutFileCountTime).TotalSeconds >= 10 Then
             dtLastOutFileCountTime = System.DateTime.Now
-        	CalculateNewStatus()
+            CalculateNewStatus(False)
         End If
 
         'Update the status file (limit the updates to every 5 seconds)

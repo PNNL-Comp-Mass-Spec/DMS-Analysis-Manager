@@ -26,7 +26,7 @@ Public Class clsAnalysisResourcesDtaRefinery
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         'Retrieve param file
-        If Not RetrieveFile( _
+        If Not RetrieveGeneratedParamFile( _
          m_jobParams.GetParam("ParmFileName"), _
          m_jobParams.GetParam("ParmFileStoragePath"), _
          m_mgrParams.GetParam("workdir")) _

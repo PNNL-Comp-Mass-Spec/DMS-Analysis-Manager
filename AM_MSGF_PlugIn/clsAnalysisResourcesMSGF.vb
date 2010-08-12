@@ -37,18 +37,51 @@ Public Class clsAnalysisResourcesMSGF
 	''' <remarks></remarks>
 	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
+        Dim eResult As IJobParams.CloseOutType
+
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
 
-		'Get analysis results files
-		If GetInputFiles(m_jobParams.GetParam("ResultType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: Handle error
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Make sure the machine has enough free memory to run MSGF
+        eResult = ValidateFreeMemorySize()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then            
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Get analysis results files
+        eResult = GetInputFiles(m_jobParams.GetParam("ResultType"))
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
+
+    Private Function GetFreeMemoryMB() As Single
+
+        Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+
+        Dim sngFreeMemory As Single
+
+        Try
+            If mFreeMemoryPerformanceCounter Is Nothing Then
+                mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+                mFreeMemoryPerformanceCounter.ReadOnly = True
+            End If
+
+            sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+
+        Catch ex As Exception
+            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+            If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+            End If
+        End Try
+
+        Return sngFreeMemory
+
+    End Function
 
 	''' <summary>
     ''' Retrieves input files needed for MSGF
@@ -125,6 +158,9 @@ Public Class clsAnalysisResourcesMSGF
         ' See if a .mzXML file already exists for this dataset
         blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
 
+        ' Make sure we don't move the .mzXML file into the results folder
+        clsGlobal.m_FilesToDeleteExt.Add(".mzXML")
+
         If blnSuccess Then
             ' .mzXML file found and copied locally; no need to retrieve the .Raw file
             If m_DebugLevel >= 1 Then
@@ -145,6 +181,40 @@ Public Class clsAnalysisResourcesMSGF
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
+    End Function
+
+    ''' <summary>
+    ''' Lookups the amount of memory that will be reserved for Java
+    ''' If this value is >= the free memory, then returns CLOSEOUT_FAILED
+    ''' Otherwise, returns CLOSEOUT_SUCCESS
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ValidateFreeMemorySize() As IJobParams.CloseOutType
+
+        Dim intJavaMemorySize As Integer
+        Dim sngFreeMemoryMB As Single
+        Dim strMessage As String
+
+        intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFJavaMemorySize", 2000)
+        If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+
+        sngFreeMemoryMB = GetFreeMemoryMB()
+        If intJavaMemorySize >= sngFreeMemoryMB Then
+            strMessage = "Not enough free memory to run MSGF"
+
+            strMessage &= "; need " & intJavaMemorySize & " MB but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            If m_DebugLevel >= 1 Then
+                strMessage = "MSGF will use " & intJavaMemorySize & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
     End Function
 
 #End Region

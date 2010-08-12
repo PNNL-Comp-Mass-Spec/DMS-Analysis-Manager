@@ -1081,7 +1081,8 @@ Namespace AnalysisManagerBase
 
                 PathsToCheck(0) = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
                 PathsToCheck(1) = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName)
-                PathsToCheck(2) = Path.Combine(Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName), "InputFolderName")
+                PathsToCheck(2) = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName)
+
                 blnFileNotFoundEncountered = False
 
                 strBestPath = PathsToCheck(0)

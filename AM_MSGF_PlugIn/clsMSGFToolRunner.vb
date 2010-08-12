@@ -93,6 +93,7 @@ Public Class clsMSGFRunner
         Dim eReturnCode As IJobParams.CloseOutType
 
         Dim blnProcessingError As Boolean
+        Dim blnUseExistingMSGFResults As Boolean
         Dim blnResultsValidationError As Boolean
 
         ' Set this to success for now
@@ -167,22 +168,43 @@ Public Class clsMSGFRunner
 
 
             If Not blnProcessingError Then
-                'Run MSGF
-                blnSuccess = RunMSGF()
+                blnUseExistingMSGFResults = clsGlobal.GetJobParameter(m_jobParams, "UseExistingMSGFResults", False)
+
+                If blnUseExistingMSGFResults Then
+                    ' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
+                    ' If that file exists, use it as the official MSGF results file
+                    ' The assumption is that this file will have been created by manually running MSGF on another computer
+
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
+                    End If
+
+                    If RetrievePreGeneratedDataFile(System.IO.Path.GetFileName(mMSGFResultsFilePath)) Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file successfully copied to the work directory")
+                        blnSuccess = True
+                    Else
+                        blnSuccess = False
+                    End If
+
+                Else
+                    'Run MSGF
+                    blnSuccess = RunMSGF()
+                End If
+
                 If Not blnSuccess Then
                     Msg = "Error running MSGF"
                     m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
                     blnProcessingError = True
                 Else
                     ' MSGF successfully completed
-                    If Not clsGlobal.CBoolSafe(m_mgrParams.GetParam("KeepMSGFInputFile")) Then
+                    If Not clsGlobal.GetJobParameter(m_jobParams, "KeepMSGFInputFile", False) Then
                         ' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
                         clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(mMSGFInputFilePath))
                     End If
 
                     m_progress = PROGRESS_PCT_MSGF_COMPLETE
                     m_StatusTools.UpdateAndWrite(m_progress)
-                    End If
+                End If
             End If
 
             If Not blnProcessingError Then
@@ -669,7 +691,7 @@ Public Class clsMSGFRunner
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
             Catch ex As Exception
-
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats: " & ex.Message)
             End Try
         End If
 
@@ -892,9 +914,64 @@ Public Class clsMSGFRunner
 
     End Function
 
+    ''' <summary>
+    ''' Looks for file strFileNameToFind in the transfer folder for this job
+    ''' If found, copies the file to the work directory
+    ''' </summary>
+    ''' <param name="strFileNameToFind"></param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function RetrievePreGeneratedDataFile(ByVal strFileNameToFind As String) As Boolean
+
+        Dim strTransferFolderPath As String
+        Dim strInputFolderName As String
+        Dim strFolderToCheck As String = "??"
+        Dim strFilePathSource As String
+        Dim strFilePathTarget As String
+
+        Try
+            strTransferFolderPath = m_jobParams.GetParam("transferFolderPath")
+            strInputFolderName = m_jobParams.GetParam("inputFolderName")
+
+            strFolderToCheck = System.IO.Path.Combine(System.IO.Path.Combine(strTransferFolderPath, m_DatasetName), strInputFolderName)
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " & strFolderToCheck)
+            End If
+
+            ' Look for strFileNameToFind in strFolderToCheck
+            If System.IO.Directory.Exists(strFolderToCheck) Then
+                strFilePathSource = System.IO.Path.Combine(strFolderToCheck, strFileNameToFind)
+
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for file " & strFilePathSource)
+                End If
+
+                If System.IO.File.Exists(strFilePathSource) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & strFilePathSource & " to " & strFilePathTarget)
+
+                    strFilePathTarget = System.IO.Path.Combine(m_WorkDir, strFileNameToFind)
+
+                    System.IO.File.Copy(strFilePathSource, strFilePathTarget, True)
+
+                    ' File found and successfully copied; return true
+                    Return True
+                End If
+            End If
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck & ": " & ex.Message)
+            Return False
+        End Try
+
+        ' File not found
+        Return False
+
+    End Function
+
     Protected Function RunMSGF() As Boolean
 
         Dim CmdStr As String
+        Dim intJavaMemorySize As Integer
 
         ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
 
@@ -927,6 +1004,12 @@ Public Class clsMSGFRunner
             Return False
         End If
 
+        ' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
+        ' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
+        ' (job 611216 succeeded with a value of 5000)
+        intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFJavaMemorySize", 2000)
+        If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF")
         End If
@@ -935,7 +1018,7 @@ Public Class clsMSGFRunner
         m_StatusTools.CurrentOperation = "Running MSGF"
         m_StatusTools.UpdateAndWrite(m_progress)
 
-        CmdStr = " -Xmx2000M -jar " & MSGFLoc
+        CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & MSGFLoc
         CmdStr &= " -i " & mMSGFInputFilePath       ' Input file
         CmdStr &= " -d " & m_WorkDir                                                                ' Folder containing .mzXML file
         CmdStr &= " -o " & mMSGFResultsFilePath     ' Output file
@@ -1017,6 +1100,8 @@ Public Class clsMSGFRunner
     '''   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
     ''' Will create a new file that guarantees that the SpecProb column has a number, 
     '''   but has an additional column called SpecProbNotes with any notes or warnings
+    ''' In addition, checks whether any entries were skipped when using the the synopsis file to create the MSGF input file
+    '''  If any were skipped, add them to the validated MSGF file (to aid in linking up files later)
     ''' </summary>
     ''' <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
     ''' <returns>True if success; false if one or more errors</returns>

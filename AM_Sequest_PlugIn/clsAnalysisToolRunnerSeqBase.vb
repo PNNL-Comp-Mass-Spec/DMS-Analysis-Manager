@@ -137,17 +137,6 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <summary>
     ''' Calculates status information for progress file
     ''' </summary>
-    ''' <remarks>
-    ''' Calculation in this class is based on Sequest processing. For other processing types,
-    '''	override this function in derived class
-    '''</remarks>
-    Protected Overridable Sub CalculateNewStatus()
-        CalculateNewStatus(True)
-    End Sub
-
-    ''' <summary>
-    ''' Calculates status information for progress file
-    ''' </summary>
     ''' <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
     ''' <remarks>
     ''' Calculation in this class is based on Sequest processing. For other processing types,

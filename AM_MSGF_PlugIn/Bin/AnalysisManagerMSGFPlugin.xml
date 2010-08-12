@@ -113,6 +113,14 @@ AnalysisManagerMSGFPlugin
 	<param name="objDynamicMods">List with mod symbols as the key and the corresponding mod mass</param>
 	<param name="objStaticMods">List with amino acid names as the key and the corresponding mod mass</param>
 	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.RetrievePreGeneratedDataFile(System.String)">
+	<summary>
+ Looks for file strFileNameToFind in the transfer folder for this job
+ If found, copies the file to the work directory
+ </summary>
+	<param name="strFileNameToFind"></param>
+	<returns>True if success; false if an error</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ValidateMSGFResults(System.String)">
 	<summary>
  Look for non-numeric values in the SpecProb column
@@ -121,6 +129,8 @@ AnalysisManagerMSGFPlugin
    N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
  Will create a new file that guarantees that the SpecProb column has a number, 
    but has an additional column called SpecProbNotes with any notes or warnings
+ In addition, checks whether any entries were skipped when using the the synopsis file to create the MSGF input file
+  If any were skipped, add them to the validated MSGF file (to aid in linking up files later)
  </summary>
 	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
 	<returns>True if success; false if one or more errors</returns>
@@ -159,6 +169,14 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF.ValidateFreeMemorySize">
+	<summary>
+ Lookups the amount of memory that will be reserved for Java
+ If this value is &gt;= the free memory, then returns CLOSEOUT_FAILED
+ Otherwise, returns CLOSEOUT_SUCCESS
+ </summary>
+	<returns></returns>
 	<remarks></remarks>
 </member>
 </members>
