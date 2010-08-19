@@ -893,7 +893,7 @@ Public Class clsExtractToolRunner
         Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS As Integer = 60
         Static dtLastPepProphetStatusLog As System.DateTime = System.DateTime.Now.Subtract(New System.TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
-        m_progress = SEQUEST_PROGRESS_PHRP_DONE + PercentComplete * (SEQUEST_PROGRESS_PEPPROPHET_DONE - SEQUEST_PROGRESS_PHRP_DONE) / SEQUEST_PROGRESS_PEPPROPHET_DONE
+        m_progress = SEQUEST_PROGRESS_PHRP_DONE + CSng(PercentComplete / 3.0)
         m_StatusTools.UpdateAndWrite(m_progress)
 
         If m_DebugLevel >= 4 Then
@@ -908,7 +908,7 @@ Public Class clsExtractToolRunner
         Const PHRP_DETAILED_LOG_INTERVAL_SECONDS As Integer = 20
         Static dtLastPHRPStatusLog As System.DateTime = System.DateTime.Now.Subtract(New System.TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
-        m_progress = SEQUEST_PROGRESS_PHRP_DONE + percentComplete * (SEQUEST_PROGRESS_PEPPROPHET_DONE - SEQUEST_PROGRESS_PHRP_DONE) / SEQUEST_PROGRESS_PEPPROPHET_DONE
+        m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + CSng(percentComplete / 3.0)
         m_StatusTools.UpdateAndWrite(m_progress)
 
         If m_DebugLevel >= 4 Then

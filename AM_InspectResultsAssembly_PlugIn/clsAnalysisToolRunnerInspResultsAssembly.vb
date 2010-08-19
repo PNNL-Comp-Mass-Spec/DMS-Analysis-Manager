@@ -120,28 +120,32 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 ' FilterInspectResultsByPValue will create file _inspect_filtered.txt
                 Result = FilterInspectResultsByPValue()
                 If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    blnProcessingError = True
                 End If
+                isParallelized = False
             Else
                 ' This is a parallelized job; need to re-assemble the results
                 intNumResultFiles = CInt(numClonedSteps)
 
-                If m_DebugLevel >= 2 Then
+                If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect files; file count = " & intNumResultFiles.ToString)
                 End If
 
                 ' AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
                 Result = AssembleResults(intNumResultFiles)
+
                 If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    Return Result
+                    blnProcessingError = True
                 End If
                 isParallelized = True
             End If
 
-            ' Rename and zip up files _inspect_filtered.txt and _inspect.txt
-            Result = ZipInspectResults()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                blnProcessingError = True
+            If Not blnProcessingError Then
+                ' Rename and zip up files _inspect_filtered.txt and _inspect.txt
+                Result = ZipInspectResults()
+                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    blnProcessingError = True
+                End If
             End If
 
             If Not blnProcessingError Then
@@ -489,7 +493,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping))
 
         Try
-            If m_DebugLevel >= 2 Then
+            If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
             End If
 

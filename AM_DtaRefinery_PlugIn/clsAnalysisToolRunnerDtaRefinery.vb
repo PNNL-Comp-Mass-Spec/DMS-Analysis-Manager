@@ -23,6 +23,8 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
 
+    Protected m_Dataset As String = String.Empty
+
     Protected WithEvents CmdRunner As clsRunDosProgram
     '--------------------------------------------------------------------------------------------
     'Future section to monitor DTA_Refinery log file for progress determination
@@ -49,6 +51,9 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
+        m_Dataset = m_jobParams.GetParam("datasetNum")
+
+
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
@@ -73,7 +78,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         Dim CmdStr As String
         CmdStr = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile"))
-        CmdStr &= " " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("DatasetNum") & "_dta.txt")
+        CmdStr &= " " & System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
         CmdStr &= " " & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)
 
 
@@ -150,8 +155,8 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
         Catch ex As Exception
             ' Ignore errors here
         End Try
@@ -185,7 +190,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Dim blnDataFound As Boolean = False
 
         Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             If Not System.IO.File.Exists(strInputFilePath) Then
                 m_message = "_DTA.txt file not found: " & strInputFilePath
@@ -225,10 +230,12 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Private Function ZipMainOutputFile() As IJobParams.CloseOutType
-        Dim TmpFile As String
-        Dim FileList() As String
-        Dim ZipFileName As String
-        Dim DatasetNum As String = m_jobParams.GetParam("datasetNum")
+
+        Dim ioWorkDirectory As System.IO.DirectoryInfo
+        Dim ioFiles() As System.IO.FileInfo
+        Dim ioFile As System.IO.FileInfo
+        Dim strFixedDTAFilePath As String
+
         'Do we want to zip these output files?  Just zipping the fixed dta file.
         '* _dta_DtaRefineryLog.txt 
         '* _dta_SETTINGS.xml
@@ -240,50 +247,57 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         ' * log10 of ion intensity in the ICR/Orbitrap cell: _logTrappedIonInt.png
         ' * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
 
+
+
         'Delete the original DTA files
         Try
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.*")
-            For Each TmpFile In FileList
-                If Not TmpFile.Contains("FIXED") Then
-                    System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
-                    System.IO.File.Delete(TmpFile)
+            ioWorkDirectory = New System.IO.DirectoryInfo(m_WorkDir)
+            ioFiles = ioWorkDirectory.GetFiles("*_dta.*")
+
+            For Each ioFile In ioFiles
+                If Not ioFile.Name.ToUpper.EndsWith("_FIXED_dta.txt".ToUpper) Then
+                    ioFile.Attributes = ioFile.Attributes And (Not System.IO.FileAttributes.ReadOnly)
+                    ioFile.Delete()
                 End If
             Next
+
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Try
-            Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-            Dim fi As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_FIXED_dta.txt"))
-            fi.MoveTo(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
-            For Each TmpFile In FileList
-                ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-                If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
-                    Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = AppendToComment(m_message, "Error zipping output files")
+            strFixedDTAFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_FIXED_dta.txt")
+            ioFile = New System.IO.FileInfo(strFixedDTAFilePath)
+
+            If Not ioFile.Exists Then
+                Dim Msg As String = "DTARefinery output file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.Name)
+                m_message = AppendToComment(m_message, Msg)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            ioFile.MoveTo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
+
+            Try
+                If Not MyBase.ZipFile(ioFile.FullName, True) Then
+                    Dim Msg As String = "Error zipping DTARefinery output file"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.FullName)
+                    m_message = AppendToComment(m_message, Msg)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
-            Next
-        Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error zipping output files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
 
-        'Delete the output files
-        Try
-            FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
-            For Each TmpFile In FileList
-                System.IO.File.SetAttributes(TmpFile, System.IO.File.GetAttributes(TmpFile) And (Not System.IO.FileAttributes.ReadOnly))
-                System.IO.File.Delete(TmpFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
+            Catch ex As Exception
+                Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error zipping DTARefinery output file: " & ex.Message
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                m_message = AppendToComment(m_message, "Error zipping DTARefinery output file")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Try
+
+        Catch ex As Exception
+            Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error renaming DTARefinery output file: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = AppendToComment(m_message, "Error renaming DTARefinery output file")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

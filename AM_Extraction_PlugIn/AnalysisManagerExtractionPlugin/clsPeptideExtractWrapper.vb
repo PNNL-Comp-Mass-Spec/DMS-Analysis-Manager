@@ -33,7 +33,8 @@ Public Class clsPeptideExtractWrapper
 
         Dim blnUpdateLog As Boolean = False
 
-        m_Progress = CSng(100.0 * fractionDone)
+        ' We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
+        m_Progress = CSng(100.0 * fractionDone / 3.0)
 
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
             dtLastStatusUpdate = System.DateTime.Now
