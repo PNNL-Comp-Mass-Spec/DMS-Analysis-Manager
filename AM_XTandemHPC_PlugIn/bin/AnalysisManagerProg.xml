@@ -365,6 +365,17 @@ AnalysisManagerProg
 	<param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
+	<summary>
+ Looks for this dataset's mzXML file
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+ If the MSXML folder (or the .mzXML file) cannot be found, then returns False
+ </summary>
+	<param name="WorkDir"></param>
+	<param name="CreateStoragePathInfoOnly"></param>
+	<param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
+	<returns>True if the file was found and retrieved, otherwise False</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
 	<summary>
  Retrieves a .raw folder from Micromass TOF for the analysis job in progress
@@ -420,7 +431,7 @@ AnalysisManagerProg
 	<param name="FolderName">Folder name to look for</param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32,System.Int32)">
 	<summary>
  Test for folder existence with a retry loop in case of temporary glitch
  </summary>
@@ -438,7 +449,7 @@ AnalysisManagerProg
 	<param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
 	<returns>Path to the most appropriate dataset folder</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String,System.Int32)">
 	<summary>
  Determines the most appropriate folder to use to obtain dataset files from
  Optionally, can require that a certain file also be present in the folder for it to be deemed valid
@@ -635,6 +646,21 @@ AnalysisManagerProg
  </summary>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.ZipFile(System.String,System.Boolean)">
+	<summary>
+ Stores SourceFilePath in a zip file with the same name, but extension .zip
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.ZipFile(System.String,System.Boolean,System.String)">
+	<summary>
+ Stores SourceFilePath in a zip file named ZipfilePath
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	<param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+	<returns>True if success; false if an error</returns>
 </member><member name="M:AnalysisManagerBase.IStatusFile.WriteStatusFile">
 	<summary>
  Writes out a new status file, indicating that the manager is still alive
@@ -821,7 +847,7 @@ AnalysisManagerProg
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsStatusFile.WriteStatusFile(System.Boolean)">
 	<summary>
- Writes the status file
+ Updates the status in various locations, including on disk and with the message broker and/or broker DB
  </summary>
 	<param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	<remarks></remarks>
@@ -957,6 +983,13 @@ AnalysisManagerProg
 	<param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:clsCodeTest.CheckETDModeEnabledXTandem(System.String,System.Boolean@)">
+	<summary>
+ Examines the X!Tndem param file to determine if ETD mode is enabled
+ If it is, then sets m_ETDMode to True
+ </summary>
+	<param name="strParamFilePath">X!Tandem XML parameter file to read</param>
+	<returns>True if success; false if an error</returns>
 </member><member name="M:clsCodeTest.SplitFileRoundRobin(System.String,System.Int64,System.Boolean,System.String[]@)">
 	<summary>
  Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output 
@@ -1168,6 +1201,78 @@ AnalysisManagerProg
  </summary>
 	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:clsSharpZipTools.UnzipFile(System.String)">
+	<summary>
+ Unzip ZipFilePath into the working directory defined when this class was instantiated
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsSharpZipTools.UnzipFile(System.String,System.String)">
+	<summary>
+ Unzip ZipFilePath into the working directory defined when this class was instantiated
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Folder to place the unzipped files</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsSharpZipTools.UnzipFile(System.String,System.String,System.String)">
+	<summary>
+ Unzip ZipFilePath into the working directory defined when this class was instantiated
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Folder to place the unzipped files</param>
+	<param name="FileFilter">Filter to apply when unzipping</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsSharpZipTools.ZipFile(System.String,System.Boolean)">
+	<summary>
+ Stores SourceFilePath in a zip file with the same name, but extension .zip
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsSharpZipTools.ZipFile(System.String,System.Boolean,System.String)">
+	<summary>
+ Stores SourceFilePath in a zip file named ZipFilePath
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	<param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Status">
+	<summary>
+ Allows calling program to get current status
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Results">
+	<summary>
+ Allows calling program to determine if DTA creation succeeded
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.ErrMsg">
+	<summary>
+ Error message describing any errors encountered
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.DebugLevel">
+	<summary>
+ Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.SpectraFileCount">
+	<summary>
+ Count of spectra files that have been created
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Progress">
+	<summary>
+  Percent complete (Value between 0 and 100)
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.MgrParams">
+	<summary>
+ Machine-specific parameters, such as file locations
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.JobParams">
+	<summary>
+ Job-specific parameters
+ </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.StatusTools">
+	<summary>
+ Interface for updating task status
+ </summary>
 </member><member name="M:AnalysisManagerBase.clsMemoryUsageLogger.#ctor(System.String,System.Single)">
 	<summary>
  Constructor
@@ -1278,6 +1383,7 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsGlobal.RemoveNonResultFiles(System.String,System.Int32)">
 	<summary>
  Deletes files in specified directory that have been previously flagged as not wanted in results folder
+ This function does not need to be called, since function MoveResultFiles ignores files in list FilesToDelete
  </summary>
 	<param name="WorkDir">Full path to work directory</param>
 	<returns>TRUE for success; FALSE for failure</returns>

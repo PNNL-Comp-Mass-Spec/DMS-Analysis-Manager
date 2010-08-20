@@ -132,7 +132,22 @@ Public Class clsAnalysisToolRunnerXTHPC
         '--------------------------------------------------------------------------------------------
         '
         'Set up and execute a program runner to run Putty program to create directories
+
+        With CmdRunner
+            .CreateNoWindow = False
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = False
+
+            .WriteConsoleOutputToFile = False
+            .ConsoleOutputFilePath = ""
+        End With
+
         CmdStr = "-l " & HPC_NAME & " -m " & "CreateFastaFileList.txt"
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Create fasta file list: " & progLoc & " " & CmdStr)
+        End If
+
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -140,6 +155,11 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         'Set up and execute a program runner to run PuttySFTP program to get files from Supercomputer
         CmdStr = "-l " & HPC_NAME & " -b " & "GetFastaFileList.txt"
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Get fasta file list: " & progLoc & " " & CmdStr)
+        End If
+
         If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -149,6 +169,11 @@ Public Class clsAnalysisToolRunnerXTHPC
         If Not FastaFilesEqual() Then
             'Set up and execute a program runner to run PuttySFTP program to transfer fasta file to Supercomputer
             CmdStr = "-l " & HPC_NAME & " -b " & "PutFasta_Job" & m_JobNum
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Transfer fasta file: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy fasta file to super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -157,6 +182,11 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         'Set up and execute a program runner to run Putty program to create directories
         CmdStr = "-l " & HPC_NAME & " -m " & "CreateDir_Job" & m_JobNum
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Create directories: " & progLoc & " " & CmdStr)
+        End If
+
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -166,6 +196,11 @@ Public Class clsAnalysisToolRunnerXTHPC
         'Set up and execute a program runner to run PuttySFTP program to transfer files to Supercomputer
         For i = 1 To m_NumClonedSteps
             CmdStr = "-l " & HPC_NAME & " -b " & "PutCmds_Job" & m_JobNum & "_" & i
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Transfer files: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -175,6 +210,11 @@ Public Class clsAnalysisToolRunnerXTHPC
         'All files have been copied, now run the command to start the jobs
         For i = 1 To m_NumClonedSteps
             CmdStr = "-l " & HPC_NAME & " -m " & "StartXT_Job" & m_JobNum & "_" & i
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Start the jobs: " & progLoc & " " & CmdStr)
+            End If
+
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to schedule the jobs on the super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1327,38 +1367,70 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
+        Dim strFastaInfoFile As String
         Dim fastaSizeLocal As String
-
         Dim fastaSizeHPC As String
 
         Try
-            If System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, "fastafiles.txt")) Then
+            strFastaInfoFile = "fastafiles_Job" & m_JobNum.ToString & ".txt"
+
+            If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, strFastaInfoFile)) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXTHPC.FastaFilesEqual, " & strFastaInfoFile & " file not found at " & m_WorkDir & "; this is unexpected; will copy the local fasta file to HPC")
+                Return False
+            Else
                 Dim fiFastaLocal As New System.IO.FileInfo(System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName))
                 fastaSizeLocal = fiFastaLocal.Length.ToString
 
-                'Check to see if file is empty or less than 100 Mb.  If so, just copy fasta
-                Dim fiFastaLocalHPC As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "fastafiles.txt"))
-                If (fiFastaLocalHPC.Length = 0) Or (fiFastaLocal.Length < 100000000) Then
+                ' Verify that fasta file in HPC is not 0 bytes
+                Dim fiFastaLocalHPC As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, strFastaInfoFile))
+
+                If (fiFastaLocalHPC.Length = 0) Then
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Local Fasta file has size of 0; this likely indicates the Fasta file is not present in HPC; will copy local file to HPC")
+                    End If
                     Return False
                 End If
 
                 ' Create an instance of StreamWriter to read from a file.
-                Dim listFile As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, "fastafiles.txt"))
+                Dim listFile As System.IO.StreamReader = New System.IO.StreamReader(fiFastaLocalHPC.FullName)
                 fastaSizeHPC = listFile.ReadLine.Trim
                 listFile.Close()
+
                 If fastaSizeHPC = fastaSizeLocal Then
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Local Fasta file size matches size in HPC: " & fastaSizeHPC & " bytes; will not re-copy the file")
+                    End If
                     Return True
+                Else
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Local Fasta file size differs from size in HPC: " & fastaSizeHPC & " bytes vs. " & fastaSizeLocal & "; will copy fasta file to HPC")
+                    End If
+
+                    ''Dim FastSizeBytesLocal As Int64
+                    ''Dim FastSizeBytesHPC As Int64
+                    ''If Int64.TryParse(fastaSizeLocal, FastSizeBytesLocal) Then
+                    ''    If Int64.TryParse(fastaSizeHPC, FastSizeBytesHPC) Then
+                    ''        If FastSizeBytesHPC > 0 AndAlso _
+                    ''          Math.Abs(FastSizeBytesLocal - FastSizeBytesHPC) / CDbl(FastSizeBytesLocal) < 0.01 Then
+
+                    ''            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Local Fasta file's size is within 1% of the size reported by HPC; will assume the files are identical")
+
+                    ''            Return True
+                    ''        End If
+                    ''    End If
+                    ''End If
+
+                    ''If m_DebugLevel >= 1 Then
+                    ''    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Will copy fasta file to HPC")
+                    ''End If
+
+                    Return False
                 End If
-
-            Else
-
-                Return False
-
             End If
 
-        Catch E As Exception
+        Catch ex As Exception
             ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.FastaFilesEqual, The file could not be read: " & E.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesXTHPC.FastaFilesEqual, The file could not be read: " & ex.Message)
             result = False
             Return result
         End Try
