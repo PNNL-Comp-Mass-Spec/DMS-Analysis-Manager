@@ -25,21 +25,13 @@ AnalysisManagerDtaSplitPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.SplitCattedDtaFileIntoSegments(System.String,System.Int32,System.Boolean)">
+</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.SplitCattedDtaFileIntoSegments(System.String,System.Int32)">
 	<summary>
  Split the dta txt file into multiple files
  </summary>
 	<param name="strSourceFilePath">Input data file path</param>
 	<param name="intSegmentCountToCreate">Number of segments to create</param>
-	<param name="blnSplitToEqualScanCounts">When True, then the split files will each have the same number of spectra; when false, then the split files will each have a similar number of bytes</param>
 	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.CreateNextSegment(System.IO.StreamWriter@,System.Int32@)">
-	<summary>
- Closes the current segment and then creates the next one
- </summary>
-	<param name="swOutFile"></param>
-	<param name="fileNameCounter"></param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.CountSpectraInCattedDtaFile(System.String)">
 	<summary>

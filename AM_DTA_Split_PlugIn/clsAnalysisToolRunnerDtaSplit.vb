@@ -74,7 +74,6 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim result As IJobParams.CloseOutType
         Dim strCattedFile As String
         Dim intSegmentCountToCreate As Integer
-        Dim blnSplitToEqualScanCounts As Boolean
 
         Try
             strCattedFile = Path.Combine(m_mgrParams.GetParam("WorkDir"), m_jobParams.GetParam("DatasetNum") & "_dta.txt")
@@ -90,17 +89,13 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 intSegmentCountToCreate = 4
             End Try
 
-            Try
-                blnSplitToEqualScanCounts = clsGlobal.GetJobParameter(m_jobParams, "ClonedStepsHaveEqualNumSpectra", True)
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'ClonedStepsHaveEqualNumSpectra' is not valid in the job parameters; will assume True")
-                blnSplitToEqualScanCounts = True
-            End Try
+            ' Note: blnSplitToEqualScanCounts is no longer used
+            ' blnSplitToEqualScanCounts = clsGlobal.GetJobParameter(m_jobParams, "ClonedStepsHaveEqualNumSpectra", True)
 
             'Start the job timer
             m_StartTime = System.DateTime.Now
 
-            result = SplitCattedDtaFileIntoSegments(strCattedFile, intSegmentCountToCreate, blnSplitToEqualScanCounts)
+            result = SplitCattedDtaFileIntoSegments(strCattedFile, intSegmentCountToCreate)
 
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
@@ -148,32 +143,30 @@ Public Class clsAnalysisToolRunnerDtaSplit
     ''' </summary>
     ''' <param name="strSourceFilePath">Input data file path</param>
     ''' <param name="intSegmentCountToCreate">Number of segments to create</param>
-    ''' <param name="blnSplitToEqualScanCounts">When True, then the split files will each have the same number of spectra; when false, then the split files will each have a similar number of bytes</param>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Private Function SplitCattedDtaFileIntoSegments(ByVal strSourceFilePath As String, _
-                                                    ByVal intSegmentCountToCreate As Integer, _
-                                                    ByVal blnSplitToEqualScanCounts As Boolean) As IJobParams.CloseOutType
+                                                    ByVal intSegmentCountToCreate As Integer) As IJobParams.CloseOutType
 
         Const STATUS_UPDATE_INTERVAL_SECONDS As Single = 15
 
         Dim srInFile As System.IO.StreamReader = Nothing
         Dim strLineIn As String
         Dim splitMatch As Match = Nothing
-        Dim fileNameCounter As Integer
-
-        Dim lngTargetBytesPerSegment As Long
-        Dim lngNextTargetByteThreshold As Long
-        Dim lngBytesRead As Long
+        Dim intSplitFileNum As Integer
 
         Dim intTargetSpectraPerSegment As Integer
-        Dim intSpectraCountReadCurrentSegment As Integer
         Dim intSpectraCountRead As Integer
         Dim intSpectraCountExpected As Integer
 
+        Dim lngBytesRead As Long
+
         Dim fi As System.IO.FileInfo
         Dim lineEndCharCount As Integer
-        Dim swOutFile As System.IO.StreamWriter
+
+        Dim swOutFile() As System.IO.StreamWriter
+        Dim intSpectraCountBySegment() As Integer
+
         Dim strSegmentDescription As String
 
         Dim sngPercentComplete As Single
@@ -182,13 +175,12 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Try
             If intSegmentCountToCreate < 1 Then intSegmentCountToCreate = 1
 
-            If blnSplitToEqualScanCounts AndAlso intSegmentCountToCreate > 1 Then
-                ' Need to prescan the file to count the number of spectra in it
+            If intSegmentCountToCreate > 1 Then
+                ' Need to pre-scan the file to count the number of spectra in it
                 intSpectraCountExpected = CountSpectraInCattedDtaFile(strSourceFilePath)
 
                 If intSpectraCountExpected = 0 Then
-                    blnSplitToEqualScanCounts = False
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "CountSpectraInCattedDtaFile returned a spectrum count of 0; will instead split the files to an approximately equal byte length")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "CountSpectraInCattedDtaFile returned a spectrum count of 0; this is unexpected")
                 End If
             End If
 
@@ -218,30 +210,27 @@ Public Class clsAnalysisToolRunnerDtaSplit
 
             intTargetSpectraPerSegment = CInt(Math.Ceiling(intSpectraCountExpected / CDbl(intSegmentCountToCreate)))
             If intTargetSpectraPerSegment < 1 Then intTargetSpectraPerSegment = 1
-            intSpectraCountReadCurrentSegment = 0
-            intSpectraCountRead = 0
-
-            lngTargetBytesPerSegment = CLng(Math.Ceiling(fi.Length / CDbl(intSegmentCountToCreate)))
-            lngNextTargetByteThreshold = lngTargetBytesPerSegment
-            lngBytesRead = 0
 
             If m_DebugLevel >= 1 Then
-                If blnSplitToEqualScanCounts Then
-                    strSegmentDescription = "spectra per segment = " & intTargetSpectraPerSegment
-                Else
-                    strSegmentDescription = "bytes per segment = " & lngTargetBytesPerSegment
-                End If
-
+                strSegmentDescription = "spectra per segment = " & intTargetSpectraPerSegment
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Splitting " & System.IO.Path.GetFileName(strSourceFilePath) & " into " & intSegmentCountToCreate & " segments; " & strSegmentDescription)
             End If
 
-            ' Create the first output file
-            fileNameCounter = 1
-            swOutFile = CreateNewSplitDTAFile(fileNameCounter)
-            If swOutFile Is Nothing Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            ' Create all of the output files since we will write spectra to them in a round-robin fashion
+            ReDim swOutFile(intSegmentCountToCreate)
+            ReDim intSpectraCountBySegment(intSegmentCountToCreate)
+
+            For intSplitFileNum = 1 To intSegmentCountToCreate
+                swOutFile(intSplitFileNum) = CreateNewSplitDTAFile(intSplitFileNum)
+                If swOutFile(intSplitFileNum) Is Nothing Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Next
 
             ' Open the input file
             srInFile = New System.IO.StreamReader(strSourceFilePath)
+
+            intSplitFileNum = 1
+            intSpectraCountRead = 0
+            lngBytesRead = 0
 
             Do While srInFile.Peek() >= 0
                 strLineIn = srInFile.ReadLine
@@ -249,94 +238,51 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 ' Increment the bytes read counter
                 lngBytesRead += strLineIn.Length + lineEndCharCount
 
-                If fileNameCounter < intSegmentCountToCreate Then
-                    If blnSplitToEqualScanCounts Then
-
-                        ' Look for the spectrum separator line
-                        splitMatch = Me.r_FileSeparator.Match(strLineIn)
-                        If splitMatch.Success Then
-                            intSpectraCountReadCurrentSegment += 1
-                            intSpectraCountRead += 1
-
-                            If intSpectraCountReadCurrentSegment > intTargetSpectraPerSegment Then
-                                If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Segment " & fileNameCounter.ToString & " has " & (intSpectraCountReadCurrentSegment - 1).ToString & " spectra; creating next segment; bytes read = " & lngBytesRead.ToString)
-                                End If
-
-                                ' Number of desired spectra have been written to this segment
-                                ' Close the current file and create the next segment
-                                CreateNextSegment(swOutFile, fileNameCounter)
-                                If swOutFile Is Nothing Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-                                intSpectraCountReadCurrentSegment = 1
-                            End If
+                ' Look for the spectrum separator line
+                splitMatch = Me.r_FileSeparator.Match(strLineIn)
+                If splitMatch.Success Then
+                    If intSpectraCountRead > 0 Then
+                        ' Increment intSplitFileNum, but only after the first spectrum has been read
+                        intSplitFileNum += 1
+                        If intSplitFileNum > intSegmentCountToCreate Then
+                            intSplitFileNum = 1
                         End If
 
-                    Else
-
-                        If lngBytesRead >= lngNextTargetByteThreshold Then
-                            ' We have passed the target byte threshold
-                            ' Now start looking for the spectrum separator line
-                            splitMatch = Me.r_FileSeparator.Match(strLineIn)
-                            If splitMatch.Success Then
-                                If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Target byte threshold reached: " & lngBytesRead.ToString & " bytes read vs. threshold of " & lngNextTargetByteThreshold.ToString & " bytes")
-                                End If
-
-                                intSpectraCountReadCurrentSegment += 1
-                                intSpectraCountRead += 1
-
-                                ' File separator found; close the current file and create the next segment
-                                CreateNextSegment(swOutFile, fileNameCounter)
-                                If swOutFile Is Nothing Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-                                ' Increment lngNextTargetByteThreshold
-                                lngNextTargetByteThreshold += lngTargetBytesPerSegment
-                            End If
+                        If intSpectraCountBySegment(intSplitFileNum) = 0 Then
+                            ' Add a blank line to the top of each file
+                            swOutFile(intSplitFileNum).WriteLine()
                         End If
-
                     End If
+
+                    intSpectraCountRead += 1
+                    intSpectraCountBySegment(intSplitFileNum) += 1
                 End If
 
                 If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
                     dtLastStatusUpdate = System.DateTime.Now
                     sngPercentComplete = (lngBytesRead / CSng(srInFile.BaseStream.Length) * 100)
-                    m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, fileNameCounter, "", "", "", False)
+                    m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, intSpectraCountRead, "", "", "", False)
                 End If
 
-                swOutFile.WriteLine(strLineIn)
+                swOutFile(intSplitFileNum).WriteLine(strLineIn)
             Loop
 
-            'close the main dta file and the last split dta file
-            swOutFile.Close()
+            ' Close the input file and each of the output files
             srInFile.Close()
+
+            For intSplitFileNum = 1 To intSegmentCountToCreate
+                swOutFile(intSplitFileNum).Close()
+            Next
 
         Catch ex As Exception
             If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SplitCattedDtaFileIntoSegments reading file: " & strSourceFilePath & "; Current segment = " & fileNameCounter.ToString & "; " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SplitCattedDtaFileIntoSegments reading file: " & strSourceFilePath & "; " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
-
-    ''' <summary>
-    ''' Closes the current segment and then creates the next one
-    ''' </summary>
-    ''' <param name="swOutFile"></param>
-    ''' <param name="fileNameCounter"></param>
-    ''' <remarks></remarks>
-    Private Sub CreateNextSegment(ByRef swOutFile As System.IO.StreamWriter, ByRef fileNameCounter As Integer)
-
-        swOutFile.Close()
-        swOutFile.Dispose()
-
-        ' Increment the file counter, then create the next file
-        fileNameCounter += 1
-        swOutFile = CreateNewSplitDTAFile(fileNameCounter)
-
-    End Sub
 
     ''' <summary>
     ''' Counts the number of spectra in the input concatenated DTA file (_dta.txt file)
