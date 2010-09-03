@@ -113,7 +113,7 @@ Public Class clsCreateInspectIndexedDB
                 'Set up and execute a program runner to run PrepDB.py
                 CmdStr = " " & PrebDBScriptPath & " FASTA " & dbFilename
                 If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
                 End If
 
                 If Not CmdRunner.RunProgram(progLoc, CmdStr, "PrepDB", True) Then

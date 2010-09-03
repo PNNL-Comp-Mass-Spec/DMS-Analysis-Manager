@@ -841,7 +841,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ' -r is the input file
         ' -w is the output file
         ' -s saves the p-value distribution to a text file
-        ' -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); shuffled protein names start with XXX
+        ' -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); shuffled protein names start with XXX; we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
         ' -p 0.1 will filter out results with p-value <= 0.1 (this threshold was suggested by Sam Payne)
         ' -i means to create a PValue distribution image file (.PNG)
         ' -S 0.5 means that 50% of the proteins in the DB come from shuffled proteins
@@ -855,15 +855,14 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         CmdStr = " " & pvalueScriptPath & _
                  " -r " & strInspectResultsInputFilePath & _
                  " -w " & strOutputFilePath & _
-                 " -s " & pvalDistributionFilename & _
-                 " -H "
+                 " -s " & pvalDistributionFilename
 
         If blnCreateImageFiles Then
             CmdStr &= " -i"
         End If
 
         If blnTopHitOnly Then
-            CmdStr &= " -p 1 -1"
+            CmdStr &= " -H -1 -p 1"
         Else
             CmdStr &= " -p " & pthresh
         End If
@@ -873,11 +872,12 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         End If
 
         ' The following could be used to enable protein selection
+        ' That would require that the database file be present, and this can take quite a bit longer
         ''CmdStr &= " -a -d " & dbFilename
 
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
         With CmdRunner
