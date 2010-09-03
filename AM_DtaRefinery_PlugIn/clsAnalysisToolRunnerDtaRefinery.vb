@@ -165,7 +165,8 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         result = MakeResultsFolder()
         If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
-            If result = MoveResultFiles() Then
+            result = MoveResultFiles()
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
             End If
