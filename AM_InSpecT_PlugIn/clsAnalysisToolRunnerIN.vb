@@ -206,21 +206,33 @@ Public Class clsAnalysisToolRunnerIN
         Dim ParamFilename As String
         Dim orgDbDir As String
         Dim fastaFilename As String
-        Dim dbFilename As String
+        Dim dbFilePath As String
         Dim mzXMLFilename As String
         Dim inputFilename As String
         Dim strInputSpectra As String
 
+        Dim blnUseShuffledDB As Boolean
+
         Try
             ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
-            fastaFilename = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("generatedFastaName"))
-            dbFilename = fastaFilename.Replace("fasta", "trie")
+            fastaFilename = m_jobParams.GetParam("generatedFastaName")
             mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".mzXML")
             inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 
-            ' ToDo: Add support for dbFileName being a decoy database created by shuffleDB.py
+            blnUseShuffledDB = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("InspectUsesShuffledDB"), False)
+
+            If blnUseShuffledDB Then
+                ' Using shuffled version of the .trie file
+                ' The Pvalue.py script does much better at computing p-values if a decoy search is performed (i.e. shuffleDB.py is used)
+                ' Note that shuffleDB will add a prefix of XXX to the shuffled protein names
+                dbFilePath = System.IO.Path.GetFileNameWithoutExtension(fastaFilename) & "_shuffle.trie"
+            Else
+                dbFilePath = System.IO.Path.GetFileNameWithoutExtension(fastaFilename) & ".trie"
+            End If
+
+            dbFilePath = System.IO.Path.Combine(orgDbDir, dbFilePath)
 
             'add extra lines to the parameter files
             'the parameter file will become the input file for inspect
@@ -258,7 +270,7 @@ Public Class clsAnalysisToolRunnerIN
             swInspectInputFile.WriteLine()
 
             swInspectInputFile.WriteLine("#Note: The fully qualified database (.trie file) filename")
-            swInspectInputFile.WriteLine("DB," & dbFilename)
+            swInspectInputFile.WriteLine("DB," & dbFilePath)
 
             ' Read and display the lines from the file until the end 
             ' of the file is reached.
@@ -274,7 +286,7 @@ Public Class clsAnalysisToolRunnerIN
 
             If m_DebugLevel >= 2 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created Inspect input file '" & inputFilename & "' using '" & ParamFilename & "'")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Using DB '" & dbFilename & "' and input spectra '" & strInputSpectra & "'")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Using DB '" & dbFilePath & "' and input spectra '" & strInputSpectra & "'")
             End If
 
         Catch ex As Exception
@@ -467,7 +479,7 @@ Public Class clsAnalysisToolRunnerIN
         ' Set up and execute a program runner to run Inspect.exe
         CmdStr = " -i " & mInspectCustomParamFileName & " -o " & mInspectResultsFilePath & " -e " & mInspectErrorFilePath
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
         With CmdRunner

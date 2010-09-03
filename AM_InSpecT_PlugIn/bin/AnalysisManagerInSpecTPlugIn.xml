@@ -87,7 +87,6 @@ AnalysisManagerInSpecTPlugIn
  Creates a lock file
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks>Not presently implemented</remarks>
 </member>
 </members>
 </doc>
