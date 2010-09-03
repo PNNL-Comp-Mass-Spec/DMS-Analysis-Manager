@@ -431,7 +431,7 @@ AnalysisManagerProg
 	<param name="FolderName">Folder name to look for</param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32,System.Int32)">
 	<summary>
  Test for folder existence with a retry loop in case of temporary glitch
  </summary>
@@ -449,7 +449,7 @@ AnalysisManagerProg
 	<param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
 	<returns>Path to the most appropriate dataset folder</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String,System.Int32)">
 	<summary>
  Determines the most appropriate folder to use to obtain dataset files from
  Optionally, can require that a certain file also be present in the folder for it to be deemed valid

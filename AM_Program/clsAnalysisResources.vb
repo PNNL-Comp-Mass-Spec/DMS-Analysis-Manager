@@ -30,6 +30,8 @@ Namespace AnalysisManagerBase
 #Region "Constants"
         Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
         Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
+        Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
+
         Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
         Protected Const SHARPZIPLIB_HANDLES_ZIP64 As Boolean = True
@@ -52,6 +54,9 @@ Namespace AnalysisManagerBase
         Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"          'IMS_UIMF (IMS_Agilent_TOF in DMS)
         Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"        'mzXML
 
+        Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"     ' Bruker folders that have a ser file, analysis.baf file and a XMASS_Method.m subfolder with file apexAcquisition.method
+
+        Public Const RAW_DATA_TYPE_BRUKER_TOF_FOLDER As String = "bruker_tof"   ' Bruker folders for Maldi TOF_TOF.  Main folder as a .emf graphic file, then a series of subfolders, one per pixel from the MALDI imaging.  Each subfolder will have more subfolders; the important files are the fid file with the raw data and the acqus with the method
 
         Public Const DOT_WIFF_EXTENSION As String = ".wiff"
         Public Const DOT_RAW_EXTENSION As String = ".raw"
@@ -644,11 +649,13 @@ Namespace AnalysisManagerBase
             Dim MzXMLFilename As String = DSName & ".mzXML"
             Dim ServerPath As String
 
+            Dim MaxRetryCount As Integer = 1
+
             SourceFilePath = String.Empty
 
             ' Look for the MSXmlFolder
             ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-            ServerPath = FindValidFolder(DSName, "", MSXmlFoldername)
+            ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
 
             'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
             Dim RemFolders() As String = Directory.GetDirectories(ServerPath, MSXmlFoldername)
@@ -1001,10 +1008,14 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String) As Boolean
 
-            Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS)
+            Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT)
 
         End Function
 
+        Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
+                                                         ByVal RetryHoldoffSeconds As Integer) As Boolean
+            Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT)
+        End Function
 
         ''' <summary>
         ''' Test for folder existence with a retry loop in case of temporary glitch
@@ -1013,9 +1024,15 @@ Namespace AnalysisManagerBase
         ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
+        Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
+                                                         ByVal RetryHoldoffSeconds As Integer, _
+                                                         ByVal MaxRetryCount As Integer) As Boolean
 
-            Dim RetryCount As Integer = 3
+            Dim RetryCount As Integer
+
+            If MaxRetryCount < 1 Then MaxRetryCount = 1
+            If MaxRetryCount > 10 Then MaxRetryCount = 10
+            RetryCount = MaxRetryCount
 
             If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS
             If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
@@ -1047,9 +1064,18 @@ Namespace AnalysisManagerBase
         ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
         ''' <returns>Path to the most appropriate dataset folder</returns>
         ''' <remarks></remarks>
-        Private Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String) As String
+        Private Function FindValidFolder(ByVal DSName As String, _
+                                         ByVal FileNameToFind As String) As String
 
-            Return FindValidFolder(DSName, FileNameToFind, "")
+            Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT)
+
+        End Function
+
+        Private Function FindValidFolder(ByVal DSName As String, _
+                                         ByVal FileNameToFind As String, _
+                                         ByVal FolderNameToFind As String) As String
+
+            Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT)
 
         End Function
 
@@ -1063,7 +1089,10 @@ Namespace AnalysisManagerBase
         ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder</param>
         ''' <returns>Path to the most appropriate dataset folder</returns>
         ''' <remarks></remarks>
-        Private Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String, ByVal FolderNameToFind As String) As String
+        Private Function FindValidFolder(ByVal DSName As String, _
+                                         ByVal FileNameToFind As String, _
+                                         ByVal FolderNameToFind As String, _
+                                         ByVal MaxRetryCount As Integer) As String
 
             Dim strBestPath As String = String.Empty
             Dim PathsToCheck() As String
@@ -1095,7 +1124,7 @@ Namespace AnalysisManagerBase
 
                         ' First check whether this folder exists
                         ' Using a 3 second holdoff between retries
-                        If FolderExistsWithRetry(PathsToCheck(intIndex), 3) Then
+                        If FolderExistsWithRetry(PathsToCheck(intIndex), 3, MaxRetryCount) Then
                             If m_DebugLevel > 3 Then
                                 Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Folder found " & PathsToCheck(intIndex)
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
@@ -1157,7 +1186,7 @@ Namespace AnalysisManagerBase
 
                                     ' Look for folder FolderNameToFind in this folder
                                     ' Note: Using a 1 second holdoff between retries
-                                    If Not FolderExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FolderNameToFind), 1) Then
+                                    If Not FolderExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FolderNameToFind), 1, MaxRetryCount) Then
                                         blnValidFolder = False
                                     End If
                                 End If
@@ -1816,7 +1845,7 @@ Namespace AnalysisManagerBase
 
             Dim dtStartTime As DateTime
             Dim dtEndTime As DateTime
-            
+
             Try
                 If ZipFilePath Is Nothing Then ZipFilePath = String.Empty
 
