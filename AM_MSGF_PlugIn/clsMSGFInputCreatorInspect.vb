@@ -86,20 +86,26 @@ Public Class clsMSGFInputCreatorInspect
 
     End Sub
 
-    Public Shared Function GetPHRPResultsFileName(ByVal strDatasetName As String) As String
+    Public Shared Function GetPHRPFirstHitsFileName(ByVal strDatasetName As String) As String
+        Return strDatasetName & "_inspect_fht.txt"
+    End Function
+
+    Public Shared Function GetPHRPSynopsisFileName(ByVal strDatasetName As String) As String
         Return strDatasetName & "_inspect_syn.txt"
     End Function
 
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for Inspect synopsis files
-        mPHRPResultFilePath = System.IO.Path.Combine(mWorkDir, GetPHRPResultsFileName(mDatasetName))
+        mPHRPFirstHitsFilePath = System.IO.Path.Combine(mWorkDir, GetPHRPFirstHitsFileName(mDatasetName))
+        mPHRPSynopsisFilePath = System.IO.Path.Combine(mWorkDir, GetPHRPSynopsisFileName(mDatasetName))
 
         UpdateMSGFInputOutputFilePaths()
 
     End Sub
 
     Protected Overrides Function ParsePHRPDataLine(ByVal intLineNumber As Integer, _
+                                                   ByRef strPHRPSource As String, _
                                                    ByRef strColumns() As String, _
                                                    ByRef udtPHRPData As udtPHRPDataLine) As Boolean
         Dim dblPValue As Double
@@ -159,7 +165,7 @@ Public Class clsMSGFInputCreatorInspect
             End If
 
         Catch ex As Exception
-            MyBase.ReportError("Error parsing line " & intLineNumber & " in the Inspect PHRP result file: " & ex.Message)
+            MyBase.ReportError("Error parsing line " & intLineNumber & " in the Inspect PHRP " & strPHRPSource & " file: " & ex.Message)
         End Try
 
         Return blnSuccess

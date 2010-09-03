@@ -28,6 +28,20 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<returns>True if success, false if an error</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.CreateMSGFFirstHitsFile">
+	<summary>
+ Read the first-hits file and create a new, parallel file with the MSGF results
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles">
+	<summary>
+ Creates the input file for MSGF
+ Will contain filter passing peptides from the synopsis file, plus all peptides 
+ in the first-hits file that are not filter passing in the synopsis file
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@)">
 	<summary>
  Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
@@ -59,6 +73,17 @@ AnalysisManagerMSGFPlugin
 	<param name="strColumns">Column names read from the input file</param>
 	<param name="objColumnHeaders">Column mapping dictionary object to update</param>
 	<remarks>The SortedDictionary object should be instantiated using a case-insensitive comparer, i.e. (StringComparer.CurrentCultureIgnoreCase)</remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.ReadAndStorePHRPData(System.IO.StreamReader@,System.IO.StreamWriter@,System.String,System.Boolean)">
+	<summary>
+ Read data from a synopsis file or first hits file
+ Write filter-passing synopsis file data to the MSGF input file
+ Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
+ </summary>
+	<param name="srPHRPFile"></param>
+	<param name="swMSGFInputFile"></param>
+	<param name="strMzXMLFileName"></param>
+	<param name="blnParsingSynopsisFile"></param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.UpdateMSGFInputOutputFilePaths">
 	<summary>
  Define the MSGF input and output file paths
@@ -105,6 +130,21 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<returns>True if success; false if an error</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFResults(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.String)">
+	<summary>
+ Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
+ Will also look for non-numeric values in the SpecProb column
+ Examples:
+   N/A: unrecognizable annotation
+   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
+ the new MSGF result files will guarantee that the SpecProb column has a number, 
+   but will have an additional column called SpecProbNotes with any notes or warnings
+ The synopsis-based MSGF results will be extended to include any entries skipped when
+  creating the MSGF input file (to aid in linking up files later)
+ </summary>
+	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
+	<returns>True if success; false if one or more errors</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ReadModSummaryFile(System.String,System.Collections.Generic.SortedDictionary{System.String,System.String}@,System.Collections.Generic.SortedDictionary{System.String,System.String}@)">
 	<summary>
  Reads the data in strModSummaryFilePath.  Populates objDynamicMods and objStaticMods with the modification definitions
@@ -120,20 +160,6 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<param name="strFileNameToFind"></param>
 	<returns>True if success; false if an error</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ValidateMSGFResults(System.String)">
-	<summary>
- Look for non-numeric values in the SpecProb column
- Examples:
-   N/A: unrecognizable annotation
-   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
- Will create a new file that guarantees that the SpecProb column has a number, 
-   but has an additional column called SpecProbNotes with any notes or warnings
- In addition, checks whether any entries were skipped when using the the synopsis file to create the MSGF input file
-  If any were skipped, add them to the validated MSGF file (to aid in linking up files later)
- </summary>
-	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
-	<returns>True if success; false if one or more errors</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.MSXmlGenReadW_LoopWaiting">
 	<summary>

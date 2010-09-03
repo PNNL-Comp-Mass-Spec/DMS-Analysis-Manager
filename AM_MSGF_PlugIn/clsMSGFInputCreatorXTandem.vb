@@ -63,20 +63,27 @@ Public Class clsMSGFInputCreatorXTandem
 
     End Sub
 
-    Public Shared Function GetPHRPResultsFileName(ByVal strDatasetName As String) As String
+    Public Shared Function GetPHRPFirstHitsFileName(ByVal strDatasetName As String) As String
+        ' X!Tandem does not have a first-hits file; just the _xt.txt file
+        Return String.Empty
+    End Function
+
+    Public Shared Function GetPHRPSynopsisFileName(ByVal strDatasetName As String) As String
         Return strDatasetName & "_xt.txt"
     End Function
 
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for X!Tandem _xt.txt files
-        mPHRPResultFilePath = System.IO.Path.Combine(mWorkDir, GetPHRPResultsFileName(mDatasetName))
+        mPHRPFirstHitsFilePath = String.Empty
+        mPHRPSynopsisFilePath = System.IO.Path.Combine(mWorkDir, GetPHRPSynopsisFileName(mDatasetName))
 
         UpdateMSGFInputOutputFilePaths()
 
     End Sub
 
     Protected Overrides Function ParsePHRPDataLine(ByVal intLineNumber As Integer, _
+                                                   ByRef strPHRPSource As String, _
                                                    ByRef strColumns() As String, _
                                                    ByRef udtPHRPData As udtPHRPDataLine) As Boolean
         Dim dblHyperscore As Double
@@ -117,13 +124,13 @@ Public Class clsMSGFInputCreatorXTandem
                 ' This will typically keep all data in the _xt.txt file
 
                 If dblLogEValue <= -0.3 Then
-                   udtPHRPData.PassesFilters = True
+                    udtPHRPData.PassesFilters = True
                 End If
 
             End If
 
         Catch ex As Exception
-            MyBase.ReportError("Error parsing line " & intLineNumber & " in the X!Tandem PHRP result file: " & ex.Message)
+            MyBase.ReportError("Error parsing line " & intLineNumber & " in the X!Tandem PHRP " & strPHRPSource & " file: " & ex.Message)
         End Try
 
         Return blnSuccess

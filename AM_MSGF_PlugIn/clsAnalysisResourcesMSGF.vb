@@ -146,14 +146,43 @@ Public Class clsAnalysisResourcesMSGF
         End If
         clsGlobal.FilesToDelete.Add(FileToGet)
 
-
-        ' Get the Sequest, X!Tandem, or Inspect PHRP results file
-        FileToGet = clsMSGFRunner.GetPHRPResultsFileName(eResultType, DatasetName)
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+        ' Get the Sequest, X!Tandem, or Inspect PHRP _syn.txt file
+        FileToGet = clsMSGFRunner.GetPHRPSynopsisFileName(eResultType, DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            clsGlobal.FilesToDelete.Add(FileToGet)
         End If
-        clsGlobal.FilesToDelete.Add(FileToGet)
+
+        ' Get the Sequest, X!Tandem, or Inspect PHRP _fht.txt file
+        FileToGet = clsMSGFRunner.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            clsGlobal.FilesToDelete.Add(FileToGet)
+        End If
+
+        If eResultType = clsMSGFRunner.ePeptideHitResultType.XTandem Then
+            ' Grab a few more files for X!Tandem files so that we can extract the protein names and include these in the MSGF files
+
+            FileToGet = DatasetName & clsMSGFRunner.XT_RESULT_TO_SEQ_MAP_SUFFIX
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            clsGlobal.FilesToDelete.Add(FileToGet)
+
+            FileToGet = DatasetName & clsMSGFRunner.XT_SEQ_TO_PROTEIN_MAP_SUFFIX
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            clsGlobal.FilesToDelete.Add(FileToGet)
+        End If
 
         ' See if a .mzXML file already exists for this dataset
         blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
@@ -200,6 +229,12 @@ Public Class clsAnalysisResourcesMSGF
         If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
         sngFreeMemoryMB = GetFreeMemoryMB()
+
+        If System.Environment.MachineName.ToUpper.StartsWith("MONROE") Then
+            ' Don't worry about the amount of free memory
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
+
         If intJavaMemorySize >= sngFreeMemoryMB Then
             strMessage = "Not enough free memory to run MSGF"
 

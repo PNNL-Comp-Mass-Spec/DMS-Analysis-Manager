@@ -17,7 +17,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Constants"
     Protected Const MSGF_INPUT_FILENAME_SUFFIX As String = "_MSGF_input.txt"
-    Protected Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
+    Public Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
 #End Region
 
 #Region "Structures"
@@ -49,13 +49,23 @@ Public MustInherit Class clsMSGFInputCreator
     Protected mDynamicMods As System.Collections.Generic.SortedDictionary(Of String, String)
     Protected mStaticMods As System.Collections.Generic.SortedDictionary(Of String, String)
 
+    ' Column headers in the synopsis file and first hits file
     Protected mColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
 
     Protected mSkippedLineInfo As System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
 
+    ' This dictionary is initially populated with a string constructed using
+    ' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
+    ' It will contain an entry for every line written to the MSGF input file
+    ' It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
+    ' Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
+    Protected mMSGFCachedResults As System.Collections.Generic.SortedDictionary(Of String, String)
+
     Protected mErrorMessage As String = String.Empty
 
-    Protected mPHRPResultFilePath As String = String.Empty
+    Protected mPHRPFirstHitsFilePath As String = String.Empty
+    Protected mPHRPSynopsisFilePath As String = String.Empty
+
     Protected mMSGFInputFilePath As String = String.Empty
     Protected mMSGFResultsFilePath As String = String.Empty
 
@@ -86,9 +96,15 @@ Public MustInherit Class clsMSGFInputCreator
         End Get
     End Property
 
-    Public ReadOnly Property PHRPResultFilePath() As String
+    Public ReadOnly Property PHRPFirstHitsFilePath() As String
         Get
-            Return mPHRPResultFilePath
+            Return mPHRPFirstHitsFilePath
+        End Get
+    End Property
+
+    Public ReadOnly Property PHRPSynopsisFilePath() As String
+        Get
+            Return mPHRPSynopsisFilePath
         End Get
     End Property
 
@@ -112,6 +128,8 @@ Public MustInherit Class clsMSGFInputCreator
 
         mSkippedLineInfo = New System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
 
+        mMSGFCachedResults = New System.Collections.Generic.SortedDictionary(Of String, String)
+
         ' The following will be overridden by a derived form of this class
         DefineColumnHeaders()
 
@@ -123,7 +141,10 @@ Public MustInherit Class clsMSGFInputCreator
 #Region "Functions to be defined in derived classes"
     Protected MustOverride Sub DefineColumnHeaders()
     Protected MustOverride Sub InitializeFilePaths()
-    Protected MustOverride Function ParsePHRPDataLine(ByVal intLineNumber As Integer, ByRef strColumns() As String, ByRef udtPHRPData As udtPHRPDataLine) As Boolean
+    Protected MustOverride Function ParsePHRPDataLine(ByVal intLineNumber As Integer, _
+                                                      ByRef strPHRPSource As String, _
+                                                      ByRef strColumns() As String, _
+                                                      ByRef udtPHRPData As udtPHRPDataLine) As Boolean
 #End Region
 
     ''' <summary>
@@ -135,12 +156,9 @@ Public MustInherit Class clsMSGFInputCreator
 
         Static sbNewPeptide As New System.Text.StringBuilder
 
-        'Dim objEnum As System.Collections.Generic.SortedDictionary(Of String, String).Enumerator
         Dim intIndex As Integer
         Dim intIndexStart As Integer
         Dim intIndexEnd As Integer
-
-        Dim strModMass As String = String.Empty
 
         Try
             If mDynamicMods.Count = 0 AndAlso mStaticMods.Count = 0 Then
@@ -181,25 +199,34 @@ Public MustInherit Class clsMSGFInputCreator
                         sbNewPeptide.Append(strPeptide.Chars(intIndex))
 
                         ' See if it is present in mStaticMods (this is a case-sensitive search)
-                        If mStaticMods.TryGetValue(strPeptide.Chars(intIndex), strModMass) Then
-                            ' Static mod applies to this residue; append the mod (add a plus sign if it doesn't start with a minus sign)
-                            If strModMass.StartsWith("-") Then
-                                sbNewPeptide.Append(strModMass)
-                            Else
-                                sbNewPeptide.Append("+" & strModMass)
+                        AddModIfPresent(mStaticMods, strPeptide.Chars(intIndex), sbNewPeptide)
+
+                        If intIndex = intIndexStart AndAlso mStaticMods.Count > 0 Then
+                            ' We're at the N-terminus of the peptide
+                            ' Possibly add a static N-terminal peptide mod (for example, iTRAQ8, which is 304.2022 DA)
+                            AddModIfPresent(mStaticMods, clsMSGFRunner.N_TERMINAL_PEPTIDE_SYMBOL_DMS, sbNewPeptide)
+
+                            If strPeptide.StartsWith(clsMSGFRunner.PROTEIN_TERMINUS_SYMBOL_PHRP) Then
+                                ' We're at the N-terminus of the protein
+                                ' Possibly add a static N-terminal protein mod
+                                AddModIfPresent(mStaticMods, clsMSGFRunner.N_TERMINAL_PROTEIN_SYMBOL_DMS, sbNewPeptide)
+                            End If
+                        End If
+
+                        If intIndex = intIndexEnd AndAlso mStaticMods.Count > 0 Then
+                            ' Possibly add a static C-terminal peptide mod
+                            AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PEPTIDE_SYMBOL_DMS, sbNewPeptide)
+
+                            If strPeptide.EndsWith(clsMSGFRunner.PROTEIN_TERMINUS_SYMBOL_PHRP) Then
+                                ' We're at the C-terminus of the protein
+                                ' Possibly add a static C-terminal protein mod
+                                AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PROTEIN_SYMBOL_DMS, sbNewPeptide)
                             End If
 
                         End If
                     Else
                         ' Not a letter; see if it is present in mDynamicMods
-                        If mDynamicMods.TryGetValue(strPeptide.Chars(intIndex), strModMass) Then
-                            ' Dynamic mod applies to the previous residue; append the mod (add a plus sign if it doesn't start with a minus sign)
-                            If strModMass.StartsWith("-") Then
-                                sbNewPeptide.Append(strModMass)
-                            Else
-                                sbNewPeptide.Append("+" & strModMass)
-                            End If
-                        End If
+                        AddModIfPresent(mDynamicMods, strPeptide.Chars(intIndex), sbNewPeptide)
                     End If
                 End If
                 intIndex += 1
@@ -216,67 +243,110 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Function
 
-    Public Function CreateMSGFInputFileUsingPHRPResultFile() As Boolean
+    Protected Sub AddModIfPresent(ByRef objMods As System.Collections.Generic.SortedDictionary(Of String, String), _
+                                  ByVal chResidue As Char, _
+                                  ByRef sbNewPeptide As System.Text.StringBuilder)
+
+        Dim strModMass As String = String.Empty
+
+        If objMods.TryGetValue(chResidue, strModMass) Then
+            ' Static mod applies to this residue; append the mod (add a plus sign if it doesn't start with a minus sign)
+            If strModMass.StartsWith("-") Then
+                sbNewPeptide.Append(strModMass)
+            Else
+                sbNewPeptide.Append("+" & strModMass)
+            End If
+        End If
+
+    End Sub
+
+    Public Sub AddUpdateMSGFResult(ByRef strScanNumber As String, _
+                                   ByRef strCharge As String, _
+                                   ByRef strPeptide As String, _
+                                   ByRef strMSGFResultData As String)
+
+        Try
+            mMSGFCachedResults.Item(ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)) = strMSGFResultData
+        Catch ex As Exception
+            ' Entry not found; this is unexpected; we will only report the error at the console
+            Console.WriteLine("Entry not found in mMSGFCachedResults for " & ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide))
+        End Try
+
+    End Sub
+
+    Protected Function ConstructMSGFResultCode(ByVal intScanNumber As Integer, _
+                                               ByVal intCharge As Integer, _
+                                               ByRef strPeptide As String) As String
+
+        Return intScanNumber.ToString & "_" & intCharge.ToString & "_" & strPeptide
+
+    End Function
+
+    Protected Function ConstructMSGFResultCode(ByRef strScanNumber As String, _
+                                               ByRef strCharge As String, _
+                                               ByRef strPeptide As String) As String
+
+        Return strScanNumber & "_" & strCharge & "_" & strPeptide
+
+    End Function
+
+    ''' <summary>
+    ''' Read the first-hits file and create a new, parallel file with the MSGF results
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function CreateMSGFFirstHitsFile() As Boolean
+
+        Const MAX_WARNINGS_TO_REPORT As Integer = 10
 
         Dim srPHRPFile As System.IO.StreamReader
-        Dim swMSGFInputFile As System.IO.StreamWriter
+        Dim swMSGFFHTFile As System.IO.StreamWriter
 
-        Dim strMzXMLFileName As String = String.Empty
-        Dim strPeptideWithMods As String = String.Empty
+        Dim strMSGFFirstHitsResults As String
 
         Dim strLineIn As String
         Dim strSplitLine() As String
+        Dim strPeptideResultCode As String
+        Dim strPHRPSource As String = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT
+
+        Dim strMSGFResultData As String = String.Empty
 
         Dim intLinesRead As Integer
+
+        Dim intMissingValueCount As Integer
+        Dim strWarningMessage As String
 
         Dim blnSkipLine As Boolean
         Dim blnHeaderLineParsed As Boolean
         Dim blnSuccess As Boolean
 
-        Dim udtPHRPDataPrevious As udtPHRPDataLine
         Dim udtPHRPData As udtPHRPDataLine
 
-        Dim objSkipList As System.Collections.Generic.List(Of String)
-
         Try
-            If String.IsNullOrEmpty(mDatasetName) Then
-                ReportError("Dataset name is undefined; unable to continue")
-                Return False
+
+
+            If String.IsNullOrEmpty(mPHRPFirstHitsFilePath) Then
+                ' This result type does not have a first-hits file
+                Return True
             End If
 
-            If String.IsNullOrEmpty(mWorkDir) Then
-                ReportError("Working directory is undefined; unable to continue")
-                Return False
-            End If
+            ' Open the first-hits file
+            srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPFirstHitsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-            ' mzXML filename is dataset plus .mzXML
-            ' Note that the jrap reader used by will fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
-            strMzXMLFileName = mDatasetName & ".mzXML"
+            ' Define the path to write the first-hits MSGF results to
+            strMSGFFirstHitsResults = System.IO.Path.Combine(mWorkDir, _
+                                                             System.IO.Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
 
-            ' Open the PHRP result file
-            srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPResultFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            ' Create the output file
+            swMSGFFHTFile = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFFirstHitsResults, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
 
-            ' Create the MSGF Input file that we will write data to
-            swMSGFInputFile = New System.IO.StreamWriter(New System.IO.FileStream(mMSGFInputFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+            ' Write out the headers to swMSGFFHTFile
+            WriteMSGFResultsHeaders(swMSGFFHTFile)
 
-            ' Write out the headers
-            ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
-            swMSGFInputFile.WriteLine("#SpectrumFile" & ControlChars.Tab & _
-                                      "Title" & ControlChars.Tab & _
-                                      "Scan#" & ControlChars.Tab & _
-                                      "Annotation" & ControlChars.Tab & _
-                                      "Charge" & ControlChars.Tab & _
-                                      "Protein_First" & ControlChars.Tab & _
-                                      "Result_ID")
 
-            blnHeaderLineParsed = False
             intLinesRead = 0
-            mMSGFInputFileLineCount = 1
-
-            udtPHRPDataPrevious.Clear()
-            udtPHRPData.Clear()
-
-            mSkippedLineInfo.Clear()
+            intMissingValueCount = 0
+            blnHeaderLineParsed = False
 
             Do While srPHRPFile.Peek >= 0
                 strLineIn = srPHRPFile.ReadLine
@@ -294,59 +364,31 @@ Public MustInherit Class clsMSGFInputCreator
                         End If
 
                         blnHeaderLineParsed = True
-
                     End If
 
                     If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
 
-                        blnSuccess = ParsePHRPDataLine(intLinesRead, strSplitLine, udtPHRPData)
+                        blnSuccess = ParsePHRPDataLine(intLinesRead, strPHRPSource, strSplitLine, udtPHRPData)
 
-                        If blnSuccess And udtPHRPData.PassesFilters Then
-                            ' If this line is a duplicate of the previous line, then skip it
-                            ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
-                            With udtPHRPDataPrevious
-                                If .ScanNumber = udtPHRPData.ScanNumber AndAlso _
-                                   .Charge = udtPHRPData.Charge AndAlso _
-                                   .Peptide = udtPHRPData.Peptide Then
+                        strPeptideResultCode = ConstructMSGFResultCode(udtPHRPData.ScanNumber, udtPHRPData.Charge, udtPHRPData.Peptide)
 
-                                    blnSuccess = False
+                        If mMSGFCachedResults.TryGetValue(strPeptideResultCode, strMSGFResultData) Then
+                            ' Match found; write out the result
+                            swMSGFFHTFile.WriteLine(udtPHRPData.ResultID & ControlChars.Tab & strMSGFResultData)
 
-                                    If mSkippedLineInfo.TryGetValue(.ResultID, objSkipList) Then
-                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
-                                    Else
-                                        objSkipList = New System.Collections.Generic.List(Of String)
-                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
-                                        mSkippedLineInfo.Add(.ResultID, objSkipList)
-                                    End If
-                                Else
-                                    ' Update udtPHRPDataPrevious
-                                    ' Since this is a structure, "=" will result in a member-by-member copy
-                                    udtPHRPDataPrevious = udtPHRPData
+                        Else
+                            ' Match not found; this is unexpected
+
+                            ' Report the first 10 times this happens
+                            intMissingValueCount += 1
+                            If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
+                                strWarningMessage = "Match not found for first-hits entry with result code '" & strPeptideResultCode & "'; this is unexpected"
+                                If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
+                                    strWarningMessage &= "; additional missing entries will not be reported"
                                 End If
-                            End With
-                        End If
+                                ReportError(strWarningMessage)
+                            End If
 
-                        If blnSuccess And udtPHRPData.PassesFilters Then
-                            ' Markup the peptide with the dynamic and static mods
-                            blnSuccess = AddDynamicAndStaticMods(udtPHRPData.Peptide.Trim, strPeptideWithMods)
-                        End If
-
-                        If blnSuccess And udtPHRPData.PassesFilters Then
-                            With udtPHRPData
-
-                                ' The title column holds the original peptide sequence
-                                ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
-
-                                swMSGFInputFile.WriteLine(strMzXMLFileName & ControlChars.Tab & _
-                                                          udtPHRPData.Peptide & ControlChars.Tab & _
-                                                          .ScanNumber & ControlChars.Tab & _
-                                                          strPeptideWithMods & ControlChars.Tab & _
-                                                          .Charge & ControlChars.Tab & _
-                                                          .ProteinFirst & ControlChars.Tab & _
-                                                          .ResultID)
-
-                                mMSGFInputFileLineCount += 1
-                            End With
                         End If
 
                     End If
@@ -355,6 +397,81 @@ Public MustInherit Class clsMSGFInputCreator
             Loop
 
             srPHRPFile.Close()
+            swMSGFFHTFile.Close()
+
+        Catch ex As Exception
+            ReportError("Error creating the MSGF first hits file: " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Creates the input file for MSGF
+    ''' Will contain filter passing peptides from the synopsis file, plus all peptides 
+    ''' in the first-hits file that are not filter passing in the synopsis file
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function CreateMSGFInputFileUsingPHRPResultFiles() As Boolean
+
+        Dim srPHRPFile As System.IO.StreamReader
+        Dim swMSGFInputFile As System.IO.StreamWriter
+
+        Dim strMzXMLFileName As String = String.Empty
+
+        Try
+            If String.IsNullOrEmpty(mDatasetName) Then
+                ReportError("Dataset name is undefined; unable to continue")
+                Return False
+            End If
+
+            If String.IsNullOrEmpty(mWorkDir) Then
+                ReportError("Working directory is undefined; unable to continue")
+                Return False
+            End If
+
+            ' mzXML filename is dataset plus .mzXML
+            ' Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
+            strMzXMLFileName = mDatasetName & ".mzXML"
+
+            ' Create the MSGF Input file that we will write data to
+            swMSGFInputFile = New System.IO.StreamWriter(New System.IO.FileStream(mMSGFInputFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+
+            ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source
+            ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
+            swMSGFInputFile.WriteLine(clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab & _
+                                      clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source)
+
+            ' Initialize some tracking variables
+            mMSGFInputFileLineCount = 1
+
+            mSkippedLineInfo.Clear()
+
+            mMSGFCachedResults.Clear()
+
+
+            ' First read the synopsis file data
+            srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPSynopsisFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+
+            ReadAndStorePHRPData(srPHRPFile, swMSGFInputFile, strMzXMLFileName, True)
+
+
+            If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) Then
+                ' Now read the first-hits file data
+                srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPFirstHitsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+
+                ReadAndStorePHRPData(srPHRPFile, swMSGFInputFile, strMzXMLFileName, False)
+            End If
+
             swMSGFInputFile.Close()
 
         Catch ex As Exception
@@ -489,7 +606,6 @@ Public MustInherit Class clsMSGFInputCreator
         Dim intIndex As Integer
 
         For intIndex = 0 To strColumns.Length - 1
-
             If objColumnHeaders.ContainsKey(strColumns(intIndex)) Then
                 ' Update the index associated with this column name
                 objColumnHeaders(strColumns(intIndex)) = intIndex
@@ -498,6 +614,157 @@ Public MustInherit Class clsMSGFInputCreator
             End If
         Next intIndex
 
+    End Sub
+
+    ''' <summary>
+    ''' Read data from a synopsis file or first hits file
+    ''' Write filter-passing synopsis file data to the MSGF input file
+    ''' Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
+    ''' </summary>
+    ''' <param name="srPHRPFile"></param>
+    ''' <param name="swMSGFInputFile"></param>
+    ''' <param name="strMzXMLFileName"></param>
+    ''' <param name="blnParsingSynopsisFile"></param>
+    ''' <remarks></remarks>
+    Private Sub ReadAndStorePHRPData(ByRef srPHRPFile As System.IO.StreamReader, _
+                                     ByRef swMSGFInputFile As System.IO.StreamWriter, _
+                                     ByVal strMzXMLFileName As String, _
+                                     ByVal blnParsingSynopsisFile As Boolean)
+
+        Dim strPeptideWithMods As String = String.Empty
+
+        Dim strLineIn As String
+        Dim strSplitLine() As String
+        Dim strPeptideResultCode As String
+        Dim strPHRPSource As String
+
+        Dim intLinesRead As Integer
+
+        Dim blnSkipLine As Boolean
+        Dim blnHeaderLineParsed As Boolean
+        Dim blnSuccess As Boolean
+
+        Dim udtPHRPDataPrevious As udtPHRPDataLine
+        Dim udtPHRPData As udtPHRPDataLine
+
+        Dim objSkipList As System.Collections.Generic.List(Of String)
+
+        If blnParsingSynopsisFile Then
+            strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN
+        Else
+            strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT
+        End If
+
+        udtPHRPDataPrevious.Clear()
+        udtPHRPData.Clear()
+
+        intLinesRead = 0
+        blnHeaderLineParsed = False
+
+        Do While srPHRPFile.Peek >= 0
+            strLineIn = srPHRPFile.ReadLine
+            intLinesRead += 1
+            blnSkipLine = False
+
+            If Not String.IsNullOrEmpty(strLineIn) Then
+                strSplitLine = strLineIn.Split(ControlChars.Tab)
+
+                If Not blnHeaderLineParsed Then
+                    If Not clsMSGFInputCreator.IsNumber(strSplitLine(0)) Then
+                        ' Parse the header line to confirm the column ordering
+                        clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, mColumnHeaders)
+                        blnSkipLine = True
+                    End If
+
+                    blnHeaderLineParsed = True
+                End If
+
+                If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
+
+                    blnSuccess = ParsePHRPDataLine(intLinesRead, strPHRPSource, strSplitLine, udtPHRPData)
+
+                    ' Compute the result code; we'll use it later to search/populate mMSGFCachedResults
+                    strPeptideResultCode = ConstructMSGFResultCode(udtPHRPData.ScanNumber, udtPHRPData.Charge, udtPHRPData.Peptide)
+
+                    If blnParsingSynopsisFile Then
+                        ' Synopsis file 
+                        ' Check for duplicate lines
+
+                        If blnSuccess And udtPHRPData.PassesFilters Then
+                            ' If this line is a duplicate of the previous line, then skip it
+                            ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
+                            With udtPHRPDataPrevious
+                                If .ScanNumber = udtPHRPData.ScanNumber AndAlso _
+                                   .Charge = udtPHRPData.Charge AndAlso _
+                                   .Peptide = udtPHRPData.Peptide Then
+
+                                    blnSuccess = False
+
+                                    If mSkippedLineInfo.TryGetValue(.ResultID, objSkipList) Then
+                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
+                                    Else
+                                        objSkipList = New System.Collections.Generic.List(Of String)
+                                        objSkipList.Add(udtPHRPData.ResultID & ControlChars.Tab & udtPHRPData.ProteinFirst)
+                                        mSkippedLineInfo.Add(.ResultID, objSkipList)
+                                    End If
+                                Else
+                                    ' Update udtPHRPDataPrevious
+                                    ' Since this is a structure, "=" will result in a member-by-member copy
+                                    udtPHRPDataPrevious = udtPHRPData
+                                End If
+                            End With
+                        End If
+
+                    Else
+                        ' First-hits file
+                        ' Override PassesFilters, but see if this entry is present in mMSGFCachedResults
+
+                        udtPHRPData.PassesFilters = True
+
+                        If mMSGFCachedResults.ContainsKey(strPeptideResultCode) Then
+                            blnSuccess = False
+                        End If
+
+                    End If
+
+                    If blnSuccess And udtPHRPData.PassesFilters Then
+                        ' Markup the peptide with the dynamic and static mods
+                        blnSuccess = AddDynamicAndStaticMods(udtPHRPData.Peptide.Trim, strPeptideWithMods)
+                    End If
+
+                    If blnSuccess And udtPHRPData.PassesFilters Then
+                        With udtPHRPData
+
+                            ' The title column holds the original peptide sequence
+                            ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
+
+                            swMSGFInputFile.WriteLine(strMzXMLFileName & ControlChars.Tab & _
+                                                      .Peptide & ControlChars.Tab & _
+                                                      .ScanNumber & ControlChars.Tab & _
+                                                      strPeptideWithMods & ControlChars.Tab & _
+                                                      .Charge & ControlChars.Tab & _
+                                                      .ProteinFirst & ControlChars.Tab & _
+                                                      .ResultID & ControlChars.Tab & _
+                                                      strPHRPSource)
+
+                            mMSGFInputFileLineCount += 1
+
+                            Try
+                                mMSGFCachedResults.Add(strPeptideResultCode, "")
+                            Catch ex As Exception
+                                ' Key is already present; this is unexpected, but we can safely ignore this error
+                            End Try
+
+
+                        End With
+                    End If
+
+                End If
+            End If
+
+        Loop
+
+        srPHRPFile.Close()
     End Sub
 
     Protected Sub ReportError(ByVal strErrorMessage As String)
@@ -511,8 +778,19 @@ Public MustInherit Class clsMSGFInputCreator
     ''' </summary>
     ''' <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
     Protected Sub UpdateMSGFInputOutputFilePaths()
-        mMSGFInputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPResultFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
-        mMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPResultFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+        mMSGFInputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
+        mMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+    End Sub
+
+    Public Sub WriteMSGFResultsHeaders(ByRef swOutFile As System.IO.StreamWriter)
+
+        swOutFile.WriteLine("Result_ID" & ControlChars.Tab & _
+                            "Scan" & ControlChars.Tab & _
+                            "Charge" & ControlChars.Tab & _
+                            "Protein" & ControlChars.Tab & _
+                            "Peptide" & ControlChars.Tab & _
+                            "SpecProb" & ControlChars.Tab & _
+                            "Notes")
     End Sub
 
 End Class
