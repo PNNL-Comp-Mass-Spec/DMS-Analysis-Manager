@@ -26,7 +26,7 @@ Public Class clsAnalysisResourcesLCMSFF
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
         'Retrieve Decon2LS _isos.csv and _scans.csv files for this dataset
         strFileToGet = m_jobParams.GetParam("DatasetNum") & ISOS_FILE_SUFFIX
@@ -61,6 +61,29 @@ Public Class clsAnalysisResourcesLCMSFF
         If Not CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, m_WorkingDir) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
+        End If
+
+        Dim strRawDataType As String
+        strRawDataType = m_jobParams.GetParam("RawDataType")
+        If strRawDataType.ToLower = clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES Then
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving .UIMF file")
+            End If
+
+
+            ' IMS data; need to get the .UIMF file
+            If Not RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
+                End If
+            End If
+
+            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
+
         End If
 
         ' Could add an extension of a file to delete, like this:
