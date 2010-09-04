@@ -423,6 +423,83 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Function TestProteinDBExport(ByVal DestFolder As String) As Boolean
+
+        Dim strLegacyFasta As String
+        Dim strProteinCollectionList As String
+        Dim strProteinOptions As String
+
+
+        ' Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
+        strLegacyFasta = "na"
+        strProteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_"
+        strProteinOptions = "seq_direction=forward,filetype=fasta"
+
+        ' Test a legacy fasta file:
+        strLegacyFasta = "GOs_Surface_Sargasso_Meso_2009-02-11_24.fasta"
+        strProteinCollectionList = ""
+        strProteinOptions = ""
+
+        ' Test a 34 MB fasta file
+        strLegacyFasta = "na"
+        strProteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig"
+        strProteinOptions = "seq_direction=forward,filetype=fasta"
+
+
+        Return TestProteinDBExport(DestFolder, "na", strProteinCollectionList, strProteinOptions)
+
+    End Function
+
+    Public Function TestProteinDBExport(ByVal DestFolder As String, _
+                                        ByVal strLegacyFasta As String, _
+                                        ByVal strProteinCollectionList As String, _
+                                        ByVal strProteinOptions As String) As Boolean
+
+        Dim HashString As String = String.Empty
+
+        'Instantiate fasta tool if not already done
+        If m_FastaTools Is Nothing Then
+            If m_FastaToolsCnStr = "" Then
+                Console.WriteLine("Protein database connection string not specified")
+                Return False
+            End If
+            m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
+        End If
+
+        'Initialize fasta generation state variables
+        m_GenerationStarted = False
+        m_GenerationComplete = False
+
+        'Setup a timer to prevent an infinite loop if there's a fasta generation problem
+        m_FastaTimer = New System.Timers.Timer
+        m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
+        m_FastaTimer.AutoReset = False
+
+        'Create the fasta file
+        m_FastaGenTimeOut = False
+        Try
+            m_FastaTimer.Start()
+            HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder)
+        Catch ex As Exception
+            Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: ", ex.Message)
+            Return False
+        End Try
+
+        'Wait for fasta creation to finish
+        While Not m_GenerationComplete
+            System.Threading.Thread.Sleep(2000)
+        End While
+
+        If m_FastaGenTimeOut Then
+            'Fasta generator hung - report error and exit
+            Console.WriteLine("Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString & " seconds have elapsed)")
+            Return False
+        End If
+
+        'If we got to here, everything worked OK
+        Return True
+
+    End Function
 
     Public Sub TestDeleteFiles()
 

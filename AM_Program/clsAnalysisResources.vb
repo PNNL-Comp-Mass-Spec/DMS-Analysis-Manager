@@ -124,9 +124,16 @@ Namespace AnalysisManagerBase
             Static dtLastLogTime As DateTime
             Static dblFractionDoneSaved As Double = -1
 
-            If m_DebugLevel >= 3 Then
+            Dim blnForcelog As Boolean = False
+
+            If m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT) Then
+                blnForcelog = True
+            End If
+
+            If m_DebugLevel >= 3 OrElse blnForcelog Then
                 ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-                If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+                If blnForcelog OrElse _
+                   System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
                    fractionDone - dblFractionDoneSaved >= 0.25 Then
                     dtLastLogTime = System.DateTime.Now
                     dblFractionDoneSaved = fractionDone

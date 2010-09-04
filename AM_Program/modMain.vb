@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "August 10, 2010"
+    Public Const PROGRAM_DATE As String = "September 3, 2010"
 
     Private mInputFilePath As String
 
@@ -46,6 +46,9 @@ Module modMain
 
         Try
             blnProceed = False
+
+            ' Look for /T on the command line
+            ' If present, this means "code test mode" is enabled
             If objParseCommandLine.ParseCommandLine Then
                 If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
             End If
@@ -91,7 +94,8 @@ Module modMain
                         'objTest.CheckETDModeEnabledXTandem("input.xml", False)
                         'objTest.TestDTAWatcher("E:\DMS_WorkDir", 5)
 
-                        objTest.SystemMemoryUsage()
+                        objTest.TestProteinDBExport("C:\DMS_Temp_Org")
+
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
                     End Try
