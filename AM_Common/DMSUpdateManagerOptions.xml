@@ -6,7 +6,7 @@
     <item key="TargetFolderPath" value="." />
     <item key="CopySubdirectoriesToParentFolder" value="True" />
     <item key="RebootCommandFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerReboot" />
-    <item key="FilesToIgnore" value="AnalysisManagerProg.exe.config, Utils.pyc, Global.pyc" />
+    <item key="FilesToIgnore" value="AnalysisManagerProg.exe.config, Utils.pyc, Global.pyc, PValues.txt, PTMods.txt" />
     <item key="LogMessages" value="True" />
   </section>
 </sections>
