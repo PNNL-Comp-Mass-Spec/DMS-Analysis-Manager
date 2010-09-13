@@ -743,6 +743,12 @@ Namespace AnalysisManagerBase
 
             Dim strMessage As String
             Dim blnErrorEncountered As Boolean = False
+            Dim intFailedFileCount As Integer = 0
+
+
+            Dim intRetryCount As Integer = 10
+            Dim intRetryHoldoffSeconds As Integer = 15
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = True
 
             Try
                 m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
@@ -769,41 +775,52 @@ Namespace AnalysisManagerBase
 
                 TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
 
-                'Verify transfer directory exists
-                If TransferFolderPath Is Nothing OrElse TransferFolderPath.Length = 0 OrElse _
-                   Not System.IO.Directory.Exists(TransferFolderPath) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Transfer folder not found, job " & m_jobParams.GetParam("Job"))
-                    m_message = "Transfer folder not found"
+                ' Verify transfer directory exists
+                ' First make sure TransferFolderPath is defined
+                If String.IsNullOrEmpty(TransferFolderPath) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+                    m_message = AppendToComment(m_message, "Transfer folder path not defined")
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
+                ' Now verify transfer directory exists
+                Try
+                    objAnalysisResults.FolderExistsWithRetry(TargetFolderPath)
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+                    m_message = AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+                    objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End Try
+
                 'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
+                ' First make sure "DatasetNum" is defined
                 DatasetName = m_jobParams.GetParam("DatasetNum")
-                If DatasetName Is Nothing OrElse DatasetName.Length = 0 Then
+                If String.IsNullOrEmpty(DatasetName) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("Job"))
                     m_message = "Dataset name is undefined"
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
+                ' Now create the folder if it doesn't exist
                 TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, DatasetName)
-                If Not System.IO.Directory.Exists(TargetFolderPath) Then
-                    'Make the dataset folder
-                    Try
-                        objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
-                    Catch ex As Exception
-                        m_message = AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderPath)) & ": " & ex.Message
-                        objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    End Try
-                End If
+                Try
+                    objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+                    m_message = AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+                    objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End Try
 
                 ' Now append the output folder name to TargetFolderPath
                 TargetFolderPath = System.IO.Path.Combine(TargetFolderPath, ResultsFolderName)
 
             Catch ex As Exception
-                m_message = AppendToComment(m_message, "Error creating results folder: " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
+                m_message = AppendToComment(m_message, "Error creating dataset folder in transfer directory")
                 If SourceFolderPath.Length > 0 Then
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                 End If
@@ -815,7 +832,7 @@ Namespace AnalysisManagerBase
                 htFilesToOverwrite = New System.Collections.Hashtable
                 htFilesToOverwrite.Clear()
 
-                If System.IO.Directory.Exists(TargetFolderPath) Then
+                If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
                     ' The xfer folder already exists
 
                     ' Examine the files in the results folder to see if any of the files already exist in the xfer folder
@@ -839,14 +856,16 @@ Namespace AnalysisManagerBase
                     Try
                         objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
                     Catch ex As Exception
-                        m_message = AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderPath)) & ": " & ex.Message
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+                        m_message = AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
                         objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                     End Try
                 End If
 
             Catch ex As Exception
-                m_message = AppendToComment(m_message, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
+                m_message = AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
@@ -869,26 +888,36 @@ Namespace AnalysisManagerBase
                     Try
                         If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
                             ' Copy file and overwrite existing
-                            objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True)
+                            objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                                                                 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
                         Else
                             ' Copy file only if it doesn't currently exist
                             If Not System.IO.File.Exists(strTargetPath) Then
-                                objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, 3, 10)
+                                objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                                                                     intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
                             End If
                         End If
                     Catch ex As Exception
                         ' Continue copying files; we'll fail the results at the end of this function
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
                         blnErrorEncountered = True
+                        intFailedFileCount += 1
                     End Try
                 Next
 
             Catch ex As Exception
-                m_message = AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
+                m_message = AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath))
                 blnErrorEncountered = True
             End Try
 
             If blnErrorEncountered Then
+                strMessage = "Error copying " & intFailedFileCount.ToString & " file"
+                If intFailedFileCount <> 1 Then
+                    strMessage &= "s"
+                End If
+                strMessage &= " to transfer folder"
+                m_message = AppendToComment(m_message, strMessage)
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             Else

@@ -147,7 +147,7 @@ Namespace AnalysisManagerBase
             Dim strMessage As String
 
             ' the source directory must exist, otherwise throw an exception
-            If Not diSourceDir.Exists Then
+            If Not FolderExistsWithRetry(diSourceDir.FullName, 3, 3) Then
                 strMessage = "Source directory does not exist: " + diSourceDir.FullName
                 If ContinueOnError Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
@@ -157,7 +157,7 @@ Namespace AnalysisManagerBase
                 End If
             Else
                 ' if destination SubDir's parent SubDir does not exist throw an exception
-                If Not diDestDir.Parent.Exists Then
+                If Not FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1) Then
                     strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName
                     If ContinueOnError Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
@@ -167,7 +167,7 @@ Namespace AnalysisManagerBase
                     End If
                 End If
 
-                If Not diDestDir.Exists Then
+                If Not FolderExistsWithRetry(diDestDir.FullName, 3, 3) Then
                     CreateFolderWithRetry(DestPath, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
                 End If
 
@@ -210,23 +210,38 @@ Namespace AnalysisManagerBase
         End Sub
 
         Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean)
-            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC)
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+        End Sub
+
+        Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, _
+                                     ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
         End Sub
 
         Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
                                      ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+        End Sub
+
+        Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
+                                     ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+                                     ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
             Dim AttemptCount As Integer = 0
             Dim blnSuccess As Boolean = False
+            Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
-            If RetryHoldoffSeconds < 1 Then RetryHoldoffSeconds = 1
+            If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+            If MaxRetryCount < 1 Then MaxRetryCount = 1
 
             ' First make sure the source file exists
             If Not System.IO.File.Exists(SrcFilePath) Then
                 Throw New System.IO.IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " & SrcFilePath)
             End If
 
-            Do While AttemptCount < MaxRetryCount And Not blnSuccess
+            Do While AttemptCount <= MaxRetryCount And Not blnSuccess
                 AttemptCount += 1
 
                 Try
@@ -241,9 +256,15 @@ Namespace AnalysisManagerBase
                         Throw New System.IO.IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
                     End If
 
-                    System.Threading.Thread.Sleep(RetryHoldoffSeconds * 1000)    'Wait several seconds before retrying
+                    System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))    'Wait several seconds before retrying
+
+                    GC.Collect()
+                    GC.WaitForPendingFinalizers()
                 End Try
 
+                If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                    sngRetryHoldoffSeconds *= 1.5!
+                End If
             Loop
 
             If Not blnSuccess Then
@@ -339,38 +360,56 @@ Namespace AnalysisManagerBase
         End Sub
 
         Public Sub CreateFolderWithRetry(ByVal FolderPath As String)
-            CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC)
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
         End Sub
 
-        Public Sub CreateFolderWithRetry(ByVal FolderPath As String, ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+        Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
+                                         ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+        End Sub
+
+        Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
+                                         ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+                                         ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
             Dim AttemptCount As Integer = 0
             Dim blnSuccess As Boolean = False
+            Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
-            If RetryHoldoffSeconds < 1 Then RetryHoldoffSeconds = 1
+            If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+            If MaxRetryCount < 1 Then MaxRetryCount = 1
 
-            ' If the folder already exists, then there is nothing to do
-            If System.IO.Directory.Exists(FolderPath) Then
-                Exit Sub
-            End If
-
-            Do While AttemptCount < MaxRetryCount And Not blnSuccess
+            Do While AttemptCount <= MaxRetryCount And Not blnSuccess
                 AttemptCount += 1
 
                 Try
-                    System.IO.Directory.CreateDirectory(FolderPath)
-                    blnSuccess = True
+                    If System.IO.Directory.Exists(FolderPath) Then
+                        ' If the folder already exists, then there is nothing to do
+                        blnSuccess = True
+                    Else
+                        System.IO.Directory.CreateDirectory(FolderPath)
+                        blnSuccess = True
+                    End If
 
                 Catch ex As Exception
                     Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath & ": " & ex.Message
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
-                    System.Threading.Thread.Sleep(RetryHoldoffSeconds * 1000)    'Wait several seconds before retrying
+
+                    System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))    'Wait several seconds before retrying
+
+                    GC.Collect()
+                    GC.WaitForPendingFinalizers()
                 End Try
 
+                If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                    sngRetryHoldoffSeconds *= 1.5!
+                End If
             Loop
 
             If Not blnSuccess Then
-                If Not System.IO.Directory.Exists(FolderPath) Then
+                If Not FolderExistsWithRetry(FolderPath, 1, 3) Then
                     Throw New System.IO.IOException("Excessive failures during folder creation")
                 End If
             End If
@@ -417,6 +456,62 @@ Namespace AnalysisManagerBase
             Next
 
         End Sub
+
+        Public Function FolderExistsWithRetry(ByVal FolderPath As String) As Boolean
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+        End Function
+
+        Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
+                                         ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
+            Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+            FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+        End Function
+
+        Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
+                                         ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+                                         ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
+
+            Dim AttemptCount As Integer = 0
+            Dim blnSuccess As Boolean = False
+            Dim blnFolderExists As Boolean = False
+
+            Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
+
+            If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+            If MaxRetryCount < 1 Then MaxRetryCount = 1
+
+            Do While AttemptCount <= MaxRetryCount And Not blnSuccess
+                AttemptCount += 1
+
+                Try
+                    blnFolderExists = System.IO.Directory.Exists(FolderPath)
+                    blnSuccess = True
+
+                Catch ex As Exception
+                    Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath & ": " & ex.Message
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+
+                    System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))    'Wait several seconds before retrying
+
+                    GC.Collect()
+                    GC.WaitForPendingFinalizers()
+                End Try
+
+                If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                    sngRetryHoldoffSeconds *= 1.5!
+                End If
+
+            Loop
+
+            If Not blnSuccess Then
+                ' Exception occurred; return False
+                Return False
+            End If
+
+            Return blnFolderExists
+
+        End Function
 #End Region
 
     End Class
