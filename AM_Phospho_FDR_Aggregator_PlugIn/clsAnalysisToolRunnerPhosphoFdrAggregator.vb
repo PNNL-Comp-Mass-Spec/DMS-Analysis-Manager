@@ -101,22 +101,28 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
-        result = ConcatenateResultFiles("_cid_outputAScore.txt")
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
+            result = ConcatenateResultFiles("_cid_outputAScore.txt")
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'TODO: What do we do here?
+                Return result
+            End If
         End If
 
-        result = ConcatenateResultFiles("_etd_outputAScore.txt")
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")) Then
+            result = ConcatenateResultFiles("_etd_outputAScore.txt")
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'TODO: What do we do here?
+                Return result
+            End If
         End If
 
-        result = ConcatenateResultFiles("_hcd_outputAScore.txt")
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
+        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")) Then
+            result = ConcatenateResultFiles("_hcd_outputAScore.txt")
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'TODO: What do we do here?
+                Return result
+            End If
         End If
 
 
