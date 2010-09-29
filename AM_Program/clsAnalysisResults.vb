@@ -459,13 +459,13 @@ Namespace AnalysisManagerBase
 
         Public Function FolderExistsWithRetry(ByVal FolderPath As String) As Boolean
             Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
-            FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+            Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
         End Function
 
         Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
                                          ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
             Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
-            FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+            Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
         End Function
 
         Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
