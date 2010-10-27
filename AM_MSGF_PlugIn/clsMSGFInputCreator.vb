@@ -212,22 +212,23 @@ Public MustInherit Class clsMSGFInputCreator
                                 AddModIfPresent(mStaticMods, clsMSGFRunner.N_TERMINAL_PROTEIN_SYMBOL_DMS, sbNewPeptide)
                             End If
                         End If
-
-                        If intIndex = intIndexEnd AndAlso mStaticMods.Count > 0 Then
-                            ' Possibly add a static C-terminal peptide mod
-                            AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PEPTIDE_SYMBOL_DMS, sbNewPeptide)
-
-                            If strPeptide.EndsWith(clsMSGFRunner.PROTEIN_TERMINUS_SYMBOL_PHRP) Then
-                                ' We're at the C-terminus of the protein
-                                ' Possibly add a static C-terminal protein mod
-                                AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PROTEIN_SYMBOL_DMS, sbNewPeptide)
-                            End If
-
-                        End If
                     Else
                         ' Not a letter; see if it is present in mDynamicMods
                         AddModIfPresent(mDynamicMods, strPeptide.Chars(intIndex), sbNewPeptide)
                     End If
+
+                    If intIndex = intIndexEnd AndAlso mStaticMods.Count > 0 Then
+                        ' Possibly add a static C-terminal peptide mod
+                        AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PEPTIDE_SYMBOL_DMS, sbNewPeptide)
+
+                        If strPeptide.EndsWith(clsMSGFRunner.PROTEIN_TERMINUS_SYMBOL_PHRP) Then
+                            ' We're at the C-terminus of the protein
+                            ' Possibly add a static C-terminal protein mod
+                            AddModIfPresent(mStaticMods, clsMSGFRunner.C_TERMINAL_PROTEIN_SYMBOL_DMS, sbNewPeptide)
+                        End If
+
+                    End If
+
                 End If
                 intIndex += 1
             Loop
