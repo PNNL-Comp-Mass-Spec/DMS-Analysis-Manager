@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "July 7, 2010"
+        MyBase.mFileDate = "October 26, 2010"
         InitializeVariables()
     End Sub
 

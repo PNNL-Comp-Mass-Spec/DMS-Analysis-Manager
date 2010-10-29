@@ -1,0 +1,3 @@
+These VB.NET files are mirrored content from the MSMSSpectrumFilter.DLL
+
+See http://prismsvn.pnl.gov/svn/User_Applications/Monroe_Utilities/MSMSSpectraPreprocessor/trunk/MsMsSpectrumFilter
