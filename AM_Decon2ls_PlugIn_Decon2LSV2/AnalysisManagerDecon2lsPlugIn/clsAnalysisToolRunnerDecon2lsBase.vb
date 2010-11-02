@@ -9,16 +9,9 @@ Option Strict On
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-'Imports PRISM.Processes
 Imports AnalysisManagerBase
-'Imports AnalysisManagerBase.clsGlobal
-'
+
 'Imports Decon2LS.Readers -> DeconToolsV2.Readers
-'Imports System.Exception
-'Imports System.Runtime.Remoting
-'Imports System.Runtime.Remoting.Channels
-'Imports System.Runtime.Remoting.Channels.tcp
-'Imports Decon2LSRemoter
 
 Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Inherits clsAnalysisToolRunnerBase
