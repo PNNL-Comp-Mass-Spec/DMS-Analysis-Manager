@@ -9,7 +9,7 @@ AnalysisManagerICR2LSPlugIn
 <member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR.FixICR2LSResultFileNames(System.String,System.String)">
 	<summary>
  Look for the .PEK and .PAR files in the specified folder
- Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
+ Make sure they are named Dataset_m_dd_yyyy.PAR and Dataset_m_dd_yyyy.Pek
  </summary>
 	<param name="strFolderPath">Folder to examine</param>
 	<param name="strDatasetName">Dataset name</param>
@@ -23,6 +23,19 @@ AnalysisManagerICR2LSPlugIn
 	<param name="ResultsFileNamePath"></param>
 	<param name="eICR2LSMode"></param>
 	<returns>True if successfully started; otherwise false</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants,System.Boolean,System.Int32,System.Int32)">
+	<summary>
+ Run ICR-2LS on the file (or 0.ser folder) specified by DSNamePath
+ </summary>
+	<param name="DSNamePath"></param>
+	<param name="ParamFilePath"></param>
+	<param name="ResultsFileNamePath"></param>
+	<param name="eICR2LSMode"></param>
+	<param name="UseAllScans"></param>
+	<param name="MinScan"></param>
+	<param name="MaxScan"></param>
+	<returns></returns>
 	<remarks></remarks>
 </member>
 </members>

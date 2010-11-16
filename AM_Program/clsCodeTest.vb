@@ -1221,6 +1221,18 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Sub TestFindFile()
+        Dim strFolderPath As String
+        Dim strFileName As String
+        Dim strPath As String
+
+        strFolderPath = "\\proto-3\12T_DMS3\111410_blank_H061010A_am_000001\111410_blank_H061010A_am_000001.d"
+        strFileName = "apexAcquisition.method"
+
+        strPath = clsAnalysisResources.FindFileInDirectoryTree(strFolderPath, strFileName)
+
+    End Sub
+
     Protected Sub FindAndReplace(ByRef lineText As String, ByRef strOldValue As String, ByRef strNewValue As String)
         Dim intMatchIndex As Integer
 

@@ -23,6 +23,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     Public Const ICR2LS_STATE_MMTOFPEKGENERATION As String = "MMTOFPEKGeneration"
     Public Const ICR2LS_STATE_LTQFTPEKGENERATION As String = "LTQFTPEKGeneration"
 
+    Protected Const APEX_ACQUISITION_METHOD_FILE As String = "apexAcquisition.method"
+
     ' ''Enumerated constants
     ''Public Enum ICR_STATUS As Short
     ''    'TODO: This list must be kept current with ICR2LS
@@ -45,6 +47,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         SFoldersTIC = 3
         SerFolderPEK = 4
         SerFolderTIC = 5
+        SerFilePEK = 6
+        SerFileTIC = 7
     End Enum
 
     Protected Structure udtICR2LSStatusType
@@ -356,24 +360,38 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''' <returns>True if successfully started; otherwise false</returns>
     ''' <remarks></remarks>
     Protected Function StartICR2LS(ByVal DSNamePath As String, _
-                                             ByVal ParamFilePath As String, _
-                                             ByVal ResultsFileNamePath As String, _
-                                             ByVal eICR2LSMode As ICR2LSProcessingModeConstants) As Boolean
+                                   ByVal ParamFilePath As String, _
+                                   ByVal ResultsFileNamePath As String, _
+                                   ByVal eICR2LSMode As ICR2LSProcessingModeConstants) As Boolean
         Return StartICR2LS(DSNamePath, ParamFilePath, ResultsFileNamePath, eICR2LSMode, True, 0, 0)
     End Function
 
+    ''' <summary>
+    ''' Run ICR-2LS on the file (or 0.ser folder) specified by DSNamePath
+    ''' </summary>
+    ''' <param name="DSNamePath"></param>
+    ''' <param name="ParamFilePath"></param>
+    ''' <param name="ResultsFileNamePath"></param>
+    ''' <param name="eICR2LSMode"></param>
+    ''' <param name="UseAllScans"></param>
+    ''' <param name="MinScan"></param>
+    ''' <param name="MaxScan"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Function StartICR2LS(ByVal DSNamePath As String, _
-                                             ByVal ParamFilePath As String, _
-                                             ByVal ResultsFileNamePath As String, _
-                                             ByVal eICR2LSMode As ICR2LSProcessingModeConstants, _
-                                             ByVal UseAllScans As Boolean, _
-                                             ByVal MinScan As Integer, _
-                                             ByVal MaxScan As Integer) As Boolean
+                                   ByVal ParamFilePath As String, _
+                                   ByVal ResultsFileNamePath As String, _
+                                   ByVal eICR2LSMode As ICR2LSProcessingModeConstants, _
+                                   ByVal UseAllScans As Boolean, _
+                                   ByVal MinScan As Integer, _
+                                   ByVal MaxScan As Integer) As Boolean
 
         Const MONITOR_INTERVAL_SECONDS As Integer = 4
 
         Dim strExeFilePath As String
         Dim strArguments As String
+        Dim strApexAcqFilePath As String
+
         Dim blnSuccess As Boolean
         Dim eLogLevel As clsLogTools.LogLevels
 
@@ -399,6 +417,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ' ICR-2LS.exe /I:InputFilePath /P:ParameterFilePath /O:OutputFilePath /M:[PEK|TIC] /T:[1|2] /F:FirstScan /L:LastScan
         '
         ' /M:PEK means to make a PEK file while /M:TIC means to generate the .TIC file
+        ' /T:0 is likely auto-determine based on input file name
         ' /T:1 means the input file is a Thermo .Raw file, and /I specifies a file path
         ' /T:2 means the input files are s-files in s-folders (ICR-2LS file format), and thus /I specifies a folder path
         '
@@ -406,11 +425,27 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ' 
         ' See clsAnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders 
 
-        If eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK Or eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderTIC Then
-            strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & "\acqus /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
-        Else
-            strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
-        End If
+
+        ' TODO: For 12T datasets with .D folders, need to send the path to the apexAcquisition.method file in the .M folder
+
+        Select Case eICR2LSMode
+            Case ICR2LSProcessingModeConstants.SerFolderPEK, ICR2LSProcessingModeConstants.SerFolderTIC
+                strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & "\acqus /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+
+            Case ICR2LSProcessingModeConstants.SerFilePEK, ICR2LSProcessingModeConstants.SerFileTIC
+                ' Need to find the location of the apexAcquisition.method file
+                strApexAcqFilePath = AnalysisManagerBase.clsAnalysisResources.FindFileInDirectoryTree(System.IO.Path.GetDirectoryName(DSNamePath), APEX_ACQUISITION_METHOD_FILE)
+
+                If String.IsNullOrEmpty(strApexAcqFilePath) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not find the " & APEX_ACQUISITION_METHOD_FILE & " file in folder " & DSNamePath)
+                    Return False
+                Else
+                    strArguments = " /I:" & PossiblyQuotePath(strApexAcqFilePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+                End If
+
+            Case Else
+                strArguments = " /I:" & PossiblyQuotePath(DSNamePath) & " /P:" & PossiblyQuotePath(ParamFilePath) & " /O:" & PossiblyQuotePath(ResultsFileNamePath)
+        End Select
 
 
         Select Case eICR2LSMode
@@ -424,9 +459,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 strArguments &= " /M:PEK /T:2"
             Case ICR2LSProcessingModeConstants.SFoldersTIC
                 strArguments &= " /M:TIC /T:2"
-            Case ICR2LSProcessingModeConstants.SerFolderPEK
+            Case ICR2LSProcessingModeConstants.SerFolderPEK, ICR2LSProcessingModeConstants.SerFilePEK
                 strArguments &= " /M:PEK /T:0"
-            Case ICR2LSProcessingModeConstants.SerFolderTIC
+            Case ICR2LSProcessingModeConstants.SerFolderTIC, ICR2LSProcessingModeConstants.SerFileTIC
                 strArguments &= " /M:TIC /T:0"
             Case Else
                 ' Unknown mode
@@ -445,7 +480,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
         ' Initialize the program runner
         mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        mCmdRunner.MonitorInterval = MONITOR_INTERVAL_SECONDS
+        mCmdRunner.MonitorInterval = MONITOR_INTERVAL_SECONDS * 1000
 
         ' Set up and execute a program runner to run ICR2LS.exe
         If m_DebugLevel >= 1 Then

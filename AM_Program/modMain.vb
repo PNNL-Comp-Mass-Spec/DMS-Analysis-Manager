@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "September 3, 2010"
+    Public Const PROGRAM_DATE As String = "November 15, 2010"
 
     Private mInputFilePath As String
 
@@ -94,7 +94,9 @@ Module modMain
                         'objTest.CheckETDModeEnabledXTandem("input.xml", False)
                         'objTest.TestDTAWatcher("E:\DMS_WorkDir", 5)
 
-                        objTest.TestProteinDBExport("C:\DMS_Temp_Org")
+                        'objTest.TestProteinDBExport("C:\DMS_Temp_Org")
+
+                        objTest.TestFindFile()
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

@@ -15,7 +15,6 @@ Imports ParamFileGenerator.MakeParams
 Imports Protein_Exporter
 Imports Protein_Exporter.ExportProteinCollectionsIFC
 Imports System.Timers
-Imports System.Collections.Specialized
 Imports System.Data.SqlClient
 
 Namespace AnalysisManagerBase
@@ -45,8 +44,8 @@ Namespace AnalysisManagerBase
         Protected Const SHARPZIPLIB_MAX_FILESIZE_MB As Integer = 1024
 
         ' Note: These constants need to be all lowercase
-        Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data
-        Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"      'FTICR data
+        Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data, Agilent TOF data
+        Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"      'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
         Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"          'Micromass QTOF data
 
         Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"            'Finnigan ion trap/LTQ-FT data
@@ -54,11 +53,20 @@ Namespace AnalysisManagerBase
         Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"          'IMS_UIMF (IMS_Agilent_TOF in DMS)
         Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"        'mzXML
 
-        Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"     ' Bruker folders that have a ser file, analysis.baf file and a XMASS_Method.m subfolder with file apexAcquisition.method
+        ' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+        ' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
-        Public Const RAW_DATA_TYPE_BRUKER_TOF_FOLDER As String = "bruker_tof"   ' Bruker folders for Maldi TOF_TOF.  Main folder as a .emf graphic file, then a series of subfolders, one per pixel from the MALDI imaging.  Each subfolder will have more subfolders; the important files are the fid file with the raw data and the acqus with the method
+        ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder; inside that folder is the analysis.baf file and a .m subfolder
+        ' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
+        ' 15T datasets also have raw_data_type "bruker_ft"
+        Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
+
+        ' Bruker folders for Maldi TOF_TOF.  Main folder has a .emf graphic file, then a series of subfolders, one per pixel from the MALDI imaging.  Each subfolder will have more subfolders; the important files are the fid file with the raw data and the acqus with the method
+        ' Instruments: BrukerTOF_01 and the 9T
+        Public Const RAW_DATA_TYPE_BRUKER_TOF_FOLDER As String = "bruker_tof"
 
         Public Const DOT_WIFF_EXTENSION As String = ".wiff"
+        Public Const DOT_D_EXTENSION As String = ".d"
         Public Const DOT_RAW_EXTENSION As String = ".raw"
         Public Const DOT_UIMF_EXTENSION As String = ".uimf"
         Public Const DOT_MZXML_EXTENSION As String = ".mzxml"
@@ -69,6 +77,7 @@ Namespace AnalysisManagerBase
         Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
         Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
+        Public Const BRUKER_SER_FILE As String = "ser"
 #End Region
 
 #Region "Module variables"
@@ -225,10 +234,10 @@ Namespace AnalysisManagerBase
         ''' <returns>TRUE for success; FALSE for failure</returns>
         ''' <remarks></remarks>
         Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
-                                             ByVal InpFolder As String, _
-                                             ByVal OutDir As String, _
-                                             ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-                                             ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+                                                       ByVal InpFolder As String, _
+                                                       ByVal OutDir As String, _
+                                                       ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+                                                       ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
             Dim SourceFile As String = String.Empty
             Dim DestFilePath As String = String.Empty
@@ -257,7 +266,7 @@ Namespace AnalysisManagerBase
                     Return True
                 Else
                     m_message = "Error copying file " & SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     Return False
                 End If
 
@@ -350,7 +359,7 @@ Namespace AnalysisManagerBase
                     Return True
                 Else
                     m_message = "Error copying file " & SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     Return False
                 End If
 
@@ -401,6 +410,44 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
+        ''' Looks for file strFileName in strFolderPath or any of its subfolders
+        ''' The filename may contain a wildcard character, in which case the first match will be returned
+        ''' </summary>
+        ''' <param name="strFolderPath">Folder path to examine</param>
+        ''' <param name="strFileName">File name to find</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Public Shared Function FindFileInDirectoryTree(ByVal strFolderPath As String, ByVal strFileName As String) As String
+            Dim ioFolder As System.IO.DirectoryInfo
+            Dim ioFile As System.IO.FileSystemInfo
+            Dim ioSubFolder As System.IO.FileSystemInfo
+
+            Dim strFilePathMatch As String = String.Empty
+
+            ioFolder = New System.IO.DirectoryInfo(strFolderPath)
+
+            If ioFolder.Exists Then
+                ' Examine the files for this folder
+                For Each ioFile In ioFolder.GetFiles(strFileName)
+                    strFilePathMatch = ioFile.FullName
+                    Return strFilePathMatch
+                Next
+
+                ' Match not found
+                ' Recursively call this function with the subdirectories in this folder
+
+                For Each ioSubFolder In ioFolder.GetDirectories
+                    strFilePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, strFileName)
+                    If Not String.IsNullOrEmpty(strFilePathMatch) Then
+                        Return strFilePathMatch
+                    End If
+                Next
+            End If
+
+            Return strFilePathMatch
+        End Function
+
+        ''' <summary>
         ''' Looks for the specified file in the given folder
         ''' If present, returns the full path to the file
         ''' If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
@@ -447,8 +494,11 @@ Namespace AnalysisManagerBase
         ''' <summary>
         ''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
         ''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
-        ''' If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
-        ''' If a 0.ser folder is found, then returns the path to the 0.ser folder
+        ''' If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+        ''' If found, returns the path to the ser file
+        ''' If not found, then looks for a 0.ser folder in the specified folder
+        ''' If found, returns the path to the 0.ser folder
+        ''' Otherwise, returns an empty string
         ''' </summary>
         ''' <param name="FolderPath">The folder to look in</param>
         ''' <returns></returns>
@@ -456,6 +506,7 @@ Namespace AnalysisManagerBase
         Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
 
             Dim ioFolder As System.IO.DirectoryInfo
+            Dim ioFile As System.IO.FileInfo
 
             Dim srInFile As System.IO.StreamReader
             Dim strPhysicalFilePath As String = String.Empty
@@ -478,12 +529,18 @@ Namespace AnalysisManagerBase
                 srInFile.Close()
             Else
                 ' The desired file was not found
-                ' See if a folder named 0.ser exists in FolderPath
 
-                strPhysicalFilePath = System.IO.Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
-                ioFolder = New System.IO.DirectoryInfo(strPhysicalFilePath)
-                If Not ioFolder.Exists Then
-                    strPhysicalFilePath = ""
+                ' Look for a ser file in the dataset folder
+                strPhysicalFilePath = System.IO.Path.Combine(FolderPath, BRUKER_SER_FILE)
+                ioFile = New System.IO.FileInfo(strPhysicalFilePath)
+
+                If Not ioFile.Exists Then
+                    ' See if a folder named 0.ser exists in FolderPath
+                    strPhysicalFilePath = System.IO.Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
+                    ioFolder = New System.IO.DirectoryInfo(strPhysicalFilePath)
+                    If Not ioFolder.Exists Then
+                        strPhysicalFilePath = ""
+                    End If
                 End If
 
             End If
@@ -515,39 +572,61 @@ Namespace AnalysisManagerBase
                                                        ByVal WorkDir As String, _
                                                        ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-            Dim OpResult As Boolean = False
+            Dim blnSuccess As Boolean = False
+            Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving spectra file(s)")
 
             Select Case RawDataType.ToLower
                 Case RAW_DATA_TYPE_DOT_D_FOLDERS            'Agilent ion trap data
-                    If RetrieveMgfFile(WorkDir, True, CreateStoragePathInfoOnly) Then OpResult = True
+
+                    If StoragePath.ToLower.Contains("Agilent_SL1".ToLower) OrElse _
+                       StoragePath.ToLower.Contains("Agilent_XCT1".ToLower) Then
+                        ' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
+                        '  we would pre-process the data beforehand to create MGF files
+                        ' The following call can be used to retrieve the files
+                        blnSuccess = RetrieveMgfFile(WorkDir, True, CreateStoragePathInfoOnly)
+                    Else
+                        ' DeconTools_V2 now supports reading the .D files directly
+                        ' Call RetrieveDotDFolder() to copy the folder and all subfolders
+                        blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
+                    End If
 
                 Case RAW_DATA_TYPE_DOT_WIFF_FILES           'Agilent/QSTAR TOF data
-                    If RetrieveDatasetFile(WorkDir, DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveDatasetFile(WorkDir, DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly)
 
                 Case RAW_DATA_TYPE_ZIPPED_S_FOLDERS         'FTICR data
-                    If RetrieveSFolders(WorkDir, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveSFolders(WorkDir, CreateStoragePathInfoOnly)
 
                 Case RAW_DATA_TYPE_DOT_RAW_FILES            'Finnigan ion trap/LTQ-FT data
-                    If RetrieveDatasetFile(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveDatasetFile(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly)
 
                 Case RAW_DATA_TYPE_DOT_RAW_FOLDER           'Micromass QTOF data
-                    If RetrieveDotRawFolder(WorkDir, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveDotRawFolder(WorkDir, CreateStoragePathInfoOnly)
 
                 Case RAW_DATA_TYPE_DOT_UIMF_FILES           'IMS UIMF data
-                    If RetrieveDatasetFile(WorkDir, DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveDatasetFile(WorkDir, DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly)
 
                 Case RAW_DATA_TYPE_DOT_MZXML_FILES
-                    If RetrieveDatasetFile(WorkDir, DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly) Then OpResult = True
+                    blnSuccess = RetrieveDatasetFile(WorkDir, DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly)
 
-                Case Else           'Something bad has happened if we ever get to here
+                Case RAW_DATA_TYPE_BRUKER_FT_FOLDER
+                    ' Call RetrieveDotDFolder() to copy the folder and all subfolders
+                    ' Note: we're skipping the analysis.baf since none of our tools use it
+
+                    blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
+
+                Case RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                    blnSuccess = RetrieveBrukerTOFFolder(WorkDir, CreateStoragePathInfoOnly)
+
+                Case Else
+                    ' RawDataType is not recognized
                     m_message = "Invalid data type specified: " & RawDataType
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             End Select
 
             'Return the result of the spectra retrieval
-            Return OpResult
+            Return blnSuccess
 
         End Function
 
@@ -589,7 +668,7 @@ Namespace AnalysisManagerBase
             'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
             Dim DSName As String = m_jobParams.GetParam("datasetNum")
-            Dim ServerPath As String = FindValidFolder(DSName, "", "*.D")
+            Dim ServerPath As String = FindValidFolder(DSName, "", "*" & DOT_D_EXTENSION)
 
             Dim DSFolders() As String
             Dim DSFiles() As String = Nothing
@@ -680,20 +759,62 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
-        ''' Retrieves a .raw folder from Micromass TOF for the analysis job in progress
+        ''' Retrieves an Agilent .D folder for the analysis job in progress
         ''' </summary>
         ''' <param name="WorkDir">Destination directory for copy</param>
         ''' <returns>TRUE for success; FALSE for failure</returns>
         ''' <remarks></remarks>
-        Protected Overridable Function RetrieveDotRawFolder(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+        Protected Overridable Function RetrieveDotDFolder(ByVal WorkDir As String, _
+                                                          ByVal CreateStoragePathInfoOnly As Boolean, _
+                                                          ByVal blnSkipBAFFiles As Boolean) As Boolean
+            Dim objFileNamesToSkip As List(Of String)
 
-            'Copies a .raw data folder from the Micromass TOF datafile to the working directory
+            objFileNamesToSkip = New List(Of String)
+            If blnSkipBAFFiles Then
+                objFileNamesToSkip.Add("analysis.baf")
+
+            End If
+
+            Return RetrieveDotXFolder(WorkDir, DOT_D_EXTENSION, CreateStoragePathInfoOnly, objFileNamesToSkip)
+        End Function
+
+        ''' <summary>
+        ''' Retrieves a Micromass .raw folder for the analysis job in progress
+        ''' </summary>
+        ''' <param name="WorkDir">Destination directory for copy</param>
+        ''' <returns>TRUE for success; FALSE for failure</returns>
+        ''' <remarks></remarks>
+        Protected Overridable Function RetrieveDotRawFolder(ByVal WorkDir As String, _
+                                                            ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+            Return RetrieveDotXFolder(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, New List(Of String))
+        End Function
+
+
+        ''' <summary>
+        ''' Retrieves a folder with a name like Dataset.D or Dataset.Raw
+        ''' </summary>
+        ''' <param name="WorkDir">Destination directory for copy</param>
+        ''' <param name="FolderExtension">Extension on the folder; for example, ".D"</param>
+        ''' <returns>TRUE for success; FALSE for failure</returns>
+        ''' <remarks></remarks>
+        Protected Overridable Function RetrieveDotXFolder(ByVal WorkDir As String, _
+                                                          ByVal FolderExtension As String, _
+                                                          ByVal CreateStoragePathInfoOnly As Boolean, _
+                                                          ByVal objFileNamesToSkip As List(Of String)) As Boolean
+
+            'Copies a data folder ending in FolderExtension to the working directory
             Dim DSName As String = m_jobParams.GetParam("datasetNum")
-            Dim ServerPath As String = FindValidFolder(DSName, "", "*.raw")
+
+            If Not FolderExtension.StartsWith(".") Then
+                FolderExtension = "." & FolderExtension
+            End If
+            Dim FolderExtensionWildcard As String = "*" & FolderExtension
+
+            Dim ServerPath As String = FindValidFolder(DSName, "", FolderExtensionWildcard)
             Dim DestFolderPath As String
 
-            'Find the .raw folder in the dataset folder
-            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, "*.raw")
+            'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
+            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, FolderExtensionWildcard)
             If RemFolders.GetLength(0) <> 1 Then Return False
 
             'Set up the file paths
@@ -701,23 +822,25 @@ Namespace AnalysisManagerBase
 
             'Do the copy
             Try
-                DestFolderPath = System.IO.Path.Combine(WorkDir, DSName & ".raw")
+                DestFolderPath = System.IO.Path.Combine(WorkDir, DSName & FolderExtension)
 
                 If CreateStoragePathInfoOnly Then
                     If Not System.IO.Directory.Exists(DSFolderPath) Then
                         m_message = "Source folder not found: " & DSFolderPath
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                         Return False
                     Else
                         CreateStoragePathInfoFile(DSFolderPath, DestFolderPath)
                     End If
                 Else
-                    CopyDirectory(DSFolderPath, DestFolderPath)
+                    ' Copy the directory and all subdirectories
+                    ' Skip any files defined by objFileNamesToSkip
+                    PRISM.Files.clsFileTools.CopyDirectory(DSFolderPath, DestFolderPath, objFileNamesToSkip)
                 End If
 
             Catch ex As Exception
                 m_message = "Error copying folder " & DSFolderPath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message & " to working directory: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " to working directory: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
                 Return False
             End Try
 
@@ -726,6 +849,53 @@ Namespace AnalysisManagerBase
 
         End Function
 
+        Public Function RetrieveBrukerTOFFolder(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+
+            Dim DSName As String = m_jobParams.GetParam("datasetNum")
+            Dim ServerPath As String = FindValidFolder(DSName, "")
+            Dim DestFolderPath As String
+
+            ''''''''''''''''''''''''''''''''''''
+            ' TODO: Finalize this code
+            '       DMS doesn't yet have a BrukerTOF dataset 
+            '        so we don't know the official folder structure
+            ''''''''''''''''''''''''''''''''''''
+
+            ' Find the instrument data folder in the dataset folder
+            ' The instrument data folder should have the same name as the dataset folder
+            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, DSName)
+            If RemFolders.GetLength(0) <> 1 Then Return False
+
+            'Set up the file paths
+            Dim DSFolderPath As String = Path.Combine(ServerPath, RemFolders(0))
+
+            'Do the copy
+            Try
+                DestFolderPath = System.IO.Path.Combine(WorkDir, DSName)
+
+                If CreateStoragePathInfoOnly Then
+                    If Not System.IO.Directory.Exists(DSFolderPath) Then
+                        m_message = "Source folder not found: " & DSFolderPath
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Return False
+                    Else
+                        CreateStoragePathInfoFile(DSFolderPath, DestFolderPath)
+                    End If
+                Else
+                    ' Copy the directory and all subdirectories
+                    PRISM.Files.clsFileTools.CopyDirectory(DSFolderPath, DestFolderPath)
+                End If
+
+            Catch ex As Exception
+                m_message = "Error copying folder " & DSFolderPath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " to working directory: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Return False
+            End Try
+
+            ' If we get here, all is fine
+            Return True
+
+        End Function
         ''' <summary>
         ''' Unzips dataset folders to working directory
         ''' </summary>
@@ -1230,7 +1400,7 @@ Namespace AnalysisManagerBase
                         m_message &= " containing file " & FileNameToFind
                     End If
                     Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("Job") & ", Dataset " & DSName
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 End If
 
             Catch ex As Exception
@@ -1445,7 +1615,7 @@ Namespace AnalysisManagerBase
 
             Catch ex As Exception
                 Dim Msg As String = m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 If Not ParFileGen Is Nothing Then
                     If Not ParFileGen.LastError Is Nothing Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error converting param file: " & ParFileGen.LastError)

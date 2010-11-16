@@ -311,6 +311,15 @@ AnalysisManagerProg
 	<param name="DestFilePath">The path where the file would have been copied to</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindFileInDirectoryTree(System.String,System.String)">
+	<summary>
+ Looks for file strFileName in strFolderPath or any of its subfolders
+ The filename may contain a wildcard character, in which case the first match will be returned
+ </summary>
+	<param name="strFolderPath">Folder path to examine</param>
+	<param name="strFileName">File name to find</param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(System.String,System.String)">
 	<summary>
  Looks for the specified file in the given folder
@@ -326,8 +335,11 @@ AnalysisManagerProg
 	<summary>
  Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
  If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
- If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
- If a 0.ser folder is found, then returns the path to the 0.ser folder
+ If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+ If found, returns the path to the ser file
+ If not found, then looks for a 0.ser folder in the specified folder
+ If found, returns the path to the 0.ser folder
+ Otherwise, returns an empty string
  </summary>
 	<param name="FolderPath">The folder to look in</param>
 	<returns></returns>
@@ -376,11 +388,26 @@ AnalysisManagerProg
 	<param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
 	<returns>True if the file was found and retrieved, otherwise False</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotDFolder(System.String,System.Boolean,System.Boolean)">
 	<summary>
- Retrieves a .raw folder from Micromass TOF for the analysis job in progress
+ Retrieves an Agilent .D folder for the analysis job in progress
  </summary>
 	<param name="WorkDir">Destination directory for copy</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
+	<summary>
+ Retrieves a Micromass .raw folder for the analysis job in progress
+ </summary>
+	<param name="WorkDir">Destination directory for copy</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotXFolder(System.String,System.String,System.Boolean,System.Collections.Generic.List{System.String})">
+	<summary>
+ Retrieves a folder with a name like Dataset.D or Dataset.Raw
+ </summary>
+	<param name="WorkDir">Destination directory for copy</param>
+	<param name="FolderExtension">Extension on the folder; for example, ".D"</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveSFolders(System.String,System.Boolean)">

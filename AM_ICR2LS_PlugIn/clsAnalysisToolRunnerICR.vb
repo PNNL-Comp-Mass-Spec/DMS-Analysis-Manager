@@ -49,10 +49,15 @@ Public Class clsAnalysisToolRunnerICR
         Dim MaxScan As Integer = 0
         Dim UseAllScans As Boolean = True
 
-        Dim SerFolderPath As String
+        Dim SerFileOrFolderPath As String
+        Dim eICR2LSMode As ICR2LSProcessingModeConstants
+        Dim strSerTypeName As String
 
         Dim OutFileNamePath As String
         Dim ParamFilePath As String
+        Dim RawDataType As String
+        Dim DatasetFolderPathBase As String
+
         Dim blnSuccess As Boolean
 
         'Start with base class function to get settings information
@@ -89,28 +94,63 @@ Public Class clsAnalysisToolRunnerICR
         'Assemble the dataset name
         DatasetName = m_jobParams.GetParam("datasetNum")
         DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, DatasetName))
+        RawDataType = m_jobParams.GetParam("RawDataType")
 
         'Assemble the output file name and path
         OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
 
-        ' Determine the location of the "0.ser" folder
+        ' Determine the location of the ser file
+        ' It could be in a "0.ser" folder or a ser file inside a .D folder
+
         If clsAnalysisResourcesIcr2ls.PROCESS_SER_FOLDER_OVER_NETWORK Then
-            SerFolderPath = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+            SerFileOrFolderPath = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
         Else
-            ' Look for the "0.ser" folder in the working directory
-            SerFolderPath = System.IO.Path.Combine(m_WorkDir, "0.ser")
-            If Not System.IO.Directory.Exists(SerFolderPath) Then
-                ' Folder does not exist
-                ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-                '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-                SerFolderPath = String.Empty
+            If RawDataType.ToLower() = AnalysisManagerBase.clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+                DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, DatasetName & ".d")
+            Else
+                DatasetFolderPathBase = String.Copy(m_WorkDir)
+            End If
+
+            ' Look for a ser file in the working directory
+            SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
+
+            If System.IO.File.Exists(SerFileOrFolderPath) Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
+                End If
+            Else
+
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
+                End If
+
+                ' Look for the "0.ser" folder in the working directory
+                SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
+                If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
+                    ' Folder does not exist
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
+                    End If
+
+                    ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+                    '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+                    SerFileOrFolderPath = String.Empty
+                End If
             End If
         End If
 
-        If Not String.IsNullOrEmpty(SerFolderPath) Then
-            blnSuccess = MyBase.StartICR2LS(SerFolderPath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SerFolderPEK, UseAllScans, MinScan, MaxScan)
+        If Not String.IsNullOrEmpty(SerFileOrFolderPath) Then
+            If System.IO.Path.GetFileName(SerFileOrFolderPath).ToLower = clsAnalysisResources.BRUKER_SER_FILE.ToLower() Then
+                eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK
+                strSerTypeName = "file"
+            Else
+                eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK
+                strSerTypeName = "folder"
+            End If
+
+            blnSuccess = MyBase.StartICR2LS(SerFileOrFolderPath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
             If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on folder " & SerFolderPath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on " & strSerTypeName & " " & SerFileOrFolderPath)
             End If
         Else
             ' Processing zipped s-folders
@@ -121,7 +161,8 @@ Public Class clsAnalysisToolRunnerICR
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.SFoldersPEK, UseAllScans, MinScan, MaxScan)
+            eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK
+            blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
 
             If Not blnSuccess Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on zipped s-files in " & DSNamePath)
@@ -192,7 +233,7 @@ Public Class clsAnalysisToolRunnerICR
 
     ''' <summary>
     ''' Look for the .PEK and .PAR files in the specified folder
-    ''' Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
+    ''' Make sure they are named Dataset_m_dd_yyyy.PAR and Dataset_m_dd_yyyy.Pek
     ''' </summary>
     ''' <param name="strFolderPath">Folder to examine</param>
     ''' <param name="strDatasetName">Dataset name</param>

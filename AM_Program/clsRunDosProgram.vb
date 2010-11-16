@@ -204,6 +204,9 @@ Namespace AnalysisManagerBase
             'DAC debugging
             '		System.Threading.Thread.CurrentThread.Name = "RunProg"
 
+            ' Require a minimum monitoring interval of 250 mseconds
+            If m_MonitorInterval < 250 Then m_MonitorInterval = 250
+
             With m_ProgRunner
                 .Arguments = CmdLine
                 .CreateNoWindow = m_CreateNoWindow
