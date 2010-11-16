@@ -635,7 +635,8 @@ Public Class clsMSGFRunner
         Dim msXmlGenerator As String = "ReadW.exe"
         Dim dtStartTime As System.DateTime
 
-        Dim CentroidMSXML As Boolean = False
+        ' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
+        Dim CentroidMSXML As Boolean = True
 
         Dim ReadWProgramPath As String
         Dim eOutputType As clsMSXMLGenReadW.MSXMLOutputTypeConstants
