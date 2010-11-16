@@ -17,6 +17,7 @@ Public Class clsAnalysisResourcesXTHPC
     'Friend Const HPC_ACCOUNT_NAME As String = "emsl33210"
 
     ' This is the MPP3 idle account (enabled June 2, 2010 by Erich Vorpagel)
+    ' As of October 2010 it is linked to EMSL proposal 34708 with 80,000 hours
     Friend Const HPC_ACCOUNT_NAME As String = "mscfidle"
 
     Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
