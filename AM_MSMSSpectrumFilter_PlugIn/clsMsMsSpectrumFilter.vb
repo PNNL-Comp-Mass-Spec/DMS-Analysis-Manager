@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "October 26, 2010"
+        MyBase.mFileDate = "November 19, 2010"
         InitializeVariables()
     End Sub
 
@@ -49,6 +49,9 @@ Public Class clsMsMsSpectrumFilter
     Public Const DEFAULT_IONFILTER_PRECURSOR_TOLERANCE_MZ As Double = 3.1
     Public Const DEFAULT_IONFILTER_PRECURSOR_NL_CLEANING_WINDOW_DA As Double = 60
 
+    Public Const DEFAULT_MODE4_REPORTER_ION_MZs As String = "204.0871934, 300.130787, 503.2101566"
+    Public Const DEFAULT_MODE4_PARENT_ION_MASS_LOSS_DA As Single = 502.2023
+
     Public Enum eFilterMsMsSpectraErrorCodes
         NoError = 0
         ReservedUnusedError = 1
@@ -68,6 +71,7 @@ Public Class clsMsMsSpectrumFilter
         mode1 = 1               ' Simple filter, only looks at spacing between ions
         mode2 = 2               ' Filter based on Spequal, by Sam Purvine
         mode3 = 3               ' Phosphorylation Neutral Loss filter
+        mode4 = 4               ' Look for reporter ions at specific m/z values
     End Enum
 
     Public Enum FilterMode1Options
@@ -105,21 +109,6 @@ Public Class clsMsMsSpectrumFilter
         BasePeakIntensityMinimum = 0
         MassToleranceHalfWidthMZ = 1
         NLAbundanceThresholdFractionMax = 2
-    End Enum
-
-    ' Be sure to update NEUTRAL_LOSS_CODE_COUNT when changing enum eNeutralLossCodeConstants
-    Public Const NEUTRAL_LOSS_CODE_COUNT As Integer = 10
-    Public Enum eNeutralLossCodeConstants
-        CustomMass = 0
-        NL98 = 1            ' loss of 98 from the parent m/z
-        NL116 = 2           ' loss of (98+18) = 116
-        NL49 = 3            ' loss of 98/2 = 49
-        NL58 = 4            ' loss of (98+18)/2 = 58 
-        NL107 = 5           ' loss of (98*2+18)/2 = 107
-        NL33 = 6            ' loss of 98/3 = 32.66
-        NL65 = 7            ' loss of (98*2)/3 = 65.32
-        NL39 = 8            ' loss of (98+18)/3 = 38.66
-        NL71 = 9            ' loss of (98*2+18)/3 = 71.32
     End Enum
 
     ' The ScanStats file has additional columns, but these are the only ones we care about
@@ -232,6 +221,22 @@ Public Class clsMsMsSpectrumFilter
         Public SpecificMZLosses As String                       ' Comma separated list of specific m/z loss values to search for.  When defined (and non-zero) then only looks for parent ion losses matching these m/z values
     End Structure
 
+    ''' <summary>
+    ''' Filter mode 4 looks for the presence of 1 or more reporter ions at specific m/z values
+    ''' If the minimum number of ions are present (above an intensity threhsold) then the spectrum is kept
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Structure FilterMode4OptionsType
+        Public ReporterIonMZs As String                         ' Comma-separated list of m/z values to look for
+        Public ReporterIonIntensityThreshold As Single          ' Minimum intensity (ion counts) that the ion must be present at
+        Public ReporterIonToleranceHalfWidthMZ As Single        ' Search tolerance (+/- this value)
+        Public RemoveReporterIons As Boolean                    ' If true, then the reporter ions are removed from the spectrum
+        Public PrecursorIonMassLossDa As Single                 ' Will change the mass of the parent ion listed for each spectrum by this amount (correcting for charge, as needed).  This is needed if gas phase chemistry causes the precursor ion to lose a functional group, thereby decreasing the effective mass of the precursor
+        Public ReporterIonMatchCountMinimum As Integer
+        Public RemoveMassCorrectedPrecursorIons As Boolean      ' If true, then looks for ions at the new m/z that the precursor should have, given the precursor mass minus PrecursorIonMassLossDa; will look at the charge state of the precursor ion and at the charge one smaller than the precursor ion
+        Public PrecursorIonMinimumCharge As Short
+    End Structure
+
     Protected Structure IonFilterOptionsType
         Public RemovePrecursor As Boolean
         Public RemoveChargeReducedPrecursors As Boolean
@@ -254,6 +259,7 @@ Public Class clsMsMsSpectrumFilter
         ' If FilterMode1, then equals PercentAbundantPeaksWithMassDiffMatches
         ' If FilterMode2, then equals FilterMode2Score
         ' If FilterMode3, then set to 1 if it has phosphorylation signatures, and 0 if not
+        ' If FilterMode4, then set to 1 if the reporter ions are present, and 0 if not
         Public SpectrumQualityScore As Single
         Public IonPairCount As Integer
         Public IonPairCountScore As Single
@@ -307,17 +313,28 @@ Public Class clsMsMsSpectrumFilter
         Public QualityScore As Single
     End Structure
 
-    Protected Structure udtNeutralLossMassesType
-        Public NeutralLossMass As Double
-        Public LowerBoundMZ As Double
-        Public UpperBoundMZ As Double
-        Public NeutralLossCode As eNeutralLossCodeConstants
-    End Structure
+    ''Protected Structure udtNeutralLossMassesType
+    ''    Public NeutralLossMass As Double
+    ''    Public LowerBoundMZ As Double
+    ''    Public UpperBoundMZ As Double
+    ''    Public SearchMassCode As SearchMassSpecsClass.eSearchMassCodeConstants
+    ''End Structure
 
-    Public Structure udtNLStatsType
-        Public PrecursorMZ As Double
+    Public Structure udtIonMatchStatsType
         Public BPI As Single
-        Public NeutralLossIntensitiesNormalized() As Single     ' Values between 0 and 100, computed via peak intensity / BPI * 100; use eNeutralLossCodeConstants to determine which index corresponds to which neutral loss value
+        ' Used by both Mode 3 and Mode 4
+        ' For Mode 3, use SearchMassSpecsClass.eSearchMassCodeConstants to determine which index corresponds to which neutral loss value
+        ' For Mode 4, the order corresponds to the order of numbers in mFiltermode4Options.ReporterIonMZs
+        Public IonIntensitiesNormalized() As Single     ' Values between 0 and 100, computed via peak intensity / BPI * 100
+
+        Public Sub Clear()
+            BPI = 0
+            If Not IonIntensitiesNormalized Is Nothing Then
+                For intIndex As Integer = 0 To IonIntensitiesNormalized.Length - 1
+                    IonIntensitiesNormalized(intIndex) = 0
+                Next
+            End If
+        End Sub
     End Structure
 
     Protected Structure udtScanStatsInfoType
@@ -344,7 +361,7 @@ Public Class clsMsMsSpectrumFilter
     Private mSpectrumFilterMode As eSpectrumFilterMode
     Private mMinimumQualityScore As Single
     Private mGenerateFilterReport As Boolean
-    Private mIncludeNLStatsOnFilterReport As Boolean
+    Private mIncludeNLStatsOnFilterReport As Boolean            ' When True, then includes additional columns on the filter report (for filter modes 3 and 4)
     Private mOverwriteExistingFiles As Boolean
 
     Private mDiscardValidSpectra As Boolean                     ' Set to True to only keep the Invalid spectra, rather than only keeping the Valid spectra
@@ -365,6 +382,7 @@ Public Class clsMsMsSpectrumFilter
     Private mFilterMode1Options As FilterMode1OptionsType
     Private mFilterMode2Options As FilterMode2OptionsType
     Private mFilterMode3Options As FilterMode3OptionsType
+    Private mFilterMode4Options As FilterMode4OptionsType
 
     Private mAminoAcidMassList As Hashtable
 
@@ -594,6 +612,86 @@ Public Class clsMsMsSpectrumFilter
             Else
                 mFilterMode3Options.SpecificMZLosses = String.Empty
             End If
+        End Set
+    End Property
+
+    Public Property FilterMode4_ReporterIonMZs() As String
+        Get
+            If Not mFilterMode4Options.ReporterIonMZs Is Nothing Then
+                Return mFilterMode4Options.ReporterIonMZs
+            Else
+                Return String.Empty
+            End If
+        End Get
+        Set(ByVal value As String)
+            If Not value Is Nothing Then
+                mFilterMode4Options.ReporterIonMZs = String.Copy(value)
+            Else
+                mFilterMode4Options.ReporterIonMZs = String.Empty
+            End If
+        End Set
+    End Property
+
+    Public Property FilterMode4_ReporterIonIntensityThreshold() As Single
+        Get
+            Return mFilterMode4Options.ReporterIonIntensityThreshold
+        End Get
+        Set(ByVal value As Single)
+            mFilterMode4Options.ReporterIonIntensityThreshold = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_ReporterIonToleranceHalfWidthMZ() As Single
+        Get
+            Return mFilterMode4Options.ReporterIonToleranceHalfWidthMZ
+        End Get
+        Set(ByVal value As Single)
+            mFilterMode4Options.ReporterIonToleranceHalfWidthMZ = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_RemoveReporterIons() As Boolean
+        Get
+            Return mFilterMode4Options.RemoveReporterIons
+        End Get
+        Set(ByVal value As Boolean)
+            mFilterMode4Options.RemoveReporterIons = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_PrecursorIonMassLossDa() As Single
+        Get
+            Return mFilterMode4Options.PrecursorIonMassLossDa
+        End Get
+        Set(ByVal value As Single)
+            mFilterMode4Options.PrecursorIonMassLossDa = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_ReporterIonMatchCountMinimum() As Integer
+        Get
+            Return mFilterMode4Options.ReporterIonMatchCountMinimum
+        End Get
+        Set(ByVal value As Integer)
+            mFilterMode4Options.ReporterIonMatchCountMinimum = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_RemoveMassCorrectedPrecursorIons() As Boolean
+        Get
+            Return mFilterMode4Options.RemoveMassCorrectedPrecursorIons
+        End Get
+        Set(ByVal value As Boolean)
+            mFilterMode4Options.RemoveMassCorrectedPrecursorIons = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_PrecursorIonMinimumCharge() As Short
+        Get
+            Return mFilterMode4Options.PrecursorIonMinimumCharge
+        End Get
+        Set(ByVal value As Short)
+            mFilterMode4Options.PrecursorIonMinimumCharge = value
         End Set
     End Property
 
@@ -866,21 +964,31 @@ Public Class clsMsMsSpectrumFilter
 
 #End Region
 
-    Private Sub AppendToNeutralLossMassList(ByRef udtNeutralLossMasses() As udtNeutralLossMassesType, ByRef intNeutralLossMassCount As Integer, ByVal dblNewMass As Double, ByVal eNeutralLossCode As eNeutralLossCodeConstants)
-        Try
-            If udtNeutralLossMasses.Length = intNeutralLossMassCount Then
-                ReDim Preserve udtNeutralLossMasses(udtNeutralLossMasses.Length * 2 - 1)
-            End If
+    Private Sub AppendToSearchMZList(ByRef objSearchMassSpecs As System.Collections.Generic.List(Of SearchMassSpecsClass), _
+                                     ByVal dblNewMass As Double, _
+                                     ByVal eSearchMassCode As SearchMassSpecsClass.eSearchMassCodeConstants)
 
-            With udtNeutralLossMasses(intNeutralLossMassCount)
-                .NeutralLossMass = dblNewMass
-                .NeutralLossCode = eNeutralLossCode
-            End With
+        Const DEFAULT_TOLERANCE_HALFWIDTH_MZ As Double = 0.5
 
-            intNeutralLossMassCount += 1
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
+        AppendToSearchMZList(objSearchMassSpecs, dblNewMass, DEFAULT_TOLERANCE_HALFWIDTH_MZ, eSearchMassCode)
+    End Sub
+
+    Private Sub AppendToSearchMZList(ByRef objSearchMassSpecs As System.Collections.Generic.List(Of SearchMassSpecsClass), _
+                                     ByVal dblNewMass As Double, _
+                                     ByVal dblSearchToleranceHalfWidthMZ As Double, _
+                                     ByVal eSearchMassCode As SearchMassSpecsClass.eSearchMassCodeConstants)
+
+        Dim objNewEntry As New SearchMassSpecsClass
+
+        With objNewEntry
+            .SearchMass = dblNewMass
+            .SearchMassCode = eSearchMassCode
+            .LowerBoundMZ = .SearchMass - dblSearchToleranceHalfWidthMZ
+            .UpperBoundMZ = .SearchMass + dblSearchToleranceHalfWidthMZ
+        End With
+
+        objSearchMassSpecs.Add(objNewEntry)
+
     End Sub
 
     Private Sub AppendReportLine(ByVal strReportFileName As String, _
@@ -891,10 +999,14 @@ Public Class clsMsMsSpectrumFilter
                                  ByVal sngPrecursorMZ As Single, _
                                  ByVal sngBPI As Single, _
                                  ByVal blnIncludeNLStats As Boolean, _
-                                 ByRef udtNLStats As udtNLStatsType, _
+                                 ByVal blnIncludeReporterIonStats As Boolean, _
+                                 ByRef udtIonMatchStats As udtIonMatchStatsType, _
                                  ByVal blnIonFilteringEnabled As Boolean, _
                                  ByVal intPositiveDataCountBeforeFilter As Integer, _
                                  ByVal intPositiveDataCountAfterFilter As Integer)
+
+        ' This needs to be static because it is only updated when we write the headers (or if it is zero and blnIncludeReporterIonStats = True)
+        Static intReporterIonMZCount As Integer = 0
 
         Dim chTab As Char = ControlChars.Tab
 
@@ -970,6 +1082,21 @@ Public Class clsMsMsSpectrumFilter
                 End If
             End If
 
+            If blnIncludeReporterIonStats Then
+                Dim dblReporterIonMZs As New System.Collections.Generic.List(Of Double)
+
+                If GetFilterMode4ReporterIons(dblReporterIonMZs) Then
+                    intReporterIonMZCount = dblReporterIonMZs.Count
+
+                    For Each dblItem As Double In dblReporterIonMZs
+                        strLineOut &= chTab & "ReporterIon_" & Math.Round(dblItem, 0).ToString()
+                    Next
+
+                End If
+
+                strLineOut &= chTab & "ReporterIon_Count" & chTab & "ReporterIon_Sum"
+            End If
+
             swReportFile.WriteLine(strLineOut)
         End If
 
@@ -1004,20 +1131,51 @@ Public Class clsMsMsSpectrumFilter
         End If
 
         If blnIncludeNLStats Then
-            With udtNLStats
-                strLineOut &= chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL98), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL49), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL33), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL65), 0).ToString
+            With udtIonMatchStats
+                strLineOut &= chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL98), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL49), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL33), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL65), 0).ToString
 
                 If mFilterMode3Options.ConsiderWaterLoss Then
-                    strLineOut &= chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL116), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL58), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL107), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL39), 0).ToString & _
-                              chTab & Math.Round(.NeutralLossIntensitiesNormalized(eNeutralLossCodeConstants.NL71), 0).ToString
+                    strLineOut &= chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL116), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL58), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL107), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL39), 0).ToString & _
+                              chTab & Math.Round(.IonIntensitiesNormalized(SearchMassSpecsClass.eSearchMassCodeConstants.NL71), 0).ToString
                 End If
             End With
+        End If
+
+        If blnIncludeReporterIonStats Then
+            If intReporterIonMZCount = 0 Then
+                Dim dblReporterIonMZs As New System.Collections.Generic.List(Of Double)
+                If GetFilterMode4ReporterIons(dblReporterIonMZs) Then
+                    intReporterIonMZCount = dblReporterIonMZs.Count
+                End If
+            End If
+
+            Dim intPositiveReporterIonCount As Integer = 0
+            Dim sngIonIntensitySum As Single = 0
+
+            With udtIonMatchStats
+                If Not .IonIntensitiesNormalized Is Nothing Then
+                    For intIndex As Integer = 0 To .IonIntensitiesNormalized.Length - 1
+                        If intIndex >= intReporterIonMZCount Then
+                            Exit For
+                        End If
+
+                        strLineOut &= chTab & Math.Round(.IonIntensitiesNormalized(intIndex), 1).ToString
+
+                        If .IonIntensitiesNormalized(intIndex) > 0 Then
+                            intPositiveReporterIonCount += 1
+                            sngIonIntensitySum += .IonIntensitiesNormalized(intIndex)
+                        End If
+                    Next
+                End If
+            End With
+
+            strLineOut &= chTab & intPositiveReporterIonCount.ToString() & chTab & Math.Round(sngIonIntensitySum, 1).ToString
         End If
 
         swReportFile.WriteLine(strLineOut)
@@ -1176,7 +1334,8 @@ Public Class clsMsMsSpectrumFilter
         If mIonFilterOptions.RemovePrecursor OrElse _
            mIonFilterOptions.RemoveChargeReducedPrecursors OrElse _
            mIonFilterOptions.RemoveNeutralLossesFromChargeReducedPrecursors OrElse _
-           mIonFilterOptions.CondenseData Then
+           mIonFilterOptions.CondenseData OrElse _
+           Me.SpectrumFilterMode = eSpectrumFilterMode.mode4 Then
             Return True
         Else
             Return False
@@ -1346,6 +1505,46 @@ Public Class clsMsMsSpectrumFilter
             ' Ignore any errors here
         End Try
     End Sub
+
+
+    Protected Function ComputeBPIAndTIC(ByVal sngValues() As Single, ByRef sngBPI As Single, ByRef dblTIC As Double) As Boolean
+        If sngValues Is Nothing Then
+            Return False
+        Else
+            Return ComputeBPIAndTIC(sngValues, sngValues.Length - 1, sngBPI, dblTIC)
+        End If
+    End Function
+
+    Protected Function ComputeBPIAndTIC(ByVal sngValues() As Single, ByVal intIndexMax As Integer, ByRef sngBPI As Single, ByRef dblTIC As Double) As Boolean
+        Dim intIndex As Integer
+        Dim blnSuccess As Boolean
+
+        sngBPI = 0
+        dblTIC = 0
+
+        If sngValues Is Nothing OrElse sngValues.Length <= 0 OrElse intIndexMax < 0 Then
+            ' Zero-length array
+            blnSuccess = False
+        Else
+            If intIndexMax > sngValues.Length - 1 Then
+                intIndexMax = sngValues.Length - 1
+            End If
+
+            sngBPI = Integer.MinValue
+
+            For intIndex = 0 To intIndexMax
+                If sngValues(intIndex) > sngBPI Then
+                    sngBPI = sngValues(intIndex)
+                End If
+                dblTIC += sngValues(intIndex)
+            Next intIndex
+
+            blnSuccess = True
+        End If
+
+        Return blnSuccess
+
+    End Function
 
     Protected Function ComputeSpectrumNoiseLevel(ByVal sngIntensityList() As Single, ByVal intArrayLength As Integer) As clsBaselineNoiseEstimator.udtBaselineNoiseStatsType
         Const FRACTION_LOW_INTENSITY_DATA_TO_AVERAGE As Single = 0.75
@@ -1521,7 +1720,24 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
-    Protected Function EvaluateMsMsSpectrumStart(ByRef sngMassList() As Single, ByRef sngIntensityList() As Single, ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, ByRef udtNLStats As udtNLStatsType, ByRef sngBPI As Single, ByRef blnIncludeNLStats As Boolean) As udtSpectrumQualityScoreType
+    ''' <summary>
+    ''' </summary>
+    ''' <param name="sngMassList"></param>
+    ''' <param name="sngIntensityList"></param>
+    ''' <param name="udtSpectrumHeaderInfo">Passed by Ref since EvaluateMsMsSpectrumMode4 will update the parent ion mass values</param>
+    ''' <param name="sngBPI"></param>
+    ''' <param name="blnIncludeNLStats"></param>
+    ''' <param name="blnIncludeReporterIonStats"></param>
+    ''' <param name="udtIonMatchStats"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function EvaluateMsMsSpectrumStart(ByRef sngMassList() As Single, ByRef sngIntensityList() As Single, _
+                                                 ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
+                                                 ByRef sngBPI As Single, _
+                                                 ByRef blnIncludeNLStats As Boolean, _
+                                                 ByRef blnIncludeReporterIonStats As Boolean, _
+                                                 ByRef udtIonMatchStats As udtIonMatchStatsType) As udtSpectrumQualityScoreType
+
         Dim strSpectrumID As String
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
         Dim blnPassesFilter As Boolean
@@ -1532,15 +1748,34 @@ Public Class clsMsMsSpectrumFilter
 
         udtSpectrumQualityScore.Initialize()
 
+        blnIncludeNLStats = False
+        blnIncludeReporterIonStats = False
+
         Select Case mSpectrumFilterMode
+            Case eSpectrumFilterMode.mode1, eSpectrumFilterMode.mode2
+                udtSpectrumQualityScore = EvaluateMsMsSpectrum(sngMassList, sngIntensityList, _
+                                                               udtSpectrumHeaderInfo.ParentIonCharges(0), _
+                                                               udtSpectrumHeaderInfo.ParentIonMH, _
+                                                               udtSpectrumHeaderInfo.ParentIonMZ, _
+                                                               sngBPI, _
+                                                               strSpectrumID)
+
             Case eSpectrumFilterMode.mode3
-                blnPassesFilter = EvaluateMsMsSpectrumMode3(sngMassList, sngIntensityList, udtSpectrumHeaderInfo.ParentIonMZ, udtSpectrumHeaderInfo.ParentIonCharges(0), udtNLStats, udtSpectrumQualityScore.SpectrumQualityScore)
-                sngBPI = udtNLStats.BPI
+                blnPassesFilter = EvaluateMsMsSpectrumMode3(sngMassList, sngIntensityList, _
+                                                            udtSpectrumHeaderInfo.ParentIonMZ, _
+                                                            udtSpectrumHeaderInfo.ParentIonCharges(0), _
+                                                            udtIonMatchStats, _
+                                                            udtSpectrumQualityScore.SpectrumQualityScore)
+                sngBPI = udtIonMatchStats.BPI
                 blnIncludeNLStats = mIncludeNLStatsOnFilterReport
 
-            Case eSpectrumFilterMode.mode1, eSpectrumFilterMode.mode2
-                udtSpectrumQualityScore = EvaluateMsMsSpectrum(sngMassList, sngIntensityList, udtSpectrumHeaderInfo.ParentIonCharges(0), udtSpectrumHeaderInfo.ParentIonMH, udtSpectrumHeaderInfo.ParentIonMZ, sngBPI, strSpectrumID)
-                blnIncludeNLStats = False
+            Case eSpectrumFilterMode.mode4
+                blnPassesFilter = EvaluateMsMsSpectrumMode4(sngMassList, sngIntensityList, _
+                                                            udtSpectrumHeaderInfo, _
+                                                            udtIonMatchStats, _
+                                                            udtSpectrumQualityScore.SpectrumQualityScore)
+                sngBPI = udtIonMatchStats.BPI
+                blnIncludeReporterIonStats = True
 
             Case Else
                 ' Includes eSpectrumFilterMode.NoFilter
@@ -2394,23 +2629,22 @@ Public Class clsMsMsSpectrumFilter
     ' The aim of the filter is to only select spectra that are likely to be from phosphorylated peptides
     ' Returns True if the spectrum passes the filter, otherwise returns false
     ' Returns the quality score as parameter sngSpectrumQualityScore
-    Public Function EvaluateMsMsSpectrumMode3(ByVal sngMassList() As Single, ByVal sngIntensityList() As Single, ByVal dblParentMZ As Double, ByVal intAssumedChargeState As Integer, ByRef udtNLStats As udtNLStatsType, ByRef sngSpectrumQualityScore As Single) As Boolean
+    Public Function EvaluateMsMsSpectrumMode3(ByVal sngMassList() As Single, ByVal sngIntensityList() As Single, _
+                                              ByVal dblParentMZ As Double, _
+                                              ByVal intAssumedChargeState As Integer, _
+                                              ByRef udtIonMatchStats As udtIonMatchStatsType, _
+                                              ByRef sngSpectrumQualityScore As Single) As Boolean
 
         Dim intIndex As Integer
-        Dim intMassIndex, intIonIndex As Integer
 
         Dim dblTIC As Double
         Dim dblNLAbundanceThreshold As Double
-        Dim sngNewPercentage As Single
-
-        Dim strMZList() As String
-        Dim dblCurrentMZ As Double
 
         Dim blnPassesFilter As Boolean
 
-        ' The neutral loss masses array is static to avoid reserving memory for every spectrum
-        Static intNeutralLossMassCount As Integer
-        Static udtNeutralLossMasses() As udtNeutralLossMassesType
+        ' The neutral loss object is static to avoid reserving memory for every spectrum
+        ' However, it will be re-populated on each call to this function
+        Static objNeutralLossMasses As System.Collections.Generic.List(Of SearchMassSpecsClass)
 
         Try
             ' Initially set sngSpectrumQualityScore such that its score value is less than the minimum
@@ -2420,152 +2654,107 @@ Public Class clsMsMsSpectrumFilter
                 sngSpectrumQualityScore = mMinimumQualityScore - 1
             End If
 
-            If udtNeutralLossMasses Is Nothing Then
-                ReDim udtNeutralLossMasses(9)
+            If objNeutralLossMasses Is Nothing Then
+                objNeutralLossMasses = New System.Collections.Generic.List(Of SearchMassSpecsClass)
             End If
 
-            ' Clear udtNLStats
-            With udtNLStats
-                .PrecursorMZ = dblParentMZ
-                .BPI = 0
-                For intIndex = 0 To .NeutralLossIntensitiesNormalized.Length - 1
-                    .NeutralLossIntensitiesNormalized(intIndex) = 0
-                Next
-            End With
+            ' Clear udtIonMatchStats
+            udtIonMatchStats.Clear()
 
             ' Determine the base peak intensity (maximum intensity in the spectrum)
-            ComputeBPIAndTIC(sngIntensityList, udtNLStats.BPI, dblTIC)
+            ComputeBPIAndTIC(sngIntensityList, udtIonMatchStats.BPI, dblTIC)
 
-            If udtNLStats.BPI < mFilterMode3Options.BasePeakIntensityMinimum Then
+            If udtIonMatchStats.BPI < mFilterMode3Options.BasePeakIntensityMinimum Then
                 Return False
             End If
 
-            dblNLAbundanceThreshold = udtNLStats.BPI * mFilterMode3Options.NLAbundanceThresholdFractionMax
+            dblNLAbundanceThreshold = udtIonMatchStats.BPI * mFilterMode3Options.NLAbundanceThresholdFractionMax
 
             If mFilterMode3Options.SpecificMZLosses Is Nothing Then
                 mFilterMode3Options.SpecificMZLosses = String.Empty
             End If
 
-            intNeutralLossMassCount = 0
+            objNeutralLossMasses.Clear()
             If mFilterMode3Options.SpecificMZLosses.Length > 0 Then
-
-                ' Split mFilterMode3Options.SpecificMZLosses on commas, spaces, or semicolons
-                strMZList = mFilterMode3Options.SpecificMZLosses.Split(New Char() {","c, ";"c, " "c})
-
-                For intMassIndex = 0 To strMZList.Length - 1
-                    Try
-                        If IsNumber(strMZList(intMassIndex)) Then
-                            dblCurrentMZ = CDbl(strMZList(intMassIndex))
-                            AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, dblCurrentMZ, eNeutralLossCodeConstants.CustomMass)
-                        End If
-                    Catch ex As Exception
-                        ' Ignore errors here
-                    End Try
-                Next intMassIndex
+                ' Searching for specific mass losses
+                Dim dblValues As New System.Collections.Generic.List(Of Double)
+                If ParseDelimitedIntegerList(mFilterMode3Options.SpecificMZLosses, dblValues) Then
+                    For Each dblValue As Double In dblValues
+                        AppendToSearchMZList(objNeutralLossMasses, dblValue, SearchMassSpecsClass.eSearchMassCodeConstants.CustomMass)
+                    Next
+                End If
 
             Else
                 ' Always check for loss of 98, regardless of charge state of the parent ion
                 ' For 1+ spectra, 98 is the only possibly loss (phosphorylation)
                 ' For 2+ and 3+ spectra, could lose 98 if multiple phosphorylation sites are present
-                AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, MASS_PHOSPHORYLATION, eNeutralLossCodeConstants.NL98)
+                AppendToSearchMZList(objNeutralLossMasses, MASS_PHOSPHORYLATION, SearchMassSpecsClass.eSearchMassCodeConstants.NL98)
 
                 If Not mFilterMode3Options.LimitToChargeSpecificIons OrElse intAssumedChargeState = 0 OrElse intAssumedChargeState = 1 Then
                     ' 1+ spectrum
                     If mFilterMode3Options.ConsiderWaterLoss Then
                         ' Check for loss of 116 (which is 98+18)
-                        AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, MASS_PHOSPHORYLATION + MASS_WATER, eNeutralLossCodeConstants.NL116)
+                        AppendToSearchMZList(objNeutralLossMasses, MASS_PHOSPHORYLATION + MASS_WATER, SearchMassSpecsClass.eSearchMassCodeConstants.NL116)
                     End If
                 End If
 
                 If Not mFilterMode3Options.LimitToChargeSpecificIons OrElse intAssumedChargeState = 0 OrElse intAssumedChargeState = 2 Then
                     ' 2+ spectrum
                     ' Check for loss of 49 (which is 98/2)
-                    AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, MASS_PHOSPHORYLATION / 2.0#, eNeutralLossCodeConstants.NL49)
+                    AppendToSearchMZList(objNeutralLossMasses, MASS_PHOSPHORYLATION / 2.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL49)
 
                     If mFilterMode3Options.ConsiderWaterLoss Then
                         ' Check for loss of 58 (which is (98+18)/2)
-                        AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, (MASS_PHOSPHORYLATION + MASS_WATER) / 2.0#, eNeutralLossCodeConstants.NL58)
+                        AppendToSearchMZList(objNeutralLossMasses, (MASS_PHOSPHORYLATION + MASS_WATER) / 2.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL58)
 
                         ' Check for loss of 107 (which is (98*2+18)/2)
-                        AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, (MASS_PHOSPHORYLATION * 2.0# + MASS_WATER) / 2.0#, eNeutralLossCodeConstants.NL107)
+                        AppendToSearchMZList(objNeutralLossMasses, (MASS_PHOSPHORYLATION * 2.0# + MASS_WATER) / 2.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL107)
                     End If
                 End If
 
                 If Not mFilterMode3Options.LimitToChargeSpecificIons OrElse intAssumedChargeState = 0 OrElse intAssumedChargeState >= 3 Then
                     ' 3+ spectrum
                     ' Check for loss of 32.66 (which is 98/3)
-                    AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, MASS_PHOSPHORYLATION / 3.0#, eNeutralLossCodeConstants.NL33)
+                    AppendToSearchMZList(objNeutralLossMasses, MASS_PHOSPHORYLATION / 3.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL33)
 
                     ' Check for loss of loss of 65.32 (which is (98*2)/3)
-                    AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, (MASS_PHOSPHORYLATION * 2.0#) / 3.0#, eNeutralLossCodeConstants.NL65)
+                    AppendToSearchMZList(objNeutralLossMasses, (MASS_PHOSPHORYLATION * 2.0#) / 3.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL65)
 
                     If mFilterMode3Options.ConsiderWaterLoss Then
                         ' Check for loss of 38.66 (which is (98+18)/3)
-                        AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, (MASS_PHOSPHORYLATION + MASS_WATER) / 3.0#, eNeutralLossCodeConstants.NL39)
+                        AppendToSearchMZList(objNeutralLossMasses, (MASS_PHOSPHORYLATION + MASS_WATER) / 3.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL39)
 
                         ' Check for loss of 71.32 (which is (98*2+18)/3)
-                        AppendToNeutralLossMassList(udtNeutralLossMasses, intNeutralLossMassCount, (MASS_PHOSPHORYLATION * 2.0# + MASS_WATER) / 3.0#, eNeutralLossCodeConstants.NL71)
+                        AppendToSearchMZList(objNeutralLossMasses, (MASS_PHOSPHORYLATION * 2.0# + MASS_WATER) / 3.0#, SearchMassSpecsClass.eSearchMassCodeConstants.NL71)
                     End If
                 End If
 
             End If
 
-            ' Set up search bounds for the items in udtNeutralLossMasses
+            ' Set up search bounds for the items in objNeutralLossMasses
             ' These bounds are dependent on dblParentMZ so they need to be intialized for every spectrum processed
-            For intMassIndex = 0 To intNeutralLossMassCount - 1
-                With udtNeutralLossMasses(intMassIndex)
-                    .LowerBoundMZ = dblParentMZ - .NeutralLossMass - mFilterMode3Options.MassToleranceHalfWidthMZ
-                    .UpperBoundMZ = dblParentMZ - .NeutralLossMass + mFilterMode3Options.MassToleranceHalfWidthMZ
+            For intIndex = 0 To objNeutralLossMasses.Count - 1
+                With objNeutralLossMasses(intIndex)
+                    .LowerBoundMZ = dblParentMZ - .SearchMass - mFilterMode3Options.MassToleranceHalfWidthMZ
+                    .UpperBoundMZ = dblParentMZ - .SearchMass + mFilterMode3Options.MassToleranceHalfWidthMZ
                 End With
-            Next intMassIndex
+            Next
 
         Catch ex As Exception
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
-                mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 2): " & ex.Message
+                mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 1): " & ex.Message
             End If
             HandleException(mErrorMessage, ex)
         End Try
 
         Try
-
-            blnPassesFilter = False
-            For intIonIndex = 0 To sngMassList.Length - 1
-
-                ' Check whether any of the masses in sngMassList matches the values in udtNeutralLossMasses
-                For intMassIndex = 0 To intNeutralLossMassCount - 1
-                    If sngMassList(intIonIndex) >= udtNeutralLossMasses(intMassIndex).LowerBoundMZ AndAlso _
-                       sngMassList(intIonIndex) <= udtNeutralLossMasses(intMassIndex).UpperBoundMZ Then
-                        If sngIntensityList(intIonIndex) >= dblNLAbundanceThreshold Then
-                            ' Match found
-                            blnPassesFilter = True
-
-                            If mIncludeNLStatsOnFilterReport Then
-                                If udtNLStats.BPI > 0 Then
-                                    ' Compute the normalized intensity for this match
-                                    ' Update the value in udtNLStats.NeutralLossIntensitiesNormalized() if larger than the stored value
-                                    sngNewPercentage = sngIntensityList(intIonIndex) / udtNLStats.BPI * 100
-                                    If sngNewPercentage > udtNLStats.NeutralLossIntensitiesNormalized(udtNeutralLossMasses(intMassIndex).NeutralLossCode) Then
-                                        udtNLStats.NeutralLossIntensitiesNormalized(udtNeutralLossMasses(intMassIndex).NeutralLossCode) = sngNewPercentage
-                                    End If
-                                End If
-                            Else
-                                ' Not populating the NL values in udtNLStats
-                                ' We can exit the loop now to speed up processing time
-                                Exit For
-                            End If
-                        End If
-                    End If
-                Next intMassIndex
-
-                If blnPassesFilter AndAlso Not mIncludeNLStatsOnFilterReport Then
-                    Exit For
-                End If
-            Next intIonIndex
-
+            blnPassesFilter = SearchSpectrumForIons(sngMassList, sngIntensityList, _
+                                                    objNeutralLossMasses, dblNLAbundanceThreshold, _
+                                                    mIncludeNLStatsOnFilterReport, udtIonMatchStats)
 
         Catch ex As Exception
             If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
-                mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 3): " & ex.Message
+                mErrorMessage = "Error in EvaluateMsMsSpectrumMode3 (loc 2): " & ex.Message
             End If
             HandleException(mErrorMessage, ex)
         End Try
@@ -2584,44 +2773,222 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
-    Protected Function ComputeBPIAndTIC(ByVal sngValues() As Single, ByRef sngBPI As Single, ByRef dblTIC As Double) As Boolean
-        If sngValues Is Nothing Then
-            Return False
-        Else
-            Return ComputeBPIAndTIC(sngValues, sngValues.Length - 1, sngBPI, dblTIC)
-        End If
-    End Function
+    ''' <summary>
+    ''' Looks for the ions specified by mFilterMode4Options.ReporterIonMZs
+    ''' Updates the parent ion information in udtSpectrumHeaderInfo using mFilterMode4Options.PrecursorIonMassLossDa
+    ''' </summary>
+    ''' <param name="sngMassList"></param>
+    ''' <param name="sngIntensityList"></param>
+    ''' <param name="udtSpectrumHeaderInfo"></param>
+    ''' <param name="udtIonMatchStats"></param>
+    ''' <param name="sngSpectrumQualityScore"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function EvaluateMsMsSpectrumMode4(ByVal sngMassList() As Single, ByVal sngIntensityList() As Single, _
+                                                 ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
+                                                 ByRef udtIonMatchStats As udtIonMatchStatsType, _
+                                                 ByRef sngSpectrumQualityScore As Single) As Boolean
 
-    Protected Function ComputeBPIAndTIC(ByVal sngValues() As Single, ByVal intIndexMax As Integer, ByRef sngBPI As Single, ByRef dblTIC As Double) As Boolean
-        Dim intIndex As Integer
-        Dim blnSuccess As Boolean
+        Dim intMassIndex As Integer
 
-        sngBPI = 0
-        dblTIC = 0
+        Dim dblTIC As Double
 
-        If sngValues Is Nothing OrElse sngValues.Length <= 0 OrElse intIndexMax < 0 Then
-            ' Zero-length array
-            blnSuccess = False
-        Else
-            If intIndexMax > sngValues.Length - 1 Then
-                intIndexMax = sngValues.Length - 1
+        Dim blnPassesFilter As Boolean
+        Dim intReporterIonMatchCount As Integer
+
+        ' The reporter ion mass list is static to avoid reserving memory for every spectrum
+        ' However, it will be re-populated on each call to this function
+        Static objReporterIonMasses As System.Collections.Generic.List(Of SearchMassSpecsClass)
+
+        Try
+            ' Initially set sngSpectrumQualityScore such that its score value is less than the minimum
+            If mMinimumQualityScore > 0 Then
+                sngSpectrumQualityScore = 0
+            Else
+                sngSpectrumQualityScore = mMinimumQualityScore - 1
             End If
 
-            sngBPI = Integer.MinValue
+            If objReporterIonMasses Is Nothing Then
+                objReporterIonMasses = New System.Collections.Generic.List(Of SearchMassSpecsClass)
+            End If
 
-            For intIndex = 0 To intIndexMax
-                If sngValues(intIndex) > sngBPI Then
-                    sngBPI = sngValues(intIndex)
+            ' Clear udtIonMatchStats
+            udtIonMatchStats.Clear()
+
+            ' Determine the base peak intensity (maximum intensity in the spectrum)
+            ComputeBPIAndTIC(sngIntensityList, udtIonMatchStats.BPI, dblTIC)
+
+            If mFilterMode4Options.ReporterIonMZs Is Nothing Then
+                mFilterMode4Options.ReporterIonMZs = String.Empty
+            End If
+
+
+            Dim dblReporterIonMZs As New System.Collections.Generic.List(Of Double)
+
+            objReporterIonMasses.Clear()
+            If GetFilterMode4ReporterIons(dblReporterIonMZs) Then
+                For Each dblValue As Double In dblReporterIonMZs
+                    AppendToSearchMZList(objReporterIonMasses, dblValue, mFilterMode4Options.ReporterIonToleranceHalfWidthMZ, SearchMassSpecsClass.eSearchMassCodeConstants.CustomMass)
+                Next
+            End If
+
+        Catch ex As Exception
+            If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
+                mErrorMessage = "Error in EvaluateMsMsSpectrumMode4 (loc 1): " & ex.Message
+            End If
+            HandleException(mErrorMessage, ex)
+        End Try
+
+        Try
+            Dim blnMatchFound As Boolean
+            blnPassesFilter = False
+
+            ' Note: need to set blnPopulateIonIntensitiesNormalized to true when calling SearchSpectrumForIons since we need to find all of the matching ions
+            blnMatchFound = SearchSpectrumForIons(sngMassList, sngIntensityList, _
+                                                  objReporterIonMasses, mFilterMode4Options.ReporterIonIntensityThreshold, _
+                                                  True, udtIonMatchStats)
+
+            If blnMatchFound Then
+                ' Count the number of matches
+                intReporterIonMatchCount = 0
+                For intMassIndex = 0 To objReporterIonMasses.Count - 1
+                    If objReporterIonMasses(intMassIndex).Matched Then
+                        intReporterIonMatchCount += 1
+                    End If
+                Next
+
+                If intReporterIonMatchCount >= mFilterMode4Options.ReporterIonMatchCountMinimum Then
+                    blnPassesFilter = True
                 End If
-                dblTIC += sngValues(intIndex)
-            Next intIndex
 
-            blnSuccess = True
+            End If
+
+        Catch ex As Exception
+            If mErrorMessage Is Nothing OrElse mErrorMessage.Length = 0 Then
+                mErrorMessage = "Error in EvaluateMsMsSpectrumMode4 (loc 2): " & ex.Message
+            End If
+            HandleException(mErrorMessage, ex)
+        End Try
+
+        If blnPassesFilter Then
+            If mFilterMode4Options.PrecursorIonMinimumCharge > 0 Then
+                ' Make sure the precursor charge state is high enough
+                blnPassesFilter = False
+                If udtSpectrumHeaderInfo.ParentIonChargeCount >= 1 Then
+
+                    For intChargeIndex As Integer = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+                        If udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex) >= mFilterMode4Options.PrecursorIonMinimumCharge Then
+                            blnPassesFilter = True
+                            Exit For
+                        End If
+                    Next
+
+                End If
+            End If
         End If
 
-        Return blnSuccess
+        If blnPassesFilter Then
+
+            If mFilterMode4Options.PrecursorIonMassLossDa <> 0 Then
+                ' Update the parent ion mass
+
+                ' Need to update these values:
+                '   udtSpectrumHeaderInfo.ParentIonLineText = 
+                '   udtSpectrumHeaderInfo.ParentIonMH =
+                '   udtSpectrumHeaderInfo.ParentIonMZ =
+
+                udtSpectrumHeaderInfo.ParentIonMH = udtSpectrumHeaderInfo.ParentIonMH - mFilterMode4Options.PrecursorIonMassLossDa
+
+                If udtSpectrumHeaderInfo.ParentIonMH < 10 Then
+                    ' Do not allow the parent ion MH to fall below 10 Da (which is, obviously, already tiny)
+                    udtSpectrumHeaderInfo.ParentIonMH = 10
+                End If
+
+                If udtSpectrumHeaderInfo.ParentIonChargeCount >= 1 Then
+                    udtSpectrumHeaderInfo.ParentIonMZ = CSng(ConvoluteMass(udtSpectrumHeaderInfo.ParentIonMH, 1, udtSpectrumHeaderInfo.ParentIonCharges(0)))
+                    udtSpectrumHeaderInfo.ParentIonLineText = udtSpectrumHeaderInfo.ParentIonMH.ToString() & " " & udtSpectrumHeaderInfo.ParentIonCharges(0).ToString()
+                Else
+                    ' No charges defined; will have to assume 1+
+                    udtSpectrumHeaderInfo.ParentIonMZ = udtSpectrumHeaderInfo.ParentIonMH
+                    udtSpectrumHeaderInfo.ParentIonLineText = udtSpectrumHeaderInfo.ParentIonMH.ToString() & " 1"
+                End If
+
+            End If
+
+
+            ' Spectrum passed filter; guarantee that its score value is greater than the minimum
+            ' We'll set the score to 1 if mMinimumQualityScore is <= 1 or set it to mMinimumQualityScore+1 if mMinimumQualityScore is > 1
+            If mMinimumQualityScore <= 1 Then
+                sngSpectrumQualityScore = 1
+            Else
+                sngSpectrumQualityScore = mMinimumQualityScore + 1
+            End If
+        End If
+
+        Return blnPassesFilter
 
     End Function
+
+    Private Function SearchSpectrumForIons(ByVal sngMassList() As Single, ByVal sngIntensityList() As Single, _
+                                           ByRef objSearchMassSpecs As System.Collections.Generic.List(Of SearchMassSpecsClass), _
+                                           ByVal dblAbundanceThreshold As Double, _
+                                           ByVal blnPopulateIonIntensitiesNormalized As Boolean, _
+                                           ByRef udtIonMatchStats As udtIonMatchStatsType) As Boolean
+
+        Dim intIonIndex As Integer
+        Dim intMassIndex As Integer
+
+        Dim sngNewPercentage As Single
+
+        Dim blnMatchFound As Boolean
+
+        If udtIonMatchStats.IonIntensitiesNormalized Is Nothing Then
+            ReDim udtIonMatchStats.IonIntensitiesNormalized(objSearchMassSpecs.Count - 1)
+        ElseIf udtIonMatchStats.IonIntensitiesNormalized.Length < objSearchMassSpecs.Count Then
+            ReDim Preserve udtIonMatchStats.IonIntensitiesNormalized(objSearchMassSpecs.Count - 1)
+        End If
+
+        blnMatchFound = False
+        For intIonIndex = 0 To sngMassList.Length - 1
+
+            ' Check whether any of the masses in sngMassList matches the values in objSearchMassSpecs
+            For intMassIndex = 0 To objSearchMassSpecs.Count - 1
+
+                If sngMassList(intIonIndex) >= objSearchMassSpecs(intMassIndex).LowerBoundMZ AndAlso _
+                   sngMassList(intIonIndex) <= objSearchMassSpecs(intMassIndex).UpperBoundMZ Then
+
+                    If sngIntensityList(intIonIndex) >= dblAbundanceThreshold Then
+                        ' Match found
+
+                        objSearchMassSpecs(intMassIndex).Matched = True
+                        blnMatchFound = True
+
+                        If blnPopulateIonIntensitiesNormalized Then
+                            If udtIonMatchStats.BPI > 0 Then
+                                ' Compute the normalized intensity for this match
+                                ' Update the value in udtIonMatchStats.IonIntensitiesNormalized() if larger than the stored value
+                                sngNewPercentage = sngIntensityList(intIonIndex) / udtIonMatchStats.BPI * 100
+                                If sngNewPercentage > udtIonMatchStats.IonIntensitiesNormalized(intMassIndex) Then
+                                    udtIonMatchStats.IonIntensitiesNormalized(intMassIndex) = sngNewPercentage
+                                End If
+                            End If
+                        Else
+                            ' Not populating the IonIntensitiesNormalized values in udtIonMatchStats
+                            ' We can exit the loop now to speed up processing time
+                            Exit For
+                        End If
+                    End If
+                End If
+            Next intMassIndex
+
+            If blnMatchFound AndAlso Not blnPopulateIonIntensitiesNormalized Then
+                Exit For
+            End If
+        Next intIonIndex
+
+        Return blnMatchFound
+    End Function
+
 
     ''' <summary>
     ''' Looks for ions that are within certain m/z ranges
@@ -2632,7 +2999,7 @@ Public Class clsMsMsSpectrumFilter
     ''' <param name="sngIntensityList">Array of intensity values</param>
     ''' <param name="udtSpectrumHeaderInfo">Spectrum Header Info</param>
     ''' <param name="blnRemoveIons">True to remove ions; False to change their intensity to between 0 and 1</param>
-    ''' <returns></returns>
+    ''' <returns>True if the data is updated.</returns>
     ''' <remarks></remarks>
     Protected Function FilterIonsByMZ(ByRef intDataCount As Integer, _
                                       ByRef sngMassList() As Single, _
@@ -2658,6 +3025,9 @@ Public Class clsMsMsSpectrumFilter
 
         Dim objCharges As New Generic.List(Of Integer)
 
+        Dim blnFilterReporterIons As Boolean
+        Dim dblReporterIonMZs As New System.Collections.Generic.List(Of Double)
+        Dim dblParentIonMZNextLowerCharge As Double
 
         blnSpectralDataUpdated = False
         intPositiveDataCountBeforeFilter = 0
@@ -2681,7 +3051,6 @@ Public Class clsMsMsSpectrumFilter
                 dblParentIonMonoMass = udtSpectrumHeaderInfo.ParentIonMH - MASS_PROTON
                 dblParentIonMZ = udtSpectrumHeaderInfo.ParentIonMZ
 
-
                 For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
                     objCharges.Add(udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
                 Next
@@ -2703,6 +3072,10 @@ Public Class clsMsMsSpectrumFilter
                     objCharges.Add(3)
                 End If
 
+                If mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
+                    blnFilterReporterIons = GetFilterMode4ReporterIons(dblReporterIonMZs)
+                End If
+
                 ' Step through the data
                 ' Check whether any points should be removed
                 ' If we keep them, then copy from intIndex to intTargetIndex and increment intTargetIndex
@@ -2710,12 +3083,22 @@ Public Class clsMsMsSpectrumFilter
 
                 For Each intParentCharge In objCharges
 
+
+                    If mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
+                        ' If the charge is > 1, then convolute the charge down one and remove the resultant peak
+                        If intParentCharge > 1 Then
+                            dblParentIonMZNextLowerCharge = ConvoluteMass(dblParentIonMonoMass, 0, intParentCharge - 1)
+                        End If
+                    End If
+
                     intTargetIndex = 0
                     For intIndex = 0 To intDataCount - 1
 
                         blnKeepIon = True
 
-                        If mIonFilterOptions.RemovePrecursor Then
+                        If mIonFilterOptions.RemovePrecursor OrElse _
+                           (mSpectrumFilterMode = eSpectrumFilterMode.mode4 AndAlso mFilterMode4Options.RemoveMassCorrectedPrecursorIons) Then
+
                             If Math.Abs(dblParentIonMZ - sngMassList(intIndex)) <= mIonFilterOptions.PrecursorCleaningToleranceMZ Then
                                 blnKeepIon = False
                             End If
@@ -2743,6 +3126,27 @@ Public Class clsMsMsSpectrumFilter
                             Next
                         End If
 
+                        If mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
+
+                            If blnKeepIon AndAlso blnFilterReporterIons Then
+                                ' Remove the reporter ion masses
+                                For Each dblValue As Double In dblReporterIonMZs
+                                    If Math.Abs(dblValue - sngMassList(intIndex)) <= mFilterMode4Options.ReporterIonToleranceHalfWidthMZ Then
+                                        blnKeepIon = False
+                                        Exit For
+                                    End If
+                                Next
+
+                            End If
+
+                            If blnKeepIon AndAlso intParentCharge > 1 Then
+                                If Math.Abs(dblParentIonMZNextLowerCharge - sngMassList(intIndex)) <= mFilterMode4Options.ReporterIonToleranceHalfWidthMZ Then
+                                    blnKeepIon = False
+                                End If
+                            End If
+
+                        End If
+
                         If blnKeepIon Then
                             If intTargetIndex <> intIndex Then
                                 sngMassList(intTargetIndex) = sngMassList(intIndex)
@@ -2755,15 +3159,16 @@ Public Class clsMsMsSpectrumFilter
                             If Not blnRemoveIons Then
                                 ' Instead of removing the ion, change its intensity to 0
 
-                                'If sngIntensityList(intTargetIndex) > 0 Then
-                                '    ' First divide the intensity by 10000
-                                '    sngIntensityList(intTargetIndex) /= 10000
+                                ' The following could be used to change the intensity to a small number but not 0
+                                ''If sngIntensityList(intTargetIndex) > 0 Then
+                                ''    ' First divide the intensity by 10000
+                                ''    sngIntensityList(intTargetIndex) /= 10000
 
-                                '    ' If the intensity is still 1 or larger, then divide by 10 until it drops below one
-                                '    Do While sngIntensityList(intTargetIndex) >= 1
-                                '        sngIntensityList(intTargetIndex) /= 10
-                                '    Loop
-                                'End If
+                                ''    ' If the intensity is still 1 or larger, then divide by 10 until it drops below one
+                                ''    Do While sngIntensityList(intTargetIndex) >= 1
+                                ''        sngIntensityList(intTargetIndex) /= 10
+                                ''    Loop
+                                ''End If
 
                                 sngIntensityList(intTargetIndex) = 0
                                 intTargetIndex += 1
@@ -3024,6 +3429,10 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
+    Private Function GetFilterMode4ReporterIons(ByRef dblReporterIonMZs As System.Collections.Generic.List(Of Double)) As Boolean
+        Return ParseDelimitedIntegerList(mFilterMode4Options.ReporterIonMZs, dblReporterIonMZs)
+    End Function
+
     Private Function GetReportFileName(ByVal strInputFilePath As String) As String
         Return GetReportFileName(strInputFilePath, String.Empty)
     End Function
@@ -3043,7 +3452,9 @@ Public Class clsMsMsSpectrumFilter
     Private Sub HandleEvaluationResults(ByVal strReportFilePath As String, _
                 ByRef udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, _
                 ByVal udtSpectrumQualityScore As udtSpectrumQualityScoreType, ByVal sngBPI As Single, _
-                ByVal blnIncludeNLStats As Boolean, ByRef udtNLStats As udtNLStatsType, _
+                ByVal blnIncludeNLStats As Boolean, _
+                ByVal blnIncludeReporterIonStats As Boolean, _
+                ByRef udtIonMatchStats As udtIonMatchStatsType, _
                 ByVal intMSLevelFilter As Integer, _
                 ByVal strScanTypeFilter As String, ByRef reScanTypeFilter As System.Text.RegularExpressions.Regex, _
                 ByVal strCollisionModeFilter As String, ByRef reCollisionModeFilter As System.Text.RegularExpressions.Regex, _
@@ -3063,7 +3474,8 @@ Public Class clsMsMsSpectrumFilter
             AppendReportLine(strReportFilePath, _
                             udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ScanNumberEnd, _
                             udtSpectrumHeaderInfo.ParentIonCharges(0), udtSpectrumQualityScore, _
-                            udtSpectrumHeaderInfo.ParentIonMZ, sngBPI, blnIncludeNLStats, udtNLStats, _
+                            udtSpectrumHeaderInfo.ParentIonMZ, sngBPI, _
+                            blnIncludeNLStats, blnIncludeReporterIonStats, udtIonMatchStats, _
                             blnIonFilteringEnabled, intPositiveDataCountBeforeFilter, intPositiveDataCountAfterFilter)
         End If
 
@@ -3291,6 +3703,18 @@ Public Class clsMsMsSpectrumFilter
             .SpecificMZLosses = String.Empty
         End With
 
+        ' Filter mode 4
+        With mFilterMode4Options
+            .ReporterIonMZs = DEFAULT_MODE4_REPORTER_ION_MZs
+            .ReporterIonIntensityThreshold = 50
+            .ReporterIonToleranceHalfWidthMZ = 0.7
+            .RemoveReporterIons = True
+            .PrecursorIonMassLossDa = DEFAULT_MODE4_PARENT_ION_MASS_LOSS_DA
+            .ReporterIonMatchCountMinimum = 2
+            .RemoveMassCorrectedPrecursorIons = True
+            .PrecursorIonMinimumCharge = 2
+        End With
+
         ' Populate mAminoAcidMassList with the amino acids
         InitializeAminoAcidMassList(mAminoAcidMassList)
 
@@ -3318,6 +3742,7 @@ Public Class clsMsMsSpectrumFilter
         Const FILTER_MODE1 As String = "FilterMode1"
         Const FILTER_MODE2 As String = "FilterMode2"
         Const FILTER_MODE3 As String = "FilterMode3"
+        Const FILTER_MODE4 As String = "FilterMode4"
 
         Dim objSettingsFile As New XmlSettingsFileAccessor
 
@@ -3382,8 +3807,8 @@ Public Class clsMsMsSpectrumFilter
                 End If
 
                 If Not objSettingsFile.SectionPresent(FILTER_MODE1) Then
-                    If SpectrumFilterMode = eSpectrumFilterMode.mode1 Then
-                        mErrorMessage = "The node '<section name=""" & FILTER_MODE1 & """> was not found in the parameter file: " & strParameterFilePath
+                    If Me.SpectrumFilterMode = eSpectrumFilterMode.mode1 Then
+                        mErrorMessage = "The Spectrum Filter Mode is 1, but node '<section name=""" & FILTER_MODE1 & """> was not found in the parameter file: " & strParameterFilePath
                         ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
@@ -3417,8 +3842,8 @@ Public Class clsMsMsSpectrumFilter
                 End If
 
                 If Not objSettingsFile.SectionPresent(FILTER_MODE2) Then
-                    If SpectrumFilterMode = eSpectrumFilterMode.mode2 Then
-                        mErrorMessage = "The node '<section name=""" & FILTER_MODE2 & """> was not found in the parameter file: " & strParameterFilePath
+                    If Me.SpectrumFilterMode = eSpectrumFilterMode.mode2 Then
+                        mErrorMessage = "The Spectrum Filter Mode is 2, but node '<section name=""" & FILTER_MODE2 & """> was not found in the parameter file: " & strParameterFilePath
                         ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
@@ -3442,8 +3867,8 @@ Public Class clsMsMsSpectrumFilter
                 End If
 
                 If Not objSettingsFile.SectionPresent(FILTER_MODE3) Then
-                    If SpectrumFilterMode = eSpectrumFilterMode.mode3 Then
-                        mErrorMessage = "The node '<section name=""" & FILTER_MODE3 & """> was not found in the parameter file: " & strParameterFilePath
+                    If Me.SpectrumFilterMode = eSpectrumFilterMode.mode3 Then
+                        mErrorMessage = "The Spectrum Filter Mode is 3, but node '<section name=""" & FILTER_MODE3 & """> was not found in the parameter file: " & strParameterFilePath
                         ShowErrorMessage(mErrorMessage)
                         MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
                         Return False
@@ -3456,6 +3881,26 @@ Public Class clsMsMsSpectrumFilter
                         .LimitToChargeSpecificIons = objSettingsFile.GetParam(FILTER_MODE3, "LimitToChargeSpecificIons", .LimitToChargeSpecificIons)
                         .ConsiderWaterLoss = objSettingsFile.GetParam(FILTER_MODE3, "ConsiderWaterLoss", .ConsiderWaterLoss)
                         .SpecificMZLosses = objSettingsFile.GetParam(FILTER_MODE3, "SpecificMZLosses", .SpecificMZLosses)
+                    End With
+                End If
+
+                If Not objSettingsFile.SectionPresent(FILTER_MODE4) Then
+                    If Me.SpectrumFilterMode = eSpectrumFilterMode.mode4 Then
+                        mErrorMessage = "The Spectrum Filter Mode is 4, but node '<section name=""" & FILTER_MODE3 & """> was not found in the parameter file: " & strParameterFilePath
+                        ShowErrorMessage(mErrorMessage)
+                        MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
+                        Return False
+                    End If
+                Else
+                    With mFilterMode4Options
+                        .ReporterIonMZs = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMZs", .ReporterIonMZs)
+                        .ReporterIonIntensityThreshold = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonIntensityThreshold", .ReporterIonIntensityThreshold)
+                        .ReporterIonToleranceHalfWidthMZ = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonToleranceHalfWidthMZ", .ReporterIonToleranceHalfWidthMZ)
+                        .RemoveReporterIons = objSettingsFile.GetParam(FILTER_MODE4, "RemoveReporterIons", .RemoveReporterIons)
+                        .PrecursorIonMassLossDa = objSettingsFile.GetParam(FILTER_MODE4, "PrecursorIonMassLossDa", .PrecursorIonMassLossDa)
+                        .ReporterIonMatchCountMinimum = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMatchCountMinimum", .ReporterIonMatchCountMinimum)
+                        .RemoveMassCorrectedPrecursorIons = objSettingsFile.GetParam(FILTER_MODE4, "RemoveMassCorrectedPrecursorIons", .RemoveMassCorrectedPrecursorIons)
+                        .PrecursorIonMinimumCharge = objSettingsFile.GetParam(FILTER_MODE4, "PrecursorIonMinimumCharge", .PrecursorIonMinimumCharge)
                     End With
                 End If
             End If
@@ -3950,6 +4395,69 @@ Public Class clsMsMsSpectrumFilter
 
     End Function
 
+    ''' <summary>
+    ''' Returns true if 1 or more reporter ions are defined for mode 4
+    ''' </summary>
+    ''' <param name="strList">List of values to parse.  Can be separated by comma, semicolon, or space</param>
+    ''' <param name="dblValues">List of doubles extracted from strList</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ParseDelimitedIntegerList(ByRef strList As String, _
+                                               ByRef dblValues As System.Collections.Generic.List(Of Double)) As Boolean
+
+        Static strSplitLineSaved As String
+        Static dblValuesSaved As System.Collections.Generic.List(Of Double)
+        Static intSaveCopyUseCount As Integer
+
+        Dim strSplitLine() As String
+        Dim dblValue As Double
+
+        Dim intIndex As Integer
+
+        If dblValues Is Nothing Then
+            dblValues = New System.Collections.Generic.List(Of Double)
+        Else
+            dblValues.Clear()
+        End If
+
+        If String.IsNullOrEmpty(strList) Then
+            Return False
+        Else
+            If Not String.IsNullOrEmpty(strSplitLineSaved) Then
+                ' Return the cached info
+                If strSplitLineSaved = strList AndAlso Not dblValuesSaved Is Nothing Then
+                    dblValues = dblValuesSaved
+                    intSaveCopyUseCount += 1
+                    Return True
+                End If
+            End If
+
+            ' Split strList on commas, spaces, or semicolons
+            strSplitLine = strList.Split(New Char() {","c, ";"c, " "c})
+
+            If strSplitLine.Length = 0 Then
+                Return False
+            Else
+                For intIndex = 0 To strSplitLine.Length - 1
+                    If Not String.IsNullOrEmpty(strSplitLine(intIndex)) Then
+                        If Double.TryParse(strSplitLine(intIndex), dblValue) Then
+                            dblValues.Add(dblValue)
+                        End If
+                    End If
+                Next
+
+                strSplitLineSaved = String.Copy(strList)
+                dblValuesSaved = dblValues
+
+                If dblValues.Count > 0 Then
+                    Return True
+                Else
+                    Return False
+                End If
+            End If
+        End If
+    End Function
+
     Private Function ParseSequestParamFile(ByVal strSequestParamFilePath As String) As Boolean
         ' Parse a Sequest Param file to determine any modified amino acid masses
 
@@ -4121,7 +4629,8 @@ Public Class clsMsMsSpectrumFilter
         Dim intDataCount As Integer
         Dim sngMassList() As Single
         Dim sngIntensityList() As Single
-        Dim udtNLStats As udtNLStatsType
+
+        Dim udtIonMatchStats As udtIonMatchStatsType
 
         Dim sngBPI As Single
 
@@ -4129,8 +4638,10 @@ Public Class clsMsMsSpectrumFilter
         Dim intPositiveDataCountAfterFilter As Integer
 
         Dim blnSuccess As Boolean
-        Dim blnIncludeNLStats As Boolean
         Dim blnValidOutputFolder As Boolean
+
+        Dim blnIncludeNLStats As Boolean
+        Dim blnIncludeReporterIonStats As Boolean
 
         Dim strNewFilePath As String
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
@@ -4159,7 +4670,7 @@ Public Class clsMsMsSpectrumFilter
         blnSuccess = True
 
         Try
-            ReDim udtNLStats.NeutralLossIntensitiesNormalized(NEUTRAL_LOSS_CODE_COUNT - 1)
+            ReDim udtIonMatchStats.IonIntensitiesNormalized(SearchMassSpecsClass.SEARCH_MASS_CODE_COUNT - 1)
 
             blnValidOutputFolder = ValidateOutputFolder(strInputFilePath, strOutputFolderPath)
 
@@ -4200,13 +4711,20 @@ Public Class clsMsMsSpectrumFilter
             End If
 
             If objDtaTextFileReader.ReadSingleDtaFile(strInputFilePath, strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo) Then
+
+
                 ' Populate sngMassList and sngIntensityList
                 intDataCount = objDtaTextFileReader.ParseMsMsDataList(strMSMSDataList, intMsMsDataCount, sngMassList, sngIntensityList)
                 intPositiveDataCountBeforeFilter = 0
                 intPositiveDataCountAfterFilter = 0
 
                 If intDataCount > 0 Then
-                    udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+                    udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, _
+                                                                        udtSpectrumHeaderInfo, _
+                                                                        sngBPI, _
+                                                                        blnIncludeNLStats, _
+                                                                        blnIncludeReporterIonStats, _
+                                                                        udtIonMatchStats)
 
                     If blnIonFilteringEnabled Then
                         Const blnRemoveIons As Boolean = False
@@ -4223,7 +4741,7 @@ Public Class clsMsMsSpectrumFilter
                         blnSpectralDataUpdated = False
                     End If
 
-                    If blnSpectralDataUpdated Then
+                    If blnSpectralDataUpdated Or mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
                         ' Need to re-create the .DTA file
                         WriteDTAFile(strInputFilePath, udtSpectrumHeaderInfo.ParentIonLineText, intDataCount, sngMassList, sngIntensityList)
                     End If
@@ -4235,7 +4753,7 @@ Public Class clsMsMsSpectrumFilter
 
                 HandleEvaluationResults(GetReportFileName(strInputFilePath, strOutputFolderPath), _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
-                                   blnIncludeNLStats, udtNLStats, _
+                                   blnIncludeNLStats, blnIncludeReporterIonStats, udtIonMatchStats, _
                                    intMSLevelFilter, _
                                    strScanTypeFilter, reScanTypeFilter, _
                                    strCollisionModeFilter, reCollisionModeFilter, _
@@ -4365,20 +4883,21 @@ Public Class clsMsMsSpectrumFilter
 
         Dim sngMassList() As Single
         Dim sngIntensityList() As Single
-        Dim udtNLStats As udtNLStatsType
+        Dim udtIonMatchStats As udtIonMatchStatsType
 
         Dim sngBPI As Single
 
         Dim strOutputFilePath As String
         Dim strReportFilePath As String
         Dim strInputFilePathOriginal As String
-        Dim strMostRecentSpectrumText As String
+        Dim strMostRecentSpectrumText As String = String.Empty
 
         Dim blnValidOutputFolder As Boolean
 
         Dim blnProceed As Boolean
         Dim blnSuccess As Boolean
         Dim blnIncludeNLStats As Boolean
+        Dim blnIncludeReporterIonStats As Boolean
 
         Dim blnSpectrumFound As Boolean
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
@@ -4401,7 +4920,7 @@ Public Class clsMsMsSpectrumFilter
         Dim reCollisionModeFilter As System.Text.RegularExpressions.Regex
 
         Try
-            ReDim udtNLStats.NeutralLossIntensitiesNormalized(NEUTRAL_LOSS_CODE_COUNT - 1)
+            ReDim udtIonMatchStats.IonIntensitiesNormalized(SearchMassSpecsClass.SEARCH_MASS_CODE_COUNT - 1)
 
             blnValidOutputFolder = ValidateOutputFolder(strInputFilePath, strOutputFolderPath)
             strInputFilePathOriginal = String.Copy(strInputFilePath)
@@ -4499,7 +5018,12 @@ Public Class clsMsMsSpectrumFilter
                         If mSpectrumFilterMode = eSpectrumFilterMode.NoFilter AndAlso Not blnIonFilteringEnabled Then
                             ' We do not need to populate sngMassList or sngIntensityList
                             ' Simply call EvaluateMsMsSpectrumStart so that udtSpectrumQualityScore gets updated
-                            udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(Nothing, Nothing, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+                            udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(Nothing, Nothing, _
+                                                                                udtSpectrumHeaderInfo, _
+                                                                                sngBPI, _
+                                                                                blnIncludeNLStats, _
+                                                                                blnIncludeReporterIonStats, _
+                                                                                udtIonMatchStats)
 
                             intDataCount = intMsMsDataCount
                             strMostRecentSpectrumText = objFileReader.GetMostRecentSpectrumFileText
@@ -4512,7 +5036,12 @@ Public Class clsMsMsSpectrumFilter
 
                             If intDataCount > 0 Then
                                 ' Call EvaluateMsMsSpectrum()
-                                udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, udtSpectrumHeaderInfo, udtNLStats, sngBPI, blnIncludeNLStats)
+                                udtSpectrumQualityScore = EvaluateMsMsSpectrumStart(sngMassList, sngIntensityList, _
+                                                                                    udtSpectrumHeaderInfo, _
+                                                                                    sngBPI, _
+                                                                                    blnIncludeNLStats, _
+                                                                                    blnIncludeReporterIonStats, _
+                                                                                    udtIonMatchStats)
 
                                 If blnIonFilteringEnabled Then
                                     Const blnRemoveIons As Boolean = False
@@ -4528,7 +5057,9 @@ Public Class clsMsMsSpectrumFilter
                                     End If
                                 End If
 
-                                If blnSpectralDataUpdated Then
+                                If blnSpectralDataUpdated Or mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
+                                    ' Note: we always re-create the .DTA file when using filter mode 4 since the parent ion mass may have been updated
+
                                     intMSSpectraCountIonFiltered += 1
 
                                     ' Need to re-create the .DTA file
@@ -4558,7 +5089,7 @@ Public Class clsMsMsSpectrumFilter
 
                             HandleEvaluationResults(strReportFilePath, _
                                    udtSpectrumHeaderInfo, udtSpectrumQualityScore, sngBPI, _
-                                   blnIncludeNLStats, udtNLStats, _
+                                   blnIncludeNLStats, blnIncludeReporterIonStats, udtIonMatchStats, _
                                    intMSLevelFilter, _
                                    strScanTypeFilter, reScanTypeFilter, _
                                    strCollisionModeFilter, reCollisionModeFilter, _
@@ -5069,9 +5600,12 @@ Public Class clsMsMsSpectrumFilter
                 Return "Mode 2: Intensity Threshold Filter"
             Case clsMsMsSpectrumFilter.eSpectrumFilterMode.mode3
                 Return "Mode 3: Phosph Neutral Loss Filter"
+            Case clsMsMsSpectrumFilter.eSpectrumFilterMode.mode4
+                Return "Mode 4: Reporter Ion m/z Filter"
             Case Else
                 Return String.Empty
         End Select
+
     End Function
 
     Public Shared Function TextMatchTypeCodeToString(ByVal eTextMatchTypeCode As eTextMatchTypeConstants) As String
@@ -5403,4 +5937,29 @@ Public Class clsMsMsSpectrumFilter
 
         End Function
     End Class
+
+    Private Class SearchMassSpecsClass
+
+        ' Be sure to update SEARCH_MASS_CODE_COUNT when changing enum SearchMassSpecsClass.eSearchMassCodeConstants
+        Public Const SEARCH_MASS_CODE_COUNT As Integer = 10
+        Public Enum eSearchMassCodeConstants
+            CustomMass = 0
+            NL98 = 1            ' loss of 98 from the parent m/z
+            NL116 = 2           ' loss of (98+18) = 116
+            NL49 = 3            ' loss of 98/2 = 49
+            NL58 = 4            ' loss of (98+18)/2 = 58 
+            NL107 = 5           ' loss of (98*2+18)/2 = 107
+            NL33 = 6            ' loss of 98/3 = 32.66
+            NL65 = 7            ' loss of (98*2)/3 = 65.32
+            NL39 = 8            ' loss of (98+18)/3 = 38.66
+            NL71 = 9            ' loss of (98*2+18)/3 = 71.32
+        End Enum
+
+        Public SearchMass As Double
+        Public LowerBoundMZ As Double
+        Public UpperBoundMZ As Double
+        Public SearchMassCode As eSearchMassCodeConstants
+        Public Matched As Boolean
+    End Class
+
 End Class
