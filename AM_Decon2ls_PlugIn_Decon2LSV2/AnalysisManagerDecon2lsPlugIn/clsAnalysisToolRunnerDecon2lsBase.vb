@@ -33,10 +33,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
 #Region "Module variables"
 
-    ' This will be TDL or DLS (though I'm not sure it's actually used anywhere
+    Protected mDatasetName As String
+    Protected mRawDataType As String = String.Empty
+
+    Protected mInputFilePath As String = String.Empty
+
+    ' This will be TDL or DLS (though it's actually used anywhere)
     Protected m_AnalysisType As String
 
-    Protected mInputFileName As String = String.Empty
 
     Protected mCurrentLoopParams As udtCurrentLoopParamsType
 
@@ -47,7 +51,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Private WithEvents mDeconToolsBackgroundWorker As System.ComponentModel.BackgroundWorker
 
     Protected mDeconToolsStatus As udtDeconToolsStatusType
-   
+
 #End Region
 
 #Region "Enums and Structures"
@@ -91,7 +95,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
 #Region "Methods"
     Public Sub New()
-
     End Sub
 
     Private Sub mDeconToolsBackgroundWorker_DoWork(ByVal sender As Object, _
@@ -117,7 +120,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim tr As System.IO.StreamReader = Nothing
         Dim tw As System.IO.StreamWriter
         Dim s As String
-        Dim DatasetName As String
         Dim fileNameCounter As Integer
         Dim ResultsFile As String = ""
         Dim intLinesRead As Integer
@@ -127,7 +129,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim blnAddSegmentNumberToEachLine As Boolean = False
 
         Try
-            DatasetName = m_jobParams.GetParam("datasetNum")
 
             tw = CreateNewExportFile(System.IO.Path.Combine(m_WorkDir, strCombinedFileName))
             If tw Is Nothing Then
@@ -137,12 +138,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             For fileNameCounter = 1 To intNumResultFiles
                 Select Case resFileType
                     Case Decon2LSResultFileType.DECON2LS_ISOS
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Decon2LSResultFileType.DECON2LS_SCANS
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                         blnFilesContainHeaderLine = True
 
@@ -156,7 +157,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                     ' Isos or Scans file is not found
                     If resFileType = Decon2LSResultFileType.DECON2LS_SCANS Then
                         ' Be sure to delete the _#_peaks.dat file (which Decon2LS likely created, but it doesn't contain any useful information)
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                     End If
                 Else
@@ -209,20 +210,51 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Private Function AssembleResults(ByVal blnLoopingEnabled As Boolean, ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
+    Private Function AssembleResults(ByVal blnLoopingEnabled As Boolean, _
+                                     ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
+
         Dim result As IJobParams.CloseOutType
 
-        Dim DatasetName As String
         Dim ScansFilePath As String
         Dim IsosFilePath As String
         Dim PeaksFilePath As String
 
         Try
-            DatasetName = m_jobParams.GetParam("datasetNum")
 
-            ScansFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_SCANS_FILE_SUFFIX)
-            IsosFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_ISOS_FILE_SUFFIX)
-            PeaksFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_PEAKS_FILE_SUFFIX)
+            ScansFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & DECON2LS_SCANS_FILE_SUFFIX)
+            IsosFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & DECON2LS_ISOS_FILE_SUFFIX)
+            PeaksFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & DECON2LS_PEAKS_FILE_SUFFIX)
+
+            Select Case mRawDataType
+                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                    ' As of 11/19/2010, the Decon2LS output files are created inside the .D folder
+                    If Not System.IO.File.Exists(IsosFilePath) And Not System.IO.File.Exists(ScansFilePath) Then
+                        ' Copy the files from the .D folder to the work directory
+
+                        Dim fiSrcFilePath As System.IO.FileInfo
+
+                        If m_DebugLevel >= 1 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying Decon2LS result files from the .D folder to the working directory")
+                        End If
+
+                        fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, mDatasetName & DECON2LS_SCANS_FILE_SUFFIX))
+                        If fiSrcFilePath.Exists Then
+                            fiSrcFilePath.CopyTo(ScansFilePath)
+                        End If
+
+                        fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, mDatasetName & DECON2LS_ISOS_FILE_SUFFIX))
+                        If fiSrcFilePath.Exists Then
+                            fiSrcFilePath.CopyTo(IsosFilePath)
+                        End If
+
+                        fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, mDatasetName & DECON2LS_PEAKS_FILE_SUFFIX))
+                        If fiSrcFilePath.Exists Then
+                            fiSrcFilePath.CopyTo(PeaksFilePath)
+                        End If
+
+                    End If
+
+            End Select
 
             clsGlobal.m_ExceptionFiles.Add(ScansFilePath)
             clsGlobal.m_ExceptionFiles.Add(IsosFilePath)
@@ -245,6 +277,13 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 result = AssembleFiles(IsosFilePath, Decon2LSResultFileType.DECON2LS_ISOS, intNumResultFiles)
                 If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     Return result
+                End If
+            Else
+                ' make sure the Isos File exists
+                If Not System.IO.File.Exists(IsosFilePath) Then
+                    m_message = "DeconTools Isos file Not Found: " & IsosFilePath
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
                 End If
             End If
 
@@ -276,9 +315,13 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         'Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
 
         Dim result As IJobParams.CloseOutType
-        Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
         'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
         Dim eReturnCode As IJobParams.CloseOutType
+
+        ' Make sure the dataset name is defined
+        mDatasetName = m_jobParams.GetParam("datasetNum")
+
+        mRawDataType = m_jobParams.GetParam("RawDataType")
 
         ' Set this to success for now
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -288,7 +331,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         'Get the setup file by running the base class method
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        result = MyBase.RunTool()
+        If Not result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'Error message is generated in base class, so just exit with error
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -301,7 +345,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             ' Something went wrong
             ' In order to help diagnose things, we will move whatever files were created into the result folder, 
             '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            m_message = "Error running Decon2LS"
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error running Decon2LS"
+            End If
 
             eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -311,7 +357,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
         End If
 
-        If DeleteRawDataFiles(m_jobParams.GetParam("RawDataType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If DeleteRawDataFiles(mRawDataType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
             m_message = "Error deleting raw data files"
             ' Don't treat this as a critical error; leave eReturnCode unchanged
@@ -365,6 +411,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                                              ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)   'Uses overrides in subclasses to handle details of starting Decon2LS
 
     Protected Function RunDecon2Ls() As IJobParams.CloseOutType
+
         Const DEFAULT_LOOPING_CHUNK_SIZE As Integer = 25000
         Const PARAM_FILE_NAME_TEMP As String = "Decon2LSParamsCurrentLoop.xml"
         Const MAX_SCAN_STOP As Integer = 10000000       ' 10 million
@@ -376,7 +423,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim blnLoopingEnabled As Boolean = False
         Dim intLoopChunkSize As Integer = DEFAULT_LOOPING_CHUNK_SIZE
 
-        Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
         'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
 
         Dim strParamFile As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
@@ -429,20 +475,20 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         ''End If
 
         ' Get file type of the raw data file
-        Dim filetype As DeconTools.Backend.Globals.MSFileType = GetInputFileType(RawDataType)
+        Dim filetype As DeconTools.Backend.Globals.MSFileType = GetInputFileType(mRawDataType)
         If filetype = DeconTools.Backend.Globals.MSFileType.Undefined Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & mRawDataType)
             m_message = "Invalid raw data type specified"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Specify output file name
-        Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+        Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, mDatasetName)
 
         ' Specify Input file or folder
-        mInputFileName = SpecifyInputFileName(RawDataType)
-        If mInputFileName = "" Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & RawDataType)
+        mInputFilePath = SpecifyInputFilePath(mRawDataType)
+        If mInputFilePath = "" Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & mRawDataType)
             m_message = "Invalid raw data type specified"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -472,13 +518,13 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Processing scans " & LocScanStart.ToString & " to " & LocScanStop.ToString)
             End If
 
-          
+
             ' Reset the log file tracking variables
             mDecon2LSThreadAbortedSinceFinished = False
 
             ' Initialize mCurrentLoopParams
             With mCurrentLoopParams
-                .InputFilePath = mInputFileName
+                .InputFilePath = mInputFilePath
                 .OutputFilePath = strOutFileCurrentLoop
                 .ParamFilePath = strParamFileCurrentLoop
                 .DeconFileType = filetype
@@ -522,6 +568,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
                         m_message = "Decon2LS invalid state"
                         blnDecon2LSError = True
+                    Case DeconToolsStateType.Running
+                        ' We probably shouldn't get here
+                        ' But, we'll assume success
+                        blnDecon2LSError = False
                 End Select
             End If
 
@@ -598,7 +648,13 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         blnFinished = False
 
         Try
-            strLogFilePath = System.IO.Path.Combine(m_WorkDir, mInputFileName & "_log.txt")
+            Select Case mRawDataType
+                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                    ' As of 11/19/2010, the _Log.txt file is created inside the .D folder
+                    strLogFilePath = System.IO.Path.Combine(mInputFilePath, mDatasetName) & "_log.txt"
+                Case Else
+                    strLogFilePath = System.IO.Path.Combine(m_WorkDir, mInputFilePath & "_log.txt")
+            End Select
 
             If System.IO.File.Exists(strLogFilePath) Then
                 srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
@@ -651,29 +707,52 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     Protected Function GetInputFileType(ByVal RawDataType As String) As DeconTools.Backend.Globals.MSFileType
 
+        Dim InstrumentClass As String = m_jobParams.GetParam("instClass")
+
         'Gets the Decon2LS file type based on the input data type
         Select Case RawDataType.ToLower
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
                 Return DeconTools.Backend.Globals.MSFileType.Finnigan
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
                 Return DeconTools.Backend.Globals.MSFileType.Agilent_WIFF
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
                 Return DeconTools.Backend.Globals.MSFileType.PNNL_UIMF
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+                Return DeconTools.Backend.Globals.MSFileType.Agilent_D
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
                 Return DeconTools.Backend.Globals.MSFileType.Micromass_Rawdata
+
             Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
-                If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
+                If InstrumentClass.ToLower = "brukerftms" Then
                     'Data off of Bruker FTICR
                     Return DeconTools.Backend.Globals.MSFileType.Bruker
-                ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
+
+                ElseIf InstrumentClass.ToLower = "finnigan_fticr" Then
                     'Data from old Finnigan FTICR
                     Return DeconTools.Backend.Globals.MSFileType.SUNEXTREL
                 Else
                     'Should never get here
                     Return DeconTools.Backend.Globals.MSFileType.Undefined
                 End If
-            Case "dot_mzxml_files"
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+                Return DeconTools.Backend.Globals.MSFileType.Bruker_V2
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+
+                ' TODO: Add support for this after Decon2LS is updated
+                'Return DeconTools.Backend.Globals.MSFileType.Bruker_15T
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker_TOF data (" & RawDataType & ")")
+                Return DeconTools.Backend.Globals.MSFileType.Undefined
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
                 Return DeconTools.Backend.Globals.MSFileType.MZXML_Rawdata
+
             Case Else
                 'Should never get this value
                 Return DeconTools.Backend.Globals.MSFileType.Undefined
@@ -681,20 +760,40 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Protected Function SpecifyInputFileName(ByVal RawDataType As String) As String
+    Protected Function SpecifyInputFilePath(ByVal RawDataType As String) As String
 
         'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
         Select Case RawDataType.ToLower
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_RAW_EXTENSION)
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_WIFF_EXTENSION)
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_WIFF_EXTENSION)
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_UIMF_EXTENSION)
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_UIMF_EXTENSION)
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName) & clsAnalysisResources.DOT_D_EXTENSION
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")) & ".raw/_FUNC001.DAT"
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName) & clsAnalysisResources.DOT_RAW_EXTENSION & "/_FUNC001.DAT"
+
             Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName)
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+                ' Bruker_FT folders are actually .D folders
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName) & clsAnalysisResources.DOT_D_EXTENSION
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                ''''''''''''''''''''''''''''''''''''
+                ' TODO: Finalize this code
+                '       DMS doesn't yet have a BrukerTOF dataset 
+                '        so we don't know the official folder structure
+                ''''''''''''''''''''''''''''''''''''
+                Return System.IO.Path.Combine(m_WorkDir, mDatasetName)
+
             Case Else
                 'Should never get this value
                 Return ""
@@ -703,6 +802,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     End Function
 
     Protected Sub WaitForDecon2LSFinish()
+
         Dim dtLastStatusUpdate As System.DateTime
 
         Dim dtFinishTime As DateTime
@@ -715,6 +815,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         dtLastStatusUpdate = System.DateTime.Now
 
         While mDeconToolsBackgroundWorker.IsBusy
+
+            System.Threading.Thread.Sleep(2000)
 
             ' Update the status every 5 seconds
             If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
@@ -783,20 +885,48 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Select Case RawDataType.ToLower
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_RAW_EXTENSION)
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
                 IsFile = True
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_WIFF_EXTENSION)
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_WIFF_EXTENSION)
                 IsFile = True
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & clsAnalysisResources.DOT_UIMF_EXTENSION)
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_UIMF_EXTENSION)
                 IsFile = True
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+                IsFile = True
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+                IsFile = False
+
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".raw")
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
                 IsFile = False
+
             Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName)
                 IsFile = False
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+                ' Bruker_FT folders are actually .D folders
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+                IsFile = False
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                ''''''''''''''''''''''''''''''''''''
+                ' TODO: Finalize this code
+                '       DMS doesn't yet have a BrukerTOF dataset 
+                '        so we don't know the official folder structure
+                ''''''''''''''''''''''''''''''''''''
+
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, mDatasetName)
+                IsFile = False
+
             Case Else
                 'Should never get this value
                 m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & RawDataType

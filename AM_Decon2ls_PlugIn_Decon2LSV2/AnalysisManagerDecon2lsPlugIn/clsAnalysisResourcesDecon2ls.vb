@@ -27,9 +27,9 @@ Public Class clsAnalysisResourcesDecon2ls
 
         'Retrieve param file
         If Not RetrieveFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_mgrParams.GetParam("workdir")) _
+           m_jobParams.GetParam("ParmFileName"), _
+           m_jobParams.GetParam("ParmFileStoragePath"), _
+           m_mgrParams.GetParam("workdir")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 
