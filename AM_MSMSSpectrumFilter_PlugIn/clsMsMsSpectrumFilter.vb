@@ -14,7 +14,7 @@ Public Class clsMsMsSpectrumFilter
 
 
     Public Sub New()
-        MyBase.mFileDate = "November 19, 2010"
+        MyBase.mFileDate = "November 22, 2010"
         InitializeVariables()
     End Sub
 
@@ -228,11 +228,12 @@ Public Class clsMsMsSpectrumFilter
     ''' <remarks></remarks>
     Protected Structure FilterMode4OptionsType
         Public ReporterIonMZs As String                         ' Comma-separated list of m/z values to look for
-        Public ReporterIonIntensityThreshold As Single          ' Minimum intensity (ion counts) that the ion must be present at
+        Public ReporterIonMinimumIntensity As Single            ' Minimum intensity (ion counts) that the ion must be present at in order to be counted when checking ReporterIonMatchCountMinimum
         Public ReporterIonToleranceHalfWidthMZ As Single        ' Search tolerance (+/- this value)
         Public RemoveReporterIons As Boolean                    ' If true, then the reporter ions are removed from the spectrum
         Public PrecursorIonMassLossDa As Single                 ' Will change the mass of the parent ion listed for each spectrum by this amount (correcting for charge, as needed).  This is needed if gas phase chemistry causes the precursor ion to lose a functional group, thereby decreasing the effective mass of the precursor
         Public ReporterIonMatchCountMinimum As Integer
+        Public ReporterIonMaxIntensityThreshold As Single       ' At least one of the reporter ions must have an intensity at/above this value in order for the spectrum to pass the filter
         Public RemoveMassCorrectedPrecursorIons As Boolean      ' If true, then looks for ions at the new m/z that the precursor should have, given the precursor mass minus PrecursorIonMassLossDa; will look at the charge state of the precursor ion and at the charge one smaller than the precursor ion
         Public PrecursorIonMinimumCharge As Short
     End Structure
@@ -632,12 +633,12 @@ Public Class clsMsMsSpectrumFilter
         End Set
     End Property
 
-    Public Property FilterMode4_ReporterIonIntensityThreshold() As Single
+    Public Property FilterMode4_ReporterIonMinimumIntensity() As Single
         Get
-            Return mFilterMode4Options.ReporterIonIntensityThreshold
+            Return mFilterMode4Options.ReporterIonMinimumIntensity
         End Get
         Set(ByVal value As Single)
-            mFilterMode4Options.ReporterIonIntensityThreshold = value
+            mFilterMode4Options.ReporterIonMinimumIntensity = value
         End Set
     End Property
 
@@ -674,6 +675,15 @@ Public Class clsMsMsSpectrumFilter
         End Get
         Set(ByVal value As Integer)
             mFilterMode4Options.ReporterIonMatchCountMinimum = value
+        End Set
+    End Property
+
+    Public Property FilterMode4_ReporterIonMaxIntensityThreshold() As Single
+        Get
+            Return mFilterMode4Options.ReporterIonMaxIntensityThreshold
+        End Get
+        Set(ByVal value As Single)
+            mFilterMode4Options.ReporterIonMaxIntensityThreshold = value
         End Set
     End Property
 
@@ -985,6 +995,8 @@ Public Class clsMsMsSpectrumFilter
             .SearchMassCode = eSearchMassCode
             .LowerBoundMZ = .SearchMass - dblSearchToleranceHalfWidthMZ
             .UpperBoundMZ = .SearchMass + dblSearchToleranceHalfWidthMZ
+            .Matched = False
+            .IonIntensity = 0
         End With
 
         objSearchMassSpecs.Add(objNewEntry)
@@ -2795,6 +2807,8 @@ Public Class clsMsMsSpectrumFilter
 
         Dim blnPassesFilter As Boolean
         Dim intReporterIonMatchCount As Integer
+        Dim dblReporterIonMaxIntensity As Double
+
 
         ' The reporter ion mass list is static to avoid reserving memory for every spectrum
         ' However, it will be re-populated on each call to this function
@@ -2845,19 +2859,25 @@ Public Class clsMsMsSpectrumFilter
 
             ' Note: need to set blnPopulateIonIntensitiesNormalized to true when calling SearchSpectrumForIons since we need to find all of the matching ions
             blnMatchFound = SearchSpectrumForIons(sngMassList, sngIntensityList, _
-                                                  objReporterIonMasses, mFilterMode4Options.ReporterIonIntensityThreshold, _
+                                                  objReporterIonMasses, mFilterMode4Options.ReporterIonMinimumIntensity, _
                                                   True, udtIonMatchStats)
 
             If blnMatchFound Then
                 ' Count the number of matches
                 intReporterIonMatchCount = 0
+                dblReporterIonMaxIntensity = 0
+
                 For intMassIndex = 0 To objReporterIonMasses.Count - 1
                     If objReporterIonMasses(intMassIndex).Matched Then
                         intReporterIonMatchCount += 1
+                        If objReporterIonMasses(intMassIndex).IonIntensity > dblReporterIonMaxIntensity Then
+                            dblReporterIonMaxIntensity = objReporterIonMasses(intMassIndex).IonIntensity
+                        End If
                     End If
                 Next
 
-                If intReporterIonMatchCount >= mFilterMode4Options.ReporterIonMatchCountMinimum Then
+                If intReporterIonMatchCount >= mFilterMode4Options.ReporterIonMatchCountMinimum AndAlso _
+                   dblReporterIonMaxIntensity >= mFilterMode4Options.ReporterIonMaxIntensityThreshold Then
                     blnPassesFilter = True
                 End If
 
@@ -2961,6 +2981,10 @@ Public Class clsMsMsSpectrumFilter
                         ' Match found
 
                         objSearchMassSpecs(intMassIndex).Matched = True
+                        If sngIntensityList(intIonIndex) > objSearchMassSpecs(intMassIndex).IonIntensity Then
+                            objSearchMassSpecs(intMassIndex).IonIntensity = sngIntensityList(intIonIndex)
+                        End If
+
                         blnMatchFound = True
 
                         If blnPopulateIonIntensitiesNormalized Then
@@ -3073,7 +3097,12 @@ Public Class clsMsMsSpectrumFilter
                 End If
 
                 If mSpectrumFilterMode = eSpectrumFilterMode.mode4 Then
-                    blnFilterReporterIons = GetFilterMode4ReporterIons(dblReporterIonMZs)
+                    If mFilterMode4Options.RemoveReporterIons Then
+                        blnFilterReporterIons = GetFilterMode4ReporterIons(dblReporterIonMZs)
+                    Else
+                        blnFilterReporterIons = False
+                    End If
+
                 End If
 
                 ' Step through the data
@@ -3139,7 +3168,7 @@ Public Class clsMsMsSpectrumFilter
 
                             End If
 
-                            If blnKeepIon AndAlso intParentCharge > 1 Then
+                            If blnKeepIon AndAlso intParentCharge > 1 AndAlso mFilterMode4Options.RemoveMassCorrectedPrecursorIons Then
                                 If Math.Abs(dblParentIonMZNextLowerCharge - sngMassList(intIndex)) <= mFilterMode4Options.ReporterIonToleranceHalfWidthMZ Then
                                     blnKeepIon = False
                                 End If
@@ -3706,11 +3735,12 @@ Public Class clsMsMsSpectrumFilter
         ' Filter mode 4
         With mFilterMode4Options
             .ReporterIonMZs = DEFAULT_MODE4_REPORTER_ION_MZs
-            .ReporterIonIntensityThreshold = 50
+            .ReporterIonMinimumIntensity = 50
             .ReporterIonToleranceHalfWidthMZ = 0.7
             .RemoveReporterIons = True
             .PrecursorIonMassLossDa = DEFAULT_MODE4_PARENT_ION_MASS_LOSS_DA
             .ReporterIonMatchCountMinimum = 2
+            .ReporterIonMaxIntensityThreshold = 500
             .RemoveMassCorrectedPrecursorIons = True
             .PrecursorIonMinimumCharge = 2
         End With
@@ -3894,11 +3924,12 @@ Public Class clsMsMsSpectrumFilter
                 Else
                     With mFilterMode4Options
                         .ReporterIonMZs = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMZs", .ReporterIonMZs)
-                        .ReporterIonIntensityThreshold = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonIntensityThreshold", .ReporterIonIntensityThreshold)
+                        .ReporterIonMinimumIntensity = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMinimumIntensity", .ReporterIonMinimumIntensity)
                         .ReporterIonToleranceHalfWidthMZ = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonToleranceHalfWidthMZ", .ReporterIonToleranceHalfWidthMZ)
                         .RemoveReporterIons = objSettingsFile.GetParam(FILTER_MODE4, "RemoveReporterIons", .RemoveReporterIons)
                         .PrecursorIonMassLossDa = objSettingsFile.GetParam(FILTER_MODE4, "PrecursorIonMassLossDa", .PrecursorIonMassLossDa)
                         .ReporterIonMatchCountMinimum = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMatchCountMinimum", .ReporterIonMatchCountMinimum)
+                        .ReporterIonMaxIntensityThreshold = objSettingsFile.GetParam(FILTER_MODE4, "ReporterIonMaxIntensityThreshold", .ReporterIonMaxIntensityThreshold)
                         .RemoveMassCorrectedPrecursorIons = objSettingsFile.GetParam(FILTER_MODE4, "RemoveMassCorrectedPrecursorIons", .RemoveMassCorrectedPrecursorIons)
                         .PrecursorIonMinimumCharge = objSettingsFile.GetParam(FILTER_MODE4, "PrecursorIonMinimumCharge", .PrecursorIonMinimumCharge)
                     End With
@@ -5960,6 +5991,7 @@ Public Class clsMsMsSpectrumFilter
         Public UpperBoundMZ As Double
         Public SearchMassCode As eSearchMassCodeConstants
         Public Matched As Boolean
+        Public IonIntensity As Double
     End Class
 
 End Class
