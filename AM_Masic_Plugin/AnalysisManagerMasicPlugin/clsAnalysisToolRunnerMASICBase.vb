@@ -207,7 +207,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         ' Define the parameters to send to Masic.exe
         CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q /SF:" & m_MASICStatusFileName
 
-        If m_DebugLevel >= 3 Then
+        If m_DebugLevel >= 2 Then
             ' Create a MASIC Log File
             CmdStr &= " /L"
             m_MASICLogFileName = "MASIC_Log_Job" & m_JobNum & ".txt"
@@ -239,7 +239,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         objMasicProgRunner = Nothing
         System.Threading.Thread.Sleep(3000)             'Delay for 3 seconds to make sure program exits
 
-        If Not m_MASICLogFileName Is Nothing AndAlso m_MASICLogFileName.Length > 0 Then
+        If Not String.IsNullOrEmpty(m_MASICLogFileName) Then
             ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
             ' Use clsLogTools.WriteLog to write these to the log
             ExtractErrorsFromMASICLogFile(System.IO.Path.Combine(m_WorkDir, m_MASICLogFileName))
