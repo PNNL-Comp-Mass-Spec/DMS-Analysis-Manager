@@ -740,7 +740,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 End If
 
             Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
-                Return DeconTools.Backend.Globals.MSFileType.Bruker_V2
+                Return DeconTools.Backend.Globals.MSFileType.Bruker
 
             Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
 
