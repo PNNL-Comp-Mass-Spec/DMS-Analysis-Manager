@@ -415,7 +415,11 @@ Namespace AnalysisManagerBase
             Dim blnValue As Boolean = False
 
             Try
-                blnValue = CBool(Value)
+                If String.IsNullOrEmpty(Value) Then
+                    blnValue = False
+                Else
+                    blnValue = CBool(Value)
+                End If
             Catch ex As Exception
                 blnValue = False
             End Try
@@ -428,7 +432,11 @@ Namespace AnalysisManagerBase
             Dim blnValue As Boolean = False
 
             Try
-                blnValue = CBool(Value)
+                If String.IsNullOrEmpty(Value) Then
+                    blnValue = blnDefaultValue
+                Else
+                    blnValue = CBool(Value)
+                End If
             Catch ex As Exception
                 blnValue = blnDefaultValue
             End Try
@@ -442,7 +450,11 @@ Namespace AnalysisManagerBase
             Dim intValue As Integer
 
             Try
-                intValue = CInt(Value)
+                If String.IsNullOrEmpty(Value) Then
+                    intValue = intDefaultValue
+                Else
+                    intValue = CInt(Value)
+                End If
             Catch ex As Exception
                 intValue = intDefaultValue
             End Try
@@ -455,7 +467,12 @@ Namespace AnalysisManagerBase
             Dim sngValue As Single
 
             Try
-                sngValue = CSng(Value)
+                If String.IsNullOrEmpty(Value) Then
+                    sngValue = sngDefaultValue
+                Else
+                    sngValue = CSng(Value)
+                End If
+
             Catch ex As Exception
                 sngValue = sngDefaultValue
             End Try
