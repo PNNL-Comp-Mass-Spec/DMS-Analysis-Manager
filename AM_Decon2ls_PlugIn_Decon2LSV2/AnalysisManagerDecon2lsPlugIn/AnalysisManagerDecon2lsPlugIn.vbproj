@@ -77,7 +77,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="DeconTools.Backend, Version=1.0.3989.10053, Culture=neutral, processorArchitecture=x86" />
+    <Reference Include="DeconTools.Backend, Version=1.0.3993.5912, Culture=neutral, processorArchitecture=x86" />
     <Reference Include="PRISM">
       <Name>PRISM</Name>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
