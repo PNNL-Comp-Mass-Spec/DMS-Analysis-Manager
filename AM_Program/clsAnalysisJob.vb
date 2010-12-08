@@ -111,7 +111,7 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public Overrides Function RequestTask() As clsDBTask.RequestTaskResult
 
-			Dim RetVal As RequestTaskResult
+            Dim RetVal As clsDBTask.RequestTaskResult
 
 			RetVal = RequestAnalysisJob()
 			Select Case RetVal

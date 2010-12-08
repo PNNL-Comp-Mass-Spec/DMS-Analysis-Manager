@@ -322,14 +322,32 @@ Namespace AnalysisManagerProg
                         Case clsDBTask.RequestTaskResult.TaskFound
                             m_TaskFound = True
                             TasksStartedCount += 1
-                            If DoAnalysisJob() Then
-                                ' Task succeeded; reset the sequential job failure counter
-                                m_ErrorCount = 0
-                                m_OneTaskPerformed = True
-                            Else
-                                'Something went wrong; errors were logged by DoAnalysisJob
+
+                            Try
+                                If DoAnalysisJob() Then
+                                    ' Task succeeded; reset the sequential job failure counter
+                                    m_ErrorCount = 0
+                                    m_OneTaskPerformed = True
+                                Else
+                                    'Something went wrong; errors were logged by DoAnalysisJob
+                                    m_ErrorCount += 1
+                                End If
+
+                            Catch ex As Exception
+                                ' Something went wrong; errors likely were not logged by DoAnalysisJob
+
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " & _
+                                    ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
+
+                                ' Set the job state to failed
+                                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob")
+
                                 m_ErrorCount += 1
-                            End If
+                                m_NeedToAbortProcessing = True
+
+                            End Try
+                            
                         Case clsDBTask.RequestTaskResult.TooManyRetries
                             'There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
                             ' Bump up LoopCount to the maximum to exit the loop
@@ -346,7 +364,7 @@ Namespace AnalysisManagerProg
                             Exit Sub
                     End Select
 
-                    If NeedToAbortProcessing() Then Exit Sub
+                    If NeedToAbortProcessing() Then Exit While
                     LoopCount += 1
 
                     'if the only problem was deleting non result files, we want to stop the manager

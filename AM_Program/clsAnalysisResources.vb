@@ -2125,10 +2125,29 @@ Namespace AnalysisManagerBase
                     DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
 
                     'Add all potential paths to job params
-                    If Not m_jobParams.AddAdditionalParameter("DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then Return False
-                    If Not m_jobParams.AddAdditionalParameter("DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then Return False
-                    If Not m_jobParams.AddAdditionalParameter("inputFolderName", DbCStr(CurRow(DatasetInformation.Columns("ResultsFolder")))) Then Return False
-                    If Not m_jobParams.AddAdditionalParameter("DatasetFolderName", DbCStr(CurRow(DatasetInformation.Columns("DatasetFolder")))) Then Return False
+                    If Not m_jobParams.AddAdditionalParameter("DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then
+                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ServerStoragePath' not found in the DatasetInformation associated with the data package"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Return False
+                    End If
+
+                    If Not m_jobParams.AddAdditionalParameter("DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then
+                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ArchiveStoragePath' not found in the DatasetInformation associated with the data package"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Return False
+                    End If
+
+                    If Not m_jobParams.AddAdditionalParameter("inputFolderName", DbCStr(CurRow(DatasetInformation.Columns("ResultsFolder")))) Then
+                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ResultsFolder' not found in the DatasetInformation associated with the data package"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Return False
+                    End If
+
+                    If Not m_jobParams.AddAdditionalParameter("DatasetFolderName", DbCStr(CurRow(DatasetInformation.Columns("DatasetFolder")))) Then
+                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'DatasetFolder' not found in the DatasetInformation associated with the data package"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Return False
+                    End If
 
                     clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
 
@@ -2138,11 +2157,12 @@ Namespace AnalysisManagerBase
                     For Each FileNameExt As String In FilesToRetrieveExt
                         SplitString = FileNameExt.Split(":"c)
                         SourceFilename = DatasetName & SplitString(1)
-                        If SplitString(0) = Tool.ToLower Then
+                        If SplitString(0).ToLower() = Tool.ToLower() Then
                             SourceFolderPath = FindDataFile(SourceFilename)
                             If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, WorkDir, clsLogTools.LogLevels.ERROR) Then
+                                m_message = "CopyFileToWorkDir returned False for " & SourceFilename & " using folder " & SourceFolderPath
                                 If m_DebugLevel >= 1 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFilename & " using folder " & SourceFolderPath)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                                 End If
                                 Return False
                             Else
@@ -2249,7 +2269,7 @@ Namespace AnalysisManagerBase
 
             'Requests Dataset information from a data package
             Dim RetryCount As Short = 3
-            Dim MyMsg As String
+
             Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
             Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SettingsFileName, DatasetID " & _
@@ -2273,17 +2293,17 @@ Namespace AnalysisManagerBase
                     Exit While
                 Catch ex As System.Exception
                     RetryCount -= 1S
-                    MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; Exception getting aggregate list from database: " & ex.Message & "; ConnectionString: " & ConnectionString
-                    MyMsg &= ", RetryCount = " & RetryCount.ToString
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                    m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Exception getting aggregate list from database: " & ex.Message & "; ConnectionString: " & ConnectionString
+                    m_message &= ", RetryCount = " & RetryCount.ToString
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     System.Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
                 End Try
             End While
 
             'If loop exited due to errors, return false
             If RetryCount < 1 Then
-                MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; Excessive failures attempting to retrieve aggregate list from database"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Excessive failures attempting to retrieve aggregate list from database"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Dt.Dispose()
                 Return False
             End If
@@ -2291,8 +2311,8 @@ Namespace AnalysisManagerBase
             'Verify at least one row returned
             If Dt.Rows.Count < 1 Then
                 ' No data was returned
-                MyMsg = "clsAnalysisResources.LoadDatasetLocationsFromDB; The file paths return from the database was empty."
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyMsg)
+                m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; The file paths return from the database was empty."
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Dt.Dispose()
                 Return False
             End If
