@@ -67,9 +67,24 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Dim CmdStr As String
         CmdStr = "/M:" & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"))
         CmdStr &= " /G /O:" & m_WorkDir
+        CmdStr &= " /L:" & System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt")
+
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt")
+        End With
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " & m_JobNum)
+
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging XTandem problems
+            CopyFailedResultsToArchiveFolder()
+
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -115,6 +130,40 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
+
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            result = MoveResultFiles()
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+
+    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
