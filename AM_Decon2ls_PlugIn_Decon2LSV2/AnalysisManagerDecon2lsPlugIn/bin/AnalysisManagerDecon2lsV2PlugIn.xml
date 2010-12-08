@@ -12,6 +12,22 @@ AnalysisManagerDecon2lsV2PlugIn
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsBase.IsosFileHasData(System.String)">
+	<summary>
+ Examines IsosFilePath to look for data lines (does not read the entire file, just the first two lines)
+ </summary>
+	<param name="IsosFilePath"></param>
+	<returns>True if it has one or more lines of data, otherwise, returns False</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsBase.IsosFileHasData(System.String,System.Int32@,System.Boolean)">
+	<summary>
+ Examines IsosFilePath to look for data lines 
+ </summary>
+	<param name="IsosFilePath"></param>
+	<param name="intDataLineCount">Output parameter: total data line count</param>
+	<param name="blnCountTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
+	<returns>True if it has one or more lines of data, otherwise, returns False</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsBase.WriteTempParamFileUpdateElementValue(System.Xml.XmlDocument@,System.String,System.String,System.String)">
 	<summary>
  Looks for the section specified by parameter XPathForSection.  If found, updates its value to NewElementValue.  If not found, tries to add a new node with name ElementName

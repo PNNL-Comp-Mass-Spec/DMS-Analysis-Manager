@@ -287,6 +287,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 End If
             End If
 
+            ' Make sure the Isos file contains at least one row of data
+            If Not IsosFileHasData(IsosFilePath) Then
+                m_message = "No results in DeconTools Isos file"
+                clsGlobal.m_Completions_Msg = m_message
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
+
         Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -310,11 +318,80 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
+    ''' <summary>
+    ''' Examines IsosFilePath to look for data lines (does not read the entire file, just the first two lines)
+    ''' </summary>
+    ''' <param name="IsosFilePath"></param>
+    ''' <returns>True if it has one or more lines of data, otherwise, returns False</returns>
+    ''' <remarks></remarks>
+    Protected Function IsosFileHasData(ByVal IsosFilePath As String) As Boolean
+        Dim intDataLineCount As Integer
+        Return IsosFileHasData(IsosFilePath, intDataLineCount, False)
+    End Function
+
+    ''' <summary>
+    ''' Examines IsosFilePath to look for data lines 
+    ''' </summary>
+    ''' <param name="IsosFilePath"></param>
+    ''' <param name="intDataLineCount">Output parameter: total data line count</param>
+    ''' <param name="blnCountTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
+    ''' <returns>True if it has one or more lines of data, otherwise, returns False</returns>
+    ''' <remarks></remarks>
+    Protected Function IsosFileHasData(ByVal IsosFilePath As String, ByRef intDataLineCount As Integer, ByVal blnCountTotalDataLines As Boolean) As Boolean
+
+        Dim srInFile As System.IO.StreamReader
+
+        Dim strLineIn As String
+        Dim blnHeaderLineProcessed As Boolean
+
+        intDataLineCount = 0
+        blnHeaderLineProcessed = False
+
+        Try
+
+            If System.IO.File.Exists(IsosFilePath) Then
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(IsosFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+                Do While srInFile.Peek >= 0
+                    strLineIn = srInFile.ReadLine
+
+                    If Not String.IsNullOrEmpty(strLineIn) Then
+
+                        If blnHeaderLineProcessed Then
+                            ' This is a data line
+                            If blnCountTotalDataLines Then
+                                intDataLineCount += 1
+                            Else
+                                intDataLineCount = 1
+                                Exit Do
+                            End If
+
+                        Else
+                            blnHeaderLineProcessed = True
+                        End If
+                    End If
+                Loop
+
+                srInFile.Close()
+            End If
+
+        Catch ex As System.Exception
+            ' Ignore errors here
+        End Try
+
+        If intDataLineCount > 0 Then
+            Return True
+        Else
+            Return False
+        End If
+
+    End Function
+
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         'Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
 
-        Dim result As IJobParams.CloseOutType
+        Dim eResult As IJobParams.CloseOutType
         'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
         Dim eReturnCode As IJobParams.CloseOutType
 
@@ -331,25 +408,33 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         'Get the setup file by running the base class method
-        result = MyBase.RunTool()
-        If Not result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'Error message is generated in base class, so just exit with error
+        eResult = MyBase.RunTool()
+        If Not eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Error message is generated in base class, so just exit with error
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' Make sure clsGlobal.m_Completions_Msg is empty
+        clsGlobal.m_Completions_Msg = String.Empty
 
         mDecon2LSFailedMidLooping = False
 
         'Run Decon2LS
-        result = RunDecon2Ls()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        eResult = RunDecon2Ls()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Something went wrong
-            ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+            ' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
             '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Error running Decon2LS"
             End If
 
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                eReturnCode = eResult
+            Else
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
         End If
 
         'Delete the raw data files
@@ -374,16 +459,16 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder")
         End If
 
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        eResult = MakeResultsFolder()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'MakeResultsFolder handles posting to local log, so set database error message and exit
             m_message = "Error making results folder"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MoveResultFiles moves the result files to the result folder
+        eResult = MoveResultFiles()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MoveResultFiles moves the eResult files to the eResult folder
             m_message = "Error moving files into results folder"
             eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -396,10 +481,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        eResult = CopyResultsFolderToServer()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
-            Return result
+            Return eResult
         End If
 
         'If we get to here, everything worked so exit happily
@@ -619,6 +704,11 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             eResult = AssembleResults(blnLoopingEnabled, intLoopNum)
 
             If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'Check for no data first. If no data, then exit but still copy results to server
+                If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    Return eResult
+                End If
+
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), AssembleResults returned " & eResult.ToString)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
