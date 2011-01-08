@@ -607,6 +607,38 @@ Public Class clsCodeTest
         Return blnSuccess
     End Function
 
+    Public Sub TestZipAndUnzip()
+
+        Dim objZipper As New clsIonicZipTools(3, "F:\Temp\UnzipTest")
+
+        objZipper.ZipFile("F:\Temp\UnzipTest\StageMD5_Scratch.xls", False)
+        objZipper.ZipFile("F:\Temp\UnzipTest\StageMD5_Scratch.xls", True)
+
+        objZipper.ZipFile("F:\Temp\UnzipTest\StageMD5_Scratch.xls", False, "F:\Temp\UnzipTest\TestCustom.zip")
+
+        objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\ZippedFolders.zip")
+        objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\0_R00X051Y065.zip", False)
+
+        objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\ZippedFolders2.zip", True, "*.baf*")
+
+        objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\ZippedFolders3.zip", True, "*.ini")
+
+        objZipper.UnzipFile("f:\temp\unziptest\StageMD5_Scratch.zip")
+
+        objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped")
+
+        objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped2", "*.baf*")
+
+        objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped3", "*.baf*", Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
+
+        objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders3.zip", "F:\Temp\UnzipTest\Unzipped4", "*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
+
+        objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders3.zip", "F:\Temp\UnzipTest\Unzipped5", "my*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
+
+
+    End Sub
+
+
     Public Function TestFileSplitThenCombine() As Boolean
         Const SYN_FILE_MAX_SIZE_MB As Integer = 200
         Const PEPPROPHET_RESULT_FILE_SUFFIX As String = "_PepProphet.txt"

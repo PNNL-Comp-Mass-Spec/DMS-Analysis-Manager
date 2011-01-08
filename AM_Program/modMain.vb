@@ -47,7 +47,7 @@ Module modMain
         Try
             blnProceed = False
 
-            ' Look for /T on the command line
+            ' Look for /T or /Test on the command line
             ' If present, this means "code test mode" is enabled
             If objParseCommandLine.ParseCommandLine Then
                 If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
@@ -96,7 +96,9 @@ Module modMain
 
                         'objTest.TestProteinDBExport("C:\DMS_Temp_Org")
 
-                        objTest.TestFindFile()
+                        'objTest.TestFindFile()
+
+                        'objTest.TestZipAndUnzip()
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
@@ -131,7 +133,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim strValidParameters() As String = New String() {"I", "T", "Q"}
+        Dim strValidParameters() As String = New String() {"I", "T", "Test", "Q"}
 
         Try
             ' Make sure no invalid parameters are present
@@ -147,6 +149,7 @@ Module modMain
                     End If
 
                     If .RetrieveValueForParameter("T", strValue) Then mCodeTestMode = True
+                    If .RetrieveValueForParameter("Test", strValue) Then mCodeTestMode = True
 
                     If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
                 End With

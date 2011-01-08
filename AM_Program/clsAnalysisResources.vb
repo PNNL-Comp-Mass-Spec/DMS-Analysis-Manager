@@ -7,16 +7,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
-Imports PRISM.Files.ZipTools
-Imports ParamFileGenerator.MakeParams
-Imports Protein_Exporter
-Imports Protein_Exporter.ExportProteinCollectionsIFC
-Imports System.Timers
-Imports System.Data.SqlClient
-
 Namespace AnalysisManagerBase
 
     Public MustInherit Class clsAnalysisResources
@@ -33,15 +23,22 @@ Namespace AnalysisManagerBase
 
         Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
-        Protected Const SHARPZIPLIB_HANDLES_ZIP64 As Boolean = True
-
-        ' Define the maximum file size to process using SharpZipLib; 
-        '  the reason we don't want to process larger files is that SharpZipLib is 1.5x to 2x slower than PkZip
+        ' Define the maximum file size to process using IonicZip; 
+        '  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
         '  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
         '   SharpZipLib unzips the file in 130 seconds
         '   WinRar      unzips the file in 120 seconds
         '   PKZipC      unzips the file in  84 seconds
-        Protected Const SHARPZIPLIB_MAX_FILESIZE_MB As Integer = 1024
+        '
+        ' Re-tested on 1/7/2011 with a 611 MB file
+        '   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
+        '   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
+        '   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
+        '   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
+        '
+        ' For smaller files, the speed differences are much less noticable
+
+        Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
 
         ' Note: These constants need to be all lowercase
         Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data, Agilent TOF data
@@ -94,9 +91,9 @@ Namespace AnalysisManagerBase
         Protected m_FastaGenTimeOut As Boolean = False
         Protected m_FastaGenStartTime As DateTime = System.DateTime.Now
 
-        Protected WithEvents m_FastaTools As ExportProteinCollectionsIFC.IGetFASTAFromDMS
-        Protected WithEvents m_FastaTimer As Timer
-        Protected m_SharpZipTools As clsSharpZipTools
+        Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
+        Protected WithEvents m_FastaTimer As System.Timers.Timer
+        Protected m_IonicZipTools As clsIonicZipTools
 #End Region
 
 #Region "Properties"
@@ -123,7 +120,7 @@ Namespace AnalysisManagerBase
 
         Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
-            m_FastaFileName = Path.GetFileName(FullOutputPath)      'Get the name of the fasta file that was generated
+            m_FastaFileName = System.IO.Path.GetFileName(FullOutputPath)      'Get the name of the fasta file that was generated
             m_GenerationComplete = True     'Set the completion flag
 
         End Sub
@@ -188,7 +185,7 @@ Namespace AnalysisManagerBase
 
             m_WorkingDir = m_mgrParams.GetParam("workdir")
 
-            m_SharpZipTools = New clsSharpZipTools(m_DebugLevel, m_WorkingDir)
+            m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 
         End Sub
 
@@ -244,7 +241,7 @@ Namespace AnalysisManagerBase
 
             Try
                 SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
-                DestFilePath = Path.Combine(OutDir, InpFile)
+                DestFilePath = System.IO.Path.Combine(OutDir, InpFile)
 
                 'Verify source file exists
                 If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
@@ -333,7 +330,7 @@ Namespace AnalysisManagerBase
             Dim DestFilePath As String = String.Empty
 
             Try
-                SourceFile = Path.Combine(InpFolder, InpFile)
+                SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
 
                 'Verify source file exists
                 If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
@@ -342,9 +339,9 @@ Namespace AnalysisManagerBase
                     Return False
                 End If
 
-                Dim Fi As New FileInfo(SourceFile)
+                Dim Fi As New System.IO.FileInfo(SourceFile)
                 Dim TargetName As String = m_jobParams.GetParam("datasetNum") & Fi.Extension
-                DestFilePath = Path.Combine(OutDir, TargetName)
+                DestFilePath = System.IO.Path.Combine(OutDir, TargetName)
 
                 If CreateStoragePathInfoOnly Then
                     ' Create a storage path info file
@@ -393,7 +390,7 @@ Namespace AnalysisManagerBase
 
                 strInfoFilePath = DestFilePath & STORAGE_PATH_INFO_FILE_SUFFIX
 
-                swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strInfoFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
 
                 swOutFile.WriteLine(SourceFilePath)
                 swOutFile.Close()
@@ -478,7 +475,7 @@ Namespace AnalysisManagerBase
                     ' The _StoragePathInfo.txt file is present
                     ' Open that file to read the file path on the first line of the file
 
-                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
                     strLineIn = srInFile.ReadLine
                     strPhysicalFilePath = strLineIn
@@ -521,7 +518,7 @@ Namespace AnalysisManagerBase
                 ' The _StoragePathInfo.txt file is present
                 ' Open that file to read the file path on the first line of the file
 
-                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
                 strLineIn = srInFile.ReadLine
                 strPhysicalFilePath = strLineIn
@@ -677,11 +674,11 @@ Namespace AnalysisManagerBase
             Dim DataFolderPath As String = ""
 
             'Get a list of the subfolders in the dataset folder
-            DSFolders = Directory.GetDirectories(ServerPath)
+            DSFolders = System.IO.Directory.GetDirectories(ServerPath)
             'Go through the folders looking for a file with a ".mgf" extension
             For Each DumFolder In DSFolders
                 If FileFound Then Exit For
-                DSFiles = Directory.GetFiles(DumFolder, "*" & DOT_MGF_EXTENSION)
+                DSFiles = System.IO.Directory.GetFiles(DumFolder, "*" & DOT_MGF_EXTENSION)
                 If DSFiles.GetLength(0) = 1 Then
                     'Correct folder has been found
                     DataFolderPath = DumFolder
@@ -699,7 +696,7 @@ Namespace AnalysisManagerBase
             'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
             If Not GetCdfAlso Then Return True
 
-            DSFiles = Directory.GetFiles(DataFolderPath, "*" & DOT_CDF_EXTENSION)
+            DSFiles = System.IO.Directory.GetFiles(DataFolderPath, "*" & DOT_CDF_EXTENSION)
             If DSFiles.GetLength(0) <> 1 Then
                 'Incorrect number of .cdf files found
                 Return False
@@ -744,7 +741,7 @@ Namespace AnalysisManagerBase
             ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
 
             'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, MSXmlFoldername)
+            Dim RemFolders() As String = System.IO.Directory.GetDirectories(ServerPath, MSXmlFoldername)
             If RemFolders.GetLength(0) <> 1 Then Return False
 
             ' MSXmlFolder found; copy the .mzXML file
@@ -814,11 +811,11 @@ Namespace AnalysisManagerBase
             Dim DestFolderPath As String
 
             'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, FolderExtensionWildcard)
+            Dim RemFolders() As String = System.IO.Directory.GetDirectories(ServerPath, FolderExtensionWildcard)
             If RemFolders.GetLength(0) <> 1 Then Return False
 
             'Set up the file paths
-            Dim DSFolderPath As String = Path.Combine(ServerPath, RemFolders(0))
+            Dim DSFolderPath As String = System.IO.Path.Combine(ServerPath, RemFolders(0))
 
             'Do the copy
             Try
@@ -863,11 +860,11 @@ Namespace AnalysisManagerBase
 
             ' Find the instrument data folder in the dataset folder
             ' The instrument data folder should have the same name as the dataset folder
-            Dim RemFolders() As String = Directory.GetDirectories(ServerPath, DSName)
+            Dim RemFolders() As String = System.IO.Directory.GetDirectories(ServerPath, DSName)
             If RemFolders.GetLength(0) <> 1 Then Return False
 
             'Set up the file paths
-            Dim DSFolderPath As String = Path.Combine(ServerPath, RemFolders(0))
+            Dim DSFolderPath As String = System.IO.Path.Combine(ServerPath, RemFolders(0))
 
             'Do the copy
             Try
@@ -907,10 +904,12 @@ Namespace AnalysisManagerBase
             Dim DSName As String = m_jobParams.GetParam("datasetNum")
             Dim ZipFiles() As String
             Dim DSWorkFolder As String
-            Dim UnZipper As ZipTools
-            Dim TargetFolder As String
+            Dim UnZipper As clsIonicZipTools
+
+            Dim SourceFilePath As String
+            Dim TargetFolderPath As String
+
             Dim ZipFile As String
-            Dim strZipProgramPath As String
 
             Try
 
@@ -966,7 +965,7 @@ Namespace AnalysisManagerBase
 
 
                 'Get a listing of the zip files to process
-                ZipFiles = Directory.GetFiles(WorkDir, "s*.zip")
+                ZipFiles = System.IO.Directory.GetFiles(WorkDir, "s*.zip")
                 If ZipFiles.GetLength(0) < 1 Then
                     m_message = "No zipped s-folders found in working directory"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -974,19 +973,11 @@ Namespace AnalysisManagerBase
                 End If
 
                 'Create a dataset subdirectory under the working directory
-                DSWorkFolder = Path.Combine(WorkDir, DSName)
-                Directory.CreateDirectory(DSWorkFolder)
+                DSWorkFolder = System.IO.Path.Combine(WorkDir, DSName)
+                System.IO.Directory.CreateDirectory(DSWorkFolder)
 
                 'Set up the unzipper
-                strZipProgramPath = m_mgrParams.GetParam("zipprogram")
-
-                If Not System.IO.File.Exists(strZipProgramPath) Then
-                    m_message = "Unzip program not found (" & strZipProgramPath & "); unable to continue"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return False
-                End If
-
-                UnZipper = New ZipTools(DSWorkFolder, strZipProgramPath)
+                UnZipper = New clsIonicZipTools(m_DebugLevel, DSWorkFolder)
 
                 'Unzip each of the zip files to the working directory
                 For Each ZipFile In ZipFiles
@@ -994,9 +985,12 @@ Namespace AnalysisManagerBase
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file " & ZipFile)
                     End If
                     Try
-                        TargetFolder = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
-                        Directory.CreateDirectory(TargetFolder)
-                        If Not UnZipper.UnzipFile("", ZipFile, TargetFolder) Then
+                        TargetFolderPath = System.IO.Path.Combine(DSWorkFolder, System.IO.Path.GetFileNameWithoutExtension(ZipFile))
+                        System.IO.Directory.CreateDirectory(TargetFolderPath)
+
+                        SourceFilePath = System.IO.Path.Combine(WorkDir, System.IO.Path.GetFileName(ZipFile))
+
+                        If Not UnZipper.UnzipFile(SourceFilePath, TargetFolderPath) Then
                             m_message = "Error unzipping file " & ZipFile
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                             Return False
@@ -1011,7 +1005,7 @@ Namespace AnalysisManagerBase
                 'Delete all s*.zip files in working directory
                 For Each ZipFile In ZipFiles
                     Try
-                        File.Delete(ZipFile)
+                        System.IO.File.Delete(System.IO.Path.Combine(WorkDir, System.IO.Path.GetFileName(ZipFile)))
                     Catch ex As Exception
                         m_message = "Exception deleting file " & ZipFile
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
@@ -1046,10 +1040,10 @@ Namespace AnalysisManagerBase
             Dim DestFilePath As String
 
             'Verify dataset folder exists
-            If Not Directory.Exists(DSFolderPath) Then Return False
+            If Not System.IO.Directory.Exists(DSFolderPath) Then Return False
 
             'Get a listing of the zip files to process
-            ZipFiles = Directory.GetFiles(DSFolderPath, "s*.zip")
+            ZipFiles = System.IO.Directory.GetFiles(DSFolderPath, "s*.zip")
             If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
 
             'copy each of the s*.zip files to the working directory
@@ -1059,7 +1053,7 @@ Namespace AnalysisManagerBase
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & ZipFilePath & " to work directory")
                 End If
 
-                DestFilePath = Path.Combine(WorkDir, System.IO.Path.GetFileName(ZipFilePath))
+                DestFilePath = System.IO.Path.Combine(WorkDir, System.IO.Path.GetFileName(ZipFilePath))
 
                 If CreateStoragePathInfoOnly Then
                     If Not CreateStoragePathInfoFile(ZipFilePath, DestFilePath) Then
@@ -1096,7 +1090,7 @@ Namespace AnalysisManagerBase
 
             While RetryCount > 0
                 Try
-                    File.Copy(SrcFileName, DestFileName, Overwrite)
+                    System.IO.File.Copy(SrcFileName, DestFileName, Overwrite)
                     'Copy must have worked, so return TRUE
                     Return True
                 Catch ex As Exception
@@ -1154,7 +1148,7 @@ Namespace AnalysisManagerBase
             If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
             While RetryCount > 0
-                If File.Exists(FileName) Then
+                If System.IO.File.Exists(FileName) Then
                     Return True
                 Else
                     If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
@@ -1285,9 +1279,9 @@ Namespace AnalysisManagerBase
             Try
                 If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
 
-                PathsToCheck(0) = Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
-                PathsToCheck(1) = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName)
-                PathsToCheck(2) = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName)
+                PathsToCheck(0) = System.IO.Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
+                PathsToCheck(1) = System.IO.Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName)
+                PathsToCheck(2) = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName)
 
                 blnFileNotFoundEncountered = False
 
@@ -1464,7 +1458,7 @@ Namespace AnalysisManagerBase
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResources.CreateFastaFile(), " & m_message)
                     Return False
                 End If
-                m_FastaTools = New clsGetFASTAFromDMS(m_FastaToolsCnStr)
+                m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
             End If
 
             'Initialize fasta generation state variables
@@ -1486,7 +1480,7 @@ Namespace AnalysisManagerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" & CollectionList & "; CreationOpts=" & CreationOpts & "; LegacyFasta=" & LegacyFasta)
             End If
 
-            m_FastaTimer = New Timer
+            m_FastaTimer = New System.Timers.Timer
             m_FastaTimer.Interval = 5000
             m_FastaTimer.AutoReset = True
 
@@ -1587,18 +1581,18 @@ Namespace AnalysisManagerBase
         Protected Overridable Function RetrieveGeneratedParamFile(ByVal ParamFileName As String, ByVal ParamFilePath As String, _
           ByVal WorkDir As String) As Boolean
 
-            Dim ParFileGen As IGenerateFile
+            Dim ParFileGen As ParamFileGenerator.MakeParams.IGenerateFile
             Dim blnSuccess As Boolean
 
             Try
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving parameter file")
 
-                ParFileGen = New clsMakeParameterFile
+                ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile
                 ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
 
                 ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
                 blnSuccess = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion(m_jobParams.GetParam("ToolName")), _
-                 Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
+                 System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
                  WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("DatasetID")))
 
                 If blnSuccess Then
@@ -1652,7 +1646,7 @@ Namespace AnalysisManagerBase
         ''' <param name="ToolName">Version specified in mgr config file</param>
         ''' <returns>IGenerateFile.ParamFileType based on input version</returns>
         ''' <remarks></remarks>
-        Protected Overridable Function SetBioworksVersion(ByVal ToolName As String) As IGenerateFile.ParamFileType
+        Protected Overridable Function SetBioworksVersion(ByVal ToolName As String) As ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType
 
             Dim strToolNameLCase As String
 
@@ -1662,28 +1656,28 @@ Namespace AnalysisManagerBase
             '	parameter file generator dll
             Select Case strToolNameLCase
                 Case "20"
-                    Return IGenerateFile.ParamFileType.BioWorks_20
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_20
                 Case "30"
-                    Return IGenerateFile.ParamFileType.BioWorks_30
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_30
                 Case "31"
-                    Return IGenerateFile.ParamFileType.BioWorks_31
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_31
                 Case "32"
-                    Return IGenerateFile.ParamFileType.BioWorks_32
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_32
                 Case "sequest"
-                    Return IGenerateFile.ParamFileType.BioWorks_Current
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_Current
                 Case "xtandem"
-                    Return IGenerateFile.ParamFileType.X_Tandem
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
                 Case "inspect"
-                    Return IGenerateFile.ParamFileType.Inspect
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
                 Case Else
                     ' Did not find an exact match
                     ' Try a substring match
                     If strToolNameLCase.Contains("sequest") Then
-                        Return IGenerateFile.ParamFileType.BioWorks_Current
+                        Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_Current
                     ElseIf strToolNameLCase.Contains("xtandem") Then
-                        Return IGenerateFile.ParamFileType.X_Tandem
+                        Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
                     ElseIf strToolNameLCase.Contains("inspect") Then
-                        Return IGenerateFile.ParamFileType.Inspect
+                        Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
                     Else
                         Return Nothing
                     End If
@@ -1745,7 +1739,7 @@ Namespace AnalysisManagerBase
 
                 'Unzip concatenated DTA file
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-                If UnzipFileStart(Path.Combine(m_WorkingDir, SourceFileName), m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
+                If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, SourceFileName), m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
                     If m_DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
                     End If
@@ -1789,7 +1783,7 @@ Namespace AnalysisManagerBase
 
             'Unzip concatenated OUT file
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated OUT file")
-            If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), ZippedFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveOutFiles", False) Then
+            If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), ZippedFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveOutFiles", False) Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenated OUT file unzipped")
                 End If
@@ -1959,7 +1953,7 @@ Namespace AnalysisManagerBase
             If Not Unzip Then Return True
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " & FileName)
-            If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), FileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
+            If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), FileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " & FileName)
                 End If
@@ -1977,7 +1971,7 @@ Namespace AnalysisManagerBase
         ''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
         Protected Friend Overridable Function RetrieveSettingsFileFromDb() As Boolean
 
-            Dim OutputFile As String = Path.Combine(m_mgrParams.GetParam("workdir"), m_jobParams.GetParam("SettingsFileName"))
+            Dim OutputFile As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), m_jobParams.GetParam("SettingsFileName"))
 
             Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
 
@@ -2004,12 +1998,21 @@ Namespace AnalysisManagerBase
 
         End Function
 
+        ''' <summary>
+        ''' Unzips all files in the specified Zip file
+        ''' If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
+        ''' Otherwise, uses PKZipC (provided PKZipC.exe exists)
+        ''' </summary>
+        ''' <param name="ZipFilePath">File to unzip</param>
+        ''' <param name="OutFolderPath">Target directory for the extracted files</param>
+        ''' <param name="CallingFunctionName">Calling function name (used for debugging purposes)</param>
+        ''' <param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
         Public Function UnzipFileStart(ByVal ZipFilePath As String, _
                                        ByVal OutFolderPath As String, _
                                        ByVal CallingFunctionName As String, _
                                        ByVal ForceExternalZipProgramUse As Boolean) As Boolean
-
-            Const TWO_GB As Long = 2L * 1024 * 1024 * 1024
 
             Dim fiFileInfo As System.IO.FileInfo
             Dim sngFileSizeMB As Single
@@ -2044,50 +2047,47 @@ Namespace AnalysisManagerBase
                     Return False
                 End If
 
-                If ForceExternalZipProgramUse Then
-                    blnUseExternalUnzipper = True
-                Else
-                    ' Examine the size of ZipFilePath
-                    If fiFileInfo.Length >= TWO_GB Then
-                        ' File is over 2 GB in size; use the external unzipper if SharpZipLib cannot handle Zip64 files
-                        blnUseExternalUnzipper = Not SHARPZIPLIB_HANDLES_ZIP64
-                    End If
-
-                    If sngFileSizeMB >= SHARPZIPLIB_MAX_FILESIZE_MB Then
-                        If strExternalUnzipperFilePath.Length > 0 AndAlso _
-                           strExternalUnzipperFilePath.ToLower <> "na" AndAlso _
-                           System.IO.File.Exists(strExternalUnzipperFilePath) Then
+                ' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
+                ' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
+                If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
+                    If strExternalUnzipperFilePath.Length > 0 AndAlso _
+                       strExternalUnzipperFilePath.ToLower <> "na" Then
+                        If System.IO.File.Exists(strExternalUnzipperFilePath) Then
                             blnUseExternalUnzipper = True
                         End If
+                    End If
+
+                    If Not blnUseExternalUnzipper Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " & strExternalUnzipperFilePath & "; will instead use Ionic.Zip")
                     End If
                 End If
 
                 If blnUseExternalUnzipper Then
                     strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath)
 
-                    Dim UnZipper As New ZipTools(OutFolderPath, strExternalUnzipperFilePath)
+                    Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
 
                     dtStartTime = DateTime.Now
                     blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
                     dtEndTime = DateTime.Now
 
                     If blnSuccess Then
-                        m_SharpZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
+                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
                     Else
-                        m_message = "Error unzipping " & System.IO.Path.GetFileName(ZipFilePath)
+                        m_message = "Error unzipping " & System.IO.Path.GetFileName(ZipFilePath) & " using " & strUnzipperName
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName & ": " & m_message)
                         UnZipper = Nothing
                     End If
                 Else
-                    ' Use SharpZipLib
-                    strUnzipperName = "SharpZipLib"
-                    m_SharpZipTools.DebugLevel = m_DebugLevel
-                    blnSuccess = m_SharpZipTools.UnzipFile(ZipFilePath, OutFolderPath)
+                    ' Use Ionic.Zip
+                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
+                    m_IonicZipTools.DebugLevel = m_DebugLevel
+                    blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath)
                 End If
 
             Catch ex As Exception
                 m_message = "Exception while unzipping '" & ZipFilePath & "'"
-                If strUnzipperName.Length > 0 Then m_message &= " using " & strUnzipperName
+                If Not String.IsNullOrEmpty(strUnzipperName) Then m_message &= " using " & strUnzipperName
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
                 blnSuccess = False
@@ -2174,7 +2174,7 @@ Namespace AnalysisManagerBase
                             If SourceFilename.ToLower.Contains(".zip") Then
                                 'Unzip file
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " & SourceFilename)
-                                If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFilename), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveAggregateFiles", False) Then
+                                If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFilename), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveAggregateFiles", False) Then
                                     If m_DebugLevel >= 1 Then
                                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
                                     End If
@@ -2216,7 +2216,7 @@ Namespace AnalysisManagerBase
             Try
                 Select Case m_jobParams.GetParam("StepTool").ToLower
                     Case "phospho_fdr_aggregator"
-                        Dim fi As New FileInfo(Path.Combine(workDir, SourceFilename))
+                        Dim fi As New System.IO.FileInfo(System.IO.Path.Combine(workDir, SourceFilename))
                         ext = System.IO.Path.GetExtension(SourceFilename)
                         filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(SourceFilename)
 
@@ -2234,7 +2234,7 @@ Namespace AnalysisManagerBase
                         End If
 
                         If newFilename <> SourceFilename Then
-                            fi.MoveTo(Path.Combine(workDir, newFilename))
+                            fi.MoveTo(System.IO.Path.Combine(workDir, newFilename))
                         End If
 
                         If SaveFile.ToLower = "nocopy" Then
@@ -2282,8 +2282,8 @@ Namespace AnalysisManagerBase
             'Get a table to hold the results of the query
             While RetryCount > 0
                 Try
-                    Using Cn As SqlConnection = New SqlConnection(ConnectionString)
-                        Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
+                    Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+                        Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(SqlStr, Cn)
                             Using Ds As DataSet = New DataSet
                                 Da.Fill(Ds)
                                 Dt = Ds.Tables(0)

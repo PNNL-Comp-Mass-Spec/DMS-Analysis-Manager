@@ -21,92 +21,93 @@ Namespace AnalysisManagerBase
 		'*********************************************************************************************************
 
 #Region "Module variables"
-		'status tools
-		Protected m_StatusTools As IStatusFile
+        'status tools
+        Protected m_StatusTools As IStatusFile
 
-		' access to the job parameters
-		Protected m_jobParams As IJobParams
+        ' access to the job parameters
+        Protected m_jobParams As IJobParams
 
         ' access to mgr parameters
-		Protected m_mgrParams As IMgrParams
+        Protected m_mgrParams As IMgrParams
 
-		' access to settings file parameters
-		Protected m_settingsFileParams As New PRISM.Files.XmlSettingsFileAccessor
+        ' access to settings file parameters
+        Protected m_settingsFileParams As New PRISM.Files.XmlSettingsFileAccessor
 
         ' progress of run (in percent); This is a value between 0 and 100
-		Protected m_progress As Single = 0
+        Protected m_progress As Single = 0
 
-		'	status code
+        '	status code
         Protected m_status As IStatusFile.EnumMgrStatus
 
-		'DTA count for status report
-		Protected m_DtaCount As Integer = 0
+        'DTA count for status report
+        Protected m_DtaCount As Integer = 0
 
-		' for posting a general explanation for external consumption
+        ' for posting a general explanation for external consumption
         Protected m_message As String = String.Empty
 
-		'Debug level
-		Protected m_DebugLevel As Short
+        'Debug level
+        Protected m_DebugLevel As Short
 
-		'Working directory, machine name, & job number (used frequently by subclasses)
-		Protected m_WorkDir As String
-		Protected m_MachName As String
-		Protected m_JobNum As String
+        'Working directory, machine name, & job number (used frequently by subclasses)
+        Protected m_WorkDir As String
+        Protected m_MachName As String
+        Protected m_JobNum As String
+        Protected m_Dataset As String
 
-		'Elapsed time information
-		Protected m_StartTime As Date
-		Protected m_StopTime As Date
+        'Elapsed time information
+        Protected m_StartTime As Date
+        Protected m_StopTime As Date
 
-		'Results folder name
-		Protected m_ResFolderName As String
+        'Results folder name
+        Protected m_ResFolderName As String
 
-		'DLL file info
-		Protected m_FileVersion As String
-		Protected m_FileDate As String
+        'DLL file info
+        Protected m_FileVersion As String
+        Protected m_FileDate As String
 
         Protected m_ResourcerDataFileList() As String
 
-        Protected m_SharpZipTools As clsSharpZipTools
+        Protected m_IonicZipTools As clsIonicZipTools
 #End Region
 
 #Region "Properties"
-		'Publicly accessible results folder name and path
-		Public ReadOnly Property ResFolderName() As String Implements IToolRunner.ResFolderName
-			Get
-				Return m_ResFolderName
-			End Get
-		End Property
+        'Publicly accessible results folder name and path
+        Public ReadOnly Property ResFolderName() As String Implements IToolRunner.ResFolderName
+            Get
+                Return m_ResFolderName
+            End Get
+        End Property
 
-		' explanation of what happened to last operation this class performed
-		Public ReadOnly Property Message() As String Implements IToolRunner.Message
-			Get
-				Return m_message
-			End Get
-		End Property
+        ' explanation of what happened to last operation this class performed
+        Public ReadOnly Property Message() As String Implements IToolRunner.Message
+            Get
+                Return m_message
+            End Get
+        End Property
 
-		' the state of completion of the job (as a percentage)
-		Public ReadOnly Property Progress() As Single Implements IToolRunner.Progress
-			Get
-				Return m_progress
-			End Get
-		End Property
+        ' the state of completion of the job (as a percentage)
+        Public ReadOnly Property Progress() As Single Implements IToolRunner.Progress
+            Get
+                Return m_progress
+            End Get
+        End Property
 #End Region
 
 #Region "Methods"
-		''' <summary>
-		''' Constructor
-		''' </summary>
-		''' <remarks>Does nothing at present</remarks>
-		Public Sub New()
-		End Sub
+        ''' <summary>
+        ''' Constructor
+        ''' </summary>
+        ''' <remarks>Does nothing at present</remarks>
+        Public Sub New()
+        End Sub
 
-		''' <summary>
-		''' Initializes class
-		''' </summary>
-		''' <param name="mgrParams">Object holding manager parameters</param>
-		''' <param name="jobParams">Object holding job parameters</param>
+        ''' <summary>
+        ''' Initializes class
+        ''' </summary>
+        ''' <param name="mgrParams">Object holding manager parameters</param>
+        ''' <param name="jobParams">Object holding job parameters</param>
         ''' <param name="StatusTools">Object for status reporting</param>
-		''' <remarks></remarks>
+        ''' <remarks></remarks>
         Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
           ByVal StatusTools As IStatusFile) Implements IToolRunner.Setup
 
@@ -116,6 +117,7 @@ Namespace AnalysisManagerBase
             m_WorkDir = m_mgrParams.GetParam("workdir")
             m_MachName = m_mgrParams.GetParam("MgrName")
             m_JobNum = m_jobParams.GetParam("Job")
+            m_Dataset = m_jobParams.GetParam("DatasetNum")
             m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
@@ -125,41 +127,41 @@ Namespace AnalysisManagerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.Setup()")
             End If
 
-            m_SharpZipTools = New clsSharpZipTools(m_DebugLevel, m_WorkDir)
+            m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
 
         End Sub
 
-		''' <summary>
-		''' Loads the job settings file
-		''' </summary>
-		''' <returns>TRUE for success, FALSE for failure</returns>
-		''' <remarks></remarks>
-		Protected Function LoadSettingsFile() As Boolean
-			Dim fileName As String = m_jobParams.GetParam("settingsFileName")
-			If fileName <> "na" Then
-				Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
-				If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
-					Return m_settingsFileParams.LoadSettings(filePath)
-				Else
-					Return False			'Settings file wasn't found
-				End If
-			Else
-				Return True		  'Settings file wasn't required
-			End If
+        ''' <summary>
+        ''' Loads the job settings file
+        ''' </summary>
+        ''' <returns>TRUE for success, FALSE for failure</returns>
+        ''' <remarks></remarks>
+        Protected Function LoadSettingsFile() As Boolean
+            Dim fileName As String = m_jobParams.GetParam("settingsFileName")
+            If fileName <> "na" Then
+                Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
+                If File.Exists(filePath) Then            'XML tool Loadsettings returns True even if file is not found, so separate check reqd
+                    Return m_settingsFileParams.LoadSettings(filePath)
+                Else
+                    Return False            'Settings file wasn't found
+                End If
+            Else
+                Return True       'Settings file wasn't required
+            End If
 
-		End Function
+        End Function
 
-		''' <summary>
-		''' Runs the analysis tool
-		''' </summary>
-		''' <returns>CloseoutType enum representing completion status</returns>
-		''' <remarks></remarks>
-		Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
+        ''' <summary>
+        ''' Runs the analysis tool
+        ''' </summary>
+        ''' <returns>CloseoutType enum representing completion status</returns>
+        ''' <remarks></remarks>
+        Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
 
             ' Synchronize the stored Debug level with the value stored in the database
             GetCurrentMgrSettingsFromDB()
 
-			'Runs the job. Major work is performed by overrides
+            'Runs the job. Major work is performed by overrides
 
             'Make log entry (both locally and in the DB)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
@@ -167,11 +169,11 @@ Namespace AnalysisManagerBase
             'Start the job timer
             m_StartTime = System.DateTime.Now()
 
-			'Remainder of method is supplied by subclasses
+            'Remainder of method is supplied by subclasses
 
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		End Function
+        End Function
 
         ''' <summary>
         ''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
@@ -552,12 +554,12 @@ Namespace AnalysisManagerBase
                 End If
 
                 'Add the data
-                clsSummaryFile.Add("Job Number" & ControlChars.Tab & m_jobParams.GetParam("Job"))
+                clsSummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
                 clsSummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("Step"))
                 clsSummaryFile.Add("Date" & ControlChars.Tab & System.DateTime.Now().ToString)
                 clsSummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
                 clsSummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
-                clsSummaryFile.Add("Dataset Name" & ControlChars.Tab & m_jobParams.GetParam("datasetNum"))
+                clsSummaryFile.Add("Dataset Name" & ControlChars.Tab & m_Dataset)
                 clsSummaryFile.Add("Xfer Folder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
                 clsSummaryFile.Add("Param File Name" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
                 clsSummaryFile.Add("Settings File Name" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
@@ -731,7 +733,6 @@ Namespace AnalysisManagerBase
             Dim SourceFolderPath As String = String.Empty
             Dim TransferFolderPath As String = String.Empty
             Dim TargetFolderPath As String = String.Empty
-            Dim DatasetName As String = String.Empty
             Dim ResultsFolderName As String = String.Empty
 
             Dim objSourceFolderInfo As System.IO.DirectoryInfo
@@ -796,8 +797,7 @@ Namespace AnalysisManagerBase
 
                 'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
                 ' First make sure "DatasetNum" is defined
-                DatasetName = m_jobParams.GetParam("DatasetNum")
-                If String.IsNullOrEmpty(DatasetName) Then
+                If String.IsNullOrEmpty(m_Dataset) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("Job"))
                     m_message = "Dataset name is undefined"
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
@@ -805,7 +805,7 @@ Namespace AnalysisManagerBase
                 End If
 
                 ' Now create the folder if it doesn't exist
-                TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, DatasetName)
+                TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
                 Try
                     objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
                 Catch ex As Exception
@@ -926,17 +926,41 @@ Namespace AnalysisManagerBase
 
         End Function
 
+        ''' <summary>
+        ''' Unzips all files in the specified Zip file
+        ''' Output folder is m_WorkDir
+        ''' </summary>
+        ''' <param name="ZipFilePath">File to unzip</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
         Protected Function UnzipFile(ByVal ZipFilePath As String) As Boolean
             Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
         End Function
 
+        ''' <summary>
+        ''' Unzips all files in the specified Zip file
+        ''' Output folder is TargetDirectory
+        ''' </summary>
+        ''' <param name="ZipFilePath">File to unzip</param>
+        ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
         Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
             Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
         End Function
 
+        ''' <summary>
+        ''' Unzips files in the specified Zip file that match the FileFilter spec
+        ''' Output folder is TargetDirectory
+        ''' </summary>
+        ''' <param name="ZipFilePath">File to unzip</param>
+        ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+        ''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
         Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
-            m_SharpZipTools.DebugLevel = m_DebugLevel
-            Return m_SharpZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
+            m_IonicZipTools.DebugLevel = m_DebugLevel
+            Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
         End Function
 
         ''' <summary>
@@ -945,17 +969,12 @@ Namespace AnalysisManagerBase
         ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
         ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
         ''' <returns>True if success; false if an error</returns>
-        Protected Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+        Protected Function ZipFile(ByVal SourceFilePath As String, _
+                                   ByVal DeleteSourceAfterZip As Boolean) As Boolean
 
-            m_SharpZipTools.DebugLevel = m_DebugLevel
-
-            If m_SharpZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip) Then
-                Return True
-                clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(m_SharpZipTools.MostRecentZipFilePath))
-            Else
-                Return False
-            End If
-
+            m_IonicZipTools.DebugLevel = m_DebugLevel
+            Return m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
+            
         End Function
 
         ''' <summary>
@@ -969,14 +988,8 @@ Namespace AnalysisManagerBase
                                    ByVal DeleteSourceAfterZip As Boolean, _
                                    ByVal ZipFilePath As String) As Boolean
 
-            m_SharpZipTools.DebugLevel = m_DebugLevel
-
-            If m_SharpZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath) Then
-                Return True
-                clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(ZipFilePath))
-            Else
-                Return False
-            End If
+            m_IonicZipTools.DebugLevel = m_DebugLevel
+            Return m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
 
         End Function
 
