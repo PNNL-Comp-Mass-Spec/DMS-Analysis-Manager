@@ -23,8 +23,6 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
 
-    Protected m_Dataset As String = String.Empty
-
     Protected WithEvents CmdRunner As clsRunDosProgram
     '--------------------------------------------------------------------------------------------
     'Future section to monitor DTA_Refinery log file for progress determination
@@ -50,9 +48,6 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-        m_Dataset = m_jobParams.GetParam("datasetNum")
-
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then

@@ -101,7 +101,7 @@ Public Class clsAnalysisToolRunnerXT
         End With
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
 
             If CmdRunner.ExitCode <> 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tandem.exe returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
@@ -133,7 +133,7 @@ Public Class clsAnalysisToolRunnerXT
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
         End If
 
         'Make sure objects are released
@@ -191,8 +191,8 @@ Public Class clsAnalysisToolRunnerXT
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
         Catch ex As Exception
             ' Ignore errors here
         End Try
@@ -227,7 +227,7 @@ Public Class clsAnalysisToolRunnerXT
         Dim blnDataFound As Boolean = False
 
         Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             If Not System.IO.File.Exists(strInputFilePath) Then
                 m_message = "_DTA.txt file not found: " & strInputFilePath
@@ -269,28 +269,27 @@ Public Class clsAnalysisToolRunnerXT
     Private Function ZipMainOutputFile() As IJobParams.CloseOutType
         Dim TmpFile As String
         Dim FileList() As String
-        Dim ZipFileName As String
+        Dim TmpFilePath As String
 
-        Try
-            Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
+        Try            
             FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
             For Each TmpFile In FileList
-                ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-                If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
+                TmpFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileName(TmpFile))
+                If Not MyBase.ZipFile(TmpFilePath, True) Then
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     m_message = AppendToComment(m_message, "Error zipping output files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        'Delete the XML output files
+        ' Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
         Try
             FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
             For Each TmpFile In FileList
@@ -298,7 +297,7 @@ Public Class clsAnalysisToolRunnerXT
                 System.IO.File.Delete(TmpFile)
             Next
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

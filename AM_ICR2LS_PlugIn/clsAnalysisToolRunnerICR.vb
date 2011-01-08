@@ -42,7 +42,6 @@ Public Class clsAnalysisToolRunnerICR
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim ResCode As IJobParams.CloseOutType
-        Dim DatasetName As String
         Dim DSNamePath As String
 
         Dim MinScan As Integer = 0
@@ -92,12 +91,11 @@ Public Class clsAnalysisToolRunnerICR
         End If
 
         'Assemble the dataset name
-        DatasetName = m_jobParams.GetParam("datasetNum")
-        DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, DatasetName))
+        DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, m_Dataset))
         RawDataType = m_jobParams.GetParam("RawDataType")
 
         'Assemble the output file name and path
-        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
+        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".pek")
 
         ' Determine the location of the ser file
         ' It could be in a "0.ser" folder or a ser file inside a .D folder
@@ -106,7 +104,7 @@ Public Class clsAnalysisToolRunnerICR
             SerFileOrFolderPath = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
         Else
             If RawDataType.ToLower() = AnalysisManagerBase.clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-                DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, DatasetName & ".d")
+                DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
             Else
                 DatasetFolderPathBase = String.Copy(m_WorkDir)
             End If
@@ -171,7 +169,7 @@ Public Class clsAnalysisToolRunnerICR
 
         If Not blnSuccess Then
             ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
-            If VerifyPEKFileExists(m_WorkDir, DatasetName) Then
+            If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
 
                 PerfPostAnalysisTasks(False)
@@ -186,7 +184,7 @@ Public Class clsAnalysisToolRunnerICR
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
             ' Make sure the .pek file and .Par file are named properly
-            FixICR2LSResultFileNames(m_WorkDir, DatasetName)
+            FixICR2LSResultFileNames(m_WorkDir, m_Dataset)
         End If
 
         'Run the cleanup routine from the base class
@@ -208,8 +206,8 @@ Public Class clsAnalysisToolRunnerICR
 		While RetryCount < 3
 			Try
                 System.Threading.Thread.Sleep(5000)             'Allow extra time for ICR2LS to release file locks
-                If System.IO.Directory.Exists(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))) Then
-                    System.IO.Directory.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")), True)
+                If System.IO.Directory.Exists(System.IO.Path.Combine(m_WorkDir, m_Dataset)) Then
+                    System.IO.Directory.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset), True)
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Catch Err As System.IO.IOException

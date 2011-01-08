@@ -49,7 +49,6 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_Plug
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\log4net.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Protein_Exporter.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Apache.NMS.ActiveMQ.dll
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\ICSharpCode.SharpZipLib.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\PeptideFileExtractor.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\TableManipulationBase.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\ParamFileGenerator.dll
@@ -83,3 +82,4 @@ C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LS
 C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 C:\Development\Analysis_Manager\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Protein_Storage.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_ICR2LS_PlugIn\bin\Ionic.Zip.dll

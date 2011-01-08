@@ -6,7 +6,64 @@ AnalysisManagerProg
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerBase.clsAnalysisJob.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
+<member name="M:clsIonicZipTools.UnzipFile(System.String)">
+	<summary>
+ Unzip ZipFilePath into the working directory defined when this class was instantiated
+ Existing files will be overwritten
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.UnzipFile(System.String,System.String)">
+	<summary>
+ Unzip ZipFilePath into the specified target directory
+ Existing files will be overwritten
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Folder to place the unzipped files</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.UnzipFile(System.String,System.String,System.String)">
+	<summary>
+ Unzip ZipFilePath into the specified target directory, applying the specified file filter
+ Existing files will be overwritten
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Folder to place the unzipped files</param>
+	<param name="FileFilter">Filter to apply when unzipping</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.UnzipFile(System.String,System.String,System.String,Ionic.Zip.ExtractExistingFileAction)">
+	<summary>
+ Unzip ZipFilePath into the specified target directory, applying the specified file filter
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Folder to place the unzipped files</param>
+	<param name="FileFilter">Filter to apply when unzipping</param>
+	<param name="eOverwriteBehavior">Defines what to do when existing files could be ovewritten</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.ZipFile(System.String,System.Boolean)">
+	<summary>
+ Stores SourceFilePath in a zip file with the same name, but extension .zip
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.ZipFile(System.String,System.Boolean,System.String)">
+	<summary>
+ Stores SourceFilePath in a zip file named ZipFilePath
+ </summary>
+	<param name="SourceFilePath">Full path to the file to be zipped</param>
+	<param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+	<param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:clsIonicZipTools.ZipDirectory(System.String,System.String,System.Boolean,System.String)">
+	<summary>
+ Stores all files in a source directory into a zip file named ZipFilePath
+ </summary>
+	<param name="SourceDirectoryPath">Full path to the directory to be zipped</param>
+	<param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+	<param name="Recurse">If True, then recurse through all subfolders</param>
+	<param name="FileFilter">Filter to apply when zipping</param>
+	<returns>True if success; false if an error</returns>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.#ctor(AnalysisManagerBase.IMgrParams,System.Int32)">
 	<summary>
  Constructor
  </summary>
@@ -311,6 +368,15 @@ AnalysisManagerProg
 	<param name="DestFilePath">The path where the file would have been copied to</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindFileInDirectoryTree(System.String,System.String)">
+	<summary>
+ Looks for file strFileName in strFolderPath or any of its subfolders
+ The filename may contain a wildcard character, in which case the first match will be returned
+ </summary>
+	<param name="strFolderPath">Folder path to examine</param>
+	<param name="strFileName">File name to find</param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(System.String,System.String)">
 	<summary>
  Looks for the specified file in the given folder
@@ -326,8 +392,11 @@ AnalysisManagerProg
 	<summary>
  Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
  If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
- If the file named _StoragePathInfo.txt isn't found, then looks for a 0.ser folder in the specified folder
- If a 0.ser folder is found, then returns the path to the 0.ser folder
+ If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+ If found, returns the path to the ser file
+ If not found, then looks for a 0.ser folder in the specified folder
+ If found, returns the path to the 0.ser folder
+ Otherwise, returns an empty string
  </summary>
 	<param name="FolderPath">The folder to look in</param>
 	<returns></returns>
@@ -376,11 +445,26 @@ AnalysisManagerProg
 	<param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
 	<returns>True if the file was found and retrieved, otherwise False</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotDFolder(System.String,System.Boolean,System.Boolean)">
 	<summary>
- Retrieves a .raw folder from Micromass TOF for the analysis job in progress
+ Retrieves an Agilent .D folder for the analysis job in progress
  </summary>
 	<param name="WorkDir">Destination directory for copy</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotRawFolder(System.String,System.Boolean)">
+	<summary>
+ Retrieves a Micromass .raw folder for the analysis job in progress
+ </summary>
+	<param name="WorkDir">Destination directory for copy</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotXFolder(System.String,System.String,System.Boolean,System.Collections.Generic.List{System.String})">
+	<summary>
+ Retrieves a folder with a name like Dataset.D or Dataset.Raw
+ </summary>
+	<param name="WorkDir">Destination directory for copy</param>
+	<param name="FolderExtension">Extension on the folder; for example, ".D"</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveSFolders(System.String,System.Boolean)">
@@ -550,6 +634,18 @@ AnalysisManagerProg
 	<param name="FileNamePath">Name of file to create</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks>XML handling based on code provided by Matt Monroe</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.UnzipFileStart(System.String,System.String,System.String,System.Boolean)">
+	<summary>
+ Unzips all files in the specified Zip file
+ If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
+ Otherwise, uses PKZipC (provided PKZipC.exe exists)
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="OutFolderPath">Target directory for the extracted files</param>
+	<param name="CallingFunctionName">Calling function name (used for debugging purposes)</param>
+	<param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.#ctor">
 	<summary>
  Constructor
@@ -644,6 +740,33 @@ AnalysisManagerProg
 	<summary>
  Copies the files from the results folder to the transfer folder on the server
  </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UnzipFile(System.String)">
+	<summary>
+ Unzips all files in the specified Zip file
+ Output folder is m_WorkDir
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UnzipFile(System.String,System.String)">
+	<summary>
+ Unzips all files in the specified Zip file
+ Output folder is TargetDirectory
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Target directory for the extracted files</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UnzipFile(System.String,System.String,System.String)">
+	<summary>
+ Unzips files in the specified Zip file that match the FileFilter spec
+ Output folder is TargetDirectory
+ </summary>
+	<param name="ZipFilePath">File to unzip</param>
+	<param name="TargetDirectory">Target directory for the extracted files</param>
+	<param name="FileFilter">FilterSpec to apply, for example *.txt</param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.ZipFile(System.String,System.Boolean)">
@@ -1201,42 +1324,6 @@ AnalysisManagerProg
  </summary>
 	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:clsSharpZipTools.UnzipFile(System.String)">
-	<summary>
- Unzip ZipFilePath into the working directory defined when this class was instantiated
- </summary>
-	<param name="ZipFilePath">File to unzip</param>
-	<returns>True if success; false if an error</returns>
-</member><member name="M:clsSharpZipTools.UnzipFile(System.String,System.String)">
-	<summary>
- Unzip ZipFilePath into the working directory defined when this class was instantiated
- </summary>
-	<param name="ZipFilePath">File to unzip</param>
-	<param name="TargetDirectory">Folder to place the unzipped files</param>
-	<returns>True if success; false if an error</returns>
-</member><member name="M:clsSharpZipTools.UnzipFile(System.String,System.String,System.String)">
-	<summary>
- Unzip ZipFilePath into the working directory defined when this class was instantiated
- </summary>
-	<param name="ZipFilePath">File to unzip</param>
-	<param name="TargetDirectory">Folder to place the unzipped files</param>
-	<param name="FileFilter">Filter to apply when unzipping</param>
-	<returns>True if success; false if an error</returns>
-</member><member name="M:clsSharpZipTools.ZipFile(System.String,System.Boolean)">
-	<summary>
- Stores SourceFilePath in a zip file with the same name, but extension .zip
- </summary>
-	<param name="SourceFilePath">Full path to the file to be zipped</param>
-	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
-	<returns>True if success; false if an error</returns>
-</member><member name="M:clsSharpZipTools.ZipFile(System.String,System.Boolean,System.String)">
-	<summary>
- Stores SourceFilePath in a zip file named ZipFilePath
- </summary>
-	<param name="SourceFilePath">Full path to the file to be zipped</param>
-	<param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
-	<param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-	<returns>True if success; false if an error</returns>
 </member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.Status">
 	<summary>
  Allows calling program to get current status

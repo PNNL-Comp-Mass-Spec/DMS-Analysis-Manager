@@ -42,7 +42,6 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim CmdStr As String
-        Dim DatasetName As String
         Dim DtaTxtFilename As String
         Dim DATResultFilePath As String
 
@@ -92,14 +91,13 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
 
         'Set up and execute a program runner to run MSCluster
 
-        DatasetName = m_jobParams.GetParam("datasetNum")
-        If DatasetName Is Nothing OrElse DatasetName.Length = 0 Then
+        If String.IsNullOrEmpty(m_Dataset) Then
             ' Undefined Dataset; unable to continue
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset name is undefined; unable to continue")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        DtaTxtFilename = System.IO.Path.Combine(m_WorkDir, DatasetName) & "_dta.txt"
+        DtaTxtFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset) & "_dta.txt"
 
         ' Possibly make these adjustable in the future
         strQualityScoreThreshold = "0.05"

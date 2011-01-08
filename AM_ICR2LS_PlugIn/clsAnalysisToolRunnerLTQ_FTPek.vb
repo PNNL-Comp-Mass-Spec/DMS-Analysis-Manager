@@ -16,7 +16,6 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim ResCode As IJobParams.CloseOutType
-        Dim DatasetName As String
         Dim DSNamePath As String
 
         Dim MinScan As Integer = 0
@@ -59,8 +58,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         End If
 
         'Assemble the data file name and path
-        DatasetName = m_jobParams.GetParam("datasetNum")
-        DSNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".raw")
+        DSNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
         If Not System.IO.File.Exists(DSNamePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Raw file not found: " & DSNamePath)
 
@@ -69,7 +67,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         End If
 
         'Assemble the output file name and path
-        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, DatasetName & ".pek")
+        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".pek")
 
         blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, UseAllScans, MinScan, MaxScan)
 
@@ -77,7 +75,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on file " & DSNamePath)
 
             ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
-            If VerifyPEKFileExists(m_WorkDir, DatasetName) Then
+            If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
 
                 PerfPostAnalysisTasks(False)

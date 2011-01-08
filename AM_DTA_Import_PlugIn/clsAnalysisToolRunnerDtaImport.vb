@@ -99,7 +99,7 @@ Public Class clsAnalysisToolRunnerDtaImport
             CompleteFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
 
             'Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
-            TargetFolderNamePath = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
+            TargetFolderNamePath = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset)
             If Not System.IO.Directory.Exists(TargetFolderNamePath) Then
                 'Make the DTA folder
                 Try

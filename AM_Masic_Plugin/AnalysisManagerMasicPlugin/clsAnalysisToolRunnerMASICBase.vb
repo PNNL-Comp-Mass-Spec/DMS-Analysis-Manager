@@ -341,9 +341,6 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Protected Overridable Function PerfPostAnalysisTasks(ByVal ResType As String) As IJobParams.CloseOutType
 
         Dim StepResult As IJobParams.CloseOutType
-        '		Dim Zipper As PRISM.Files.ZipTools
-        Dim Zipper As ZipTools
-        Dim ZippedXMLFileName As String
         Dim FoundFiles() As String
 
         'Stop the job timer
@@ -360,14 +357,13 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         If FoundFiles.Length > 0 Then
             'Setup zipper
-            Zipper = New PRISM.Files.ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
-            'Zipper = New clsSharpZipWrapper
 
-            ZippedXMLFileName = m_jobParams.GetParam("datasetNum") & "_SICs.zip"
+            Dim ZipFileName As String
 
-            If Not Zipper.MakeZipFile("-normal", System.IO.Path.Combine(m_WorkDir, ZippedXMLFileName), System.IO.Path.Combine(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX)) Then
-                '				If Not Zipper.ZipFilesInFolder(Path.Combine(m_WorkDir, ZippedXMLFileName), m_WorkDir, False, ".*_SICs\.xml") Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping *" & SICS_XML_FILE_SUFFIX & " files, job " & m_JobNum)
+            ZipFileName = m_Dataset & "_SICs.zip"
+
+            If Not MyBase.ZipFile(FoundFiles(0), True, System.IO.Path.Combine(m_WorkDir, ZipFileName)) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping " & System.IO.Path.GetFileName(FoundFiles(0)) & ", job " & m_JobNum)
                 m_message = AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If

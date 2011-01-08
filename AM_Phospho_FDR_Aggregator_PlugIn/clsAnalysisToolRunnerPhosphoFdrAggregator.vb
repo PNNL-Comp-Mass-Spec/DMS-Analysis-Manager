@@ -135,7 +135,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Dim DumFiles() As String
 
         'update list of files to be deleted after run
-        DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*_outputAScore*")
+        DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_outputAScore*")
         For Each FileToSave As String In DumFiles
             clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(FileToSave))
         Next
@@ -159,20 +159,19 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Protected Function ConcatenateResultFiles(ByVal FilterExtension As String) As IJobParams.CloseOutType
         Dim result As Boolean = True
         Dim ConcatenateAScoreFiles() As String
-        Dim WorkDir As String = m_mgrParams.GetParam("workdir")
         Dim FileToConcatenate As String
         Dim ReadFirstLine As Boolean = False
         Try
 
-            ConcatenateAScoreFiles = System.IO.Directory.GetFiles(WorkDir, "*" & FilterExtension)
+            ConcatenateAScoreFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & FilterExtension)
             ' Create an instance of StreamWriter to write to a file.
-            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkDir, "Concatenated" & FilterExtension))
+            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_WorkDir, "Concatenated" & FilterExtension))
 
             For Each FullFileToConcatenate As String In ConcatenateAScoreFiles
                 FileToConcatenate = System.IO.Path.GetFileName(FullFileToConcatenate)
 
                 ' Create an instance of StreamReader to read from a file.
-                Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkDir, FileToConcatenate))
+                Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, FileToConcatenate))
 
                 Dim inpLine As String
                 If ReadFirstLine Then
@@ -216,7 +215,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
         Catch ex As Exception
             ' Ignore errors here
         End Try

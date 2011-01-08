@@ -116,7 +116,7 @@ Public Class clsAnalysisToolRunnerIN
             'Determine if this is a parallelized job
             m_CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart")
             m_StepNum = m_jobParams.GetParam("Step")
-            strBaseFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+            strBaseFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset)
 
             'Determine if this is parallelized inspect job
             If System.String.IsNullOrEmpty(m_CloneStepRenum) Then
@@ -217,7 +217,7 @@ Public Class clsAnalysisToolRunnerIN
             ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
             fastaFilename = m_jobParams.GetParam("generatedFastaName")
-            mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".mzXML")
+            mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML")
             inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 

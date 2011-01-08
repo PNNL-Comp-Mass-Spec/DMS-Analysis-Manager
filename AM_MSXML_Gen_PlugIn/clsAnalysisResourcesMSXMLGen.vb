@@ -26,7 +26,7 @@ Public Class clsAnalysisResourcesMSXMLGen
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
             If RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
-                clsGlobal.m_FilesToDeleteExt.Add(".raw")  'Raw file
+                clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)  'Raw file
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED

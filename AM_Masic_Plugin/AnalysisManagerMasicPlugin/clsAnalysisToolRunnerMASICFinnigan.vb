@@ -40,7 +40,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 		End If
 
         ' Determine the path to the .Raw file
-        strRawFileName = m_jobParams.GetParam("datasetNum") & ".raw"
+        strRawFileName = m_Dataset & ".raw"
         strInputFilePath = AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
 
         If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then

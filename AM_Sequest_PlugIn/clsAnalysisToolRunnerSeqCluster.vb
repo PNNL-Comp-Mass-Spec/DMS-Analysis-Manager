@@ -96,14 +96,14 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		End If
 
 		'Package out files into concatenated text files 
-		If Not ConcatOutFiles(m_WorkDir, m_jobParams.GetParam("datasetNum"), m_JobNum) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		'Zip concatenated .out files
-		If Not ZipConcatOutFile(m_WorkDir, m_mgrParams.GetParam("zipprogram"), m_JobNum) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		'Add working files to delete list
 		'Individual OUT files
@@ -155,7 +155,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	''' <remarks></remarks>
 	Private Sub AddClusterStatsToSummaryFile()
 
-		Dim SeqLogFilePath As String = Path.Combine(m_mgrParams.GetParam("workdir"), "sequest.log")
+        Dim SeqLogFilePath As String = Path.Combine(m_WorkDir, "sequest.log")
 		Dim NumNodeMachines As Integer
 		Dim NumSlaveProcesses As Integer
 		Dim TotalSearchTime As Integer

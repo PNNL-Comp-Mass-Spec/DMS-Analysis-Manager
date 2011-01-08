@@ -72,7 +72,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim tr As System.IO.StreamReader = Nothing
         Dim tw As System.IO.StreamWriter
         Dim s As String
-        Dim DatasetName As String
         Dim fileNameCounter As Integer
         Dim ResultsFile As String = ""
         Dim intLinesRead As Integer
@@ -82,7 +81,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim blnAddSegmentNumberToEachLine As Boolean = False
 
         Try
-            DatasetName = m_jobParams.GetParam("datasetNum")
 
             tw = CreateNewExportFile(System.IO.Path.Combine(m_WorkDir, strCombinedFileName))
             If tw Is Nothing Then
@@ -92,12 +90,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             For fileNameCounter = 1 To intNumResultFiles
                 Select Case resFileType
                     Case Decon2LSResultFileType.DECON2LS_ISOS
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
+                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Decon2LSResultFileType.DECON2LS_SCANS
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
+                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                         blnFilesContainHeaderLine = True
 
@@ -111,7 +109,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                     ' Isos or Scans file is not found
                     If resFileType = Decon2LSResultFileType.DECON2LS_SCANS Then
                         ' Be sure to delete the _#_peaks.dat file (which Decon2LS likely created, but it doesn't contain any useful information)
-                        ResultsFile = DatasetName & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
+                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
                         clsGlobal.FilesToDelete.Add(ResultsFile)
                     End If
                 Else
@@ -173,11 +171,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim PeaksFilePath As String
 
         Try
-            DatasetName = m_jobParams.GetParam("datasetNum")
 
-            ScansFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_SCANS_FILE_SUFFIX)
-            IsosFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_ISOS_FILE_SUFFIX)
-            PeaksFilePath = System.IO.Path.Combine(m_WorkDir, DatasetName & DECON2LS_PEAKS_FILE_SUFFIX)
+            ScansFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX)
+            IsosFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
+            PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
             clsGlobal.m_ExceptionFiles.Add(ScansFilePath)
             clsGlobal.m_ExceptionFiles.Add(IsosFilePath)
@@ -387,7 +384,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         ' Specify output file name
-        Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+        Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, m_Dataset)
 
         ' Specify Input file or folder
         Dim InpFileName As String = SpecifyInputFileName(RawDataType)
@@ -586,18 +583,18 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
         Select Case RawDataType.ToLower
             Case "dot_raw_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".raw")
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
             Case "dot_wiff_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".wiff")
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
             Case "dot_raw_folder"
-                Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum")) & ".raw/_FUNC001.DAT"
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & ".raw/_FUNC001.DAT"
             Case "zipped_s_folders"
                 Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
                 'Check for "0.ser" folder
                 If Not String.IsNullOrEmpty(NewSourceFolder) Then
                     Return NewSourceFolder
                 Else
-                    Return System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                    Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
                 End If
 
             Case Else
@@ -645,19 +642,19 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Select Case RawDataType.ToLower
             Case "dot_raw_files"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".raw")
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
                 IsFile = True
             Case "dot_wiff_files"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".wiff")
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
                 IsFile = True
             Case "dot_raw_folder"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".raw")
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
                 IsFile = False
             Case "zipped_s_folders"
                 Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
                 'Check for "0.ser" folder
                 If String.IsNullOrEmpty(NewSourceFolder) Then
-                    FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum"))
+                    FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
                     IsNetworkDir = False
                 Else
                     IsNetworkDir = True

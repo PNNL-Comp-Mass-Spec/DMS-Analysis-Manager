@@ -22,9 +22,7 @@ Public Class clsAnalysisToolRunnerOM
 	Protected Const PROGRESS_PCT_OMSSA_RUNNING As Single = 5
 	Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
 	Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
-
-    Protected m_DatasetName As String = String.Empty
-
+    
 	Protected WithEvents CmdRunner As clsRunDosProgram
 	'--------------------------------------------------------------------------------------------
 	'Future section to monitor OMSSA log file for progress determination
@@ -52,9 +50,6 @@ Public Class clsAnalysisToolRunnerOM
 
         ' Set this to success for now
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-        ' Cache the dataset name
-        m_DatasetName = m_jobParams.GetParam("datasetNum")
 
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -209,14 +204,14 @@ Public Class clsAnalysisToolRunnerOM
         Dim blnDataFound As Boolean = False
 
         Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_dta.txt")
+            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             If Not System.IO.File.Exists(strInputFilePath) Then
                 m_message = "_DTA.txt file not found: " & strInputFilePath
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return False
             End If
-            
+
             srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
             Do While srReader.Peek >= 0
@@ -243,31 +238,31 @@ Public Class clsAnalysisToolRunnerOM
 
     End Function
 
-	''' <summary>
+    ''' <summary>
     ''' Zips OMSSA XML output file
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
 
         'Zip the output file
         Dim strOMSSAResultsFilePath As String
         Dim blnSuccess As Boolean
 
-        strOMSSAResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_om.omx")
+        strOMSSAResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_om.omx")
 
         blnSuccess = MyBase.ZipFile(strOMSSAResultsFilePath, True)
         If Not blnSuccess Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
         ' Synchronize the stored Debug level with the value stored in the database
@@ -280,7 +275,7 @@ Public Class clsAnalysisToolRunnerOM
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_OMSSA_RUNNING, 0, "", "", "", False)
         End If
 
-	End Sub
+    End Sub
 
     Protected Function ConvertOMSSA2PepXmlFile() As Boolean
         Dim CmdStr As String
@@ -305,8 +300,8 @@ Public Class clsAnalysisToolRunnerOM
                 Return False
             End If
 
-            Dim outputFilename As String = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_pepxml.xml")
-            Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, m_DatasetName & "_om_large.omx")
+            Dim outputFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_pepxml.xml")
+            Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_om_large.omx")
 
             'Set up and execute a program runner to run Omssa2PepXml.exe
             'omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx

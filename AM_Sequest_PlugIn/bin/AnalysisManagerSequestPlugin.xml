@@ -172,12 +172,11 @@ AnalysisManagerSequestPlugin
 	<param name="blnLogToConsole">If true, then displays the various status messages at the console</param>
 	<remarks></remarks>
 	<returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(System.String,System.String,System.String)">
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(System.String,System.String)">
 	<summary>
  Zips the concatenated .out file
  </summary>
 	<param name="WorkDir">Working directory</param>
-	<param name="ZipperLoc">Location of file zipping program</param>
 	<param name="JobNum">Job number</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>

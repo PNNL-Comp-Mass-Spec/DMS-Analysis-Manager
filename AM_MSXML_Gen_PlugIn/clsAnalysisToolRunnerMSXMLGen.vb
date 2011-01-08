@@ -112,9 +112,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMZXMLFile(): Enter")
         End If
 
-        Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-        Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
-
         Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically ReadW.exe
 
@@ -139,7 +136,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End Select
 
         ' Instantiate the processing class
-        mMSXmlGenReadW = New clsMSXMLGenReadW(WorkingDir, ReadWProgramPath, DatasetName, eOutputType, CentroidMSXML)
+        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, ReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
         ' Create the file
         blnSuccess = mMSXmlGenReadW.CreateMSXMLFile

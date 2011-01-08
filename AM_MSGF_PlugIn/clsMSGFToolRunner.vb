@@ -73,7 +73,6 @@ Public Class clsMSGFRunner
 #End Region
 
 #Region "Module variables"
-    Protected m_DatasetName As String = String.Empty
     Protected m_ETDMode As Boolean = False
 
     Protected mMSGFInputFilePath As String = String.Empty
@@ -116,9 +115,6 @@ Public Class clsMSGFRunner
 
         'Call base class for initial setup
         MyBase.RunTool()
-
-        ' Cache the dataset name
-        m_DatasetName = m_jobParams.GetParam("datasetNum")
 
         ' Resolve eResultType
         eResultType = GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
@@ -561,7 +557,7 @@ Public Class clsMSGFRunner
         Dim objStaticMods As New System.Collections.Generic.SortedDictionary(Of String, String)
 
         ' Read the PHRP Mod Summary File
-        strModSummaryFilePath = System.IO.Path.Combine(m_WorkDir, GetModSummaryFileName(eResultType, m_DatasetName))
+        strModSummaryFilePath = System.IO.Path.Combine(m_WorkDir, GetModSummaryFileName(eResultType, m_Dataset))
         blnSuccess = ReadModSummaryFile(strModSummaryFilePath, objDynamicMods, objStaticMods)
 
         If blnSuccess Then
@@ -571,18 +567,18 @@ Public Class clsMSGFRunner
                 Case ePeptideHitResultType.Sequest
 
                     ' Convert Sequest results to input format required for MSGF
-                    mMSGFInputCreator = New clsMSGFInputCreatorSequest(m_DatasetName, m_WorkDir, objDynamicMods, objStaticMods)
+                    mMSGFInputCreator = New clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
 
                 Case ePeptideHitResultType.XTandem
 
                     ' Convert X!Tandem results to input format required for MSGF
-                    mMSGFInputCreator = New clsMSGFInputCreatorXTandem(m_DatasetName, m_WorkDir, objDynamicMods, objStaticMods)
+                    mMSGFInputCreator = New clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
 
 
                 Case ePeptideHitResultType.Inspect
 
                     ' Convert Inspect results to input format required for MSGF
-                    mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_DatasetName, m_WorkDir, objDynamicMods, objStaticMods)
+                    mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
 
                 Case Else
                     'Should never get here; invalid result type specified
@@ -646,20 +642,20 @@ Public Class clsMSGFRunner
         m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
         ' mzXML filename is dataset plus .mzXML
-        If System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, m_DatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION)) Then
+        If System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION)) Then
             ' File already exists; nothing to do
             Return True
         End If
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_DatasetName)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset)
         End If
 
         ReadWProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
         eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
 
         ' Instantiate the processing class
-        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, ReadWProgramPath, m_DatasetName, eOutputType, CentroidMSXML)
+        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, ReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
         dtStartTime = System.DateTime.Now
 
@@ -685,12 +681,12 @@ Public Class clsMSGFRunner
 
                 dblTotalMinutes = System.DateTime.Now.Subtract(dtStartTime).TotalMinutes
 
-                ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_DatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION))
+                ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION))
                 If ioFileInfo.Exists Then
                     dblFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
                 End If
 
-                ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_DatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION))
+                ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION))
                 If ioFileInfo.Exists Then
                     dblXMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
                 End If
@@ -854,7 +850,7 @@ Public Class clsMSGFRunner
         Try
 
             ' Read the data from the result to sequence map file
-            strFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & XT_RESULT_TO_SEQ_MAP_SUFFIX)
+            strFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & XT_RESULT_TO_SEQ_MAP_SUFFIX)
             srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
             intLinesRead = 0
@@ -938,7 +934,7 @@ Public Class clsMSGFRunner
             objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Protein_Intensity, 5)
 
             ' Read the data from the sequence to protein map file
-            strFilePath = System.IO.Path.Combine(m_WorkDir, m_DatasetName & XT_SEQ_TO_PROTEIN_MAP_SUFFIX)
+            strFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & XT_SEQ_TO_PROTEIN_MAP_SUFFIX)
             srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
             intLinesRead = 0
@@ -1090,7 +1086,7 @@ Public Class clsMSGFRunner
 
             If eResultType = ePeptideHitResultType.XTandem Then
                 ' Need to read the ResultToSeqMap and SeqToProteinMap files so that we can determine the first protein name for each result
-                blnSuccess = LoadXTandemResultProteins(objProteinByresultID)
+                blnSuccess = LoadXTandemResultProteins(objProteinByResultID)
                 If Not blnSuccess Then
                     Return False
                 End If
@@ -1514,7 +1510,7 @@ Public Class clsMSGFRunner
             strTransferFolderPath = m_jobParams.GetParam("transferFolderPath")
             strInputFolderName = m_jobParams.GetParam("inputFolderName")
 
-            strFolderToCheck = System.IO.Path.Combine(System.IO.Path.Combine(strTransferFolderPath, m_DatasetName), strInputFolderName)
+            strFolderToCheck = System.IO.Path.Combine(System.IO.Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName)
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " & strFolderToCheck)

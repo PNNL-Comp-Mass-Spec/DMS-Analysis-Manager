@@ -58,7 +58,6 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     Public Const INSPECT_INPUT_PARAMS_FILENAME As String = "inspect_input.txt"
 
     Protected mInspectResultsFileName As String
-    Protected mDatasetName As String
 
     Protected mInspectSearchLogFilePath As String = "InspectSearchLog.txt"      ' This value gets updated in function RunInSpecT
 
@@ -243,8 +242,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.Setup()")
         End If
 
-        mDatasetName = m_jobParams.GetParam("datasetNum")
-        mInspectResultsFileName = mDatasetName & ORIGINAL_INSPECT_FILE_SUFFIX
+        mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
 
     End Sub
 
@@ -269,7 +267,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect error files")
             End If
 
-            strFileName = mDatasetName & "_error.txt"
+            strFileName = m_Dataset & "_error.txt"
             result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
@@ -349,7 +347,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim intSlashIndex As Integer
 
         Try
-            DatasetName = mDatasetName
+            DatasetName = m_Dataset
 
             tw = CreateNewExportFile(System.IO.Path.Combine(m_WorkDir, strCombinedFileName))
             If tw Is Nothing Then
@@ -653,7 +651,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim eResult As IJobParams.CloseOutType
 
         Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, mDatasetName & FIRST_HITS_INSPECT_FILE_SUFFIX)
+        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -674,7 +672,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim eResult As IJobParams.CloseOutType
 
         Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, mDatasetName & FILTERED_INSPECT_FILE_SUFFIX)
+        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -744,7 +742,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim eResult As IJobParams.CloseOutType
 
         Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, mDatasetName & FILTERED_INSPECT_FILE_SUFFIX)
+        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -795,7 +793,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim CmdStr As String
 
         Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
-        Dim pvalDistributionFilename As String = System.IO.Path.Combine(m_WorkDir, mDatasetName & "_PValueDistribution.txt")
+        Dim pvalDistributionFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_PValueDistribution.txt")
 
         ' The following code is only required if you use the -a and -d switches
         ''Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
@@ -1179,8 +1177,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect.txt file into _inspect_all.zip
             ' Rename to _inspect.txt before zipping
             ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, mDatasetName & ORIGINAL_INSPECT_FILE_SUFFIX), _
-                                                 System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect_all.zip"), _
+            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX), _
+                                                 System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_all.zip"), _
                                                  True)
 
             If Not blnSuccess Then
@@ -1191,8 +1189,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect_fht.txt file into _inspect_fht.zip
             ' Rename to _inspect.txt before zipping
             ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, mDatasetName & FIRST_HITS_INSPECT_FILE_SUFFIX), _
-                                                 System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect_fht.zip"), _
+            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX), _
+                                                 System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip"), _
                                                  True)
 
             If Not blnSuccess Then
@@ -1203,8 +1201,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect_filtered.txt file into _inspect.zip
             ' Rename to _inspect.txt before zipping
             ' Do not delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, mDatasetName & FILTERED_INSPECT_FILE_SUFFIX), _
-                                     System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect.zip"), _
+            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX), _
+                                     System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip"), _
                                      False)
 
             If Not blnSuccess Then

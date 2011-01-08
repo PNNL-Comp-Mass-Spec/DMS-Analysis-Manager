@@ -76,7 +76,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim intSegmentCountToCreate As Integer
 
         Try
-            strCattedFile = Path.Combine(m_mgrParams.GetParam("WorkDir"), m_jobParams.GetParam("DatasetNum") & "_dta.txt")
+            strCattedFile = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             Try
                 intSegmentCountToCreate = clsGlobal.GetJobParameter(m_jobParams, "NumberOfClonedSteps", 0)
@@ -370,10 +370,10 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim strFileName As String
         Dim strFilePath As String
 
-        strFileName = m_jobParams.GetParam("DatasetNum") + "_" + CStr(fileNameCounter) + "_dta.txt"
+        strFileName = m_Dataset + "_" + CStr(fileNameCounter) + "_dta.txt"
         m_ExceptionFiles.Add(strFileName)
 
-        strFilePath = System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), strFileName)
+        strFilePath = System.IO.Path.Combine(m_WorkDir, strFileName)
 
         Return strFilePath
 

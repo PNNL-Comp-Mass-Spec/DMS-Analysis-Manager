@@ -21,7 +21,6 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Protected m_ErrMsg As String = ""
     Protected m_SettingsFileName As String = ""         'Handy place to store value so repeated calls to m_JobParams aren't required
     Protected m_Results As ISpectraFilter.ProcessResults
-    Protected m_DSName As String = ""                               'Handy place to store value so repeated calls to m_JobParams aren't required
     Protected m_DTATextFileName As String = ""
 
     Protected m_thThread As System.Threading.Thread
@@ -344,20 +343,20 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             blnSuccess = True
 
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for the _ScanStats.txt files for dataset " & m_DSName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for the _ScanStats.txt files for dataset " & m_Dataset)
             End If
 
-            blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(m_WorkDir, m_DSName)
+            blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(m_WorkDir, m_Dataset)
             If blnScanStatsFilesExist Then
                 If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " & m_DSName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " & m_Dataset)
                 End If
             Else
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " & m_DSName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " & m_Dataset)
 
                 ' Determine the path to the .Raw file
-                strRawFileName = m_DSName & ".raw"
+                strRawFileName = m_Dataset & ".raw"
                 strFinniganRawFilePath = AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
 
                 If strFinniganRawFilePath Is Nothing OrElse strFinniganRawFilePath.Length = 0 Then
@@ -423,7 +422,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
     End Sub
-   
+
     Protected Overridable Function InitSetup() As Boolean
 
         'Initializes module variables and verifies mandatory parameters have been propery specified
@@ -446,11 +445,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             Return False
         End If
 
-        'Set dataset name
-        m_DSName = m_jobParams.GetParam("datasetNum")
-
         'Set the _DTA.Txt file name
-        m_DTATextFileName = m_DSName & "_dta.txt"
+        m_DTATextFileName = m_Dataset & "_dta.txt"
 
         'Set settings file name
         'This is the job parameters file that contains the settings information
@@ -539,37 +535,22 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Protected Overridable Function ZipConcDtaFile() As IJobParams.CloseOutType
 
         'Zips the concatenated dta file
-        Dim DtaFileName As String = m_jobParams.GetParam("datasetNum") & "_dta.txt"
+        Dim DtaFileName As String = m_Dataset & "_dta.txt"
+        Dim DtaFilePath As String = System.IO.Path.Combine(m_WorkDir, DtaFileName)
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 
         'Verify file exists
-        If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, DtaFileName)) Then
+        If Not System.IO.File.Exists(DtaFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Zip the file
         Try
-            Dim ZipProgramPath As String = m_mgrParams.GetParam("zipprogram")
-            If ZipProgramPath Is Nothing Then ZipProgramPath = String.Empty
-            If Not System.IO.File.Exists(ZipProgramPath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Zip program not found: " & ZipProgramPath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Dim Zipper As New PRISM.Files.ZipTools(m_WorkDir, ZipProgramPath)
-            Dim ZipFileName As String = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(DtaFileName)) & ".zip"
-
-            If System.IO.File.Exists(ZipFileName) Then
-                ' Delete any existing .zip file
-                System.IO.File.Delete(ZipFileName)
-                System.Threading.Thread.Sleep(250)
-            End If
-
-            If Not Zipper.MakeZipFile("-fast", ZipFileName, DtaFileName) Then
+            If Not MyBase.ZipFile(DtaFilePath, False) Then
                 Dim Msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         Catch ex As Exception

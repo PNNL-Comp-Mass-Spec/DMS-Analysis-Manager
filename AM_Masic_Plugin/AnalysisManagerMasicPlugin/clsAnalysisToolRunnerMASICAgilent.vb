@@ -40,7 +40,7 @@ Public Class clsAnalysisToolRunnerMASICAgilent
 		End If
 
         ' Determine the path to the .Raw file
-        strMgfFileName = m_jobParams.GetParam("datasetNum") & ".mgf"
+        strMgfFileName = m_Dataset & ".mgf"
         strInputFilePath = AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName)
 
         If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then

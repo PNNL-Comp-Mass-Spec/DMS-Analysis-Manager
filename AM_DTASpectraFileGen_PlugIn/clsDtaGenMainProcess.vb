@@ -152,7 +152,7 @@ Public Class clsDtaGenMainProcess
 		If Not MyBase.InitSetup Then Return False
 
         'Raw data file exists?
-		If Not VerifyRawFileExists(m_WorkDir, m_JobParams.GetParam("DatasetNum")) Then Return False 'Error message handled by VerifyRawFileExists
+        If Not VerifyRawFileExists(m_WorkDir, m_Dataset) Then Return False 'Error message handled by VerifyRawFileExists
 
         'DTA creation tool exists?
         m_DtaToolNameLoc = ConstructDTAToolPath()
@@ -288,7 +288,7 @@ Public Class clsDtaGenMainProcess
         End If
 
         'Get the parameters from the various parameter dictionaries
-        RawFile = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("DatasetNum") & ".raw")
+        RawFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
 
         'Note: Defaults are used if certain parameters are not present in m_JobParams
 

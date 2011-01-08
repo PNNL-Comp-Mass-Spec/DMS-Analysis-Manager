@@ -108,7 +108,7 @@ Public Class clsMGFtoDtaGenMainProcess
 		If Not MyBase.InitSetup Then Return False
 
         'MGF data file exists?
-		If Not VerifyMGFFileExists(m_WorkDir, m_JobParams.GetParam("DatasetNum")) Then Return False 'Error message handled by VerifyMGFFileExists
+        If Not VerifyMGFFileExists(m_WorkDir, m_Dataset) Then Return False 'Error message handled by VerifyMGFFileExists
 
 		'If we got to here, there was no problem
 		Return True
@@ -154,7 +154,7 @@ Public Class clsMGFtoDtaGenMainProcess
 		System.Threading.Thread.CurrentThread.Name = "MakeDTAFilesFromMGF"
 
 		'Get the parameters from the various setup files
-        MGFFile = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("DatasetNum") & ".mgf")
+        MGFFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mgf")
 		mScanStart = CInt(m_JobParams.GetParam("ScanStart"))
 		mScanStop = CInt(m_JobParams.GetParam("ScanStop"))
 		mMWLower = CInt(m_JobParams.GetParam("MWStart"))

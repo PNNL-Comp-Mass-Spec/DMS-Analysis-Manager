@@ -33,7 +33,6 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected WithEvents CmdRunner As clsRunDosProgram
 
     Private m_NumClonedSteps As Integer = 1
-    Private m_Dataset As String = ""
 
     ' 2D array, with the first dimension going from 1 to m_NumClonedSteps and the second dimension going from 0 to 1
     '   m_NumClonedSteps(1,0) holds the job number for the first step
@@ -78,7 +77,6 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         ' Update m_NumClonedSteps
         m_NumClonedSteps = CInt(m_jobParams.GetParam("NumberOfClonedSteps"))
-        m_Dataset = m_jobParams.GetParam("datasetNum")
 
         ' Update the account name
         m_HPCAccountName = m_jobParams.GetParam("HPCAccountName")
@@ -149,7 +147,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         End If
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -161,7 +159,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         End If
 
         If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -175,7 +173,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy fasta file to super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy fasta file to super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         End If
@@ -188,7 +186,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         End If
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to create directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -202,7 +200,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to copy files to super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         Next
@@ -216,7 +214,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to schedule the jobs on the super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to schedule the jobs on the super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         Next
@@ -348,7 +346,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
         End If
 
         'Make sure objects are released
@@ -486,7 +484,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 JobOutputFilename = "GetJobOutputCmds_Job" & m_JobNum & "_" & i
                 CmdStr = "-l " & HPC_NAME & " -b " & JobOutputFilename
                 If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to retrieve job output files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to retrieve job output files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
                 If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, "X-Tandem_Job" & m_JobNum & "_" & i & ".output")) Then
@@ -511,7 +509,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             JobOutputFilename = "Cancel_Job" & m_JobNum
             CmdStr = "-l " & HPC_NAME & " -m " & JobOutputFilename
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to Cancel Jobs on super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to Cancel Jobs on super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -532,7 +530,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             RemoveJobFilename = System.IO.Path.Combine(m_WorkDir, "Remove_Job" & m_JobNum)
             CmdStr = "-l " & HPC_NAME & " -m " & RemoveJobFilename
             If Not CmdRunner.RunProgram(progLoc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to Remove Job Directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to Remove Job Directories on super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -729,7 +727,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "CreateShowBalance_Job" & m_JobNum
             CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
             If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -739,7 +737,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "GetBalance_Job" & m_JobNum
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -834,7 +832,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "CreateCheckjob_Job" & m_JobNum & "_" & indexNum.ToString
             CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
             If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to create CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return False
             End If
 
@@ -844,7 +842,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "GetCheckjob_HPCJob" & m_HPCJobStatus(indexNum, 0)
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get CheckJob file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return False
             End If
 
@@ -910,7 +908,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "CreateShowQ_Job" & m_JobNum
             CmdStr = "-l " & HPC_NAME & " -m " & CommandfileName
             If Not CmdRunner.RunProgram(progloc, CmdStr, "Putty", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty to create Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -920,7 +918,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "GetShowQResults_Job" & m_JobNum
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get Queue file from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -1001,7 +999,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             CommandfileName = "GetResultFilesCmds_Job" & m_JobNum & "_" & CloneStepNum
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
             If Not CmdRunner.RunProgram(progSftpLoc, CmdStr, "PuttySFTP", True) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get results files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Putty SFTP to get results files from super computer, job " & m_JobNum & ", Command: " & CmdStr)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -1045,7 +1043,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 If fiErrorLocal.Length > 0 Then
                     '***********Log error to log file here***********
                     strErrorResult = ReadEntireFile(ErrorResultFilePath)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error file " & ErrorResultFilePath & " contains the following error: " & strErrorResult)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error file " & ErrorResultFilePath & " contains the following error: " & strErrorResult)
                     m_HPCJobStatus(CloneStepNum, 1) = "error"
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
@@ -1493,28 +1491,27 @@ Public Class clsAnalysisToolRunnerXTHPC
     Private Function ZipMainOutputFile() As IJobParams.CloseOutType
         Dim TmpFile As String
         Dim FileList() As String
-        Dim ZipFileName As String
+        Dim TmpFilePath As String
 
         Try
-            Dim Zipper As New ZipTools(m_WorkDir, m_mgrParams.GetParam("zipprogram"))
             FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
             For Each TmpFile In FileList
-                ZipFileName = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(TmpFile)) & ".zip"
-                If Not Zipper.MakeZipFile("-fast", ZipFileName, System.IO.Path.GetFileName(TmpFile)) Then
+                TmpFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileName(TmpFile))
+                If Not MyBase.ZipFile(TmpFilePath, True) Then
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     m_message = AppendToComment(m_message, "Error zipping output files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        'Delete the XML output files
+        ' Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
         Try
             FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
             For Each TmpFile In FileList
@@ -1522,7 +1519,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 System.IO.File.Delete(TmpFile)
             Next
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1682,14 +1679,14 @@ Public Class clsAnalysisToolRunnerXTHPC
                         ioFileInfo.Delete()
                     Catch ex As Exception
                         ' Log the error, but continue
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerXT.ConstructSingleXTandemResultFile, Error deleting '" & strFilePath & "': " & ex.Message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerXT.ConstructSingleXTandemResultFile, Error deleting '" & strFilePath & "': " & ex.Message)
                     End Try
 
                 Next i
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ConstructSingleXTandemResultFile, Error concatenating _xt.xml files: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ConstructSingleXTandemResultFile, Error concatenating _xt.xml files: " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1794,7 +1791,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGroupIdNumber, Error obtaining group id from *_xt.xml files, job " & m_JobNum & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGroupIdNumber, Error obtaining group id from *_xt.xml files, job " & m_JobNum & ex.Message)
             intGroupdID = 0
         End Try
 
@@ -1855,7 +1852,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGBalanceData, Error parsing GBalance info, job " & m_JobNum & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveGBalanceData, Error parsing GBalance info, job " & m_JobNum & ex.Message)
         End Try
 
         Return sngBalanceHours
@@ -1910,7 +1907,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveJobQueueStatus, Error parsing ShowQ info, job " & m_JobNum & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.RetrieveJobQueueStatus, Error parsing ShowQ info, job " & m_JobNum & ex.Message)
         End Try
 
         Return strState
@@ -1932,7 +1929,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             intGroupID = RetrieveGroupIDNumber(LineOfText)
             Return ComputeNewMaxNumber(intGroupID, CurrentMaxNum, OffsetNum)
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ComputeNewMaxNumber, Error obtaining max group id from *_xt.xml files, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ComputeNewMaxNumber, Error obtaining max group id from *_xt.xml files, job " & m_JobNum & Err.Message)
             Return CurrentMaxNum
         End Try
 
@@ -1955,7 +1952,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 Return intGroupID + OffsetNum
             End If
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ComputeNewMaxNumber, Error obtaining max group id from *_xt.xml files, job " & m_JobNum & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ComputeNewMaxNumber, Error obtaining max group id from *_xt.xml files, job " & m_JobNum & Err.Message)
             Return CurrentMaxNum
         End Try
 

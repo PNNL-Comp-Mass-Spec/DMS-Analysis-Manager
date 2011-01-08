@@ -6,13 +6,7 @@ AnalysisManagerDtaImportPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDtaImportPlugIn.clsAnalysisResourcesDtaImport.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaImportPlugIn.clsAnalysisToolRunnerDtaImport.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+<member name="M:AnalysisManagerDtaImportPlugIn.clsAnalysisToolRunnerDtaImport.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
 	<summary>
  Initializes class
  </summary>
@@ -25,6 +19,12 @@ AnalysisManagerDtaImportPlugIn
  Runs DTA Import tool
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaImportPlugIn.clsAnalysisResourcesDtaImport.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>

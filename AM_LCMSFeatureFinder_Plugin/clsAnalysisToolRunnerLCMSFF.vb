@@ -143,8 +143,8 @@ Public Class clsAnalysisToolRunnerLCMSFF
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & ".UIMF"))
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("datasetNum") & "*.csv"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".UIMF"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "*.csv"))
         Catch ex As Exception
             ' Ignore errors here
         End Try

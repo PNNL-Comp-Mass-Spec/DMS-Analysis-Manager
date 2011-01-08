@@ -22,7 +22,8 @@ Public Class clsDtaGen
 #Region "Module variables"
 	'	Protected m_DSName As String = ""	 'Handy place to store value so repeated calls to m_JobParams aren't required
 	Protected m_ErrMsg As String = ""
-	Protected m_WorkDir As String = ""	'Working directory on analysis machine
+    Protected m_WorkDir As String = ""  'Working directory on analysis machine
+    Protected m_Dataset As String = ""
     Protected m_Status As ISpectraFileProcessor.ProcessStatus
 	Protected m_Results As ISpectraFileProcessor.ProcessResults
     Protected m_MgrParams As IMgrParams
@@ -113,7 +114,8 @@ Public Class clsDtaGen
             m_StatusTools = .StatusTools
 		End With
 
-		m_WorkDir = m_MgrParams.GetParam("workdir")
+        m_WorkDir = m_MgrParams.GetParam("workdir")
+        m_Dataset = m_JobParams.GetParam("DatasetNum")
         m_Progress = 0
 
 	End Sub

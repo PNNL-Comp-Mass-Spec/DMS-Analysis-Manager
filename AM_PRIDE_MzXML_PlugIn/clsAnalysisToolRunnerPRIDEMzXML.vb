@@ -110,7 +110,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Dim DumFiles() As String
 
         'update list of files to be deleted after run
-        DumFiles = System.IO.Directory.GetFiles(m_mgrParams.GetParam("workdir"), "*_grouped*")
+        DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_grouped*")
         For Each FileToSave As String In DumFiles
             clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(FileToSave))
         Next

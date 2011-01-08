@@ -49,7 +49,8 @@ Public Class clsAnalysisResourcesDtaImport
                 'TODO: Handle errors
             End If
 
-            Dim zipFileName As String = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
+            Dim strDataset As String = m_jobParams.GetParam("DatasetNum")
+            Dim zipFileName As String = strDataset & "_dta.zip"
             Dim fileEntries As String() = Directory.GetFiles(SourceFolderNamePath, zipFileName)
 
             ' Process the list of files found in the directory.
@@ -61,7 +62,7 @@ Public Class clsAnalysisResourcesDtaImport
 
             'If valid zip file is found, then uzip the contents
             For Each fileName In fileEntries
-                If UnzipFileStart(Path.Combine(m_mgrParams.GetParam("WorkDir"), fileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResourcesDtaImport.ValidateDTA", False) Then
+                If UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", False) Then
                     If m_DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manual DTA file unzipped")
                     End If
@@ -71,8 +72,8 @@ Public Class clsAnalysisResourcesDtaImport
                 End If
             Next fileName
 
-            Dim txtFileName As String = m_jobParams.GetParam("DatasetNum") & "_dta.txt"
-            fileEntries = Directory.GetFiles(m_mgrParams.GetParam("WorkDir"), txtFileName)
+            Dim txtFileName As String = strDataset & "_dta.txt"
+            fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName)
             If fileEntries.Length < 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA text file in the zip file was named incorrectly or not valid: " & Path.Combine(SourceFolderNamePath, txtFileName))
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED

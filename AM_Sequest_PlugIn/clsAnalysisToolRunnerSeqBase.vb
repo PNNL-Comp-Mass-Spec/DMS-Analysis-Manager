@@ -423,9 +423,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		'Package out files into concatenated text files 
-		If Not ConcatOutFiles(m_WorkDir, m_jobParams.GetParam("datasetNum"), m_JobNum) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Try to ensure there are no open objects with file handles
         System.Threading.Thread.Sleep(10000)        'Move this to before GC after troubleshooting complete
@@ -434,9 +434,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 
 		'Zip concatenated .out files
-		If Not ZipConcatOutFile(m_WorkDir, m_mgrParams.GetParam("zipprogram"), m_JobNum) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		'If we got here, everything worked
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -960,18 +960,18 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' Zips the concatenated .out file
     ''' </summary>
     ''' <param name="WorkDir">Working directory</param>
-    ''' <param name="ZipperLoc">Location of file zipping program</param>
     ''' <param name="JobNum">Job number</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Overridable Function ZipConcatOutFile(ByVal WorkDir As String, ByVal ZipperLoc As String, ByVal JobNum As String) As Boolean
+    Protected Overridable Function ZipConcatOutFile(ByVal WorkDir As String, ByVal JobNum As String) As Boolean
 
-        Dim OutFileName As String = m_jobParams.GetParam("datasetNum") & "_out.txt"
+        Dim OutFileName As String = m_Dataset & "_out.txt"
+        Dim OutFilePath As String = System.IO.Path.Combine(WorkDir, OutFileName)
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated output file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 
         'Verify file exists
-        If Not File.Exists(Path.Combine(m_WorkDir, OutFileName)) Then
+        If Not File.Exists(OutFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated .out file")
             Return False
         End If
@@ -979,10 +979,8 @@ Public Class clsAnalysisToolRunnerSeqBase
         clsGlobal.FilesToDelete.Add(OutFileName)
 
         Try
-            'Zip the file
-            Dim Zipper As New ZipTools(m_WorkDir, ZipperLoc)
-            Dim ZipFileName As String = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(OutFileName)) & ".zip"
-            If Not Zipper.MakeZipFile("-fast", ZipFileName, OutFileName) Then
+            'Zip the file            
+            If Not MyBase.ZipFile(OutFilePath, False) Then
                 Dim Msg As String = "Error zipping concat out file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
                 Return False

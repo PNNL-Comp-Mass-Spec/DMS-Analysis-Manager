@@ -25,12 +25,12 @@ Public Class clsDtaGenResources
         clsGlobal.ResetFilesToDeleteOrKeep()
 
 		'Get input data file
-		If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Else
+        If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_WorkingDir) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        End If
 
     End Function
 #End Region

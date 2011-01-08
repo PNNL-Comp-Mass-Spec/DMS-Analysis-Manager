@@ -26,7 +26,6 @@ Public Class clsExtractToolRunner
 #End Region
 
 #Region "Module variables"
-    Protected mDatasetName As String
     Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
     Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 #End Region
@@ -51,7 +50,6 @@ Public Class clsExtractToolRunner
 		'Call base class for initial setup
 		MyBase.RunTool()
 
-        mDatasetName = m_jobParams.GetParam("DatasetNum")
         Try
             ' Make sure clsGlobal.m_Completions_Msg is empty
             clsGlobal.m_Completions_Msg = String.Empty
@@ -324,7 +322,7 @@ Public Class clsExtractToolRunner
             '   Get the other files from the _inspect.txt file in the_inspect.zip file
 
             ' Extract _inspect.txt from the _inspect_fht.zip file
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect_fht.zip")
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip")
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
             If Not blnSuccess Then
@@ -334,7 +332,7 @@ Public Class clsExtractToolRunner
             ' Create the First Hits files using the _inspect.txt file
             CreateFHTFile = True
             CreateSYNFile = False
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect.txt")
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
             Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateFHTFile, CreateSYNFile)
 
             ' Delete the _inspect.txt file
@@ -344,7 +342,7 @@ Public Class clsExtractToolRunner
 
 
             ' Extract _inspect.txt from the _inspect.zip file
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect.zip")
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip")
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
             If Not blnSuccess Then
@@ -354,7 +352,7 @@ Public Class clsExtractToolRunner
             ' Create the Synopsis files using the _inspect.txt file
             CreateFHTFile = False
             CreateSYNFile = True
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, mDatasetName & "_inspect.txt")
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
             Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateFHTFile, CreateSYNFile)
 
             Try
@@ -410,7 +408,7 @@ Public Class clsExtractToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
         End If
 
-        SynFile = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), mDatasetName & "_syn.txt")
+        SynFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
 
         'Check to see if Syn file exists
         fiSynFile = New System.IO.FileInfo(SynFile)
@@ -458,7 +456,7 @@ Public Class clsExtractToolRunner
         For intFileIndex = 0 To strFileList.Length - 1
             m_PeptideProphet.InputFile = strFileList(intFileIndex)
             m_PeptideProphet.Enzyme = "tryptic"
-            m_PeptideProphet.OutputFilePath = m_mgrParams.GetParam("workdir")
+            m_PeptideProphet.OutputFilePath = m_WorkDir
 
             fiSynFile = New System.IO.FileInfo(strFileList(intFileIndex))
             strSynFileNameAndSize = fiSynFile.Name & " (file size = " & (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") & " MB"
@@ -859,7 +857,7 @@ Public Class clsExtractToolRunner
 
     '	Dim Msg As String
     '	Dim FileToCopy As String = ""
-    '	Dim SourceDir As String = m_mgrParams.GetParam("workdir")
+    '	Dim SourceDir As String = m_WorkDir
     '	Dim TargetDir As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))
     '	TargetDir = Path.Combine(TargetDir, m_jobParams.GetParam("OutputFolderName"))
 
