@@ -284,7 +284,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim Textfiles() As StreamWriter
 		Dim NumFiles As Integer
 		Dim ProcIndx As Integer
-		Dim StillRunning As Boolean
+        Dim StillRunning As Boolean
+
         '12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
         'This code is left here so we can still debug to make sure everything still works
         '		Dim NumProcessors As Integer = CInt(m_mgrParams.GetParam("numberofprocessors"))
@@ -345,14 +346,16 @@ Public Class clsAnalysisToolRunnerSeqBase
 		'Run all the programs
 		For ProcIndx = 0 To RunProgs.GetUpperBound(0)
 			RunProgs(ProcIndx).StartAndMonitorProgram()
-			System.Threading.Thread.Sleep(1000)
+            System.Threading.Thread.Sleep(1000)
 		Next
 
 		'Wait for completion
-		StillRunning = True
-		While StillRunning
-			StillRunning = False
-			System.Threading.Thread.Sleep(5000)
+
+        Do
+            StillRunning = False
+
+            ' Wait 5 seconds
+            System.Threading.Thread.Sleep(5000)
 
             ' Synchronize the stored Debug level with the value stored in the database
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -361,87 +364,87 @@ Public Class clsAnalysisToolRunnerSeqBase
             CalculateNewStatus(False)
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
-			For ProcIndx = 0 To RunProgs.GetUpperBound(0)
-				If m_DebugLevel > 4 Then
+            For ProcIndx = 0 To RunProgs.GetUpperBound(0)
+                If m_DebugLevel > 4 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" & ProcIndx.ToString & ").State = " & _
                      RunProgs(ProcIndx).State.ToString)
                 End If
-				If (RunProgs(ProcIndx).State <> 0) Then
-					If m_DebugLevel > 4 Then
+                If (RunProgs(ProcIndx).State <> 0) Then
+                    If m_DebugLevel > 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" & ProcIndx.ToString & ").State = " & _
                          RunProgs(ProcIndx).State.ToString)
                     End If
-					If (RunProgs(ProcIndx).State <> 10) Then
-						If m_DebugLevel > 4 Then
+                    If (RunProgs(ProcIndx).State <> 10) Then
+                        If m_DebugLevel > 4 Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" & ProcIndx.ToString & ").State = " & _
                              RunProgs(ProcIndx).State.ToString)
                         End If
-						StillRunning = True
-						Exit For
-					Else
-						If m_DebugLevel > 0 Then
+                        StillRunning = True
+                        Exit For
+                    Else
+                        If m_DebugLevel > 0 Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" & ProcIndx.ToString & ").State = " & _
                              RunProgs(ProcIndx).State.ToString)
                         End If
-					End If
-				End If
+                    End If
+                End If
             Next
-        End While
 
-		'Clean up our object references
-		If m_DebugLevel > 0 Then
+        Loop While StillRunning
+
+        'Clean up our object references
+        If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references")
         End If
-		For ProcIndx = 0 To RunProgs.GetUpperBound(0)
-			RunProgs(ProcIndx) = Nothing
-			If m_DebugLevel > 0 Then
+        For ProcIndx = 0 To RunProgs.GetUpperBound(0)
+            RunProgs(ProcIndx) = Nothing
+            If m_DebugLevel > 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Set RunProgs(" & ProcIndx.ToString & ") to Nothing")
             End If
-		Next
+        Next
 
-		'Make sure objects are released
-		System.Threading.Thread.Sleep(20000)		'20 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+        'Make sure objects are released
+        System.Threading.Thread.Sleep(10000)        '10 second delay
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
 
-		'Verify out file creation
-		If m_DebugLevel > 0 Then
+        'Verify out file creation
+        If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation")
         End If
-		DtaFiles = Directory.GetFiles(m_WorkDir, "*.out")
-		If DtaFiles.GetLength(0) < 1 Then
+        DtaFiles = Directory.GetFiles(m_WorkDir, "*.out")
+        If DtaFiles.GetLength(0) < 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             m_message = AppendToComment(m_message, "No OUT files created")
-			Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-		Else
-			'Add .out files to list of files for deletion
-			For Each OutFile As String In DtaFiles
-				clsGlobal.FilesToDelete.Add(OutFile)
+            Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+        Else
+            'Add .out files to list of files for deletion
+            For Each OutFile As String In DtaFiles
+                clsGlobal.FilesToDelete.Add(OutFile)
             Next
             'Add .out extension to list of file extensions to delete
             clsGlobal.m_FilesToDeleteExt.Add(".out")
-		End If
+        End If
 
-		'Package out files into concatenated text files 
+        'Package out files into concatenated text files 
         If Not ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Try to ensure there are no open objects with file handles
-        System.Threading.Thread.Sleep(10000)        'Move this to before GC after troubleshooting complete
+        System.Threading.Thread.Sleep(2000)        '2 second delay
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
-
-		'Zip concatenated .out files
+        'Zip concatenated .out files
         If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		'If we got here, everything worked
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'If we got here, everything worked
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Concatenates the .out files in the working directory to a single _out.txt file
@@ -454,6 +457,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
 		Dim ConcatTools As New clsConcatToolWrapper(WorkDir)
+        Dim blnDeleteSourceFilesWhenConcatenating As Boolean = True
 
 		If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ConcatOutFiles(), concatenating .out files")
@@ -464,16 +468,16 @@ Public Class clsAnalysisToolRunnerSeqBase
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
-		If ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_OUT, DSName) Then
-			If m_DebugLevel > 0 Then
+        If ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_OUT, DSName, blnDeleteSourceFilesWhenConcatenating) Then
+            If m_DebugLevel > 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ConcatOutFiles(), out file concatenation succeeded")
             End If
-			Return True
-		Else
+            Return True
+        Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, ConcatTools.ErrMsg & ", job " & JobNum)
             m_message = AppendToComment(m_message, "Error concatenating out files")
-			Return False
-		End If
+            Return False
+        End If
 
 	End Function
 
