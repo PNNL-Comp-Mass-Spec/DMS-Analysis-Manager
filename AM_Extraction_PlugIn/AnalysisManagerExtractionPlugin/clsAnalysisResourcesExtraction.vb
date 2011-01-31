@@ -80,11 +80,13 @@ Public Class clsAnalysisResourcesExtraction
 				If ExtractionSkipsCDTAFile Then
 					' Do not grab the _Dta.txt file
 				Else
-					'Get the concatenated .dta file
-					If Not RetrieveDtaFiles(False) Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-					End If
+                    ' As of 1/26/2011 the peptide file extractor no longer needs the concatenated .dta file,
+                    ' so we're no longer copying it
+
+                    ''If Not RetrieveDtaFiles(False) Then
+                    ''	'Errors were reported in function call, so just return
+                    ''	Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+                    ''End If
 				End If
 
 				'Get the concatenated .out file

@@ -110,8 +110,8 @@ Public Class clsPeptideExtractWrapper
 			.FHTXCorrThreshold = 0.0
 			.SynXCorrThreshold = 1.5
 			.SynFilterScoreThreshold = 0.1
-			.MakeIRRFile = True
-			.MakeNLIFile = True
+            .MakeIRRFile = False
+            .MakeNLIFile = False            ' Not actually used by the extractor, since class PeptideHitEntry has COMPUTE_DISCRIMINANT_SCORE = False in the PeptideFileExtractor project
 		End With
 
 		'Verify the concatenated _out.txt file exists
