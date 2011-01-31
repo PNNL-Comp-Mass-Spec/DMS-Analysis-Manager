@@ -28,7 +28,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
-        'Retrieve Decon2LS _isos.csv and _scans.csv files for this dataset
+        'Retrieve Decon2LS _isos.csv file for this dataset (we do not need the _scans.csv file)
         strFileToGet = m_jobParams.GetParam("DatasetNum") & ISOS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
@@ -36,15 +36,8 @@ Public Class clsAnalysisResourcesLCMSFF
         End If
         clsGlobal.FilesToDelete.Add(strFileToGet)
 
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & SCANS_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
-        End If
-        clsGlobal.FilesToDelete.Add(strFileToGet)
 
         ' Retrieve the LCMSFeatureFinder .Ini file specified for this job
-
         strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile")
         If strLCMSFFIniFileName Is Nothing OrElse strLCMSFFIniFileName.Length = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue")
