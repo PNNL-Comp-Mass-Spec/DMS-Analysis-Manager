@@ -263,6 +263,7 @@ Public Class clsIonicZipTools
             End If
 
             objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
+            objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
             dtStartTime = System.DateTime.Now
             objZipper.AddItem(fiFile.FullName, String.Empty)
@@ -362,6 +363,7 @@ Public Class clsIonicZipTools
             End If
 
             objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
+            objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
             dtStartTime = System.DateTime.Now
 

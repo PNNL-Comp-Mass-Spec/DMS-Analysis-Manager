@@ -41,26 +41,35 @@ Namespace AnalysisManagerBase
         Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
 
         ' Note: These constants need to be all lowercase
-        Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"            'Agilent ion trap data, Agilent TOF data
-        Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"      'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-        Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"          'Micromass QTOF data
+        Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"                'Agilent ion trap data, Agilent TOF data
+        Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"          'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"              'Micromass QTOF data
 
-        Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"            'Finnigan ion trap/LTQ-FT data
-        Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"          'Agilent/QSTAR TOF data
-        Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"          'IMS_UIMF (IMS_Agilent_TOF in DMS)
-        Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"        'mzXML
+        Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"                'Finnigan ion trap/LTQ-FT data
+        Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"              'Agilent/QSTAR TOF data
+        Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"              'IMS_UIMF (IMS_Agilent_TOF in DMS)
+        Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"            'mzXML
 
         ' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
         ' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
-        ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder; inside that folder is the analysis.baf file and a .m subfolder
+        ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
         ' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
         ' 15T datasets also have raw_data_type "bruker_ft"
+        ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
         Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
 
-        ' Bruker folders for Maldi TOF_TOF.  Main folder has a .emf graphic file, then a series of subfolders, one per pixel from the MALDI imaging.  Each subfolder will have more subfolders; the important files are the fid file with the raw data and the acqus with the method
-        ' Instruments: BrukerTOF_01 and the 9T
-        Public Const RAW_DATA_TYPE_BRUKER_TOF_FOLDER As String = "bruker_tof"
+        ' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+        ' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+        Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
+
+        ' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+        ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
+
+        ' The following is used by instrument Maxis_01
+        ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
 
         Public Const DOT_WIFF_EXTENSION As String = ".wiff"
         Public Const DOT_D_EXTENSION As String = ".d"
@@ -407,6 +416,42 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
+        ''' Tries to delete the first file whose path is defined in strFilesToDelete
+        ''' If deletion succeeds, then removes the file from the queue
+        ''' </summary>
+        ''' <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
+        ''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
+        ''' <remarks></remarks>
+        Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As System.Collections.Generic.Queue(Of String), _
+                                        ByVal strFileToQueueForDeletion As String)
+
+            If strFilesToDelete.Count > 0 Then
+                ' Call the garbage collector, then try to delete the first queued file
+
+                GC.Collect()
+
+                Try
+                    Dim strFileToDelete As String
+                    strFileToDelete = strFilesToDelete.Peek()
+
+                    System.IO.File.Delete(strFileToDelete)
+
+                    ' If we get here, then the delete succeeded, so we can dequeue the file
+                    strFilesToDelete.Dequeue()
+
+                Catch ex As Exception
+                    ' Exception deleting the file; ignore this error
+                End Try
+
+            End If
+
+            If Not String.IsNullOrEmpty(strFileToQueueForDeletion) Then
+                strFilesToDelete.Enqueue(strFileToQueueForDeletion)
+            End If
+
+        End Sub
+
+        ''' <summary>
         ''' Looks for file strFileName in strFolderPath or any of its subfolders
         ''' The filename may contain a wildcard character, in which case the first match will be returned
         ''' </summary>
@@ -442,6 +487,93 @@ Namespace AnalysisManagerBase
             End If
 
             Return strFilePathMatch
+        End Function
+
+        ''' <summary>
+        ''' Split apart coordinates that look like "R00X438Y093" into R, X, and Y
+        ''' </summary>
+        ''' <param name="strCoord"></param>
+        ''' <param name="R"></param>
+        ''' <param name="X"></param>
+        ''' <param name="Y"></param>
+        ''' <returns>True if success, false otherwise</returns>
+        ''' <remarks></remarks>
+        Public Shared Function GetBrukerImagingFileCoords(ByVal strCoord As String, _
+                                                          ByRef R As Integer, _
+                                                          ByRef X As Integer, _
+                                                          ByRef Y As Integer) As Boolean
+
+            Static reRegExRXY As System.Text.RegularExpressions.Regex
+            Static reRegExRX As System.Text.RegularExpressions.Regex
+
+            Dim reMatch As System.Text.RegularExpressions.Match
+            Dim blnSuccess As Boolean
+
+            If reRegExRXY Is Nothing Then
+                reRegExRXY = New System.Text.RegularExpressions.Regex("R(\d+)X(\d+)Y(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+                reRegExRX = New System.Text.RegularExpressions.Regex("R(\d+)X(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            End If
+
+            ' Try to match names like R00X438Y093
+            reMatch = reRegExRXY.Match(strCoord)
+
+            blnSuccess = False
+
+            If reMatch.Success Then
+                ' Match succeeded; extract out the coordinates
+                If Integer.TryParse(reMatch.Groups.Item(1).Value, R) Then blnSuccess = True
+                If Integer.TryParse(reMatch.Groups.Item(2).Value, X) Then blnSuccess = True
+                Integer.TryParse(reMatch.Groups.Item(3).Value, Y)
+
+            Else
+                ' Try to match names like R00X438
+                reMatch = reRegExRX.Match(strCoord)
+
+                If reMatch.Success Then
+                    If Integer.TryParse(reMatch.Groups.Item(1).Value, R) Then blnSuccess = True
+                    If Integer.TryParse(reMatch.Groups.Item(2).Value, X) Then blnSuccess = True
+                End If
+            End If
+
+            Return blnsuccess
+
+        End Function
+
+        ''' <summary>
+        ''' Looks for job parameters BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
+        ''' If defined, then populates StartSectionX and EndSectionX with the Start and End X values to filter on
+        ''' </summary>
+        ''' <param name="objJobParams"></param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Public Shared Function GetBrukerImagingSectionFilter(ByRef objJobParams As IJobParams, _
+                                                             ByRef StartSectionX As Integer, _
+                                                             ByRef EndSectionX As Integer) As Boolean
+
+            Dim blnApplySectionFilter As Boolean
+
+            Dim strParam As String
+
+            blnApplySectionFilter = False
+            StartSectionX = -1
+            EndSectionX = Int32.MaxValue
+
+            strParam = objJobParams.GetParam("MALDI_Imaging_StartSectionX")
+            If Not String.IsNullOrEmpty(strParam) Then
+                If Integer.TryParse(strParam, StartSectionX) Then
+                    blnApplySectionFilter = True
+                End If
+            End If
+
+            strParam = objJobParams.GetParam("MALDI_Imaging_EndSectionX")
+            If Not String.IsNullOrEmpty(strParam) Then
+                If Integer.TryParse(strParam, EndSectionX) Then
+                    blnApplySectionFilter = True
+                End If
+            End If
+
+            Return blnApplySectionFilter
+
         End Function
 
         ''' <summary>
@@ -613,8 +745,8 @@ Namespace AnalysisManagerBase
 
                     blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
 
-                Case RAW_DATA_TYPE_BRUKER_TOF_FOLDER
-                    blnSuccess = RetrieveBrukerTOFFolder(WorkDir, CreateStoragePathInfoOnly)
+                Case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+                    blnSuccess = RetrieveBrukerMALDIImagingFolders(WorkDir, UnzipOverNetwork:=True)
 
                 Case Else
                     ' RawDataType is not recognized
@@ -740,13 +872,18 @@ Namespace AnalysisManagerBase
             ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
             ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
 
-            'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-            Dim RemFolders() As String = System.IO.Directory.GetDirectories(ServerPath, MSXmlFoldername)
-            If RemFolders.GetLength(0) <> 1 Then Return False
+            If String.IsNullOrEmpty(ServerPath) Then Return False
 
-            ' MSXmlFolder found; copy the .mzXML file
-            ServerPath = System.IO.Path.Combine(ServerPath, MSXmlFoldername)
-            SourceFilePath = System.IO.Path.Combine(ServerPath, MzXMLFilename)
+            Dim diFolderInfo As System.IO.DirectoryInfo
+            diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
+            If Not diFolderInfo.Exists Then Return False
+
+            'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+            Dim diSubfolders() As System.IO.DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
+            If diSubfolders.Length < 1 Then Return False
+
+            ' MSXmlFolder found; copy the .mzXML file            
+            SourceFilePath = System.IO.Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
             If CopyFileToWorkDir(MzXMLFilename, ServerPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
                 Return True
             Else
@@ -769,7 +906,6 @@ Namespace AnalysisManagerBase
             objFileNamesToSkip = New List(Of String)
             If blnSkipBAFFiles Then
                 objFileNamesToSkip.Add("analysis.baf")
-
             End If
 
             Return RetrieveDotXFolder(WorkDir, DOT_D_EXTENSION, CreateStoragePathInfoOnly, objFileNamesToSkip)
@@ -846,46 +982,281 @@ Namespace AnalysisManagerBase
 
         End Function
 
-        Public Function RetrieveBrukerTOFFolder(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+        ''' <summary>
+        ''' Retrieves a data from a Bruker MALDI imaging dataset
+        ''' The data is stored as zip files with names like 0_R00X433.zip
+        ''' This data is unzipped into a subfolder in the Chameleon cached data folder
+        ''' </summary>
+        ''' <param name="WorkDir">Work directory for this manager; only used if UnzipOverNetwork is false</param>
+        ''' <param name="UnzipOverNetwork"></param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Public Function RetrieveBrukerMALDIImagingFolders(ByVal WorkDir As String, _
+                                                          ByVal UnzipOverNetwork As Boolean) As Boolean
+
+            Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
             Dim DSName As String = m_jobParams.GetParam("datasetNum")
-            Dim ServerPath As String = FindValidFolder(DSName, "")
-            Dim DestFolderPath As String
+            Dim ChameleonCachedDataFolder As String = m_mgrParams.GetParam("ChameleonCachedDataFolder")
+            Dim diCachedDataFolder As System.IO.DirectoryInfo
 
-            ''''''''''''''''''''''''''''''''''''
-            ' TODO: Finalize this code
-            '       DMS doesn't yet have a BrukerTOF dataset 
-            '        so we don't know the official folder structure
-            ''''''''''''''''''''''''''''''''''''
+            Dim ServerPath As String
+            Dim strUnzipFolderPathBase As String = String.Empty
 
-            ' Find the instrument data folder in the dataset folder
-            ' The instrument data folder should have the same name as the dataset folder
-            Dim RemFolders() As String = System.IO.Directory.GetDirectories(ServerPath, DSName)
-            If RemFolders.GetLength(0) <> 1 Then Return False
+            Dim strFilesToDelete As New System.Collections.Generic.Queue(Of String)
 
-            'Set up the file paths
-            Dim DSFolderPath As String = System.IO.Path.Combine(ServerPath, RemFolders(0))
+            Dim strZipFilePathRemote As String = String.Empty
+            Dim strZipFilePathToExtract As String
 
-            'Do the copy
+            Dim blnUnzipFile As Boolean
+
+            Dim blnApplySectionFilter As Boolean
+            Dim StartSectionX As Integer
+            Dim EndSectionX As Integer
+
+            Dim CoordR As Integer, CoordX As Integer, CoordY As Integer
+
             Try
-                DestFolderPath = System.IO.Path.Combine(WorkDir, DSName)
 
-                If CreateStoragePathInfoOnly Then
-                    If Not System.IO.Directory.Exists(DSFolderPath) Then
-                        m_message = "Source folder not found: " & DSFolderPath
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                If String.IsNullOrEmpty(ChameleonCachedDataFolder) Then
+                    m_message = "Chameleon cached data folder not defined"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; unable to unzip MALDI imaging data")
+                    Return False
+                Else
+                    ' Delete any subfolders at ChameleonCachedDataFolder that do not have this dataset's name
+                    diCachedDataFolder = New System.IO.DirectoryInfo(ChameleonCachedDataFolder)
+                    If Not diCachedDataFolder.Exists Then
+                        m_message = "Chameleon cached data folder does not exist"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diCachedDataFolder.FullName)
                         Return False
                     Else
-                        CreateStoragePathInfoFile(DSFolderPath, DestFolderPath)
+                        strUnzipFolderPathBase = System.IO.Path.Combine(diCachedDataFolder.FullName, DSName)
                     End If
-                Else
-                    ' Copy the directory and all subdirectories
-                    PRISM.Files.clsFileTools.CopyDirectory(DSFolderPath, DestFolderPath)
+
+                    For Each diSubFolder As System.IO.DirectoryInfo In diCachedDataFolder.GetDirectories()
+                        If diSubFolder.Name.ToLower <> DSName.ToLower Then
+                            ' Delete this directory
+                            Try
+                                If m_DebugLevel >= 2 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting old dataset subfolder from chameleon cached data folder: " & diSubFolder.FullName)
+                                End If
+
+                                If m_mgrParams.GetParam("MgrName").ToLower.Contains("monroe") Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Skipping delete since this is a development computer")
+                                Else
+                                    diSubFolder.Delete(True)
+                                End If
+
+                            Catch ex As Exception
+                                m_message = "Error deleting cached subfolder"
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " " & diSubFolder.FullName & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                                Return False
+                            End Try
+                        End If
+                    Next
+
+                    ' Delete any .mis files that do not start with this dataset's name
+                    For Each fiFile As System.IO.FileInfo In diCachedDataFolder.GetFiles("*.mis")
+                        If System.IO.Path.GetFileNameWithoutExtension(fiFile.Name).ToLower <> DSName.ToLower Then
+                            fiFile.Delete()
+                        End If
+                    Next
                 End If
 
             Catch ex As Exception
-                m_message = "Error copying folder " & DSFolderPath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " to working directory: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                m_message = "Error cleaning out old data from the Chameleon cached data folder"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Return False
+            End Try
+
+            ' See if any imaging section filters are defined
+            blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, StartSectionX, EndSectionX)
+
+            ' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
+            ' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+            ServerPath = FindValidFolder(DSName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+
+            Try
+
+                Dim MisFiles() As String
+                Dim strImagingSeqFilePathFinal As String
+
+                ' Look for the .mis file (ImagingSequence file) 
+                strImagingSeqFilePathFinal = System.IO.Path.Combine(diCachedDataFolder.FullName, DSName & ".mis")
+
+                If Not System.IO.File.Exists(strImagingSeqFilePathFinal) Then
+
+                    ' Copy the .mis file (ImagingSequence file) over from the storage server
+                    MisFiles = System.IO.Directory.GetFiles(ServerPath, "*.mis")
+
+                    If MisFiles.Length = 0 Then
+                        ' No .mis files were found; unable to continue
+                        m_message = "ImagingSequence (.mis) file not found in dataset folder"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; unable to process MALDI imaging data")
+                        Return False
+                    Else
+                        ' We'll copy the first file in MisFiles(0)
+                        ' Log a warning if we will be renaming the file
+
+                        If System.IO.Path.GetFileName(MisFiles(0)).ToLower <> System.IO.Path.GetFileName(strImagingSeqFilePathFinal).ToLower() Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Note: Renaming .mis file (ImagingSequence file) from " & System.IO.Path.GetFileName(MisFiles(0)) & " to " & System.IO.Path.GetFileName(strImagingSeqFilePathFinal))
+                        End If
+
+                        If Not CopyFileWithRetry(MisFiles(0), strImagingSeqFilePathFinal, True) Then
+                            ' Abort processing
+                            m_message = "Error copying ImagingSequence (.mis) file"
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; unable to process MALDI imaging data")
+                            Return False
+                        End If
+
+                    End If
+                End If
+
+            Catch ex As Exception
+                m_message = "Error obtaining ImagingSequence (.mis) file"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Return False
+            End Try
+
+            Try
+
+                ' Unzip each of the *R*X*.zip files to the Chameleon cached data folder
+
+                ' However, consider limits defined by job params BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
+                ' when processing the files
+
+                Dim ZipFiles() As String
+                ZipFiles = System.IO.Directory.GetFiles(ServerPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+
+                For Each strZipFilePathRemote In ZipFiles
+
+                    If blnApplySectionFilter Then
+                        blnUnzipFile = False
+
+                        ' Determine the R, X, and Y coordinates for this .Zip file
+                        If GetBrukerImagingFileCoords(strZipFilePathRemote, CoordR, CoordX, CoordY) Then
+                            ' Compare to StartSectionX and EndSectionX
+                            If CoordX >= StartSectionX AndAlso CoordX <= EndSectionX Then
+                                blnUnzipFile = True
+                            End If
+                        End If
+                    Else
+                        blnUnzipFile = True
+                    End If
+
+                    ' Open up the zip file over the network and get a listing of all of the files
+                    ' If they already exist in the cached data folder, then there is no need to continue
+
+                    If blnUnzipFile Then
+
+                        ' Set this to false for now
+                        blnUnzipFile = False
+
+                        Dim objZipfile As Ionic.Zip.ZipFile
+
+                        objZipfile = New Ionic.Zip.ZipFile(strZipFilePathRemote)
+
+                        For Each objEntry As Ionic.Zip.ZipEntry In objZipfile.Entries
+                            If Not objEntry.IsDirectory Then
+
+                                Dim strPathToCheck As String
+                                strPathToCheck = System.IO.Path.Combine(strUnzipFolderPathBase, objEntry.FileName.Replace("/"c, "\"c))
+
+                                If Not System.IO.File.Exists(strPathToCheck) Then
+                                    blnUnzipFile = True
+                                    Exit For
+                                End If
+                            End If
+                        Next
+                    End If
+
+                    If blnUnzipFile Then
+                        ' Unzip the file to the Chameleon cached data folder
+                        ' If UnzipOverNetwork=True, then we want to copy the file locally first
+
+                        If UnzipOverNetwork Then
+                            strZipFilePathToExtract = String.Copy(strZipFilePathRemote)
+                        Else
+                            Try
+
+                                ' Copy the file to the work directory on the local computer
+                                strZipFilePathToExtract = System.IO.Path.Combine(WorkDir, System.IO.Path.GetFileName(strZipFilePathRemote))
+
+                                If m_DebugLevel >= 2 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strZipFilePathRemote)
+                                End If
+
+                                If Not CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, True) Then
+                                    ' Abort processing
+                                    m_message = "Error copying Zip file"
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; unable to process MALDI imaging data")
+                                    Return False
+                                End If
+
+                            Catch ex As Exception
+                                m_message = "Error copying zipped instrument data"
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", file " & strZipFilePathRemote & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                                Return False
+                            End Try
+                        End If
+
+                        ' Now use Ionic to unzip strZipFilePathLocal to the data cache folder
+                        ' Do not overwrite existing files (assume they're already valid)
+                        Try
+
+                            Dim objZipfile As Ionic.Zip.ZipFile
+
+                            objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
+
+                            If m_DebugLevel >= 2 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping " & strZipFilePathToExtract)
+                            End If
+
+                            objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
+                            objZipfile = Nothing
+
+                        Catch ex As Exception
+                            m_message = "Error extracting zipped instrument data"
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", file " & strZipFilePathToExtract & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                            Return False
+                        End Try
+
+                        If Not UnzipOverNetwork Then
+                            ' Need to delete the zip file that we copied locally
+                            ' However, Ionic may have a file handle open so we use a queue to keep track of files that need to be deleted
+
+                            DeleteQueuedFiles(strFilesToDelete, strZipFilePathToExtract)
+                        End If
+
+                    End If
+
+                Next
+
+
+                If Not UnzipOverNetwork Then
+                    Dim dtStartTime As System.DateTime = System.DateTime.Now
+
+                    Do While strFilesToDelete.Count > 0
+                        ' Try to process the files remaining in queue strFilesToDelete
+
+                        DeleteQueuedFiles(strFilesToDelete, String.Empty)
+
+                        If strFilesToDelete.Count > 0 Then
+                            If System.DateTime.Now.Subtract(dtStartTime).TotalSeconds > 20 Then
+                                ' Stop trying to delete files; it's not worth continuing to try
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete all of the files in queue strFilesToDelete; Queue Length = " & strFilesToDelete.Count & "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
+                                Exit Do
+                            End If
+
+                            System.Threading.Thread.Sleep(500)
+                        End If
+                    Loop
+
+                End If
+
+            Catch ex As Exception
+                m_message = "Error extracting zipped instrument data"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " from " & strZipFilePathRemote & "; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
                 Return False
             End Try
 
@@ -893,6 +1264,7 @@ Namespace AnalysisManagerBase
             Return True
 
         End Function
+
         ''' <summary>
         ''' Unzips dataset folders to working directory
         ''' </summary>
@@ -1253,11 +1625,11 @@ Namespace AnalysisManagerBase
         ''' <summary>
         ''' Determines the most appropriate folder to use to obtain dataset files from
         ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        ''' If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
         ''' </summary>
         ''' <param name="DSName">Name of the dataset</param>
-        ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
-        ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder</param>
+        ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder; can contain a wildcard, e.g. SEQ*</param>
         ''' <returns>Path to the most appropriate dataset folder</returns>
         ''' <remarks></remarks>
         Private Function FindValidFolder(ByVal DSName As String, _

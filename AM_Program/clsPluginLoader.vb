@@ -72,6 +72,9 @@ Namespace AnalysisManagerBase
             Dim myToolRunner As IToolRunner = Nothing
 
             Select Case className.ToLower
+                'Case "AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT, IToolRunner)
+
                 'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit, IToolRunner)
                 'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower
@@ -124,6 +127,9 @@ Namespace AnalysisManagerBase
             Dim myModule As IAnalysisResources
 
             Select Case className.ToLower
+                'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower
+                '    myModule = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT, IAnalysisResources)
+
                 'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower
                 '    myModule = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit, IAnalysisResources)
                 'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower

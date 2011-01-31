@@ -274,8 +274,7 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Public Shared Function CleanWorkDir(ByVal WorkDir As String, ByVal HoldoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
 
-            Dim FoundFiles() As String
-            Dim FoundFolders() As String
+            Dim diWorkFolder As System.IO.DirectoryInfo
             Dim HoldoffMilliseconds As Integer
 
             Dim strCurrentFile As String = String.Empty
@@ -283,9 +282,6 @@ Namespace AnalysisManagerBase
 
             strFailureMessage = String.Empty
             WorkDir = CheckTerminator(WorkDir)
-
-            FoundFiles = Directory.GetFiles(WorkDir)
-            FoundFolders = Directory.GetDirectories(WorkDir)
 
             Try
                 HoldoffMilliseconds = CInt(HoldoffSeconds * 1000)
@@ -300,26 +296,32 @@ Namespace AnalysisManagerBase
             GC.WaitForPendingFinalizers()
             System.Threading.Thread.Sleep(HoldoffMilliseconds)
 
+            diWorkFolder = New System.IO.DirectoryInfo(WorkDir)
+
             'Delete the files
             Try
-                For Each strCurrentFile In FoundFiles
-                    'Verify file is not set to readonly
-                    File.SetAttributes(strCurrentFile, File.GetAttributes(strCurrentFile) And (Not FileAttributes.ReadOnly))
-                    File.Delete(strCurrentFile)
+                For Each fiFile As System.IO.FileInfo In diWorkFolder.GetFiles()
+                    Try
+                        fiFile.Delete()
+                    Catch ex As Exception
+                        ' Make sure the readonly bit is not set
+                        ' The manager will try to delete the file the next time is starts
+                        fiFile.Attributes = fiFile.Attributes And (Not FileAttributes.ReadOnly)
+                    End Try
                 Next
             Catch Ex As Exception
-                strFailureMessage = "Error deleting file " & System.IO.Path.GetFileName(strCurrentFile) & " in working directory"
+                strFailureMessage = "Error deleting files in working directory"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " & strFailureMessage & " " & WorkDir & ": " & Ex.Message)
                 Return False
             End Try
 
-            'Delete the folders
+            'Delete the sub directories
             Try
-                For Each strCurrentSubfolder In FoundFolders
-                    Directory.Delete(strCurrentSubfolder, True)
+                For Each diSubDirectory As System.IO.DirectoryInfo In diWorkFolder.GetDirectories
+                    diSubDirectory.Delete(True)
                 Next
             Catch Ex As Exception
-                strFailureMessage = "Error deleting folder " & strCurrentSubfolder
+                strFailureMessage = "Error deleting subfolder " & strCurrentSubfolder
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory: " & Ex.Message)
                 Return False
             End Try

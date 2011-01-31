@@ -62,40 +62,48 @@ Public Class clsConcatToolWrapper
 
 	End Sub
 
-	Public Function ConcatenateFiles(ByVal FileType As ConcatFileTypes, ByVal RootFileName As String) As Boolean
+    Public Function ConcatenateFiles(ByVal FileType As ConcatFileTypes, ByVal RootFileName As String) As Boolean
+        Return ConcatenateFiles(FileType, RootFileName, False)
+    End Function
 
-		Try
+    Public Function ConcatenateFiles(ByVal FileType As ConcatFileTypes, _
+                                     ByVal RootFileName As String, _
+                                     ByVal blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
+
+        Try
             'Perform the concatenation
             m_CatTools = New clsConcatenateFiles(m_DataPath, RootFileName)
+            m_CatTools.DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
+
             m_CatInProgress = True
 
             'Call the dll based on the concatenation type
-			Select Case FileType
-				Case ConcatFileTypes.CONCAT_ALL
-					m_CatTools.MakeCattedDTAsAndOUTs()
-				Case ConcatFileTypes.CONCAT_DTA
-					m_CatTools.MakeCattedDTAsOnly()
-				Case ConcatFileTypes.CONCAT_OUT
-					m_CatTools.MakeCattedOUTsOnly()
-				Case Else
-					'Shouldn't ever get here
-					m_ErrMsg = "Invalid concatenation selection: " & FileType.ToString
-					Return False
-			End Select
+            Select Case FileType
+                Case ConcatFileTypes.CONCAT_ALL
+                    m_CatTools.MakeCattedDTAsAndOUTs()
+                Case ConcatFileTypes.CONCAT_DTA
+                    m_CatTools.MakeCattedDTAsOnly()
+                Case ConcatFileTypes.CONCAT_OUT
+                    m_CatTools.MakeCattedOUTsOnly()
+                Case Else
+                    'Shouldn't ever get here
+                    m_ErrMsg = "Invalid concatenation selection: " & FileType.ToString
+                    Return False
+            End Select
 
-			'Loop until the concatenation finishes
-			While m_CatInProgress
-				System.Threading.Thread.Sleep(1000)
-			End While
+            'Loop until the concatenation finishes
+            While m_CatInProgress
+                System.Threading.Thread.Sleep(1000)
+            End While
 
-			'Concatenation must have finished successfully, so exit
-			Return True
-		Catch ex As Exception
-			m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex)
-			Return False
-		End Try
+            'Concatenation must have finished successfully, so exit
+            Return True
+        Catch ex As Exception
+            m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex)
+            Return False
+        End Try
 
-	End Function
+    End Function
 #End Region
 
 #Region "Private methods"

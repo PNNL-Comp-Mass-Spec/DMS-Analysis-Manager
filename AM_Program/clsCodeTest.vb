@@ -607,6 +607,46 @@ Public Class clsCodeTest
         Return blnSuccess
     End Function
 
+    Public Function TestMALDIDataUnzip(ByVal strSourceDatasetFolder As String) As Boolean
+
+        Dim intDebugLevel As Integer = 2
+
+        Dim objResources As New clsResourceTestClass
+
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+        Dim blnSuccess As Boolean
+
+        If String.IsNullOrEmpty(strSourceDatasetFolder) Then
+            strSourceDatasetFolder = "\\proto-4\9T_Imaging_DMS1\ratjoint071110_INCAS_MS"
+        End If
+
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "3")
+        m_mgrParams.SetParam("ChameleonCachedDataFolder", "H:\9T_Imaging")
+
+        objJobParams.SetParam("StepTool", "TestStepTool")
+        objJobParams.SetParam("ToolName", "TestTool")
+
+        objJobParams.SetParam("Job", "12345")
+        objJobParams.SetParam("OutputFolderName", "Test_Results")
+        objJobParams.SetParam("datasetNum", "ratjoint071110_INCAS_MS")
+
+        objJobParams.SetParam("DatasetStoragePath", "\\proto-4\9T_Imaging_DMS1")
+        objJobParams.SetParam("DatasetArchivePath", "\\a2.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1")
+        objJobParams.SetParam("transferFolderPath", "\\proto-4\DMS3_Xfer")
+
+
+        objResources.Setup(m_mgrParams, objJobParams)
+
+        blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders("E:\DMS_WorkDir", True)
+
+        'blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
+
+        Return blnSuccess
+    End Function
+
     Public Sub TestZipAndUnzip()
 
         Dim objZipper As New clsIonicZipTools(3, "F:\Temp\UnzipTest")

@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "November 15, 2010"
+    Public Const PROGRAM_DATE As String = "January 10, 2011"
 
     Private mInputFilePath As String
 
@@ -99,6 +99,7 @@ Module modMain
                         'objTest.TestFindFile()
 
                         'objTest.TestZipAndUnzip()
+                        objTest.TestMALDIDataUnzip("")
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

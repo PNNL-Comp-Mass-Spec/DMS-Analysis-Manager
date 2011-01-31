@@ -250,6 +250,29 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         Return blnSuccess
     End Function
+    
+    Protected Function GetAppDataFolderPath(ByVal strAppName As String) As String
+        Dim strAppDataFolder As String = String.Empty
+
+		If String.IsNullOrEmpty(strAppName) Then
+			strAppName = String.Empty
+		End If
+		
+        Try
+            strAppDataFolder = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), strAppName)
+            If Not System.IO.Directory.Exists(strAppDataFolder) Then
+                System.IO.Directory.CreateDirectory(strAppDataFolder)
+            End If
+
+        Catch ex As Exception
+            ' Error creating the folder, revert to using the system Temp folder
+            strAppDataFolder = System.IO.Path.GetTempPath()
+        End Try
+
+        Return strAppDataFolder
+
+    End Function
+
     Protected Function GetBaseClassErrorMessage() As String
         ' Returns String.Empty if no error
 
