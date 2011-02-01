@@ -225,7 +225,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
             Select Case mRawDataType
-                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
                     ' As of 11/19/2010, the Decon2LS output files are created inside the .D folder
                     If Not System.IO.File.Exists(IsosFilePath) And Not System.IO.File.Exists(ScansFilePath) Then
                         ' Copy the files from the .D folder to the work directory
@@ -735,7 +735,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Try
             Select Case mRawDataType
-                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+                Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
                     ' As of 11/19/2010, the _Log.txt file is created inside the .D folder
                     strLogFilePath = System.IO.Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
                 Case Else
@@ -828,12 +828,21 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
                 Return DeconTools.Backend.Globals.MSFileType.Bruker
 
-            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
 
                 ' TODO: Add support for this after Decon2LS is updated
                 'Return DeconTools.Backend.Globals.MSFileType.Bruker_15T
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker_TOF data (" & RawDataType & ")")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & RawDataType & ")")
+                Return DeconTools.Backend.Globals.MSFileType.Undefined
+
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+
+                ' TODO: Add support for this after Decon2LS is updated
+                'Return DeconTools.Backend.Globals.MSFileType.Bruker_15T
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & RawDataType & ")")
                 Return DeconTools.Backend.Globals.MSFileType.Undefined
 
             Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
@@ -872,7 +881,15 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 ' Bruker_FT folders are actually .D folders
                 Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
-            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+                ''''''''''''''''''''''''''''''''''''
+                ' TODO: Finalize this code
+                '       DMS doesn't yet have a BrukerTOF dataset 
+                '        so we don't know the official folder structure
+                ''''''''''''''''''''''''''''''''''''
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
                 ''''''''''''''''''''''''''''''''''''
                 ' TODO: Finalize this code
                 '       DMS doesn't yet have a BrukerTOF dataset 
@@ -1003,7 +1020,18 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
                 IsFile = False
 
-            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_FOLDER
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+                ''''''''''''''''''''''''''''''''''''
+                ' TODO: Finalize this code
+                '       DMS doesn't yet have a BrukerTOF dataset 
+                '        so we don't know the official folder structure
+                ''''''''''''''''''''''''''''''''''''
+
+                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+                IsFile = False
+
+            Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+       
                 ''''''''''''''''''''''''''''''''''''
                 ' TODO: Finalize this code
                 '       DMS doesn't yet have a BrukerTOF dataset 
