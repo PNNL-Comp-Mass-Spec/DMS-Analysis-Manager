@@ -129,7 +129,7 @@ Public Class clsMSGFInputCreatorSequest
                 ' Examine the score values and possibly filter out this line
 
                 ' Sequest filter rules are relaxed forms of the MTS Peptide DB Minima (Peptide DB minima 6, filter set 149)
-                ' All data must have DelCn <= 0.5
+                ' All data must have DelCn <= 0.25
                 ' For Partially or fully tryptic, or protein terminal; 
                 '    XCorr >= 1.5 for 1+ or 2+
                 '    XCorr >= 2.2 for >=3+
