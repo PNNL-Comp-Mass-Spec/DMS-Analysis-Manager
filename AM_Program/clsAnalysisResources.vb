@@ -2471,15 +2471,16 @@ Namespace AnalysisManagerBase
 
         Public Function RetrieveAggregateFiles(ByVal FilesToRetrieveExt As String()) As Boolean
 
-            Dim SourceFolderPath As String = ""
+            Dim SourceFolderPath As String = String.Empty
+            Dim SharedResultsFolder As String = String.Empty
             Dim DatasetName As String
-            Dim SourceFilename As String = ""
+            Dim SourceFilename As String = String.Empty
             Dim DatasetInformation As New DataTable
             Dim SplitString As String()
             Dim Tool As String
             Dim blnsuccess As Boolean = False
             Dim WorkDir As String = m_mgrParams.GetParam("WorkDir")
-            Dim FilterValue As String = ""
+            Dim FilterValue As String = String.Empty
             Dim i As Integer = 0
 
             Try
@@ -2519,6 +2520,12 @@ Namespace AnalysisManagerBase
                         m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'DatasetFolder' not found in the DatasetInformation associated with the data package"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                         Return False
+                    End If
+
+                    ' Add the SharedResultsFolder if it isn't blank
+                    SharedResultsFolder = DbCStr(CurRow(DatasetInformation.Columns("SharedResultsFolder")))
+                    If Not String.IsNullOrEmpty(SharedResultsFolder) Then
+                        m_jobParams.AddAdditionalParameter("SharedResultsFolders", SharedResultsFolder)
                     End If
 
                     clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
