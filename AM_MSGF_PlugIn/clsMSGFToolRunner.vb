@@ -110,6 +110,8 @@ Public Class clsMSGFRunner
         Dim blnUseExistingMSGFResults As Boolean
         Dim blnPostProcessingError As Boolean
 
+        Dim blnDoNotFilterPeptides As Boolean
+
         ' Set this to success for now
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -128,11 +130,13 @@ Public Class clsMSGFRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+
+        blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
+
         Try
             ' Make sure clsGlobal.m_Completions_Msg is empty
             clsGlobal.m_Completions_Msg = String.Empty
             blnProcessingError = False
-
 
             ' Parse the Sequest, X!Tandem, or Inspect parameter file to determine if ETD mode was used
             Dim strParamFilePath As String
@@ -150,7 +154,7 @@ Public Class clsMSGFRunner
             End If
 
             ' Create the _MSGF_input.txt file
-            blnSuccess = CreateMSGFInputFile(eResultType)
+            blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides)
 
             If Not blnSuccess Then
                 Msg = "Error creating MSGF input file"
@@ -539,7 +543,8 @@ Public Class clsMSGFRunner
     ''' <param name="eResultType"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function CreateMSGFInputFile(ByVal eResultType As ePeptideHitResultType) As Boolean
+    Private Function CreateMSGFInputFile(ByVal eResultType As ePeptideHitResultType, _
+                                         ByVal blnDoNotFilterPeptides As Boolean) As Boolean
 
         Dim strModSummaryFilePath As String
         Dim Msg As String
@@ -593,6 +598,8 @@ Public Class clsMSGFRunner
 
                 mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath()
                 mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
+
+                mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
 
                 m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
 

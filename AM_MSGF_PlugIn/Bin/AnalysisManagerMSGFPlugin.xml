@@ -116,7 +116,7 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<param name="strParamFilePath">X!Tandem XML parameter file to read</param>
 	<returns>True if success; false if an error</returns>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Boolean)">
 	<summary>
  Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
  Uses the ModSummary.txt file to determine the dynamic and static mods used

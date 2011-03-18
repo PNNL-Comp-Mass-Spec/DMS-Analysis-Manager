@@ -54,6 +54,8 @@ Public MustInherit Class clsMSGFInputCreator
 
     Protected mSkippedLineInfo As System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
 
+    Protected mDoNotFilterPeptides As Boolean
+
     ' This dictionary is initially populated with a string constructed using
     ' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
     ' It will contain an entry for every line written to the MSGF input file
@@ -78,6 +80,16 @@ Public MustInherit Class clsMSGFInputCreator
 #End Region
 
 #Region "Properties"
+
+    Public Property DoNotFilterPeptides() As Boolean
+        Get
+            Return mDoNotFilterPeptides
+        End Get
+        Set(ByVal value As Boolean)
+            mDoNotFilterPeptides = value
+        End Set
+    End Property
+
     Public ReadOnly Property MSGFInputFileLineCount() As Integer
         Get
             Return mMSGFInputFileLineCount
@@ -686,6 +698,10 @@ Public MustInherit Class clsMSGFInputCreator
 
                     ' Compute the result code; we'll use it later to search/populate mMSGFCachedResults
                     strPeptideResultCode = ConstructMSGFResultCode(udtPHRPData.ScanNumber, udtPHRPData.Charge, udtPHRPData.Peptide)
+
+                    If mDoNotFilterPeptides Then
+                        udtPHRPData.PassesFilters = True
+                    End If
 
                     If blnParsingSynopsisFile Then
                         ' Synopsis file 
