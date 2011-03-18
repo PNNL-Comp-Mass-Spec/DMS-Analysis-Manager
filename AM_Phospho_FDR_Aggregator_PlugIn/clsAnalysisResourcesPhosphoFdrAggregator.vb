@@ -92,13 +92,23 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             DatasetFiles = System.IO.Directory.GetFiles(WorkDir, "*_syn*.txt")
             For Each Dataset As String In DatasetFiles
                 Dataset = System.IO.Path.GetFileName(Dataset)
-                DatasetType = Dataset.Substring(Dataset.IndexOf("_syn") + 4, 4)
-                DatasetName = Dataset.Substring(0, Dataset.Length - (Dataset.Length - Dataset.IndexOf("_syn")))
+
+                ' Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
+                '  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
+                '  The suffix to use is based on text present in the settings file name for each job
+                ' However, if the settings file name did not contain HCD, ETD, or CID, then the dta, fht, and syn files
+                '  will not have had a suffix added; in that case, DatasetType will be ".txt"
+                DatasetType = Dataset.Substring(Dataset.ToLower().IndexOf("_syn") + 4, 4)
+
+                ' If DatasetType is ".txt" then change it to an empty string
+                If DatasetType.ToLower() = ".txt" Then DatasetType = String.Empty
+
+                DatasetName = Dataset.Substring(0, Dataset.Length - (Dataset.Length - Dataset.ToLower().IndexOf("_syn")))
                 inputFile.WriteLine("  <run>")
 
                 DatasetID = GetDatasetID(DatasetName)
 
-                If DatasetType = "_cid" Then
+                If String.IsNullOrEmpty(DatasetType) OrElse DatasetType = "_cid" Then
                     inputFile.WriteLine("    <param_file>" & System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) & "</param_file>")
                 ElseIf DatasetType = "_hcd" Then
                     inputFile.WriteLine("    <param_file>" & System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) & "</param_file>")
