@@ -150,7 +150,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If Not blnProcessingError Then
                 ' Create the Peptide to Protein map file
                 Result = CreatePeptideToProteinMapping()
-                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
                     blnProcessingError = True
                 End If
             End If
@@ -484,11 +484,47 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
         Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+        Dim strInputFilePath As String
 
         Dim blnIgnorePeptideToProteinMapperErrors As Boolean
         Dim blnSuccess As Boolean
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping))
+
+        strInputFilePath = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
+
+        Try
+            ' Validate that the input file has at least one entry; if not, then no point in continuing
+            Dim srInFile As System.IO.StreamReader
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
+
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+            intLinesRead = 0
+            Do While srInFile.Peek >= 0 AndAlso intLinesRead < 10
+                strLineIn = srInFile.ReadLine()
+                If Not String.IsNullOrEmpty(strLineIn) Then
+                    intLinesRead += 1
+                End If
+            Loop
+
+            If intLinesRead <= 1 Then
+                ' File is empty or only contains a header line
+                clsGlobal.m_Completions_Msg = "No results above threshold"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; filtered inspect results file is empty")
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
+
+        Catch ex As Exception
+
+            m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping"
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
+                m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        End Try
 
         Try
             If m_DebugLevel >= 1 Then
@@ -522,7 +558,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 .ShowMessages = False
             End With
 
-            blnSuccess = mPeptideToProteinMapper.ProcessFile(System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName), m_WorkDir, String.Empty, True)
+            blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
 
             mPeptideToProteinMapper.CloseLogFileNow()
 
@@ -545,7 +581,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping"
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine: " & _
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & _
                 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
             If blnIgnorePeptideToProteinMapperErrors Then
@@ -706,7 +742,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim strTargetFilePath As String
         Dim blnSuccess As Boolean
 
-        ' Zip up the _inspect_filtered.txt file into _inspect.zip
+        ' Zip up file specified by strSourceFilePath
         ' Rename to _inspect.txt before zipping
         fiFileInfo = New System.IO.FileInfo(strSourceFilePath)
 
@@ -1173,8 +1209,6 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.ZipInspectResults))
 
             ' Zip up the _inspect.txt file into _inspect_all.zip
-
-            ' Zip up the _inspect.txt file into _inspect_all.zip
             ' Rename to _inspect.txt before zipping
             ' Delete the _inspect.txt file after zipping
             blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX), _
@@ -1200,7 +1234,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             ' Zip up the _inspect_filtered.txt file into _inspect.zip
             ' Rename to _inspect.txt before zipping
-            ' Do not delete the _inspect.txt file after zipping
+            ' Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
             blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX), _
                                      System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip"), _
                                      False)
