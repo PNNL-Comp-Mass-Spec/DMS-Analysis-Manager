@@ -518,7 +518,7 @@ Public Class clsAnalysisResourcesSeq
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since did not succeed on at least " & MINIMUM_NODE_SUCCESS_PCT.ToString & "% of the nodes")
                 Return False
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Warning, will continue analysis using the reamining nodes")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Warning, will continue analysis using the remaining nodes")
 
                 ' Decrement intNodeCountProcessed by intNodeCountFailed so the stats in the next If / EndIf block are valid
                 intNodeCountProcessed -= intNodeCountFailed
