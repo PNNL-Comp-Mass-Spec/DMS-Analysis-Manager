@@ -2613,7 +2613,30 @@ Namespace AnalysisManagerBase
                         End If
 
                         If newFilename <> SourceFilename Then
-                            fi.MoveTo(System.IO.Path.Combine(workDir, newFilename))
+                            Dim intRetryCount As Integer
+                            Dim blnSuccess As Boolean = False
+                            Dim strExceptionMsg As String = "unknown reason"
+
+                            Do
+                                Try
+                                    fi.MoveTo(System.IO.Path.Combine(workDir, newFilename))
+                                    blnSuccess = True
+                                Catch ex As System.IO.IOException
+                                    intRetryCount += 1
+                                    If intRetryCount = 1 Then
+                                        strExceptionMsg = String.Copy(ex.Message)
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " & fi.Name & " in folder " & workDir & "; will retry after garbage collection")
+                                        GC.Collect()
+                                        GC.WaitForPendingFinalizers()
+                                        System.Threading.Thread.Sleep(1000)
+                                    End If
+                                End Try
+                            Loop While Not blnSuccess And intRetryCount <= 1
+
+                            If Not blnSuccess Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Unable to rename file" & fi.Name & " to " & newFilename & " in folder " & workDir & ": " & strExceptionMsg)
+                                Return False
+                            End If
                         End If
 
                         If SaveFile.ToLower = "nocopy" Then
@@ -2651,7 +2674,7 @@ Namespace AnalysisManagerBase
 
             Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SettingsFileName, DatasetID " & _
+            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID " & _
                                    "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
                                    "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
                                    "Order by Dataset, Tool"

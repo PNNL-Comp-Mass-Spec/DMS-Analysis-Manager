@@ -1303,6 +1303,12 @@ AnalysisManagerProg
  </summary>
 	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:clsIonicZipTools.DisposeZipper(Ionic.Zip.ZipFile@)">
+	<summary>
+ Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+ </summary>
+	<param name="objZipper"></param>
+	<remarks></remarks>
 </member><member name="M:clsIonicZipTools.UnzipFile(System.String)">
 	<summary>
  Unzip ZipFilePath into the working directory defined when this class was instantiated

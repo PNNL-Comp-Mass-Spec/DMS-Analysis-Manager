@@ -40,6 +40,21 @@ Public Class clsIonicZipTools
         m_WorkDir = WorkDir
     End Sub
 
+    ''' <summary>
+    ''' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+    ''' </summary>
+    ''' <param name="objZipper"></param>
+    ''' <remarks></remarks>
+    Protected Sub DisposeZipper(ByRef objZipper As Ionic.Zip.ZipFile)
+
+        objZipper = Nothing
+
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
+        System.Threading.Thread.Sleep(100)
+
+    End Sub
+
     Protected Sub ReportZipStats(ByVal fiFileSystemInfo As System.IO.FileSystemInfo, _
                                  ByVal dtStartTime As System.DateTime, _
                                  ByVal dtEndTime As System.DateTime, _
@@ -190,6 +205,9 @@ Public Class clsIonicZipTools
 
             ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
 
+            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+            DisposeZipper(objZipper)
+
         Catch ex As Exception
             m_Message = "Error unzipping " & ZipFilePath & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
@@ -271,6 +289,9 @@ Public Class clsIonicZipTools
             dtEndTime = System.DateTime.Now
 
             ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+
+            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+            DisposeZipper(objZipper)
 
         Catch ex As Exception
             m_Message = "Error zipping " & fiFile.FullName & ": " & ex.Message
@@ -382,6 +403,9 @@ Public Class clsIonicZipTools
             dtEndTime = System.DateTime.Now
 
             ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
+
+            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+            DisposeZipper(objZipper)
 
         Catch ex As Exception
             m_Message = "Error zipping " & diDirectory.FullName & ": " & ex.Message
