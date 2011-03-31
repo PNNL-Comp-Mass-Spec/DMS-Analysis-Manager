@@ -131,7 +131,7 @@ Public Class clsExtractToolRunner
             End Select
 
             'Stop the job timer
-            m_StopTime = Now
+            m_StopTime = System.DateTime.Now
 
             If blnProcessingError Then
                 ' Something went wrong
