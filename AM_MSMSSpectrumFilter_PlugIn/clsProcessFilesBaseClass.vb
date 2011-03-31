@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
     Public Sub New()
-        mFileDate = "December 10, 2010"
+        mFileDate = "February 25, 2011"
         mErrorCode = eProcessFilesErrorCodes.NoError
         mProgressStepDescription = String.Empty
 
@@ -271,6 +271,10 @@ Public MustInherit Class clsProcessFilesBaseClass
 
         Return strAppDataFolder
 
+    End Function
+
+    Protected Function GetAppPath() As String
+        Return System.Reflection.Assembly.GetExecutingAssembly().Location
     End Function
 
     Protected Function GetBaseClassErrorMessage() As String
