@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_MSXML_Bruker_PlugIn", "AM_MSXML_Bruker_PlugIn.vbproj", "{2A46F87F-966D-45AE-BFF2-CDB24AD06143}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|x86.ActiveCfg = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|x86.Build.0 = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|x86.ActiveCfg = Release|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
