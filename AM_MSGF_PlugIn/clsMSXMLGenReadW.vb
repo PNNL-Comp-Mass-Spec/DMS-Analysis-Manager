@@ -115,7 +115,7 @@ Public Class clsMSXMLGenReadW
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.GetFileNameWithoutExtension(mReadWProgramPath) & "_ConsoleOutput.txt"
+            .ConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mReadWProgramPath) & "_ConsoleOutput.txt")
         End With
 
         blnSuccess = CmdRunner.RunProgram(mReadWProgramPath, CmdStr, System.IO.Path.GetFileNameWithoutExtension(mReadWProgramPath), True)
