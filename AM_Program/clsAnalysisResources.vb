@@ -741,9 +741,17 @@ Namespace AnalysisManagerBase
 
                 Case RAW_DATA_TYPE_BRUKER_FT_FOLDER
                     ' Call RetrieveDotDFolder() to copy the folder and all subfolders
-                    ' Note: we're skipping the analysis.baf since none of our tools use it
 
-                    blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
+                    ' Only the MSXml step tool requires the .Baf file; we can skip it for other tools
+                    Dim blnSkipBAFFiles As Boolean
+
+                    If Me.GetType.FullName.ToLower.Contains("msxmlbruker") Then
+                        blnSkipBAFFiles = False
+                    Else
+                        blnSkipBAFFiles = True
+                    End If
+
+                    blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles)
 
                 Case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
                     blnSuccess = RetrieveBrukerMALDIImagingFolders(WorkDir, UnzipOverNetwork:=True)

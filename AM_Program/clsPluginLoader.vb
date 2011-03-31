@@ -93,6 +93,9 @@ Namespace AnalysisManagerBase
                 'Case "AnalysisManagerExtractionPlugin.clsExtractToolRunner".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerExtractionPlugin.clsExtractToolRunner, IToolRunner)
 
+                'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker, IToolRunner)
+
                 'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower
                 '    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter, IToolRunner)
                 'Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower
@@ -147,6 +150,9 @@ Namespace AnalysisManagerBase
 
                 'Case "AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction".ToLower
                 '    myModule = DirectCast(New AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction, IAnalysisResources)
+
+                'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXmlBruker".ToLower
+                '    myModule = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXMLBruker, IAnalysisResources)
 
                 'Case "MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter".ToLower
                 '    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter, IAnalysisResources)

@@ -153,6 +153,11 @@
 		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" 
 	/>
 	<ToolRunner 
+		Tool="msxml_bruker" 
+		Class="AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker" 
+		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll" 
+	/>
+	<ToolRunner 
 		Tool="dta_import" 
 		Class="AnalysisManagerDtaImportPlugIn.clsAnalysisToolRunnerDtaImport" 
 		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll" 
@@ -339,6 +344,11 @@
 		Tool="msxml_gen" 
 		Class="AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen" 
 		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msxml_bruker" 
+		Class="AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXMLBruker" 
+		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="dta_import" 
