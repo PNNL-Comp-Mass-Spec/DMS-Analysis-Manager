@@ -28,14 +28,21 @@ Public Class clsAnalysisResourcesLCMSFF
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
-        'Retrieve Decon2LS _isos.csv file for this dataset (we do not need the _scans.csv file)
+        ' Retrieve Decon2LS _scans.csv file for this dataset
+        ' The LCMSFeature Finder doesn't actually use the _scans.csv file, but want to be sure it's present in the results folder
+        strFileToGet = m_jobParams.GetParam("DatasetNum") & SCANS_FILE_SUFFIX
+        If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
+
+        ' Retrieve Decon2LS _isos.csv files for this dataset
         strFileToGet = m_jobParams.GetParam("DatasetNum") & ISOS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
         clsGlobal.FilesToDelete.Add(strFileToGet)
-
 
         ' Retrieve the LCMSFeatureFinder .Ini file specified for this job
         strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile")
@@ -53,7 +60,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         If Not CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, m_WorkingDir) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         Dim strRawDataType As String

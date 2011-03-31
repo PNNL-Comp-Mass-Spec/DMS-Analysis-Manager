@@ -53,10 +53,12 @@ Public Class clsAnalysisToolRunnerLCMSFF
         Dim progLoc As String = m_mgrParams.GetParam("LCMSFeatureFinderProgLoc")
         If Not System.IO.File.Exists(progLoc) Then
             If progLoc.Length = 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Manager parameter LCMSFeatureFinderProgLoc is not defined in the Manager Control DB")
+                m_message = "Manager parameter LCMSFeatureFinderProgLoc is not defined in the Manager Control DB"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find LCMSFeatureFinder program file: " & progLoc)
-            End If
+                m_message = "Cannot find LCMSFeatureFinder program file"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+            End If            
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -75,7 +77,8 @@ Public Class clsAnalysisToolRunnerLCMSFF
         End With
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running LCMSFeatureFinder, job " & m_JobNum)
+            m_message = "Error running LCMSFeatureFinder"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
         Else
             blnSuccess = True
