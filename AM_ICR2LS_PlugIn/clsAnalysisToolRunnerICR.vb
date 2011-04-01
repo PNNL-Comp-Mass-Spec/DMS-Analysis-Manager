@@ -100,40 +100,36 @@ Public Class clsAnalysisToolRunnerICR
         ' Determine the location of the ser file
         ' It could be in a "0.ser" folder or a ser file inside a .D folder
 
-        If clsAnalysisResourcesIcr2ls.PROCESS_SER_FOLDER_OVER_NETWORK Then
-            SerFileOrFolderPath = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+        If RawDataType.ToLower() = AnalysisManagerBase.clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+            DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
         Else
-            If RawDataType.ToLower() = AnalysisManagerBase.clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-                DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
-            Else
-                DatasetFolderPathBase = String.Copy(m_WorkDir)
+            DatasetFolderPathBase = String.Copy(m_WorkDir)
+        End If
+
+        ' Look for a ser file in the working directory
+        SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
+
+        If System.IO.File.Exists(SerFileOrFolderPath) Then
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
+            End If
+        Else
+
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
             End If
 
-            ' Look for a ser file in the working directory
-            SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
-
-            If System.IO.File.Exists(SerFileOrFolderPath) Then
+            ' Look for the "0.ser" folder in the working directory
+            SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
+            If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
+                ' Folder does not exist
                 If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
-                End If
-            Else
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
                 End If
 
-                ' Look for the "0.ser" folder in the working directory
-                SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
-                If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
-                    ' Folder does not exist
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
-                    End If
-
-                    ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-                    '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-                    SerFileOrFolderPath = String.Empty
-                End If
+                ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+                '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+                SerFileOrFolderPath = String.Empty
             End If
         End If
 

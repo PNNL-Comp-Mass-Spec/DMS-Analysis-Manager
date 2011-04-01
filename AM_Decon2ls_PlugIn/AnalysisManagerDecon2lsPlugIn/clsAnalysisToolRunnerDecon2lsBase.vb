@@ -165,7 +165,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Private Function AssembleResults(ByVal blnLoopingEnabled As Boolean, ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
 
-        Dim DatasetName As String
         Dim ScansFilePath As String
         Dim IsosFilePath As String
         Dim PeaksFilePath As String
@@ -632,65 +631,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End While
 
     End Sub
-
-    Protected Function DeleteRawDataFiles(ByVal RawDataType As String) As IJobParams.CloseOutType
-
-        'Deletes the raw data files/folders from the working directory
-        Dim IsFile As Boolean = True
-        Dim IsNetworkDir As Boolean = False
-        Dim FileOrFolderName As String
-
-        Select Case RawDataType.ToLower
-            Case "dot_raw_files"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
-                IsFile = True
-            Case "dot_wiff_files"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
-                IsFile = True
-            Case "dot_raw_folder"
-                FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
-                IsFile = False
-            Case "zipped_s_folders"
-                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
-                'Check for "0.ser" folder
-                If String.IsNullOrEmpty(NewSourceFolder) Then
-                    FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
-                    IsNetworkDir = False
-                Else
-                    IsNetworkDir = True
-                End If
-
-                IsFile = False
-            Case Else
-                'Should never get this value
-                m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & RawDataType
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Select
-
-        If IsFile Then
-            'Data is a file, so use file deletion tools
-            If DeleteFileWithRetries(FileOrFolderName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            Else
-                m_message = "Error deleting raw data file " & FileOrFolderName
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        ElseIf IsNetworkDir Then
-            'The files were on the network and do not need to be deleted
-
-        Else
-            'Use folder deletion tools
-            Try
-                System.IO.Directory.Delete(FileOrFolderName, True)
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            Catch ex As System.Exception
-                m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
-                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End Try
-        End If
-
-    End Function
 
     Private Function GetScanValues(ByVal strParamFileCurrent As String, ByRef MinScanValueFromParamFile As Integer, ByRef MaxScanValueFromParamFile As Integer) As Boolean
         Dim objParamFile As System.Xml.XmlDocument
