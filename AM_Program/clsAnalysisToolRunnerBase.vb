@@ -639,6 +639,7 @@ Namespace AnalysisManagerBase
 
             'Deletes the raw data files/folders from the working directory
             Dim IsFile As Boolean = True
+            Dim IsNetworkDir As Boolean = False
             Dim FileOrFolderName As String
 
             Select Case RawDataType.ToLower
@@ -667,7 +668,16 @@ Namespace AnalysisManagerBase
                     IsFile = False
 
                 Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
-                    FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+
+                    Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                    'Check for "0.ser" folder
+                    If String.IsNullOrEmpty(NewSourceFolder) Then
+                        FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+                        IsNetworkDir = False
+                    Else
+                        IsNetworkDir = True
+                    End If
+
                     IsFile = False
 
                 Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
@@ -720,6 +730,9 @@ Namespace AnalysisManagerBase
                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End Try
+            ElseIf IsNetworkDir Then
+                'The files were on the network and do not need to be deleted
+
             Else
                 'Use folder deletion tools
                 Try
