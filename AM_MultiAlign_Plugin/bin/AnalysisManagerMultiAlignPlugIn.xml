@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerMultiAlignPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign.RunTool">
+	<summary>
+ Runs MultiAlign tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member>
+</members>
+</doc>
