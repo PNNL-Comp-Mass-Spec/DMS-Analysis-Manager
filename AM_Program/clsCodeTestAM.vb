@@ -55,7 +55,9 @@ Public Class clsCodeTestAM
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
 
-		Dim Result As IJobParams.CloseOutType
+        Dim blnProcessingError As Boolean = False
+        Dim Result As IJobParams.CloseOutType
+        Dim eReturnCode As IJobParams.CloseOutType
 
         ' Create some dummy results files
         Dim strSubFolderPath As String
@@ -72,17 +74,56 @@ Public Class clsCodeTestAM
         CreateTestFiles(strSubFolderPath, 5, "Stuff")
 
 
+        'Stop the job timer
+        m_StopTime = Now
+
+        If blnProcessingError Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        'Add the current job data to the summary file
+        If Not UpdateSummaryFile() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+        End If
+
+        'Make sure objects are released
+        System.Threading.Thread.Sleep(2000)        '2 second delay
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
+
         Result = MakeResultsFolder()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return Result
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         Result = MoveResultFiles()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return Result
+            'MoveResultFiles moves the result files to the result folder
+            m_message = "Error moving files into results folder"
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+
+        ' Move the Plots folder to the result files folder
+        Dim diPlotsFolder As System.IO.DirectoryInfo
+        diPlotsFolder = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"))
+
+        Dim strTargetFolderPath As String
+        strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots")
+        diPlotsFolder.MoveTo(strTargetFolderPath)
+
+
+        If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         Result = CopyResultsFolderToServer()
