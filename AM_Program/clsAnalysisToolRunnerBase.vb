@@ -854,11 +854,6 @@ Namespace AnalysisManagerBase
             Dim TargetFolderPath As String = String.Empty
             Dim ResultsFolderName As String = String.Empty
 
-            Dim objSourceFolderInfo As System.IO.DirectoryInfo
-            Dim objSourceFile As System.IO.FileInfo
-            Dim objTargetFile As System.IO.FileInfo
-
-            Dim htFilesToOverwrite As System.Collections.Hashtable
             Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
             Dim strMessage As String
@@ -906,7 +901,7 @@ Namespace AnalysisManagerBase
 
                 ' Now verify transfer directory exists
                 Try
-                    objAnalysisResults.FolderExistsWithRetry(TargetFolderPath)
+                    objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
                 Catch ex As Exception
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
                     m_message = AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
@@ -947,82 +942,20 @@ Namespace AnalysisManagerBase
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
 
-            Try
-                htFilesToOverwrite = New System.Collections.Hashtable
-                htFilesToOverwrite.Clear()
-
-                If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
-                    ' The xfer folder already exists
-
-                    ' Examine the files in the results folder to see if any of the files already exist in the xfer folder
-                    ' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
-
-                    objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
-                    For Each objSourceFile In objSourceFolderInfo.GetFiles()
-                        If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
-                            objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
-
-                            If objSourceFile.LastWriteTime > objTargetFile.LastWriteTime Then
-                                strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date: " & objSourceFile.LastWriteTime.ToString & "; old file date: " & objTargetFile.LastWriteTime.ToString
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-
-                                htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
-                            End If
-                        End If
-                    Next
-                Else
-                    ' Need to create the xfer folder
-                    Try
-                        objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
-                    Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-                        m_message = AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-                        objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    End Try
-                End If
-
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
-                m_message = AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End Try
 
             ' Copy results folder to xfer folder
             ' Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
             Try
 
-                ' Gather all the files in the local result folder
-                Dim ResultFiles() As String
-                Dim strSourceFileName As String
-                Dim strTargetPath As String
+                ' Copy all of the files and subdirectories in the local result folder to the target folder
+                Dim eResult As IJobParams.CloseOutType
 
-                ' Note: Entries in ResultFiles will have full file paths, not just file names
-                ResultFiles = System.IO.Directory.GetFiles(SourceFolderPath, "*.*")
-                For Each FileToCopy As String In ResultFiles
-                    strSourceFileName = System.IO.Path.GetFileName(FileToCopy)
-                    strTargetPath = System.IO.Path.Combine(TargetFolderPath, strSourceFileName)
+                ' Copy the files and subfolders
+                eResult = CopyResulsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
+                                                    objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+                                                    intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
-                    Try
-                        If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
-                            ' Copy file and overwrite existing
-                            objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-                                                                 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-                        Else
-                            ' Copy file only if it doesn't currently exist
-                            If Not System.IO.File.Exists(strTargetPath) Then
-                                objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-                                                                     intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-                            End If
-                        End If
-                    Catch ex As Exception
-                        ' Continue copying files; we'll fail the results at the end of this function
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
-                        blnErrorEncountered = True
-                        intFailedFileCount += 1
-                    End Try
-                Next
+                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
@@ -1042,6 +975,127 @@ Namespace AnalysisManagerBase
             Else
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
+
+        End Function
+
+        ''' <summary>
+        ''' Copies each of the files in the source folder to the target folder
+        ''' Uses CopyFileWithRetry to retry the copy up to intRetryCount times
+        ''' </summary>
+        ''' <param name="SourceFolderPath"></param>
+        ''' <param name="TargetFolderPath"></param>
+        ''' <remarks></remarks>
+        Private Function CopyResulsFolderRecursive(ByVal RootSourceFolderPath As String, ByVal SourceFolderPath As String, ByVal TargetFolderPath As String, _
+                                                   ByRef objAnalysisResults As clsAnalysisResults, _
+                                                   ByRef blnErrorEncountered As Boolean, _
+                                                   ByRef intFailedFileCount As Integer, _
+                                                   ByVal intRetryCount As Integer, _
+                                                   ByVal intRetryHoldoffSeconds As Integer, _
+                                                   ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
+
+            Dim objSourceFolderInfo As System.IO.DirectoryInfo
+            Dim objSourceFile As System.IO.FileInfo
+            Dim objTargetFile As System.IO.FileInfo
+
+            Dim htFilesToOverwrite As System.Collections.Hashtable
+
+            Dim ResultFiles() As String
+            Dim strSourceFileName As String
+            Dim strTargetPath As String
+
+            Dim strMessage As String
+
+            Try
+                htFilesToOverwrite = New System.Collections.Hashtable
+                htFilesToOverwrite.Clear()
+
+                If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
+                    ' The target folder already exists
+
+                    ' Examine the files in the results folder to see if any of the files already exist in the xfer folder
+                    ' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
+
+                    objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
+                    For Each objSourceFile In objSourceFolderInfo.GetFiles()
+                        If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
+                            objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
+
+                            If objSourceFile.LastWriteTime > objTargetFile.LastWriteTime Then
+                                strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date: " & objSourceFile.LastWriteTime.ToString & "; old file date: " & objTargetFile.LastWriteTime.ToString
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+
+                                htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
+                            End If
+                        End If
+                    Next
+                Else
+                    ' Need to create the target folder
+                    Try
+                        objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+                        m_message = AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+                        objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    End Try
+                End If
+
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
+                m_message = AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Try
+
+            ' Note: Entries in ResultFiles will have full file paths, not just file names
+            ResultFiles = System.IO.Directory.GetFiles(SourceFolderPath, "*.*")
+
+            For Each FileToCopy As String In ResultFiles
+                strSourceFileName = System.IO.Path.GetFileName(FileToCopy)
+                strTargetPath = System.IO.Path.Combine(TargetFolderPath, strSourceFileName)
+
+                Try
+                    If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
+                        ' Copy file and overwrite existing
+                        objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                                                             intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+                    Else
+                        ' Copy file only if it doesn't currently exist
+                        If Not System.IO.File.Exists(strTargetPath) Then
+                            objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                                                                 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+                        End If
+                    End If
+                Catch ex As Exception
+                    ' Continue copying files; we'll fail the results at the end of this function
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
+                    blnErrorEncountered = True
+                    intFailedFileCount += 1
+                End Try
+            Next
+
+
+            ' Recursively call this function for each subfolder
+            ' If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
+            Dim eResult As IJobParams.CloseOutType
+            eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+            Dim diSourceFolder As System.IO.DirectoryInfo
+            Dim strTargetFolderPathCurrent As String
+            diSourceFolder = New System.IO.DirectoryInfo(SourceFolderPath)
+
+            For Each objSubFolder As System.IO.DirectoryInfo In diSourceFolder.GetDirectories()
+                strTargetFolderPathCurrent = System.IO.Path.Combine(TargetFolderPath, objSubFolder.Name)
+
+                eResult = CopyResulsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
+                                                    objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+                                                    intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+
+                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
+
+            Next
+
+            Return eResult
 
         End Function
 
@@ -1093,7 +1147,7 @@ Namespace AnalysisManagerBase
 
             m_IonicZipTools.DebugLevel = m_DebugLevel
             Return m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
-            
+
         End Function
 
         ''' <summary>

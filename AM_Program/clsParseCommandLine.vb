@@ -25,7 +25,7 @@ Option Strict On
 ' this computer software.
 
 '
-' Last modified March 30, 2011
+' Last modified April 14, 2011
 
 Public Class clsParseCommandLine
 
@@ -82,18 +82,18 @@ Public Class clsParseCommandLine
         Dim blnMatchFound As Boolean
 
         Try
-            Dim iEnum As System.Collections.IDictionaryEnumerator = mSwitches.GetEnumerator()
+            Dim iEnum As System.Collections.Generic.Dictionary(Of String, String).Enumerator = mSwitches.GetEnumerator()
 
             Do While iEnum.MoveNext()
                 blnMatchFound = False
                 For intIndex = 0 To strParameterList.Length - 1
                     If blnCaseSensitive Then
-                        If CStr(iEnum.Key) = strParameterList(intIndex) Then
+                        If iEnum.Current.Key = strParameterList(intIndex) Then
                             blnMatchFound = True
                             Exit For
                         End If
                     Else
-                        If CStr(iEnum.Key).ToUpper = strParameterList(intIndex).ToUpper Then
+                        If iEnum.Current.Key.ToUpper = strParameterList(intIndex).ToUpper Then
                             blnMatchFound = True
                             Exit For
                         End If

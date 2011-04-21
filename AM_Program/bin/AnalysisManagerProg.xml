@@ -721,6 +721,14 @@ AnalysisManagerProg
  </summary>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CopyResulsFolderRecursive(System.String,System.String,System.String,AnalysisManagerBase.clsAnalysisResults@,System.Boolean@,System.Int32@,System.Int32,System.Int32,System.Boolean)">
+	<summary>
+ Copies each of the files in the source folder to the target folder
+ Uses CopyFileWithRetry to retry the copy up to intRetryCount times
+ </summary>
+	<param name="SourceFolderPath"></param>
+	<param name="TargetFolderPath"></param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UnzipFile(System.String)">
 	<summary>
  Unzips all files in the specified Zip file

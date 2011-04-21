@@ -58,19 +58,19 @@ Public Class clsCodeTestAM
 		Dim Result As IJobParams.CloseOutType
 
         ' Create some dummy results files
-        Dim swOutFile As System.IO.StreamWriter
-        Dim objRand As System.Random = New System.Random()
-        Dim strOutFilePath As String
+        Dim strSubFolderPath As String
 
-        For intIndex As Integer = 1 To 5
-            strOutFilePath = System.IO.Path.Combine(m_WorkDir, "TestResultFile" & intIndex.ToString & "_" & objRand.Next(1, 99) & ".txt")
+        CreateTestFiles(m_WorkDir, 5, "TestResultFile")
 
-            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swOutFile.WriteLine(System.DateTime.Now().ToString & "This is a test file.")
-            swOutFile.Close()
+        ' Make some subfolders with more files
+        strSubFolderPath = System.IO.Path.Combine(m_WorkDir, "Plots")
+        System.IO.Directory.CreateDirectory(strSubFolderPath)
+        CreateTestFiles(strSubFolderPath, 4, "Plot")
 
-            System.Threading.Thread.Sleep(250)
-        Next
+        strSubFolderPath = System.IO.Path.Combine(strSubFolderPath, "MoreStuff")
+        System.IO.Directory.CreateDirectory(strSubFolderPath)
+        CreateTestFiles(strSubFolderPath, 5, "Stuff")
+
 
         Result = MakeResultsFolder()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -96,6 +96,23 @@ Public Class clsCodeTestAM
 
 	End Function
 
+    Private Sub CreateTestFiles(ByVal strFolderPath As String, ByVal intFilesToCreate As Integer, ByVal strFileNameBase As String)
+
+        Dim swOutFile As System.IO.StreamWriter
+        Dim objRand As System.Random = New System.Random()
+        Dim strOutFilePath As String
+
+        For intIndex As Integer = 1 To intFilesToCreate
+            strOutFilePath = System.IO.Path.Combine(strFolderPath, strFileNameBase & intIndex.ToString & "_" & objRand.Next(1, 99) & ".txt")
+
+            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swOutFile.WriteLine(System.DateTime.Now().ToString & "This is a test file.")
+            swOutFile.Close()
+
+            System.Threading.Thread.Sleep(50)
+        Next
+
+    End Sub
 #End Region
 
 End Class

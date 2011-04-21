@@ -69,7 +69,7 @@ Module modMain
                         'objTest.TestUncat("ShewCarbF_2_3_04Jan07_Phoenix_06-11-18_trimmed", "D:\DMS_WorkDir")
                         'objTest.TestFileSplitThenCombine()
                         'objTest.TestResultsTransfer()
-                        'objTest.TestDeliverResults()
+                        objTest.TestDeliverResults()
                         'objTest.TestGetFileContents()
 
                         'If Not mInputFilePath Is Nothing AndAlso mInputFilePath.Length > 0 Then
@@ -99,7 +99,7 @@ Module modMain
                         'objTest.TestFindFile()
 
                         'objTest.TestZipAndUnzip()
-                        objTest.TestMALDIDataUnzip("")
+                        'objTest.TestMALDIDataUnzip("")
 
                     Catch ex As Exception
                         Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
