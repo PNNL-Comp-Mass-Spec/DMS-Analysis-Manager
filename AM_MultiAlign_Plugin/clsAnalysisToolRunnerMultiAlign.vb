@@ -8,7 +8,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
-'Imports PRISM.Files
+Imports System.IO
 'Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerMultiAlign
@@ -62,10 +62,10 @@ Public Class clsAnalysisToolRunnerMultiAlign
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim MultiAlignDatabaseName As String = " " & m_jobParams.GetParam("DatasetNum") & ".db3"
+        Dim MultiAlignDatabaseName As String = " " & m_jobParams.GetParam("DatasetNum") '& ".db3"
 
         ' Set up and execute a program runner to run MultiAlign
-        CmdStr = " files.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & MultiAlignDatabaseName
+        CmdStr = " input.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & MultiAlignDatabaseName
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
@@ -113,6 +113,9 @@ Public Class clsAnalysisToolRunnerMultiAlign
             Return result
         End If
 
+        'Rename the log file so it is consistent with other log files. MultiAlign will add ability to specify log file name
+        RenameLogFile()
+
         result = MoveResultFiles()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
@@ -138,6 +141,36 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
+
+    Protected Function RenameLogFile() As IJobParams.CloseOutType
+
+        Dim TmpFile As String = String.Empty
+        Dim Files As String()
+        Dim DatasetName As String = m_jobParams.GetParam("DatasetNum")
+        Dim LogExtension As String = "-log.txt"
+        Dim NewFilename As String = DatasetName & LogExtension
+        'This is what MultiAlign is currently naming the log file
+        Dim LogNameFilter As String = DatasetName & ".db3-log*.txt"
+        Try
+            'Get the log file name.  There should only be one log file
+            Files = Directory.GetFiles(m_WorkDir, LogNameFilter)
+            'go through each log file found.  Again, there should only be one log file
+            For Each TmpFile In Files
+                'Check to see if the log file exists.  If so, only rename one of them
+                If Not File.Exists(NewFilename) Then
+                    My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
+                End If
+            Next
+
+        Catch ex As Exception
+            'Even if the rename failed, go ahead and continue
+
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 

@@ -68,7 +68,7 @@ Public Class clsAnalysisResourcesMultiAlign
 
     Protected Function BuildMultiAlignInputTextFile() As Boolean
 
-        Const INPUT_FILENAME As String = "files.txt"
+        Const INPUT_FILENAME As String = "input.txt"
 
         Dim result As Boolean = True
         Dim swOutFile As System.IO.StreamWriter
