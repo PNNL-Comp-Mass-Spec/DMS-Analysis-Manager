@@ -4,7 +4,6 @@
 ' Copyright 2009, Battelle Memorial Institute
 ' Created 02/06/2009
 '
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 imports AnalysisManagerBase
@@ -22,7 +21,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
-    Protected WithEvents mMSXmlGenReadW As clsMSXMLGenReadW
+    Protected WithEvents mMSXmlGen As clsMSXmlGen
 
 #End Region
 
@@ -112,41 +111,62 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMZXMLFile(): Enter")
         End If
 
-        Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
-        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically ReadW.exe
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReadW.exe or MSConvert.exe
 
         Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
         Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
 
-        Dim ReadWProgramPath As String
-        Dim eOutputType As clsMSXMLGenReadW.MSXMLOutputTypeConstants
+        Dim ProgramPath As String
+        Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
 
         Dim blnSuccess As Boolean
 
-        ReadWProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
-
+        ' Determine the output type
         Select Case msXmlFormat.ToLower
             Case "mzxml"
-                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
+                eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
             Case "mzml"
-                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzML
+                eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzML
             Case Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not mzXML or mzML (" & msXmlFormat & "); will default to mzXML")
-                eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
+                eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
         End Select
 
-        ' Instantiate the processing class
-        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, ReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+
+        ' Determine the program path and Instantiate the processing class
+        If msXmlGenerator.ToLower.Contains("readw") Then
+            ' ReadW
+            Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
+            ProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
+
+            mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, ProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+
+        ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
+            ' MSConvert
+            Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
+            ProgramPath = System.IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
+
+            mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, ProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unsupported XmlGenerator: " & msXmlGenerator)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        If Not System.IO.File.Exists(ProgramPath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MsXmlGenerator not found: " & ProgramPath)
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
         ' Create the file
-        blnSuccess = mMSXmlGenReadW.CreateMSXMLFile
+        blnSuccess = mMSXmlGen.CreateMSXMLFile
 
         If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        ElseIf mMSXmlGenReadW.ErrorMessage.Length > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+        ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
 
         End If
 
@@ -161,7 +181,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' Event handler for MSXmlGenReadW.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGenReadW.LoopWaiting
+    Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
 
         ' Synchronize the stored Debug level with the value stored in the database
@@ -176,11 +196,11 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     End Sub
 
     ''' <summary>
-    ''' Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+    ''' Event handler for mMSXmlGen.ProgRunnerStarting event
     ''' </summary>
     ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
     ''' <remarks></remarks>
-    Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGenReadW.ProgRunnerStarting
+    Private Sub mMSXmlGen_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 #End Region

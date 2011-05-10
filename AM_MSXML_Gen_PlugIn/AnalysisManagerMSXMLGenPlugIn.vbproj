@@ -92,6 +92,8 @@
     <Compile Include="clsAnalysisToolRunnerMSXMLGen.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsMSXmlGen.vb" />
+    <Compile Include="clsMSXmlGenMSConvert.vb" />
     <Compile Include="clsMSXMLGenReadW.vb" />
   </ItemGroup>
   <ItemGroup>

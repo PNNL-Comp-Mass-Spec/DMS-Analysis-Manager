@@ -42,24 +42,19 @@ AnalysisManagerMsXmlGenPlugIn
  Event handler for MSXmlGenReadW.LoopWaiting event
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.mMSXmlGenReadW_ProgRunnerStarting(System.String)">
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.mMSXmlGen_ProgRunnerStarting(System.String)">
 	<summary>
- Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+ Event handler for mMSXmlGen.ProgRunnerStarting event
  </summary>
 	<param name="CommandLine">The command being executed (program path plus command line arguments)</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsMSXMLGenReadW.#ctor(System.String,System.String,System.String,AnalysisManagerMsXmlGenPlugIn.clsMSXMLGenReadW.MSXMLOutputTypeConstants,System.Boolean)">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsMSXMLGenReadW.CreateMSXMLFile">
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsMSXmlGen.CreateMSXMLFile">
 	<summary>
  Generate the mzXML or mzML file
  </summary>
 	<returns>True if success; false if a failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsMSXMLGenReadW.CmdRunner_LoopWaiting">
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsMSXmlGen.CmdRunner_LoopWaiting">
 	<summary>
  Event handler for CmdRunner.LoopWaiting event
  </summary>
