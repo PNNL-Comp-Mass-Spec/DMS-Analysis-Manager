@@ -18,9 +18,12 @@ Public MustInherit Class clsMSXmlGen
     Protected mProgramPath As String
     Protected mDatasetName As String
     Protected mOutputType As MSXMLOutputTypeConstants
+
     Protected mCentroidMSXML As Boolean
+    Protected mUseProgRunnerResultCode As Boolean       ' When true, then return an error if the progrunner returns a non-zero exit code
 
     Protected mErrorMessage As String = String.Empty
+    Protected mDebugLevel As Integer = 1
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -30,6 +33,15 @@ Public MustInherit Class clsMSXmlGen
 #End Region
 
 #Region "Properties"
+    Public Property DebugLevel() As Integer
+        Get
+            Return mDebugLevel
+        End Get
+        Set(ByVal value As Integer)
+            mDebugLevel = value
+        End Set
+    End Property
+
     Public ReadOnly Property ErrorMessage() As String
         Get
             If mErrorMessage Is Nothing Then
@@ -111,9 +123,11 @@ Public MustInherit Class clsMSXmlGen
 
             .WriteConsoleOutputToFile = True
             .ConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
+
+            .WorkDir = mWorkDir
         End With
 
-        blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, System.IO.Path.GetFileNameWithoutExtension(mProgramPath), True)
+        blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, System.IO.Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode)
 
         If Not blnSuccess Then
             If CmdRunner.ExitCode <> 0 Then
@@ -123,7 +137,17 @@ Public MustInherit Class clsMSXmlGen
                 mErrorMessage = "Call to " & System.IO.Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
                 blnSuccess = True
             End If
+        Else
+            ' Make sure the output file was created and is non-zero
+            Dim strOutputFilePath As String
+            strOutputFilePath = System.IO.Path.ChangeExtension(RawFilePath, msXmlFormat)
+
+            If Not System.IO.File.Exists(strOutputFilePath) Then
+                mErrorMessage = "Output file not found: " & strOutputFilePath
+                blnSuccess = False
+            End If
         End If
+
 
         Return blnSuccess
 

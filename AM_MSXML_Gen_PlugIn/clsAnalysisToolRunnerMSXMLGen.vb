@@ -114,7 +114,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReadW.exe or MSConvert.exe
 
         Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
-        Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
+        Dim CentroidMSXML As Boolean = clsGlobal.CBoolSafe(m_jobParams.GetParam("CentroidMSXML"), False)
 
         Dim ProgramPath As String
         Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
@@ -153,6 +153,8 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        mMSXmlGen.DebugLevel = m_DebugLevel
+
         If Not System.IO.File.Exists(ProgramPath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MsXmlGenerator not found: " & ProgramPath)
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -163,11 +165,12 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
         If Not blnSuccess Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
+            m_message = mMSXmlGen.ErrorMessage
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
-
+            m_message = mMSXmlGen.ErrorMessage
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

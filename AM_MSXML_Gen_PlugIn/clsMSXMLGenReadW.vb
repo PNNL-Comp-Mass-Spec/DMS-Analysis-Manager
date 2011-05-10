@@ -21,6 +21,8 @@ Public Class clsMSXMLGenReadW
 
         MyBase.New(WorkDir, ReadWProgramPath, DatasetName, eOutputType, CentroidMSXML)
 
+        mUseProgRunnerResultCode = True
+
     End Sub
 
     Protected Overrides Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
