@@ -285,6 +285,7 @@ Public Class clsMSGFRunner
             Result = CopyResultsFolderToServer()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return Result
             End If
 
