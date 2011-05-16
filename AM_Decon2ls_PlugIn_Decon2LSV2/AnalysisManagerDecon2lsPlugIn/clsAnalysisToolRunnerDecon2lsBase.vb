@@ -483,8 +483,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return eResult
         End If
 
-        'If we get to here, everything worked so exit happily
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'If we get to here, return the return code
+        Return eReturnCode
 
     End Function
 
