@@ -39,8 +39,7 @@ Namespace AnalysisManagerProg
 		Private m_TaskFound As Boolean = False
 		Private m_DebugLevel As Integer = 0
 		Private m_ErrorCount As Integer = 0
-		Private m_FirstRun As Boolean = True
-		Private m_Resource As IAnalysisResources
+        Private m_Resource As IAnalysisResources
         Private m_ToolRunner As IToolRunner
         Private m_StatusTools As clsStatusFile
         Private m_NeedToAbortProcessing As Boolean = False
@@ -104,11 +103,20 @@ Namespace AnalysisManagerProg
         ''' <remarks></remarks>
         Private Function InitMgr() As Boolean
 
-            'Get the manager settings
+            ' Get the manager settings
+            ' If you get an exception here while debugging in Visual Studio, then be sure 
+            '   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
             Try
                 m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
             Catch ex As System.Exception
-                'Failures are logged by clsMgrSettings to application event logs
+                ' Failures are logged by clsMgrSettings to application event logs;
+                '  this includes MgrActive_Local = False
+                '  
+                ' If the DMS_AnalysisMgr application log does not exist yet, the SysLogger will create it
+                ' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
+                ' Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+
+                Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " & ex.Message)
                 Return False
             End Try
 
@@ -160,7 +168,7 @@ Namespace AnalysisManagerProg
 
             Dim strWorkingDir As String = m_MgrSettings.GetParam("workdir")
             Dim strMessage As String
-            Dim blnMgrCleanupSuccess As Boolean
+            Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.Now
 
             Try
 
@@ -188,40 +196,16 @@ Namespace AnalysisManagerProg
                         DeleteStatusFlagFile()
                     End If
 
-                    'Verify an error hasn't left the the system in an odd state
-                    If DetectStatusFlagFile() Then
-
-                        Try
-                            Dim objCleanupMgrErrors As New clsCleanupMgrErrors( _
-                                                m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
-                                                m_MgrSettings.GetParam("MgrName"), _
-                                                clsGlobal.AppFolderPath, _
-                                                strWorkingDir)
-
-                            blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode())
-
-                        Catch ex As Exception
-
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Error calling AutoCleanupManagerErrors, " & _
-                                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
-
-                            blnMgrCleanupSuccess = False
-                        End Try
-
-
-                        If blnMgrCleanupSuccess Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Flag file found; automatically cleaned the work directory and deleted the flag file(s)")
-                        Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
-                            UpdateStatusFlagFileExists()
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
-                            Exit Sub
-                        End If
-
+                    'Verify that an error hasn't left the the system in an odd state
+                    If StatusFlagFileError(strWorkingDir) Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
+                        UpdateStatusFlagFileExists()
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
+                        Exit Sub
                     End If
 
-                    'Check to see if the machine settings have changed
+                    ' Check for configuration change
+                    ' This variable will be true if the CaptureTaskManager.exe.config file has been updated
                     If m_ConfigChanged Then
                         'Local config file has changed
                         m_ConfigChanged = False
@@ -239,21 +223,15 @@ Namespace AnalysisManagerProg
                         End If
                         m_FileWatcher.EnableRaisingEvents = True
                     Else
-                        If m_FirstRun Then
-                            'No need to check for mgr control db changes since they were just loaded
-                            m_FirstRun = False
-                        Else    'm_FirstRun check
-                            ' Reload the manager control DB settings in case they have changed
-                            If Not m_MgrSettings.LoadDBSettings() Then
-                                ' Error retrieving settings from the manager control DB
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrSettings.ErrMsg)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
-                                Exit Sub
-                            Else
-                                ' Need to synchronize some of the settings
-                                UpdateStatusToolLoggingSettings(m_StatusTools)
-                            End If
-                        End If  'm_FirstRun check
+
+                        ' Reload the manager control DB settings in case they have changed
+                        ' However, only reload every 2 minutes
+                        If Not UpdateManagerSettings(dtLastConfigDBUpdate, 2) Then
+                            ' Error retrieving settings from the manager control DB
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
+                            Exit Sub
+                        End If
+
                     End If
 
                     'Check to see if manager is still active
@@ -283,15 +261,6 @@ Namespace AnalysisManagerProg
                         Exit Sub
                     End If
 
-                    'Verify working directory properly specified and empty
-                    If Not ValidateWorkingDir() Then
-                        'Working directory problem, so exit
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
-                        CreateStatusFlagFile()
-                        UpdateStatusFlagFileExists()
-                        Exit While
-                    End If
-
                     'Check to see if an excessive number of errors have occurred
                     If m_ErrorCount > MAX_ERROR_COUNT Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager via flag file")
@@ -303,6 +272,15 @@ Namespace AnalysisManagerProg
                         CreateStatusFlagFile()
                         UpdateStatusFlagFileExists()
 
+                        Exit While
+                    End If
+
+                    'Verify working directory properly specified and empty
+                    If Not ValidateWorkingDir() Then
+                        'Working directory problem, so exit
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
+                        CreateStatusFlagFile()
+                        UpdateStatusFlagFileExists()
                         Exit While
                     End If
 
@@ -347,7 +325,7 @@ Namespace AnalysisManagerProg
                                 m_NeedToAbortProcessing = True
 
                             End Try
-                            
+
                         Case clsDBTask.RequestTaskResult.TooManyRetries
                             'There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
                             ' Bump up LoopCount to the maximum to exit the loop
@@ -740,6 +718,45 @@ Namespace AnalysisManagerProg
 
         End Function
 
+        Private Function StatusFlagFileError(ByVal strWorkingDir As String) As Boolean
+
+            Dim blnMgrCleanupSuccess As Boolean = False
+
+            If DetectStatusFlagFile() Then
+
+                Try
+                    Dim objCleanupMgrErrors As New clsCleanupMgrErrors( _
+                                        m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
+                                        m_MgrSettings.GetParam("MgrName"), _
+                                        clsGlobal.AppFolderPath, _
+                                        strWorkingDir)
+
+                    blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode())
+
+                Catch ex As Exception
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling AutoCleanupManagerErrors, " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
+
+                    blnMgrCleanupSuccess = False
+                End Try
+
+                If blnMgrCleanupSuccess Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Flag file found; automatically cleaned the work directory and deleted the flag file(s)")
+                    ' No error; return false
+                    Return False
+                Else
+                    ' Error removing flag file; return true
+                    Return True
+                End If
+
+            End If
+
+            ' No error; return false
+            Return False
+
+        End Function
+
         Private Function SetToolRunnerObject() As Boolean
             Dim strMessage As String
             Dim StepToolName As String = m_AnalysisTask.GetParam("StepTool")
@@ -761,6 +778,45 @@ Namespace AnalysisManagerProg
             m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
             Return True
 
+        End Function
+
+        ''' <summary>
+        ''' Reloads the manager settings from the manager control database 
+        ''' if at least MinutesBetweenUpdates minutes have elapsed since the last update
+        ''' </summary>
+        ''' <param name="dtLastConfigDBUpdate"></param>
+        ''' <param name="MinutesBetweenUpdates"></param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As System.DateTime, ByVal MinutesBetweenUpdates As Double) As Boolean
+
+            Dim blnSuccess As Boolean = True
+
+            If (System.DateTime.Now.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
+
+                dtLastConfigDBUpdate = System.DateTime.Now
+
+                If Not m_MgrSettings.LoadDBSettings() Then
+                    Dim msg As String
+
+                    If (String.IsNullOrEmpty(m_MgrSettings.ErrMsg)) Then
+                        msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings"
+                    Else
+                        msg = m_MgrSettings.ErrMsg
+                    End If
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+
+                    blnSuccess = False
+                Else
+                    ' Need to synchronize some of the settings
+                    UpdateStatusToolLoggingSettings(m_StatusTools)
+                End If
+
+            End If
+
+            Return blnSuccess
+           
         End Function
 
         Protected Sub UpdateStatusDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String)

@@ -93,6 +93,9 @@ Namespace AnalysisManagerBase
                 'Case "AnalysisManagerExtractionPlugin.clsExtractToolRunner".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerExtractionPlugin.clsExtractToolRunner, IToolRunner)
 
+                'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen, IToolRunner)
+
                 'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker, IToolRunner)
 
@@ -150,6 +153,9 @@ Namespace AnalysisManagerBase
 
                 'Case "AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction".ToLower
                 '    myModule = DirectCast(New AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction, IAnalysisResources)
+
+                'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen".ToLower
+                '    myModule = DirectCast(New AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen, IAnalysisResources)
 
                 'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXmlBruker".ToLower
                 '    myModule = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXMLBruker, IAnalysisResources)

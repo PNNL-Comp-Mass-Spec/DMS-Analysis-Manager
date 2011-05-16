@@ -1671,6 +1671,15 @@ AnalysisManagerProg
 	<param name="sender"></param>
 	<param name="e"></param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.UpdateManagerSettings(System.DateTime@,System.Double)">
+	<summary>
+ Reloads the manager settings from the manager control database 
+ if at least MinutesBetweenUpdates minutes have elapsed since the last update
+ </summary>
+	<param name="dtLastConfigDBUpdate"></param>
+	<param name="MinutesBetweenUpdates"></param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerProg.clsMainProcess.InitStatusTools">
 	<summary>
  Initializes the status file writing tool
