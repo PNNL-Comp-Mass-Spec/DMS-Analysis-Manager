@@ -93,6 +93,9 @@ Public Class clsAnalysisResourcesLCMSFF
         result = UpdateFeatureFinderIniFile(strLCMSFFIniFileName)
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " & strLCMSFFIniFileName
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = Msg
+            End If
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -101,14 +104,33 @@ Public Class clsAnalysisResourcesLCMSFF
 
     End Function
 
+    Protected Function GetValue(ByVal strLine As String) As String
+        Dim intEqualsIndex As Integer
+        Dim strValue As String = String.Empty
+
+        If Not String.IsNullOrEmpty(strLine) Then
+            intEqualsIndex = strLine.IndexOf("="c)
+            If intEqualsIndex > 0 AndAlso intEqualsIndex < strLine.Length - 1 Then
+                strValue = strLine.Substring(intEqualsIndex + 1)
+            End If
+        End If
+
+        Return strValue
+
+    End Function
+
     Protected Function UpdateFeatureFinderIniFile(ByVal strLCMSFFIniFileName As String) As Boolean
 
         Const INPUT_FILENAME_KEY As String = "InputFileName"
         Const OUTPUT_DIRECTORY_KEY As String = "OutputDirectory"
+        Const FILTER_FILE_NAME_KEY As String = "DeconToolsFilterFileName"
+
 
         Dim result As Boolean = True
 
         ' Read the source .Ini file and update the settings for InputFileName and OutputDirectory
+        ' In addition, look for an entry for DeconToolsFilterFileName; 
+        '  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
         Dim srInFile As System.IO.StreamReader
         Dim swOutFile As System.IO.StreamWriter
@@ -154,6 +176,28 @@ Public Class clsAnalysisResourcesLCMSFF
                             blnOutputDirectoryDefined = True
                         End If
 
+                        If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
+                            ' Copy the file defined by DeconToolsFilterFileName= to the working directory
+
+                            Dim strValue As String
+                            strValue = GetValue(strLineIn)
+
+                            If Not String.IsNullOrEmpty(strValue) Then
+                                Dim fiFileInfo As System.IO.FileInfo = New System.IO.FileInfo(strValue)
+                                If Not fiFileInfo.Exists Then
+                                    m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                    result = False
+                                    Exit Do
+                                Else
+                                    ' Copy the file locally
+                                    Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, fiFileInfo.Name)
+                                    fiFileInfo.CopyTo(strTargetFilePath)
+                                End If
+                            End If
+
+                        End If
+
                         swOutFile.WriteLine(strLineIn)
                     End If
                 Loop
@@ -166,13 +210,17 @@ Public Class clsAnalysisResourcesLCMSFF
                     swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir)
                 End If
 
-                swOutFile.Close()
-                srInFile.Close()
-
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)
                 result = False
+            Finally
+                If Not swOutFile Is Nothing Then
+                    swOutFile.Close()
+                End If
 
+                If Not srInFile Is Nothing Then
+                    srInFile.Close()
+                End If
             End Try
 
             ' Wait 250 millseconds, then replace the original .Ini file with the new one
