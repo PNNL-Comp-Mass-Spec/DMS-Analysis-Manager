@@ -131,8 +131,24 @@ Public Class clsResultXferToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
 
             Try
+                Dim diParentFolder As System.IO.DirectoryInfo
+                diParentFolder = diDatasetFolder.Parent
 
-                If diDatasetFolder.Parent.Exists Then
+                If Not diParentFolder.Exists Then
+                    ' Parent folder doesn't exist; try to go up one more level and create the parent
+
+                    If Not diParentFolder.Parent Is Nothing Then
+                        ' Parent of the parent exist; try to create the parent folder
+                        diParentFolder.Create()
+
+                        ' Wait 500 msec then verify that the folder was created
+                        System.Threading.Thread.Sleep(500)
+                        diParentFolder.Refresh()
+                        diDatasetFolder.Refresh()
+                    End If
+                End If
+
+                If diParentFolder.Exists Then
                     ' Parent folder exists; try to create the dataset folder
                     diDatasetFolder.Create()
 
