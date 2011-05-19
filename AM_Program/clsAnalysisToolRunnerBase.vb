@@ -14,11 +14,11 @@ Imports AnalysisManagerBase.clsGlobal
 Namespace AnalysisManagerBase
 
 	Public Class clsAnalysisToolRunnerBase
-		Implements IToolRunner
+        Implements IToolRunner
 
-		'*********************************************************************************************************
-		'Base class for analysis tool runner
-		'*********************************************************************************************************
+        '*********************************************************************************************************
+        'Base class for analysis tool runner
+        '*********************************************************************************************************
 
 #Region "Module variables"
         'status tools
@@ -68,6 +68,8 @@ Namespace AnalysisManagerBase
         Protected m_ResourcerDataFileList() As String
 
         Protected m_IonicZipTools As clsIonicZipTools
+        Protected m_NeedToAbortProcessing As Boolean
+
 #End Region
 
 #Region "Properties"
@@ -82,6 +84,12 @@ Namespace AnalysisManagerBase
         Public ReadOnly Property Message() As String Implements IToolRunner.Message
             Get
                 Return m_message
+            End Get
+        End Property
+
+        Public ReadOnly Property NeedToAbortProcessing() As Boolean Implements IToolRunner.NeedToAbortProcessing
+            Get
+                Return m_NeedToAbortProcessing
             End Get
         End Property
 
@@ -128,6 +136,7 @@ Namespace AnalysisManagerBase
             End If
 
             m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
+            m_NeedToAbortProcessing = False
 
         End Sub
 
@@ -1144,9 +1153,15 @@ Namespace AnalysisManagerBase
         ''' <returns>True if success; false if an error</returns>
         Protected Function ZipFile(ByVal SourceFilePath As String, _
                                    ByVal DeleteSourceAfterZip As Boolean) As Boolean
-
+            Dim blnSuccess As Boolean
             m_IonicZipTools.DebugLevel = m_DebugLevel
-            Return m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
+            blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
+
+            If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+                m_NeedToAbortProcessing = True
+            End If
+
+            Return blnSuccess
 
         End Function
 
@@ -1160,9 +1175,15 @@ Namespace AnalysisManagerBase
         Protected Function ZipFile(ByVal SourceFilePath As String, _
                                    ByVal DeleteSourceAfterZip As Boolean, _
                                    ByVal ZipFilePath As String) As Boolean
-
+            Dim blnSuccess As Boolean
             m_IonicZipTools.DebugLevel = m_DebugLevel
-            Return m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
+            blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
+
+            If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+                m_NeedToAbortProcessing = True
+            End If
+
+            Return blnSuccess
 
         End Function
 

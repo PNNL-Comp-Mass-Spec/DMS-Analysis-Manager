@@ -21,6 +21,8 @@ Namespace AnalysisManagerBase
         ' explanation of what happened to last operation this class performed
         ReadOnly Property Message() As String
 
+        ReadOnly Property NeedToAbortProcessing() As Boolean
+
         ' the state of completion of the job (as a percentage)
         ReadOnly Property Progress() As Single
 #End Region

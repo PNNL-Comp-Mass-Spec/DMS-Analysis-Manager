@@ -553,6 +553,11 @@ Namespace AnalysisManagerProg
 
                     blnRunToolError = True
                 End If
+
+                If m_ToolRunner.NeedToAbortProcessing Then
+                    m_NeedToAbortProcessing = True
+                End If
+
             Catch Err As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
 
