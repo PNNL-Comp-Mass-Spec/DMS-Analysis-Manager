@@ -976,7 +976,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         'Verify file exists
         If Not File.Exists(OutFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated .out file")
+            m_message = "Unable to find concatenated .out file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return False
         End If
 
@@ -985,12 +986,14 @@ Public Class clsAnalysisToolRunnerSeqBase
         Try
             'Zip the file            
             If Not MyBase.ZipFile(OutFilePath, False) Then
-                Dim Msg As String = "Error zipping concat out file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
+                m_message = "Error zipping concat out file"
+                Dim Msg As String = m_message & ", job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
                 Return False
             End If
         Catch ex As Exception
-            Dim Msg As String = "Exception zipping concat out file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & _
+            m_message = "Exception zipping concat out file"
+            Dim Msg As String = m_message & ", job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & _
              ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
             Return False

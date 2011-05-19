@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{657B81BF-1D50-4289-878A-CAAE154835C4}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -126,4 +126,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)..\AM_Common"
+copy "$(TargetPath)" "$(SolutionDir)..\AM_Program\bin"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

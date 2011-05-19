@@ -102,7 +102,7 @@
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)..\AM_Common"
+copy "$(TargetPath)" "$(SolutionDir)..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
 </Project>

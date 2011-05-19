@@ -207,6 +207,11 @@
 		Class="AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign"
 		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="multialign_aggregator" 
+		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator"
+		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -405,6 +410,11 @@
 		Tool="multialign" 
 		Class="AnalysisManagerMultiAlignPlugIn.clsAnalysisResourcesMultiAlign" 
 		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="multialign_aggregator" 
+		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator"
+		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" 
 	/>
 
 </Resourcers>

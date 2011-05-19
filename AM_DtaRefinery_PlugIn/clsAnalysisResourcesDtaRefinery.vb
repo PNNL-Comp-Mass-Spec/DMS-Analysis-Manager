@@ -159,7 +159,6 @@ Public Class clsAnalysisResourcesDtaRefinery
         Dim XtandemTaxonomyList As String = System.IO.Path.Combine(WorkingDir, XTANDEM_TAXONOMY_LIST_FILE)
         Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
         Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
-        Dim tmpDir As String
 
         Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
 
