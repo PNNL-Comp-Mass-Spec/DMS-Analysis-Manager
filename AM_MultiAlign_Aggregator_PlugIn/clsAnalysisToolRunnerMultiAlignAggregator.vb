@@ -79,7 +79,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End If
 
         ' Set up and execute a program runner to run MultiAlign
-        CmdStr = " " & MULTIALIGN_INPUT_FILE & " " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & " " & MultiAlignResultFilename
+        CmdStr = " -files " & MULTIALIGN_INPUT_FILE & " -params " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " -path " & m_WorkDir & " -name " & MultiAlignResultFilename & " -plots"
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
