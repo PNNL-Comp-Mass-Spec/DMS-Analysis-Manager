@@ -12,7 +12,7 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesMultiAlign
     Inherits clsAnalysisResources
 
-    Public Const FEATURES_FILE_SUFFIX As String = "_LCMSFeatures.txt"
+    'Public Const FEATURES_FILE_SUFFIX As String = "_LCMSFeatures.txt"
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
@@ -27,8 +27,18 @@ Public Class clsAnalysisResourcesMultiAlign
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
-        ' Retrieve FeatureFinder _LCMSFeatures.txt file for this dataset
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & FEATURES_FILE_SUFFIX
+        Dim SplitString As String()
+        Dim FileNameExt As String()
+        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
+        For Each row As String In SplitString
+            FileNameExt = row.Split(":"c)
+            If FileNameExt(2) = "nocopy" Then
+                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+            End If
+        Next
+
+        ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
+        strFileToGet = m_jobParams.GetParam("DatasetNum") & FileNameExt(1)
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -73,8 +83,18 @@ Public Class clsAnalysisResourcesMultiAlign
         Dim result As Boolean = True
         Dim swOutFile As System.IO.StreamWriter
 
+        Dim SplitString As String()
+        Dim FileNameExt As String()
+        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
+        For Each row As String In SplitString
+            FileNameExt = row.Split(":"c)
+            If FileNameExt(2) = "nocopy" Then
+                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+            End If
+        Next
+
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & FEATURES_FILE_SUFFIX)
+        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & FileNameExt(1))
 
         Dim blnInputFileDefined As Boolean
         Dim blnOutputDirectoryDefined As Boolean

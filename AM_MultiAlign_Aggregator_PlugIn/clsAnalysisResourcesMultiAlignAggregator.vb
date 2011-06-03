@@ -10,7 +10,6 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
     Inherits clsAnalysisResources
 
     Friend Const MULTIALIGN_INPUT_FILE As String = "Input.txt"
-    Public Const FEATURES_FILE_SUFFIX As String = "_LCMSFeatures.txt"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
@@ -79,10 +78,19 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
         Dim swOutFile As System.IO.StreamWriter
 
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & FEATURES_FILE_SUFFIX)
 
         Dim blnInputFileDefined As Boolean
         Dim blnOutputDirectoryDefined As Boolean
+
+        Dim SplitString As String()
+        Dim FileNameExt As String()
+        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
+        For Each row As String In SplitString
+            FileNameExt = row.Split(":"c)
+            If FileNameExt(2) = "nocopy" Then
+                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+            End If
+        Next
 
         Dim TmpFile As String
         Dim Files As String()
@@ -96,7 +104,7 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
 
             swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-            Files = Directory.GetFiles(m_WorkingDir, "*" & FEATURES_FILE_SUFFIX)
+            Files = Directory.GetFiles(m_WorkingDir, "*" & FileNameExt(1))
 
             swOutFile.WriteLine("[Files]")
             Dim AlignmentDataset As String = m_jobParams.GetParam("AlignmentDataset")
