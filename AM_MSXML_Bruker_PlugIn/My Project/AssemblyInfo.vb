@@ -8,11 +8,11 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("")> 
+<Assembly: AssemblyTitle("AnalysisManagerMsXmlBrukerPlugIn")> 
 <Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("")> 
-<Assembly: AssemblyCopyright("")> 
+<Assembly: AssemblyCompany("Battelle PNNL")> 
+<Assembly: AssemblyProduct("AnalysisManagerMsXmlBrukerPlugIn")> 
+<Assembly: AssemblyCopyright("Copyright © Battelle PNNL 2011")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)> 

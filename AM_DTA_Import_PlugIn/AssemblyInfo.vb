@@ -8,13 +8,14 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("")> 
+<Assembly: AssemblyTitle("AnalysisManagerDtaImportPlugIn")> 
 <Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("")> 
-<Assembly: AssemblyCopyright("")> 
+<Assembly: AssemblyCompany("Battelle PNNL")> 
+<Assembly: AssemblyProduct("AnalysisManagerDtaImportPlugIn")> 
+<Assembly: AssemblyCopyright("Copyright © Battelle PNNL 2011")> 
 <Assembly: AssemblyTrademark("")> 
-<Assembly: CLSCompliant(True)> 
+
+<Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
 <Assembly: Guid("B924F5CD-360D-45B2-88D8-F4CEE6B3F221")> 

@@ -29,10 +29,6 @@ Imports System.Runtime.InteropServices
 '
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
-' <Assembly: AssemblyVersion("1.0.*")> 
 
 <Assembly: AssemblyVersion("2.2.*")> 
 '<Assembly: AssemblyFileVersion("1.0.0.0")> 
-
-'Set assembly to CLS-Compliant (gets rid of nuisance warnings)
-<Assembly: CLSCompliant(True)> 
