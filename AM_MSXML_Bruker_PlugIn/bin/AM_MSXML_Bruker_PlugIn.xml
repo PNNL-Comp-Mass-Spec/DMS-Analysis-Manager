@@ -47,6 +47,11 @@ AnalysisManagerMsXmlBrukerPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.CompassXportRunner_LoopWaiting">
 	<summary>
  Event handler for CompassXportRunner.LoopWaiting event

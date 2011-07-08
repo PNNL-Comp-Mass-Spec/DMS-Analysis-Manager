@@ -52,7 +52,12 @@ Public Class clsAnalysisToolRunnerOM
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the OMSSA version info in the database
+        StoreToolVersionInfo()
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -332,6 +337,33 @@ Public Class clsAnalysisToolRunnerOM
         Return result
     End Function
 
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("OMSSAprogloc")))
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("omssa2pepprogloc")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
 	'--------------------------------------------------------------------------------------------
 	'Future section to monitor OMSSA log file for progress determination

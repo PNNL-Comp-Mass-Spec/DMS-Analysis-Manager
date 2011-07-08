@@ -62,30 +62,38 @@ Public Class clsMGFtoDtaGenMainProcess
 		m_AbortRequested = True
 	End Function
 
-	Public Overrides Function Start() As ISpectraFileProcessor.ProcessStatus
+    Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) 
+        MyBase.Setup(InitParams)
 
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        m_DtaToolNameLoc = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MsMsSpectrumFilter.dll")
 
-		'Verify necessary files are in specified locations
-		If Not InitSetup() Then
-			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return m_Status
-		End If
+    End Sub
+
+    Public Overrides Function Start() As ISpectraFileProcessor.ProcessStatus
+
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
+
+        'Verify necessary files are in specified locations
+        If Not InitSetup() Then
+            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            Return m_Status
+        End If
 
         'Make the DTA files (the process runs in a separate thread)
-		Try
-			m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
-			m_thThread.Start()
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-		Catch ex As Exception
-			m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-		End Try
+        Try
+            m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
+            m_thThread.Start()
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        Catch ex As Exception
+            m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+        End Try
 
-		Return m_Status
+        Return m_Status
 
-	End Function
+    End Function
 
 	Private Function VerifyMGFFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 

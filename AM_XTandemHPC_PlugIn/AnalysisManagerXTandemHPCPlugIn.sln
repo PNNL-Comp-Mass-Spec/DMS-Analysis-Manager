@@ -1,6 +1,6 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{22D6B855-36BE-43E7-8308-CA0E9E42BABB}") = "AnalysisManagerXTandemHPCPlugIn", "AnalysisManagerXTandemHPCPlugIn.vbproj", "{E26245DB-FE3B-4CDB-8B39-B989BE7BE52C}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerXTandemHPCPlugIn", "AnalysisManagerXTandemHPCPlugIn.vbproj", "{E26245DB-FE3B-4CDB-8B39-B989BE7BE52C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

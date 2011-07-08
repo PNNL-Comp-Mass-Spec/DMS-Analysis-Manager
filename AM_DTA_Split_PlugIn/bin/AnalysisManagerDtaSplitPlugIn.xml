@@ -49,6 +49,11 @@ AnalysisManagerDtaSplitPlugIn
 	<param name="fi"></param>
 	<returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit.GetResources">
 	<summary>
  Retrieves files necessary for performance of Sequest analysis

@@ -97,6 +97,16 @@ DTASpectraFileGen
  </summary>
 	<returns>CloseoutType enum indicating success or failure</returns>
 	<remarks>Overridden for other types of input files</remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfoDeconMSn(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.ZipConcDtaFile">
 	<summary>
  Zips concatenated DTA file to reduce size

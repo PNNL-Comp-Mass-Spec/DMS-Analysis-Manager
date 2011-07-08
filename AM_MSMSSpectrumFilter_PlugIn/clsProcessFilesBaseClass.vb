@@ -390,7 +390,7 @@ Public MustInherit Class clsProcessFilesBaseClass
                     mLogFolderPath = String.Empty
                 End Try
 
-                If mLogFolderPath.Length > 0 Then
+                If Not System.IO.Path.IsPathRooted(mLogFilePath) AndAlso mLogFolderPath.Length > 0 Then
                     mLogFilePath = System.IO.Path.Combine(mLogFolderPath, mLogFilePath)
                 End If
 
@@ -841,6 +841,7 @@ Public MustInherit Class clsProcessFilesBaseClass
         Console.WriteLine()
 
         If blnAllowLogToFile Then
+            ' Note that LogMessage will call RaiseMessageEvent
             LogMessage(strMessage, eMessageTypeConstants.ErrorMsg)
         Else
             RaiseMessageEvent(strMessage, eMessageTypeConstants.ErrorMsg)
@@ -864,6 +865,7 @@ Public MustInherit Class clsProcessFilesBaseClass
         Console.WriteLine(strMessage)
 
         If blnAllowLogToFile Then
+            ' Note that LogMessage will call RaiseMessageEvent
             LogMessage(strMessage, eMessageTypeConstants.Normal)
         Else
             RaiseMessageEvent(strMessage, eMessageTypeConstants.Normal)

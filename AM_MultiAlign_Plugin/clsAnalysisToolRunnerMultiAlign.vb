@@ -15,7 +15,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
     Inherits clsAnalysisToolRunnerBase
 
     '*********************************************************************************************************
-    ' Class for running the MultiAlign
+    ' Class for running MultiAlign
     '*********************************************************************************************************
 
 #Region "Module Variables"
@@ -39,7 +39,9 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Dim blnSuccess As Boolean
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign")
 
@@ -61,6 +63,9 @@ Public Class clsAnalysisToolRunnerMultiAlign
             End If
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' Store the MultiAlign version info in the database
+        StoreToolVersionInfo(progLoc)
 
         Dim MultiAlignDatabaseName As String = " " & m_jobParams.GetParam("DatasetNum") '& ".db3"
 
@@ -213,6 +218,60 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
     End Sub
 
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strMultiAlignProgLoc As String) As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioMultiAlignProg As System.IO.FileInfo
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
+
+        ' Lookup the version of MultiAlign 
+        StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+
+        ' Lookup the version of additional DLLs
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByRef strFullPath As String)
+
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strFullPath)
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileNameWithoutExtension(strFullPath) & ": " & ex.Message)
+        End Try
+
+    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event

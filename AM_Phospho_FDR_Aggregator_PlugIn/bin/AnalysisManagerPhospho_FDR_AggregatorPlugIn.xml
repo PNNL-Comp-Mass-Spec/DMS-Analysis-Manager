@@ -12,6 +12,11 @@ AnalysisManagerPhospho_FDR_AggregatorPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator.CmdRunner_LoopWaiting">
 	<summary>
  Event handler for CmdRunner.LoopWaiting event

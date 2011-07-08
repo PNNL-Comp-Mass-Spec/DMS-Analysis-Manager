@@ -31,6 +31,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
     Dim mOutFileCandidates As New System.Collections.Queue
     Dim mDtaFilesDeleted As New System.Collections.Generic.SortedList(Of String, System.DateTime)
 
+    Dim mSequestVersionInfoStored As Boolean
+
     Dim WithEvents m_CmdRunner As clsRunDosProgram
     Dim m_ErrMsg As String = ""
 #End Region
@@ -74,6 +76,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         mOutFileCandidates.Clear()
         mDtaFilesDeleted.Clear()
+        mSequestVersionInfoStored = False
 
         ' Initialize the out file watcher
         With mOutFileWatcher
@@ -121,7 +124,18 @@ Public Class clsAnalysisToolRunnerSeqCluster
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.MakeOutFiles(), outfile count: " & OutFiles.GetLength(0).ToString)
         End If
-        If OutFiles.GetLength(0) < 1 Then
+
+        If Not mSequestVersionInfoStored Then
+            ' Tool version not yet recorded; record it now
+            If OutFiles.Length > 0 Then
+                ' Pass the path to the first out file created
+                mSequestVersionInfoStored = StoreToolVersionInfo(OutFiles(0))
+            Else
+                mSequestVersionInfoStored = StoreToolVersionInfo(String.Empty)
+            End If
+        End If
+
+        If OutFiles.Length < 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "No OUT files created")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
@@ -330,6 +344,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
+    ''' <summary>
+    ''' Adds newly created .Out file to Queue mOutFileCandidates
+    ''' This queue is used to delete corresponding .DTA files as the .Out files are created
+    ''' </summary>
+    ''' <param name="OutFileName"></param>
+    ''' <remarks></remarks>
     Private Sub HandleOutFileChange(ByVal OutFileName As String)
 
         Try
@@ -370,6 +390,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Try
             If m_DebugLevel >= 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Examining out file creation dates (Candidate Count = " & mOutFileCandidates.Count & ")")
+            End If
+
+            If mOutFileCandidates.Count > 0 And Not mSequestVersionInfoStored Then
+                ' Determine tool version
+
+                ' Pass the path to the first out file created
+                objEntry = CType(mOutFileCandidates.Peek, System.Collections.Generic.KeyValuePair(Of String, System.DateTime))
+                If StoreToolVersionInfo(System.IO.Path.Combine(m_WorkDir, objEntry.Key)) Then
+                    mSequestVersionInfoStored = True
+                End If
             End If
 
             blnContinue = True

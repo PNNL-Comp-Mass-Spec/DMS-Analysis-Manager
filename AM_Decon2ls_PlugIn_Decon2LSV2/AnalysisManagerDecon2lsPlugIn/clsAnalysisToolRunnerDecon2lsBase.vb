@@ -513,6 +513,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim intLoopNum As Integer
         Dim blnDecon2LSError As Boolean
 
+        ' Store the DeconTools version info in the database
+        StoreToolVersionInfo()
+
         clsGlobal.FilesToDelete.Add(PARAM_FILE_NAME_TEMP)
 
         ' See if Decon2LS Looping is enabled
@@ -901,6 +904,88 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 'Should never get this value
                 Return ""
         End Select
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of the DeconTools Backend
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("DeconTools.Backend").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+        End Try
+
+        ' Lookup the version of the UIMF Library
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll"))
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the UIMFLibrary: " & ex.Message)
+        End Try
+
+        ' Lookup the version of the DeconEngine Library
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DeconEngine.dll"))
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the DeconEngine: " & ex.Message)
+        End Try
+
+        ' Lookup the version of the DeconEngineV2 Library
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DeconEngineV2.dll"))
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the DeconEngineV2: " & ex.Message)
+        End Try
+
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DeconTools.Backend.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

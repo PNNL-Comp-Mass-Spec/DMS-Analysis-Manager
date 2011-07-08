@@ -36,7 +36,12 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         Dim result As IJobParams.CloseOutType
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the MSMSSpectrumFilter version info in the database
+        StoreToolVersionInfo()
 
         m_Status = ISpectraFilter.ProcessStatus.SFILT_STARTING
 
@@ -488,6 +493,58 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ex.Message)
 
     End Sub
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of the MSMSSpectrumFilterAM
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("MSMSSpectrumFilterAM").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MSMSSpectrumFilterAM: " & ex.Message)
+        End Try
+
+        ' Lookup the version of the MsMsDataFileReader
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+           oAssemblyName = System.Reflection.Assembly.Load("MsMsDataFileReader").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MsMsDataFileReader: " & ex.Message)
+        End Try
+
+        ' Store the path to MsMsDataFileReader.dll in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MsMsDataFileReader.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
     Protected Overridable Function VerifyDirExists(ByVal TestDir As String) As Boolean
 

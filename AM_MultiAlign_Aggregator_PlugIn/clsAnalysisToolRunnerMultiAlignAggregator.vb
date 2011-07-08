@@ -39,7 +39,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
 #Region "Methods"
     ''' <summary>
-    ''' Runs PhosphoFdrAggregator tool
+    ''' Runs MultiAlign Aggregator tool
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -50,7 +50,9 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         Dim blnSuccess As Boolean
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign")
 
@@ -73,6 +75,9 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        ' Store the MultiAlign version info in the database
+        StoreToolVersionInfo(progLoc)
+
         Dim MultiAlignResultFilename As String = m_jobParams.GetParam("ResultFilename")
         If String.IsNullOrEmpty(MultiAlignResultFilename.Trim) Then
             MultiAlignResultFilename = m_jobParams.GetParam("DatasetNum")
@@ -85,11 +90,10 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End If
 
         With CmdRunner
-            ' Must set this to "False" so that a window Does appear; otherwise, AScore_Console.exe crashes
-            ' In addition, cannot capture the text written to the console
-            .CreateNoWindow = False
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = False
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
             .WriteConsoleOutputToFile = False
         End With
 
@@ -107,7 +111,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
         End If
 
         'Make sure objects are released
@@ -134,6 +138,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         result = MoveResultFiles()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
+            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
@@ -148,6 +153,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         result = CopyResultsFolderToServer()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
+            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
@@ -223,6 +229,62 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
     End Sub
 
     ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strMultiAlignProgLoc As String) As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioMultiAlignProg As System.IO.FileInfo
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
+
+        ' Lookup the version of MultiAlign 
+        StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+
+        ' Lookup the version of additional DLLs
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByRef strFullPath As String)
+
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strFullPath)
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileNameWithoutExtension(strFullPath) & ": " & ex.Message)
+        End Try
+
+    End Sub
+
+
+    ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
@@ -241,31 +303,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
     End Sub
 
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
-
-    ''Watches the DTA_Refinery status file and reports changes
-
-    ''Setup
-    'm_StatFileWatch = New FileSystemWatcher
-    'With m_StatFileWatch
-    '	.BeginInit()
-    '	.Path = DirToWatch
-    '	.IncludeSubdirectories = False
-    '	.Filter = FileToWatch
-    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-    '	.EndInit()
-    'End With
-
-    ''Start monitoring
-    'm_StatFileWatch.EnableRaisingEvents = True
-
-    '	End Sub
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
+   
 #End Region
 
 End Class

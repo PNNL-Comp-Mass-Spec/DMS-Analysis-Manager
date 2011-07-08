@@ -161,6 +161,11 @@ AnalysisManagerMSGFPlugin
 	<param name="strFileNameToFind"></param>
 	<returns>True if success; false if an error</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.MSXmlGenReadW_LoopWaiting">
 	<summary>
  Event handler for MSXmlGenReadW.LoopWaiting event

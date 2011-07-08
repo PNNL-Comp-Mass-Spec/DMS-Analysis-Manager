@@ -58,6 +58,11 @@ AnalysisManagerInspResultsAssemblyPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(System.String,System.String)">
 	<summary>
  Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath

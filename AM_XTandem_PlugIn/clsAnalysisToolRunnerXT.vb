@@ -22,19 +22,24 @@ Public Class clsAnalysisToolRunnerXT
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-	Protected Const PROGRESS_PCT_XTANDEM_RUNNING As Single = 5
-	Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
-	Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
+    Protected Const XTANDEM_CONSOLE_OUTPUT As String = "XTandem_ConsoleOutput.txt"
 
-	Protected WithEvents CmdRunner As clsRunDosProgram
-	'--------------------------------------------------------------------------------------------
-	'Future section to monitor XTandem log file for progress determination
-	'--------------------------------------------------------------------------------------------
-	'Dim WithEvents m_StatFileWatch As FileSystemWatcher
-	'Protected m_XtSetupFile As String = "default_input.xml"
-	'--------------------------------------------------------------------------------------------
-	'End future section
-	'--------------------------------------------------------------------------------------------
+    Protected Const PROGRESS_PCT_XTANDEM_STARTING As Single = 1
+    Protected Const PROGRESS_PCT_XTANDEM_LOADING_SPECTRA As Single = 5
+    Protected Const PROGRESS_PCT_XTANDEM_COMPUTING_MODELS As Single = 10
+    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT As Single = 50
+    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE As Single = 50
+    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE As Single = 70
+    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING As Single = 85
+    Protected Const PROGRESS_PCT_XTANDEM_MERGING_RESULTS As Single = 90
+    Protected Const PROGRESS_PCT_XTANDEM_CREATING_REPORT As Single = 95
+    Protected Const PROGRESS_PCT_XTANDEM_COMPLETE As Single = 99
+
+    Protected WithEvents CmdRunner As clsRunDosProgram
+
+    Protected mToolVersionWritten As Boolean
+    Protected mXTandemVersion As String = String.Empty
+
 #End Region
 
 #Region "Methods"
@@ -47,9 +52,16 @@ Public Class clsAnalysisToolRunnerXT
 
         Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
+        Dim blnSuccess As Boolean
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Note: we will store the XTandem version info in the database after the first line is written to file XTandem_ConsoleOutput.txt
+        mToolVersionWritten = False
+        mXTandemVersion = String.Empty
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -72,22 +84,6 @@ Public Class clsAnalysisToolRunnerXT
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        '--------------------------------------------------------------------------------------------
-        'Future section to monitor XTandem log file for progress determination
-        '--------------------------------------------------------------------------------------------
-        ''Get the XTandem log file name for a File Watcher to monitor
-        'Dim XtLogFileName As String = GetXTLogFileName(System.IO.Path.Combine(m_WorkDir, m_XtSetupFile))
-        'If XtLogFileName = "" Then
-        '	m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        'End If
-
-        ''Setup and start a File Watcher to monitor the XTandem log file
-        'StartFileWatcher(m_workdir, XtLogFileName)
-        '--------------------------------------------------------------------------------------------
-        'End future section
-        '--------------------------------------------------------------------------------------------
-
         'Set up and execute a program runner to run X!Tandem
         CmdStr = "input.xml"
 
@@ -97,10 +93,21 @@ Public Class clsAnalysisToolRunnerXT
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "XTandem_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT)
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True) Then
+        m_progress = PROGRESS_PCT_XTANDEM_STARTING
+
+        blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True)
+
+        If Not mToolVersionWritten Then
+            If String.IsNullOrWhiteSpace(mXTandemVersion) Then
+                ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
+            End If
+            mToolVersionWritten = StoreToolVersionInfo()
+        End If
+
+        If Not blnSuccess Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
 
             If CmdRunner.ExitCode <> 0 Then
@@ -118,15 +125,6 @@ Public Class clsAnalysisToolRunnerXT
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End If
-
-        '--------------------------------------------------------------------------------------------
-        'Future section to monitor XTandem log file for progress determination
-        '--------------------------------------------------------------------------------------------
-        ''Turn off file watcher
-        'm_StatFileWatch.EnableRaisingEvents = False
-        '--------------------------------------------------------------------------------------------
-        'End future section
-        '--------------------------------------------------------------------------------------------
 
         'Stop the job timer
         m_StopTime = System.DateTime.Now
@@ -174,12 +172,13 @@ Public Class clsAnalysisToolRunnerXT
 
     End Function
 
+
     Protected Sub CopyFailedResultsToArchiveFolder()
 
         Dim result As IJobParams.CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
@@ -216,9 +215,127 @@ Public Class clsAnalysisToolRunnerXT
     End Sub
 
     ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        strToolVersionInfo = String.Copy(mXTandemVersion)
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("xtprogloc")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
+    ''' </summary>
+    ''' <param name="strConsoleOutputFilePath"></param>
+    ''' <remarks></remarks>
+    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+
+        Try
+
+            If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                End If
+
+                Exit Sub
+            End If
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+            End If
+
+          
+            Dim srInFile As System.IO.StreamReader
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
+
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+            intLinesRead = 0
+            Do While srInFile.Peek() >= 0
+                strLineIn = srInFile.ReadLine()
+                intLinesRead += 1
+
+                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If intLinesRead = 1 Then
+                        ' The first line is the X!Tandem version
+
+                        If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mXTandemVersion) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
+                        End If
+
+                        mXTandemVersion = String.Copy(strLineIn)
+
+                    Else
+
+                        ' Update progress if the line starts with one of the expected phrases
+                        If strLineIn.StartsWith("Loading spectra") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
+
+                        ElseIf strLineIn.StartsWith("Computing models") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
+
+                        ElseIf strLineIn.StartsWith("Model refinement") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
+
+                        ElseIf strLineIn.StartsWith("	partial cleavage") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
+
+                        ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
+
+                        ElseIf strLineIn.StartsWith("	finishing refinement ") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
+
+                        ElseIf strLineIn.StartsWith("Merging results") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
+
+                        ElseIf strLineIn.StartsWith("Creating report") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
+
+                        ElseIf strLineIn.StartsWith("Estimated false positives") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
+
+                        End If
+                    End If
+                End If
+            Loop
+
+            srInFile.Close()
+
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
+
+    End Sub
+
+
+    ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
     ''' </summary>
-    ''' <returns></returns>
+    ''' <returns>True if success; false if failure</returns>
     ''' <remarks></remarks>
     Protected Function ValidateCDTAFile() As Boolean
         Dim strInputFilePath As String
@@ -271,7 +388,7 @@ Public Class clsAnalysisToolRunnerXT
         Dim FileList() As String
         Dim TmpFilePath As String
 
-        Try            
+        Try
             FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_xt.xml")
             For Each TmpFile In FileList
                 TmpFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileName(TmpFile))
@@ -305,12 +422,13 @@ Public Class clsAnalysisToolRunnerXT
 
     End Function
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -319,36 +437,21 @@ Public Class clsAnalysisToolRunnerXT
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.Now
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_XTANDEM_RUNNING, 0, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
         End If
 
-	End Sub
+        If System.DateTime.Now.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = System.DateTime.Now
 
-	'--------------------------------------------------------------------------------------------
-	'Future section to monitor XTandem log file for progress determination
-	'--------------------------------------------------------------------------------------------
-	'	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
+            ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mXTandemVersion) Then
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
 
-	''Watches the XTandem status file and reports changes
+        End If
 
-	''Setup
-	'm_StatFileWatch = New FileSystemWatcher
-	'With m_StatFileWatch
-	'	.BeginInit()
-	'	.Path = DirToWatch
-	'	.IncludeSubdirectories = False
-	'	.Filter = FileToWatch
-	'	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-	'	.EndInit()
-	'End With
+    End Sub
 
-	''Start monitoring
-	'm_StatFileWatch.EnableRaisingEvents = True
-
-	'	End Sub
-	'--------------------------------------------------------------------------------------------
-	'End future section
-	'--------------------------------------------------------------------------------------------
 #End Region
 
 End Class

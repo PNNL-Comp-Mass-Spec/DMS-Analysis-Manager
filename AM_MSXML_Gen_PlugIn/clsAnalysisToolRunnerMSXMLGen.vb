@@ -59,8 +59,13 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
 
-        'Start the job timer
-        m_StartTime = System.DateTime.Now
+        'Do the base class stuff
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the ReadW version info in the database
+        StoreToolVersionInfo()
 
         If CreateMZXMLFile() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -174,6 +179,56 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReadW.exe or MSConvert.exe
+        Dim ProgramPath As String = String.Empty
+
+        ' Determine the program path and Instantiate the processing class
+        If msXmlGenerator.ToLower.Contains("readw") Then
+            ' ReadW
+            Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
+            ProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
+
+        ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
+            ' MSConvert
+            Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
+            ProgramPath = System.IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
+
+        Else
+            ' Invalid value for MSXMLGenerator
+        End If
+
+        If Not String.IsNullOrEmpty(ProgramPath) Then
+            ioToolFiles.Add(New System.IO.FileInfo(ProgramPath))
+        Else
+            ' Invalid value for MSXMLGenerator
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

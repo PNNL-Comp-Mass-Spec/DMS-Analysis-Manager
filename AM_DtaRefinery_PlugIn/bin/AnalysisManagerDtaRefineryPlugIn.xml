@@ -12,6 +12,11 @@ AnalysisManagerDtaRefineryPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ValidateCDTAFile">
 	<summary>
  Make sure the _DTA.txt file exists and has at lease one spectrum in it

@@ -8,9 +8,14 @@ AnalysisManagerMultiAlign_AggregatorPlugIn
 <members>
 <member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.RunTool">
 	<summary>
- Runs PhosphoFdrAggregator tool
+ Runs MultiAlign Aggregator tool
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.CmdRunner_LoopWaiting">
 	<summary>

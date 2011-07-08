@@ -647,6 +647,7 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.RunTool">
 	<summary>
  Runs the analysis tool
+ Major work is performed by overrides
  </summary>
 	<returns>CloseoutType enum representing completion status</returns>
 	<remarks></remarks>
@@ -682,6 +683,30 @@ AnalysisManagerProg
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.SetStepTaskToolVersion(System.String)">
+	<summary>
+ Communicates with database to record the tool version(s) for the current step task
+ </summary>
+	<param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+	<returns>True for success, False for failure</returns>
+	<remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.SetStepTaskToolVersion(System.String,System.Collections.Generic.List{System.IO.FileInfo})">
+	<summary>
+ Communicates with database to record the tool version(s) for the current step task
+ </summary>
+	<param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+	<param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+	<returns>True for success, False for failure</returns>
+	<remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.SetStepTaskToolVersion(System.String,System.Collections.Generic.List{System.IO.FileInfo},System.Boolean)">
+	<summary>
+ Communicates with database to record the tool version(s) for the current step task
+ </summary>
+	<param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+	<param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+	<param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+	<returns>True for success, False for failure</returns>
+	<remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UpdateSummaryFile">
 	<summary>
  Updates the analysis summary file
@@ -1390,6 +1415,10 @@ AnalysisManagerProg
 	<summary>
  Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
  </summary>
+</member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.DtaToolNameLoc">
+	<summary>
+ Path to the program used to create .DTA files
+ </summary>
 </member><member name="P:AnalysisManagerBase.ISpectraFileProcessor.SpectraFileCount">
 	<summary>
  Count of spectra files that have been created
@@ -1703,6 +1732,80 @@ AnalysisManagerProg
  </summary>
 	<param name="line">Data to be added</param>
 	<remarks></remarks>
+</member><member name="M:clsParseCommandLine.InvalidParametersPresent(System.Collections.Generic.List{System.String})">
+	<summary>
+ Compares the parameter names in objParameterList with the parameters at the command line
+ </summary>
+	<param name="objParameterList">Parameter list</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:clsParseCommandLine.InvalidParametersPresent(System.String[])">
+	<summary>
+ Compares the parameter names in strParameterList with the parameters at the command line
+ </summary>
+	<param name="strParameterList">Parameter list</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:clsParseCommandLine.InvalidParametersPresent(System.String[],System.Boolean)">
+	<summary>
+ Compares the parameter names in strParameterList with the parameters at the command line
+ </summary>
+	<param name="strParameterList">Parameter list</param>
+	<param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:clsParseCommandLine.IsParameterPresent(System.String)">
+	<summary>
+ Look for parameter on the command line
+ </summary>
+	<param name="strParameterName">Parameter name</param>
+	<returns>True if present, otherwise false</returns>
+</member><member name="M:clsParseCommandLine.ParseCommandLine">
+	<summary>
+ Parse the parameters and switches at the command line; uses / for the switch character and : for the switch parameter character
+ </summary>
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:clsParseCommandLine.ParseCommandLine(System.Char)">
+	<summary>
+ Parse the parameters and switches at the command line; uses : for the switch parameter character
+ </summary>
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:clsParseCommandLine.ParseCommandLine(System.Char,System.Char)">
+	<summary>
+ Parse the parameters and switches at the command line
+ </summary>
+	<param name="chSwitchStartChar"></param>
+	<param name="chSwitchParameterChar"></param>
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:clsParseCommandLine.RetrieveNonSwitchParameter(System.Int32)">
+	<summary>
+ Returns the value of the non-switch parameter at the given index
+ </summary>
+	<param name="intParameterIndex">Parameter index</param>
+	<returns>The value of the parameter at the given index; empty string if no value or invalid index</returns>
+</member><member name="M:clsParseCommandLine.RetrieveParameter(System.Int32,System.String@,System.String@)">
+	<summary>
+ Returns the parameter at the given index
+ </summary>
+	<param name="intParameterIndex">Parameter index</param>
+	<param name="strKey">Parameter name (output)</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+	<returns></returns>
+</member><member name="M:clsParseCommandLine.RetrieveValueForParameter(System.String,System.String@)">
+	<summary>
+ Look for parameter on the command line and returns its value in strValue
+ </summary>
+	<param name="strKey">Parameter name</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+	<returns>True if present, otherwise false</returns>
+</member><member name="M:clsParseCommandLine.RetrieveValueForParameter(System.String,System.String@,System.Boolean)">
+	<summary>
+ Look for parameter on the command line and returns its value in strValue
+ </summary>
+	<param name="strKey">Parameter name</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+	<param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
+	<returns>True if present, otherwise false</returns>
 </member><member name="P:My.Resources.Resources.ResourceManager">
 	<summary>
   Returns the cached ResourceManager instance used by this class.

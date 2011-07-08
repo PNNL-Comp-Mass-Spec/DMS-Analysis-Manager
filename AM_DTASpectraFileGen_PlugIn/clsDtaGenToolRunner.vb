@@ -233,8 +233,16 @@ Public Class clsDtaGenToolRunner
 			.JobParams = m_jobParams
             .MgrParams = m_mgrParams
             .StatusTools = m_StatusTools
-		End With
+        End With
+
 		SpectraGen.Setup(SetupParams)
+
+        ' Store the DeconTools version info in the database
+        If SpectraGen.DtaToolNameLoc.ToLower().Contains("deconmsn.exe") Then
+            StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
+        Else
+            StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
+        End If
 
 		'Start the spectra generation process
 		Try
@@ -347,6 +355,94 @@ Public Class clsDtaGenToolRunner
 		End Try
 
 	End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strDtaGeneratorAppPath As String) As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Stor strDtaGeneratorAppPath in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(strDtaGeneratorAppPath))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoDeconMSn(ByVal strDtaGeneratorAppPath As String) As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        Dim strDeconMSnEnginePath As String = String.Empty
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of DeconMSn
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(strDtaGeneratorAppPath).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSn: " & ex.Message)
+        End Try
+
+        ' Lookup the version of DeconMSnEngine
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioDeconMSnInfo As System.IO.FileInfo = New System.IO.FileInfo(strDtaGeneratorAppPath)
+
+            If ioDeconMSnInfo.Exists Then
+                Dim ioDeconMSnEngineInfo As System.IO.FileInfo
+                strDeconMSnEnginePath = System.IO.Path.Combine(ioDeconMSnInfo.DirectoryName, "deconmsnengine.dll")
+                ioDeconMSnEngineInfo = New System.IO.FileInfo(strDeconMSnEnginePath)
+                oAssemblyName = System.Reflection.Assembly.LoadFrom(ioDeconMSnEngineInfo.FullName).GetName
+
+                Dim strNameAndVersion As String
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+            End If           
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSnEngine.dll: " & ex.Message)
+        End Try
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(strDtaGeneratorAppPath))
+        ioToolFiles.Add(New System.IO.FileInfo(strDeconMSnEnginePath))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
 	''' <summary>
 	''' Zips concatenated DTA file to reduce size

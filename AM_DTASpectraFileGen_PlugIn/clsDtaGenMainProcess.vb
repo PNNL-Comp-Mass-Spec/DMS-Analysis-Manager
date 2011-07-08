@@ -17,8 +17,7 @@ Public Class clsDtaGenMainProcess
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Private m_DtaToolNameLoc As String
-	Private m_NumScans As Integer
+    Private m_NumScans As Integer
 	Private m_AbortRequested As Boolean = False
 	Private WithEvents m_RunProgTool As clsRunDosProgram
     Private m_thThread As System.Threading.Thread
@@ -58,6 +57,12 @@ Public Class clsDtaGenMainProcess
 		m_AbortRequested = True
 	End Function
 
+    Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams)
+        MyBase.Setup(InitParams)
+
+        m_DtaToolNameLoc = ConstructDTAToolPath()
+    End Sub
+
 	''' <summary>
 	''' Starts DTA creation
 	''' </summary>
@@ -73,8 +78,6 @@ Public Class clsDtaGenMainProcess
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
 			Return m_Status
 		End If
-
-        m_DtaToolNameLoc = ConstructDTAToolPath()
         
         If Not VerifyFileExists(m_DtaToolNameLoc) Then
             m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE

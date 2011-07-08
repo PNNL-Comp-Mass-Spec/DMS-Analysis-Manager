@@ -130,6 +130,8 @@ Public Class clsMSGFRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        ' Store the MSGF version info in the database
+        StoreToolVersionInfo()
 
         blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
 
@@ -1312,6 +1314,9 @@ Public Class clsMSGFRunner
             Return False
         End Try
 
+        Dim blnTooManyPrecursorMassMismatches As Boolean
+        blnTooManyPrecursorMassMismatches = False
+
         Try
             ' Compare intPrecursorMassErrorCount to intLinesRead
             ' If more than 10% of the results have a precursor mass error, then return false
@@ -1325,7 +1330,7 @@ Public Class clsMSGFRunner
                 If sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT Then
                     Msg &= "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    blnSuccess = False
+                    blnTooManyPrecursorMassMismatches = True
                 Else
                     Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT & "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
@@ -1342,7 +1347,11 @@ Public Class clsMSGFRunner
             blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile()
         End If
 
-        Return blnSuccess
+        If blnTooManyPrecursorMassMismatches Then
+            Return False
+        Else
+            Return blnSuccess
+        End If
 
     End Function
 
@@ -1636,6 +1645,35 @@ Public Class clsMSGFRunner
         End If
 
         Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSGFLoc")))
+
+        Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(InspectDir, "ReadW.exe")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

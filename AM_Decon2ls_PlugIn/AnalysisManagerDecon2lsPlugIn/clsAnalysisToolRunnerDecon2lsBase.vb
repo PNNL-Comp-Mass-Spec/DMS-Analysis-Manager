@@ -7,15 +7,10 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-'Imports PRISM.Processes
 Imports AnalysisManagerBase
-'Imports AnalysisManagerBase.clsGlobal
 Imports Decon2LS.Readers
 Imports System.Threading
 Imports System.Exception
-'Imports System.Runtime.Remoting
-'Imports System.Runtime.Remoting.Channels
-'Imports System.Runtime.Remoting.Channels.tcp
 Imports Decon2LSRemoter
 
 Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
@@ -234,11 +229,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
         End If
 
-        'Get the setup file by running the base class method
+        'Call base class for initial setup
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'Error message is generated in base class, so just exit with error
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' Store the DeconTools version info in the database
+        StoreToolVersionInfo()
 
         mDecon2LSFailedMidLooping = False
 
@@ -577,60 +575,6 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Protected Function SpecifyInputFileName(ByVal RawDataType As String) As String
-
-        'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
-        Select Case RawDataType.ToLower
-            Case "dot_raw_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
-            Case "dot_wiff_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
-            Case "dot_raw_folder"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & ".raw/_FUNC001.DAT"
-            Case "zipped_s_folders"
-                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
-                'Check for "0.ser" folder
-                If Not String.IsNullOrEmpty(NewSourceFolder) Then
-                    Return NewSourceFolder
-                Else
-                    Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
-                End If
-
-            Case Else
-                'Should never get this value
-                Return ""
-        End Select
-
-    End Function
-
-    Protected Sub WaitForDecon2LSFinish()
-
-        'Loops while waiting for Decon2LS to finish running
-
-        Dim CurState As DMSDecon2LS.DeconState = m_ToolObj.DeconState
-        While (CurState = DMSDecon2LS.DeconState.RUNNING_DECON) Or (CurState = DMSDecon2LS.DeconState.RUNNING_TIC)
-
-            ' Synchronize the stored Debug level with the value stored in the database
-            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-            MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-            'Update the % completion
-            CalculateNewStatus()
-
-            'Update the status file
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
-
-            'Wait 5 seconds, then get a new Decon2LS state
-            System.Threading.Thread.Sleep(5000)
-            CurState = m_ToolObj.DeconState
-            Debug.WriteLine("Current Scan: " & m_ToolObj.CurrentScan)
-            If m_DebugLevel >= 5 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
-            End If
-
-        End While
-
-    End Sub
 
     Private Function GetScanValues(ByVal strParamFileCurrent As String, ByRef MinScanValueFromParamFile As Integer, ByRef MaxScanValueFromParamFile As Integer) As Boolean
         Dim objParamFile As System.Xml.XmlDocument
@@ -701,6 +645,113 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Sub
 
+    Protected Function SpecifyInputFileName(ByVal RawDataType As String) As String
+
+        'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
+        Select Case RawDataType.ToLower
+            Case "dot_raw_files"
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
+            Case "dot_wiff_files"
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
+            Case "dot_raw_folder"
+                Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & ".raw/_FUNC001.DAT"
+            Case "zipped_s_folders"
+                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                'Check for "0.ser" folder
+                If Not String.IsNullOrEmpty(NewSourceFolder) Then
+                    Return NewSourceFolder
+                Else
+                    Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
+                End If
+
+            Case Else
+                'Should never get this value
+                Return ""
+        End Select
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of DMSDecon2LS
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("DMSDecon2LS").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+        End Try
+
+        ' Lookup the version of DeconEngine
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("DeconEngine").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+        End Try
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DMSDecon2LS.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DeconEngine.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    Protected Sub WaitForDecon2LSFinish()
+
+        'Loops while waiting for Decon2LS to finish running
+
+        Dim CurState As DMSDecon2LS.DeconState = m_ToolObj.DeconState
+        While (CurState = DMSDecon2LS.DeconState.RUNNING_DECON) Or (CurState = DMSDecon2LS.DeconState.RUNNING_TIC)
+
+            ' Synchronize the stored Debug level with the value stored in the database
+            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+            MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+            'Update the % completion
+            CalculateNewStatus()
+
+            'Update the status file
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
+
+            'Wait 5 seconds, then get a new Decon2LS state
+            System.Threading.Thread.Sleep(5000)
+            CurState = m_ToolObj.DeconState
+            Debug.WriteLine("Current Scan: " & m_ToolObj.CurrentScan)
+            If m_DebugLevel >= 5 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
+            End If
+
+        End While
+
+    End Sub
 
     Private Function WriteTempParamFile(ByVal strParamFile As String, ByVal strParamFileTemp As String, ByVal NewMinScanValue As Integer, ByRef NewMaxScanValue As Integer) As Boolean
         Dim objParamFile As System.Xml.XmlDocument

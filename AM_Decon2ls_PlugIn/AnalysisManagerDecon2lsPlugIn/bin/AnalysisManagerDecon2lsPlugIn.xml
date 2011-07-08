@@ -12,6 +12,11 @@ AnalysisManagerDecon2lsPlugIn
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsBase.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsBase.WriteTempParamFileUpdateElementValue(System.Xml.XmlDocument@,System.String,System.String,System.String)">
 	<summary>
  Looks for the section specified by parameter XPathForSection.  If found, updates its value to NewElementValue.  If not found, tries to add a new node with name ElementName

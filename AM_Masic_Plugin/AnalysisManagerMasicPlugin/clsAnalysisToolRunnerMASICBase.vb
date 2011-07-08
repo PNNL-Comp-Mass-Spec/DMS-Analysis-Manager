@@ -107,7 +107,11 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         Dim StepResult As IJobParams.CloseOutType
 
-        ' Reset this variable
+        'Call base class for initial setup
+        MyBase.RunTool()
+
+        ' Store the MASIC version info in the database
+        StoreToolVersionInfo()
 
         'Start the job timer
         m_StartTime = System.DateTime.Now
@@ -384,6 +388,47 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        Dim strMASICExePath As String = m_mgrParams.GetParam("masicprogloc")
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of MASIC
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strMASICExePath)
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MASIC: " & ex.Message)
+        End Try
+
+        ' Store path to MASIC.exe in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(strMASICExePath))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

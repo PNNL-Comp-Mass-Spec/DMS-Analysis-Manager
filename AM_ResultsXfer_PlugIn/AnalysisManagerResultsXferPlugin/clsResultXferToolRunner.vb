@@ -43,6 +43,9 @@ Public Class clsResultXferToolRunner
 		'Call base class for initial setup
 		MyBase.RunTool()
 
+        ' Store the AnalysisManager version info in the database
+        StoreToolVersionInfo()
+
         ' Transfer the results
 		Result = PerformResultsXfer()
 		If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -215,7 +218,61 @@ Public Class clsResultXferToolRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-	End Function
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of the Analysis Manager
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerProg").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerProg: " & ex.Message)
+        End Try
+
+        ' Lookup the version of AnalysisManagerResultsXferPlugin
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerResultsXferPlugin").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerResultsXferPlugin: " & ex.Message)
+        End Try
+
+        ' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AnalysisManagerProg.exe")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AnalysisManagerResultsXferPlugin.dll")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
 #End Region
 
 End Class

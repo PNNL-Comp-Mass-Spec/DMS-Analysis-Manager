@@ -24,19 +24,11 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
     Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
     Protected WithEvents CmdRunner As clsRunDosProgram
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor PRIDE_MzXml log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    'Dim WithEvents m_StatFileWatch As FileSystemWatcher
-    'Protected m_XtSetupFile As String = "default_input.xml"
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
 #End Region
 
 #Region "Methods"
     ''' <summary>
-    ''' Runs DTA_Refinery tool
+    ''' Runs MSDataFileTrimmer tool
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -45,7 +37,12 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Dim result As IJobParams.CloseOutType
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the MSDataFileTrimmer version info in the database
+        StoreToolVersionInfo()
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
 
@@ -56,7 +53,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         ' verify that program file exists
-        ' DTARefineryLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
+        ' progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
         Dim progLoc As String = m_mgrParams.GetParam("MSDataFileTrimmerprogloc")
         If Not System.IO.File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager"
@@ -165,6 +162,33 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
     End Sub
 
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
@@ -184,31 +208,6 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
     End Sub
 
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
-
-    ''Watches the DTA_Refinery status file and reports changes
-
-    ''Setup
-    'm_StatFileWatch = New FileSystemWatcher
-    'With m_StatFileWatch
-    '	.BeginInit()
-    '	.Path = DirToWatch
-    '	.IncludeSubdirectories = False
-    '	.Filter = FileToWatch
-    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-    '	.EndInit()
-    'End With
-
-    ''Start monitoring
-    'm_StatFileWatch.EnableRaisingEvents = True
-
-    '	End Sub
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
 #End Region
 
 End Class

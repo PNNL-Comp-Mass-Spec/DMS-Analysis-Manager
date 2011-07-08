@@ -69,6 +69,11 @@ AnalysisManagerInSpecTPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.mSearchLogFileWatcher_Changed(System.Object,System.IO.FileSystemEventArgs)">
 	<summary>
  Event handler for mSearchLogFileWatcher.Changed event

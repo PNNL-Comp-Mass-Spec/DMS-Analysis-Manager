@@ -37,6 +37,11 @@ AnalysisManagerMsXmlGenPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.MSXmlGenReadW_LoopWaiting">
 	<summary>
  Event handler for MSXmlGenReadW.LoopWaiting event

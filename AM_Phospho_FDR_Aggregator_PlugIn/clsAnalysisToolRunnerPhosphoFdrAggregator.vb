@@ -24,14 +24,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Protected Const PROGRESS_PCT_PHOSPHO_FDR_COMPLETE As Single = 99
 
     Protected WithEvents CmdRunner As clsRunDosProgram
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor PhosphoFdrAggregator log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    'Dim WithEvents m_StatFileWatch As FileSystemWatcher
-    'Protected m_XtSetupFile As String = "default_input.xml"
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
 #End Region
 
 #Region "Methods"
@@ -46,7 +38,12 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Dim result As IJobParams.CloseOutType
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the AScore version info in the database
+        StoreToolVersionInfo()
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running AScore")
 
@@ -238,6 +235,33 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     End Sub
 
     ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("AScoreprogloc")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+
+    ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
@@ -256,31 +280,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Sub
 
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
-
-    ''Watches the DTA_Refinery status file and reports changes
-
-    ''Setup
-    'm_StatFileWatch = New FileSystemWatcher
-    'With m_StatFileWatch
-    '	.BeginInit()
-    '	.Path = DirToWatch
-    '	.IncludeSubdirectories = False
-    '	.Filter = FileToWatch
-    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-    '	.EndInit()
-    'End With
-
-    ''Start monitoring
-    'm_StatFileWatch.EnableRaisingEvents = True
-
-    '	End Sub
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
 #End Region
 
 End Class

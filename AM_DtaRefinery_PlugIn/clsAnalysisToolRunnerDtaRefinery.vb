@@ -47,7 +47,12 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Store the DTARefinery and X!Tandem version info in the database
+        StoreToolVersionInfo()
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -173,6 +178,40 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
 
     End Sub
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        Dim ioDtaRefineryFileInfo As New System.IO.FileInfo(m_mgrParams.GetParam("DTARefineryLoc"))
+
+        If ioDtaRefineryFileInfo.Exists Then
+            ioToolFiles.Add(ioDtaRefineryFileInfo)
+
+            Dim strXTandemModuleLoc As String = System.IO.Path.Combine(ioDtaRefineryFileInfo.DirectoryName, "aux_xtandem_module\tandem_5digit_precision.exe")
+            ioToolFiles.Add(New System.IO.FileInfo(strXTandemModuleLoc))
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
 
     ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it

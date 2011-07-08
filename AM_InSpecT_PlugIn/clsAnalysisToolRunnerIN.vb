@@ -99,11 +99,16 @@ Public Class clsAnalysisToolRunnerIN
         Dim strParallelizedText As String
 
         Try
+            MyBase.RunTool()
+
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.RunTool(): Enter")
             End If
 
             OrgDbName = m_jobParams.GetParam("organismDBName")
+
+            ' Store the Inspect version info in the database
+            StoreToolVersionInfo()
 
             'Start the job timer
             m_StartTime = System.DateTime.Now
@@ -636,6 +641,35 @@ Public Class clsAnalysisToolRunnerIN
         End Try
 
     End Sub
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        Dim strInspectFolder As String
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        strInspectFolder = m_mgrParams.GetParam("inspectdir")
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strInspectFolder, "inspect.exe")))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
     ''' <summary>
     ''' Event handler for mSearchLogFileWatcher.Changed event

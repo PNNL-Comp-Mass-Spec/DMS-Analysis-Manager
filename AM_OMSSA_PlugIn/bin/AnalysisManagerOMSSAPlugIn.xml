@@ -29,6 +29,11 @@ AnalysisManagerOMSSAPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member>
 </members>
 </doc>

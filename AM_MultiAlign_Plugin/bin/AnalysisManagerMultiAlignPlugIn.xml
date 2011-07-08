@@ -12,6 +12,11 @@ AnalysisManagerMultiAlignPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign.CmdRunner_LoopWaiting">
 	<summary>
  Event handler for CmdRunner.LoopWaiting event

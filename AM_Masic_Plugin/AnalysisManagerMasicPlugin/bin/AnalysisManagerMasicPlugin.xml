@@ -6,7 +6,12 @@ AnalysisManagerMasicPlugin
 </name>
 </assembly>
 <members>
-<member name="P:AnalysisManagerMasicPlugin.My.Resources.Resources.ResourceManager">
+<member name="M:AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICBase.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerMasicPlugin.My.Resources.Resources.ResourceManager">
 	<summary>
   Returns the cached ResourceManager instance used by this class.
 </summary>

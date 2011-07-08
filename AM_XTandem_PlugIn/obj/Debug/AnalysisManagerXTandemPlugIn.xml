@@ -12,6 +12,11 @@ AnalysisManagerXTandemPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ValidateCDTAFile">
 	<summary>
  Make sure the _DTA.txt file exists and has at least one spectrum in it

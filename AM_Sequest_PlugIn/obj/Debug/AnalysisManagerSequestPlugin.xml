@@ -104,6 +104,13 @@ AnalysisManagerSequestPlugin
 	<param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
 	<returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
 	<remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.HandleOutFileChange(System.String)">
+	<summary>
+ Adds newly created .Out file to Queue mOutFileCandidates
+ This queue is used to delete corresponding .DTA files as the .Out files are created
+ </summary>
+	<param name="OutFileName"></param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.#ctor">
 	<summary>
  Constructor
@@ -146,6 +153,14 @@ AnalysisManagerSequestPlugin
 	<param name="DSName">Dataset name</param>
 	<param name="JobNum">Job number</param>
 	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the Sequest tool version info in the database
+ If strOutFilePath is defined, then looks up the specific Sequest version using the given .Out file
+ Also records the file date of the Sequest Program .exe
+ </summary>
+	<param name="strOutFilePath"></param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ValidateDTAFiles">
 	<summary>

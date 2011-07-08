@@ -39,7 +39,9 @@ Public Class clsAnalysisToolRunnerLCMSFF
         Dim blnSuccess As Boolean
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder")
 
@@ -61,6 +63,9 @@ Public Class clsAnalysisToolRunnerLCMSFF
             End If            
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' Store the FeatureFinder version info in the database
+        StoreToolVersionInfo(progLoc)
 
         ' Set up and execute a program runner to run the LCMS Feature Finder
         CmdStr = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"))
@@ -170,7 +175,6 @@ Public Class clsAnalysisToolRunnerLCMSFF
 
     End Sub
 
-
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
@@ -190,7 +194,113 @@ Public Class clsAnalysisToolRunnerLCMSFF
 
     End Sub
 
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strFeatureFinderProgLoc As String) As Boolean
 
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        Dim ioFeatureFinderInfo As System.IO.FileInfo
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ioFeatureFinderInfo = New System.IO.FileInfo(strFeatureFinderProgLoc)
+        If Not ioFeatureFinderInfo.Exists Then
+            Try
+                strToolVersionInfo = "Unknown"
+                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                Return False
+            End Try
+
+            Return False
+        End If
+
+        ' Lookup the version of the Feature Finder
+        StoreToolVersionInfoOneFile(strToolVersionInfo, ioFeatureFinderInfo.FullName)
+
+        ' Lookup the version of the FeatureFinder Library (in the feature finder folder)
+        Dim strFeatureFinderDllLoc As String = System.IO.Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll")
+        StoreToolVersionInfoOneFile(strToolVersionInfo, strFeatureFinderDllLoc)
+
+        ' Lookup the version of the UIMF Library (in the feature finder folder)
+        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"))
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(strFeatureFinderProgLoc))
+        ioToolFiles.Add(New System.IO.FileInfo(strFeatureFinderDllLoc))
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+
+    End Function
+
+    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strFilePath As String)
+
+        ' If folder 32BitDLLs exists below the folder defined in strFeatureFinderProgLoc, then 
+        ' preferably use the files in that folder to determine the version number.  However, only
+        ' use the files if their Last-Modified date is the same as the date of the primary files
+        '
+        ' We're doing this because the 32-bit Analysis Manager cannot use Reflection to determine version info in 64-bit compiled DLLs
+
+        Dim ioFileInfo As System.IO.FileInfo
+        Dim ioFileInfo32Bit As System.IO.FileInfo
+
+        Dim str32BitEquivalentFilePath As String
+
+        Try
+            ioFileInfo = New System.IO.FileInfo(strFilePath)
+
+            If Not ioFileInfo.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strFilePath)
+            Else
+                ' Look for a subfolder named 32BitDLLs
+                str32BitEquivalentFilePath = System.IO.Path.Combine(System.IO.Path.Combine(ioFileInfo.DirectoryName, "32BitDLLs"), ioFileInfo.Name)
+                ioFileInfo32Bit = New System.IO.FileInfo(str32BitEquivalentFilePath)
+
+                If Not ioFileInfo32Bit.Exists Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "32-bit version of the file not at: " & str32BitEquivalentFilePath & "; 64-bit version info will be incomplete")
+                Else
+
+                    ' Confirm that the 64-bit and 32-bit version of the files have modification dates less than 1 minute apart
+
+                    If Math.Abs(ioFileInfo32Bit.LastWriteTime.Subtract(ioFileInfo.LastWriteTime).TotalMinutes) <= 1 Then
+                        ioFileInfo = ioFileInfo32Bit
+                    Else
+                        Dim strMessage As String
+                        strMessage = "32-bit version of " & ioFileInfo.Name & " has a modification time more than 1 minute away from the 64-bit version; " & _
+                                     "32-bit=" & ioFileInfo32Bit.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " vs. " & _
+                                     "64-bit=" & ioFileInfo.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT)
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+                    End If
+                End If
+            End If
+
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
+        End Try
+
+
+    End Sub
 #End Region
 
 End Class

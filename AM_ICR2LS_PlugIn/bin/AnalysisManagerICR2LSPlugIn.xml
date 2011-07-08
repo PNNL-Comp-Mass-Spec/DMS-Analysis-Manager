@@ -14,6 +14,11 @@ AnalysisManagerICR2LSPlugIn
 	<param name="strFolderPath">Folder to examine</param>
 	<param name="strDatasetName">Dataset name</param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants)">
 	<summary>
  Starts ICR-2LS by running the .Exe at the command line

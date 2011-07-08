@@ -15,6 +15,8 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
+    Protected Const COMPASS_XPORT As String = "CompassXport.exe"
+
     Protected WithEvents mCompassXportRunner As clsCompassXportRunner
 
 #End Region
@@ -57,9 +59,13 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         ' Set this to success for now
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
+        'Do the base class stuff
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-        'Start the job timer
-        m_StartTime = System.DateTime.Now
+        ' Store the CompassXport version info in the database
+        StoreToolVersionInfo()
 
         eResult = CreateMSXmlFile()
         If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -157,7 +163,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
         Dim blnSuccess As Boolean
 
-        If msXmlGenerator.ToLower = "CompassXport.exe".ToLower() Then
+        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
             CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc")
 
             If String.IsNullOrEmpty(CompassXportProgramPath) Then
@@ -199,6 +205,38 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically CompassXport.exe
+        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
+            ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("CompassXportLoc")))
+        Else
+            ' Invalid value for MSXMLGenerator
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

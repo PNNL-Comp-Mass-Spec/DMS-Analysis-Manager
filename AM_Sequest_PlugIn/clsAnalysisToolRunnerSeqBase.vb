@@ -482,6 +482,83 @@ Public Class clsAnalysisToolRunnerSeqBase
 	End Function
 
     ''' <summary>
+    ''' Stores the Sequest tool version info in the database
+    ''' If strOutFilePath is defined, then looks up the specific Sequest version using the given .Out file
+    ''' Also records the file date of the Sequest Program .exe
+    ''' </summary>
+    ''' <param name="strOutFilePath"></param>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strOutFilePath As String) As Boolean
+
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        Dim strToolVersionInfo As String = String.Empty
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Lookup the version of the Param file generator
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("ParamFileGenerator").GetName
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for ParamFileGenerator: " & ex.Message)
+        End Try
+
+        ' Lookup the version of Sequest using the .Out file
+        Try
+            If Not String.IsNullOrEmpty(strOutFilePath) Then
+
+                Dim srOutFile As System.IO.StreamReader
+                Dim strLineIn As String
+
+                srOutFile = New System.IO.StreamReader(New System.IO.FileStream(strOutFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                Do While srOutFile.Peek >= 0
+                    strLineIn = srOutFile.ReadLine()
+                    If Not String.IsNullOrEmpty(strLineIn) Then
+                        strLineIn = strLineIn.Trim()
+                        If strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()) Then
+                            strToolVersionInfo = strLineIn
+
+                            If m_DebugLevel >= 2 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest Version: " & strToolVersionInfo)
+                            End If
+
+                            Exit Do
+                        End If
+                    End If
+                Loop
+
+                srOutFile.Close()
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception parsing .Out file in StoreToolVersionInfo: " & ex.Message)
+        End Try
+
+        ' Store the path to the Sequest .Exe in ioToolFiles
+        Try
+            ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("seqprogloc")))
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception adding Sequest .Exe to ioToolFiles in StoreToolVersionInfo: " & ex.Message)
+        End Try
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
     ''' Make sure at least one .DTA file exists
     ''' Also makes sure at least one of the .DTA files has data
     ''' </summary>
