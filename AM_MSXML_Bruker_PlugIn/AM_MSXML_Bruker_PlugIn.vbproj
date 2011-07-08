@@ -97,10 +97,9 @@
     <Compile Include="clsAnalysisResourcesMSXMLBruker.vb" />
     <Compile Include="clsAnalysisToolRunnerMSXMLBruker.vb" />
     <Compile Include="clsCompassXportRunner.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="My Project\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
