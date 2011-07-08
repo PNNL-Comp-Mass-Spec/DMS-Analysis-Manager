@@ -20,6 +20,11 @@ Namespace AnalysisManagerBase
         'Base class for analysis tool runner
         '*********************************************************************************************************
 
+#Region "Constants"
+        Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"
+        Protected Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
+#End Region
+
 #Region "Module variables"
         'status tools
         Protected m_StatusTools As IStatusFile
@@ -162,6 +167,7 @@ Namespace AnalysisManagerBase
 
         ''' <summary>
         ''' Runs the analysis tool
+        ''' Major work is performed by overrides
         ''' </summary>
         ''' <returns>CloseoutType enum representing completion status</returns>
         ''' <remarks></remarks>
@@ -170,10 +176,8 @@ Namespace AnalysisManagerBase
             ' Synchronize the stored Debug level with the value stored in the database
             GetCurrentMgrSettingsFromDB()
 
-            'Runs the job. Major work is performed by overrides
-
-            'Make log entry (both locally and in the DB)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+            'Make log entry
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
             'Start the job timer
             m_StartTime = System.DateTime.Now()
@@ -533,6 +537,148 @@ Namespace AnalysisManagerBase
             Else
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
+
+        End Function
+
+        Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
+            Dim swToolVersionFile As System.IO.StreamWriter
+            Dim strToolVersionFilePath As String
+
+            Try
+                strToolVersionFilePath = System.IO.Path.Combine(strFolderPath, "Tool_Version_Info_" & m_jobParams.GetParam("StepTool") & ".txt")
+
+                swToolVersionFile = New System.IO.StreamWriter(New System.IO.FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+
+                swToolVersionFile.WriteLine("Date: " & System.DateTime.Now().ToString(DATE_TIME_FORMAT))
+                swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
+                swToolVersionFile.WriteLine("Job: " & m_JobNum)
+                swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("Step"))
+                swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
+                swToolVersionFile.WriteLine("ToolVersionInfo:")
+
+                swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", ControlChars.NewLine))
+                swToolVersionFile.Close()
+
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)
+            End Try
+
+        End Function
+
+        ''' <summary>
+        ''' Communicates with database to record the tool version(s) for the current step task
+        ''' </summary>
+        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        ''' <returns>True for success, False for failure</returns>
+        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
+            Return SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
+        End Function
+
+        ''' <summary>
+        ''' Communicates with database to record the tool version(s) for the current step task
+        ''' </summary>
+        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        ''' <returns>True for success, False for failure</returns>
+        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+                                                  ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo)) As Boolean
+
+            Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
+        End Function
+
+        ''' <summary>
+        ''' Communicates with database to record the tool version(s) for the current step task
+        ''' </summary>
+        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        ''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+        ''' <returns>True for success, False for failure</returns>
+        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+                                                  ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo), _
+                                                  ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
+
+            Dim strExeInfo As String = String.Empty
+            Dim strToolVersionInfoCombined As String
+
+            Dim Outcome As Boolean = False
+            Dim ResCode As Integer
+
+            If Not ioToolFiles Is Nothing Then
+
+                For Each ioFileInfo As System.IO.FileInfo In ioToolFiles
+                    Try
+                        If ioFileInfo.Exists Then
+                            strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
+
+                            If m_DebugLevel >= 2 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
+                            End If
+
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
+                        End If
+
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
+                    End Try
+                Next
+            End If
+
+            ' Append the .Exe info to strToolVersionInfo
+            If String.IsNullOrEmpty(strExeInfo) Then
+                strToolVersionInfoCombined = String.Copy(strToolVersionInfo)
+            Else
+                strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo)
+            End If
+
+            If blnSaveToolVersionTextFile Then
+                SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined)
+            End If
+
+            'Setup for execution of the stored procedure
+            Dim MyCmd As New System.Data.SqlClient.SqlCommand
+            With MyCmd
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = SP_NAME_SET_TASK_TOOL_VERSION
+
+                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+                .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
+                .Parameters.Item("@job").Direction = ParameterDirection.Input
+                .Parameters.Item("@job").Value = CInt(m_jobParams.GetParam("Job"))
+
+                .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
+                .Parameters.Item("@step").Direction = ParameterDirection.Input
+                .Parameters.Item("@step").Value = CInt(m_jobParams.GetParam("Step"))
+
+                .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 256))
+                .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
+                .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
+            End With
+
+            Dim objAnalysisTask As clsAnalysisJob
+            Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
+
+            objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
+
+            'Execute the SP (retry the call up to 4 times)
+            ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
+
+            objAnalysisTask = Nothing
+
+            If ResCode = 0 Then
+                Outcome = True
+            Else
+                Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                Outcome = False
+            End If
+
+            Return Outcome
 
         End Function
 

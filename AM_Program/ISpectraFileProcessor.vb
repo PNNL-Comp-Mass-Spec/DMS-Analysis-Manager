@@ -69,6 +69,11 @@ Namespace AnalysisManagerBase
         Property DebugLevel() As Integer
 
         ''' <summary>
+        ''' Path to the program used to create .DTA files
+        ''' </summary>
+        ReadOnly Property DtaToolNameLoc() As String
+
+        ''' <summary>
         ''' Count of spectra files that have been created
         ''' </summary>
         ReadOnly Property SpectraFileCount() As Integer

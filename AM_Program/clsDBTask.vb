@@ -213,11 +213,11 @@ Namespace AnalysisManagerBase
 		''' <param name="ConnStr">Db connection string</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String) As Integer
+        Public Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String) As Integer
 
-			Return ExecuteSP(SpCmd, Nothing, ConnStr, DEFAULT_SP_RETRY_COUNT)
+            Return ExecuteSP(SpCmd, Nothing, ConnStr, DEFAULT_SP_RETRY_COUNT)
 
-		End Function
+        End Function
 
 		''' <summary>
 		''' Method for executing a db stored procedure, assuming no data table is returned
@@ -227,11 +227,11 @@ Namespace AnalysisManagerBase
 		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
+        Public Function ExecuteSP(ByRef SpCmd As SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
 
-			Return ExecuteSP(SpCmd, Nothing, ConnStr, MaxRetryCount)
+            Return ExecuteSP(SpCmd, Nothing, ConnStr, MaxRetryCount)
 
-		End Function
+        End Function
 
 		''' <summary>
 		''' Method for executing a db stored procedure if a data table is to be returned; will retry the call to the procedure up to DEFAULT_SP_RETRY_COUNT=3 times
@@ -241,9 +241,9 @@ Namespace AnalysisManagerBase
 		''' <param name="ConnStr">Db connection string</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String) As Integer
-			Return ExecuteSP(SpCmd, OutTable, ConnStr, DEFAULT_SP_RETRY_COUNT)
-		End Function
+        Public Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String) As Integer
+            Return ExecuteSP(SpCmd, OutTable, ConnStr, DEFAULT_SP_RETRY_COUNT)
+        End Function
 
 		''' <summary>
 		''' Method for executing a db stored procedure if a data table is to be returned
@@ -254,19 +254,19 @@ Namespace AnalysisManagerBase
 		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
 		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 		''' <remarks></remarks>
-		Protected Overloads Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
+        Public Function ExecuteSP(ByRef SpCmd As SqlCommand, ByRef OutTable As DataTable, ByVal ConnStr As String, ByVal MaxRetryCount As Integer) As Integer
 
-			Dim ResCode As Integer = -9999	'If this value is in error msg, then exception occurred before ResCode was set
-			Dim ErrMsg As String
-			Dim MyTimer As New System.Diagnostics.Stopwatch
-			Dim RetryCount As Integer = MaxRetryCount
+            Dim ResCode As Integer = -9999  'If this value is in error msg, then exception occurred before ResCode was set
+            Dim ErrMsg As String
+            Dim MyTimer As New System.Diagnostics.Stopwatch
+            Dim RetryCount As Integer = MaxRetryCount
             Dim blnDeadlockOccurred As Boolean
 
-			If RetryCount < 1 Then
-				RetryCount = 1
-			End If
+            If RetryCount < 1 Then
+                RetryCount = 1
+            End If
 
-			m_ErrorList.Clear()
+            m_ErrorList.Clear()
             While RetryCount > 0    'Multiple retry loop for handling SP execution failures
                 blnDeadlockOccurred = False
                 Try
@@ -314,7 +314,7 @@ Namespace AnalysisManagerBase
                 End If
             End While
 
-			If RetryCount < 1 Then
+            If RetryCount < 1 Then
                 'Too many retries, log and return error
                 ErrMsg = "Excessive retries"
                 If blnDeadlockOccurred Then
@@ -327,11 +327,11 @@ Namespace AnalysisManagerBase
                 Else
                     Return RET_VAL_EXCESSIVE_RETRIES
                 End If
-			End If
+            End If
 
-			Return ResCode
+            Return ResCode
 
-		End Function
+        End Function
 
 		''' <summary>
 		''' Debugging routine for printing SP calling params

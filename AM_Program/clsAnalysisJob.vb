@@ -25,7 +25,7 @@ Namespace AnalysisManagerBase
 		'*********************************************************************************************************
 
 #Region "Constants"
-		Protected Const SP_NAME_SET_COMPLETE As String = "SetStepTaskComplete"
+        Protected Const SP_NAME_SET_COMPLETE As String = "SetStepTaskComplete"
         Protected Const SP_NAME_REQUEST_TASK As String = "RequestStepTaskXML" '"RequestStepTask"
 #End Region
 
@@ -320,30 +320,43 @@ Namespace AnalysisManagerBase
             With MyCmd
                 .CommandType = CommandType.StoredProcedure
                 .CommandText = SpName
+
                 .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
                 .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
                 .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
+
                 .Parameters.Item("@job").Direction = ParameterDirection.Input
                 .Parameters.Item("@job").Value = CInt(m_JobParams("Job"))
+
                 .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
                 .Parameters.Item("@step").Direction = ParameterDirection.Input
                 .Parameters.Item("@step").Value = CInt(m_JobParams("Step"))
+
                 .Parameters.Add(New SqlClient.SqlParameter("@completionCode", SqlDbType.Int))
                 .Parameters.Item("@completionCode").Direction = ParameterDirection.Input
                 .Parameters.Item("@completionCode").Value = CompCode
+
                 .Parameters.Add(New SqlClient.SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
                 .Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
                 .Parameters.Item("@completionMessage").Value = CompMsg
+
                 .Parameters.Add(New SqlClient.SqlParameter("@evaluationCode", SqlDbType.Int))
                 .Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
                 .Parameters.Item("@evaluationCode").Value = EvalCode
+
                 .Parameters.Add(New SqlClient.SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
                 .Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
                 .Parameters.Item("@evaluationMessage").Value = EvalMsg
+
                 .Parameters.Add(New SqlClient.SqlParameter("@organismDBName", SqlDbType.VarChar, 64))
                 .Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
-                .Parameters.Item("@organismDBName").Value = CStr(IIf(m_JobParams.ContainsKey("generatedFastaName"), _
-                 m_JobParams.Item("generatedFastaName"), ""))
+
+                If m_JobParams.ContainsKey("generatedFastaName") Then
+                    .Parameters.Item("@organismDBName").Value = m_JobParams.Item("generatedFastaName")
+                Else
+                    .Parameters.Item("@organismDBName").Value = String.Empty
+                End If
+
             End With
 
             'Execute the SP (retry the call up to 20 times)
@@ -361,7 +374,7 @@ Namespace AnalysisManagerBase
             Return Outcome
 
         End Function
-
+     
         ''' <summary>
         ''' Uses the "ToolName" and "StepTool" entries in m_jobParams to generate the tool name for the current analysis job
         ''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
