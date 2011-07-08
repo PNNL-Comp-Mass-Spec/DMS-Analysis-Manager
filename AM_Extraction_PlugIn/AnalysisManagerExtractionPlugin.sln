@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerExtractionPlugin", "AnalysisManagerExtractionPlugin\AnalysisManagerExtractionPlugin.vbproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
 Global

@@ -47,10 +47,14 @@ Public Class clsExtractToolRunner
 
         Dim blnProcessingError As Boolean
 
-		'Call base class for initial setup
-		MyBase.RunTool()
-
         Try
+
+            'Call base class for initial setup
+            MyBase.RunTool()
+
+            ' Store the AnalysisManager version info in the database
+            StoreToolVersionInfo()
+
             ' Make sure clsGlobal.m_Completions_Msg is empty
             clsGlobal.m_Completions_Msg = String.Empty
 
@@ -401,7 +405,21 @@ Public Class clsExtractToolRunner
 
         blnIgnorePeptideProphetErrors = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideProphetErrors"))
 
-        m_PeptideProphet = New clsPeptideProphetWrapper
+        Dim progLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
+
+        ' verify that program file exists
+        If Not System.IO.File.Exists(progLoc) Then
+            If progLoc.Length = 0 Then
+                m_message = "Manager parameter PeptideProphetRunnerProgLoc is not defined in the Manager Control DB"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Else
+                m_message = "Cannot find PeptideProphetRunner program file"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        m_PeptideProphet = New clsPeptideProphetWrapper(progLoc)
 
         If m_DebugLevel >= 3 Then
             Msg = "clsExtractToolRunner.RunPeptideProphet(); Starting Peptide Prophet"
@@ -456,7 +474,8 @@ Public Class clsExtractToolRunner
         For intFileIndex = 0 To strFileList.Length - 1
             m_PeptideProphet.InputFile = strFileList(intFileIndex)
             m_PeptideProphet.Enzyme = "tryptic"
-            m_PeptideProphet.OutputFilePath = m_WorkDir
+            m_PeptideProphet.OutputFolderPath = m_WorkDir
+            m_PeptideProphet.DebugLevel = m_DebugLevel
 
             fiSynFile = New System.IO.FileInfo(strFileList(intFileIndex))
             strSynFileNameAndSize = fiSynFile.Name & " (file size = " & (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") & " MB"
@@ -480,7 +499,7 @@ Public Class clsExtractToolRunner
             If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 
                 ' Make sure the Peptide Prophet output file was actually created
-                strPepProphetOutputFilePath = System.IO.Path.Combine(m_PeptideProphet.OutputFilePath, _
+                strPepProphetOutputFilePath = System.IO.Path.Combine(m_PeptideProphet.OutputFolderPath, _
                                                                 System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
                                                                 PEPPROPHET_RESULT_FILE_SUFFIX)
 
@@ -530,7 +549,7 @@ Public Class clsExtractToolRunner
                 ' We now need to recombine the peptide prophet result files
 
                 ' Update strFileList() to have the peptide prophet result file names
-                strBaseName = System.IO.Path.Combine(m_PeptideProphet.OutputFilePath, System.IO.Path.GetFileNameWithoutExtension(SynFile))
+                strBaseName = System.IO.Path.Combine(m_PeptideProphet.OutputFolderPath, System.IO.Path.GetFileNameWithoutExtension(SynFile))
 
                 For intFileIndex = 0 To strFileList.Length - 1
                     strFileList(intFileIndex) = strBaseName & "_part" & (intFileIndex + 1).ToString & PEPPROPHET_RESULT_FILE_SUFFIX
@@ -848,42 +867,98 @@ Public Class clsExtractToolRunner
 
     End Function
 
-    '''' <summary>
-    '''' Copies extraction results from working directory to results folder in storage server transfer folder
-    '''' </summary>
-    '''' <returns>IJobParams.CloseOutType representing success or failure</returns>
-    '''' <remarks></remarks>
-    'Protected Function DeliverResults() As IJobParams.CloseOutType
 
-    '	Dim Msg As String
-    '	Dim FileToCopy As String = ""
-    '	Dim SourceDir As String = m_WorkDir
-    '	Dim TargetDir As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))
-    '	TargetDir = Path.Combine(TargetDir, m_jobParams.GetParam("OutputFolderName"))
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
 
-    '	'Verify target directory exists
-    '	If Not Directory.Exists(TargetDir) Then
-    '		Msg = "clsExtractToolRunner.DeliverResults(); Target directory " & TargetDir & " not found"
-    '		m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-    '		Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-    '	End If
+        Dim strToolVersionInfo As String = String.Empty
+        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 
-    '	'Copy results from working directory to results folder
-    '	Dim FilesToCopy() As String = Directory.GetFiles(SourceDir)
-    '	Try
-    '		For Each FileToCopy In FilesToCopy
-    '			File.Copy(FileToCopy, Path.Combine(TargetDir, Path.GetFileName(FileToCopy)))
-    '		Next
-    '	Catch ex As System.Exception
-    '		Msg = "clsExtractToolRunner.DeliverResults(); Exception copying file " & FileToCopy & ": " & ex.Message 
-    '		m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-    '		Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-    '	End Try
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
 
-    '	'Copy was successful, so return
-    '	Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        ' Lookup the version of the PeptideHitResultsProcessor
+        Try
+            Dim oAssemblyName As System.Reflection.AssemblyName
+            oAssemblyName = System.Reflection.Assembly.Load("PeptideHitResultsProcessor").GetName
 
-    'End Function
+            Dim strNameAndVersion As String
+            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
+        End Try
+
+
+        If m_jobParams.GetParam("ResultType") = "Peptide_Hit" Then
+            'Sequest result type
+
+            ' Lookup the version of the PeptideFileExtractor
+            Try
+                Dim oAssemblyName As System.Reflection.AssemblyName
+                oAssemblyName = System.Reflection.Assembly.Load("PeptideFileExtractor").GetName
+
+                Dim strNameAndVersion As String
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+            Catch ex As System.Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
+            End Try
+    
+            Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
+            Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
+
+            If ioPeptideProphetRunner.Exists() Then
+                ' Lookup the version of the PeptideProphetRunner
+                Try
+                    Dim oAssemblyName As System.Reflection.AssemblyName
+                    oAssemblyName = System.Reflection.Assembly.LoadFrom(ioPeptideProphetRunner.FullName).GetName
+
+                    Dim strNameAndVersion As String
+                    strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                    strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+                Catch ex As System.Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideProphetRunner: " & ex.Message)
+                End Try
+
+                ' Lookup the version of the PeptideProphetLibrary
+                Try
+                    Dim oAssemblyName As System.Reflection.AssemblyName
+                    Dim strDLLPath As String = System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll")
+                    oAssemblyName = System.Reflection.Assembly.LoadFrom(strDLLPath).GetName
+
+                    Dim strNameAndVersion As String
+                    strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                    strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+                Catch ex As System.Exception
+                    ' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
+                    '  <startup useLegacyV2RuntimeActivationPolicy="true">
+                    '    <supportedRuntime version="v4.0" />
+                    '  </startup>
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideProphetLibrary: " & ex.Message)
+                End Try
+            End If
+
+
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
 #End Region
 
 #Region "Event handlers"

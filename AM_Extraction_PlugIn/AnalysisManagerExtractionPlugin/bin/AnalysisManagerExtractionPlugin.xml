@@ -85,6 +85,24 @@ AnalysisManagerExtractionPlugin
 	<param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
 	<returns>True if success, false if failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsExtractToolRunner.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerExtractionPlugin.My.Resources.Resources.ResourceManager">
+	<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:AnalysisManagerExtractionPlugin.My.Resources.Resources.Culture">
+	<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="T:AnalysisManagerExtractionPlugin.My.Resources.Resources">
+	<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams)">
 	<summary>
  Constructor
@@ -110,6 +128,11 @@ AnalysisManagerExtractionPlugin
  Makes flat text file from PeptideSearchResultsFileName
  </summary>
 	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideProphetWrapper.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
 	<remarks></remarks>
 </member>
 </members>
