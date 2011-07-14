@@ -140,6 +140,11 @@ Public Class clsAnalysisToolRunnerIN
             mInspectSearchLogFilePath = System.IO.Path.Combine(m_WorkDir, "InspectSearchLog" & strFileNameAdder & ".txt")
             mInspectConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "InspectConsoleOutput" & strFileNameAdder & ".txt")
 
+            ' Make sure the _DTA.txt file is valid
+            If Not ValidateCDTAFile(mInspectConcatenatedDtaFilePath) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            End If
+
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running " & strParallelizedText & " inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
             End If
@@ -668,6 +673,50 @@ Public Class clsAnalysisToolRunnerIN
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
+
+    End Function
+
+
+    ''' <summary>
+    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
+    ''' </summary>
+    ''' <returns>True if success; false if failure</returns>
+    ''' <remarks></remarks>
+    Protected Function ValidateCDTAFile(ByVal strInputFilePath As String) As Boolean
+        Dim srReader As System.IO.StreamReader
+
+        Dim blnDataFound As Boolean = False
+
+        Try
+            If Not System.IO.File.Exists(strInputFilePath) Then
+                m_message = "_DTA.txt file not found: " & strInputFilePath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+            Do While srReader.Peek >= 0
+                If srReader.ReadLine.Trim.Length > 0 Then
+                    blnDataFound = True
+                    Exit Do
+                End If
+            Loop
+
+            srReader.Close()
+
+            If Not blnDataFound Then
+                m_message = "The _DTA.txt file is empty"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in ValidateCDTAFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+        Return blnDataFound
 
     End Function
 
