@@ -63,6 +63,9 @@ Public Class clsMSGFRunner
     Public Const XT_RESULT_TO_SEQ_MAP_SUFFIX As String = "_xt_ResultToSeqMap.txt"
     Public Const XT_SEQ_TO_PROTEIN_MAP_SUFFIX As String = "_xt_SeqToProteinMap.txt"
 
+    Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
+    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05          ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
+
     Public Enum ePeptideHitResultType
         Unknown = 0
         Sequest = 1
@@ -70,6 +73,11 @@ Public Class clsMSGFRunner
         Inspect = 3
     End Enum
 
+    Protected Structure udtSegmentFileInfoType
+        Public Segment As Integer       ' Segment number
+        Public FilePath As String       ' Full path to the file
+        Public Entries As Integer       ' Number of entries in this segment
+    End Structure
 #End Region
 
 #Region "Module variables"
@@ -77,7 +85,10 @@ Public Class clsMSGFRunner
 
     Protected mMSGFInputFilePath As String = String.Empty
     Protected mMSGFResultsFilePath As String = String.Empty
+    Protected mCurrentMSGFResultsFilePath As String = String.Empty
+
     Protected mMSGFInputFileLineCount As Integer = 0
+    Protected mMSGFLineCountPreviousSegments As Integer = 0
 
     Protected WithEvents mMSXmlGenReadW As clsMSXMLGenReadW
     Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
@@ -716,7 +727,7 @@ Public Class clsMSGFRunner
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats: " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats", ex)
             End Try
         End If
 
@@ -809,6 +820,12 @@ Public Class clsMSGFRunner
 
     End Function
 
+    Protected Function GetSegmentFilePath(ByVal strFilePath As String, ByVal intSegmentNumber As Integer) As String
+
+        Dim fiFile As System.IO.FileInfo = New System.IO.FileInfo(strFilePath)
+        Return System.IO.Path.Combine(fiFile.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & intSegmentNumber.ToString & fiFile.Extension)
+
+    End Function
 
     Protected Function LoadXTandemResultProteins(ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
 
@@ -832,7 +849,7 @@ Public Class clsMSGFRunner
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading X!Tandem protein results: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading X!Tandem protein results", ex)
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception loading X!Tandem protein results")
             blnSuccess = False
         End Try
@@ -896,7 +913,7 @@ Public Class clsMSGFRunner
             srInFile.Close()
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem result to seq map file: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem result to seq map file", ex)
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem " & XT_RESULT_TO_SEQ_MAP_SUFFIX & " file")
             Return False
         End Try
@@ -999,7 +1016,7 @@ Public Class clsMSGFRunner
             srInFile.Close()
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem seq to protein map file: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem seq to protein map file", ex)
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem " & XT_SEQ_TO_PROTEIN_MAP_SUFFIX & " file")
             Return False
         End Try
@@ -1463,7 +1480,7 @@ Public Class clsMSGFRunner
                                         End If
 
                                     Catch ex As Exception
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding static mod for " & strTargetResidues.Chars(intIndex) & " with ModMass=" & strModMass & ": " & ex.Message)
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding static mod for " & strTargetResidues.Chars(intIndex) & " with ModMass=" & strModMass, ex)
                                     End Try
                                 Next intIndex
 
@@ -1481,7 +1498,7 @@ Public Class clsMSGFRunner
                                     End If
 
                                 Catch ex As Exception
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding dynamic mod for " & strModSymbol & " with ModMass=" & strModMass & ": " & ex.Message)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding dynamic mod for " & strModSymbol & " with ModMass=" & strModMass, ex)
                                 End Try
 
                         End Select
@@ -1542,9 +1559,8 @@ Public Class clsMSGFRunner
                 End If
 
                 If System.IO.File.Exists(strFilePathSource) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & strFilePathSource & " to " & strFilePathTarget)
-
                     strFilePathTarget = System.IO.Path.Combine(m_WorkDir, strFileNameToFind)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & strFilePathSource & " to " & strFilePathTarget)
 
                     System.IO.File.Copy(strFilePathSource, strFilePathTarget, True)
 
@@ -1553,7 +1569,7 @@ Public Class clsMSGFRunner
                 End If
             End If
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck & ": " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck, ex)
             Return False
         End Try
 
@@ -1564,18 +1580,119 @@ Public Class clsMSGFRunner
 
     Protected Function RunMSGF() As Boolean
 
+        Dim intMSGFEntriesPerSegment As Integer = 0
+        Dim blnSuccess As Boolean
+        Dim blnUseSegments As Boolean = False
+        Dim strSegmentUsageMessage As String = String.Empty
+
+        intMSGFEntriesPerSegment = clsGlobal.GetJobParameter(m_jobParams, "MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFInputFileLineCount = " & mMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " & intMSGFEntriesPerSegment)
+        End If
+
+        If intMSGFEntriesPerSegment <= 1 Then
+            blnUseSegments = False
+            strSegmentUsageMessage = "Not using MSGF segments since MSGFEntriesPerSegment is <= 1"
+
+        ElseIf mMSGFInputFileLineCount <= intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
+            blnUseSegments = False
+            strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " & intMSGFEntriesPerSegment & " * " & CInt(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() & "%"
+
+        Else
+            blnUseSegments = True
+            strSegmentUsageMessage = "Using MSGF segments"
+        End If
+
+        mMSGFLineCountPreviousSegments = 0
+        m_progress = PROGRESS_PCT_MSGF_START
+
+
+        If Not blnUseSegments Then
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage)
+            End If
+
+            ' Do not use segments
+            ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
+            blnSuccess = RunMSGFWork(mMSGFInputFilePath, mMSGFResultsFilePath)
+
+        Else
+
+            Dim lstSegmentFileInfo As New System.Collections.Generic.List(Of udtSegmentFileInfoType)
+            Dim udtSegmentFile As udtSegmentFileInfoType
+            Dim lstResultFiles As System.Collections.Generic.List(Of String)
+            lstResultFiles = New System.Collections.Generic.List(Of String)
+
+            ' Split mMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
+            ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
+            blnSuccess = SplitMSGFInputFile(mMSGFInputFilePath, intMSGFEntriesPerSegment, lstSegmentFileInfo)
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage & "; segment count = " & lstSegmentFileInfo.Count)
+            End If
+
+            If blnSuccess Then
+
+                ' Call MSGF for each segment
+                For Each udtSegmentFile In lstSegmentFileInfo
+                    Dim strResultFile As String
+                    strResultFile = GetSegmentFilePath(mMSGFResultsFilePath, udtSegmentFile.Segment)
+
+                    blnSuccess = RunMSGFWork(udtSegmentFile.FilePath, strResultFile)
+
+                    If Not blnSuccess Then Exit For
+
+                    lstResultFiles.Add(strResultFile)
+                    mMSGFLineCountPreviousSegments += udtSegmentFile.Entries
+                Next
+            End If
+
+            If blnSuccess Then
+                ' Combine the results
+                blnSuccess = CombineMSGFResultFiles(mMSGFResultsFilePath, lstResultFiles)
+            End If
+
+
+            If blnSuccess Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting MSGF segment files")
+                End If
+
+                ' Delete the segment files
+                For Each udtSegmentFile In lstSegmentFileInfo
+                    Try
+                        System.IO.File.Delete(udtSegmentFile.FilePath)
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting segment file " & udtSegmentFile.FilePath, ex)
+                    End Try
+                Next
+
+                ' Delete the result files
+                For Each strResultFile As String In lstResultFiles
+                    Try
+                        System.IO.File.Delete(strResultFile)
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting segment result file " & strResultFile, ex)
+                    End Try
+                Next
+            End If
+        End If
+
+        Return blnSuccess
+    End Function
+
+    Protected Function RunMSGFWork(ByVal strInputFilePath As String, ByVal strResultsFilePath As String) As Boolean
+
         Dim CmdStr As String
         Dim intJavaMemorySize As Integer
 
-        ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
-
-        If String.IsNullOrEmpty(mMSGFInputFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mMSGFInputFilePath has not been defined; unable to continue")
+        If String.IsNullOrEmpty(strInputFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strInputFilePath has not been defined; unable to continue")
             Return False
         End If
 
-        If String.IsNullOrEmpty(mMSGFResultsFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mMSGFResultsFilePath has not been defined; unable to continue")
+        If String.IsNullOrEmpty(strResultsFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strResultsFilePath has not been defined; unable to continue")
             Return False
         End If
 
@@ -1605,17 +1722,18 @@ Public Class clsMSGFRunner
         If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF on " & System.IO.Path.GetFileName(strInputFilePath))
         End If
 
-        m_progress = PROGRESS_PCT_MSGF_START
+        mCurrentMSGFResultsFilePath = String.Copy(strResultsFilePath)
+
         m_StatusTools.CurrentOperation = "Running MSGF"
         m_StatusTools.UpdateAndWrite(m_progress)
 
         CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & MSGFLoc
-        CmdStr &= " -i " & mMSGFInputFilePath       ' Input file
+        CmdStr &= " -i " & strInputFilePath         ' Input file
         CmdStr &= " -d " & m_WorkDir                                                                ' Folder containing .mzXML file
-        CmdStr &= " -o " & mMSGFResultsFilePath     ' Output file
+        CmdStr &= " -o " & strResultsFilePath       ' Output file
 
         If m_ETDMode Then
             CmdStr &= " -m 1"   ' ETD fragmentation
@@ -1640,9 +1758,134 @@ Public Class clsMSGFRunner
         End With
 
         If Not mMSGFRunner.RunProgram(progLoc, CmdStr, "MSGF", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
             Return False
         End If
+
+        Return True
+
+    End Function
+
+    Protected Function CombineMSGFResultFiles(ByVal strMSGFOutputFilePath As String, _
+                                              ByRef lstResultFiles As System.Collections.Generic.List(Of String)) As Boolean
+
+        Try
+
+            Dim srInFile As System.IO.StreamReader
+            Dim swOutFile As System.IO.StreamWriter = Nothing
+
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
+
+            ' Create the output file
+            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+            ' Step through the input files and append the results
+            For Each strResultFile As String In lstResultFiles
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strResultFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+                intLinesRead = 0
+                Do While srInFile.Peek >= 0
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
+
+                    If intLinesRead > 1 Then
+                        swOutFile.WriteLine(strLineIn)
+                    End If
+
+                Loop
+
+                srInFile.Close()
+            Next
+
+            ' Close output file
+            swOutFile.Close()
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception combining MSGF result files", ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Function SplitMSGFInputFile(ByVal strMSGFInputFilePath As String, _
+                                          ByVal intMSGFEntriesPerSegment As Integer, _
+                                          ByRef lstSegmentFileInfo As System.Collections.Generic.List(Of udtSegmentFileInfoType)) As Boolean
+
+        Dim intLinesRead As Integer = 0
+        Dim strLineIn As String
+        Dim strHeaderLine As String = String.Empty
+
+        Dim intLineCountAllSegments As Integer = 0
+        Dim udtThisSegment As udtSegmentFileInfoType
+
+        Try
+            lstSegmentFileInfo.Clear()
+            If intMSGFEntriesPerSegment < 100 Then intMSGFEntriesPerSegment = 100
+
+            Dim srInFile As System.IO.StreamReader
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+            Dim swOutFile As System.IO.StreamWriter = Nothing
+
+            udtThisSegment.FilePath = String.Empty
+            udtThisSegment.Entries = 0
+            udtThisSegment.Segment = 0
+
+            Do While srInFile.Peek >= 0
+                strLineIn = srInFile.ReadLine()
+                intLinesRead += 1
+
+                If intLinesRead = 1 Then
+                    ' This is the header line; cache it so that we can write it out to the top of each input file
+                    strHeaderLine = String.Copy(strLineIn)
+                End If
+
+                If udtThisSegment.Segment = 0 OrElse udtThisSegment.Entries >= intMSGFEntriesPerSegment Then
+                    ' Need to create a new segment
+                    ' However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
+
+                    Dim intLineCountRemaining As Integer
+                    intLineCountRemaining = mMSGFInputFileLineCount - intLineCountAllSegments
+
+                    If udtThisSegment.Segment = 0 OrElse intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
+
+                        If udtThisSegment.Segment > 0 Then
+                            ' Close the current segment
+                            swOutFile.Close()
+                            lstSegmentFileInfo.Add(udtThisSegment)
+                        End If
+
+                        ' Initialize a new segment
+                        udtThisSegment.Segment += 1
+                        udtThisSegment.Entries = 0
+                        udtThisSegment.FilePath = GetSegmentFilePath(strMSGFInputFilePath, udtThisSegment.Segment)
+
+                        swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(udtThisSegment.FilePath, System.IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+                        ' Write the header line to the new segment
+                        swOutFile.WriteLine(strHeaderLine)
+                    End If
+                End If
+
+                If intLinesRead > 1 Then
+                    swOutFile.WriteLine(strLineIn)
+                    udtThisSegment.Entries += 1
+                    intLineCountAllSegments += 1
+                End If
+            Loop
+
+            ' Close the input and output files
+            srInFile.Close()
+            swOutFile.Close()
+            lstSegmentFileInfo.Add(udtThisSegment)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception splitting MSGF input file", ex)
+            Return False
+        End Try
 
         Return True
 
@@ -1671,7 +1914,7 @@ Public Class clsMSGFRunner
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
 
@@ -1688,8 +1931,9 @@ Public Class clsMSGFRunner
         Try
 
             If mMSGFInputFileLineCount <= 0 Then Exit Sub
+            If Not System.IO.File.Exists(strMSGFResultsFilePath) Then Exit Sub
 
-            ' Read the data from the Param file
+            ' Read the data from the results file
             srMSGFResultsFile = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
             intLineCount = 0
@@ -1702,7 +1946,7 @@ Public Class clsMSGFRunner
             srMSGFResultsFile.Close()
 
             ' Update the overall progress
-            dblProgress = intLineCount / mMSGFInputFileLineCount
+            dblProgress = (intLineCount + mMSGFLineCountPreviousSegments) / mMSGFInputFileLineCount
 
             m_progress = CSng(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblProgress)
             m_StatusTools.UpdateAndWrite(m_progress)
@@ -1711,7 +1955,7 @@ Public Class clsMSGFRunner
             ' Log errors the first 3 times they occur
             intErrorCount += 1
             If intErrorCount <= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error counting the number of lines in the MSGF results file, " & strMSGFResultsFilePath & ": " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of lines in the MSGF results file, " & strMSGFResultsFilePath, ex)
             End If
         End Try
     End Sub
@@ -1765,7 +2009,7 @@ Public Class clsMSGFRunner
 
         If System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
             ' Update the MSGF progress by counting the number of lines in the _MSGF.txt file
-            UpdateMSGFProgress(mMSGFResultsFilePath)
+            UpdateMSGFProgress(mCurrentMSGFResultsFilePath)
 
             dtLastUpdateTime = System.DateTime.Now
         End If
