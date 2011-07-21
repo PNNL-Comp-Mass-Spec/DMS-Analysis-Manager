@@ -193,7 +193,7 @@ Namespace AnalysisManagerProg
                             Exit Sub
                         End If
                         'successful delete of files in working directory, so delete the status flag file
-                        DeleteStatusFlagFile()
+                        DeleteStatusFlagFile(m_DebugLevel)
                     End If
 
                     'Verify that an error hasn't left the the system in an odd state
@@ -509,7 +509,7 @@ Namespace AnalysisManagerProg
 
                     clsGlobal.CleanWorkDir(WorkDirPath)
                     UpdateStatusIdle("Error encountered: " & ErrorMessage)
-                    clsGlobal.DeleteStatusFlagFile()
+                    clsGlobal.DeleteStatusFlagFile(m_DebugLevel)
                     Return False
                 End If
             Catch Err As Exception
@@ -519,7 +519,7 @@ Namespace AnalysisManagerProg
                 m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources")
 
                 If CleanWorkDir(WorkDirPath) Then
-                    DeleteStatusFlagFile()
+                    DeleteStatusFlagFile(m_DebugLevel)
                 Else
                     CreateErrorDeletingFilesFlagFile()
                 End If
@@ -548,7 +548,7 @@ Namespace AnalysisManagerProg
                         End If
 
                     Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Exception examining ErrorMessage: " & ex.Message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Exception examining ErrorMessage", ex)
                     End Try
 
                     blnRunToolError = True
@@ -575,7 +575,7 @@ Namespace AnalysisManagerProg
 
                 Try
                     If CleanWorkDir(WorkDirPath) Then
-                        DeleteStatusFlagFile()
+                        DeleteStatusFlagFile(m_DebugLevel)
                     Else
                         CreateErrorDeletingFilesFlagFile()
                     End If
@@ -641,7 +641,7 @@ Namespace AnalysisManagerProg
                     End Try
 
                     'Delete the status flag file
-                    DeleteStatusFlagFile()
+                    DeleteStatusFlagFile(m_DebugLevel)
 
                     ' Note that we do not need to call m_StatusTools.UpdateIdle() here since 
                     ' we called UpdateStatusIdle() just after m_AnalysisTask.CloseTask above
@@ -736,7 +736,7 @@ Namespace AnalysisManagerProg
                                         clsGlobal.AppFolderPath, _
                                         strWorkingDir)
 
-                    blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode())
+                    blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel)
 
                 Catch ex As Exception
 

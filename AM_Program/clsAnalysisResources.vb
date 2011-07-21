@@ -280,8 +280,8 @@ Namespace AnalysisManagerBase
                 If SourceFile Is Nothing Then SourceFile = InpFile
                 If SourceFile Is Nothing Then SourceFile = "??"
 
-                m_message = "Exception in CopyFileToWorkDir for " & SourceFile & ": " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "Exception in CopyFileToWorkDir for " & SourceFile
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             End Try
 
             Return False
@@ -373,8 +373,8 @@ Namespace AnalysisManagerBase
                 If SourceFile Is Nothing Then SourceFile = InpFile
                 If SourceFile Is Nothing Then SourceFile = "??"
 
-                m_message = "Exception in CopyFileToWorkDirWithRename for " & SourceFile & ": " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "Exception in CopyFileToWorkDirWithRename for " & SourceFile
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             End Try
 
         End Function
@@ -405,8 +405,8 @@ Namespace AnalysisManagerBase
                 swOutFile.Close()
 
             Catch ex As Exception
-                m_message = "Exception in CreateStoragePathInfoFile for " & strInfoFilePath & ": " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "Exception in CreateStoragePathInfoFile for " & strInfoFilePath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
 
                 Return False
             End Try
@@ -1774,7 +1774,7 @@ Namespace AnalysisManagerBase
                         m_message &= " containing file " & FileNameToFind
                     End If
                     Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("Job") & ", Dataset " & DSName
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
                 End If
 
             Catch ex As Exception
@@ -2288,8 +2288,8 @@ Namespace AnalysisManagerBase
                 End If
 
             Catch ex As Exception
-                m_message = "Exception in FindDataFile looking for: " & FileToFind & ": " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "Exception in FindDataFile looking for: " & FileToFind
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             End Try
 
             ' We'll only get here if an exception occurs
@@ -2496,7 +2496,7 @@ Namespace AnalysisManagerBase
                     Return False
                 End If
             Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDatasetLocationsFromDB: " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDatasetLocationsFromDB", ex)
                 Return False
             End Try
 
@@ -2582,7 +2582,7 @@ Namespace AnalysisManagerBase
                 blnsuccess = True
 
             Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath & ": " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath, ex)
                 blnsuccess = False
             Finally
                 DatasetInformation.Dispose()
@@ -2656,7 +2656,7 @@ Namespace AnalysisManagerBase
                 End Select
 
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " & newFilename & " from folder " & workDir & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " & newFilename & " from folder " & workDir, ex)
                 Return False
             End Try
 

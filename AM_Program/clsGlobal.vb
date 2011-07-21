@@ -199,7 +199,7 @@ Namespace AnalysisManagerBase
             ''        End If
             ''    Next
             ''Catch ex As Exception
-            ''    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultFiles(), Error deleting file " & FileToDelete & ":" & ex.Message)
+            ''    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultFiles(), Error deleting file " & FileToDelete, ex)
             ''    'Create a flag file if there was trouble deleting the files
             ''    CreateErrorDeletingFilesFlagFile()
             ''    'Even if an exception occurred, return true since the results were already copied back to the server
@@ -236,7 +236,7 @@ Namespace AnalysisManagerBase
                     End If
                 Next
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete & ":" & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
                 'Even if an exception occurred, return true since the results were already copied back to the server
                 Return True
             End Try
@@ -311,7 +311,7 @@ Namespace AnalysisManagerBase
                 Next
             Catch Ex As Exception
                 strFailureMessage = "Error deleting files in working directory"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " & strFailureMessage & " " & WorkDir & ": " & Ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " & strFailureMessage & " " & WorkDir, Ex)
                 Return False
             End Try
 
@@ -322,7 +322,7 @@ Namespace AnalysisManagerBase
                 Next
             Catch Ex As Exception
                 strFailureMessage = "Error deleting subfolder " & strCurrentSubfolder
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory: " & Ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory", Ex)
                 Return False
             End Try
 
@@ -353,12 +353,12 @@ Namespace AnalysisManagerBase
         ''' </summary>
         ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
         ''' <remarks></remarks>
-        Public Shared Function DeleteStatusFlagFile() As Boolean
+        Public Shared Function DeleteStatusFlagFile(ByVal DebugLevel As Integer) As Boolean
 
             'Deletes the job request control flag file
             Dim strFlagFilePath As String = Path.Combine(clsGlobal.AppFolderPath, FLAG_FILE_NAME)
 
-            Return DeleteFlagFile(strFlagFilePath)
+            Return DeleteFlagFile(strFlagFilePath, DebugLevel)
 
         End Function
 
@@ -367,12 +367,12 @@ Namespace AnalysisManagerBase
         ''' </summary>
         ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
         ''' <remarks></remarks>
-        Public Shared Function DeleteDeconServerFlagFile() As Boolean
+        Public Shared Function DeleteDeconServerFlagFile(ByVal DebugLevel As Integer) As Boolean
 
             'Deletes the job request control flag file
             Dim strFlagFilePath As String = Path.Combine(clsGlobal.AppFolderPath, DECON_SERVER_FLAG_FILE_NAME)
 
-            Return DeleteFlagFile(strFlagFilePath)
+            Return DeleteFlagFile(strFlagFilePath, DebugLevel)
 
         End Function
 
@@ -383,17 +383,33 @@ Namespace AnalysisManagerBase
         ''' <param name="strFlagFilePath">Full path to the file to delete</param>
         ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
         ''' <remarks></remarks>
-        Protected Shared Function DeleteFlagFile(ByVal strFlagFilePath As String) As Boolean
+        Protected Shared Function DeleteFlagFile(ByVal strFlagFilePath As String, ByVal intDebugLevel As Integer) As Boolean
 
             Try
                 If File.Exists(strFlagFilePath) Then
-                    File.Delete(strFlagFilePath)
+
+                    Try
+                        ' DeleteFileWithRetries will throw an exception if it cannot delete the file
+                        ' Thus, need to wrap it with an Exception handler
+
+                        If clsAnalysisToolRunnerBase.DeleteFileWithRetries(strFlagFilePath, intDebugLevel) Then
+                            Return True
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " & strFlagFilePath)
+                            Return False
+                        End If
+
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile", ex)
+                        Return False
+                    End Try
+
                 End If
 
                 Return True
 
-            Catch Err As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile, " & Err.Message)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile", ex)
                 Return False
             End Try
 
@@ -623,8 +639,8 @@ Namespace AnalysisManagerBase
                 If File.Exists(TestFile) Then
                     File.Delete(TestFile)
                 End If
-            Catch Err As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile, " & Err.Message)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile", ex)
             End Try
 
         End Sub
@@ -969,7 +985,7 @@ Namespace AnalysisManagerBase
             Catch ex As Exception
                 ' Ignore errors here
                 Try
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsGlobal.DetermineRecentErrorMessages: " & ex.Message)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsGlobal.DetermineRecentErrorMessages", ex)
                 Catch ex2 As Exception
                     ' Ignore errors logging the error
                 End Try

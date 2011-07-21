@@ -51,7 +51,7 @@ Public Class clsCleanupMgrErrors
 
     End Sub
 
-    Public Function AutoCleanupManagerErrors(ByVal eManagerErrorCleanupMode As eCleanupModeConstants) As Boolean
+    Public Function AutoCleanupManagerErrors(ByVal eManagerErrorCleanupMode As eCleanupModeConstants, ByVal DebugLevel As Integer) As Boolean
         Dim blnSuccess As Boolean
         Dim strFailureMessage As String = String.Empty
 
@@ -73,12 +73,12 @@ Public Class clsCleanupMgrErrors
                 End If
             Else
                 ' If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
-                blnSuccess = AnalysisManagerBase.clsGlobal.DeleteDeconServerFlagFile()
+                blnSuccess = AnalysisManagerBase.clsGlobal.DeleteDeconServerFlagFile(DebugLevel)
 
                 If Not blnSuccess Then
                     strFailureMessage = "error deleting " & AnalysisManagerBase.clsGlobal.DECON_SERVER_FLAG_FILE_NAME
                 Else
-                    blnSuccess = AnalysisManagerBase.clsGlobal.DeleteStatusFlagFile
+                    blnSuccess = AnalysisManagerBase.clsGlobal.DeleteStatusFlagFile(DebugLevel)
                     If Not blnSuccess Then
                         strFailureMessage = "error deleting " & AnalysisManagerBase.clsGlobal.FLAG_FILE_NAME
                     End If

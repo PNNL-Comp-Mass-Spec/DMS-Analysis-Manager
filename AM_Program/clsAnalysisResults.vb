@@ -191,7 +191,7 @@ Namespace AnalysisManagerBase
 
                     Catch ex As Exception
                         If ContinueOnError Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory: " & ex.Message)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory", ex)
                         Else
                             Throw ex
                         End If
@@ -302,7 +302,7 @@ Namespace AnalysisManagerBase
                     strFolderInfoFilePath = System.IO.Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
                     CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name)
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath & "': " & ex.Message)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath, ex)
                 End Try
 
                 ' Make sure the source folder exists
@@ -321,7 +321,7 @@ Namespace AnalysisManagerBase
                 End If
 
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath & ": " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath, ex)
             End Try
 
         End Sub
@@ -394,8 +394,8 @@ Namespace AnalysisManagerBase
                     End If
 
                 Catch ex As Exception
-                    Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath & ": " & ex.Message
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                    Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
                     System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))    'Wait several seconds before retrying
 
@@ -444,11 +444,11 @@ Namespace AnalysisManagerBase
                             fiFileInfo.CopyTo(strTargetFilePath, True)
                             fiFileInfo.Delete()
                         Catch ex As Exception
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " & strTargetFilePath & ": " & ex.Message)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " & strTargetFilePath, ex)
                         End Try
 
                     Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder: " & ex.Message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder", ex)
 
                     End Try
 
@@ -489,8 +489,8 @@ Namespace AnalysisManagerBase
                     blnSuccess = True
 
                 Catch ex As Exception
-                    Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath & ": " & ex.Message
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                    Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
                     System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))    'Wait several seconds before retrying
 

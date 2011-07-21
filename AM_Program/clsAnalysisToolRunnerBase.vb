@@ -795,7 +795,7 @@ Namespace AnalysisManagerBase
             'Deletes the raw data files/folders from the working directory
             Dim IsFile As Boolean = True
             Dim IsNetworkDir As Boolean = False
-            Dim FileOrFolderName As String
+            Dim FileOrFolderName As String = String.Empty
 
             Select Case RawDataType.ToLower
                 Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
@@ -916,6 +916,7 @@ Namespace AnalysisManagerBase
 
         End Sub
 
+
         ''' <summary>
         ''' Makes multiple tries to delete specified file
         ''' </summary>
@@ -923,11 +924,22 @@ Namespace AnalysisManagerBase
         ''' <returns>TRUE for success; FALSE for failure</returns>
         ''' <remarks>Raises exception if error occurs</remarks>
         Public Overridable Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
+            Return DeleteFileWithRetries(FileNamePath, m_DebugLevel)
+        End Function
+
+        ''' <summary>
+        ''' Makes multiple tries to delete specified file
+        ''' </summary>
+        ''' <param name="FileNamePath">Full path to file for deletion</param>
+        ''' <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+        ''' <returns>TRUE for success; FALSE for failure</returns>
+        ''' <remarks>Raises exception if error occurs</remarks>
+        Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer) As Boolean
 
             Dim RetryCount As Integer = 0
             Dim ErrType As AMFileNotDeletedAfterRetryException.RetryExceptionType
 
-            If m_DebugLevel > 4 Then
+            If intDebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method")
             End If
 
@@ -941,13 +953,13 @@ Namespace AnalysisManagerBase
             While RetryCount < 3
                 Try
                     File.Delete(FileNamePath)
-                    If m_DebugLevel > 4 Then
+                    If intDebugLevel > 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit")
                     End If
                     Return True
                 Catch Err1 As UnauthorizedAccessException
                     'File may be read-only. Clear read-only flag and try again
-                    If m_DebugLevel > 0 Then
+                    If intDebugLevel > 0 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR1: " & Err1.Message)
                         If Not Err1.InnerException Is Nothing Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err1.InnerException.Message)
@@ -960,7 +972,7 @@ Namespace AnalysisManagerBase
                     RetryCount += 1
                 Catch Err2 As IOException
                     'If problem is locked file, attempt to fix lock and retry
-                    If m_DebugLevel > 0 Then
+                    If intDebugLevel > 0 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR2: " & Err2.Message)
                         If Not Err2.InnerException Is Nothing Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err2.InnerException.Message)
