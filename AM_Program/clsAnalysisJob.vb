@@ -32,6 +32,7 @@ Namespace AnalysisManagerBase
 #Region "Module variables"
 		Protected m_JobParams As New StringDictionary
         Protected m_JobId As Integer
+        Protected m_TaskWasClosed As Boolean
 #End Region
 
 #Region "Methods"
@@ -46,6 +47,7 @@ Namespace AnalysisManagerBase
 
             'Ensure job parameters collection has been cleared
             m_JobParams.Clear()
+            m_TaskWasClosed = False
 
         End Sub
 
@@ -138,8 +140,10 @@ Namespace AnalysisManagerBase
 			Dim RetVal As Integer
             Dim Dt As New DataTable
             Dim Params As String
-			Dim strProductVersion As String = Application.ProductVersion
+
+            Dim strProductVersion As String = Application.ProductVersion
 			If strProductVersion Is Nothing Then strProductVersion = "??"
+            m_TaskWasClosed = False
 
 			Try
 				'Set up the command object prior to SP execution
@@ -291,9 +295,14 @@ Namespace AnalysisManagerBase
 
             If EvalMessage Is Nothing Then EvalMessage = String.Empty
 
-            If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage, m_BrokerConnStr) Then
-                MsgStr = "Error setting job complete in database, job " & m_JobId
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
+            If m_TaskWasClosed Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
+            Else
+                m_TaskWasClosed = True
+                If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage, m_BrokerConnStr) Then
+                    MsgStr = "Error setting job complete in database, job " & m_JobId
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
+                End If
             End If
 
         End Sub

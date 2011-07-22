@@ -35,10 +35,7 @@ Namespace AnalysisManagerProg
 		Private m_AnalysisTask As clsAnalysisJob
         Private WithEvents m_FileWatcher As FileSystemWatcher
 		Private m_ConfigChanged As Boolean = False
-		Private m_OneTaskPerformed As Boolean = False
-		Private m_TaskFound As Boolean = False
-		Private m_DebugLevel As Integer = 0
-		Private m_ErrorCount As Integer = 0
+        Private m_DebugLevel As Integer = 0
         Private m_Resource As IAnalysisResources
         Private m_ToolRunner As IToolRunner
         Private m_StatusTools As clsStatusFile
@@ -170,14 +167,20 @@ Namespace AnalysisManagerProg
             Dim strMessage As String
             Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.Now
 
+            Dim blnRequestJobs As Boolean = False
+            Dim blnOneTaskStarted As Boolean = False
+            Dim blnOneTaskPerformed As Boolean = False
+            Dim intErrorCount As Integer = 0
+
             Try
 
-                m_TaskFound = True
-                m_OneTaskPerformed = False
+                blnRequestJobs = True
+                blnOneTaskStarted = False
+                blnOneTaskPerformed = False
 
                 InitStatusTools()
 
-                While (LoopCount < MaxLoopCount) And m_TaskFound
+                While (LoopCount < MaxLoopCount) And blnRequestJobs
 
                     UpdateStatusIdle("No analysis jobs found")
                     If DetectErrorDeletingFilesFlagFile() Then
@@ -186,8 +189,12 @@ Namespace AnalysisManagerProg
 
                         'There was a problem deleting non result files with the last job.  Attempt to delete files again
                         If Not CleanWorkDir(strWorkingDir) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job") & "; see folder " & strWorkingDir)
-                            m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
+                            If blnOneTaskStarted Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job") & "; see folder " & strWorkingDir)
+                                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
+                            Else
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & strWorkingDir)
+                            End If
                             CreateStatusFlagFile()
                             UpdateStatusFlagFileExists()
                             Exit Sub
@@ -262,7 +269,7 @@ Namespace AnalysisManagerProg
                     End If
 
                     'Check to see if an excessive number of errors have occurred
-                    If m_ErrorCount > MAX_ERROR_COUNT Then
+                    If intErrorCount > MAX_ERROR_COUNT Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager via flag file")
 
                         ' Note: We previously called DisableManagerLocally() to update AnalysisManager.config.exe
@@ -277,10 +284,18 @@ Namespace AnalysisManagerProg
 
                     'Verify working directory properly specified and empty
                     If Not ValidateWorkingDir() Then
-                        'Working directory problem, so exit
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
-                        CreateStatusFlagFile()
-                        UpdateStatusFlagFileExists()
+                        If blnOneTaskStarted Then
+                            ' Working directory problem due to the most recently processed job
+                            ' Create ErrorDeletingFiles file and exit the program
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, creating " & ERROR_DELETING_FILES_FILENAME & "; see folder " & strWorkingDir)
+                            CreateErrorDeletingFilesFlagFile()
+                            UpdateStatusIdle("Working directory not empty")
+                        Else
+                            ' Working directory problem, so create flag file and exit
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
+                            CreateStatusFlagFile()
+                            UpdateStatusFlagFileExists()
+                        End If
                         Exit While
                     End If
 
@@ -291,24 +306,25 @@ Namespace AnalysisManagerProg
                             'No tasks found
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "No analysis jobs found")
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, "No analysis jobs found")
-                            m_TaskFound = False
-                            m_ErrorCount = 0
+                            blnRequestJobs = False
+                            intErrorCount = 0
                             UpdateStatusIdle("No analysis jobs found")
                         Case clsDBTask.RequestTaskResult.ResultError
                             'There was a problem getting the task; errors were logged by RequestTaskResult
-                            m_ErrorCount += 1
+                            intErrorCount += 1
                         Case clsDBTask.RequestTaskResult.TaskFound
-                            m_TaskFound = True
+                            blnRequestJobs = True
                             TasksStartedCount += 1
 
                             Try
+                                blnOneTaskStarted = True
                                 If DoAnalysisJob() Then
                                     ' Task succeeded; reset the sequential job failure counter
-                                    m_ErrorCount = 0
-                                    m_OneTaskPerformed = True
+                                    intErrorCount = 0
+                                    blnOneTaskPerformed = True
                                 Else
                                     'Something went wrong; errors were logged by DoAnalysisJob
-                                    m_ErrorCount += 1
+                                    intErrorCount += 1
                                 End If
 
                             Catch ex As Exception
@@ -321,7 +337,7 @@ Namespace AnalysisManagerProg
                                 ' Set the job state to failed
                                 m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob")
 
-                                m_ErrorCount += 1
+                                intErrorCount += 1
                                 m_NeedToAbortProcessing = True
 
                             End Try
@@ -369,7 +385,7 @@ Namespace AnalysisManagerProg
                     End If
                 End If
 
-                If m_OneTaskPerformed Then
+                If blnOneTaskPerformed Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "Analysis complete for all available jobs")
                 End If
 
