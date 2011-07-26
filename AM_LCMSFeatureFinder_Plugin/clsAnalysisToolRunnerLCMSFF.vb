@@ -51,16 +51,36 @@ Public Class clsAnalysisToolRunnerLCMSFF
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerLCMSFF.OperateAnalysisTool(): Enter")
         End If
 
-        ' verify that program file exists
+        ' Lookup the path to the folder that contains the LCMSFeaturefinder
         Dim progLoc As String = m_mgrParams.GetParam("LCMSFeatureFinderProgLoc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then
-                m_message = "Manager parameter LCMSFeatureFinderProgLoc is not defined in the Manager Control DB"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Else
-                m_message = "Cannot find LCMSFeatureFinder program file"
+
+        If String.IsNullOrWhiteSpace(progLoc) Then
+            m_message = "Manager parameter LCMSFeatureFinderProgLoc is not defined in the Manager Control DB"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Check whether the settings file specifies that a specific version of LCMSFeatureFinder.exe be used
+        Dim strLCMSFeatureFinderVersion As String = m_jobParams.GetParam("LCMSFeatureFinder_Version")
+
+        If Not String.IsNullOrWhiteSpace(strLCMSFeatureFinderVersion) Then
+
+            ' Specific version is defined; verify that the folder exists
+            progLoc = System.IO.Path.Combine(strLCMSFeatureFinderVersion)
+
+            If Not System.IO.Directory.Exists(progLoc) Then
+                m_message = "Version-specific LCMSFeatureFinder folder not found"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            End If            
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End If
+
+        ' Define the path to the .Exe, then verify that it exists
+        progLoc = System.IO.Path.Combine(progLoc, "LCMSFeatureFinder.exe")
+
+        If Not System.IO.File.Exists(progLoc) Then
+            m_message = "Cannot find LCMSFeatureFinder program file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
