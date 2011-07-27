@@ -77,9 +77,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="DeconTools.Backend, Version=1.0.3993.5912, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="PRISM">
       <Name>PRISM</Name>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
@@ -104,12 +101,6 @@
     </Compile>
     <Compile Include="clsAnalysisResourcesDecon2ls.vb" />
     <Compile Include="clsAnalysisToolRunnerDecon2lsBase.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsAnalysisToolRunnerDecon2lsDeIsotope.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsAnalysisToolRunnerDecon2lsTIC.vb">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
