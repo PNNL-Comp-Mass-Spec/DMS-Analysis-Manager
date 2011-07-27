@@ -1,9 +1,9 @@
 Option Strict On
 
 '*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
+' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
+' Copyright 2010, Battelle Memorial Institute
 '
 '*********************************************************************************************************
 
@@ -12,11 +12,9 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesMultiAlign
     Inherits clsAnalysisResources
 
-    'Public Const FEATURES_FILE_SUFFIX As String = "_LCMSFeatures.txt"
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
-        Dim result As Boolean
         Dim strFileToGet As String
         Dim strMAParamFileName As String
         Dim strMAParameterFileStoragePath As String
@@ -67,11 +65,11 @@ Public Class clsAnalysisResourcesMultiAlign
         End If
 
         ' Build the MultiAlign input text file
-        result = BuildMultiAlignInputTextFile(strInputFileExtension)
+        Dim blnSuccess As Boolean
+        blnSuccess = BuildMultiAlignInputTextFile(strInputFileExtension)
 
-        If Not result Then
-            Dim Msg As String = "clsAnalysisResourcesMultiAlign.GetResources(), failed building MultiAlign input.txt file "
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+        If Not blnSuccess Then
+            'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -83,7 +81,7 @@ Public Class clsAnalysisResourcesMultiAlign
 
         Const INPUT_FILENAME As String = "input.txt"
 
-        Dim result As Boolean = True
+        Dim blnSuccess As Boolean = True
         Dim swOutFile As System.IO.StreamWriter
 
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
@@ -94,7 +92,7 @@ Public Class clsAnalysisResourcesMultiAlign
 
         blnInputFileDefined = False
         blnOutputDirectoryDefined = False
-        result = True
+        blnSuccess = True
 
         ' Create the MA input file 
         Try
@@ -116,11 +114,10 @@ Public Class clsAnalysisResourcesMultiAlign
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" & INPUT_FILENAME & "): " & ex.Message)
-            result = False
-
+            blnSuccess = False
         End Try
 
-        Return result
+        Return blnSuccess
     End Function
 
 End Class

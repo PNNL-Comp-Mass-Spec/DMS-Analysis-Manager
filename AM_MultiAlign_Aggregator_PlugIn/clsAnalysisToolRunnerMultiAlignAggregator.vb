@@ -1,40 +1,28 @@
 Option Strict On
 
 '*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
+' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
+' Copyright 2010, Battelle Memorial Institute
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisToolRunnerMultiAlignAggregator
     Inherits clsAnalysisToolRunnerBase
 
     '*********************************************************************************************************
-    'Class for running MultiAlignAggregator analysis
+    ' Class for running MultiAlignAggregator analysis
     '*********************************************************************************************************
 
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_MULTIALIGN_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_MULTIALIGN_START As Single = 95
-    Protected Const PROGRESS_PCT_MULTIALIGN_COMPLETE As Single = 99
-    Friend Const MULTIALIGN_INPUT_FILE As String = "Input.txt"
     Protected Const PROGRESS_PCT_MULTI_ALIGN_DONE As Single = 95
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
-    '--------------------------------------------------------------------------------------------
-    'Future section to monitor MultiAlignAggregator log file for progress determination
-    '--------------------------------------------------------------------------------------------
-    'Dim WithEvents m_StatFileWatch As FileSystemWatcher
-    'Protected m_XtSetupFile As String = "default_input.xml"
-    '--------------------------------------------------------------------------------------------
-    'End future section
-    '--------------------------------------------------------------------------------------------
+    Protected WithEvents CmdRunner As clsRunDosProgram  
+
 #End Region
 
 #Region "Methods"
@@ -59,19 +47,14 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         CmdRunner = New clsRunDosProgram(m_WorkDir)
 
         If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMultiAlignAggregator.RunTool(): Enter")
         End If
 
-        ' verify that program file exists
-        Dim progLoc As String = m_mgrParams.GetParam("MultiAlignProgLoc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then
-                m_message = "Manager parameter MultiAlignProgLoc is not defined in the Manager Control DB"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Else
-                m_message = "Cannot find MultiAlign program file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            End If
+        ' Determine the path to the MultiAlign folder
+        Dim progLoc As String
+        progLoc = DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe")
+
+        If String.IsNullOrWhiteSpace(progLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -79,12 +62,13 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         StoreToolVersionInfo(progLoc)
 
         Dim MultiAlignResultFilename As String = m_jobParams.GetParam("ResultFilename")
-        If String.IsNullOrEmpty(MultiAlignResultFilename.Trim) Then
-            MultiAlignResultFilename = m_jobParams.GetParam("DatasetNum")
+
+        If String.IsNullOrWhiteSpace(MultiAlignResultFilename) Then
+            MultiAlignResultFilename = m_Dataset
         End If
 
         ' Set up and execute a program runner to run MultiAlign
-        CmdStr = " -files " & MULTIALIGN_INPUT_FILE & " -params " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " -path " & m_WorkDir & " -name " & MultiAlignResultFilename & " -plots"
+        CmdStr = " -files " & clsAnalysisResourcesMultiAlignAggregator.MULTIALIGN_INPUT_FILE & " -params " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " -path " & m_WorkDir & " -name " & MultiAlignResultFilename & " -plots"
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
@@ -97,7 +81,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
             .WriteConsoleOutputToFile = False
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlignProgLoc", True) Then
+        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", True) Then
             m_message = "Error running MultiAlign"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
@@ -201,12 +185,13 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         ' Bump up the debug level if less than 2
         If m_DebugLevel < 2 Then m_DebugLevel = 2
 
-        ' Try to save whatever files are in the work directory (however, delete the _dta.zip file first)
+        ' Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
         Dim strFolderPathToArchive As String
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".UIMF"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "*.csv"))
         Catch ex As Exception
             ' Ignore errors here
         End Try
@@ -244,13 +229,13 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
 
         ' Lookup the version of MultiAlign 
-        StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
 
         ' Lookup the version of additional DLLs
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
@@ -265,24 +250,6 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End Try
 
     End Function
-
-    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByRef strFullPath As String)
-
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strFullPath)
-            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileNameWithoutExtension(strFullPath) & ": " & ex.Message)
-        End Try
-
-    End Sub
-
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event

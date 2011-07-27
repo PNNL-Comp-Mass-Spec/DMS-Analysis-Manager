@@ -1,20 +1,22 @@
 Option Strict On
 
+'*********************************************************************************************************
+' Written by John Sandoval for the US Department of Energy 
+' Pacific Northwest National Laboratory, Richland, WA
+' Copyright 2010, Battelle Memorial Institute
+'
+'*********************************************************************************************************
+
 Imports AnalysisManagerBase
-Imports System.Xml.XPath
-Imports System.Xml
-Imports System.Collections.Specialized
-Imports System.IO
 
 Public Class clsAnalysisResourcesMultiAlignAggregator
     Inherits clsAnalysisResources
 
-    Friend Const MULTIALIGN_INPUT_FILE As String = "Input.txt"
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Public Const MULTIALIGN_INPUT_FILE As String = "Input.txt"
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
-        'Clear out list of files to delete or keep when packaging the results
+        'Clear out list of files to delete or keep when packaging the blnSuccesss
         clsGlobal.ResetFilesToDeleteOrKeep()
 
         Dim SplitString As String()
@@ -22,6 +24,7 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
         Dim strMAParamFileName As String
         Dim strMAParameterFileStoragePath As String
         Dim strParamFileStoragePathKeyName As String
+        Dim strInputFileExtension As String = String.Empty
 
         SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
         For Each row As String In SplitString
@@ -29,6 +32,7 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
             If FileNameExt(2) = "nocopy" Then
                 clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
             End If
+            strInputFileExtension = FileNameExt(1)
         Next
 
         ' Retrieve the MultiAlign Parameter .xml file specified for this job
@@ -50,17 +54,24 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
+        End If
 
         If Not RetrieveAggregateFiles(SplitString) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Building MultiAlign input file")
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Building MultiAlign input file")
+        End If
 
         ' Build the MultiAlign input text file
-        If Not BuildMultiAlignInputTextFile() Then
+        Dim blnSuccess As Boolean
+        blnSuccess = BuildMultiAlignInputTextFile(strInputFileExtension)
+
+        If Not blnSuccess Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -69,12 +80,11 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
 
     End Function
 
-
-    Protected Function BuildMultiAlignInputTextFile() As Boolean
+    Protected Function BuildMultiAlignInputTextFile(ByVal strInputFileExtension As String) As Boolean
 
         Const INPUT_FILENAME As String = "input.txt"
 
-        Dim result As Boolean = True
+        Dim blnSuccess As Boolean = True
         Dim swOutFile As System.IO.StreamWriter
 
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
@@ -82,29 +92,19 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
         Dim blnInputFileDefined As Boolean
         Dim blnOutputDirectoryDefined As Boolean
 
-        Dim SplitString As String()
-        Dim FileNameExt As String()
-        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
-        For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
-            If FileNameExt(2) = "nocopy" Then
-                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
-            End If
-        Next
-
         Dim TmpFile As String
         Dim Files As String()
 
         blnInputFileDefined = False
         blnOutputDirectoryDefined = False
-        result = True
+        blnSuccess = True
 
         ' Create the MA input file 
         Try
 
             swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-            Files = Directory.GetFiles(m_WorkingDir, "*" & FileNameExt(1))
+            Files = System.IO.Directory.GetFiles(m_WorkingDir, "*" & strInputFileExtension)
 
             swOutFile.WriteLine("[Files]")
             Dim AlignmentDataset As String = m_jobParams.GetParam("AlignmentDataset")
@@ -132,11 +132,11 @@ Public Class clsAnalysisResourcesMultiAlignAggregator
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" & INPUT_FILENAME & "): " & ex.Message)
-            result = False
+            blnSuccess = False
 
         End Try
 
-        Return result
+        Return blnSuccess
     End Function
 
 End Class

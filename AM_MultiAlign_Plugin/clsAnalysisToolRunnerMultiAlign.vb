@@ -1,15 +1,14 @@
 Option Strict On
 
 '*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
+' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
+' Copyright 2010, Battelle Memorial Institute
 '
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
-'Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerMultiAlign
     Inherits clsAnalysisToolRunnerBase
@@ -19,7 +18,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
     '*********************************************************************************************************
 
 #Region "Module Variables"
-    Protected Const PROGRESS_PCT_MULTI_ALIGN_RUNNING As Single = 5
+    Protected Const PROGRESS_PCT_MULTIALIGN_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_MULTI_ALIGN_DONE As Single = 95
 
     Protected WithEvents CmdRunner As clsRunDosProgram
@@ -63,7 +62,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         StoreToolVersionInfo(progLoc)
 
         ' Note that MultiAlign will append ".db3" to this filename
-        Dim MultiAlignDatabaseName As String = m_jobParams.GetParam("DatasetNum")
+        Dim MultiAlignDatabaseName As String = String.Copy(m_Dataset)
 
         ' Set up and execute a program runner to run MultiAlign
         CmdStr = " input.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & " " & MultiAlignDatabaseName
@@ -147,11 +146,10 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
         Dim TmpFile As String = String.Empty
         Dim Files As String()
-        Dim DatasetName As String = m_jobParams.GetParam("DatasetNum")
         Dim LogExtension As String = "-log.txt"
-        Dim NewFilename As String = DatasetName & LogExtension
+        Dim NewFilename As String = m_Dataset & LogExtension
         'This is what MultiAlign is currently naming the log file
-        Dim LogNameFilter As String = DatasetName & ".db3-log*.txt"
+        Dim LogNameFilter As String = m_Dataset & ".db3-log*.txt"
         Try
             'Get the log file name.  There should only be one log file
             Files = Directory.GetFiles(m_WorkDir, LogNameFilter)
@@ -171,7 +169,6 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
-
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
@@ -210,7 +207,6 @@ Public Class clsAnalysisToolRunnerMultiAlign
         ' Copy the results folder to the Archive folder
         Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
 
     End Sub
 
@@ -266,7 +262,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.Now
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MULTI_ALIGN_RUNNING, 0, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MULTIALIGN_RUNNING, 0, "", "", "", False)
         End If
 
     End Sub
