@@ -651,6 +651,15 @@ AnalysisManagerProg
  </summary>
 	<returns>CloseoutType enum representing completion status</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.DetermineProgramLocation(System.String,System.String,System.String)">
+	<summary>
+ Determine the path to the correct version of the step tool
+ </summary>
+	<param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+	<param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+	<param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+	<returns>The path to the program, or an empty string if there is a problem</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB">
 	<summary>
  Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
@@ -707,6 +716,13 @@ AnalysisManagerProg
 	<param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
 	<returns>True for success, False for failure</returns>
 	<remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.StoreToolVersionInfoOneFile(System.String@,System.String)">
+	<summary>
+ Determines the version info for a DLL using reflection
+ </summary>
+	<param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+	<param name="strDLLFilePath">Path to the DLL</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UpdateSummaryFile">
 	<summary>
  Updates the analysis summary file
@@ -738,6 +754,14 @@ AnalysisManagerProg
  Makes multiple tries to delete specified file
  </summary>
 	<param name="FileNamePath">Full path to file for deletion</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks>Raises exception if error occurs</remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.DeleteFileWithRetries(System.String,System.Int32)">
+	<summary>
+ Makes multiple tries to delete specified file
+ </summary>
+	<param name="FileNamePath">Full path to file for deletion</param>
+	<param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks>Raises exception if error occurs</remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.CopyResultsFolderToServer">
@@ -1585,19 +1609,19 @@ AnalysisManagerProg
  Creates a dummy file in the application directory to be used for controlling job request bypass
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteStatusFlagFile">
+</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteStatusFlagFile(System.Int32)">
 	<summary>
  Deletes the analysis manager flag file
  </summary>
 	<returns>True if no flag file exists or if file was successfully deleted</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteDeconServerFlagFile">
+</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteDeconServerFlagFile(System.Int32)">
 	<summary>
  Deletes the Decon2LS OA Server flag file
  </summary>
 	<returns>True if no flag file exists or if file was successfully deleted</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteFlagFile(System.String)">
+</member><member name="M:AnalysisManagerBase.clsGlobal.DeleteFlagFile(System.String,System.Int32)">
 	<summary>
  Deletes the file given by strFlagFilePath
  </summary>

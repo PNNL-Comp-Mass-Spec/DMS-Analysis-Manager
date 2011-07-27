@@ -51,26 +51,22 @@ Public Class clsAnalysisToolRunnerMultiAlign
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter")
         End If
 
-        ' verify that program file exists
-        Dim progLoc As String = m_mgrParams.GetParam("MultiAlignProgLoc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then
-                m_message = "Manager parameter MultiAlignProgLoc is not defined in the Manager Control DB"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Else
-                m_message = "Cannot find MultiAlign program file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            End If
+        ' Determine the path to the MultiAlign folder
+        Dim progLoc As String
+        progLoc = DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe")
+
+        If String.IsNullOrWhiteSpace(progLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Store the MultiAlign version info in the database
         StoreToolVersionInfo(progLoc)
 
-        Dim MultiAlignDatabaseName As String = " " & m_jobParams.GetParam("DatasetNum") '& ".db3"
+        ' Note that MultiAlign will append ".db3" to this filename
+        Dim MultiAlignDatabaseName As String = m_jobParams.GetParam("DatasetNum")
 
         ' Set up and execute a program runner to run MultiAlign
-        CmdStr = " input.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & MultiAlignDatabaseName
+        CmdStr = " input.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & " " & MultiAlignDatabaseName
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
@@ -83,7 +79,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
             .WriteConsoleOutputToFile = False
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlignProgLoc", True) Then
+        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", True) Then
             m_message = "Error running MultiAlign"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
@@ -234,13 +230,13 @@ Public Class clsAnalysisToolRunnerMultiAlign
         ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
 
         ' Lookup the version of MultiAlign 
-        StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
 
         ' Lookup the version of additional DLLs
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
-        StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
@@ -255,23 +251,6 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End Try
 
     End Function
-
-    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByRef strFullPath As String)
-
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strFullPath)
-            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileNameWithoutExtension(strFullPath) & ": " & ex.Message)
-        End Try
-
-    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event

@@ -29,16 +29,19 @@ Public Class clsAnalysisResourcesMultiAlign
 
         Dim SplitString As String()
         Dim FileNameExt As String()
+        Dim strInputFileExtension As String = String.Empty
+
         SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
         For Each row As String In SplitString
             FileNameExt = row.Split(":"c)
             If FileNameExt(2) = "nocopy" Then
                 clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
             End If
+            strInputFileExtension = FileNameExt(1)
         Next
 
         ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & FileNameExt(1)
+        strFileToGet = m_jobParams.GetParam("DatasetNum") & strInputFileExtension
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -64,7 +67,7 @@ Public Class clsAnalysisResourcesMultiAlign
         End If
 
         ' Build the MultiAlign input text file
-        result = BuildMultiAlignInputTextFile()
+        result = BuildMultiAlignInputTextFile(strInputFileExtension)
 
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesMultiAlign.GetResources(), failed building MultiAlign input.txt file "
@@ -76,25 +79,15 @@ Public Class clsAnalysisResourcesMultiAlign
 
     End Function
 
-    Protected Function BuildMultiAlignInputTextFile() As Boolean
+    Protected Function BuildMultiAlignInputTextFile(ByVal strInputFileExtension As String) As Boolean
 
         Const INPUT_FILENAME As String = "input.txt"
 
         Dim result As Boolean = True
         Dim swOutFile As System.IO.StreamWriter
 
-        Dim SplitString As String()
-        Dim FileNameExt As String()
-        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
-        For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
-            If FileNameExt(2) = "nocopy" Then
-                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
-            End If
-        Next
-
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & FileNameExt(1))
+        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & strInputFileExtension)
 
         Dim blnInputFileDefined As Boolean
         Dim blnOutputDirectoryDefined As Boolean
