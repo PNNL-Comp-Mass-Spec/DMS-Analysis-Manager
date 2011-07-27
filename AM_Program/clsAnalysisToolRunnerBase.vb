@@ -189,6 +189,57 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
+        ''' Determine the path to the correct version of the step tool
+        ''' </summary>
+        ''' <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+        ''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        ''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        ''' <returns>The path to the program, or an empty string if there is a problem</returns>
+        ''' <remarks></remarks>
+        Protected Function DetermineProgramLocation(ByVal strStepToolName As String, _
+                                                    ByVal strProgLocManagerParamName As String, _
+                                                    ByVal strExeName As String) As String
+
+            ' Lookup the path to the folder that contains the Step tool
+            Dim progLoc As String = m_mgrParams.GetParam(strProgLocManagerParamName)
+
+            If String.IsNullOrWhiteSpace(progLoc) Then
+                m_message = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return String.Empty
+            End If
+
+            ' Check whether the settings file specifies that a specific version of the step tool be used
+            Dim strStepToolVersion As String = m_jobParams.GetParam(strStepToolName & "_Version")
+
+            If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
+
+                ' Specific version is defined; verify that the folder exists
+                progLoc = System.IO.Path.Combine(progLoc, strStepToolVersion)
+
+                If Not System.IO.Directory.Exists(progLoc) Then
+                    m_message = "Version-specific folder not found for " & strStepToolName
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+                    Return String.Empty
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of " & strStepToolName & ": " & progLoc)
+                End If
+            End If
+
+            ' Define the path to the .Exe, then verify that it exists
+            progLoc = System.IO.Path.Combine(progLoc, strExeName)
+
+            If Not System.IO.File.Exists(progLoc) Then
+                m_message = "Cannot find " & strStepToolName & " program file"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+                Return String.Empty
+            End If
+
+            Return progLoc
+
+        End Function
+
+        ''' <summary>
         ''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
         ''' </summary>
         ''' <returns></returns>
@@ -681,6 +732,38 @@ Namespace AnalysisManagerBase
             Return Outcome
 
         End Function
+
+        ''' <summary>
+        ''' Determines the version info for a DLL using reflection
+        ''' </summary>
+        ''' <param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+        ''' <param name="strDLLFilePath">Path to the DLL</param>
+        ''' <remarks></remarks>
+        Protected Overridable Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String)
+
+            Dim ioFileInfo As System.IO.FileInfo
+
+            Try
+                ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
+
+                If Not ioFileInfo.Exists Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
+                Else
+
+                    Dim oAssemblyName As System.Reflection.AssemblyName
+                    oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName
+
+                    Dim strNameAndVersion As String
+                    strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                    strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+                End If
+
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+            End Try
+
+
+        End Sub
 
         ''' <summary>
         ''' Updates the analysis summary file
