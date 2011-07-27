@@ -53,10 +53,14 @@ Public Class clsAnalysisToolRunnerLCMSFF
 
         ' Determine the path to the LCMSFeatureFinder folder
         Dim progLoc As String
-        progLoc = DetermineProgramLocation()
+        progLoc = MyBase.DetermineProgramLocation("LCMSFeatureFinder", "LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe")
+
         If String.IsNullOrWhiteSpace(progLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        ' Store the FeatureFinder version info in the database
+        StoreToolVersionInfo(progLoc)
 
         ' Set up and execute a program runner to run the LCMS Feature Finder
         CmdStr = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"))
@@ -186,57 +190,6 @@ Public Class clsAnalysisToolRunnerLCMSFF
     End Sub
 
     ''' <summary>
-    ''' Determine the path to the correct version of LCMSFeatureFinder.exe
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function DetermineProgramLocation() As String
-
-        Const EXE_NAME As String = "LCMSFeatureFinder.exe"
-
-        ' Lookup the path to the folder that contains the LCMSFeaturefinder
-        Dim progLoc As String = m_mgrParams.GetParam("LCMSFeatureFinderProgLoc")
-
-        If String.IsNullOrWhiteSpace(progLoc) Then
-            m_message = "Manager parameter LCMSFeatureFinderProgLoc is not defined in the Manager Control DB"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return String.Empty
-        End If
-
-        ' Check whether the settings file specifies that a specific version of LCMSFeatureFinder.exe be used
-        Dim strLCMSFeatureFinderVersion As String = m_jobParams.GetParam("LCMSFeatureFinder_Version")
-
-        If Not String.IsNullOrWhiteSpace(strLCMSFeatureFinderVersion) Then
-
-            ' Specific version is defined; verify that the folder exists
-            progLoc = System.IO.Path.Combine(progLoc, strLCMSFeatureFinderVersion)
-
-            If Not System.IO.Directory.Exists(progLoc) Then
-                m_message = "Version-specific LCMSFeatureFinder folder not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-                Return String.Empty
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of the LCMSFeatureFinder: " & progLoc)
-            End If
-        End If
-
-        ' Define the path to the .Exe, then verify that it exists
-        progLoc = System.IO.Path.Combine(progLoc, EXE_NAME)
-
-        If Not System.IO.File.Exists(progLoc) Then
-            m_message = "Cannot find LCMSFeatureFinder program file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            Return String.Empty
-        End If
-
-        ' Store the FeatureFinder version info in the database
-        StoreToolVersionInfo(progLoc)
-
-        Return progLoc
-
-    End Function
-
-    ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
@@ -288,7 +241,13 @@ Public Class clsAnalysisToolRunnerLCMSFF
 
     End Function
 
-    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strFilePath As String)
+    ''' <summary>
+    ''' Determines the version info for a DLL using reflection
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+    ''' <param name="strDLLFilePath">Path to the DLL</param>
+    ''' <remarks></remarks>
+    Protected Overrides Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String)
 
         ' If folder 32BitDLLs exists below the folder defined in strFeatureFinderProgLoc, then 
         ' preferably use the files in that folder to determine the version number.  However, only
@@ -302,10 +261,10 @@ Public Class clsAnalysisToolRunnerLCMSFF
         Dim str32BitEquivalentFilePath As String
 
         Try
-            ioFileInfo = New System.IO.FileInfo(strFilePath)
+            ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
 
             If Not ioFileInfo.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
             Else
                 ' Look for a subfolder named 32BitDLLs
                 str32BitEquivalentFilePath = System.IO.Path.Combine(System.IO.Path.Combine(ioFileInfo.DirectoryName, "32BitDLLs"), ioFileInfo.Name)
@@ -329,18 +288,13 @@ Public Class clsAnalysisToolRunnerLCMSFF
                     End If
                 End If
 
-                Dim oAssemblyName As System.Reflection.AssemblyName
-                oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName
+                MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioFileInfo.FullName)
 
-                Dim strNameAndVersion As String
-                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
         End Try
-
 
     End Sub
 #End Region

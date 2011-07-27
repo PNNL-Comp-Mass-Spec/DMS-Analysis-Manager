@@ -17,16 +17,17 @@ AnalysisManagerLCMSFeatureFinderPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF.DetermineProgramLocation">
-	<summary>
- Determine the path to the correct version of LCMSFeatureFinder.exe
- </summary>
-	<returns></returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF.StoreToolVersionInfo(System.String)">
 	<summary>
  Stores the tool version info in the database
  </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF.StoreToolVersionInfoOneFile(System.String@,System.String)">
+	<summary>
+ Determines the version info for a DLL using reflection
+ </summary>
+	<param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+	<param name="strDLLFilePath">Path to the DLL</param>
 	<remarks></remarks>
 </member>
 </members>

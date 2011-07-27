@@ -29,12 +29,6 @@ AnalysisManagerDecon2lsV2PlugIn
 	<param name="blnCountTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
 	<returns>True if it has one or more lines of data, otherwise, returns False</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.DetermineProgramLocation">
-	<summary>
- Determine the path to the correct version of DeconConsole.exe
- </summary>
-	<returns></returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.ParseKeyValue(System.String)">
 	<summary>
  Looks for an equals sign in strData

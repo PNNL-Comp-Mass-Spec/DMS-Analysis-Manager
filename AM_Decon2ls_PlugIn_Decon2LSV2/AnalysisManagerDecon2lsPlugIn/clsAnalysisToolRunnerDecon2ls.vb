@@ -372,11 +372,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         ' Determine the path to the DeconTools folder
         Dim progLoc As String
-        progLoc = DetermineProgramLocation()
+        progLoc = DetermineProgramLocation("DeconTools", "DeconToolsProgLoc", "DeconConsole.exe")
+
         If String.IsNullOrWhiteSpace(progLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+        ' Store the DeconTools version info in the database
+        StoreToolVersionInfo(progLoc)
 
         ' Reset the log file tracking variables
         mDeconToolsFinishedDespiteProgRunnerError = False
@@ -538,56 +541,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    ''' <summary>
-    ''' Determine the path to the correct version of DeconConsole.exe
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function DetermineProgramLocation() As String
-
-        Const EXE_NAME As String = "DeconConsole.exe"
-
-        ' Lookup the path to the folder that contains DeconTools
-        Dim progLoc As String = m_mgrParams.GetParam("DeconToolsProgLoc")
-
-        If String.IsNullOrWhiteSpace(progLoc) Then
-            m_message = "Manager parameter DeconToolsProgLoc is not defined in the Manager Control DB"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return String.Empty
-        End If
-
-        ' Check whether the settings file specifies that a specific version of DeconTools be used
-        Dim strDeconToolsVersion As String = m_jobParams.GetParam("DeconTools_Version")
-
-        If Not String.IsNullOrWhiteSpace(strDeconToolsVersion) Then
-
-            ' Specific version is defined; verify that the folder exists
-            progLoc = System.IO.Path.Combine(progLoc, strDeconToolsVersion)
-
-            If Not System.IO.Directory.Exists(progLoc) Then
-                m_message = "Version-specific DeconTools folder not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-                Return String.Empty
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of DeconTools: " & progLoc)
-            End If
-        End If
-
-        ' Define the path to the .Exe, then verify that it exists
-        progLoc = System.IO.Path.Combine(progLoc, EXE_NAME)
-
-        If Not System.IO.File.Exists(progLoc) Then
-            m_message = "Cannot find the DeconTools Console file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            Return String.Empty
-        End If
-
-        ' Store the FeatureFinder version info in the database
-        StoreToolVersionInfo(progLoc)
-
-        Return progLoc
-
-    End Function
 
     Protected Function GetDeconFileTypeText(eDeconFileType As DeconToolsFileTypeConstants) As String
 
@@ -882,23 +835,23 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         ' Lookup the version of the DeconConsole application
-        StoreToolVersionInfoOneFile(strToolVersionInfo, ioDeconToolsInfo.FullName)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioDeconToolsInfo.FullName)
 
         ' Lookup the version of the DeconTools Backend (in the DeconTools folder)
         Dim strDeconToolsBackendPath As String = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll")
-        StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
 
         ' Lookup the version of the UIMFLibrary (in the DeconTools folder)
         Dim strDLLPath As String = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll")
-        StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 
         ' Lookup the version of DeconEngine (in the DeconTools folder)
         strDLLPath = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
-        StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 
         ' Lookup the version of DeconEngineV2 (in the DeconTools folder)
         strDLLPath = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-        StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
@@ -913,32 +866,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End Try
 
     End Function
-
-    Private Sub StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strFilePath As String)
-
-        Dim ioFileInfo As System.IO.FileInfo
-
-        Try
-            ioFileInfo = New System.IO.FileInfo(strFilePath)
-
-            If Not ioFileInfo.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strFilePath)
-            Else
-
-                Dim oAssemblyName As System.Reflection.AssemblyName
-                oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName
-
-                Dim strNameAndVersion As String
-                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
-        End Try
-
-
-    End Sub
 
     ''' <summary>
     ''' Read the start and end scan values from the DeconTools parameter file
