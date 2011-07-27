@@ -111,8 +111,8 @@ Namespace AnalysisManagerBase
                 '    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
                 'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
                 '    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
-                'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
-                '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
+                'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls, IToolRunner)
                 'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
                 'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML".ToLower

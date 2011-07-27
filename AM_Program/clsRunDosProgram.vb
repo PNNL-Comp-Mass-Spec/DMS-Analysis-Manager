@@ -28,6 +28,8 @@ Namespace AnalysisManagerBase
         Private m_WriteConsoleOutputToFile As Boolean = False
         Private m_ConsoleOutputFilePath As String = String.Empty
 
+        Private m_AbortProgramNow As Boolean
+
         'Runs specified program
         Private WithEvents m_ProgRunner As PRISM.Processes.clsProgRunner = New PRISM.Processes.clsProgRunner
 
@@ -148,6 +150,12 @@ Namespace AnalysisManagerBase
             End Set
         End Property
 
+        Public ReadOnly Property ProgramAborted() As Boolean
+            Get
+                Return m_AbortProgramNow
+            End Get
+        End Property
+
         ''' <summary>
         ''' Working directory for process execution.
         ''' </summary>
@@ -189,6 +197,11 @@ Namespace AnalysisManagerBase
 
         End Sub
 
+        Public Sub AbortProgramNow()
+            m_AbortProgramNow = True
+        End Sub
+            
+
         ''' <summary>
         ''' 
         ''' </summary>
@@ -228,6 +241,8 @@ Namespace AnalysisManagerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsRunDosProgram.RunProgram(), ProgRunner.Program = " & m_ProgRunner.Program)
             End If
 
+            m_AbortProgramNow = False
+
             'DAC debugging
             Debug.WriteLine("clsRunDOSProg.RunProgram, starting program, thread " & System.Threading.Thread.CurrentThread.Name)
             Try
@@ -237,6 +252,11 @@ Namespace AnalysisManagerBase
                 While (m_ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)  ' And (ProgRunner.State <> 10)
                     RaiseEvent LoopWaiting()
                     System.Threading.Thread.Sleep(m_MonitorInterval)
+
+                    If m_AbortProgramNow Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Aborting program since AbortProgramNow() was called")
+                        m_ProgRunner.StopMonitoringProgram(True)
+                    End If
                 End While
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception running DOS program " & ProgNameLoc & "; " & clsGlobal.GetExceptionStackTrace(ex))
@@ -250,12 +270,12 @@ Namespace AnalysisManagerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: ProgRunner.ExitCode = " & m_ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
                 Return False
             Else
-                Return True
+                If m_AbortProgramNow Then
+                    Return False
+                Else
+                    Return True
+                End If
             End If
-
-            'DAC debugging
-            Debug.WriteLine("clsRunDOSProg.RunProgram, program complete, thread " & System.Threading.Thread.CurrentThread.Name)
-            Debug.WriteLine("Thread priority: " & System.Threading.Thread.CurrentThread.Priority)
 
             m_ProgRunner = Nothing
 

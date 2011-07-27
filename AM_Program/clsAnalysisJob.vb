@@ -62,7 +62,7 @@ Namespace AnalysisManagerBase
             Dim Value As String
 
             Value = m_JobParams(Name)
-            If Value Is Nothing Then
+            If String.IsNullOrWhiteSpace(Value) Then
                 Value = String.Empty
             End If
 
