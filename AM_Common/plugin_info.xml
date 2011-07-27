@@ -104,7 +104,7 @@
 	/>
 	<ToolRunner 
 		Tool="decon2ls_v2" 
-		Class="AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope" 
+		Class="AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls" 
 		AssemblyFile="AnalysisManagerDecon2lsV2PlugIn.dll" 
 	/>
 	<ToolRunner 
