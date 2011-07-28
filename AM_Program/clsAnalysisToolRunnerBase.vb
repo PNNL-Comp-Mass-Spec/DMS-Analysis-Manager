@@ -706,7 +706,7 @@ Namespace AnalysisManagerBase
                 .Parameters.Item("@step").Direction = ParameterDirection.Input
                 .Parameters.Item("@step").Value = CInt(m_jobParams.GetParam("Step"))
 
-                .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 256))
+                .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
                 .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
                 .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
             End With
