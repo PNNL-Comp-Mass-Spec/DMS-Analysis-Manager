@@ -965,9 +965,19 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerInspResultsAssemblyPlugIn: " & ex.Message)
         End Try
 
-        ' Store the path to AnalysisManagerInspResultsAssemblyPlugIn.dll in ioToolFiles
+        ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll"))
+        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll"))
+
+        ' Store the path to important DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
         ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll")))
+        ' Skip System.Data.SQLite.dll; we don't need to track the file date
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

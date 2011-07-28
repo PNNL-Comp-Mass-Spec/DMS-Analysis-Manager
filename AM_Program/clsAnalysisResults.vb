@@ -312,10 +312,13 @@ Namespace AnalysisManagerBase
                     ' Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
                     DeleteOldFailedResultsFolders(diTargetFolder)
 
-                    ' Actually copy the results folder
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & ResultsFolderPath)
+                    Dim strTargetFolderPath As String
+                    strTargetFolderPath = System.IO.Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
 
-                    CopyDirectory(diSourceFolder.FullName, System.IO.Path.Combine(diTargetFolder.FullName, diSourceFolder.Name), True, 2, True)
+                    ' Actually copy the results folder
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & strTargetFolderPath)
+
+                    CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, True, 2, True)
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete")
                 End If
