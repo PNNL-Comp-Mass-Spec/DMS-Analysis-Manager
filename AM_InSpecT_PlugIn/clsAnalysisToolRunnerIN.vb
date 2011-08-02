@@ -37,6 +37,7 @@ Public Class clsAnalysisToolRunnerIN
 
 #Region "Module Variables"
     Public Const INSPECT_INPUT_PARAMS_FILENAME As String = "inspect_input.txt"
+    Protected Const INSPECT_EXE_NAME As String = "inspect.exe"
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -91,7 +92,10 @@ Public Class clsAnalysisToolRunnerIN
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
-        Dim OrgDbName As String
+
+        Dim InspectDir As String
+        Dim OrgDbDir As String
+
         Dim strBaseFilePath As String
         Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
 
@@ -99,21 +103,27 @@ Public Class clsAnalysisToolRunnerIN
         Dim strParallelizedText As String
 
         Try
-            MyBase.RunTool()
+            'Call base class for initial setup
+            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.RunTool(): Enter")
             End If
 
-            OrgDbName = m_jobParams.GetParam("organismDBName")
+            InspectDir = m_mgrParams.GetParam("inspectdir")
+            OrgDbDir = m_mgrParams.GetParam("orgdbdir")
 
             ' Store the Inspect version info in the database
-            StoreToolVersionInfo()
+            StoreToolVersionInfo(InspectDir)
 
-            'Start the job timer
-            m_StartTime = System.DateTime.Now
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create .trie file")
+            End If
 
-            result = objIndexedDBCreator.CreateIndexedDbFiles(m_mgrParams, m_jobParams, m_DebugLevel, m_JobNum)
+            ' Index the fasta file to create the .trie file
+            result = objIndexedDBCreator.CreateIndexedDbFiles(m_mgrParams, m_jobParams, m_DebugLevel, m_JobNum, InspectDir, OrgDbDir)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
@@ -149,7 +159,7 @@ Public Class clsAnalysisToolRunnerIN
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running " & strParallelizedText & " inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
             End If
 
-            result = RunInSpecT()
+            result = RunInSpecT(InspectDir)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
@@ -179,19 +189,22 @@ Public Class clsAnalysisToolRunnerIN
 
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
+                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
+                'MoveResultFiles moves the result files to the result folder
+                m_message = "Error moving files into results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
             End If
 
@@ -453,9 +466,8 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function RunInSpecT() As IJobParams.CloseOutType
+    Private Function RunInSpecT(ByVal InspectDir As String) As IJobParams.CloseOutType
         Dim CmdStr As String
-        Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
         Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim blnSuccess As Boolean = False
 
@@ -472,9 +484,9 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         ' verify that program file exists
-        Dim progLoc As String = System.IO.Path.Combine(InspectDir, "inspect.exe")
+        Dim progLoc As String = System.IO.Path.Combine(InspectDir, INSPECT_EXE_NAME)
         If Not System.IO.File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find inspect.exe program file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Inspect program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -504,9 +516,9 @@ Public Class clsAnalysisToolRunnerIN
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "Inspect", True) Then
 
             If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect.exe returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Inspect.exe failed (but exit code is 0)")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Inspect failed (but exit code is 0)")
             End If
 
             Select Case CmdRunner.ExitCode
@@ -537,7 +549,7 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Inspect.exe : " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Inspect : " & m_JobNum)
         Else
             m_progress = 100
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -651,21 +663,18 @@ Public Class clsAnalysisToolRunnerIN
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Protected Function StoreToolVersionInfo(ByVal strInspectFolder As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-        Dim strInspectFolder As String
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        strInspectFolder = m_mgrParams.GetParam("inspectdir")
-
         ' Store paths to key files in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strInspectFolder, "inspect.exe")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strInspectFolder, INSPECT_EXE_NAME)))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

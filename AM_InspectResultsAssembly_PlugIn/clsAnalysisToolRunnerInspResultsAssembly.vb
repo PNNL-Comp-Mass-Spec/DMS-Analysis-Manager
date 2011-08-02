@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -9,7 +7,9 @@ Option Strict On
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
+Option Strict On
+
+Imports AnalysisManagerBase
 Imports PRISM.Files
 Imports AnalysisManagerBase.clsGlobal
 

@@ -58,7 +58,7 @@ AnalysisManagerInSpecTPlugIn
 	<param name="errorFilename"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunInSpecT">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunInSpecT(System.String)">
 	<summary>
  Run InSpecT
  </summary>
@@ -69,7 +69,7 @@ AnalysisManagerInSpecTPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.StoreToolVersionInfo">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.StoreToolVersionInfo(System.String)">
 	<summary>
  Stores the tool version info in the database
  </summary>
@@ -87,7 +87,7 @@ AnalysisManagerInSpecTPlugIn
 	<param name="sender"></param>
 	<param name="e"></param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String)">
+</member><member name="M:AnalysisManagerInSpecTPlugIn.clsCreateInspectIndexedDB.CreateIndexedDbFiles(AnalysisManagerBase.IMgrParams@,AnalysisManagerBase.IJobParams@,System.Int32,System.String,System.String,System.String)">
 	<summary>
  Convert .Fasta file to indexed DB files
  </summary>
@@ -97,7 +97,7 @@ AnalysisManagerInSpecTPlugIn
 	<summary>
  Creates a lock file
  </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
+	<returns>True if success; false if failure</returns>
 </member>
 </members>
 </doc>

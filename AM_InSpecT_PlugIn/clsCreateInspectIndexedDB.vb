@@ -19,7 +19,9 @@ Public Class clsCreateInspectIndexedDB
     Public Function CreateIndexedDbFiles(ByRef mgrParams As AnalysisManagerBase.IMgrParams, _
                                          ByRef jobParams As AnalysisManagerBase.IJobParams, _
                                          ByVal DebugLevel As Integer, _
-                                         ByVal JobNum As String) As IJobParams.CloseOutType
+                                         ByVal JobNum As String, _
+                                         ByVal InspectDir As String, _
+                                         ByVal OrgDbDir As String) As IJobParams.CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
         Const MAX_WAITTIME_PREVENT_REPEATS As Single = 2.0
@@ -30,10 +32,6 @@ Public Class clsCreateInspectIndexedDB
         Dim objPrepDB As clsRunDosProgram
         Dim objShuffleDB As clsRunDosProgram
         Dim CmdStr As String
-
-        Dim WorkingDir As String
-        Dim InspectDir As String
-        Dim orgDbDir As String
 
         Dim intRandomNumberSeed As Integer
         Dim blnShuffleDBPreventRepeats As Boolean
@@ -50,17 +48,14 @@ Public Class clsCreateInspectIndexedDB
 
         Dim fi As System.IO.FileInfo
         Dim createTime As DateTime
-        Dim result As IJobParams.CloseOutType
         Dim durationTime As TimeSpan
         Dim currentTime As DateTime
         Dim sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
 
         Try
-
-            ' Extract various manager and job parameters
-            WorkingDir = mgrParams.GetParam("WorkDir")
-            InspectDir = mgrParams.GetParam("inspectdir")
-            orgDbDir = mgrParams.GetParam("orgdbdir")
+            If DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter")
+            End If
 
             intRandomNumberSeed = AnalysisManagerBase.clsGlobal.CIntSafe(jobParams.GetParam("InspectShuffleDBSeed"), 1000)
             blnShuffleDBPreventRepeats = AnalysisManagerBase.clsGlobal.CBoolSafe(jobParams.GetParam("InspectPreventShuffleDBRepeats"), False)
@@ -69,11 +64,11 @@ Public Class clsCreateInspectIndexedDB
                 sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS
             End If
 
-            strDBFileNameInput = System.IO.Path.Combine(orgDbDir, jobParams.GetParam("generatedFastaName"))
+            strDBFileNameInput = System.IO.Path.Combine(OrgDbDir, jobParams.GetParam("generatedFastaName"))
             blnUseShuffledDB = AnalysisManagerBase.clsGlobal.CBoolSafe(jobParams.GetParam("InspectUsesShuffledDB"), False)
 
             strOutputNameBase = System.IO.Path.GetFileNameWithoutExtension(strDBFileNameInput)
-            dbTrieFilenameBeforeShuffle = System.IO.Path.Combine(orgDbDir, strOutputNameBase & ".trie")
+            dbTrieFilenameBeforeShuffle = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
 
             If blnUseShuffledDB Then
                 ' Will create the .trie file using PrepDB.py, then shuffle it using shuffleDB.py
@@ -82,16 +77,12 @@ Public Class clsCreateInspectIndexedDB
                 strOutputNameBase &= "_shuffle"
             End If
 
-            dbLockFilename = System.IO.Path.Combine(orgDbDir, strOutputNameBase & "_trie.lock")
-            dbTrieFilename = System.IO.Path.Combine(orgDbDir, strOutputNameBase & ".trie")
+            dbLockFilename = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & "_trie.lock")
+            dbTrieFilename = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
 
             pythonProgLoc = mgrParams.GetParam("pythonprogloc")
 
             objPrepDB = New clsRunDosProgram(InspectDir & System.IO.Path.DirectorySeparatorChar)
-
-            If DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter")
-            End If
 
             ' Check to see if another Analysis Manager is already creating the indexed db files
             If System.IO.File.Exists(dbLockFilename) Then
@@ -156,9 +147,10 @@ Public Class clsCreateInspectIndexedDB
                 End If
 
                 'Create lock file
-                result = CreateLockFile(dbLockFilename)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    Return result
+                Dim bSuccess As Boolean
+                bSuccess = CreateLockFile(dbLockFilename)
+                If Not bSuccess Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If DebugLevel >= 2 Then
@@ -168,7 +160,7 @@ Public Class clsCreateInspectIndexedDB
                 'Set up and execute a program runner to run PrepDB.py
                 CmdStr = " " & PrebDBScriptPath & " FASTA " & strDBFileNameInput
                 If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonprogLoc & " " & CmdStr)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc & " " & CmdStr)
                 End If
 
                 If Not objPrepDB.RunProgram(pythonProgLoc, CmdStr, "PrepDB", True) Then
@@ -232,8 +224,8 @@ Public Class clsCreateInspectIndexedDB
     ''' <summary>
     ''' Creates a lock file
     ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    Protected Function CreateLockFile(ByVal strLockFilePath As String) As IJobParams.CloseOutType
+    ''' <returns>True if success; false if failure</returns>
+    Protected Function CreateLockFile(ByVal strLockFilePath As String) As Boolean
 
         Try
             Dim sw As System.IO.StreamWriter = New System.IO.StreamWriter(strLockFilePath)
@@ -245,10 +237,10 @@ Public Class clsCreateInspectIndexedDB
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return False
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return True
 
     End Function
 
