@@ -127,7 +127,9 @@ Public Class clsMSGFRunner
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         'Call base class for initial setup
-        MyBase.RunTool()
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         ' Resolve eResultType
         eResultType = GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
@@ -1696,15 +1698,13 @@ Public Class clsMSGFRunner
             Return False
         End If
 
-        mMSGFRunner = New clsRunDosProgram(m_WorkDir)
-
         ' verify that the program file exists
-        ' progLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+        ' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
         ' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-        Dim progLoc As String = m_mgrParams.GetParam("JavaLoc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then progLoc = "Parameter 'JavaLoc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & progLoc)
+        Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
+        If Not System.IO.File.Exists(JavaProgLoc) Then
+            If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
             Return False
         End If
 
@@ -1714,6 +1714,8 @@ Public Class clsMSGFRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSGF program: " & MSGFLoc)
             Return False
         End If
+
+        mMSGFRunner = New clsRunDosProgram(m_WorkDir)
 
         ' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
         ' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
@@ -1746,7 +1748,7 @@ Public Class clsMSGFRunner
         CmdStr &= " -x 0"       ' Write out all matches for each spectrum
         CmdStr &= " -p 1"       ' SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
         With mMSGFRunner
             .CreateNoWindow = False
@@ -1757,7 +1759,7 @@ Public Class clsMSGFRunner
             .ConsoleOutputFilePath = ""
         End With
 
-        If Not mMSGFRunner.RunProgram(progLoc, CmdStr, "MSGF", True) Then
+        If Not mMSGFRunner.RunProgram(JavaProgLoc, CmdStr, "MSGF", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
             Return False
         End If

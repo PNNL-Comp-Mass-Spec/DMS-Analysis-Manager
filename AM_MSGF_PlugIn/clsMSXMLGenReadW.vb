@@ -91,13 +91,13 @@ Public Class clsMSXMLGenReadW
                 msXmlFormat = "mzML"
         End Select
 
-        CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mReadWProgramPath))
-
         ' Verify that program file exists
         If Not System.IO.File.Exists(mReadWProgramPath) Then
             mErrorMessage = "Cannot find MSXmlGenerator exe program file: " & mReadWProgramPath
             Return False
         End If
+
+        CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mReadWProgramPath))
 
         'Set up and execute a program runner to run MS XML executable
         If mCentroidMSXML Then

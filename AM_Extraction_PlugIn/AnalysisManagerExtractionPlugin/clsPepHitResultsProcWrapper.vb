@@ -109,7 +109,7 @@ Public Class clsPepHitResultsProcWrapper
                 .ParameterFileName = ParamFileName
                 .SettingsFileName = m_JobParams.GetParam("genJobParamsFilename")        'Settings File parameters for PHRP are in this file (section PeptideHitResultsProcessorOptions)
 
-                .MiscParams = New System.Collections.Specialized.StringDictionary       ' Empty, since unused
+                .MiscParams = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)       ' Empty, since unused
                 .OutputFolderPath = m_MgrParams.GetParam("workdir")
                 .SourceFolderPath = m_MgrParams.GetParam("workdir")
 
