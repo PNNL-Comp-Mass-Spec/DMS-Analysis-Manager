@@ -9,15 +9,8 @@ NumMods=3
 
 #Modifications (see below for examples)
 StaticMod=None
+
 DynamicMod=O1, M, opt, any, Oxidation            # Oxidized methionine
-
-#Number of Threads (by default, uses all available cores)
-#NumThreads=4
-
-#Target/Decoy search mode
-#  0 means don't search decoy database (default)
-#  1 means search decoy database to compute FDR (source FASTA file must be forward-only proteins)
-TDA=0
 
 #Fragmentation Method
 #  0 means as written in the spectrum or CID if no info (Default)
@@ -51,6 +44,15 @@ C13=2
 #  The number of allowed peptide termini that are not cleaved by the enzyme (default 1)
 #  For trypsin, 0 means fully tryptic only, 1 means partially tryptic, and 2 means no-enzyme search
 NNET=1
+
+#Target/Decoy search mode
+#  0 means don't search decoy database (default)
+#  1 means search decoy database to compute FDR (source FASTA file must be forward-only proteins)
+TDA=0
+
+#Number of Threads (by default, uses all available cores)
+#In DMS, a settings file entry for MSGFDBThreads will override this value
+NumThreads=All
 
 #Minimum peptide length to consider
 minLength=6
