@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
     Public MustInherit Class clsAnalysisResources
@@ -535,7 +537,7 @@ Namespace AnalysisManagerBase
                 End If
             End If
 
-            Return blnsuccess
+            Return blnSuccess
 
         End Function
 
@@ -1788,7 +1790,7 @@ Namespace AnalysisManagerBase
         End Function
 
         ''' <summary>
-        ''' Uses Ken's dll to create a fasta file for Sequest or XTandem analysis
+        ''' Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFDB analysis
         ''' </summary>
         ''' <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
         ''' <returns>TRUE for success; FALSE for failure</returns>

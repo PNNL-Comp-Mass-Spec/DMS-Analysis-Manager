@@ -11,7 +11,6 @@ Option Strict On
 
 Imports System.Data.SqlClient
 Imports System.IO
-Imports System.Collections.Specialized
 Imports System.Xml
 Imports System.Configuration
 Imports System.Windows.Forms
@@ -33,7 +32,7 @@ Namespace AnalysisManagerBase
 
         Private Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
 
-        Private m_ParamDictionary As StringDictionary
+        Private m_ParamDictionary As System.Collections.Generic.Dictionary(Of String, String)
         Private m_ErrMsg As String = ""
         Private m_EmergencyLogSource As String = ""
         Private m_EmergencyLogName As String = ""
@@ -118,7 +117,7 @@ Namespace AnalysisManagerBase
             m_ErrMsg = ""
 
             'If the param dictionary exists, it needs to be cleared out
-            If m_ParamDictionary IsNot Nothing Then
+            If Not m_ParamDictionary Is Nothing Then
                 m_ParamDictionary.Clear()
                 m_ParamDictionary = Nothing
             End If
@@ -161,12 +160,13 @@ Namespace AnalysisManagerBase
         ''' </summary>
         ''' <returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
         ''' <remarks></remarks>
-        Private Function LoadMgrSettingsFromFile() As StringDictionary
+        Private Function LoadMgrSettingsFromFile() As System.Collections.Generic.Dictionary(Of String, String)
 
             'Load initial settings into string dictionary for return
-            Dim RetDict As New StringDictionary
+            Dim RetDict As New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
             My.Settings.Reload()
+
             'Manager config db connection string
             RetDict.Add("MgrCnfgDbConnectStr", My.Settings.MgrCnfgDbConnectStr)
 
@@ -189,7 +189,7 @@ Namespace AnalysisManagerBase
         ''' <param name="InpDict"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Private Function CheckInitialSettings(ByRef InpDict As StringDictionary) As Boolean
+        Private Function CheckInitialSettings(ByRef InpDict As System.Collections.Generic.Dictionary(Of String, String)) As Boolean
 
             Dim MyMsg As String
 
@@ -201,10 +201,19 @@ Namespace AnalysisManagerBase
             End If
 
             'Verify intact config file was found
-            If CBool(InpDict("UsingDefaults")) Then
-                MyMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, default settings being used"
+            Dim strValue As String = String.Empty
+            If Not InpDict.TryGetValue("UsingDefaults", strValue) Then
+                MyMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file"
                 clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, MyMsg)
-                Return False
+            Else
+                Dim blnValue As Boolean
+                If Boolean.TryParse(strValue, blnValue) Then
+                    If blnValue Then
+                        MyMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True"
+                        clsEmergencyLog.WriteToLog(m_EmergencyLogSource, m_EmergencyLogName, MyMsg)
+                        Return False
+                    End If
+                End If
             End If
 
             'No problems found
@@ -408,11 +417,16 @@ Namespace AnalysisManagerBase
         ''' <returns>String value associated with specified key</returns>
         ''' <remarks>Returns Nothing if key isn't found</remarks>
         Public Function GetParam(ByVal ItemKey As String) As String Implements IMgrParams.GetParam
-            Dim Value As String
+            Dim Value As String = String.Empty
 
-            Value = m_ParamDictionary.Item(ItemKey)
-            If String.IsNullOrWhiteSpace(Value) Then
-                Value = String.Empty
+            If Not m_ParamDictionary Is Nothing Then
+                If m_ParamDictionary.TryGetValue(ItemKey, Value) Then
+                    If String.IsNullOrWhiteSpace(Value) Then
+                        Return String.Empty
+                    End If
+                Else
+                    Return String.Empty
+                End If
             End If
 
             Return Value
@@ -461,17 +475,6 @@ Namespace AnalysisManagerBase
             Else
                 Return CStr(InpObj)
             End If
-
-        End Function
-
-        ''' <summary>
-        ''' Gets a collection representing all keys in the parameters string dictionary
-        ''' </summary>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
-        Public Function GetAllKeys() As ICollection
-
-            Return m_ParamDictionary.Keys
 
         End Function
 

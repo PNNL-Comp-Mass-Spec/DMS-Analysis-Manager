@@ -7,8 +7,9 @@
 ' Last modified 01/16/2008
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports System.Xml
-Imports System.Collections.Specialized
 Imports AnalysisManagerBase.clsSummaryFile
 Imports System.IO
 
@@ -40,7 +41,7 @@ Namespace AnalysisManagerBase
 				Dim s As String = ""
 
 				For Each DumStr As String In m_msgList
-					If s <> "" Then s &= vbCrLf
+                    If s <> "" Then s &= System.Environment.NewLine
 					s &= DumStr
 				Next
 
@@ -123,6 +124,9 @@ Namespace AnalysisManagerBase
                 'Case "AnalysisManagerMSGFPlugin.clsMSGFRunner".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerMSGFPlugin.clsMSGFRunner, IToolRunner)
 
+                'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower
+                '    myToolRunner = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB, IToolRunner)
+
             End Select
 
             Return myToolRunner
@@ -184,6 +188,9 @@ Namespace AnalysisManagerBase
 
                 'Case "AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF".ToLower
                 '    myModule = DirectCast(New AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF, IAnalysisResources)
+
+                'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower
+                '    myModule = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB, IAnalysisResources)
 
             End Select
 

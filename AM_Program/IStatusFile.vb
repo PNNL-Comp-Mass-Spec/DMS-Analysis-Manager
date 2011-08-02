@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
 	Public Interface IStatusFile

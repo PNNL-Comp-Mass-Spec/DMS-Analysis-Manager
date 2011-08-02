@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
     Public Class clsRunDosProgram
@@ -200,7 +202,7 @@ Namespace AnalysisManagerBase
         Public Sub AbortProgramNow()
             m_AbortProgramNow = True
         End Sub
-            
+
 
         ''' <summary>
         ''' 

@@ -10,6 +10,8 @@
 'Interface for manager params storage class
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
 	Public Interface IMgrParams

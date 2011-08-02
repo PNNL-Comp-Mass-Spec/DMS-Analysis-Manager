@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports System.Xml
 Imports System.IO
 Imports AnalysisManagerBase.clsGlobal
@@ -775,7 +777,9 @@ Namespace AnalysisManagerBase
             Dim strToolAndStepTool As String
             Try
                 'Add a separator
-                clsSummaryFile.Add(vbCrLf & "=====================================================================================" & vbCrLf)
+                clsSummaryFile.Add(System.Environment.NewLine)
+                clsSummaryFile.Add("=====================================================================================")
+                clsSummaryFile.Add(System.Environment.NewLine)
 
                 ' Construct the Tool description (combination of Tool name and Step Tool name)
                 strTool = m_jobParams.GetParam("ToolName")
@@ -808,7 +812,9 @@ Namespace AnalysisManagerBase
                 clsSummaryFile.Add("Analysis Time (hh:mm:ss)" & ControlChars.Tab & CalcElapsedTime(m_StartTime, m_StopTime))
 
                 'Add another separator
-                clsSummaryFile.Add(vbCrLf & "=====================================================================================" & vbCrLf)
+                clsSummaryFile.Add(System.Environment.NewLine)
+                clsSummaryFile.Add("=====================================================================================")
+                clsSummaryFile.Add(System.Environment.NewLine)
 
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") _

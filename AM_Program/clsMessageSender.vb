@@ -1,4 +1,6 @@
-﻿Imports System
+﻿Option Strict On
+
+Imports System
 Imports System.Collections.Generic
 Imports System.Text
 Imports Apache.NMS.ActiveMQ

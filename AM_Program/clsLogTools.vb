@@ -7,6 +7,9 @@
 ' Last modified 05/14/2009
 '						05/15/2009 (DAC) - Modified logging to use Log4Net
 '*********************************************************************************************************
+
+Option Strict On
+
 Imports log4net
 
 'This assembly attribute tells Log4Net where to find the config file

@@ -7,8 +7,9 @@
 ' Last modified 01/16/2008
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports System.IO
-Imports System.Collections.Specialized
 
 Namespace AnalysisManagerBase
 
@@ -19,7 +20,7 @@ Namespace AnalysisManagerBase
 		'*********************************************************************************************************
 
 #Region "Module Variables"
-		Private Shared m_lines As New StringCollection
+        Private Shared m_lines As New System.Collections.Generic.List(Of String)
 		Private Shared m_FolderNamePath As String
 #End Region
 

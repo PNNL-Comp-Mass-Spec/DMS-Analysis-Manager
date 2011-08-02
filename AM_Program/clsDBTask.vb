@@ -7,7 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.Collections.Specialized
+Option Strict On
+
 Imports System.Data.SqlClient
 Imports AnalysisManagerBase.clsAnalysisMgrSettings
 Imports System.Xml.XPath
@@ -47,7 +48,7 @@ Namespace AnalysisManagerBase
 		Protected m_MgrParams As IMgrParams
 		Protected m_ConnStr As String
 		Protected m_BrokerConnStr As String
-		Protected m_ErrorList As New StringCollection
+		Protected m_ErrorList As New system.Collections.Generic.List(Of String)
 		Protected m_DebugLevel As Integer
 
 		'Job status
@@ -132,7 +133,7 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Protected Sub LogErrorEvents()
 			If m_ErrorList.Count > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning messages were posted to local log")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Errors reported when calling stored procedure")
             End If
 			Dim s As String
 			For Each s In m_ErrorList
@@ -165,7 +166,7 @@ Namespace AnalysisManagerBase
 
 		End Sub
 
-        Protected Function FillParamDictXml(ByVal InpXml As String) As StringDictionary
+        Protected Function FillParamDictXml(ByVal InpXml As String) As System.Collections.Generic.Dictionary(Of String, String)
 
             Dim ErrMsg As String
 
@@ -179,27 +180,31 @@ Namespace AnalysisManagerBase
                 Dim xpn As XPathNavigator = xdoc.CreateNavigator()
                 Dim nodes As XPathNodeIterator = xpn.Select("//item")
 
-                Dim RetDictXml As New StringDictionary
-                '                ResultField.Clear()
+                Dim RetDictXml As New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
                 '' traverse the parsed XML document and extract the key and value for each item
                 While nodes.MoveNext()
                     '' extract key/value from XML element and dump to output
                     Dim key As String = nodes.Current.GetAttribute("key", "")
                     Dim value As String = nodes.Current.GetAttribute("value", "")
-                    '                   ResultField.AppendText(key & "->" & value & vbCrLf)
-                    RetDictXml.Add(key, value)
+                    '                   ResultField.AppendText(key & "->" & value & System.Environment.NewLine)
+
+                    If Not RetDictXml.ContainsKey(key) Then
+                        RetDictXml.Add(key, value)
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring duplicate key '" & key & "' in XML")
+                    End If
 
                     '' extract the section name for the current item and dump it to output
                     Dim nav2 As Xml.XPath.XPathNavigator = nodes.Current.Clone
                     nav2.MoveToParent()
                     Dim sect As String = nav2.GetAttribute("name", "")
-                    '                  ResultField.AppendText("section->" & sect & vbCrLf)
+                    '                  ResultField.AppendText("section->" & sect & System.Environment.NewLine)
                 End While
 
                 Return RetDictXml
             Catch ex As System.Exception
-				ErrMsg = "clsDBTask.FillParamDict(), exception filling dictionary; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                ErrMsg = "clsDBTask.FillParamDict(), exception filling dictionary; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
                 Return Nothing
             End Try
@@ -347,7 +352,7 @@ Namespace AnalysisManagerBase
 			Dim MyMsg As String = ""
 
 			For Each MyParam As SqlParameter In InpCmd.Parameters
-				MyMsg &= vbCrLf & "Name= " & MyParam.ParameterName & vbTab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
+                MyMsg &= System.Environment.NewLine & "Name= " & MyParam.ParameterName & controlchars.tab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
 			Next
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" & MyMsg)

@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net and status monitoring using activeMQ
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports System.IO
 Imports System.Xml
 

@@ -203,6 +203,11 @@
 		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
 	/>
 	<ToolRunner 
+		Tool="msgfdb" 
+		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
+	/>
+	<ToolRunner 
 		Tool="multialign" 
 		Class="AnalysisManagerMultiAlignPlugIn.clsAnalysisToolRunnerMultiAlign"
 		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll" 
@@ -405,6 +410,11 @@
 		Tool="msgf" 
 		Class="AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF" 
 		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="msgfdb" 
+		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
 	/>
 	<Resourcer 
 		Tool="multialign" 

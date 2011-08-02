@@ -7,6 +7,8 @@
 ' Last modified 01/16/2008
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
 	Public Interface IJobParams

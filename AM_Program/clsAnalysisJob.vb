@@ -7,11 +7,11 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.Collections.Specialized
+Option Strict On
+
 Imports System.Data.SqlClient
 Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase.clsAnalysisMgrSettings
-Imports clsFormattedXMLWriter
 Imports System.IO
 
 Namespace AnalysisManagerBase
@@ -30,7 +30,7 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Module variables"
-		Protected m_JobParams As New StringDictionary
+        Protected m_JobParams As New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
         Protected m_JobId As Integer
         Protected m_TaskWasClosed As Boolean
 #End Region
@@ -59,16 +59,21 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public Function GetParam(ByVal Name As String) As String Implements IJobParams.GetParam
 
-            Dim Value As String
+            Dim Value As String = String.Empty
 
-            Value = m_JobParams(Name)
-            If String.IsNullOrWhiteSpace(Value) Then
-                Value = String.Empty
+            If Not m_JobParams Is Nothing Then
+                If m_JobParams.TryGetValue(Name, Value) Then
+                    If String.IsNullOrWhiteSpace(Value) Then
+                        Return String.Empty
+                    End If
+                Else
+                    Return String.Empty
+                End If
             End If
 
             Return Value
 
-		End Function
+        End Function
 
         Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 

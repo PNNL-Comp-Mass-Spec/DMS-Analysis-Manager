@@ -7,6 +7,8 @@
 ' Last modified 07/29/2008
 '*********************************************************************************************************
 
+Option Strict On
+
 Namespace AnalysisManagerBase
 
     Public Interface IToolRunner

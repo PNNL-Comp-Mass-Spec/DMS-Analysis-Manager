@@ -1,5 +1,4 @@
-﻿
-'*********************************************************************************************************
+﻿'*********************************************************************************************************
 ' Written by Dave Clark for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
@@ -7,6 +6,8 @@
 '
 ' Last modified 09/19/2008
 '*********************************************************************************************************
+
+Option Strict On
 
 Imports System.IO
 Imports PRISM.Files

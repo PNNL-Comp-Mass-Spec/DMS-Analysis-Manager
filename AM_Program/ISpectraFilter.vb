@@ -7,7 +7,7 @@
 ' Last modified 01/16/2008
 '*********************************************************************************************************
 
-Imports System.Collections.Specialized
+Option Strict On
 
 Namespace AnalysisManagerBase
 
@@ -37,16 +37,16 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Structures"
-		Structure InitializationParams
-			Dim SourceFolderPath As String
-			Dim OutputFolderPath As String
-			Dim MiscParams As StringDictionary
-			Dim DebugLevel As Integer
+        Structure InitializationParams
+            Dim SourceFolderPath As String
+            Dim OutputFolderPath As String
+            '' Unused: Dim MiscParams As System.Collections.Specialized.StringDictionary
+            Dim DebugLevel As Integer
             Dim Logger As PRISM.Logging.ILogger
-			Dim MgrParams As IMgrParams
-			Dim JobParams As IJobParams
-			Dim StatusTools As IStatusFile
-		End Structure
+            Dim MgrParams As IMgrParams
+            Dim JobParams As IJobParams
+            Dim StatusTools As IStatusFile
+        End Structure
 #End Region
 
 #Region "Properties"

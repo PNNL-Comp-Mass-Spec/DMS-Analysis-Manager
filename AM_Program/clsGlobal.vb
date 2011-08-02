@@ -7,6 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports System.IO
 Imports PRISM.Files.clsFileTools
 
@@ -312,6 +314,7 @@ Namespace AnalysisManagerBase
             Catch Ex As Exception
                 strFailureMessage = "Error deleting files in working directory"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " & strFailureMessage & " " & WorkDir, Ex)
+                Console.WriteLine(strFailureMessage & ": " & Ex.Message)
                 Return False
             End Try
 
@@ -323,6 +326,7 @@ Namespace AnalysisManagerBase
             Catch Ex As Exception
                 strFailureMessage = "Error deleting subfolder " & strCurrentSubfolder
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory", Ex)
+                Console.WriteLine(strFailureMessage & ": " & Ex.Message)
                 Return False
             End Try
 

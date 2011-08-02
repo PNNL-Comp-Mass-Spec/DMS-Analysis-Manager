@@ -1,4 +1,6 @@
-﻿Imports System
+﻿Option Strict On
+
+Imports System
 Imports System.Threading
 Imports System.Collections.Generic
 
