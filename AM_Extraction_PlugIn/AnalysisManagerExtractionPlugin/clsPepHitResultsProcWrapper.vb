@@ -17,16 +17,35 @@ Imports AnalysisManagerBase
 Public Class clsPepHitResultsProcWrapper
 
 	'*********************************************************************************************************
-	' Wraps PeptideHitResultsProcessor.dll
+    ' Calls PeptideHitResultsProcRunner.exe
 	'*********************************************************************************************************
 
 #Region "Module Variables"
     Private m_DebugLevel As Integer = 0
-	Private m_MgrParams As IMgrParams
+    Private m_MgrParams As IMgrParams
     Private m_JobParams As IJobParams
 
-    Private WithEvents mPeptideHitResultsProcessor As PeptideHitResultsProcessor.IPeptideHitResultsProcessor
+    Private m_Progress As Integer = 0
+    Private m_ErrMsg As String = String.Empty
+    Private m_PHRPConsoleOutputFilePath As String
 
+    '' Old/unused
+    '' Private WithEvents mPeptideHitResultsProcessor As PeptideHitResultsProcessor.IPeptideHitResultsProcessor
+
+    Protected WithEvents CmdRunner As clsRunDosProgram
+
+#End Region
+
+#Region "Properties"
+    Public ReadOnly Property ErrMsg() As String
+        Get
+            If m_ErrMsg Is Nothing Then
+                Return String.Empty
+            Else
+                Return m_ErrMsg
+            End If
+        End Get
+    End Property
 #End Region
 
 #Region "Events"
@@ -34,12 +53,12 @@ Public Class clsPepHitResultsProcWrapper
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Constructor
-	''' </summary>
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
     ''' <param name="MgrParams">IMgrParams object containing manager settings</param>
-	''' <param name="JobParams">IJobParams object containing job parameters</param>
-	''' <remarks></remarks>
+    ''' <param name="JobParams">IJobParams object containing job parameters</param>
+    ''' <remarks></remarks>
     Public Sub New(ByVal MgrParams As IMgrParams, ByVal JobParams As IJobParams)
 
         m_MgrParams = MgrParams
@@ -50,13 +69,12 @@ Public Class clsPepHitResultsProcWrapper
 
     ''' <summary>
     ''' Converts Sequest, X!Tandem, or Inspect output file to a flat file
-    ''' Will auto-determine the input file name, and will set CreateFHTFile and CreateSYNFile to True
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults() As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String) As IJobParams.CloseOutType
         '  Let the DLL auto-determines the input filename, based on the dataset name
-        Return ExtractDataFromResults(String.Empty, True, True)
+        Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True)
     End Function
 
     ''' <summary>
@@ -65,12 +83,12 @@ Public Class clsPepHitResultsProcWrapper
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
-                                           ByVal CreateFHTFile As Boolean, _
-                                           ByVal CreateSYNFile As Boolean) As IJobParams.CloseOutType
+                                           ByVal CreateInspectFirstHitsFile As Boolean, _
+                                           ByVal CreateInspectSynopsisFile As Boolean) As IJobParams.CloseOutType
 
         Dim result As IJobParams.CloseOutType
 
-        result = MakeTextOutputFiles(PeptideSearchResultsFileName, CreateFHTFile, CreateSYNFile)
+        result = MakeTextOutputFiles(PeptideSearchResultsFileName, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
@@ -79,141 +97,197 @@ Public Class clsPepHitResultsProcWrapper
 
     End Function
 
+
     ''' <summary>
     ''' Makes flat text file from PeptideSearchResultsFileName
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Private Function MakeTextOutputFiles(ByVal PeptideSearchResultsFileName As String, _
-                                         ByVal CreateFHTFile As Boolean, _
-                                         ByVal CreateSYNFile As Boolean) As IJobParams.CloseOutType
+                                         ByVal CreateInspectFirstHitsFile As Boolean, _
+                                         ByVal CreateInspectSynopsisFile As Boolean) As IJobParams.CloseOutType
 
-        Dim Msg As String = ""
         Dim ModDefsFileName As String
         Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
 
+        Dim ioInputFile As System.IO.FileInfo
+
+        Dim CmdStr As String
+
         Try
-            If PeptideSearchResultsFileName Is Nothing Then PeptideSearchResultsFileName = String.Empty
+            m_Progress = 0
+            m_ErrMsg = String.Empty
+
+            If String.IsNullOrWhiteSpace(PeptideSearchResultsFileName) Then
+                m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue"
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
             ' Define the modification definitions file name
             ModDefsFileName = System.IO.Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
 
-            'Initialize the plugin
-            Dim SetupParams As New PeptideHitResultsProcessor.IPeptideHitResultsProcessor.InitializationParams
-            With SetupParams
-                .DebugLevel = m_DebugLevel
-                .AnalysisToolName = m_JobParams.GetParam("StepTool")
-                .DatasetName = m_JobParams.GetParam("DatasetNum")
+            ioInputFile = New System.IO.FileInfo(PeptideSearchResultsFileName)
+            m_PHRPConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
-                ' Set .ParameterFileName to the parameter file used by the peptide search tool (Sequest, XTandem, or Inspect)
-                .ParameterFileName = ParamFileName
-                .SettingsFileName = m_JobParams.GetParam("genJobParamsFilename")        'Settings File parameters for PHRP are in this file (section PeptideHitResultsProcessorOptions)
+            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
 
-                .MiscParams = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)       ' Empty, since unused
-                .OutputFolderPath = m_MgrParams.GetParam("workdir")
-                .SourceFolderPath = m_MgrParams.GetParam("workdir")
+            Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
+            progLoc = System.IO.Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
 
-                '  The DLL will auto-determines the input filename if PeptideSearchResultsFileName is empty
-                .PeptideHitResultsFileName = PeptideSearchResultsFileName
-                .MassCorrectionTagsFileName = clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME
-                .ModificationDefinitionsFileName = ModDefsFileName
-
-                .CreateInspectFirstHitsFile = CreateFHTFile
-                .CreateInspectSynopsisFile = CreateSYNFile
-            End With
-
-            mPeptideHitResultsProcessor = New PeptideHitResultsProcessor.clsAnalysisManagerPeptideHitResultsProcessor
-            mPeptideHitResultsProcessor.Setup(SetupParams)
-
-        Catch ex As System.Exception
-            Msg = "Error initializing the peptide hit results processor, job " & m_JobParams.GetParam("Job")
-            Msg &= " , Step " & m_JobParams.GetParam("Step") & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-
-        'Start the peptide hit results processor
-        Try
-            If m_DebugLevel >= 3 Then
-                Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Analyzing " & PeptideSearchResultsFileName & " with PHRP"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-            End If
-
-            Dim RetVal As PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus
-            RetVal = mPeptideHitResultsProcessor.Start()
-            If RetVal = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus.PH_ERROR Then
-                Msg = "Error starting spectra processor: " & mPeptideHitResultsProcessor.ErrMsg
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            ' verify that program file exists
+            If Not System.IO.File.Exists(progLoc) Then
+                m_ErrMsg = "PHRP not found at " & progLoc
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            'Loop until the results processor finishes
-            Do While (mPeptideHitResultsProcessor.Status = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus.PH_RUNNING) OrElse _
-             (mPeptideHitResultsProcessor.Status = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessStatus.PH_STARTING)
-                System.Threading.Thread.Sleep(2000)                 'Delay for 2 seconds
-            Loop
-            RetVal = Nothing
-            System.Threading.Thread.Sleep(2000)                    'Delay for 2 seconds
-            GC.Collect()
-            GC.WaitForPendingFinalizers()
+            ' Set up and execute a program runner to run the PHRP
+            ' Note that /SynPvalue is only used when processing Inspect files
+            CmdStr = ioInputFile.FullName & _
+                     " /O:" & ioInputFile.DirectoryName & _
+                     " /M:" & ModDefsFileName & _
+                     " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
+                     " /N:" & ParamFileName & _
+                     " /SynPvalue:0.2"
+
+            ' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
+            ' Thus, we only need to use these switches if either or these should be false
+            If Not CreateInspectFirstHitsFile Or Not CreateInspectSynopsisFile Then
+                CmdStr &= " /InsFHT:" & CreateInspectFirstHitsFile.ToString()
+                CmdStr &= " /InsSyn:" & CreateInspectSynopsisFile.ToString()
+            End If
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+            End If
+
+            With CmdRunner
+                .CreateNoWindow = True
+                .CacheStandardOutput = True
+                .EchoOutputToConsole = True
+
+                .WriteConsoleOutputToFile = True
+                .ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
+            End With
+
+            If Not CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True) Then
+                m_ErrMsg = "Error running PHRP"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+
+            If CmdRunner.ExitCode <> 0 Then
+                m_ErrMsg = "PHRP runner returned a non-zero error code: " & CmdRunner.ExitCode.ToString
+
+                ' Parse the console output file for any lines that contain "Error"
+                ' Append them to m_ErrMsg
+
+                Dim ioConsoleOutputFile As System.IO.FileInfo = New System.IO.FileInfo(m_PHRPConsoleOutputFilePath)
+                Dim blnErrorMessageFound As Boolean = False
+
+                If ioConsoleOutputFile.Exists Then
+                    Dim srInFile As System.IO.StreamReader
+                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+                    Do While srInFile.Peek() >= 0
+                        Dim strLineIn As String
+                        strLineIn = srInFile.ReadLine()
+                        If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                            If strLineIn.ToLower.Contains("error") Then
+                                m_ErrMsg &= "; " & m_ErrMsg
+                                blnErrorMessageFound = True
+                            End If
+                        End If
+                    Loop
+                    srInFile.Close()
+                End If
+
+                If Not blnErrorMessageFound Then
+                    m_ErrMsg &= "; Unknown error message"
+                End If
+
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            ' Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
+            Try
+                System.IO.File.Delete(m_PHRPConsoleOutputFilePath)
+            Catch ex As Exception
+                ' Ignore errors here
+            End Try
+
         Catch ex As System.Exception
+            Dim Msg As String
             Msg = "Exception while running the peptide hit results processor: " & _
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        'Check for reason peptide hit results processor exited
-        If mPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_FAILURE Then
-            Msg = "Error calling the peptide hit results processor: " & mPeptideHitResultsProcessor.ErrMsg
-
-            ' Truncate the message if longer than 500 characters (the full message has likely already been logged)
-            If Msg.Length > 500 Then
-                Msg = Msg.Substring(0, 500) & "..."
-            End If
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        ElseIf mPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_ABORTED Then
-            Msg = "Peptide Hit Results Processing aborted"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If m_DebugLevel >= 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete")
         End If
 
-        'Return results
-        If mPeptideHitResultsProcessor.Results = PeptideHitResultsProcessor.IPeptideHitResultsProcessor.ProcessResults.PH_SUCCESS Then
-            mPeptideHitResultsProcessor = Nothing
-
-            If m_DebugLevel >= 3 Then
-                Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Peptide hit results processor complete"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-            End If
-
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        Else
-            Msg = "clsPepHitResultsProcWrapper.MakeTextOutputFiles(); Peptide hit results processor ended with an unknown state, " & mPeptideHitResultsProcessor.Results.ToString
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-        
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
+
+    Private Sub ParsePHRPConsoleOutputFile()
+        Static reProcessing As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Processing: (\d+)")
+
+        Try
+            Dim srInFile As System.IO.StreamReader
+            Dim strLineIn As String
+            Dim reMatch As System.Text.RegularExpressions.Match
+            Dim intProgress As Integer = 0
+
+            If System.IO.File.Exists(m_PHRPConsoleOutputFilePath) Then
+                srInFile = New System.IO.StreamReader(New System.IO.FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                Do While srInFile.Peek >= 0
+                    strLineIn = srInFile.ReadLine()
+                    reMatch = reProcessing.Match(strLineIn)
+
+                    If reMatch.Success Then
+                        If Integer.TryParse(reMatch.Groups.Item(1).Value, intProgress) Then
+                            ' Success parsing out the progress
+                        End If
+                    End If
+                Loop
+
+                srInFile.Close()
+
+                If intProgress > m_Progress Then
+                    m_Progress = intProgress
+                    RaiseEvent ProgressChanged("Running PHRP", m_Progress)
+                End If
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing PHRP Console Output File", ex)
+        End Try
+
+    End Sub
+
 #End Region
 
 #Region "Event Handlers"
 
-    Private Sub mPeptideHitResultsProcessor_DebugEvent(ByVal strMessage As String) Handles mPeptideHitResultsProcessor.DebugEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+
+
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+
+        'Update the status by parsing the PHRP Console Output file every 20 seconds
+        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
+            dtLastStatusUpdate = System.DateTime.Now
+            ParsePHRPConsoleOutputFile()
+        End If
+
     End Sub
 
-    Private Sub mPeptideHitResultsProcessor_ErrorOccurred(ByVal strMessage As String) Handles mPeptideHitResultsProcessor.ErrorOccurred
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP error: " & strMessage)
-    End Sub
-
-    Private Sub mPeptideHitResultsProcessor_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideHitResultsProcessor.ProgressChanged
-        RaiseEvent ProgressChanged(taskDescription, percentComplete)
-    End Sub
 #End Region
 End Class

@@ -249,11 +249,12 @@ Public Class clsExtractToolRunner
 
 		'Run the processor
 		If m_DebugLevel > 3 Then
-			Msg = "clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP"
+            Msg = "clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
         End If
-		Try
-            Result = m_PHRP.ExtractDataFromResults()
+        Try
+            Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
+            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
         Catch ex As System.Exception
             Msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
@@ -261,8 +262,11 @@ Public Class clsExtractToolRunner
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception running PHRP")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
+
         If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
-            'TODO: Figure out appropriate response
+            Msg = "Error running PHRP"
+            If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -283,7 +287,8 @@ Public Class clsExtractToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
         End If
         Try
-            Result = m_PHRP.ExtractDataFromResults()
+            Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
+            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
         Catch ex As System.Exception
             Msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
@@ -291,8 +296,11 @@ Public Class clsExtractToolRunner
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception running PHRP")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
+
         If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
-            'TODO: Figure out appropriate response
+            Msg = "Error running PHRP"
+            If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -304,8 +312,8 @@ Public Class clsExtractToolRunner
 
         Dim Msg As String = ""
 
-        Dim CreateFHTFile As Boolean
-        Dim CreateSYNFile As Boolean
+        Dim CreateInspectFirstHitsFile As Boolean
+        Dim CreateInspectSynopsisFile As Boolean
 
         Dim strTargetFilePath As String
 
@@ -334,10 +342,17 @@ Public Class clsExtractToolRunner
             End If
 
             ' Create the First Hits files using the _inspect.txt file
-            CreateFHTFile = True
-            CreateSYNFile = False
+            CreateInspectFirstHitsFile = True
+            CreateInspectSynopsisFile = False
             strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
-            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateFHTFile, CreateSYNFile)
+            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
+
+            If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                Msg = "Error running PHRP"
+                If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             ' Delete the _inspect.txt file
             System.IO.File.Delete(strTargetFilePath)
@@ -354,10 +369,17 @@ Public Class clsExtractToolRunner
             End If
 
             ' Create the Synopsis files using the _inspect.txt file
-            CreateFHTFile = False
-            CreateSYNFile = True
+            CreateInspectFirstHitsFile = False
+            CreateInspectSynopsisFile = True
             strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
-            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateFHTFile, CreateSYNFile)
+            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
+
+            If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                Msg = "Error running PHRP"
+                If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             Try
                 ' Delete the _inspect.txt file
@@ -373,10 +395,6 @@ Public Class clsExtractToolRunner
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception running PHRP")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
-        If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
-            'TODO: Figure out appropriate response
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -485,13 +503,8 @@ Public Class clsExtractToolRunner
                 strSynFileNameAndSize &= ")"
             End If
 
-            If m_DebugLevel >= 3 Then
+            If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running peptide prophet on file " & strSynFileNameAndSize)
-            End If
-
-            If m_DebugLevel >= 3 Then
-                Msg = "clsExtractToolRunner.RunPeptideProphet(); Analyzing " & strFileList(intFileIndex) & " with peptide prophet"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
             End If
 
             eResult = m_PeptideProphet.CallPeptideProphet()
@@ -883,12 +896,23 @@ Public Class clsExtractToolRunner
 
         ' Lookup the version of the PeptideHitResultsProcessor
         Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("PeptideHitResultsProcessor").GetName
 
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+            Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
+            Dim ioPHRP As System.IO.DirectoryInfo
+            ioPHRP = New System.IO.DirectoryInfo(progLoc)
+
+            ' verify that program file exists
+            If ioPHRP.Exists Then
+                Dim oAssemblyName As System.Reflection.AssemblyName
+                Dim strDLLPath As String = System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll")
+                oAssemblyName = System.Reflection.Assembly.LoadFrom(strDLLPath).GetName
+
+                Dim strNameAndVersion As String
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
+            End If
 
         Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
@@ -978,14 +1002,17 @@ Public Class clsExtractToolRunner
     End Sub
 
     Private Sub m_PHRP_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_PHRP.ProgressChanged
+        Const PHRP_LOG_INTERVAL_SECONDS As Integer = 180
         Const PHRP_DETAILED_LOG_INTERVAL_SECONDS As Integer = 20
+
         Static dtLastPHRPStatusLog As System.DateTime = System.DateTime.Now.Subtract(New System.TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
         m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + CSng(percentComplete / 3.0)
         m_StatusTools.UpdateAndWrite(m_progress)
 
-        If m_DebugLevel >= 4 Then
-            If System.DateTime.Now.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS Then
+        If m_DebugLevel >= 1 Then
+            If System.DateTime.Now.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse _
+               System.DateTime.Now.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
                 dtLastPHRPStatusLog = System.DateTime.Now
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running PHRP: " & taskDescription & "; " & percentComplete & "% complete")
             End If

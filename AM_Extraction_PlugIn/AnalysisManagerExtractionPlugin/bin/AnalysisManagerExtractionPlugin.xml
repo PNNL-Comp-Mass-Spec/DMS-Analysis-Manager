@@ -110,10 +110,9 @@ AnalysisManagerExtractionPlugin
 	<param name="MgrParams">IMgrParams object containing manager settings</param>
 	<param name="JobParams">IJobParams object containing job parameters</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults">
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String)">
 	<summary>
  Converts Sequest, X!Tandem, or Inspect output file to a flat file
- Will auto-determine the input file name, and will set CreateFHTFile and CreateSYNFile to True
  </summary>
 	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
@@ -128,6 +127,11 @@ AnalysisManagerExtractionPlugin
  Makes flat text file from PeptideSearchResultsFileName
  </summary>
 	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideProphetWrapper.CmdRunner_LoopWaiting">
 	<summary>

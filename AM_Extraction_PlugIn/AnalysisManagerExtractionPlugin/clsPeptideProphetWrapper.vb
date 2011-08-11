@@ -99,6 +99,7 @@ Public Class clsPeptideProphetWrapper
         Dim CmdStr As String
         Dim ioInputFile As System.IO.FileInfo
         Dim strPeptideProphetConsoleOutputFilePath As String
+
         Try
             m_ErrMsg = String.Empty
 

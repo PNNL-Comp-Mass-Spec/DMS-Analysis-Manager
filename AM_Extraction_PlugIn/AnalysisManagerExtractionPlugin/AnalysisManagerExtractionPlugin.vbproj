@@ -68,11 +68,6 @@
       <HintPath>..\..\AM_Common\PeptideFileExtractor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="PeptideHitResultsProcessor, Version=1.1.3184.12968, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
