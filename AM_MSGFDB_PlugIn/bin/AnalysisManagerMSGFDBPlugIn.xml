@@ -73,7 +73,7 @@ AnalysisManagerMSGFDBPlugIn
  </summary>
 	<returns>True if success; false if failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ZipMainOutputFile">
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults(System.String)">
 	<summary>
  Zips MSGFDB Output File
  </summary>

@@ -27,11 +27,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Protected Const PROGRESS_PCT_MSGFDB_PREPROCESSING_SPECTRA As Single = 5
     Protected Const PROGRESS_PCT_MSGFDB_SEARCHING_DATABASE As Single = 10
     Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES = 50
-    Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS As Single = 97
-    Protected Const PROGRESS_PCT_MSGFDB_WRITING_RESULTS As Single = 98
+    Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS As Single = 92
+    Protected Const PROGRESS_PCT_MSGFDB_WRITING_RESULTS As Single = 93
+    Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 94
     Protected Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 99
 
     Protected WithEvents CmdRunner As clsRunDosProgram
+
+    Private WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+
 #End Region
 
 #Region "Methods"
@@ -57,6 +61,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim FastaFileSizeKB As Single
 
         Dim strParameterFilePath As String
+        Dim ResultsFileName As String
 
         Dim objIndexedDBCreator As New clsCreateMSGFDBSuffixArrayFiles
 
@@ -132,6 +137,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             ' Read the MSGFDB Parameter File
             strMSGFCmdLineOptions = ParseMSGFDBParameterFile(strParameterFilePath, FastaFileSizeKB)
+            ResultsFileName = m_Dataset & "_msgfdb.txt"
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGFDB")
 
@@ -149,7 +155,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             ' Define the input file, output file, and fasta file
             CmdStr &= " -s " & m_Dataset & "_dta.txt"
-            CmdStr &= " -o " & m_Dataset & "_msgfdb.txt"
+            CmdStr &= " -o " & ResultsFileName
             CmdStr &= " -d " & fiFastaFile.FullName
 
             ' Append the remaining options loaded from the parameter file
@@ -197,14 +203,20 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             If Not blnProcessingError Then
                 'Zip the output file
-                result = ZipMainOutputFile()
+                result = ZipMSGFDBResults(ResultsFileName)
                 If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    ' Move the source files and any results to the Failed Job folder
-                    ' Useful for debugging MSGFDB problems
-                    CopyFailedResultsToArchiveFolder()
-                    Return result
+                    blnProcessingError = True
                 End If
             End If
+
+            If Not blnProcessingError Then
+                ' Create the Peptide to Protein map file
+                result = CreatePeptideToProteinMapping(ResultsFileName)
+                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    blnProcessingError = True
+                End If
+            End If
+
 
             'Stop the job timer
             m_StopTime = System.DateTime.Now
@@ -226,6 +238,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
             GC.Collect()
             GC.WaitForPendingFinalizers()
 
+            If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Move the source files and any results to the Failed Job folder
+                ' Useful for debugging MSGFDB problems
+                CopyFailedResultsToArchiveFolder()
+                Return result
+            End If
+
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -238,14 +257,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 'MoveResultFiles moves the result files to the result folder
                 m_message = "Error moving files into results folder"
                 eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
-                ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
-
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
@@ -304,6 +315,124 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     End Sub
 
+    Private Function CreatePeptideToProteinMapping(ResultsFileName As String) As IJobParams.CloseOutType
+
+        Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
+
+        ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+        Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+        Dim strInputFilePath As String
+
+        Dim blnIgnorePeptideToProteinMapperErrors As Boolean
+        Dim blnSuccess As Boolean
+
+        UpdateStatusRunning(PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+
+        strInputFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
+
+        Try
+            ' Validate that the input file has at least one entry; if not, then no point in continuing
+            Dim srInFile As System.IO.StreamReader
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
+
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+            intLinesRead = 0
+            Do While srInFile.Peek >= 0 AndAlso intLinesRead < 10
+                strLineIn = srInFile.ReadLine()
+                If Not String.IsNullOrEmpty(strLineIn) Then
+                    intLinesRead += 1
+                End If
+            Loop
+
+            If intLinesRead <= 1 Then
+                ' File is empty or only contains a header line
+                clsGlobal.m_Completions_Msg = "No results above threshold"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; MSGF-DB results file is empty")
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
+
+        Catch ex As Exception
+
+            m_message = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
+                m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        End Try
+
+        Try
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
+            End If
+
+            blnIgnorePeptideToProteinMapperErrors = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError"))
+
+            mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+
+            With mPeptideToProteinMapper
+                .DeleteTempFiles = True
+                .IgnoreILDifferences = False
+                .InspectParameterFilePath = String.Empty
+
+                If m_DebugLevel > 2 Then
+                    .LogMessagesToFile = True
+                    .LogFolderPath = m_WorkDir
+                Else
+                    .LogMessagesToFile = False
+                End If
+
+                .MatchPeptidePrefixAndSuffixToProtein = False
+                .OutputProteinSequence = False
+                .PeptideInputFileFormat = PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile
+                .PeptideFileSkipFirstLine = False
+                .ProteinDataRemoveSymbolCharacters = True
+                .ProteinInputFilePath = System.IO.Path.Combine(OrgDbDir, dbFilename)
+                .SaveProteinToPeptideMappingFile = True
+                .SearchAllProteinsForPeptideSequence = True
+                .SearchAllProteinsSkipCoverageComputationSteps = True
+                .ShowMessages = False
+            End With
+
+            blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
+
+            mPeptideToProteinMapper.CloseLogFileNow()
+
+            If blnSuccess Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete")
+                End If
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
+
+                If blnIgnorePeptideToProteinMapperErrors Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Else
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+            End If
+
+        Catch ex As Exception
+
+            m_message = "Error in CreatePeptideToProteinMapping"
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & _
+                m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+
+            If blnIgnorePeptideToProteinMapperErrors Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Else
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
 
     Protected Function GetMSFGDBParameterNames() As System.Collections.Generic.Dictionary(Of String, String)
         Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
@@ -558,6 +687,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     Dim strModClean As String = String.Empty
 
                     If ParseMSGFValidateMod(strStaticMod, strModClean) Then
+                        If strModClean.Contains(",opt,") Then
+                            ' Auto-change this mod to a static (fixed) mod
+                            strModClean.Replace(",opt,", ",fix,")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Updated static mod to contain ',fix,' instead of ',opt,': " & strStaticMod)
+                        End If
                         swModFile.WriteLine(strModClean)
                     Else
                         Return False
@@ -574,6 +708,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     Dim strModClean As String = String.Empty
 
                     If ParseMSGFValidateMod(strDynamicMod, strModClean) Then
+                        If strModClean.Contains(",fix,") Then
+                            ' Auto-change this mod to a dynamic (optional) mod
+                            strModClean.Replace(",fix,", ",opt,")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Updated dynamic mod to contain ',opt,' instead of ',fix,': " & strDynamicMod)
+                        End If
                         swModFile.WriteLine(strModClean)
                     Else
                         Return False
@@ -613,7 +752,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim strKey As String
         Dim strValue As String
-        Dim intValue As Integer        
+        Dim intValue As Integer
 
         Dim intParamFileThreadCount As Integer = 0
         Dim intDMSDefinedThreadCount As Integer = 0
@@ -848,6 +987,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     End Function
 
+    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+        m_progress = sngPercentComplete
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
+    End Sub
+
     ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
     ''' </summary>
@@ -899,40 +1043,36 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+    Private Function ZipMSGFDBResults(ResultsFileName As String) As IJobParams.CloseOutType
         Dim TmpFilePath As String
 
         Try
-            TmpFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
-            If Not MyBase.ZipFile(TmpFilePath, True) Then
+
+            TmpFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
+            If Not MyBase.ZipFile(TmpFilePath, False) Then
                 Dim Msg As String = "Error zipping output files, job " & m_JobNum
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            ' Add the _msgfdb.txt file to .FilesToDelete since we only want to keep the Zipped version
+            clsGlobal.FilesToDelete.Add(ResultsFileName)
+
         Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        ' Make sure the MSGFDB output files have been deleted (the call to MyBase.ZipFile() above should have done this)
-        Try
-            TmpFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
-            If System.IO.File.Exists(TmpFilePath) Then
-                System.IO.File.SetAttributes(TmpFilePath, System.IO.File.GetAttributes(TmpFilePath) And (Not System.IO.FileAttributes.ReadOnly))
-                System.IO.File.Delete(TmpFilePath)
-            End If
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMSGFDB.ZipMainOutputFile, Error deleting _msgfdb.txt file, job " & m_JobNum & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
+
+#End Region
+
+#Region "Event Handlers"
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
@@ -949,7 +1089,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.Now
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+            UpdateStatusRunning(m_progress)
         End If
 
         If System.DateTime.Now.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
@@ -957,6 +1097,41 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT))
 
+        End If
+
+    End Sub
+
+    Private Sub mPeptideToProteinMapper_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
+
+        ' Note that percentComplete is a value between 0 and 100
+
+        Const STATUS_UPDATE_INTERVAL_SECONDS As Integer = 5
+        Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
+
+        Static dtLastStatusUpdate As System.DateTime
+        Static dtLastLogTime As System.DateTime
+
+        Dim sngStartPercent As Single = PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS
+        Dim sngEndPercent As Single = PROGRESS_PCT_MSGFDB_COMPLETE
+        Dim sngPercentCompleteEffective As Single
+
+        sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
+
+        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = System.DateTime.Now
+
+            ' Synchronize the stored Debug level with the value stored in the database
+            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+            AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
+
+            UpdateStatusRunning(sngPercentCompleteEffective)
+        End If
+
+        If m_DebugLevel >= 3 Then
+            If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = System.DateTime.Now
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
+            End If
         End If
 
     End Sub

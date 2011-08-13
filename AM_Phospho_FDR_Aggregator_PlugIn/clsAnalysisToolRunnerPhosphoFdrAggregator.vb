@@ -157,7 +157,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Dim result As Boolean = True
         Dim ConcatenateAScoreFiles() As String
         Dim FileToConcatenate As String
-        Dim ReadFirstLine As Boolean = False
+        Dim bSkipFirstLine As Boolean = False
         Try
 
             ConcatenateAScoreFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & FilterExtension)
@@ -171,9 +171,13 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, FileToConcatenate))
 
                 Dim inpLine As String
-                If ReadFirstLine Then
+                If bSkipFirstLine Then
                     inputBase.ReadLine()
+                Else
+                    ' Skip the first line (the header line) on subsequent files
+                    bSkipFirstLine = True
                 End If
+
                 Do
                     inpLine = inputBase.ReadLine()
                     If Not inpLine Is Nothing Then
@@ -181,7 +185,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                     End If
                 Loop Until inpLine Is Nothing
                 inputBase.Close()
-                ReadFirstLine = True
 
             Next
             inputFile.Close()
