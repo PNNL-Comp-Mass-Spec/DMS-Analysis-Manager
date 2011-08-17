@@ -23,6 +23,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
     Protected WithEvents mMSXmlGen As clsMSXmlGen
 
+    Protected mReAdWProgramPath As String = String.Empty
 #End Region
 
 #Region "Methods"
@@ -141,8 +142,14 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         ' Determine the program path and Instantiate the processing class
         If msXmlGenerator.ToLower.Contains("readw") Then
             ' ReadW
-            Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
-            ProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
+            ' mReAdWProgramPath should have been populated during the call to StoreToolVersionInfo()
+
+            If String.IsNullOrEmpty(mReAdWProgramPath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "mReAdWProgramPath is empty; this is unexpected")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                ProgramPath = mReAdWProgramPath
+            End If
 
             mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, ProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
@@ -200,13 +207,14 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
 
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReadW.exe or MSConvert.exe
-        Dim ProgramPath As String = String.Empty
+        Dim ProgramPath As String
 
         ' Determine the program path and Instantiate the processing class
         If msXmlGenerator.ToLower.Contains("readw") Then
             ' ReadW
-            Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
-            ProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
+            ' Note that msXmlGenerator will likely be ReAdW.exe
+            mReAdWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
+            ProgramPath = mReAdWProgramPath
 
         ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
             ' MSConvert
@@ -215,6 +223,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
         Else
             ' Invalid value for MSXMLGenerator
+            ProgramPath = String.Empty
         End If
 
         If Not String.IsNullOrEmpty(ProgramPath) Then

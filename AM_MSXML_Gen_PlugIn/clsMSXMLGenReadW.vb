@@ -29,12 +29,30 @@ Public Class clsMSXMLGenReadW
 
         Dim CmdStr As String
 
-        If mCentroidMSXML Then
-            ' Centroiding is enabled
-            CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
+        If mProgramPath.ToLower.Contains("\v2.") Then
+            ' Version 2.x syntax
+            ' Syntax is: readw <raw file path> <c/p> [<output file>]
+
+            If mCentroidMSXML Then
+                ' Centroiding is enabled
+                CmdStr = " " & RawFilePath & " c"
+            Else
+                CmdStr = " " & RawFilePath & " p"
+            End If
+
         Else
-            CmdStr = " --" & msXmlFormat & " " & RawFilePath
+            ' Version 3 or higher
+            ' Syntax is ReAdW [options] <raw file path> [<output file>]
+            '  where Options will include --mzXML and possibly -c
+
+            If mCentroidMSXML Then
+                ' Centroiding is enabled
+                CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
+            Else
+                CmdStr = " --" & msXmlFormat & " " & RawFilePath
+            End If
         End If
+    
 
         Return CmdStr
     End Function
