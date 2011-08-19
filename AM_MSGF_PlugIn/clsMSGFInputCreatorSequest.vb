@@ -31,7 +31,10 @@ Public Class clsMSGFInputCreatorSequest
     Protected Const DATA_COLUMN_XcRatio As String = "XcRatio"
     Protected Const DATA_COLUMN_PassFilt As String = "PassFilt"
     Protected Const DATA_COLUMN_MScore As String = "MScore"
+    Protected Const DATA_COLUMN_Ions_Observed As String = "Ions_Observed"
+    Protected Const DATA_COLUMN_Ions_Expected As String = "Ions_Expected"
     Protected Const DATA_COLUMN_NumTrypticEnds As String = "NumTrypticEnds"
+    Protected Const DATA_COLUMN_DelM_PPM As String = "DelM_PPM"
 
     Public Sub New(ByVal strDatasetName As String, _
                    ByVal strWorkDir As String, _
@@ -63,9 +66,14 @@ Public Class clsMSGFInputCreatorSequest
         mColumnHeaders.Add(DATA_COLUMN_RankXc, 13)
         mColumnHeaders.Add(DATA_COLUMN_DelM, 14)
         mColumnHeaders.Add(DATA_COLUMN_XcRatio, 15)
-        mColumnHeaders.Add(DATA_COLUMN_PassFilt, 16)
-        mColumnHeaders.Add(DATA_COLUMN_MScore, 17)
+
+        mColumnHeaders.Add(DATA_COLUMN_PassFilt, -1)
+        mColumnHeaders.Add(DATA_COLUMN_MScore, -1)
+        mColumnHeaders.Add(DATA_COLUMN_Ions_Observed, 16)
+        mColumnHeaders.Add(DATA_COLUMN_Ions_Expected, 17)
+
         mColumnHeaders.Add(DATA_COLUMN_NumTrypticEnds, 18)
+        mColumnHeaders.Add(DATA_COLUMN_DelM_PPM, 19)
 
     End Sub
 

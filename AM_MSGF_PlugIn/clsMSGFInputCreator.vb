@@ -550,8 +550,8 @@ Public MustInherit Class clsMSGFInputCreator
 
         If Not strColumns Is Nothing Then
             If objColumnHeaders.TryGetValue(strColumnName, intColIndex) Then
-                If intColIndex < strColumns.Length Then
-                    If strColumns(intColIndex) Is Nothing Then
+                If intColIndex >= 0 AndAlso intColIndex < strColumns.Length Then
+                    If String.IsNullOrWhiteSpace(strColumns(intColIndex)) Then
                         Return String.Empty
                     Else
                         Return strColumns(intColIndex)

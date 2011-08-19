@@ -90,6 +90,8 @@ Public Class clsMSGFRunner
     Protected mMSGFInputFileLineCount As Integer = 0
     Protected mMSGFLineCountPreviousSegments As Integer = 0
 
+    Protected mReadWProgramPath As String = String.Empty
+
     Protected WithEvents mMSXmlGenReadW As clsMSXMLGenReadW
     Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
     Protected WithEvents mMSGFRunner As clsRunDosProgram
@@ -650,14 +652,11 @@ Public Class clsMSGFRunner
     ''' <remarks></remarks>
     Private Function CreateMZXMLFile() As Boolean
 
-        Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
-        Dim msXmlGenerator As String = "ReadW.exe"
         Dim dtStartTime As System.DateTime
 
         ' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
         Dim CentroidMSXML As Boolean = True
 
-        Dim ReadWProgramPath As String
         Dim eOutputType As clsMSXMLGenReadW.MSXMLOutputTypeConstants
 
         Dim blnSuccess As Boolean
@@ -674,11 +673,11 @@ Public Class clsMSGFRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset)
         End If
 
-        ReadWProgramPath = System.IO.Path.Combine(InspectDir, msXmlGenerator)
         eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
 
         ' Instantiate the processing class
-        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, ReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+        ' Note that mReadWProgramPath should have been populated by StoreToolVersionInfo()
+        mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, mReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
         dtStartTime = System.DateTime.Now
 
@@ -1910,8 +1909,11 @@ Public Class clsMSGFRunner
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
         ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSGFLoc")))
 
-        Dim InspectDir As String = m_mgrParams.GetParam("InspectDir")                   ' ReadW.exe is stored in the Inspect folder
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(InspectDir, "ReadW.exe")))
+
+        Dim msXmlGenerator As String = "ReadW.exe"
+        mReadWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
+
+        ioToolFiles.Add(New System.IO.FileInfo(mReadWProgramPath))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
