@@ -7,8 +7,8 @@ Option Strict On
 ' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 ' Program started November 8, 2003
 
-' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/
+' E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+' Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 ' -------------------------------------------------------------------------------
 ' 
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -25,7 +25,7 @@ Option Strict On
 ' this computer software.
 
 '
-' Last modified June 13, 2011
+' Last modified July 7, 2011
 
 Public Class clsParseCommandLine
 
@@ -122,6 +122,8 @@ Public Class clsParseCommandLine
         Catch ex As System.Exception
             Throw New System.Exception("Error in InvalidParametersPresent", ex)
         End Try
+
+        Return False
 
     End Function
 
@@ -403,6 +405,8 @@ Public Class clsParseCommandLine
         Catch ex As System.Exception
             Throw New System.Exception("Error in RetrieveParameter", ex)
         End Try
+
+        Return False
 
     End Function
 
