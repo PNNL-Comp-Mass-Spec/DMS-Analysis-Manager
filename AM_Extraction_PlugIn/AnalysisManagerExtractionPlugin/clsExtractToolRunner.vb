@@ -126,6 +126,19 @@ Public Class clsExtractToolRunner
                         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
                     End If
 
+                Case "MSG_Peptide_Hit"
+                    'Run PHRP
+                    Result = RunPhrpForMSGFDB()
+                    If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        Msg = "Error running peptide hits result processor for MSGF-DB"
+                        m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
+                        blnProcessingError = True
+                    Else
+                        m_progress = 100    ' 100% done
+                        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+                    End If
+
                 Case Else
                     'Should never get here - invalid result type specified
                     Msg = "Invalid ResultType specified: " & m_jobParams.GetParam("ResultType")
@@ -303,6 +316,70 @@ Public Class clsExtractToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType
+
+        Dim Msg As String = ""
+
+        Dim CreateMSGFDBFirstHitsFile As Boolean
+        Dim CreateMSGFDBSynopsisFile As Boolean
+
+        Dim strTargetFilePath As String
+
+        Dim blnSuccess As Boolean
+        Dim Result As IJobParams.CloseOutType
+
+        m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
+
+        'Run the processor
+        If m_DebugLevel > 3 Then
+            Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Starting PHRP"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+        End If
+
+        Try
+            ' The goal:
+            '   Create the _fht.txt and _syn.txt files from the _MSGFDB.txt file in the _MSGFDB.zip file
+
+            ' Extract _MSGFDB.txt from the _MSGFDB.zip file
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSGFDB.zip")
+            blnSuccess = MyBase.UnzipFile(strTargetFilePath)
+
+            If Not blnSuccess Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            ' Create the First Hits files using the _MSGFDB.txt file
+            CreateMSGFDBFirstHitsFile = True
+            CreateMSGFDBSynopsisFile = True
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSGFDB.txt")
+            Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile)
+
+            If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                Msg = "Error running PHRP"
+                If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            Try
+                ' Delete the _MSGFDB.txt file
+                System.IO.File.Delete(strTargetFilePath)
+            Catch ex As System.Exception
+                ' Ignore errors here
+            End Try
+
+        Catch ex As System.Exception
+            Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & _
+             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -934,7 +1011,9 @@ Public Class clsExtractToolRunner
             Catch ex As System.Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
             End Try
-    
+
+            ' Lookup the version of the PeptideProphetRunner
+
             Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
             Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
 

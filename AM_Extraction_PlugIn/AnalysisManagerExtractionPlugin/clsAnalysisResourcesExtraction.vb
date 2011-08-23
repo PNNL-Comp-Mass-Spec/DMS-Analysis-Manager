@@ -119,7 +119,7 @@ Public Class clsAnalysisResourcesExtraction
                 End If
                 clsGlobal.FilesToDelete.Add(FileToGet)
 
-                'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
+                'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
                 clsGlobal.FilesToDelete.Add(strDataset & "_xt.xml")
 
                 ' Get the X!Tandem parameter file
@@ -164,6 +164,25 @@ Public Class clsAnalysisResourcesExtraction
                 clsGlobal.FilesToDelete.Add(FileToGet)
 
                 ' Get the Inspect parameter file
+                FileToGet = m_jobParams.GetParam("ParmFileName")
+                If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                    'Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
+                clsGlobal.FilesToDelete.Add(FileToGet)
+
+            Case "MSG_Peptide_Hit"
+                FileToGet = strDataset & "_msgfdb.zip"
+                If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+                    'Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                End If
+                clsGlobal.FilesToDelete.Add(FileToGet)
+
+                'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
+                clsGlobal.FilesToDelete.Add(strDataset & "_msgfdb.txt")
+
+                ' Get the MSGF-DB parameter file
                 FileToGet = m_jobParams.GetParam("ParmFileName")
                 If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                     'Errors were reported in function call, so just return
