@@ -71,6 +71,7 @@ Public Class clsMSGFRunner
         Sequest = 1
         XTandem = 2
         Inspect = 3
+        MSGFDB = 4
     End Enum
 
     Protected Structure udtSegmentFileInfoType
@@ -355,6 +356,10 @@ Public Class clsMSGFRunner
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inspect does not support ETD data processing; will set m_ETDMode to False")
                 blnSuccess = True
 
+            Case ePeptideHitResultType.MSGFDB
+                blnSuccess = CheckETDModeEnabledMSGFDB(strParamFilePath)
+                blnSuccess = True
+
             Case Else
                 ' Unknown result type
         End Select
@@ -366,6 +371,94 @@ Public Class clsMSGFRunner
         Return blnSuccess
 
     End Function
+
+    Protected Function CheckETDModeEnabledMSGFDB(ByVal strParamFilePath As String) As Boolean
+
+
+        Const MSGFDB_FRAG_METHOD_TAG As String = "FragmentationMethodID"
+
+        Dim srParamFile As System.IO.StreamReader
+        Dim strLineIn As String
+
+        Dim strFragMode As String
+        Dim intFragMode As Integer
+
+        Dim intLinesRead As Integer
+        Dim intCharIndex As Integer
+
+        Try
+            m_ETDMode = False
+
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Reading the MSGF-DB parameter file: " & strParamFilePath)
+            End If
+
+            ' Read the data from the MSGF-DB Param file
+            srParamFile = New System.IO.StreamReader(New System.IO.FileStream(strParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+
+            intLinesRead = 0
+
+            Do While srParamFile.Peek >= 0
+                strLineIn = srParamFile.ReadLine
+                intLinesRead += 1
+
+                If Not String.IsNullOrEmpty(strLineIn) AndAlso _
+                   strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
+
+                    ' Check whether this line is FragmentationMethodID=2
+                    ' Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)  
+                    ' This mode is not yet supported
+
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
+                    End If
+
+                    ' Look for the equals sign
+                    intCharIndex = strLineIn.IndexOf("=")
+                    If intCharIndex > 0 Then
+                        strFragMode = strLineIn.Substring(intCharIndex + 1).Trim
+
+                        If Integer.TryParse(strFragMode, intFragMode) Then
+                            If intFragMode = 2 Then
+                                m_ETDMode = True
+                            ElseIf intFragMode = 4 Then
+                                ' ToDo: Figure out how to handle this mode
+                                m_ETDMode = False
+                            Else
+                                m_ETDMode = False
+                            End If
+                        End If
+
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+                    End If
+
+                    ' No point in checking any further since we've parsed the ion_series line
+                    Exit Do
+
+                End If
+
+            Loop
+
+            srParamFile.Close()
+
+        Catch ex As Exception
+            Dim Msg As String
+            Msg = "Error reading the MSGFDB param file: " & _
+                ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
+
+            If Not srParamFile Is Nothing Then srParamFile.Close()
+
+            Return False
+        End Try
+
+        Return True
+
+
+    End Function
+
 
     ''' <summary>
     ''' Examines the Sequest param file to determine if ETD mode is enabled
@@ -603,6 +696,11 @@ Public Class clsMSGFRunner
                     ' Convert Inspect results to input format required for MSGF
                     mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
 
+                Case ePeptideHitResultType.MSGFDB
+
+                    ' Convert MSGFDB results to input format required for MSGF
+                    mMSGFInputCreator = New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+
                 Case Else
                     'Should never get here; invalid result type specified
                     Msg = "Invalid PeptideHit ResultType specified: " & eResultType
@@ -747,6 +845,9 @@ Public Class clsMSGFRunner
             Case "IN_Peptide_Hit".ToLower
                 Return ePeptideHitResultType.Inspect
 
+            Case "MSG_Peptide_Hit".ToLower
+                Return ePeptideHitResultType.MSGFDB
+
             Case Else
                 Return ePeptideHitResultType.Unknown
         End Select
@@ -758,16 +859,20 @@ Public Class clsMSGFRunner
 
         Select Case eResultType
             Case ePeptideHitResultType.Sequest
-                ' Sequest: _syn_ModSummary.txt
+                ' Sequest
                 strModSummaryName = strDatasetName & "_syn_ModSummary.txt"
 
             Case ePeptideHitResultType.XTandem
-                ' X!Tandem: _xt_ModSummary.txt
+                ' X!Tandem
                 strModSummaryName = strDatasetName & "_xt_ModSummary.txt"
 
             Case ePeptideHitResultType.Inspect
-                ' Inspect: _inspect_syn_ModSummary.txt
+                ' Inspect
                 strModSummaryName = strDatasetName & "_inspect_syn_ModSummary.txt"
+
+            Case ePeptideHitResultType.MSGFDB
+                ' MSGFDB
+                strModSummaryName = strDatasetName & "_msgfdb_syn_ModSummary.txt"
 
         End Select
 
@@ -792,6 +897,10 @@ Public Class clsMSGFRunner
                 ' Inspect: _inspect_fht.txt
                 strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPFirstHitsFileName(strDatasetName)
 
+            Case ePeptideHitResultType.MSGFDB
+                ' MSGFDB: _msgfdb_fht.txt
+                strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPFirstHitsFileName(strDatasetName)
+
         End Select
 
         Return strPHRPResultsFileName
@@ -814,6 +923,10 @@ Public Class clsMSGFRunner
             Case ePeptideHitResultType.Inspect
                 ' Inspect: _inspect_syn.txt
                 strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPSynopsisFileName(strDatasetName)
+
+            Case ePeptideHitResultType.MSGFDB
+                ' Inspect: _msgfdb_syn.txt
+                strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPSynopsisFileName(strDatasetName)
 
         End Select
 
@@ -1082,7 +1195,7 @@ Public Class clsMSGFRunner
 
         Dim strMSGFResultData As String
         Dim strOriginalPeptideInfo As String
-        Dim strProteinNew As String
+        Dim strProteinNew As String = String.Empty
 
         Dim intResultID As Integer
         Dim intIndex As Integer

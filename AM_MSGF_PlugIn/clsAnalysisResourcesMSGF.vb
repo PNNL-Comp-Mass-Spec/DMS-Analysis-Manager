@@ -109,7 +109,8 @@ Public Class clsAnalysisResourcesMSGF
 
         If eResultType = clsMSGFRunner.ePeptideHitResultType.Sequest OrElse _
            eResultType = clsMSGFRunner.ePeptideHitResultType.XTandem OrElse _
-           eResultType = clsMSGFRunner.ePeptideHitResultType.Inspect Then
+           eResultType = clsMSGFRunner.ePeptideHitResultType.Inspect OrElse _
+           eResultType = clsMSGFRunner.ePeptideHitResultType.MSGFDB Then
             blnSuccess = True
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " & ResultType)
@@ -129,7 +130,7 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
 
-        ' Get the Sequest, X!Tandem, or Inspect parameter file
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF-DB parameter file
         FileToGet = m_jobParams.GetParam("ParmFileName")
         If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
             'Errors were reported in function call, so just return
@@ -146,7 +147,7 @@ Public Class clsAnalysisResourcesMSGF
         End If
         clsGlobal.FilesToDelete.Add(FileToGet)
 
-        ' Get the Sequest, X!Tandem, or Inspect PHRP _syn.txt file
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
         FileToGet = clsMSGFRunner.GetPHRPSynopsisFileName(eResultType, DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then

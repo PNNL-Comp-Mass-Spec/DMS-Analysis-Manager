@@ -83,6 +83,7 @@
     <Compile Include="clsAnalysisResourcesMSGF.vb" />
     <Compile Include="clsMSGFInputCreator.vb" />
     <Compile Include="clsMSGFInputCreatorInspect.vb" />
+    <Compile Include="clsMSGFInputCreatorMSGFDB.vb" />
     <Compile Include="clsMSGFInputCreatorSequest.vb" />
     <Compile Include="clsMSGFInputCreatorXTandem.vb" />
     <Compile Include="clsMSGFToolRunner.vb" />
