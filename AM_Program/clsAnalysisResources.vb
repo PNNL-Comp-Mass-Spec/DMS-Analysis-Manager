@@ -2051,6 +2051,8 @@ Namespace AnalysisManagerBase
                     Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
                 Case "inspect"
                     Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
+                Case "msgfdb"
+                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
                 Case Else
                     ' Did not find an exact match
                     ' Try a substring match
@@ -2060,6 +2062,8 @@ Namespace AnalysisManagerBase
                         Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
                     ElseIf strToolNameLCase.Contains("inspect") Then
                         Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
+                    ElseIf strToolNameLCase.Contains("msgfdb") Then
+                        Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
                     Else
                         Return Nothing
                     End If
