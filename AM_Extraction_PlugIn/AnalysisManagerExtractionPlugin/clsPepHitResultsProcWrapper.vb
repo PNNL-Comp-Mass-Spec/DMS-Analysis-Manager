@@ -206,6 +206,24 @@ Public Class clsPepHitResultsProcWrapper
                 End If
 
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                ' Make sure the key PHRP result files were created
+                Dim lstFilesToCheck As System.Collections.Generic.List(Of String)
+                lstFilesToCheck = New System.Collections.Generic.List(Of String)
+
+                lstFilesToCheck.Add("_ResultToSeqMap.txt")
+                lstFilesToCheck.Add("_SeqInfo.txt")
+                lstFilesToCheck.Add("_SeqToProteinMap.txt")
+                lstFilesToCheck.Add("_ModSummary.txt")
+                lstFilesToCheck.Add("_ModDetails.txt")
+
+                For Each strFileName As String In lstFilesToCheck
+                    If ioInputFile.Directory.GetFiles("*" & strFileName).Length = 0 Then
+                        m_ErrMsg = "PHRP results file not found: " & strFileName
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg)
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    End If
+                Next
             End If
 
             ' Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful

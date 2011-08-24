@@ -206,21 +206,50 @@ Public Class clsAnalysisResourcesExtraction
 	''' <remarks></remarks>
 	Protected Friend Function RetrieveMiscFiles() As IJobParams.CloseOutType
 
-		Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & MOD_DEFS_FILE_SUFFIX
+        Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+        Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
 
 		'Mod Defs file
-		If Not FindAndRetrieveMiscFiles(ModDefsFilename, False) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-        clsGlobal.FilesToDelete.Add(ModDefsFilename)
+        If FindAndRetrieveMiscFiles(ModDefsFilename, False) Then
+            clsGlobal.FilesToDelete.Add(ModDefsFilename)
 
-		'Mass correction tags file
-		If Not FindAndRetrieveMiscFiles(MASS_CORRECTION_TAGS_FILENAME, False) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-        clsGlobal.FilesToDelete.Add(MASS_CORRECTION_TAGS_FILENAME)
+            'Mass correction tags file
+            If Not FindAndRetrieveMiscFiles(MASS_CORRECTION_TAGS_FILENAME, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            clsGlobal.FilesToDelete.Add(MASS_CORRECTION_TAGS_FILENAME)
+        Else
+
+            ' The ModDefs.txt file should have been created when Sequest, X!Tandem, Inspect, or MSGFDB ran
+            ' However, if the mods were not defined in T_Param_File_Mass_Mods then the file will not have been created
+            '
+            ' We will go ahead and call RetrieveGeneratedParamFile() now to take a second shot at creating the _ModDefs.txt file
+            ' The file is obtained using this query:
+            '  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+            '  FROM V_Param_File_Mass_Mod_Info 
+            '  WHERE Param_File_Name = 'ParamFileName'
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ModDefs.txt file not found; will try to generate it using the ParamFileGenerator")
+
+            Dim blnSuccess As Boolean
+
+            blnSuccess = RetrieveGeneratedParamFile(strParamFileName, _
+                                                    m_jobParams.GetParam("ParmFileStoragePath"), _
+                                                    m_WorkingDir)
+
+            If blnSuccess Then
+                ' Confirm that the file was actually created
+                blnSuccess = System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, ModDefsFilename))
+            End If
+
+            If Not blnSuccess Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " & strParamFileName)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+        End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
