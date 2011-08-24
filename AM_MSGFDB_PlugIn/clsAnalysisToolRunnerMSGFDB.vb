@@ -23,18 +23,30 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
     Protected Const PROGRESS_PCT_MSGFDB_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_MSGFDB_LOADING_PROTEINS As Single = 3
-    Protected Const PROGRESS_PCT_MSGFDB_PREPROCESSING_SPECTRA As Single = 5
-    Protected Const PROGRESS_PCT_MSGFDB_SEARCHING_DATABASE As Single = 10
-    Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES = 50
-    Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS As Single = 92
-    Protected Const PROGRESS_PCT_MSGFDB_WRITING_RESULTS As Single = 93
-    Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 94
-    Protected Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 99
+    Protected Const PROGRESS_PCT_MSGFDB_LOADING_DATABASE As Single = 2
+    Protected Const PROGRESS_PCT_MSGFDB_READING_SPECTRA As Single = 3
+    Protected Const PROGRESS_PCT_MSGFDB_THREADS_SPAWNED As Single = 4
+    Protected Const PROGRESS_PCT_MSGFDB_COMPUTING_FDRS As Single = 95
+    Protected Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 96
+    Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 97
+    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+
+    Protected Enum eThreadProgressSteps
+        PreprocessingSpectra = 0
+        DatabaseSearch = 1
+        ComputingSpectralProbabilities = 2
+        Complete = 3
+    End Enum
+
+    Protected Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
+    Protected Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
+    Protected Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
+    Protected Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
 
     Protected mToolVersionWritten As Boolean
     Protected mMSGFDbVersion As String
     Protected mMSGFDbProgLoc As String
+    Protected mConsoleOutputErrorMsg As String
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -99,6 +111,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
             mToolVersionWritten = False
             mMSGFDbVersion = String.Empty
+            mConsoleOutputErrorMsg = String.Empty
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile() Then
@@ -189,6 +202,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
+            If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+            End If
+
 
             If Not blnSuccess Then
                 Dim Msg As String
@@ -229,9 +246,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 End If
             End If
 
+            m_progress = PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = System.DateTime.Now
+            m_StopTime = System.DateTime.Now()
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -522,20 +540,23 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' pool-1-thread-1: Computing spectral probabilities... 33.1% complete
         ' pool-1-thread-2: Computing spectral probabilities... 33.1% complete
         ' pool-1-thread-1: Computing spectral probabilities... 66.2% complete
-        ' pool-1-thread-2: Generating results... 0.000 sec
-        ' Computing EFDRs... 0.0070 sec
-        ' Writing results... 0.662 sec
-        ' Time: 939.998 sec
-
+        ' Computing FDRs...
+        ' Computing EFDRs finished(elapsed time: 0.78 sec)
+        ' MS-GFDB complete (total elapsed time: 699.69 sec)
 
         Static reExtractThreadCount As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Using (\d+) thread", _
                                                                                                           Text.RegularExpressions.RegexOptions.Compiled Or _
                                                                                                           Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static dtLastProgressWriteTime As System.DateTime = System.DateTime.Now()
 
-        Static reExtractThreadNum As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("thread-(\d+)", _
-                                                                                                                  Text.RegularExpressions.RegexOptions.Compiled Or _
-                                                                                                                  Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Dim eThreadProgressBase() As eThreadProgressSteps
+        Dim sngThreadProgressAddon() As Single
+
         Try
+            ' Initially reserve space for 32 threads
+            ' We'll expand these arrays later if needed
+            ReDim eThreadProgressBase(32)
+            ReDim sngThreadProgressAddon(32)
 
             If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
@@ -554,9 +575,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            Dim oThreadsComputingSpecProbs As System.Collections.Generic.List(Of Short) = New System.Collections.Generic.List(Of Short)
             Dim oMatch As System.Text.RegularExpressions.Match
             Dim intThreadCount As Short = 0
+
+            Dim sngEffectiveProgress As Single
+            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
 
             srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
@@ -574,94 +597,128 @@ Public Class clsAnalysisToolRunnerMSGFDB
                             End If
 
                             mMSGFDbVersion = String.Copy(strLineIn)
+                        Else
+                            If strLineIn.ToLower.Contains("error") Then
+                                If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                    mConsoleOutputErrorMsg = "Error running MSGFDB:"
+                                End If
+                                mConsoleOutputErrorMsg &= "; " & strLineIn
+                            End If
                         End If
                     End If
 
                     ' Update progress if the line starts with one of the expected phrases
-                    If strLineIn.StartsWith("Using") Then
+                    If strLineIn.StartsWith("Loading database files") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
+                        End If
 
-                        ' Extract out the thread number
+                    ElseIf strLineIn.StartsWith("Reading spectra") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
+                        End If
+                    ElseIf strLineIn.StartsWith("Using") Then
+
+                        ' Extract out the thread count
                         oMatch = reExtractThreadCount.Match(strLineIn)
 
                         If oMatch.Success Then
                             Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
                         End If
 
-                    ElseIf strLineIn.StartsWith("Suffix array loading") Then
-                        If m_progress < PROGRESS_PCT_MSGFDB_LOADING_PROTEINS Then
-                            m_progress = PROGRESS_PCT_MSGFDB_LOADING_PROTEINS
+                        ' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
+                        If eThreadProgressBase.Length < intThreadCount Then
+                            ReDim eThreadProgressBase(intThreadCount)
+                            ReDim sngThreadProgressAddon(intThreadCount)
                         End If
 
-                    ElseIf strLineIn.Contains("Preprocessing spectra") Then
-                        If m_progress < PROGRESS_PCT_MSGFDB_PREPROCESSING_SPECTRA Then
-                            m_progress = PROGRESS_PCT_MSGFDB_PREPROCESSING_SPECTRA
-                            If m_DebugLevel >= 3 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "%: Preprocessing spectra")
-                            End If
-                        End If
-
-                    ElseIf strLineIn.Contains("Database search") Then
-                        If m_progress < PROGRESS_PCT_MSGFDB_SEARCHING_DATABASE Then
-                            m_progress = PROGRESS_PCT_MSGFDB_SEARCHING_DATABASE
-                            If m_DebugLevel >= 3 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "%: Searching database")
-                            End If
-                        End If
-
-                    ElseIf strLineIn.Contains("Computing spectral probabilities") Then
-                        If m_progress < PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES Then
-                            m_progress = PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES
-                            If m_DebugLevel >= 3 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "%: Computing spectral probabilities")
-                            End If
-                        End If
-
-                        ' Extract out the thread number
-                        oMatch = reExtractThreadNum.Match(strLineIn)
-
-                        If oMatch.Success Then
-                            Dim intThread As Short
-                            If Short.TryParse(oMatch.Groups(1).Value, intThread) Then
-                                If Not oThreadsComputingSpecProbs.Contains(intThread) Then
-                                    oThreadsComputingSpecProbs.Add(intThread)
-                                End If
-                            End If
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
                         End If
 
                     ElseIf strLineIn.StartsWith("Computing EFDRs") Then
-                        m_progress = PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
+                        End If
 
-                    ElseIf strLineIn.StartsWith("Writing results") Then
-                        m_progress = PROGRESS_PCT_MSGFDB_WRITING_RESULTS
+                    ElseIf strLineIn.StartsWith("MS-GFDB complete") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
+                        End If
 
+                    ElseIf strLineIn.Contains("Preprocessing spectra") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Database search") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Computing spectral probabilities finished") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Computing spectral probabilities") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                        If strLineIn.ToLower.Contains("error") Then                            
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                        End If
                     End If
                 End If
             Loop
 
             srInFile.Close()
 
-            If m_progress >= PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES And _
-                m_progress < PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS Then
+            If sngEffectiveProgress >= PROGRESS_PCT_MSGFDB_THREADS_SPAWNED AndAlso sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 
-                Dim sngNewProgress As Single = PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES
+                ' Increment sngEffectiveProgress based on the data in sngThreadProgressBase() and sngThreadProgressAddon()
+                Dim sngProgressAddonAllThreads As Single
+                Dim sngProgressOneThread As Single
 
-                ' Incrementally adjust m_progress based on the number of items in oThreadsComputingSpecProbs
-                If intThreadCount > 0 And oThreadsComputingSpecProbs.Count > 1 Then
-                    Dim sngFraction As Single
-                    Dim sngAddOn As Single
+                sngProgressAddonAllThreads = 0
 
-                    sngFraction = oThreadsComputingSpecProbs.Count / CSng(intThreadCount)
-                    sngAddOn = (PROGRESS_PCT_MSGFDB_COMPUTING_EFDRS - PROGRESS_PCT_MSGFDB_COMPUTING_SPECTRAL_PROBABILITIES) * sngFraction
+                For intThread As Integer = 1 To intThreadCount
+                    sngProgressOneThread = 0
 
-                    sngNewProgress += sngAddOn
+                    Select Case eThreadProgressBase(intThread)
+                        Case eThreadProgressSteps.PreprocessingSpectra
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_DATABASE_SEARCH - THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA) / 100.0!
 
-                    If sngNewProgress > m_progress Then
-                        m_progress = sngNewProgress
-                        If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "%: Computing spectral probabilities")
-                        End If
-                    End If
+                        Case eThreadProgressSteps.DatabaseSearch
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_DATABASE_SEARCH
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES - THREAD_PROGRESS_PCT_DATABASE_SEARCH) / 100.0!
 
+                        Case eThreadProgressSteps.ComputingSpectralProbabilities
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPLETE - THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES) / 100.0!
+
+                        Case eThreadProgressSteps.Complete
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPLETE
+
+                        Case Else
+                            ' Unrecognized step
+                    End Select
+
+                    sngProgressAddonAllThreads += sngProgressOneThread / intThreadCount
+                Next
+
+                sngEffectiveProgress += sngProgressAddonAllThreads * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
+            End If
+
+            If m_progress < sngEffectiveProgress Then
+                m_progress = sngEffectiveProgress
+
+                If m_DebugLevel >= 3 OrElse System.DateTime.Now().Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+                    dtLastProgressWriteTime = System.DateTime.Now()
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
                 End If
             End If
 
@@ -673,6 +730,60 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End Try
 
     End Sub
+
+    Protected Sub ParseConsoleOutputThreadMessage(ByVal strLineIn As String, _
+                                                  ByVal eThreadProgressStep As eThreadProgressSteps, _
+                                                  ByRef eThreadProgressBase() As eThreadProgressSteps, _
+                                                  ByRef sngThreadProgressAddon() As Single)
+
+        Dim oMatch As System.Text.RegularExpressions.Match
+
+        Static reExtractThreadNum As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("thread-(\d+)", _
+                                                                                                          Text.RegularExpressions.RegexOptions.Compiled Or _
+                                                                                                          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static reExtractPctComplete As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("([0-9.]+)% complete", _
+                                                                                                          Text.RegularExpressions.RegexOptions.Compiled Or _
+                                                                                                          Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+        ' Extract out the thread number
+        ' Line should look like one of these lines:
+        '   pool-1-thread-2: Database search...
+        '   pool-1-thread-2: Database search progress... 0.0% complete
+        '   pool-1-thread-3: Preprocessing spectra finished (elapsed time: 40.00 sec)
+        '   pool-1-thread-1: Computing spectral probabilities...
+        '   pool-1-thread-1: Computing spectral probabilities... 66.2% complete
+        '   pool-1-thread-1: Computing spectral probabilities finished (elapsed time: 138.00 sec)
+
+        oMatch = reExtractThreadNum.Match(strLineIn)
+
+        If oMatch.Success Then
+            Dim intThread As Short
+            If Short.TryParse(oMatch.Groups(1).Value, intThread) Then
+
+                If eThreadProgressBase Is Nothing OrElse intThread > eThreadProgressBase.Length Then
+                    ' Array not initialized properly; can't update it
+                Else
+                    If eThreadProgressBase(intThread) < eThreadProgressStep Then
+                        eThreadProgressBase(intThread) = eThreadProgressStep
+                    End If
+
+                    ' Parse out the % complete (if present)
+                    oMatch = reExtractPctComplete.Match(strLineIn)
+                    If oMatch.Success Then
+                        Dim sngProgressPctInLogFile As Single = 0
+                        If Single.TryParse(oMatch.Groups(1).Value, sngProgressPctInLogFile) Then
+                            If sngThreadProgressAddon(intThread) < sngProgressPctInLogFile Then
+                                sngThreadProgressAddon(intThread) = sngProgressPctInLogFile
+                            End If
+                        End If
+                    End If
+
+                End If
+
+            End If
+        End If
+    End Sub
+
 
     ''' <summary>
     ''' Parses the static and dynamic modification information to create the MSGFDB Mods file
@@ -1117,21 +1228,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now()
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now()
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.Now().Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.Now()
             UpdateStatusRunning(m_progress)
         End If
 
-        If System.DateTime.Now.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.Now
+        If System.DateTime.Now().Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = System.DateTime.Now()
 
             ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT))
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
@@ -1153,13 +1264,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Static dtLastLogTime As System.DateTime
 
         Dim sngStartPercent As Single = PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS
-        Dim sngEndPercent As Single = PROGRESS_PCT_MSGFDB_COMPLETE
+        Dim sngEndPercent As Single = PROGRESS_PCT_COMPLETE
         Dim sngPercentCompleteEffective As Single
 
         sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
 
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.Now().Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = System.DateTime.Now()
 
             ' Synchronize the stored Debug level with the value stored in the database
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -1169,8 +1280,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If m_DebugLevel >= 3 Then
-            If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-                dtLastLogTime = System.DateTime.Now
+            If System.DateTime.Now().Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = System.DateTime.Now()
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
             End If
         End If
