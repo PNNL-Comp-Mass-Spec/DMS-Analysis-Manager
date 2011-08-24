@@ -22,12 +22,18 @@ Public Class clsAnalysisResourcesMSGFDB
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        ' MSGFDB just copies its parameter file from the central repository
-
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
-        'Retrieve param file
-        If Not MyBase.CopyFileToWorkDir(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir) Then
+        ' Retrieve param file
+        ' This will also obtain the _ModDefs.txt file using query 
+        '  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+        '  FROM V_Param_File_Mass_Mod_Info 
+        '  WHERE Param_File_Name = 'ParamFileName'
+        If Not RetrieveGeneratedParamFile( _
+           m_jobParams.GetParam("ParmFileName"), _
+           m_jobParams.GetParam("ParmFileStoragePath"), _
+           m_mgrParams.GetParam("workdir")) _
+        Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 

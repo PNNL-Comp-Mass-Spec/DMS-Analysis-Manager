@@ -32,6 +32,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 94
     Protected Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 99
 
+    Protected mToolVersionWritten As Boolean
+    Protected mMSGFDbVersion As String
+    Protected mMSGFDbProgLoc As String
+
     Protected WithEvents CmdRunner As clsRunDosProgram
 
     Private WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
@@ -39,11 +43,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Runs MSGFDB tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Runs MSGFDB tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim CmdStr As String
         Dim intJavaMemorySize As Integer
@@ -54,7 +58,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim blnProcessingError As Boolean = False
 
         Dim blnSuccess As Boolean
-        Dim MSGFDBProgLoc As String
 
         Dim OrgDbDir As String
         Dim strFASTAFilePath As String
@@ -87,14 +90,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
             ' Determine the path to the MSGFDB program
-            MSGFDBProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDBprogloc", MSGFDB_JAR_NAME)
+            mMSGFDBProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDBprogloc", MSGFDB_JAR_NAME)
 
-            If String.IsNullOrWhiteSpace(MSGFDBProgLoc) Then
+            If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            ' Store the MSGFDB version info in the database
-            StoreToolVersionInfo(MSGFDBProgLoc)
+            ' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
+            mToolVersionWritten = False
+            mMSGFDbVersion = String.Empty
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile() Then
@@ -122,7 +126,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
             ' Index the fasta file to create the Suffix Array files
-            result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDBProgLoc, fiFastaFile.FullName)
+            result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, mMSGFDbProgLoc, fiFastaFile.FullName)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Error message has already been logged
                 Return result
@@ -150,7 +154,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             If IsMatch(System.Environment.MachineName, "monroe2") Then intJavaMemorySize = 1024
 
             'Set up and execute a program runner to run MSGFDB
-            CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & MSGFDBProgLoc
+            CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMSGFDbProgLoc
 
 
             ' Define the input file, output file, and fasta file
@@ -177,6 +181,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
             m_progress = PROGRESS_PCT_MSGFDB_STARTING
 
             blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSGFDB", True)
+
+            If Not mToolVersionWritten Then
+                If String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                    ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT))
+                End If
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
+
 
             If Not blnSuccess Then
                 Dim Msg As String
@@ -488,16 +500,28 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ' Example Console output:
         '
-        ' Using 2 threads.
-        ' Suffix array loading... 1.355 sec
-        ' Spectrum 0-17169 (total: 17170)
-        ' pool-1-thread-2: Preprocessing spectra... 111.000 sec
-        ' pool-1-thread-1: Preprocessing spectra... 152.000 sec
-        ' pool-1-thread-1: Database search... 93.000 sec
-        ' pool-1-thread-2: Database search... 159.000 sec
-        ' pool-1-thread-1: Computing spectral probabilities... 146.000 sec
-        ' pool-1-thread-1: Generating results... 0.000 sec
-        ' pool-1-thread-2: Computing spectral probabilities... 303.000 sec
+        ' MS-GFDB v6299 (08/22/2011)
+        ' Loading database files...
+        ' Loading database finished (elapsed time: 0.23 sec)
+        ' Reading spectra...
+        ' Read spectra finished (elapsed time: 9.19 sec)
+        ' Using 4 threads.
+        ' Spectrum 0-12074 (total: 12075)
+        ' pool-1-thread-2: Preprocessing spectra...
+        ' pool-1-thread-1: Preprocessing spectra...
+        ' pool-1-thread-1: Preprocessing spectra finished (elapsed time: 33.00 sec)
+        ' pool-1-thread-1: Database search...
+        ' pool-1-thread-1: Database search progress... 0.0% complete
+        ' pool-1-thread-2: Preprocessing spectra finished (elapsed time: 35.00 sec)
+        ' pool-1-thread-2: Database search...
+        ' pool-1-thread-2: Database search progress... 0.0% complete
+        ' pool-1-thread-1: Database search finished (elapsed time: 36.00 sec)
+        ' pool-1-thread-1: Computing spectral probabilities...
+        ' pool-1-thread-2: Database search finished (elapsed time: 44.00 sec)
+        ' pool-1-thread-2: Computing spectral probabilities...
+        ' pool-1-thread-1: Computing spectral probabilities... 33.1% complete
+        ' pool-1-thread-2: Computing spectral probabilities... 33.1% complete
+        ' pool-1-thread-1: Computing spectral probabilities... 66.2% complete
         ' pool-1-thread-2: Generating results... 0.000 sec
         ' Computing EFDRs... 0.0070 sec
         ' Writing results... 0.662 sec
@@ -542,7 +566,16 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 intLinesRead += 1
 
                 If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If intLinesRead = 1 Then
+                        ' The first line is the MSGFDB version
+                        If strLineIn.ToLower.Contains("gfdb") Then
+                            If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB version: " & strLineIn)
+                            End If
 
+                            mMSGFDbVersion = String.Copy(strLineIn)
+                        End If
+                    End If
 
                     ' Update progress if the line starts with one of the expected phrases
                     If strLineIn.StartsWith("Using") Then
@@ -918,6 +951,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Next
 
         If Not String.IsNullOrWhiteSpace(strComment) Then
+            ' As of August 12, 2011, the comment cannot contain a comma
+            ' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
+            strComment = strComment.Replace(",", ";")
             strModClean &= "     " & strComment
         End If
 
@@ -965,7 +1001,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal MSGFDBProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
@@ -974,9 +1010,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
+        strToolVersionInfo = String.Copy(mMSGFDbVersion)
+
         ' Store paths to key files in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(MSGFDBProgLoc))
+        ioToolFiles.Add(New System.IO.FileInfo(mMSGFDbProgLoc))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -1096,6 +1134,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
             dtLastConsoleOutputParse = System.DateTime.Now
 
             ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT))
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
 
         End If
 

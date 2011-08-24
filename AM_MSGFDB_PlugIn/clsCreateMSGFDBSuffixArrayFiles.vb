@@ -47,13 +47,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             strOutputNameBase = System.IO.Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
-            dbLockFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_sarray.lock")
-            dbSarrayFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & ".sarray")
+            dbLockFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock")
+            dbSarrayFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & ".csarr")
 
             ' Check to see if another Analysis Manager is already creating the indexed db files
             If System.IO.File.Exists(dbLockFilename) Then
                 If intDebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .sarray file " & System.IO.Path.GetFileName(dbSarrayFilename))
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .csarr file " & System.IO.Path.GetFileName(dbSarrayFilename))
                 End If
 
                 ' Lock file found; wait up to sngMaxWaitTimeHours hours
@@ -90,13 +90,26 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Dim lstExistingFiles As System.Collections.Generic.List(Of String)
 
             lstFilesToFind = New System.Collections.Generic.List(Of String)
+
+            ' Old suffixes (used prior to August 2011)
+            'lstFilesToFind.Add(".revConcat.fasta")
+            'lstFilesToFind.Add(".seq")
+            'lstFilesToFind.Add(".seqanno")
+            'lstFilesToFind.Add(".revConcat.seq")
+            'lstFilesToFind.Add(".revConcat.seqanno")
+            'lstFilesToFind.Add(".sarray")
+            'lstFilesToFind.Add(".revConcat.sarray")
+
+            ' New suffixes (effective 8/22/2011)
+            lstFilesToFind.Add(".canno")
+            lstFilesToFind.Add(".cnlcp")
+            lstFilesToFind.Add(".csarr")
+            lstFilesToFind.Add(".cseq")
+            lstFilesToFind.Add(".revConcat.canno")
+            lstFilesToFind.Add(".revConcat.cnlcp")
+            lstFilesToFind.Add(".revConcat.csarr")
+            lstFilesToFind.Add(".revConcat.cseq")
             lstFilesToFind.Add(".revConcat.fasta")
-            lstFilesToFind.Add(".seq")
-            lstFilesToFind.Add(".seqanno")
-            lstFilesToFind.Add(".revConcat.seq")
-            lstFilesToFind.Add(".revConcat.seqanno")
-            lstFilesToFind.Add(".sarray")
-            lstFilesToFind.Add(".revConcat.sarray")
 
             Dim strExistingFiles As String = String.Empty
             Dim strMissingFiles As String = String.Empty
@@ -169,7 +182,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar)
                 Dim CmdStr As String
-                CmdStr = " -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA " & fiFastaFile.FullName
+                CmdStr = " -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA -d " & fiFastaFile.FullName
                 If intDebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
                 End If
@@ -191,7 +204,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 Else
                     If intDebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created .Sarray file for " & fiFastaFile.Name)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created suffix array files for " & fiFastaFile.Name)
                     End If
                 End If
 

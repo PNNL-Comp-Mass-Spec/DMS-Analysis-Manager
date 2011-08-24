@@ -62,7 +62,7 @@ AnalysisManagerMSGFDBPlugIn
 	<param name="strParameterName"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.StoreToolVersionInfo(System.String)">
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.StoreToolVersionInfo">
 	<summary>
  Stores the tool version info in the database
  </summary>
