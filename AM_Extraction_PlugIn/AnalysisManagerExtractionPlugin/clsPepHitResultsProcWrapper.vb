@@ -211,11 +211,17 @@ Public Class clsPepHitResultsProcWrapper
                 Dim lstFilesToCheck As System.Collections.Generic.List(Of String)
                 lstFilesToCheck = New System.Collections.Generic.List(Of String)
 
-                lstFilesToCheck.Add("_ResultToSeqMap.txt")
-                lstFilesToCheck.Add("_SeqInfo.txt")
-                lstFilesToCheck.Add("_SeqToProteinMap.txt")
-                lstFilesToCheck.Add("_ModSummary.txt")
-                lstFilesToCheck.Add("_ModDetails.txt")
+                If CreateInspectFirstHitsFile And Not CreateInspectSynopsisFile Then
+                    ' We're processing Inspect data, and PHRP simply created the _fht.txt file
+                    ' Thus, only look for the first-hits file
+                    lstFilesToCheck.Add("_fht.txt")
+                Else
+                    lstFilesToCheck.Add("_ResultToSeqMap.txt")
+                    lstFilesToCheck.Add("_SeqInfo.txt")
+                    lstFilesToCheck.Add("_SeqToProteinMap.txt")
+                    lstFilesToCheck.Add("_ModSummary.txt")
+                    lstFilesToCheck.Add("_ModDetails.txt")
+                End If
 
                 For Each strFileName As String In lstFilesToCheck
                     If ioInputFile.Directory.GetFiles("*" & strFileName).Length = 0 Then
