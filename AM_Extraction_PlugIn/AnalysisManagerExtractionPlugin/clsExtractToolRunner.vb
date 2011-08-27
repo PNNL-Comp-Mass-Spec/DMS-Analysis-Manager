@@ -343,20 +343,20 @@ Public Class clsExtractToolRunner
 
         Try
             ' The goal:
-            '   Create the _fht.txt and _syn.txt files from the _MSGFDB.txt file in the _MSGFDB.zip file
+            '   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file in the _msgfdb.zip file
 
-            ' Extract _MSGFDB.txt from the _MSGFDB.zip file
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSGFDB.zip")
+            ' Extract _msgfdb.txt from the _msgfdb.zip file
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.zip")
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
             If Not blnSuccess Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            ' Create the First Hits files using the _MSGFDB.txt file
+            ' Create the First Hits files using the _msgfdb.txt file
             CreateMSGFDBFirstHitsFile = True
             CreateMSGFDBSynopsisFile = True
-            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSGFDB.txt")
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
             Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile)
 
             If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
@@ -367,7 +367,7 @@ Public Class clsExtractToolRunner
             End If
 
             Try
-                ' Delete the _MSGFDB.txt file
+                ' Delete the _msgfdb.txt file
                 System.IO.File.Delete(strTargetFilePath)
             Catch ex As System.Exception
                 ' Ignore errors here
