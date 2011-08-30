@@ -182,7 +182,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar)
                 Dim CmdStr As String
-                CmdStr = " -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA -d " & fiFastaFile.FullName
+                CmdStr = " -Xmx4000M -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA -d " & fiFastaFile.FullName
                 If intDebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
                 End If
