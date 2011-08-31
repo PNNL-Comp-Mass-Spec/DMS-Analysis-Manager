@@ -11,6 +11,14 @@ Imports AnalysisManagerBase
 
 Public Class clsCreateMSGFDBSuffixArrayFiles
 
+    Protected mErrorMessage As String = String.Empty
+
+    Public ReadOnly Property ErrorMessage As String
+        Get
+            Return mErrorMessage
+        End Get
+    End Property
+
     ''' <summary>
     ''' Convert .Fasta file to indexed DB files compatible with MSGFDB
     ''' </summary>
@@ -21,7 +29,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                                            ByVal JobNum As String, _
                                            ByVal JavaProgLoc As String,
                                            ByVal MSGFDBProgLoc As String, _
-                                           ByVal strFASTAFilePath As String) As IJobParams.CloseOutType
+                                           ByVal strFASTAFilePath As String, _
+                                           ByVal blnFastaFileIsDecoy As Boolean) As IJobParams.CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
 
@@ -38,6 +47,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Try
 
+            mErrorMessage = String.Empty
+
             If intDebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter")
             End If
@@ -50,7 +61,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             dbLockFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock")
             dbSarrayFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & ".csarr")
 
-            ' Check to see if another Analysis Manager is already creating the indexed db files
+            ' Check to see if another Analysis Manager is already creating the indexed DB files
             If System.IO.File.Exists(dbLockFilename) Then
                 If intDebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .csarr file " & System.IO.Path.GetFileName(dbSarrayFilename))
@@ -105,11 +116,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             lstFilesToFind.Add(".cnlcp")
             lstFilesToFind.Add(".csarr")
             lstFilesToFind.Add(".cseq")
-            lstFilesToFind.Add(".revConcat.canno")
-            lstFilesToFind.Add(".revConcat.cnlcp")
-            lstFilesToFind.Add(".revConcat.csarr")
-            lstFilesToFind.Add(".revConcat.cseq")
-            lstFilesToFind.Add(".revConcat.fasta")
+
+            If Not blnFastaFileIsDecoy Then
+                lstFilesToFind.Add(".revConcat.canno")
+                lstFilesToFind.Add(".revConcat.cnlcp")
+                lstFilesToFind.Add(".revConcat.csarr")
+                lstFilesToFind.Add(".revConcat.cseq")
+                lstFilesToFind.Add(".revConcat.fasta")
+            End If
 
             Dim strExistingFiles As String = String.Empty
             Dim strMissingFiles As String = String.Empty
@@ -143,20 +157,35 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             ' If lock file existed, the SuffixArray files should now be created
             ' Check for one of the index files in case this is the first time or in case
-            ' there was a problem withanother manager creating it.
+            ' there was a problem with another manager creating it.
             If blnFilesMissing Then
                 ' Try to create the index files for fasta file strDBFileNameInput
 
                 ' Verify that Java exists
                 If Not System.IO.File.Exists(JavaProgLoc) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java program file: " & JavaProgLoc)
+                    mErrorMessage = "Cannot find Java program file"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JavaProgLoc)
                     Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
 
                 ' Verify that the MSGFDB.Jar file exists
                 If Not System.IO.File.Exists(MSGFDBProgLoc) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSGFDB.Jar file: " & MSGFDBProgLoc)
+                    mErrorMessage = "Cannot find MSGFDB.Jar file"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & MSGFDBProgLoc)
                     Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                End If
+
+
+                ' Reserve 2 GB of ram for BuildSA; Sangtae says this should accomodate at least a 200 MB fasta file
+                Dim intJavaMemorySizeMB As Integer = 2000
+                Dim eResult As IJobParams.CloseOutType
+
+                ' Make sure the machine has enough free memory to run BuildSA
+
+                eResult = ValidateFreeMemorySize(intJavaMemorySizeMB, intDebugLevel)
+                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    mErrorMessage = "Cannot run BuildSA since less than " & intJavaMemorySizeMB & " MB of free memory"
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
 
@@ -164,7 +193,16 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & dbLockFilename)
                 End If
 
-                'Create lock file
+                ' Check one more time for a lock file
+                ' If it exists, then another manager just created it and we should bort
+                If System.IO.File.Exists(dbLockFilename) Then
+                    If intDebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Warning: new lock file found: " & dbLockFilename & "; aborting")
+                        Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
+                    End If
+                End If
+
+                ' Create lock file
                 Dim bSuccess As Boolean
                 bSuccess = CreateLockFile(dbLockFilename)
                 If Not bSuccess Then
@@ -180,9 +218,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating Suffix Array database file: " & dbSarrayFilename)
                 End If
 
-                'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar)
+                'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar)          
+
                 Dim CmdStr As String
-                CmdStr = " -Xmx4000M -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA -d " & fiFastaFile.FullName
+                CmdStr = " -Xmx" & intJavaMemorySizeMB.ToString & "M -cp " & MSGFDBProgLoc & " msdbsearch.BuildSA -d " & fiFastaFile.FullName
+
+                If blnFastaFileIsDecoy Then
+                    CmdStr &= " -tda 0"
+                End If
+
                 If intDebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
                 End If
@@ -200,7 +244,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 End With
 
                 If Not objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", True) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running BuildSA in MSGFDB.Jar for " & fiFastaFile.Name & " : " & JobNum)
+                    mErrorMessage = "Error running BuildSA in MSGFDB.Jar for " & fiFastaFile.Name
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 Else
                     If intDebugLevel >= 1 Then
@@ -219,12 +264,38 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles, An exception has occurred: " & ex.Message)
+            mErrorMessage = "Exception in .CreateIndexedDbFiles"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    Public Shared Function GetFreeMemoryMB() As Single
+
+        Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+
+        Dim sngFreeMemory As Single
+
+        Try
+            If mFreeMemoryPerformanceCounter Is Nothing Then
+                mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+                mFreeMemoryPerformanceCounter.ReadOnly = True
+            End If
+
+            sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+
+        Catch ex As Exception
+            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+            If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+            End If
+        End Try
+
+        Return sngFreeMemory
 
     End Function
 
@@ -243,12 +314,47 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             sw.Dispose()
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, Error creating lock file: " & ex.Message)
+            mErrorMessage = "Error creating lock file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, " & mErrorMessage & ": " & ex.Message)
             Return False
         End Try
 
         Return True
 
     End Function
+
+    ''' <summary>
+    ''' Lookups the amount of memory that will be reserved for Java
+    ''' If this value is >= the free memory, then returns CLOSEOUT_FAILED
+    ''' Otherwise, returns CLOSEOUT_SUCCESS
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ValidateFreeMemorySize(ByVal intJavaMemorySizeMB As Integer, ByVal intDebugLevel As Integer) As IJobParams.CloseOutType
+
+        Dim sngFreeMemoryMB As Single
+        Dim strMessage As String
+
+        If intJavaMemorySizeMB < 512 Then intJavaMemorySizeMB = 512
+
+        sngFreeMemoryMB = GetFreeMemoryMB()
+
+        If intJavaMemorySizeMB >= sngFreeMemoryMB Then
+            strMessage = "Not enough free memory to run BuildSA for MSGFDB"
+
+            strMessage &= "; need " & intJavaMemorySizeMB & " MB but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            If intDebugLevel >= 1 Then
+                strMessage = "BuildSA will use " & intJavaMemorySizeMB & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
+    End Function
+
 
 End Class

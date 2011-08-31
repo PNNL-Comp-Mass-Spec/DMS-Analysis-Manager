@@ -16,8 +16,16 @@ Public Class clsAnalysisResourcesMSGFDB
 
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
+        Dim eResult As IJobParams.CloseOutType
+
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
+
+        ' Make sure the machine has enough free memory to run MSGFDB
+        eResult = ValidateFreeMemorySize()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -138,6 +146,40 @@ Public Class clsAnalysisResourcesMSGFDB
 
         Return blnSuccess
 
+    End Function
+
+    ''' <summary>
+    ''' Lookups the amount of memory that will be reserved for Java
+    ''' If this value is >= the free memory, then returns CLOSEOUT_FAILED
+    ''' Otherwise, returns CLOSEOUT_SUCCESS
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ValidateFreeMemorySize() As IJobParams.CloseOutType
+
+        ' Note: This function is also present in clsAnalysisToolRunnerMSGFDB
+        '       but that function posts a log entry if sufficient memory _is_ available
+        ' This function only posts a log entry if not enough memory is available
+
+        Dim intJavaMemorySizeMB As Integer
+        Dim sngFreeMemoryMB As Single
+        Dim strMessage As String
+
+        intJavaMemorySizeMB = clsGlobal.GetJobParameter(m_jobParams, "MSGFDBJavaMemorySize", 2000)
+        If intJavaMemorySizeMB < 512 Then intJavaMemorySizeMB = 512
+
+        sngFreeMemoryMB = clsCreateMSGFDBSuffixArrayFiles.GetFreeMemoryMB()
+
+        If intJavaMemorySizeMB >= sngFreeMemoryMB Then
+            m_message = "Not enough free memory to run MSGFDB; need " & intJavaMemorySizeMB & " MB"
+
+            strMessage = m_message & " but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
     End Function
 
     Private Sub mCDTACondenser_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mCDTACondenser.ProgressChanged

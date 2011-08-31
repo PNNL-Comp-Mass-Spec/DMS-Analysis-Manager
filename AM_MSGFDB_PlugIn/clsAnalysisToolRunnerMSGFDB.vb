@@ -134,27 +134,62 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             FastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
 
+            Dim blnFastaFileIsDecoy As Boolean = False
+            Dim strProteinOptions As String
+            strProteinOptions = m_jobParams.GetParam("ProteinOptions")
+            If Not String.IsNullOrEmpty(strProteinOptions) Then
+                If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
+                    blnFastaFileIsDecoy = True
+                End If
+            End If
+
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create Suffix Array files")
             End If
 
             ' Index the fasta file to create the Suffix Array files
-            result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, mMSGFDbProgLoc, fiFastaFile.FullName)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Error message has already been logged
-                Return result
-            End If
+            Dim intIteration As Integer = 1
+
+            Do While intIteration <= 2
+
+                result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, mMSGFDbProgLoc, fiFastaFile.FullName, blnFastaFileIsDecoy)
+                If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    Exit Do
+                ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And intIteration >= 2) Then
+
+                    ' Error message has already been logged
+                    If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
+                        MyBase.m_message = objIndexedDBCreator.ErrorMessage
+                    Else
+                        MyBase.m_message = "Error creating Suffix Array files"
+                    End If
+
+                    Return result
+                End If
+
+                intIteration += 1
+            Loop
 
             strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
             If Not System.IO.File.Exists(strParameterFilePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parameter file not found")
+                m_message = "Parameter file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Read the MSGFDB Parameter File
             strMSGFCmdLineOptions = ParseMSGFDBParameterFile(strParameterFilePath, FastaFileSizeKB)
             ResultsFileName = m_Dataset & "_msgfdb.txt"
+
+            If strMSGFCmdLineOptions.Contains("-tda 1") Then
+                ' Make sure the .Fasta file is not a Decoy fasta
+                If blnFastaFileIsDecoy Then
+                    m_message = "Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
+            End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGFDB")
 
@@ -163,8 +198,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' (job 611216 succeeded with a value of 5000)
             intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFDBJavaMemorySize", 2000)
             If intJavaMemorySize < 512 Then intJavaMemorySize = 512
-
-            If IsMatch(System.Environment.MachineName, "monroe2") Then intJavaMemorySize = 1024
 
             'Set up and execute a program runner to run MSGFDB
             CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMSGFDbProgLoc
@@ -177,6 +210,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             ' Append the remaining options loaded from the parameter file
             CmdStr &= " " & strMSGFCmdLineOptions
+
+            ' Make sure the machine has enough free memory to run MSGFDB
+            If ValidateFreeMemorySize() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
@@ -296,7 +334,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
         Catch ex As Exception
-            m_message = "Error in InspectPlugin->RunTool: " & ex.Message
+            m_message = "Error in MSGFDbPlugin->RunTool: " & ex.Message
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1185,6 +1223,45 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Return blnDataFound
 
+    End Function
+
+    ''' <summary>
+    ''' Lookups the amount of memory that will be reserved for Java
+    ''' If this value is >= the free memory, then returns CLOSEOUT_FAILED
+    ''' Otherwise, returns CLOSEOUT_SUCCESS
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ValidateFreeMemorySize() As IJobParams.CloseOutType
+
+        ' Note: This function is also present in clsAnalysisResourcesMSGFDB
+        '       but that function only posts a log entry if not enough memory is available
+        ' This function also posts a log entry on Success
+
+        Dim intJavaMemorySizeMB As Integer
+        Dim sngFreeMemoryMB As Single
+        Dim strMessage As String
+
+        intJavaMemorySizeMB = clsGlobal.GetJobParameter(m_jobParams, "MSGFDBJavaMemorySize", 2000)
+        If intJavaMemorySizeMB < 512 Then intJavaMemorySizeMB = 512
+
+        sngFreeMemoryMB = clsCreateMSGFDBSuffixArrayFiles.GetFreeMemoryMB()
+
+        If intJavaMemorySizeMB >= sngFreeMemoryMB Then
+            m_message = "Not enough free memory to run MSGFDB; need " & intJavaMemorySizeMB & " MB"
+
+            strMessage = m_message & " but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            If m_DebugLevel >= 1 Then
+                strMessage = "MSGFDB will use " & intJavaMemorySizeMB & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
     End Function
 
     ''' <summary>
