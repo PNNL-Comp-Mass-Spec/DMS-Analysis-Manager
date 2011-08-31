@@ -222,30 +222,25 @@ Public Class clsAnalysisResourcesMSGF
     ''' <remarks></remarks>
     Private Function ValidateFreeMemorySize() As IJobParams.CloseOutType
 
-        Dim intJavaMemorySize As Integer
+        Dim intJavaMemorySizeMB As Integer
         Dim sngFreeMemoryMB As Single
         Dim strMessage As String
 
-        intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFJavaMemorySize", 2000)
-        If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+        intJavaMemorySizeMB = clsGlobal.GetJobParameter(m_jobParams, "MSGFJavaMemorySize", 2000)
+        If intJavaMemorySizeMB < 512 Then intJavaMemorySizeMB = 512
 
         sngFreeMemoryMB = GetFreeMemoryMB()
 
-        If System.Environment.MachineName.ToUpper.StartsWith("MONROE") Then
-            ' Don't worry about the amount of free memory
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        End If
-
-        If intJavaMemorySize >= sngFreeMemoryMB Then
+        If intJavaMemorySizeMB >= sngFreeMemoryMB Then
             strMessage = "Not enough free memory to run MSGF"
 
-            strMessage &= "; need " & intJavaMemorySize & " MB but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+            strMessage &= "; need " & intJavaMemorySizeMB & " MB but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
             If m_DebugLevel >= 1 Then
-                strMessage = "MSGF will use " & intJavaMemorySize & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+                strMessage = "MSGF will use " & intJavaMemorySizeMB & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
             End If
 
