@@ -549,7 +549,7 @@ Namespace AnalysisManagerProg
             'Run the job
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0)
             Try
-                eToolRunnerResult = m_ToolRunner.RunTool
+                eToolRunnerResult = m_ToolRunner.RunTool()
                 If eToolRunnerResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     ErrorMessage = m_ToolRunner.Message
                     If ErrorMessage Is Nothing OrElse ErrorMessage = String.Empty Then
@@ -568,6 +568,10 @@ Namespace AnalysisManagerProg
                     Catch ex As Exception
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Exception examining ErrorMessage", ex)
                     End Try
+
+                    If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE Then
+                        m_NeedToAbortProcessing = True
+                    End If
 
                     blnRunToolError = True
                 End If

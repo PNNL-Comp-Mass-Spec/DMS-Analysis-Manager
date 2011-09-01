@@ -400,7 +400,7 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
 	<summary>
  Looks for this dataset's mzXML file
- Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
  If the MSXML folder (or the .mzXML file) cannot be found, then returns False
  </summary>
 	<param name="WorkDir"></param>

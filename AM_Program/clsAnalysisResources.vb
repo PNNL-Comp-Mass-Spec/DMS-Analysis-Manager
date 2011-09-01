@@ -855,7 +855,7 @@ Namespace AnalysisManagerBase
 
         ''' <summary>
         ''' Looks for this dataset's mzXML file
-        ''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+        ''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
         ''' If the MSXML folder (or the .mzXML file) cannot be found, then returns False
         ''' </summary>
         ''' <param name="WorkDir"></param>
@@ -870,35 +870,57 @@ Namespace AnalysisManagerBase
             ' Copies this dataset's .mzXML file to the working directory
             Dim DSName As String = m_jobParams.GetParam("datasetNum")
             Dim DatasetID As String = m_jobParams.GetParam("DatasetID")
-            Dim MSXmlFoldername As String = "MSXML_Gen_1_39_" & DatasetID
+            Dim MSXmlFoldernameBase As String = "MSXML_Gen_1_"
             Dim MzXMLFilename As String = DSName & ".mzXML"
             Dim ServerPath As String
 
             Dim MaxRetryCount As Integer = 1
 
-            SourceFilePath = String.Empty
+            Dim lstValuesToCheck As System.Collections.Generic.List(Of Integer)
+            lstValuesToCheck = New System.Collections.Generic.List(Of Integer)
 
-            ' Look for the MSXmlFolder
-            ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-            ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
+            ' Initialize the values we'll look for
+            lstValuesToCheck.Add(39)            ' MSXML_Gen_1_39_DatasetID
+            lstValuesToCheck.Add(93)            ' MSXML_Gen_1_93_DatasetID
 
-            If String.IsNullOrEmpty(ServerPath) Then Return False
+            For Each intVersion As Integer In lstValuesToCheck
 
-            Dim diFolderInfo As System.IO.DirectoryInfo
-            diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
-            If Not diFolderInfo.Exists Then Return False
+                SourceFilePath = String.Empty
 
-            'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-            Dim diSubfolders() As System.IO.DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
-            If diSubfolders.Length < 1 Then Return False
+                Dim MSXmlFoldername As String
+                MSXmlFoldername = MSXmlFoldernameBase & intVersion & "_" & DatasetID
 
-            ' MSXmlFolder found; copy the .mzXML file            
-            SourceFilePath = System.IO.Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
-            If CopyFileToWorkDir(MzXMLFilename, ServerPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-                Return True
-            Else
-                Return False
-            End If
+                ' Look for the MSXmlFolder
+                ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+                ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
+
+                If Not String.IsNullOrEmpty(ServerPath) Then
+
+                    Dim diFolderInfo As System.IO.DirectoryInfo
+                    diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
+
+                    If diFolderInfo.Exists Then
+
+                        'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+                        Dim diSubfolders() As System.IO.DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
+                        If diSubfolders.Length > 0 Then
+
+                            ' MSXmlFolder found; copy the .mzXML file            
+                            SourceFilePath = System.IO.Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
+
+                            If CopyFileToWorkDir(MzXMLFilename, diSubfolders(0).FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+                                Return True
+                            End If
+
+                        End If
+
+                    End If
+
+                End If
+
+            Next
+
+            Return False
 
         End Function
 

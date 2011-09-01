@@ -33,6 +33,7 @@ Namespace AnalysisManagerBase
 			CLOSEOUT_NO_XT_FILES = 12
             CLOSEOUT_NO_INSP_FILES = 13
             CLOSEOUT_FILE_NOT_FOUND = 14
+            CLOSEOUT_ERROR_ZIPPING_FILE = 15
 			CLOSEOUT_NO_DATA = 20
 		End Enum
 #End Region

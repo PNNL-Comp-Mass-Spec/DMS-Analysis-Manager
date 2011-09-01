@@ -294,7 +294,7 @@ Public Class clsIonicZipTools
             DisposeZipper(objZipper)
 
         Catch ex As Exception
-            m_Message = "Error zipping " & fiFile.FullName & ": " & ex.Message
+            m_Message = "Error zipping file " & fiFile.FullName & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
             Return False
         End Try
@@ -408,7 +408,7 @@ Public Class clsIonicZipTools
             DisposeZipper(objZipper)
 
         Catch ex As Exception
-            m_Message = "Error zipping " & diDirectory.FullName & ": " & ex.Message
+            m_Message = "Error zipping directory " & diDirectory.FullName & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
             Return False
         End Try
