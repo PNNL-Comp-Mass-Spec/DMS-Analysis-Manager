@@ -56,7 +56,10 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
 
-		Dim Result As IJobParams.CloseOutType
+        Dim Result As IJobParams.CloseOutType
+        Dim eReturnCode As IJobParams.CloseOutType
+        Dim blnProcessingError As Boolean = False
+        Dim blnErrorZippingOutFile As Boolean = False
 
 		'Do the base class stuff
 		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -82,16 +85,28 @@ Public Class clsAnalysisToolRunnerSeqBase
         Try
             Result = MakeOUTFiles()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return Result
+                blnProcessingError = True
+                If Result = IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE Then
+                    blnErrorZippingOutFile = True
+                End If
             End If
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files, " & _
              Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            blnProcessingError = True
         End Try
 
         'Stop the job timer
         m_StopTime = Now
+
+        If blnProcessingError Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            eReturnCode = Result
+        End If
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -110,27 +125,37 @@ Public Class clsAnalysisToolRunnerSeqBase
         strSequestLogFilePath = System.IO.Path.Combine(m_WorkDir, "sequest.log")
         blnSuccess = ValidateSequestNodeCount(strSequestLogFilePath)
 
+        If blnProcessingError And Not blnErrorZippingOutFile Then
+            ' Move the source files and any results to the Failed Job folder
+            ' Useful for debugging Sequest problems
+            CopyFailedResultsToArchiveFolder()
+            If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+            Return eReturnCode
+        End If
+
         Result = MakeResultsFolder()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
             Return Result
         End If
 
         Result = MoveResultFiles()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+            m_message = "Error moving files into results folder"
             Return Result
         End If
 
         Result = CopyResultsFolderToServer()
         If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
             ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return Result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return eReturnCode
 
     End Function
 
@@ -266,6 +291,47 @@ Public Class clsAnalysisToolRunnerSeqBase
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)
         End Try
+
+    End Sub
+
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+        ' We don't need to delete .Dta files since MoveResultFiles() will skip them
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        Try
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            result = MoveResultFiles()
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
 
@@ -438,7 +504,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         'Zip concatenated .out files
         If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE
         End If
 
         'If we got here, everything worked
@@ -1058,8 +1124,6 @@ Public Class clsAnalysisToolRunnerSeqBase
             Return False
         End If
 
-        clsGlobal.FilesToDelete.Add(OutFileName)
-
         Try
             'Zip the file            
             If Not MyBase.ZipFile(OutFilePath, False) Then
@@ -1075,6 +1139,8 @@ Public Class clsAnalysisToolRunnerSeqBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Msg)
             Return False
         End Try
+
+        clsGlobal.FilesToDelete.Add(OutFileName)
 
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(), concatenated outfile zipping successful")
