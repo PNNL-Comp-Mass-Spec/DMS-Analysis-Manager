@@ -73,6 +73,8 @@ Public MustInherit Class clsMSGFInputCreator
 
     Protected mMSGFInputFileLineCount As Integer = 0
 
+    Protected mLogFile As System.IO.StreamWriter
+
 #End Region
 
 #Region "Events"
@@ -282,9 +284,20 @@ Public MustInherit Class clsMSGFInputCreator
             mMSGFCachedResults.Item(ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)) = strMSGFResultData
         Catch ex As Exception
             ' Entry not found; this is unexpected; we will only report the error at the console
-            Console.WriteLine("Entry not found in mMSGFCachedResults for " & ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide))
+            LogError("Entry not found in mMSGFCachedResults for " & ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide))
         End Try
 
+    End Sub
+
+    Public Sub CloseLogFileNow()
+        If Not mLogFile Is Nothing Then
+            mLogFile.Close()
+            mLogFile = Nothing
+
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            System.Threading.Thread.Sleep(100)
+        End If
     End Sub
 
     Protected Function ConstructMSGFResultCode(ByVal intScanNumber As Integer, _
@@ -386,20 +399,39 @@ Public MustInherit Class clsMSGFInputCreator
                         strPeptideResultCode = ConstructMSGFResultCode(udtPHRPData.ScanNumber, udtPHRPData.Charge, udtPHRPData.Peptide)
 
                         If mMSGFCachedResults.TryGetValue(strPeptideResultCode, strMSGFResultData) Then
-                            ' Match found; write out the result
-                            swMSGFFHTFile.WriteLine(udtPHRPData.ResultID & ControlChars.Tab & strMSGFResultData)
+                            If String.IsNullOrEmpty(strMSGFResultData) Then
+                                ' Match text is empty
+                                ' We should not write thie out to disk since it would result in empty columns
+
+                                strWarningMessage = "MSGF Results are empty for result code '" & strPeptideResultCode & "'; this is unexpected"
+                                intMissingValueCount += 1
+                                If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
+                                    If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
+                                        strWarningMessage &= "; additional invalid entries will not be reported"
+                                    End If
+                                    ReportError(strWarningMessage)
+                                Else
+                                    LogError(strWarningMessage)
+                                End If
+                            Else
+                                ' Match found; write out the result
+                                swMSGFFHTFile.WriteLine(udtPHRPData.ResultID & ControlChars.Tab & strMSGFResultData)
+                            End If
 
                         Else
                             ' Match not found; this is unexpected
 
+                            strWarningMessage = "Match not found for first-hits entry with result code '" & strPeptideResultCode & "'; this is unexpected"
+
                             ' Report the first 10 times this happens
                             intMissingValueCount += 1
                             If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
-                                strWarningMessage = "Match not found for first-hits entry with result code '" & strPeptideResultCode & "'; this is unexpected"
                                 If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
                                     strWarningMessage &= "; additional missing entries will not be reported"
                                 End If
                                 ReportError(strWarningMessage)
+                            Else
+                                LogError(strWarningMessage)
                             End If
 
                         End If
@@ -425,6 +457,7 @@ Public MustInherit Class clsMSGFInputCreator
     ''' Creates the input file for MSGF
     ''' Will contain filter passing peptides from the synopsis file, plus all peptides 
     ''' in the first-hits file that are not filter passing in the synopsis file
+    ''' If the synopsis file does not exist, then simply processes the first-hits file
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -434,6 +467,7 @@ Public MustInherit Class clsMSGFInputCreator
         Dim swMSGFInputFile As System.IO.StreamWriter
 
         Dim strMzXMLFileName As String = String.Empty
+        Dim blnSuccess As Boolean = False
 
         Try
             If String.IsNullOrEmpty(mDatasetName) Then
@@ -472,20 +506,28 @@ Public MustInherit Class clsMSGFInputCreator
             mMSGFCachedResults.Clear()
 
 
-            ' First read the synopsis file data
-            srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPSynopsisFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            If Not String.IsNullOrEmpty(mPHRPSynopsisFilePath) AndAlso System.IO.File.Exists(mPHRPSynopsisFilePath) Then
+                ' Read the synopsis file data
+                srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPSynopsisFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-            ReadAndStorePHRPData(srPHRPFile, swMSGFInputFile, strMzXMLFileName, True)
+                ReadAndStorePHRPData(srPHRPFile, swMSGFInputFile, strMzXMLFileName, True)
+                blnSuccess = True
+            End If
 
 
-            If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) Then
+            If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) AndAlso System.IO.File.Exists(mPHRPFirstHitsFilePath) Then
                 ' Now read the first-hits file data
                 srPHRPFile = New System.IO.StreamReader(New System.IO.FileStream(mPHRPFirstHitsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
                 ReadAndStorePHRPData(srPHRPFile, swMSGFInputFile, strMzXMLFileName, False)
+                blnSuccess = True
             End If
 
             swMSGFInputFile.Close()
+
+            If Not blnSuccess Then
+                ReportError("Neither the _syn.txt nor the _fht.txt file was found")
+            End If
 
         Catch ex As Exception
             ReportError("Error reading the PHRP result file to create the MSGF Input file: " & ex.Message)
@@ -496,7 +538,7 @@ Public MustInherit Class clsMSGFInputCreator
             Return False
         End Try
 
-        Return True
+        Return blnSuccess
 
     End Function
 
@@ -523,6 +565,35 @@ Public MustInherit Class clsMSGFInputCreator
         Return False
 
     End Function
+
+    Protected Sub LogError(ByVal strErrorMessage As String)
+
+        Try
+            If mLogFile Is Nothing Then
+                Dim strErrorLogFilePath As String
+                Dim blnWriteHeader As Boolean = True
+
+                strErrorLogFilePath = System.IO.Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt")
+
+                If System.IO.File.Exists(strErrorLogFilePath) Then
+                    blnWriteHeader = False
+                End If
+
+                mLogFile = New System.IO.StreamWriter(New System.IO.FileStream(strErrorLogFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.ReadWrite))
+                mLogFile.AutoFlush = True
+
+                If blnWriteHeader Then
+                    mLogFile.WriteLine("Date" & ControlChars.Tab & "Message")
+                End If
+            End If
+
+            mLogFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
+
+        Catch ex As Exception
+            RaiseEvent ErrorEvent("Error writing to MSGFInputCreator log file: " & ex.Message)
+        End Try
+
+    End Sub
 
     ''' <summary>
     ''' Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
@@ -770,6 +841,7 @@ Public MustInherit Class clsMSGFInputCreator
                                 mMSGFCachedResults.Add(strPeptideResultCode, "")
                             Catch ex As Exception
                                 ' Key is already present; this is unexpected, but we can safely ignore this error
+                                LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " & strPeptideResultCode)
                             End Try
 
 
@@ -786,7 +858,7 @@ Public MustInherit Class clsMSGFInputCreator
 
     Protected Sub ReportError(ByVal strErrorMessage As String)
         mErrorMessage = strErrorMessage
-
+        LogError(mErrorMessage)
         RaiseEvent ErrorEvent(mErrorMessage)
     End Sub
 

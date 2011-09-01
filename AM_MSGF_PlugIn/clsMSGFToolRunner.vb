@@ -19,7 +19,7 @@ Public Class clsMSGFRunner
 
 #Region "Constants and enums"
 
-    Protected Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2     
+    Protected Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2
     Protected Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 3
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 6
     Protected Const PROGRESS_PCT_MZXML_CREATED As Single = 10
@@ -258,6 +258,9 @@ Public Class clsMSGFRunner
                 End If
             End If
 
+            ' Make sure the MSGF Input Creator log file is closed
+            mMSGFInputCreator.CloseLogFileNow()
+
             'Stop the job timer
             m_StopTime = Now
 
@@ -358,7 +361,6 @@ Public Class clsMSGFRunner
 
             Case ePeptideHitResultType.MSGFDB
                 blnSuccess = CheckETDModeEnabledMSGFDB(strParamFilePath)
-                blnSuccess = True
 
             Case Else
                 ' Unknown result type
@@ -762,7 +764,10 @@ Public Class clsMSGFRunner
         m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
         ' mzXML filename is dataset plus .mzXML
-        If System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION)) Then
+        Dim strMzXmlFilePath As String
+        strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION)
+
+        If System.IO.File.Exists(strMzXmlFilePath) Then
             ' File already exists; nothing to do
             Return True
         End If
@@ -788,6 +793,12 @@ Public Class clsMSGFRunner
 
         ElseIf mMSXmlGenReadW.ErrorMessage.Length > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+        End If
+
+        ' Validate that the .mzXML file was actually created
+        If Not System.IO.File.Exists(strMzXmlFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ".mzXML file was not created by ReadW: " & strMzXmlFilePath)
+            Return False
         End If
 
         If m_DebugLevel >= 1 Then
@@ -925,7 +936,7 @@ Public Class clsMSGFRunner
                 strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPSynopsisFileName(strDatasetName)
 
             Case ePeptideHitResultType.MSGFDB
-                ' Inspect: _msgfdb_syn.txt
+                ' MSGFDB: _msgfdb_syn.txt
                 strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPSynopsisFileName(strDatasetName)
 
         End Select
@@ -2080,6 +2091,7 @@ Public Class clsMSGFRunner
 #End Region
 
 #Region "Event Handlers"
+
     ''' <summary>
     ''' Event handler for MSXmlGenReadW.LoopWaiting event
     ''' </summary>

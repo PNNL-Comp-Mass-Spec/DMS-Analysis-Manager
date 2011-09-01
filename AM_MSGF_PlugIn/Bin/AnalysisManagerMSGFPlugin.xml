@@ -39,6 +39,7 @@ AnalysisManagerMSGFPlugin
  Creates the input file for MSGF
  Will contain filter passing peptides from the synopsis file, plus all peptides 
  in the first-hits file that are not filter passing in the synopsis file
+ If the synopsis file does not exist, then simply processes the first-hits file
  </summary>
 	<returns></returns>
 	<remarks></remarks>

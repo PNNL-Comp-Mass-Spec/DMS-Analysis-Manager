@@ -322,7 +322,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             result = MoveResultFiles()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MoveResultFiles moves the result files to the result folder
+                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
                 eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -379,7 +379,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' Copy the results folder to the Archive folder
         Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
 
     End Sub
 
