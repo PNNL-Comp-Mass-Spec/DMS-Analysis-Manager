@@ -66,6 +66,9 @@ Public Class clsMSGFRunner
     Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
     Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05          ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
 
+    Protected Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
+    Protected Const MSGF_JAR_NAME As String = "MSGF.jar"
+
     Public Enum ePeptideHitResultType
         Unknown = 0
         Sequest = 1
@@ -90,6 +93,13 @@ Public Class clsMSGFRunner
 
     Protected mMSGFInputFileLineCount As Integer = 0
     Protected mMSGFLineCountPreviousSegments As Integer = 0
+
+    Protected mToolVersionWritten As Boolean
+    Protected mMSGFVersion As String = String.Empty
+    Protected mMSGFProgLoc As String = String.Empty
+    Protected mJavaProgLoc As String = String.Empty
+
+    Protected mConsoleOutputErrorMsg As String
 
     Protected mReadWProgramPath As String = String.Empty
 
@@ -146,8 +156,32 @@ Public Class clsMSGFRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Store the MSGF version info in the database
-        StoreToolVersionInfo()
+        ' Verify that program files exist
+
+        ' mJavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+        ' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
+        mJavaProgLoc = m_mgrParams.GetParam("JavaLoc")
+        If Not System.IO.File.Exists(mJavaProgLoc) Then
+            If mJavaProgLoc.Length = 0 Then mJavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & mJavaProgLoc)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Determine the path to the MSGFDB program
+        mMSGFProgLoc = DetermineProgramLocation("MSGF", "MSGFLoc", MSGF_JAR_NAME)
+
+        ' Determine the path to ReadW
+        Dim msXmlGenerator As String = "ReadW.exe"
+        mReadWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
+
+        If String.IsNullOrWhiteSpace(mMSGFProgLoc) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Note: we will store the MSGF version info in the database after the first line is written to file MSGF_ConsoleOutput.txt
+        mToolVersionWritten = False
+        mMSGFVersion = String.Empty
+        mConsoleOutputErrorMsg = String.Empty
 
         blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
 
@@ -1804,6 +1838,7 @@ Public Class clsMSGFRunner
         End If
 
         Return blnSuccess
+
     End Function
 
     Protected Function RunMSGFWork(ByVal strInputFilePath As String, ByVal strResultsFilePath As String) As Boolean
@@ -1818,23 +1853,6 @@ Public Class clsMSGFRunner
 
         If String.IsNullOrEmpty(strResultsFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strResultsFilePath has not been defined; unable to continue")
-            Return False
-        End If
-
-        ' verify that the program file exists
-        ' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
-        ' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-        Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
-        If Not System.IO.File.Exists(JavaProgLoc) Then
-            If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
-            Return False
-        End If
-
-        Dim MSGFLoc As String = m_mgrParams.GetParam("MSGFLoc")
-        If Not System.IO.File.Exists(MSGFLoc) Then
-            If MSGFLoc.Length = 0 Then MSGFLoc = "Parameter 'MSGFLoc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSGF program: " & MSGFLoc)
             Return False
         End If
 
@@ -1855,7 +1873,7 @@ Public Class clsMSGFRunner
         m_StatusTools.CurrentOperation = "Running MSGF"
         m_StatusTools.UpdateAndWrite(m_progress)
 
-        CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & MSGFLoc
+        CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMSGFProgLoc
         CmdStr &= " -i " & strInputFilePath         ' Input file
         CmdStr &= " -d " & m_WorkDir                                                                ' Folder containing .mzXML file
         CmdStr &= " -o " & strResultsFilePath       ' Output file
@@ -1871,23 +1889,36 @@ Public Class clsMSGFRunner
         CmdStr &= " -x 0"       ' Write out all matches for each spectrum
         CmdStr &= " -p 1"       ' SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
 
         With mMSGFRunner
             .CreateNoWindow = False
             .CacheStandardOutput = False
             .EchoOutputToConsole = False
 
-            .WriteConsoleOutputToFile = False
-            .ConsoleOutputFilePath = ""
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
         End With
 
-        If Not mMSGFRunner.RunProgram(JavaProgLoc, CmdStr, "MSGF", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
-            Return False
+        Dim blnSuccess As Boolean
+        blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", True)
+
+        If Not mToolVersionWritten Then
+            If String.IsNullOrWhiteSpace(mMSGFVersion) Then
+                ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+            End If
+            mToolVersionWritten = StoreToolVersionInfo()
         End If
 
-        Return True
+        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+        End If
+
+        If Not blnsuccess Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
+        End If
+
+        Return blnSuccess
 
     End Function
 
@@ -1934,6 +1965,72 @@ Public Class clsMSGFRunner
         Return True
 
     End Function
+
+
+    ''' <summary>
+    ''' Parse the MSGF console output file to determine the MSGF version
+    ''' </summary>
+    ''' <param name="strConsoleOutputFilePath"></param>
+    ''' <remarks></remarks>
+    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+
+        Try
+
+            If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                End If
+
+                Exit Sub
+            End If
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+            End If
+
+            Dim srInFile As System.IO.StreamReader
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
+
+            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+            intLinesRead = 0
+            Do While srInFile.Peek() >= 0
+                strLineIn = srInFile.ReadLine()
+                intLinesRead += 1
+
+                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If intLinesRead = 1 Then
+                        ' The first line is the MSGF version
+
+                        If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
+                        End If
+
+                        mMSGFVersion = String.Copy(strLineIn)
+
+                    Else
+                        If strLineIn.ToLower.Contains("error") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running MSGF:"
+                            End If
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                        End If
+                    End If
+                End If
+            Loop
+
+            srInFile.Close()
+
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
+
+    End Sub
+
 
     Protected Function SplitMSGFInputFile(ByVal strMSGFInputFilePath As String, _
                                           ByVal intMSGFEntriesPerSegment As Integer, _
@@ -2029,13 +2126,11 @@ Public Class clsMSGFRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
+        strToolVersionInfo = String.Copy(mMSGFVersion)
+
         ' Store paths to key files in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSGFLoc")))
-
-
-        Dim msXmlGenerator As String = "ReadW.exe"
-        mReadWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
+        ioToolFiles.Add(New System.IO.FileInfo(mMSGFProgLoc))
 
         ioToolFiles.Add(New System.IO.FileInfo(mReadWProgramPath))
 
@@ -2135,6 +2230,7 @@ Public Class clsMSGFRunner
     ''' <remarks></remarks>
     Private Sub mMSGFRunner_LoopWaiting() Handles mMSGFRunner.LoopWaiting
         Static dtLastUpdateTime As System.DateTime = System.DateTime.Now()
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now()
 
         If System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
             ' Update the MSGF progress by counting the number of lines in the _MSGF.txt file
@@ -2142,6 +2238,17 @@ Public Class clsMSGFRunner
 
             dtLastUpdateTime = System.DateTime.Now
         End If
+
+        If System.DateTime.Now().Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = System.DateTime.Now()
+
+            ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFVersion) Then
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
+
+        End If
+
     End Sub
 #End Region
 

@@ -162,6 +162,12 @@ AnalysisManagerMSGFPlugin
 	<param name="strFileNameToFind"></param>
 	<returns>True if success; false if an error</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ParseConsoleOutputFile(System.String)">
+	<summary>
+ Parse the MSGF console output file to determine the MSGF version
+ </summary>
+	<param name="strConsoleOutputFilePath"></param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.StoreToolVersionInfo">
 	<summary>
  Stores the tool version info in the database
