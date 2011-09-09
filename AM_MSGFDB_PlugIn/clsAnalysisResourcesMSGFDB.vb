@@ -54,6 +54,7 @@ Public Class clsAnalysisResourcesMSGFDB
         'Add all the extensions of the files to delete after run
         clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
         clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
+        clsGlobal.m_FilesToDeleteExt.Add("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
 
