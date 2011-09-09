@@ -27,8 +27,8 @@ Public Class clsMSGFInputCreatorMSGFDB
     Public Const DATA_COLUMN_NTT As String = "NTT"
     Public Const DATA_COLUMN_DeNovoScore As String = "DeNovoScore"
     Public Const DATA_COLUMN_MSGFScore As String = "MSGFScore"
-    Public Const DATA_COLUMN_SpecProb As String = "SpecProb"
-    Public Const DATA_COLUMN_RankSpecProb As String = "RankSpecProb"
+    Public Const DATA_COLUMN_SpecProb As String = "MSGFDB_SpecProb"
+    Public Const DATA_COLUMN_RankSpecProb As String = "Rank_MSGFDB_SpecProb"
     Public Const DATA_COLUMN_PValue As String = "PValue"
 
     Public Sub New(ByVal strDatasetName As String, _
