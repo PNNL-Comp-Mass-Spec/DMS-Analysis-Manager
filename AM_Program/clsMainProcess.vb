@@ -552,8 +552,13 @@ Namespace AnalysisManagerProg
                 eToolRunnerResult = m_ToolRunner.RunTool()
                 If eToolRunnerResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     ErrorMessage = m_ToolRunner.Message
-                    If ErrorMessage Is Nothing OrElse ErrorMessage = String.Empty Then
-                        ErrorMessage = "Unknown ToolRunner Error"
+
+                    If String.IsNullOrEmpty(ErrorMessage) Then
+                        If Not String.IsNullOrEmpty(m_Completions_Msg) Then
+                            ErrorMessage = String.Copy(m_Completions_Msg)
+                        Else
+                            ErrorMessage = "Unknown ToolRunner Error"
+                        End If
                     End If
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)

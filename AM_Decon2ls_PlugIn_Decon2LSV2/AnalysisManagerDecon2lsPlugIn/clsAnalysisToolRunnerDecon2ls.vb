@@ -138,15 +138,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             ' Make sure the Isos File exists
             If Not System.IO.File.Exists(IsosFilePath) Then
-                m_message = "DeconTools Isos file Not Found: " & IsosFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "DeconTools Isos file Not Found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & IsosFilePath)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
             ' Make sure the Isos file contains at least one row of data
             If Not IsosFileHasData(IsosFilePath) Then
                 m_message = "No results in DeconTools Isos file"
-                clsGlobal.m_Completions_Msg = m_message
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
             End If
@@ -266,9 +265,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
             ' Error message is generated in base class, so just exit with error
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
-
-        ' Make sure clsGlobal.m_Completions_Msg is empty
-        clsGlobal.m_Completions_Msg = String.Empty
 
         'Run Decon2LS
         eResult = RunDecon2Ls()

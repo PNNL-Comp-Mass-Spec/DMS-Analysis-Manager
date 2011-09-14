@@ -186,8 +186,6 @@ Public Class clsMSGFRunner
         blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
 
         Try
-            ' Make sure clsGlobal.m_Completions_Msg is empty
-            clsGlobal.m_Completions_Msg = String.Empty
             blnProcessingError = False
 
             ' Parse the Sequest, X!Tandem, or Inspect parameter file to determine if ETD mode was used

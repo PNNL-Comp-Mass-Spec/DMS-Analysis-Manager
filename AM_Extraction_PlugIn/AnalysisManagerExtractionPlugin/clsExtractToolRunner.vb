@@ -55,9 +55,6 @@ Public Class clsExtractToolRunner
             ' Store the AnalysisManager version info in the database
             StoreToolVersionInfo()
 
-            ' Make sure clsGlobal.m_Completions_Msg is empty
-            clsGlobal.m_Completions_Msg = String.Empty
-
             Select Case m_jobParams.GetParam("ResultType")
                 Case "Peptide_Hit"  'Sequest result type
                     'Run Ken's Peptide Extractor DLL
@@ -240,9 +237,8 @@ Public Class clsExtractToolRunner
 		'If there was a _syn.txt file created, but it contains no data, then we want to clean up and exit
 		If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
             'log error and return result calling routine handles the error appropriately
-            clsGlobal.m_Completions_Msg = "No results above threshold"
-            Msg = "No results above threshold"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = "No results above threshold"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return Result
         End If
 

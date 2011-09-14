@@ -364,8 +364,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 		DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta")
 		NumFiles = DtaFiles.GetLength(0)
 		If NumFiles = 0 Then
-			m_message = AppendToComment(m_message, "No dta files found for Sequest processing")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            m_message = AppendToComment(m_message, "No dta files found for Sequest processing")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Set up a program runner and text file for each processor
@@ -480,7 +480,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         End If
         DtaFiles = Directory.GetFiles(m_WorkDir, "*.out")
         If DtaFiles.GetLength(0) < 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))            
             m_message = AppendToComment(m_message, "No OUT files created")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         Else
@@ -672,7 +672,6 @@ Public Class clsAnalysisToolRunnerSeqBase
                     Else
                         m_message = ioFiles.Length.ToString() & " .DTA files are present, but each is empty"
                     End If
-
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     Return False
                 End If

@@ -514,7 +514,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If intLinesRead <= 1 Then
                 ' File is empty or only contains a header line
-                clsGlobal.m_Completions_Msg = "No results above threshold"
+                m_message = "No results above threshold"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; filtered inspect results file is empty")
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
             End If

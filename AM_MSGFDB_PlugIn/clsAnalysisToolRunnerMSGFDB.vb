@@ -163,7 +163,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     Else
                         MyBase.m_message = "Error creating Suffix Array files"
                     End If
-
                     Return result
                 End If
 
@@ -415,7 +414,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             If intLinesRead <= 1 Then
                 ' File is empty or only contains a header line
-                clsGlobal.m_Completions_Msg = "No results above threshold"
+                m_message = "No results above threshold"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; MSGF-DB results file is empty")
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
             End If
@@ -423,7 +422,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Catch ex As Exception
 
             m_message = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
-
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
                 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

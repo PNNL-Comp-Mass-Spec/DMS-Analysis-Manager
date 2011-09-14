@@ -347,8 +347,8 @@ Public Class clsAnalysisToolRunnerXT
             strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found: " & strInputFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_message = "_DTA.txt file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strInputFilePath)
                 Return False
             End If
 

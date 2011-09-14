@@ -323,8 +323,10 @@ Namespace AnalysisManagerBase
         ''' <param name="ConnStr">Database connection string</param>
         ''' <returns>True for success, False for failure</returns>
         ''' <remarks>EvalCode and EvalMsg not presently used</remarks>
-        Protected Function SetAnalysisJobComplete(ByVal SpName As String, ByVal CompCode As Integer, _
-          ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMsg As String, ByVal ConnStr As String) As Boolean
+        Protected Function SetAnalysisJobComplete(ByVal SpName As String,
+                                                  ByVal CompCode As Integer, ByVal CompMsg As String, _
+                                                  ByVal EvalCode As Integer, ByVal EvalMsg As String, _
+                                                  ByVal ConnStr As String) As Boolean
 
             Dim Outcome As Boolean = False
             Dim ResCode As Integer
