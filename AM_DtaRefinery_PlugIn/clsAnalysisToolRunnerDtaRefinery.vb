@@ -85,6 +85,8 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "DTARefinery", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
 
+            ValidateDTARefineryLogFile()
+
             ' Move the source files and any results to the Failed Job folder
             ' Useful for debugging DTA_Refinery problems
             CopyFailedResultsToArchiveFolder()
@@ -105,8 +107,13 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
-        'Zip the output file
-        result = ZipMainOutputFile()
+        If Not ValidateDTARefineryLogFile() Then
+            result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+        Else
+            'Zip the output file
+            result = ZipMainOutputFile()
+        End If
+
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the source files and any results to the Failed Job folder
             ' Useful for debugging DTA_Refinery problems
@@ -260,6 +267,60 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     End Function
 
     ''' <summary>
+    ''' Parses the _DTARefineryLog.txt file to look for errors
+    ''' </summary>
+    ''' <returns>True if no errors, false if a problem</returns>
+    ''' <remarks></remarks>
+    Public Function ValidateDTARefineryLogFile() As Boolean
+
+        Dim ioSourceFile As System.IO.FileInfo
+        Dim srSourceFile As System.IO.StreamReader
+
+        Dim strLineIn As String
+
+        Try
+
+            ioSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
+            If Not ioSourceFile.Exists Then
+                m_message = "DtaRefinery Log file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (" & ioSourceFile.Name & ")")
+                Return False
+            End If
+
+            srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(ioSourceFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+            Do While srSourceFile.Peek > -1
+                strLineIn = srSourceFile.ReadLine()
+
+                If strLineIn.StartsWith("number of spectra identified less than 2") Then
+                    If srSourceFile.Peek > -1 Then
+                        strLineIn = srSourceFile.ReadLine()
+                        If strLineIn.StartsWith("stop processing") Then
+                            m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset"
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                            Return False
+                        End If
+                    End If
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly")
+
+                End If
+            Loop
+
+            srSourceFile.Close()
+
+        Catch ex As Exception
+            m_message = "Exception in ValidateDTARefineryLogFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+
+    ''' <summary>
     ''' Zips concatenated XML output file
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -271,7 +332,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Dim ioFile As System.IO.FileInfo
         Dim strFixedDTAFilePath As String
 
-        'Do we want to zip these output files?  Just zipping the fixed dta file.
+        'Do we want to zip these output files?  Yes, we keep them all
         '* _dta_DtaRefineryLog.txt 
         '* _dta_SETTINGS.xml
         '* _FIXED_dta.txt
@@ -281,7 +342,6 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         ' * m/z: _mz.png
         ' * log10 of ion intensity in the ICR/Orbitrap cell: _logTrappedIonInt.png
         ' * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
-
 
 
         'Delete the original DTA files

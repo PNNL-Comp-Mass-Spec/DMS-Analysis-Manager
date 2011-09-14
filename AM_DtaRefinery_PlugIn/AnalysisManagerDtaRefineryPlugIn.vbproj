@@ -130,6 +130,7 @@
     <Compile Include="clsAnalysisToolRunnerDtaRefinery.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsDeconMSnLogFileValidator.vb" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

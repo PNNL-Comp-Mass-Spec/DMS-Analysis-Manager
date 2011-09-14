@@ -119,6 +119,10 @@ Public Class clsAnalysisResourcesDtaRefinery
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileNameToFind & " using folder " & SourceFolderPath)
                     End If
                     ' Ignore the error and continue
+                Else
+                    If Not ValidateDeconMSnLogFile(System.IO.Path.Combine(WorkingDir, strFileNameToFind)) Then
+                        Return False
+                    End If
                 End If
             End If
 
@@ -215,6 +219,28 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         Return True
 
+    End Function
+
+    Private Function ValidateDeconMSnLogFile(ByVal strFilePath As String) As Boolean
+
+        Dim oValidator As New clsDeconMSnLogFileValidator()
+        Dim blnSuccess As Boolean
+
+        blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath)
+        If Not blnSuccess Then
+            If String.IsNullOrEmpty(oValidator.ErrorMessage) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDeconMSnLogFileValidator.ValidateFile returned false")
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, oValidator.ErrorMessage)
+            End If
+            Return False
+        Else
+            If oValidator.FileUpdated Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsDeconMSnLogFileValidator.ValidateFile updated one or more rows in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1")
+            End If
+        End If
+
+        Return True
     End Function
 
 End Class
