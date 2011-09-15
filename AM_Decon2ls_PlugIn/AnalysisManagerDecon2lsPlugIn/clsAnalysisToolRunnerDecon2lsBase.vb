@@ -459,7 +459,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             WaitForDecon2LSFinish()
 
             ' Stop the analysis timer
-            m_StopTime = Now
+            m_StopTime = System.DateTime.UtcNow
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished")

@@ -54,7 +54,7 @@ Public Class clsResultXferToolRunner
 		End If
 
 		'Stop the job timer
-		m_StopTime = Now
+		m_StopTime = System.DateTime.UtcNow
 
         ' If there are no more folders in the dataset folder in the xfer directory, then delete the folder
         ' Note that another manager might be simultaneously examining this folder to see if it's empty

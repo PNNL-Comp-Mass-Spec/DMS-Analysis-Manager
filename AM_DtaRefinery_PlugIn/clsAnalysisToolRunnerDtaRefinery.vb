@@ -95,7 +95,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.Now
+        m_StopTime = System.DateTime.UtcNow
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -405,15 +405,15 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_DTA_REFINERY_RUNNING, 0, "", "", "", False)
         End If
 

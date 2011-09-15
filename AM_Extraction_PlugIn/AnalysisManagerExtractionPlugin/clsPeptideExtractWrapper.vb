@@ -28,29 +28,29 @@ Public Class clsPeptideExtractWrapper
         Const MIN_LOG_INTERVAL_SECONDS As Integer = 5
         Const MAX_LOG_INTERVAL_SECONDS As Integer = 300
 
-        Static dtLastStatusUpdate As DateTime = System.DateTime.Now()
-        Static dtLastLogTime As DateTime = System.DateTime.Now.Subtract(New System.TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
+        Static dtLastStatusUpdate As DateTime = System.DateTime.UtcNow
+        Static dtLastLogTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
 
         Dim blnUpdateLog As Boolean = False
 
         ' We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
         m_Progress = CSng(100.0 * fractionDone / 3.0)
 
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(m_Progress)
         End If
 
-        If m_DebugLevel > 3 AndAlso System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
+        If m_DebugLevel > 3 AndAlso System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
             ' Over MIN_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
-        ElseIf m_DebugLevel >= 1 AndAlso System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
+        ElseIf m_DebugLevel >= 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
             ' Over MAX_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
         End If
 
         If blnUpdateLog Then
-            dtLastLogTime = System.DateTime.Now
+            dtLastLogTime = System.DateTime.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Extraction progress: " & m_Progress.ToString("##0.0") & "%")
         End If
 

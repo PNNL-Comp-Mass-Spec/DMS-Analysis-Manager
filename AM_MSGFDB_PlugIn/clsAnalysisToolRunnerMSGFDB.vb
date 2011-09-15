@@ -286,7 +286,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             m_progress = PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = System.DateTime.Now()
+            m_StopTime = System.DateTime.UtcNow
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -582,7 +582,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Static reExtractThreadCount As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Using (\d+) thread", _
                                                                                                           Text.RegularExpressions.RegexOptions.Compiled Or _
                                                                                                           Text.RegularExpressions.RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As System.DateTime = System.DateTime.Now()
+        Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
 
         Dim eThreadProgressBase() As eThreadProgressSteps
         Dim sngThreadProgressAddon() As Single
@@ -751,8 +751,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
             If m_progress < sngEffectiveProgress Then
                 m_progress = sngEffectiveProgress
 
-                If m_DebugLevel >= 3 OrElse System.DateTime.Now().Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                    dtLastProgressWriteTime = System.DateTime.Now()
+                If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+                    dtLastProgressWriteTime = System.DateTime.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
                 End If
             End If
@@ -1302,21 +1302,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now()
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now()
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now().Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now()
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             UpdateStatusRunning(m_progress)
         End If
 
-        If System.DateTime.Now().Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.Now()
+        If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = System.DateTime.UtcNow
 
             ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT))
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
@@ -1343,8 +1343,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
 
-        If System.DateTime.Now().Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.Now()
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
 
             ' Synchronize the stored Debug level with the value stored in the database
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -1354,8 +1354,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If m_DebugLevel >= 3 Then
-            If System.DateTime.Now().Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-                dtLastLogTime = System.DateTime.Now()
+            If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = System.DateTime.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
             End If
         End If

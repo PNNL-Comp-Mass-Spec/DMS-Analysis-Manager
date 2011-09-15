@@ -74,7 +74,7 @@ Public Class clsAnalysisToolRunnerDeNovoID
 		End Try
 
 		'Stop the job timer
-		m_StopTime = Now()
+		m_StopTime = System.DateTime.UtcNow
 
 		'Make sure all files have released locks
 		GC.Collect()

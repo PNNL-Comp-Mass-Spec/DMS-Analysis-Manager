@@ -74,7 +74,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
         'Stop the job timer
-        m_StopTime = Now
+        m_StopTime = System.DateTime.UtcNow
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -412,7 +412,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     End Function
 
     Private Sub HandleProgressUpdate(ByVal percentComplete As Single)
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         m_progress = percentComplete
 
@@ -421,8 +421,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
         End If
 
@@ -487,8 +487,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
         End If
 
-        Trace.WriteLine(Now.ToLongTimeString & "; " & m_ErrMsg, strSource)
-        Console.WriteLine(Now.ToLongTimeString & "; " & m_ErrMsg, strSource)
+        Trace.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
+        Console.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ex.Message)
 

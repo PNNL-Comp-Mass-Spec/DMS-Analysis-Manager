@@ -431,7 +431,7 @@ Namespace AnalysisManagerBase
 
             ' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
             For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
-                If System.DateTime.Now.Subtract(fiFileInfo.LastWriteTime).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
+                If System.DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
                     ' File was modified before the threshold; delete the results folder, then rename this file
 
                     Try

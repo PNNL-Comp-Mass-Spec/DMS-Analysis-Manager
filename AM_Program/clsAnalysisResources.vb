@@ -100,7 +100,7 @@ Namespace AnalysisManagerBase
         Protected m_FastaToolsCnStr As String = ""
         Protected m_FastaFileName As String = ""
         Protected m_FastaGenTimeOut As Boolean = False
-        Protected m_FastaGenStartTime As DateTime = System.DateTime.Now
+        Protected m_FastaGenStartTime As DateTime = System.DateTime.UtcNow
 
         Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
         Protected WithEvents m_FastaTimer As System.Timers.Timer
@@ -150,9 +150,9 @@ Namespace AnalysisManagerBase
             If m_DebugLevel >= 3 OrElse blnForcelog Then
                 ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
                 If blnForcelog OrElse _
-                   System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+                   System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
                    fractionDone - dblFractionDoneSaved >= 0.25 Then
-                    dtLastLogTime = System.DateTime.Now
+                    dtLastLogTime = System.DateTime.UtcNow
                     dblFractionDoneSaved = fractionDone
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " & (fractionDone * 100).ToString("0.0") & "% complete, " & statusMsg)
                 End If
@@ -162,7 +162,7 @@ Namespace AnalysisManagerBase
 
         Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
 
-            If System.DateTime.Now.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
+            If System.DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
                 m_FastaGenTimeOut = True      'Set the timeout flag so an error will be reported
                 m_GenerationComplete = True     'Set the completion flag so the fasta generation wait loop will exit
             End If
@@ -1266,7 +1266,7 @@ Namespace AnalysisManagerBase
 
 
                 If Not UnzipOverNetwork Then
-                    Dim dtStartTime As System.DateTime = System.DateTime.Now
+                    Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
 
                     Do While strFilesToDelete.Count > 0
                         ' Try to process the files remaining in queue strFilesToDelete
@@ -1274,7 +1274,7 @@ Namespace AnalysisManagerBase
                         DeleteQueuedFiles(strFilesToDelete, String.Empty)
 
                         If strFilesToDelete.Count > 0 Then
-                            If System.DateTime.Now.Subtract(dtStartTime).TotalSeconds > 20 Then
+                            If System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
                                 ' Stop trying to delete files; it's not worth continuing to try
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete all of the files in queue strFilesToDelete; Queue Length = " & strFilesToDelete.Count & "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
                                 Exit Do
@@ -1892,7 +1892,7 @@ Namespace AnalysisManagerBase
             '   Since it does not spawn a new thread, the while loop after this Try block won't actually get reached while m_FastaTools.ExportFASTAFile is running
             '   Furthermore, even if m_FastaTimer_Elapsed sets m_FastaGenTimeOut to True, this won't do any good since m_FastaTools.ExportFASTAFile will still be running
             m_FastaGenTimeOut = False
-            m_FastaGenStartTime = System.DateTime.Now
+            m_FastaGenStartTime = System.DateTime.UtcNow
             Try
                 m_FastaTimer.Start()
                 HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
@@ -1933,8 +1933,8 @@ Namespace AnalysisManagerBase
                         Dim strFastaFileMsg As String
                         fiFastaFile = New System.IO.FileInfo(System.IO.Path.Combine(DestFolder, m_FastaFileName))
 
-                        strFastaFileMsg = "Fasta file last modified: " & GetHumanReadableTimeInterval(System.DateTime.Now.Subtract(fiFastaFile.LastWriteTime)) & " ago at " & fiFastaFile.LastWriteTime.ToString()
-                        strFastaFileMsg &= "; file created: " & GetHumanReadableTimeInterval(System.DateTime.Now.Subtract(fiFastaFile.CreationTime)) & " ago at " & fiFastaFile.CreationTime.ToString()
+                        strFastaFileMsg = "Fasta file last modified: " & GetHumanReadableTimeInterval(System.DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) & " ago at " & fiFastaFile.LastWriteTime.ToString()
+                        strFastaFileMsg &= "; file created: " & GetHumanReadableTimeInterval(System.DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) & " ago at " & fiFastaFile.CreationTime.ToString()
                         strFastaFileMsg &= "; file size: " & fiFastaFile.Length & " bytes"
 
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
@@ -2475,9 +2475,9 @@ Namespace AnalysisManagerBase
 
                     Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
 
-                    dtStartTime = DateTime.Now
+                    dtStartTime = DateTime.UtcNow
                     blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
-                    dtEndTime = DateTime.Now
+                    dtEndTime = DateTime.UtcNow
 
                     If blnSuccess Then
                         m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)

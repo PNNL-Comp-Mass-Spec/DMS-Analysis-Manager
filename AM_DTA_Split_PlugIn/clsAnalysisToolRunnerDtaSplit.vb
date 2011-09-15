@@ -104,7 +104,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
             ' blnSplitToEqualScanCounts = clsGlobal.GetJobParameter(m_jobParams, "ClonedStepsHaveEqualNumSpectra", True)
 
             'Start the job timer
-            m_StartTime = System.DateTime.Now
+            m_StartTime = System.DateTime.UtcNow
 
             result = SplitCattedDtaFileIntoSegments(strCDTAFile, intSegmentCountToCreate)
 
@@ -113,7 +113,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
             End If
 
             'Stop the job timer
-            m_StopTime = System.DateTime.Now
+            m_StopTime = System.DateTime.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
@@ -181,7 +181,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim strSegmentDescription As String
 
         Dim sngPercentComplete As Single
-        Dim dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Dim dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         Try
             If intSegmentCountToCreate < 1 Then intSegmentCountToCreate = 1
@@ -269,8 +269,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
                     intSpectraCountBySegment(intSplitFileNum) += 1
                 End If
 
-                If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-                    dtLastStatusUpdate = System.DateTime.Now
+                If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+                    dtLastStatusUpdate = System.DateTime.UtcNow
                     sngPercentComplete = (lngBytesRead / CSng(srInFile.BaseStream.Length) * 100)
                     m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, intSpectraCountRead, "", "", "", False)
                 End If

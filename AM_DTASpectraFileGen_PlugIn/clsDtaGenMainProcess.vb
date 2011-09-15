@@ -548,23 +548,23 @@ Public Class clsDtaGenMainProcess
     ''' <remarks></remarks>
 	Private Sub m_RunProgTool_LoopWaiting() Handles m_RunProgTool.LoopWaiting
 
-        Static dtLastDtaCountTime As System.DateTime = System.DateTime.Now
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastDtaCountTime As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_MgrParams, m_DebugLevel)
 
         ' Count the number of .Dta files (only count the files every 10 seconds)
-        If System.DateTime.Now.Subtract(dtLastDtaCountTime).TotalSeconds >= 10 Then
-            dtLastDtaCountTime = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 10 Then
+            dtLastDtaCountTime = System.DateTime.UtcNow
             Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
             m_SpectraFileCount = FileList.GetLength(0)
         End If
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
         End If
 

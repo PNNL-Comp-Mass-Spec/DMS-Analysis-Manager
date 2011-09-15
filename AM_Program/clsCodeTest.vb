@@ -564,7 +564,7 @@ Public Class clsCodeTest
 
         objTargetFile = New System.IO.FileInfo("D:\JobSteps.png")
 
-        strDate = objTargetFile.LastWriteTime.ToString
+        strDate = objTargetFile.LastWriteTime.ToString()
 
         Dim ResultFiles() As String
 
@@ -1456,7 +1456,7 @@ Public Class clsCodeTest
 
         Catch ex As Exception
             ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-            If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+            If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
             End If
 
@@ -1479,12 +1479,12 @@ Public Class clsCodeTest
 
         mDTAWatcher.EnableRaisingEvents = True
 
-        Dim dtStartTime As System.DateTime = System.DateTime.Now
+        Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
 
         Do
             System.Threading.Thread.Sleep(2000)
             Console.WriteLine("Current progress: " & m_Progress)
-        Loop While System.DateTime.Now.Subtract(dtStartTime).TotalMinutes < sngWaitTimeMinutes
+        Loop While System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes < sngWaitTimeMinutes
 
     End Sub
 

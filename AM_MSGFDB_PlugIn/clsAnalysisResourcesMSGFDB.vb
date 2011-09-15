@@ -187,9 +187,9 @@ Public Class clsAnalysisResourcesMSGFDB
         Static dtLastUpdateTime As System.DateTime
 
         If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
-               m_DebugLevel > 1 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
-                dtLastUpdateTime = System.DateTime.Now
+            If m_DebugLevel = 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+               m_DebugLevel > 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+                dtLastUpdateTime = System.DateTime.UtcNow
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & percentComplete.ToString("0.00") & "% complete")
             End If

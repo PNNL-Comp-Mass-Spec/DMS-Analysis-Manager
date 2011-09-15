@@ -5036,8 +5036,8 @@ Public Class clsMsMsSpectrumFilter
                     blnSpectrumFound = objFileReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
                     intSpectraRead += 1
 
-                    If intSpectraRead Mod 1000 = 1 OrElse System.DateTime.Now.Subtract(dtLastProgressUpdate).TotalSeconds >= mMaximumProgressUpdateIntervalSeconds Then
-                        dtLastProgressUpdate = System.DateTime.Now
+                    If intSpectraRead Mod 1000 = 1 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= mMaximumProgressUpdateIntervalSeconds Then
+                        dtLastProgressUpdate = System.DateTime.UtcNow
 
                         ' Update the label with the progress
                         intProgressPercentComplete = CInt(Math.Round(objFileReader.ProgressPercentComplete(), 0))

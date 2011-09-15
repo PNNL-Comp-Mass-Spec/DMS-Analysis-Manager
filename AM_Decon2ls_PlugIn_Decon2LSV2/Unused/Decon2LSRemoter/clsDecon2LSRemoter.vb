@@ -97,7 +97,7 @@ Public Class clsDecon2LSRemoter
 	Public Sub New()
 
 		'Constructor
-		System.Console.WriteLine(Now.ToString & ": Instantiating Remote Class")
+		System.Console.WriteLine(System.DateTime.Now().ToString & ": Instantiating Remote Class")
         m_DeconObj = New DMSDeconToolsV2.DMSDecon2LSWrapper
 
 	End Sub
@@ -105,7 +105,7 @@ Public Class clsDecon2LSRemoter
 	Public Sub Dispose() Implements IDisposable.Dispose
 
 		'Allow calling program to make sure the Decon2LS object is released
-		System.Console.WriteLine(Now.ToString & ": Disposing Remote Class")
+		System.Console.WriteLine(System.DateTime.Now().ToString & ": Disposing Remote Class")
 		m_DeconObj = Nothing
 
 	End Sub

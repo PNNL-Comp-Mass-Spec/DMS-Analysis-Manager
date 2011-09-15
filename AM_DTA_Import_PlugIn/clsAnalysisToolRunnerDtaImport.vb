@@ -54,7 +54,7 @@ Public Class clsAnalysisToolRunnerDtaImport
 
         Try
             'Start the job timer
-            m_StartTime = System.DateTime.Now
+            m_StartTime = System.DateTime.UtcNow
 
             result = CopyManualDTAs()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -67,7 +67,7 @@ Public Class clsAnalysisToolRunnerDtaImport
             End If
 
             'Stop the job timer
-            m_StopTime = System.DateTime.Now
+            m_StopTime = System.DateTime.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then

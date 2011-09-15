@@ -6,29 +6,7 @@ AnalysisManagerDtaRefineryPlugIn
 </name>
 </assembly>
 <members>
-<member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ErrorMessage">
-	<summary>
- Error message (if any)
- </summary>
-</member><member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.FileUpdated">
-	<summary>
- Indicates whether the intensity values in the original file were updated
- </summary>
-	<returns>True if the file was updated</returns>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ValidateDeconMSnLogFile(System.String)">
-	<summary>
- Parse the specified DeconMSn log file to check for intensity values in the last two columns that are zero
- </summary>
-	<param name="strSourceFilePath">Path to the file</param>
-	<returns>True if success; false if an unrecoverable error</returns>
-</member><member name="T:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator">
-	<summary>
- This class can be used to validate the data in a _DeconMSn_log.txt file
- It makes sure that the intensity values in the last two columns are all &gt; 0
- Values that are 0 are auto-changed to 1
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.RunTool">
+<member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.RunTool">
 	<summary>
  Runs DTA_Refinery tool
  </summary>
@@ -60,6 +38,28 @@ AnalysisManagerDtaRefineryPlugIn
 </member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.CmdRunner_LoopWaiting">
 	<summary>
  Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member><member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ErrorMessage">
+	<summary>
+ Error message (if any)
+ </summary>
+</member><member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.FileUpdated">
+	<summary>
+ Indicates whether the intensity values in the original file were updated
+ </summary>
+	<returns>True if the file was updated</returns>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ValidateDeconMSnLogFile(System.String)">
+	<summary>
+ Parse the specified DeconMSn log file to check for intensity values in the last two columns that are zero
+ </summary>
+	<param name="strSourceFilePath">Path to the file</param>
+	<returns>True if success; false if an unrecoverable error</returns>
+</member><member name="T:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator">
+	<summary>
+ This class can be used to validate the data in a _DeconMSn_log.txt file
+ It makes sure that the intensity values in the last two columns are all &gt; 0
+ Values that are 0 are auto-changed to 1
  </summary>
 	<remarks></remarks>
 </member>

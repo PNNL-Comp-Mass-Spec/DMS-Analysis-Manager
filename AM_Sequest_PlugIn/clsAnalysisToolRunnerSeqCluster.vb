@@ -167,8 +167,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub m_CmdRunner_LoopWaiting() Handles m_CmdRunner.LoopWaiting
-        Static dtLastOutFileCountTime As System.DateTime = System.DateTime.Now
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastOutFileCountTime As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -176,14 +176,14 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         ' Compute the progress by comparing the number of .Out files to the number of .Dta files 
         ' (only count the files every 10 seconds)
-        If System.DateTime.Now.Subtract(dtLastOutFileCountTime).TotalSeconds >= 10 Then
-            dtLastOutFileCountTime = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastOutFileCountTime).TotalSeconds >= 10 Then
+            dtLastOutFileCountTime = System.DateTime.UtcNow
             CalculateNewStatus(False)
         End If
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
         End If
 
@@ -359,7 +359,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "OutFileName is empty; this is unexpected")
                 End If
             Else
-                Dim objEntry As New System.Collections.Generic.KeyValuePair(Of String, System.DateTime)(OutFileName, System.DateTime.Now)
+                Dim objEntry As New System.Collections.Generic.KeyValuePair(Of String, System.DateTime)(OutFileName, System.DateTime.UtcNow)
 
                 If m_DebugLevel >= 5 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching new out file: " & objEntry.Key)
@@ -408,7 +408,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 ' Examine the time associated with the next item that would be dequeued
                 objEntry = CType(mOutFileCandidates.Peek, System.Collections.Generic.KeyValuePair(Of String, System.DateTime))
 
-                If System.DateTime.Now.Subtract(objEntry.Value).TotalSeconds >= DTA_DELETE_HOLDOFF_SECONDS Then
+                If System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= DTA_DELETE_HOLDOFF_SECONDS Then
 
                     ' Entry is old enough; pop it off the queue
                     objEntry = CType(mOutFileCandidates.Dequeue, System.Collections.Generic.KeyValuePair(Of String, System.DateTime))
@@ -417,7 +417,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                     strDtaFilePath = System.IO.Path.GetFileNameWithoutExtension(objEntry.Key) & ".dta"
                     If Not mDtaFilesDeleted.ContainsKey(strDtaFilePath) Then
                         ' DTA file not yet deleted
-                        mDtaFilesDeleted.Add(strDtaFilePath, System.DateTime.Now)
+                        mDtaFilesDeleted.Add(strDtaFilePath, System.DateTime.UtcNow)
 
                         Try
                             strDtaFilePath = System.IO.Path.Combine(m_WorkDir, strDtaFilePath)

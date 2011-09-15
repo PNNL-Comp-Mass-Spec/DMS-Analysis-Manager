@@ -184,11 +184,11 @@ Public Class clsPeptideProphetWrapper
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         'Update the status (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             RaiseEvent PeptideProphetRunning("Running", 50)
         End If
 

@@ -85,7 +85,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.Now
+        m_StopTime = System.DateTime.UtcNow
 
         'Delete the raw data files
         If m_DebugLevel > 3 Then
@@ -248,15 +248,15 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CompassXportRunner_LoopWaiting() Handles mCompassXportRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MSXML_GEN_RUNNING, 0, "", "", "", False)
         End If
     End Sub

@@ -41,7 +41,7 @@ Namespace AnalysisManagerBase
         Private m_MgrStatus As IStatusFile.EnumMgrStatus = IStatusFile.EnumMgrStatus.STOPPED
 
         'Manager start time
-        Private m_MgrStartTime As Date = System.DateTime.Now()
+        Private m_MgrStartTime As Date = System.DateTime.UtcNow
 
         'CPU utilization
         Private m_CpuUtilization As Integer = 0
@@ -56,7 +56,7 @@ Namespace AnalysisManagerBase
         Private m_TaskStatus As IStatusFile.EnumTaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
 
         'Task start time
-        Private m_TaskStartTime As Date = System.DateTime.Now()
+        Private m_TaskStartTime As Date = System.DateTime.UtcNow
 
         'Progess (in percent)
         Private m_Progress As Single = 0
@@ -302,8 +302,8 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Public Sub New(ByVal FileLocation As String, ByVal debugLevel As Integer)
             m_FileNamePath = FileLocation
-            m_MgrStartTime = System.DateTime.Now()
-            m_TaskStartTime = System.DateTime.Now()
+            m_MgrStartTime = System.DateTime.UtcNow
+            m_TaskStartTime = System.DateTime.UtcNow
             m_DebugLevel = debugLevel
             m_MachName = ""
 
@@ -496,7 +496,7 @@ Namespace AnalysisManagerBase
                 mCPUUsagePerformanceCounter.ReadOnly = True
             Catch ex As Exception
                 ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-                If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+                If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
                 End If
             End Try
@@ -506,7 +506,7 @@ Namespace AnalysisManagerBase
                 mFreeMemoryPerformanceCounter.ReadOnly = True
             Catch ex As Exception
                 ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-                If System.DateTime.Now.Hour = 0 And System.DateTime.Now.Minute <= 30 Then
+                If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
                 End If
 
@@ -583,8 +583,8 @@ Namespace AnalysisManagerBase
                 End If
 
             Catch ex As Exception
-                If System.DateTime.Now.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
-                    dtLastFailureTime = System.DateTime.Now
+                If System.DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
+                    dtLastFailureTime = System.DateTime.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
                 End If
 
@@ -839,20 +839,20 @@ Namespace AnalysisManagerBase
 
             Const MIN_FILE_WRITE_INTERVAL_SECONDS As Integer = 2
 
-            Static dtLastFileWriteTime As System.DateTime = System.DateTime.Now
+            Static dtLastFileWriteTime As System.DateTime = System.DateTime.UtcNow
 
             Dim strTempStatusFilePath As String
             Dim blnSuccess As Boolean
 
             blnSuccess = True
 
-            If System.DateTime.Now.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
+            If System.DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
                 ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
                 strTempStatusFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(m_FileNamePath), _
                                                                System.IO.Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
 
-                dtLastFileWriteTime = System.DateTime.Now
+                dtLastFileWriteTime = System.DateTime.UtcNow
 
                 blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText)
                 If blnSuccess Then
@@ -1176,7 +1176,7 @@ Namespace AnalysisManagerBase
         ''' <remarks></remarks>
         Private Function GetRunTime() As Single
 
-            Return CSng(System.DateTime.Now().Subtract(m_TaskStartTime).TotalHours)
+            Return CSng(System.DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
 
         End Function
 

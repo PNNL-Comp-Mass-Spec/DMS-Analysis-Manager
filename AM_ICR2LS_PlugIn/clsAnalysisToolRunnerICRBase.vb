@@ -103,7 +103,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'Start the job timer
-        m_StartTime = System.DateTime.Now
+        m_StartTime = System.DateTime.UtcNow
 
         ResetStatusLogTimes()
         mICR2LSStatus.Initialize()
@@ -145,13 +145,13 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             End If
 
             If Not blnForceParse AndAlso _
-               System.DateTime.Now.Subtract(m_LastParseTime).TotalSeconds < MINIMUM_PARSING_INTERVAL_SECONDS Then
+               System.DateTime.UtcNow.Subtract(m_LastParseTime).TotalSeconds < MINIMUM_PARSING_INTERVAL_SECONDS Then
                 ' Not enough time has elapsed, exit the procedure (returning True)
                 blnSuccess = True
                 Exit Try
             End If
 
-            m_LastParseTime = System.DateTime.Now
+            m_LastParseTime = System.DateTime.UtcNow
 
             If System.IO.File.Exists(strStatusFilePath) Then
                 ' Read the file
@@ -209,7 +209,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 If strStatusDate.Length > 0 AndAlso strStatusTime.Length > 0 Then
                     strStatusDate &= " " & strStatusTime
                     If Not DateTime.TryParse(strStatusDate, mICR2LSStatus.StatusDate) Then
-                        mICR2LSStatus.StatusDate = System.DateTime.Now
+                        mICR2LSStatus.StatusDate = System.DateTime.Now()
                     End If
                 End If
 
@@ -223,8 +223,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                     mICR2LSStatus.ProcessingState = strProcessingState
 
                     If Not ValidateICR2LSStatus(strProcessingState) Then
-                        If System.DateTime.Now.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
-                            mLastInvalidStatusFiletime = System.DateTime.Now
+                        If System.DateTime.UtcNow.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
+                            mLastInvalidStatusFiletime = System.DateTime.UtcNow
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid processing state reported by ICR2LS: " & strProcessingState)
                         End If
                     End If
@@ -244,8 +244,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 ' Status.log file not found; if the job just started, this will be the case
                 ' For this reason, ResetStatusLogTimes will set mLastMissingStatusFiletime to the time the job starts, meaning
                 '  we won't log an error about a missing Status.log file until 60 minutes into a job
-                If System.DateTime.Now.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60 Then
-                    mLastMissingStatusFiletime = System.DateTime.Now
+                If System.DateTime.UtcNow.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60 Then
+                    mLastMissingStatusFiletime = System.DateTime.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ICR2LS Status.Log file not found: " & strStatusFilePath)
                 End If
 
@@ -254,8 +254,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Catch ex As Exception
             ' Limit logging of errors to once every 60 minutes
 
-            If System.DateTime.Now.Subtract(mLastErrorPostingTime).TotalMinutes >= 60 Then
-                mLastErrorPostingTime = System.DateTime.Now
+            If System.DateTime.UtcNow.Subtract(mLastErrorPostingTime).TotalMinutes >= 60 Then
+                mLastErrorPostingTime = System.DateTime.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error reading the ICR2LS Status.Log file (" & strStatusFilePath & "): " & ex.Message)
             End If
         End Try
@@ -283,7 +283,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Dim result As IJobParams.CloseOutType
 
         'Stop the job timer
-        m_StopTime = System.DateTime.Now
+        m_StopTime = System.DateTime.UtcNow
 
         If Not UpdateSummaryFile() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum)
@@ -342,12 +342,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Private Sub ResetStatusLogTimes()
         ' Initialize the last error posting time to 2 hours before the present
-        mLastErrorPostingTime = System.DateTime.Now.Subtract(New System.TimeSpan(2, 0, 0))
+        mLastErrorPostingTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
 
         ' Initialize the last MissingStatusFileTime to the time the job starts
-        mLastMissingStatusFiletime = System.DateTime.Now
+        mLastMissingStatusFiletime = System.DateTime.UtcNow
 
-        mLastInvalidStatusFiletime = System.DateTime.Now.Subtract(New System.TimeSpan(2, 0, 0))
+        mLastInvalidStatusFiletime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
     End Sub
 
     ''' <summary>
@@ -503,7 +503,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End If
 
         'Stop the job timer
-        m_StopTime = Now
+        m_StopTime = System.DateTime.UtcNow
 
         If Not blnSuccess Then
             ' ProgRunner returned false, check the Exit Code
@@ -623,7 +623,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''    '' Dim Progress As Single
 
     ''    'Monitor status
-    ''    dtLastLogTime = System.DateTime.Now()
+    ''    dtLastLogTime = System.DateTime.UtcNow
 
     ''    While m_JobRunning
     ''        System.Threading.Thread.Sleep(4000)         'Delay for 4 seconds
@@ -649,8 +649,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''                m_StatusTools.UpdateAndWrite(m_progress)
 
     ''                If m_DebugLevel >= 2 Then
-    ''                    If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= LOGGER_DETAILED_STATUS_INTERVAL_SECONDS Then
-    ''                        dtLastLogTime = System.DateTime.Now
+    ''                    If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= LOGGER_DETAILED_STATUS_INTERVAL_SECONDS Then
+    ''                        dtLastLogTime = System.DateTime.UtcNow
     ''                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerICRBase.WaitForJobToFinish(); " & _
     ''                                           "StatusResult=" & mICR2LSStatus.ProcessingState & "; " & _
     ''                                           "Progess=" & m_progress.ToString("0.00") & "; " & _
@@ -712,7 +712,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Dim dblMinutesElapsed As Double
         Dim blnLogStatus As Boolean
 
-        dblMinutesElapsed = System.DateTime.Now.Subtract(dtLastStatusLogTime).TotalMinutes
+        dblMinutesElapsed = System.DateTime.UtcNow.Subtract(dtLastStatusLogTime).TotalMinutes
         If m_DebugLevel > 0 Then
             If dblMinutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES AndAlso m_DebugLevel >= 2 Then
                 blnLogStatus = True
@@ -721,10 +721,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             End If
 
             If blnLogStatus Then
-                dtLastStatusLogTime = System.DateTime.Now
+                dtLastStatusLogTime = System.DateTime.UtcNow
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " & _
-                                                           "Processing Time = " & System.DateTime.Now.Subtract(m_StartTime).TotalMinutes.ToString("0.0") & " minutes; " & _
+                                                           "Processing Time = " & System.DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") & " minutes; " & _
                                                            "Progress = " & m_progress.ToString("0.00") & "; " & _
                                                            "Scans Processed = " & mICR2LSStatus.ScansProcessed.ToString)
             End If

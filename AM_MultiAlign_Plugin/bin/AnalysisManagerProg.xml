@@ -103,7 +103,7 @@ AnalysisManagerProg
  </summary>
 	<returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.CheckInitialSettings(System.Collections.Specialized.StringDictionary@)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.CheckInitialSettings(System.Collections.Generic.Dictionary{System.String,System.String}@)">
 	<summary>
  Tests initial settings retrieved from config file
  </summary>
@@ -148,12 +148,6 @@ AnalysisManagerProg
  </summary>
 	<param name="InpObj"></param>
 	<returns>String equivalent of object; empty string if object is dbNull</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.GetAllKeys">
-	<summary>
- Gets a collection representing all keys in the parameters string dictionary
- </summary>
-	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisMgrSettings.WriteConfigSetting(System.String,System.String)">
 	<summary>
@@ -406,7 +400,7 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
 	<summary>
  Looks for this dataset's mzXML file
- Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
  If the MSXML folder (or the .mzXML file) cannot be found, then returns False
  </summary>
 	<param name="WorkDir"></param>
@@ -525,7 +519,7 @@ AnalysisManagerProg
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveOrgDB(System.String)">
 	<summary>
- Uses Ken's dll to create a fasta file for Sequest or XTandem analysis
+ Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFDB analysis
  </summary>
 	<param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
 	<returns>TRUE for success; FALSE for failure</returns>

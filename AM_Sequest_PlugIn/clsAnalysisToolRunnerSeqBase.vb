@@ -97,7 +97,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         End Try
 
         'Stop the job timer
-        m_StopTime = Now
+        m_StopTime = System.DateTime.UtcNow
 
         If blnProcessingError Then
             ' Something went wrong

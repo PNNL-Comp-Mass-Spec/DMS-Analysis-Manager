@@ -167,7 +167,7 @@ Namespace AnalysisManagerProg
 
             Dim strWorkingDir As String = m_MgrSettings.GetParam("workdir")
             Dim strMessage As String
-            Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.Now
+            Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.UtcNow
 
             Dim blnRequestJobs As Boolean = False
             Dim blnOneTaskStarted As Boolean = False
@@ -463,7 +463,7 @@ Namespace AnalysisManagerProg
             m_MostRecentJobInfo = ConstructMostRecentJobInfoText(System.DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
 
             With m_StatusTools
-                .TaskStartTime = System.DateTime.Now()
+                .TaskStartTime = System.DateTime.UtcNow
                 .Dataset = Dataset
                 .JobNumber = JobNum
                 .JobStep = StepNum
@@ -824,9 +824,9 @@ Namespace AnalysisManagerProg
 
             Dim blnSuccess As Boolean = True
 
-            If (System.DateTime.Now.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
+            If (System.DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
 
-                dtLastConfigDBUpdate = System.DateTime.Now
+                dtLastConfigDBUpdate = System.DateTime.UtcNow
 
                 If Not m_MgrSettings.LoadDBSettings() Then
                     Dim msg As String
@@ -943,7 +943,7 @@ Namespace AnalysisManagerProg
                 m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
 
                 With m_StatusTools
-                    .TaskStartTime = System.DateTime.Now()
+                    .TaskStartTime = System.DateTime.UtcNow
                     .Dataset = ""
                     .JobNumber = 0
                     .JobStep = 0
@@ -1027,7 +1027,7 @@ Namespace AnalysisManagerProg
             If fiFilesToDelete.Length > 0 Then
                 For Each fiFileInfo In fiFilesToDelete
                     Try
-                        If System.DateTime.Now().Subtract(fiFileInfo.LastWriteTime).TotalHours > 24 Then
+                        If System.DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalHours > 24 Then
                             fiFileInfo.Delete()
                         End If
                     Catch ex As Exception

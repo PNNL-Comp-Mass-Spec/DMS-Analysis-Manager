@@ -94,7 +94,7 @@ Module clsDecon2LSCAOServer
 		' Create an instance of StreamWriter to write text to a file.
 		Try
             Dim sw As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_FlagFilePath, FLAG_FILE_NAME), False)
-			sw.WriteLine(Now.ToString)
+			sw.WriteLine(System.DateTime.Now().ToString)
 			sw.Close()
 			Return 0
 		Catch ex As Exception
@@ -139,7 +139,7 @@ Module clsDecon2LSCAOServer
 	Private Sub m_DisplayTmr_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_DisplayTmr.Elapsed
 
 		'Output an "I'm alive" message to the console
-		System.Console.WriteLine(Now.ToString & ", CAOServer running")
+		System.Console.WriteLine(System.DateTime.Now().ToString & ", CAOServer running")
 
 	End Sub
 

@@ -607,12 +607,12 @@ Public Class clsAnalysisResourcesSeq
             If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Comparing files: " & ioFileA.FullName & " vs. " & ioFileB.FullName)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... file sizes: " & ioFileA.Length.ToString & " vs. " & ioFileB.Length.ToString)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... file dates: " & ioFileA.LastWriteTime.ToString & " vs. " & ioFileB.LastWriteTime.ToString)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... file dates: " & ioFileA.LastWriteTimeUtc.ToString & " vs. " & ioFileB.LastWriteTimeUtc.ToString)
             End If
 
             If ioFileA.Length = ioFileB.Length Then
                 ' Sizes match
-                If ioFileA.LastWriteTime = ioFileB.LastWriteTime Then
+                If ioFileA.LastWriteTimeUtc = ioFileB.LastWriteTimeUtc Then
                     ' Dates match
                     If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... sizes match and dates match exactly")
@@ -621,7 +621,7 @@ Public Class clsAnalysisResourcesSeq
                     blnFilesMatch = True
                 Else
                     ' Dates don't match, are they off by one hour?
-                    dblSecondDiff = Math.Abs(ioFileA.LastWriteTime.Subtract(ioFileB.LastWriteTime).TotalSeconds)
+                    dblSecondDiff = Math.Abs(ioFileA.LastWriteTimeUtc.Subtract(ioFileB.LastWriteTimeUtc).TotalSeconds)
 
                     If dblSecondDiff <= 2 Then
                         ' File times differ by less than 2 seconds; count this as the same

@@ -180,11 +180,11 @@ Namespace AnalysisManagerBase
             Dim blnWriteHeader As Boolean = False
 
             Try
-                If System.DateTime.Now.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
+                If System.DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
                     ' Not enough time has elapsed since the last write; exit sub
                     Exit Sub
                 End If
-                dtLastWriteTime = System.DateTime.Now
+                dtLastWriteTime = System.DateTime.UtcNow
 
                 ' We're creating a new log file each month
                 strLogFileName = "MemoryUsageLog_" & System.DateTime.Now.ToString("yyyy-MM") & ".txt"
@@ -215,8 +215,8 @@ Namespace AnalysisManagerBase
                                         "PoolNonpaged_MB" & ControlChars.Tab)
                 End If
 
-                swOutFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd") & ControlChars.Tab & _
-                                    System.DateTime.Now.ToString("hh:mm:ss tt") & ControlChars.Tab & _
+                swOutFile.WriteLine(System.DateTime.Now().ToString("yyyy-MM-dd") & ControlChars.Tab & _
+                                    System.DateTime.Now().ToString("hh:mm:ss tt") & ControlChars.Tab & _
                                     GetProcessMemoryUsageMB.ToString("0.0") & ControlChars.Tab & _
                                     GetFreeMemoryMB.ToString("0.0") & ControlChars.Tab & _
                                     GetPoolPagedMemory.ToString("0.0") & ControlChars.Tab & _

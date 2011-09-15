@@ -342,7 +342,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         '--------------------------------------------------------------------------------------------
 
         'Stop the job timer
-        m_StopTime = System.DateTime.Now
+        m_StopTime = System.DateTime.UtcNow
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -786,8 +786,8 @@ Public Class clsAnalysisToolRunnerXTHPC
                     ' File is empty
                     ' This might mean there is no time left, but it could also indicate another error
                     ' Will continue waiting, but post a log message
-                    If System.DateTime.Now.Subtract(dtLastWarnTimeEmptyFile).TotalMinutes >= 5 Then
-                        dtLastWarnTimeEmptyFile = System.DateTime.Now
+                    If System.DateTime.UtcNow.Subtract(dtLastWarnTimeEmptyFile).TotalMinutes >= 5 Then
+                        dtLastWarnTimeEmptyFile = System.DateTime.UtcNow
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisResourcesXTHPC.GetCurrentBalance, GBalance result file is empty; this likely indicates no hours are available for HPC account " & m_HPCAccountName)
                     End If
                 End If
@@ -994,7 +994,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisResourcesXTHPC.RetrieveJobResultFilesFromHPC, retrieving results from HPC for step " & CloneStepNum)
             End If
 
-            dtTransferStartTime = System.DateTime.Now
+            dtTransferStartTime = System.DateTime.UtcNow
 
             CommandfileName = "GetResultFilesCmds_Job" & m_JobNum & "_" & CloneStepNum
             CmdStr = "-l " & HPC_NAME & " -b " & CommandfileName
@@ -1019,7 +1019,7 @@ Public Class clsAnalysisToolRunnerXTHPC
             If m_DebugLevel >= 1 Then
                 ' Log the transfer stats
                 sngFileSizeMB = CSng(fiResultsFile.Length / 1024.0 / 1024.0)
-                sngTransferTimeSeconds = CSng(System.DateTime.Now.Subtract(dtTransferStartTime).TotalSeconds)
+                sngTransferTimeSeconds = CSng(System.DateTime.UtcNow.Subtract(dtTransferStartTime).TotalSeconds)
 
                 If sngTransferTimeSeconds > 0 Then
                     sngTransferRate = sngFileSizeMB / sngTransferTimeSeconds
@@ -2041,15 +2041,15 @@ Public Class clsAnalysisToolRunnerXTHPC
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_XTANDEM_RUNNING, 0, "", "", "", False)
         End If
 

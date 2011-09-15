@@ -188,7 +188,7 @@ Public Class clsIonicZipTools
             End If
             objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
 
-            dtStartTime = System.DateTime.Now
+            dtStartTime = System.DateTime.UtcNow
 
             If String.IsNullOrEmpty(FileFilter) Then
                 objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
@@ -201,7 +201,7 @@ Public Class clsIonicZipTools
                 Next
             End If
 
-            dtEndTime = System.DateTime.Now
+            dtEndTime = System.DateTime.UtcNow
 
             ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
 
@@ -283,10 +283,10 @@ Public Class clsIonicZipTools
             objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
             objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-            dtStartTime = System.DateTime.Now
+            dtStartTime = System.DateTime.UtcNow
             objZipper.AddItem(fiFile.FullName, String.Empty)
             objZipper.Save()
-            dtEndTime = System.DateTime.Now
+            dtEndTime = System.DateTime.UtcNow
 
             ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
 
@@ -386,7 +386,7 @@ Public Class clsIonicZipTools
             objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
             objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-            dtStartTime = System.DateTime.Now
+            dtStartTime = System.DateTime.UtcNow
 
             If String.IsNullOrEmpty(FileFilter) AndAlso Recurse Then
                 objZipper.AddDirectory(diDirectory.FullName)
@@ -400,7 +400,7 @@ Public Class clsIonicZipTools
 
             objZipper.Save()
 
-            dtEndTime = System.DateTime.Now
+            dtEndTime = System.DateTime.UtcNow
 
             ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
 

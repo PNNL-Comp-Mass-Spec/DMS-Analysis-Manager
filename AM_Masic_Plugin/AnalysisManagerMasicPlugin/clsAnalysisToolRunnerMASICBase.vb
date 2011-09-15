@@ -114,7 +114,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         StoreToolVersionInfo()
 
         'Start the job timer
-        m_StartTime = System.DateTime.Now
+        m_StartTime = System.DateTime.UtcNow
         m_message = String.Empty
 
         'Make the SIC's 
@@ -348,7 +348,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         Dim FoundFiles() As String
 
         'Stop the job timer
-        m_StopTime = System.DateTime.Now
+        m_StopTime = System.DateTime.UtcNow
 
         'Get rid of raw data file
         StepResult = DeleteDataFile()
@@ -457,9 +457,9 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
                 m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
 
                 If m_DebugLevel >= 3 Then
-                    If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+                    If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
                         m_progress - sngProgressSaved >= 25 Then
-                        dtLastLogTime = System.DateTime.Now
+                        dtLastLogTime = System.DateTime.UtcNow
                         sngProgressSaved = m_progress
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
                                            "Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")")

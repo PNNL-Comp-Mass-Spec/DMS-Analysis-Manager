@@ -76,7 +76,7 @@ Public Class clsCodeTestAM
 
 
         'Stop the job timer
-        m_StopTime = Now
+        m_StopTime = System.DateTime.UtcNow
 
         If blnProcessingError Then
             ' Something went wrong
@@ -148,7 +148,7 @@ Public Class clsCodeTestAM
             strOutFilePath = System.IO.Path.Combine(strFolderPath, strFileNameBase & intIndex.ToString & "_" & objRand.Next(1, 99) & ".txt")
 
             swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swOutFile.WriteLine(System.DateTime.Now().ToString & "This is a test file.")
+            swOutFile.WriteLine(System.DateTime.Now().ToString & " - This is a test file.")
             swOutFile.Close()
 
             System.Threading.Thread.Sleep(50)

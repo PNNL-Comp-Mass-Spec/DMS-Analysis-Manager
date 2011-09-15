@@ -43,7 +43,7 @@ Public Class clsDtaGenToolRunner
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return result
 
         'Stop the job timer
-		m_StopTime = Now
+		m_StopTime = System.DateTime.UtcNow
 
         'Add the current job data to the summary file
         Try
@@ -186,7 +186,7 @@ Public Class clsDtaGenToolRunner
 				Return StepResult
 			End If
 		Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults()(), Exception making results folder, " & Err.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults(), Exception making results folder, " & Err.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 

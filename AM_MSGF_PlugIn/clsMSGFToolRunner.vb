@@ -294,7 +294,7 @@ Public Class clsMSGFRunner
             mMSGFInputCreator.CloseLogFileNow()
 
             'Stop the job timer
-            m_StopTime = Now
+            m_StopTime = System.DateTime.UtcNow
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -814,7 +814,7 @@ Public Class clsMSGFRunner
         ' Note that mReadWProgramPath should have been populated by StoreToolVersionInfo()
         mMSXmlGenReadW = New clsMSXMLGenReadW(m_WorkDir, mReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
-        dtStartTime = System.DateTime.Now
+        dtStartTime = System.DateTime.UtcNow
 
         ' Create the file
         blnSuccess = mMSXmlGenReadW.CreateMSXMLFile
@@ -842,7 +842,7 @@ Public Class clsMSGFRunner
                 Dim dblFileSizeMB As Double, dblXMLSizeMB As Double
                 Dim dblTotalMinutes As Double
 
-                dblTotalMinutes = System.DateTime.Now.Subtract(dtStartTime).TotalMinutes
+                dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
 
                 ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION))
                 If ioFileInfo.Exists Then
@@ -2190,15 +2190,15 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGenReadW.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.Now
+        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
             m_progress = PROGRESS_PCT_MSXML_GEN_RUNNING
             m_StatusTools.UpdateAndWrite(m_progress)
         End If
@@ -2227,18 +2227,18 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub mMSGFRunner_LoopWaiting() Handles mMSGFRunner.LoopWaiting
-        Static dtLastUpdateTime As System.DateTime = System.DateTime.Now()
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.Now()
+        Static dtLastUpdateTime As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-        If System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+        If System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
             ' Update the MSGF progress by counting the number of lines in the _MSGF.txt file
             UpdateMSGFProgress(mCurrentMSGFResultsFilePath)
 
-            dtLastUpdateTime = System.DateTime.Now
+            dtLastUpdateTime = System.DateTime.UtcNow
         End If
 
-        If System.DateTime.Now().Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.Now()
+        If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = System.DateTime.UtcNow
 
             ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFVersion) Then

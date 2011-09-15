@@ -182,7 +182,7 @@ Namespace AnalysisManagerBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
             'Start the job timer
-            m_StartTime = System.DateTime.Now()
+            m_StartTime = System.DateTime.UtcNow
 
             'Remainder of method is supplied by subclasses
 
@@ -285,10 +285,10 @@ Namespace AnalysisManagerBase
 
             Try
 
-                If intUpdateIntervalSeconds > 0 AndAlso System.DateTime.Now.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
+                If intUpdateIntervalSeconds > 0 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
                     Return True
                 End If
-                dtLastUpdateTime = System.DateTime.Now
+                dtLastUpdateTime = System.DateTime.UtcNow
 
                 If DebugLevel >= 5 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
@@ -838,7 +838,7 @@ Namespace AnalysisManagerBase
 
             If StopTime < StartTime Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
-                StopTime = System.DateTime.Now
+                StopTime = System.DateTime.UtcNow
             End If
 
             If StopTime < StartTime OrElse StartTime = System.DateTime.MinValue Then
@@ -1276,8 +1276,8 @@ Namespace AnalysisManagerBase
                         If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
                             objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
 
-                            If objSourceFile.LastWriteTime > objTargetFile.LastWriteTime Then
-                                strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date: " & objSourceFile.LastWriteTime.ToString & "; old file date: " & objTargetFile.LastWriteTime.ToString
+                            If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
+                                strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
 
                                 htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)

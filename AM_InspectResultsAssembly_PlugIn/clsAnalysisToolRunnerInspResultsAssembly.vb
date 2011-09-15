@@ -161,7 +161,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             UpdateStatusRunning(100)
 
             'Stop the job timer
-            m_StopTime = System.DateTime.Now
+            m_StopTime = System.DateTime.UtcNow
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -1327,8 +1327,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
 
-        If System.DateTime.Now.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.Now
+        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = System.DateTime.UtcNow
 
             ' Synchronize the stored Debug level with the value stored in the database
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -1338,8 +1338,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         End If
 
         If m_DebugLevel >= 3 Then
-            If System.DateTime.Now.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-                dtLastLogTime = System.DateTime.Now
+            If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = System.DateTime.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
             End If
         End If
