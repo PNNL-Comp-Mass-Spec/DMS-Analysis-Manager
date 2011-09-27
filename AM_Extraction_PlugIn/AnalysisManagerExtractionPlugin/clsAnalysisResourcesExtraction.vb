@@ -182,6 +182,20 @@ Public Class clsAnalysisResourcesExtraction
                 'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
                 clsGlobal.FilesToDelete.Add(strDataset & "_msgfdb.txt")
 
+				' Get the peptide to protein mapping file
+				FileToGet = strDataset & "_msgfdb_PepToProtMap.txt"
+				If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+					'Errors were reported in function call
+
+					' See if IgnorePeptideToProteinMapError=True
+					If AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError")) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
+					Else
+						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+					End If
+				End If
+				clsGlobal.FilesToDelete.Add(FileToGet)
+
                 ' Get the MSGF-DB parameter file
                 FileToGet = m_jobParams.GetParam("ParmFileName")
                 If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
