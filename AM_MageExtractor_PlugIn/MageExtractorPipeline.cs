@@ -10,7 +10,7 @@ using System.IO;
 
 namespace AnalysisManager_MageExtractor_PlugIn {
 
-    class clsMageExtractorPipeline {
+    public partial class clsAnalysisToolRunnerMageExtractor {
 
         #region Member Variables
 
@@ -33,10 +33,7 @@ namespace AnalysisManager_MageExtractor_PlugIn {
 
         #endregion
 
-        public clsMageExtractorPipeline() {
-            Initialize();
-        }
-
+ 
         #region Initialization
 
         public void Initialize() {

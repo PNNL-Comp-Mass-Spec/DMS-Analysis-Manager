@@ -4,7 +4,11 @@ using System;
 
 namespace AnalysisManager_MageExtractor_PlugIn {
 
-    public class clsAnalysisToolRunnerMageExtractor : clsAnalysisToolRunnerBase {
+    public partial class clsAnalysisToolRunnerMageExtractor : clsAnalysisToolRunnerBase {
+
+        public clsAnalysisToolRunnerMageExtractor() {
+            Initialize();
+        }
 
         public override IJobParams.CloseOutType RunTool() {
 
@@ -18,10 +22,7 @@ namespace AnalysisManager_MageExtractor_PlugIn {
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
 
-
-            clsMageExtractorPipeline extractor = new clsMageExtractorPipeline();
-
-            extractor.Run();
+            Run();
 
             //Add the current job data to the summary file
             if (!UpdateSummaryFile()) {
