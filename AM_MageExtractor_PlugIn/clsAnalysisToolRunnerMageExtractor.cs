@@ -2,44 +2,33 @@
 using System.IO;
 using System;
 
-namespace AnalysisManager_MageExtractor_PlugIn
-{
+namespace AnalysisManager_MageExtractor_PlugIn {
 
-    public class clsAnalysisToolRunnerMageExtractor : clsAnalysisToolRunnerBase
-    {
+    public class clsAnalysisToolRunnerMageExtractor : clsAnalysisToolRunnerBase {
 
-        public override IJobParams.CloseOutType RunTool()
-        {
+        public override IJobParams.CloseOutType RunTool() {
 
-             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
 
             //Do the base class stuff
-            if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
-            {
+            if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)) {
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
 
 
-
-            // Store the MultiAlign version info in the database
-            //StoreToolVersionInfo(progLoc);
-
-
             clsMageExtractorPipeline extractor = new clsMageExtractorPipeline();
-            
+
             extractor.Run();
 
             //Add the current job data to the summary file
-            if (!UpdateSummaryFile())
-            {
+            if (!UpdateSummaryFile()) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
-            if (!blnSuccess)
-            {
+            if (!blnSuccess) {
                 // Move the source files and any results to the Failed Job folder
                 // Useful for debugging MultiAlign problems
                 CopyFailedResultsToArchiveFolder();
@@ -47,15 +36,13 @@ namespace AnalysisManager_MageExtractor_PlugIn
             }
 
             result = MakeResultsFolder();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                 //TODO: What do we do here?
                 return result;
             }
 
             result = MoveResultFiles();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                 //TODO: What do we do here?
                 // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return result;
@@ -64,8 +51,7 @@ namespace AnalysisManager_MageExtractor_PlugIn
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
-        {
+        protected void CopyFailedResultsToArchiveFolder() {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 
             string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
@@ -82,24 +68,19 @@ namespace AnalysisManager_MageExtractor_PlugIn
             string strFolderPathToArchive = null;
             strFolderPathToArchive = string.Copy(m_WorkDir);
 
-            try
-            {
+            try {
                 System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
                 System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 // Ignore errors here
             }
 
             // Make the results folder
             result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
+            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-                {
+                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
                 }
@@ -116,14 +97,12 @@ namespace AnalysisManager_MageExtractor_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
-        {
+        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc) {
 
             string strToolVersionInfo = string.Empty;
             System.IO.FileInfo ioMultiAlignProg = default(System.IO.FileInfo);
 
-            if (m_DebugLevel >= 2)
-            {
+            if (m_DebugLevel >= 2) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
             }
 
@@ -143,12 +122,9 @@ namespace AnalysisManager_MageExtractor_PlugIn
             ioToolFiles.Add(new System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
             ioToolFiles.Add(new System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
 
-            try
-            {
+            try {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

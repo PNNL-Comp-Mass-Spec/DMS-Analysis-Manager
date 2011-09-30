@@ -40,9 +40,6 @@ namespace AnalysisManager_MageExtractor_PlugIn {
         #region Initialization
 
         public void Initialize() {
-            // set up configuration folder and files
-            SavedState.SetupConfigFiles("MageExtractorCmdLine");
-
             // Set log4net path and kick the logger into action
             string LogFileName = Path.Combine(SavedState.DataDirectory, "log.txt");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
@@ -59,7 +56,8 @@ namespace AnalysisManager_MageExtractor_PlugIn {
         /// </summary>
         internal void Run() {
             GetExtractionParametersFromJobParameters();
-            BaseModule jobList = GetListOfJobsToProcess();
+            String dataPackageID = "";
+            BaseModule jobList = GetListOfJobsFromDataPackage(dataPackageID);
             ExtractFromJobs(jobList);
         }
 
@@ -86,17 +84,18 @@ namespace AnalysisManager_MageExtractor_PlugIn {
         /// Get a list of jobs to process
         /// </summary>
         /// <returns>A Mage module containing list of jobs</returns>
-        private BaseModule GetListOfJobsToProcess() {
-            SimpleSink jobList;
-            jobList = new SimpleSink();
-            Dictionary<string, string> queryParameters = new Dictionary<string, string>() { { "Job", "667063,667062,667061,667060,667059" } };
-            string queryTemplate = ModuleDiscovery.GetQueryXMLDef("Job_ID_List");
+        private BaseModule GetListOfJobsFromDataPackage(String dataPackageID) {
+            SimpleSink jobList = new SimpleSink();
 
+            MSSQLReader reader = new MSSQLReader();
+            reader.Server = "gigasax";
+            reader.Database = "DMS5";
+            reader.SQLText = string.Format("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}", dataPackageID);
 
-            MSSQLReader reader = new MSSQLReader(queryTemplate, queryParameters);
             ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Jobs", reader, jobList);
             ConnectPipelineToStatusDisplay(pipeline);
             pipeline.RunRoot(null);
+
             return jobList;
         }
 
