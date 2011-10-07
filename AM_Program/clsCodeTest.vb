@@ -1455,7 +1455,10 @@ Public Class clsCodeTest
             Console.WriteLine("Available memory (MB) = " & sngFreeMemory.ToString)
 
         Catch ex As Exception
-            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group 
+			' in "Local Users and Groups" on the machine showing this error.  Alternatively, add the user to the "Administrators" group.  
+			' In either case, you will need to reboot the computer for the change to take effect
             If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
             End If

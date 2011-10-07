@@ -95,7 +95,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim Result As IJobParams.CloseOutType
         Dim eReturnCode As IJobParams.CloseOutType
 
-        Dim blnProcessingError As Boolean
+		Dim blnProcessingError As Boolean = False
+		Dim blnNoDataInFilteredResults As Boolean = False
 
         ' We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
         ''Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
@@ -152,10 +153,12 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If Not blnProcessingError Then
                 ' Create the Peptide to Protein map file
-                Result = CreatePeptideToProteinMapping()
-                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-                    blnProcessingError = True
-                End If
+				Result = CreatePeptideToProteinMapping()
+				If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+					blnNoDataInFilteredResults = True
+				ElseIf Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+					blnProcessingError = True
+				End If
             End If
 
             UpdateStatusRunning(100)
@@ -215,6 +218,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
+
+			If blnNoDataInFilteredResults Then
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+			End If
 
         Catch ex As Exception
             Dim Msg As String
