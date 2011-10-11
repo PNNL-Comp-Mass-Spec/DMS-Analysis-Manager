@@ -1,6 +1,5 @@
 ﻿using System;
 using AnalysisManagerBase;
-using PRISM;
 using Mage;
 
 namespace AnalysisManager_Mage_PlugIn
