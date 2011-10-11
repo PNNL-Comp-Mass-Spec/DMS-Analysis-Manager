@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>114c37d8-e621-446b-bcfe-7be7bcec5ef3</ProjectGuid>
+    <ProjectGuid>{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AM_Mage_PlugIn</RootNamespace>
@@ -40,7 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="clsAnalysisResourcesMage.cs" />
+    <Compile Include="clsAnalysisToolRunnerMage.cs" />
+    <Compile Include="MageAMPipelines.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
