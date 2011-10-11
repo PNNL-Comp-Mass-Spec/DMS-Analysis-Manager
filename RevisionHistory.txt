@@ -1,0 +1,403 @@
+Analysis Tool Manager History
+
+October 6, 2011
+	- Updated AnalysisManagerInspResultsAssemblyPlugIn.dll to report CLOSEOUT_NO_DATA when assembled results file is empty
+
+September 26, 2011
+	- Update the Extraction plugin to copy the _msgfdb_PepToProtMap.txt file to the local computer for MSGFDB analysis jobs.
+
+September 13, 2011
+	- Replaced calls to m_Completions_Msg to instead use clsAnalysisToolRunnerBase.m_message
+
+September 13, 2011
+	- DTA_Refinery updates
+		- Now validating the _DeconMSn_Log.txt file to look for intensity values of 0
+		- Now parsing DTA Refinery log file to look for known error messages
+
+September 09, 2011
+	- MSGF Plugin Updates:
+		- Renamed SpecProb to MSGFDB_SpecProb
+		- Renamed RankSpecProb to Rank_MSGFDB_SpecProb
+
+September 09, 2011
+	- Now deleting temp.tsv files in MSGFDB plugin
+
+September 02, 2011
+	- Now parsing the MSGF console output file in the MSGF plugin to determine the program version
+
+September 01, 2011
+	- In MSGF plugin, No logging error messages to MSGFInputCreator_Log.txt
+	- In Sequest Plugin, now keeping _out.txt file if error occurs while zipping it
+
+September 01, 2011
+	- New closeout type: CLOSEOUT_ERROR_ZIPPING_FILE
+	- When finding .mzXML files, now looking for either MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
+
+August 30, 2011
+	- Updated MSGFDB plugin to send -tda 0 to BuildSA if using a decoy fasta file
+	- Now checking for sufficient free memory before running BuildSA (which now uses 2 GB of ram)
+
+August 30, 2011
+	- Updated ValidateFreeMemorySize in MSGF plugin to match MSGFDB plugin
+
+August 29, 2011
+	- Updated MSGFDB plugin to include switch -Xmx4000M when calling BuildSA
+
+August 26, 2011
+	- Extraction plugin updates:
+		- Now using lowercase _msgfdb for filenames
+		- Fixed bug that caused validation errors when processing Inspect data
+
+August 24, 2011
+	- Now parsing out the %Complete messages from the MSGFDB log file.
+
+August 24, 2011
+	- Updated SetBioworksVersion() to support MSGFDB
+
+August 24, 2011
+	- Updated for 8/22/2011 version of MSGFDB
+
+August 24, 2011
+	- Updated Extraction plugin to use the ParamFileGenerator to make the _ModDefs.txt file if not found
+	- Now verifying that the expected PHRP result files have been created
+
+August 22, 2011
+	- Updated the Extraction plugin to support MSGF-DB results (type MSG_Peptide_Hit)
+
+August 22, 2011
+	- Updated the MSGF plugin support for MSGF-DB results
+
+August 19, 2011
+	- Updated teh MSGF plugin to support columns Ions_Observed, Ions_Expected, and DelM_PPM (though they're not actually used by the plugin)
+	- Now determining the location of ReadW using ReAdWProgLoc
+
+August 17, 2011
+	- Updated the MSXML Generator plugin to support specifying a specific version of ReAdW.exe
+
+August 12, 2011
+	- New version of PeptideToProteinMapEngine.dll and ProteinCoverageSummarizer.dll
+	- MSGFDBPlugin now creates a _PepToProtMap.txt file
+
+August 10, 2011
+	- Updated the Extract to use the .Exe version of the PeptideHitResultsProcessor (previously called a DLL)
+
+August 01, 2011
+	- Add CondenseCDTAFile.dll to the MSGF-DB plugin
+	- New version of Protein_Exporter
+	- Switch from StringDictionary to Generic.Dictionary
+	- Add MSGFDB plugin
+
+July 28, 2011
+	- Fixed bug that truncated tool version to 256 characters when calling SP SetStepTaskToolVersion
+	- Now recording the version of various DLLs that the PeptideToProteinMapEngine uses
+
+July 27, 2011
+	- Updated MultiAlignAggregator step tool to support using a specific version of the tool
+	- Updated MultiAlign step tool to support using a specific version of the tool
+	- Added DetermineProgramLocation and StoreToolVersionInfoOneFile to clsAnalysisToolRunnerBase
+
+July 26, 2011
+	- Now calling DeconConsole.exe instead of the DeconTools backend
+		- Removed all the code related to DeconTools looping since no longer used
+
+July 26, 2011
+	- Plugin AnalysisManagerDecon2lsV2PlugIn now uses class clsAnalysisToolRunnerDecon2ls
+	- Added AbortProgramNow to clsRunDosProgram
+	- Now using String.IsNullOrWhiteSpace in GetParam for job and manager params
+	- Updated LCMSFeatureFinder plugin to choosing a specific version of the LCMSFeatureFinder to run
+		- Defined via settings file option
+
+July 22, 2011
+	- Altered logic when unable to delete files in the work directory
+
+July 20, 2011
+	- Made DeleteFileWithRetries a shared function
+	- Tweaked calls to clsLogTools.WriteLog() to pass the exception
+
+July 20, 2011
+	- The MSGF Plugin now splits MSGF input files into segments with 25,000 entries per segment
+
+July 13, 2011
+	- Now checking for empty _DTA.txt file in DTA_Split and Inspect plugins
+
+July 08, 2011
+	- Updated to .NET 4
+	- Added StoreToolVersionInfo function to all plugins
+
+July 07, 2011
+	- Updated Extraction plugin to use PeptideProphetRunner.exe instead of directly calling PeptideProphetLibrary.dll
+
+June 02, 2011
+	- Updated MultiAlign aggregator to support handling isos files or lcmsfeatures files.
+
+June 02, 2011
+	- New Protein Export DLLs
+
+May 27, 2011
+	- Added support for new command line switches for MultiAlign.  This includes adding plots.
+
+May 19, 2011
+	- Recompiled all plugins due to update to interface
+		- Added property NeedToAbortProcessing to interface IToolRunner and clsAnalysisToolRunnerBase
+	- Added post-build event to auto-copy DLLs to the AM_Common folder
+
+May 18, 2011
+	- Updated results transfer tool to create the parent folder of a dataset folder, if missing
+
+May 18, 2011
+	- Updated LCMSFeatureFinder plugin to copy the file specified by DeconToolsFilterFileName in the .ini file to the working directory (so that we can save an archive copy)
+
+May 16, 2011
+	- Fixed bug in Decon2LS plugin that returned CloseOutType.CLOSEOUT_SUCCESS instead of eReturnCode
+
+May 16, 2011
+	- Updated DoAnalysisJob to more closely resemble the capture task manager
+
+May 10, 2011
+	- Add support for MSConvert, which can create mzML or mzXML files
+
+May 02, 2011
+	- Adding new plugin for MultiAlign Aggregation.
+		- This option uses a data package as its source.
+
+April 25, 2011
+	- Added support for renaming log file used by the MultiAlign plugin
+
+April 21, 2011
+	- Added MultiAlign plugin.
+		- This plugin supports running MultiAlign in the DMS pipeline.
+
+April 21, 2011
+	- Updated CopyResultsFolderToServer to copy subfolders to the server (in addition to copying files)
+
+April 01, 2011
+	- ICR2LS Plugin Updates
+		- Remove PROCESS_SER_FOLDER_OVER_NETWORK
+		- Switch to using DeleteRawDataFiles in clsAnalysisResources
+
+April 01, 2011
+	- Expand DeleteRawDataFiles in the ICR2LS Plugin based on code in AM_Decon2ls_PlugIn
+
+March 30, 2011
+	- Added the MSXml Bruker Plugin
+
+March 30, 2011
+	- Now retrieving the _scans.csv file for the LCMSFeatureFinder plugin
+	- Now retrieving analysis.baf file when tool is MSXmlBruker
+	- Added DeleteRawFiles to clsAnalysisToolRunnerBase
+	- Added closeout code CLOSEOUT_FILE_NOT_FOUND
+
+March 18, 2011
+	- Updated CreatePeptideToProteinMapping in Inspect Results Assembly plugin to check for an empty input file (no valid results)
+
+March 18, 2011
+	- Added support for option MSGFIgnoreFilters
+
+March 18, 2011
+	- Updated clsIonicZipTools to dispose the zipper and call the garbage collector to assure the handle to the .zip file is released
+
+March 17, 2011
+	- Updated RetrieveAggregateFiles in clsAnalysisResources to use column SharedResultsFolder from view V_DMS_Data_Package_Aggregation_Jobs
+
+March 17, 2011
+	- Added support for Phospho FDR aggregation jobs when the settings file does not contain CID, ETD, or HCD in the name
+
+February 05, 2011
+	- New version of PeptideToProteinMapEngine and ProteinCoverageSummarizer (updated to use v1.0.66 of System.Data.SQLite)
+
+January 31, 2011
+	- Renamed RAW_DATA_TYPE_BRUKER_TOF_FOLDER to RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+	- Now setting .UseZip64WhenSaving to Ionic.Zip.Zip64Option.AsNecessary
+	- No longer changing the readonly bit on every file when cleaning the work directory
+	- Updated SEQUEST plugin to delete .DTA files as the corresponding .Out files are created
+		- Decreases the time required to delete files after the job finishes
+
+January 31, 2011
+	- No longer grabbing _scans.csv file for LCMSFeatureFinder plugin
+	- No longer retrieving the _dta.zip file for the Extraction plugin since we stopped computing MScore component of Discriminant Score
+	- Disabled creation of IRR and NLI files for Sequest extraction
+
+January 19, 2011
+	- New version of PRISM.dll
+
+January 07, 2011
+	- Updated all Plugins to use m_WorkDir and m_Dataset
+	- Updated to use MyBase.ZipFile and MyBase.UnzipFile instead of PRISM ZipTools class
+
+January 07, 2011
+	- Switched from SharpZipLib to Ionic.zip (DotNetZip)
+
+December 08, 2010
+	- Change DeconTools.Backend reference to have SpecificVersion=False
+	- Update MSDataFileTrimmer to create a log file
+
+December 07, 2010
+	- Updates in Decon2LSV2 plugin to support December 2010 version of DeconTools.Backend.dll
+
+December 07, 2010
+	- Added a Try/Catch block around the call to DoAnalysisJob() to catch "Could not load file or assembly" errors and allow the job to be failed out
+
+December 03, 2010
+	- New version of DeconTools.Backend.dll, which adds support for Bruker .D folders
+
+December 03, 2010
+	- Improved error checking in CBoolSafe and CIntSafe
+
+November 22, 2010
+	- Added new parameter to the Reporter Ion m/z Filter (Mode 4) in the MSMSSpectrumFilter: ReporterIonMaxIntensityThreshold
+		- At least one of the reporter ions must have an intensity at/above this value in order for the spectrum to pass the filter
+		- In contrast, ReporterIonMinimumIntensity defines the minimum intensity that a reporter ion must have in order for it to be counted when checking ReporterIonMatchCountMinimum
+
+November 19, 2010
+	- Updates in the Decon2LSV2 plugin for Bruker .D folders and Agilent TOF .D folders
+
+November 19, 2010
+	- Updated MSMSSpectrumFilter plugin to support new Reporter Ion m/z Filter (Mode 4)
+
+November 15, 2010
+	- Update the Decon2LSV2 plugin to support 12T .D folders (which have a ser file and an apexAcquisition.method file)
+
+November 15, 2010
+	- Now centroiding the data when creating .mzXML files for the MSGF plugin
+		- Results in faster mzXML file generation time and smaller .mzXML files
+
+November 02, 2010
+	- Remove Decon2LSRemoter and Decon2LSCAOServer from the solution file for the Decon2LSV2 plugin 
+
+October 29, 2010
+	- New versions of DeconMSn, DeconMsnEngine.dll, and MSMSSpectrumFilterAM.dll
+
+October 26, 2010
+	- Added support to the MSGF plugin for C-terminal dynamic peptide mods
+
+September 28, 2010
+	- Fixed bug in overloaded version of FolderExistsWithRetry in clsAnalysisResults.vb
+
+September 15, 2010
+	- Added support for variations in phospho FDR aggregator analyses
+		- All three types are no longer required (CID, ETD, HCD).  
+		- If a parameter file is left blank, then it is skipped.
+
+September 13, 2010
+	- Added function FolderExistsWithRetry() which checks for the existence of a folder, but will retry several times if an error occurs
+	- Altered CopyFileWithRetry() logic to increase the time to wait between each retry
+		- Waits 10 seconds, then 15, then 22, then 33, then 50 seconds, etc.
+
+September 03, 2010
+	- New versions of Protein_Exporter.dll and Protein_Storage.dll
+
+September 02, 2010
+	- Fixed benign MoveResultFiles logic bug
+	- Updated the DTA split plugin to write the spectra out in a round-robin fashion
+		- Removed the SplitToEqualScanCounts mode
+	- Added support for using a shuffled DB when running Inspect
+	- Updated the LCMSFeatureFinder to copy the .UIMF file if processing an IMS dataset
+	- Updated the MSGF plugin to compute MSGF SpecProb values for First-hits files in addition to Synopsis files
+	- Updated the MSGF plugin to support for peptide-terminal and protein-terminal static mods
+
+September 02, 2010
+	- Added ability to specify the MaxRetryCount value when calling FindValidFolder
+
+August 20, 2010
+	- XTandem_HPC Updates
+
+August 12, 2010
+	- Now validating that a machine has enough free RAM to run MSGF
+	- Updated DTARefinery plugin to use the Param File Generator to obtain the Sequest .Params files
+
+August 05, 2010
+	- Updated DLLs: FileConcatenator.dll and PeptideFileExtractor.dll
+
+August 02, 2010
+	- Added pre-check for existing .Out files at the start of the Sequest plugin
+
+July 23, 2010
+	- Added ability to retrieve a dataset's .mzXML file for use by the MSGF Plugin
+		- Looks for folder MSXML_Gen_1_39_00000 off of the dataset folder, where 00000 is the DatasetID
+
+July 23, 2010
+	- Improved MSGF results validation
+
+July 22, 2010
+	- Now computing % complete when generating DTA files
+	- Removed call to clsGlobal.RemoveNonResultFiles() in several plugins
+	- Re-worked inspect workflow
+	- New version of PeptideHitResultsProcessor
+	- Initial commit of MSGF plugin
+
+July 13, 2010
+	- Now setting .CreateNoWindow to False when calling AScore_Console.exe
+	- Increased AScore_Console thread count to 4
+
+July 08, 2010
+	- Changed HPC account name from emsl33210 to mscfidle
+	- New MSMSSpectrumFilter that supports filtering by Scan Type (e.g., MSn, HMSn, CID-MSn, CID-HMSn)
+	- Removed all MsgBox calls from MSMSSpectrumFilter
+	- Synchronized clsProgRunnerThreaded.vb with clsProgRunner.vb in PRISM.Dll
+	- Updated the code to add another entry in the AScore.xml (<scan_stats_file></scan_stats_file>) file to calculate the HCD Scan number using the _ScanStatsEx.txt file.
+
+July 07, 2010
+	- Now archiving results if the call to clsGlobal.RemoveNonResultFiles fails
+	- Now copying MSMSSpectrumFilter.dll from the AM_Common folder
+	- Updated to allow a job's "SharedResultsFolders" command to be a comma-delimited list of folder names
+	- Updated clsRunDosProgram to support new parameters: CacheStandardOutput,  EchoOutputToConsole,  WriteConsoleOutputToFile, and ConsoleOutputFilePath
+	- Now writing any text that XTandem writes to the console to file XTandem_ConsoleOutput.txt
+	- Now echoing MASIC's console output to the Analysis Manager console (but not writing it to a file)
+	- Now combining InspectConsoleOutput_*.txt files together when running a multi-segment Inspect job.
+	- Now writing any text that Inspect writes to the console to file InspectConsoleOutput.txt
+
+July 01, 2010
+	- Removed extra Imports statements
+	- Disabled looping when running DeconMSn
+
+June 15, 2010
+	- Added try/catch handling to function DeleteRawDataFiles
+
+June 15, 2010
+	- Added the Phospho FDR Aggregator plugin
+	- Added the PRIDE MzXml submission plugin
+	- Now using XRawfile to determine the number of spectra in a .Raw file (previously used ICR-2LS)
+
+May 20, 2010
+	- Added option to Resume Sequest processing by looking for a file named Resume.txt in the FailedResultsFolder
+
+April 22, 2010
+	- Updated MSMSSpectrumFilter to use a new version of MsMsDataFileReader.dll 
+		- Optimized processing speed when only filtering by collision mode or MSLevel
+
+March 30, 2010
+	- Added additional checks to XTandem_HPC plugin
+		- Checks include calling gbalance to get the remaining hours available if in blocked state
+
+March 18, 2010
+	- Fix WallTime string building code in MakeMSubFile of XTandem_HPC plugin to allow for WallTimes >= 24 hours.
+
+February 25, 2010
+	- Added the DTA_Refinery plugin
+
+February 16, 2010
+	- Added the OMSSA plugin
+
+January 22, 2010
+	- Updated to support 0.ser folder change from the capture manager.  The S folders are still supported.
+
+January 6, 2010
+	- Initial commit of the LCMSFeatureFinder plugin
+
+December 10, 2009
+	- Updated to shell to the command prompt to run ICR-2LS Lite
+	- Improved logic of distributing .Fasta files to cluster nodes
+		- Now performs file size and file date comparison, taking into account daylight savings time differences
+	- Now parses the sequest.log file at the completion of a job to verify that the number of processing cores matches the expected value
+		- Sets Evaluation_Code to > 0 and updates Evaluation_Message if a problem is found
+	- Updated to pass Evaluation_Code and Evaluation_Message to the DMS_Pipeline DB
+	- Updated to recognize tools as being Sequest, XTandem, or Inspect when they contain the expected tool name as part of their full name (e.g. Sequest_UseExistingExternalDTA)
+	- Added modMain and changed the public classes from Shared to Non-shared in clsMainProcess
+	- Now recognizes /T at the command line when performing code testing
+
+September 10, 2009
+	- Added support for ManagerErrorCleanupMode
+	- Changed logging.config to not log to the DMS5 DB
+
+August 6, 2008
+	- Added Inspect plugin
