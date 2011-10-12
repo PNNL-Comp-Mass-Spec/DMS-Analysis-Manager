@@ -7,7 +7,7 @@ using log4net;
 
 namespace AnalysisManager_Mage_PlugIn {
 
-    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase {
+    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase, IPipelineMonitor {
 
         private ILog traceLog;
 
@@ -35,7 +35,8 @@ namespace AnalysisManager_Mage_PlugIn {
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
 
-            Run();
+            // run the appropriate Mage pipeline(s) according to mode parameter
+            RunMage();
 
             //Add the current job data to the summary file
             if (!UpdateSummaryFile()) {
@@ -63,6 +64,22 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// run the appropriate Mage pipeline(s) according to mode parameter
+        /// </summary>
+        private void RunMage() {
+
+            string mageMode = m_jobParams.GetParam("MageMode");
+            switch (mageMode) {
+                case "ExtractJobsFromDataPackage":
+                    MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+                    break;
+                default: 
+                    // Future: throw an error
+                    break;
+            }
         }
 
         protected void CopyFailedResultsToArchiveFolder() {
@@ -153,12 +170,13 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         public void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue) {
-            pipelineQueue.OnRunCompleted += HandlePipelineQueueCompletion;
-            pipelineQueue.OnPipelineStarted += HandlePipelineQueueUpdate;
+            pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
+            pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
         }
+ 
         #endregion
 
-        #region Pipeline and Queue Update Message Handlers
+        #region Pipeline Update Message Handlers
 
         private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
             Console.WriteLine(args.Message);
@@ -168,11 +186,6 @@ namespace AnalysisManager_Mage_PlugIn {
             Console.WriteLine(args.Message);
         }
 
-        private void HandlePipelineQueueUpdate(object sender, MageStatusEventArgs args) {
-        }
-
-        private void HandlePipelineQueueCompletion(object sender, MageStatusEventArgs args) {
-        }
 
         #endregion
 

@@ -5,20 +5,24 @@ using System.Text;
 using Mage;
 using MageExtExtractionFilters;
 using MageDisplayLib;
+using AnalysisManagerBase;
 
-namespace AM_Mage_PlugIn {
-
+namespace AnalysisManager_Mage_PlugIn {
 
     class MageAMExtractionPipelines {
 
         #region Member Variables
 
-        Dictionary<String, String> parms;
+        IJobParams mJobParms;
+
+        IMgrParams mMgrParms;
 
         #endregion
 
-        public MageAMExtractionPipelines(Dictionary<String, String> parameters) {
-            this.parms = parameters;
+        public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms, IPipelineMonitor monitor) {
+            this.mJobParms = jobParms;
+            this.mMgrParms = mgrParms;
+            this.mMonitor = monitor;
         }
 
         #region Member Variables
@@ -39,6 +43,8 @@ namespace AM_Mage_PlugIn {
         /// </summary>
         private DestinationType mDestination = null;
 
+        IPipelineMonitor mMonitor = null;
+
         #endregion
 
 
@@ -49,9 +55,9 @@ namespace AM_Mage_PlugIn {
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        internal void Run() {
+        public void ExtractJobsFromDataPackage() {
             GetExtractionParametersFromJobParameters();
-            String dataPackageID = "";
+            String dataPackageID = mJobParms.GetParam("DataPackageID"); ;
             BaseModule jobList = GetListOfJobsFromDataPackage(dataPackageID);
             ExtractFromJobs(jobList);
         }
@@ -64,14 +70,16 @@ namespace AM_Mage_PlugIn {
             mDestination = new DestinationType();
 
             // extraction and filtering parameters
-            mExtractionParms.RType = ResultType.TypeList["Sequest First Hits"];
-            mExtractionParms.KeepAllResults = "No";
-            mExtractionParms.ResultFilterSetID = "203";
-            mExtractionParms.MSGFCutoff = "All Pass";
+            String extractionType = mJobParms.GetParam("ExtractionType"); //"Sequest First Hits"
+            mExtractionParms.RType = ResultType.TypeList[extractionType];
+
+            mExtractionParms.KeepAllResults = mJobParms.GetParam("KeepAllResults"); //"Yes"
+            mExtractionParms.ResultFilterSetID = mJobParms.GetParam("ResultFilterSetID"); // "All Pass"
+            mExtractionParms.MSGFCutoff = mJobParms.GetParam("MSGFCutoff"); // "All Pass"
 
             // ouput parameters
             mDestination.Type = DestinationType.Types.SQLite_Output;
-            mDestination.ContainerPath = @"C:\Data\Hunk";
+            mDestination.ContainerPath = @"C:\Data\Hunk"; //  m_mgrParams.GetParam("workdir")
             mDestination.Name = "result.db3";
         }
 
@@ -85,10 +93,12 @@ namespace AM_Mage_PlugIn {
             MSSQLReader reader = new MSSQLReader();
             reader.Server = "gigasax";
             reader.Database = "DMS5";
+            string connStr = mMgrParms.GetParam("brokerconnectionstring"); // Future: modify MSSQLReader to accept connection string
+
             reader.SQLText = string.Format("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}", dataPackageID);
 
             ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Jobs", reader, jobList);
-            ConnectPipelineToStatusHandlers(pipeline);
+            mMonitor.ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
 
             return jobList;
@@ -101,9 +111,9 @@ namespace AM_Mage_PlugIn {
         private void ExtractFromJobs(BaseModule jobList) {
             mPipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, mExtractionParms, mDestination);
             foreach (ProcessingPipeline p in mPipelineQueue.Pipelines.ToArray()) {
-                ConnectPipelineToStatusHandlers(p);
+                mMonitor.ConnectPipelineToStatusHandlers(p);
             }
-            ConnectPipelineQueueToStatusHandlers(mPipelineQueue);
+            mMonitor.ConnectPipelineQueueToStatusHandlers(mPipelineQueue);
             mPipelineQueue.RunRoot(null);
         }
 
