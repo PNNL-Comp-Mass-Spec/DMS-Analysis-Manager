@@ -1,15 +1,28 @@
 ﻿using AnalysisManagerBase;
 using System.IO;
 using System;
+using Mage;
+using MageDisplayLib;
+using log4net;
 
 namespace AnalysisManager_Mage_PlugIn {
 
-    public partial class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase {
+    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase {
+
+        private ILog traceLog;
 
         public clsAnalysisToolRunnerMage() {
             Initialize();
         }
 
+        private void Initialize() {
+            // Set log4net path and kick the logger into action
+            string LogFileName = Path.Combine(SavedState.DataDirectory, "log.txt");
+            log4net.GlobalContext.Properties["LogName"] = LogFileName;
+            traceLog = LogManager.GetLogger("TraceLog");
+            traceLog.Info("Starting");
+        }
+ 
         public override IJobParams.CloseOutType RunTool() {
 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
@@ -131,6 +144,37 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
         }
+
+        #region Pipeline Utilities
+
+        public void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline) {
+            pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
+            pipeline.OnRunCompleted += HandlePipelineCompletion;
+        }
+
+        public void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue) {
+            pipelineQueue.OnRunCompleted += HandlePipelineQueueCompletion;
+            pipelineQueue.OnPipelineStarted += HandlePipelineQueueUpdate;
+        }
+        #endregion
+
+        #region Pipeline and Queue Update Message Handlers
+
+        private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
+            Console.WriteLine(args.Message);
+        }
+
+        private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
+            Console.WriteLine(args.Message);
+        }
+
+        private void HandlePipelineQueueUpdate(object sender, MageStatusEventArgs args) {
+        }
+
+        private void HandlePipelineQueueCompletion(object sender, MageStatusEventArgs args) {
+        }
+
+        #endregion
 
 
 

@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMage.cs" />
     <Compile Include="clsAnalysisToolRunnerMage.cs" />
+    <Compile Include="MageAMExtractionPipelines.cs" />
     <Compile Include="MageAMPipelines.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

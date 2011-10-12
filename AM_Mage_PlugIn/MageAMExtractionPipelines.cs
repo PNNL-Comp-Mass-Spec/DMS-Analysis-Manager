@@ -2,19 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using log4net;
 using Mage;
 using MageExtExtractionFilters;
 using MageDisplayLib;
-using System.IO;
 
-namespace AnalysisManager_Mage_PlugIn {
+namespace AM_Mage_PlugIn {
 
-    public partial class clsAnalysisToolRunnerMage {
+
+    class MageAMExtractionPipelines {
 
         #region Member Variables
 
-        private ILog traceLog;
+        Dictionary<String, String> parms;
+
+        #endregion
+
+        public MageAMExtractionPipelines(Dictionary<String, String> parameters) {
+            this.parms = parameters;
+        }
+
+        #region Member Variables
+
 
         /// <summary>
         /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
@@ -33,19 +41,9 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #endregion
 
- 
+
         #region Initialization
 
-        public void Initialize() {
-            // Set log4net path and kick the logger into action
-            string LogFileName = Path.Combine(SavedState.DataDirectory, "log.txt");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            traceLog = LogManager.GetLogger("TraceLog");
-            traceLog.Info("Starting");
-
-            // connect the pipeline queue to message handlers
-            ConnectPipelineQueueToStatusDisplay(mPipelineQueue);
-        }
         #endregion
 
         /// <summary>
@@ -72,9 +70,9 @@ namespace AnalysisManager_Mage_PlugIn {
             mExtractionParms.MSGFCutoff = "All Pass";
 
             // ouput parameters
-            mDestination.Type = DestinationType.Types.File_Output;
+            mDestination.Type = DestinationType.Types.SQLite_Output;
             mDestination.ContainerPath = @"C:\Data\Hunk";
-            mDestination.Name = "mage_extr_plugin_results.txt";
+            mDestination.Name = "result.db3";
         }
 
         /// <summary>
@@ -90,7 +88,7 @@ namespace AnalysisManager_Mage_PlugIn {
             reader.SQLText = string.Format("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}", dataPackageID);
 
             ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Jobs", reader, jobList);
-            ConnectPipelineToStatusDisplay(pipeline);
+            ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
 
             return jobList;
@@ -103,42 +101,11 @@ namespace AnalysisManager_Mage_PlugIn {
         private void ExtractFromJobs(BaseModule jobList) {
             mPipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, mExtractionParms, mDestination);
             foreach (ProcessingPipeline p in mPipelineQueue.Pipelines.ToArray()) {
-                ConnectPipelineToStatusDisplay(p);
+                ConnectPipelineToStatusHandlers(p);
             }
-            ConnectPipelineQueueToStatusDisplay(mPipelineQueue);
+            ConnectPipelineQueueToStatusHandlers(mPipelineQueue);
             mPipelineQueue.RunRoot(null);
         }
-
-        #region Pipeline Utilities
-
-        private void ConnectPipelineToStatusDisplay(ProcessingPipeline pipeline) {
-            pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
-            pipeline.OnRunCompleted += HandlePipelineCompletion;
-        }
-
-        private void ConnectPipelineQueueToStatusDisplay(PipelineQueue pipelineQueue) {
-            pipelineQueue.OnRunCompleted += HandlePipelineQueueCompletion;
-            pipelineQueue.OnPipelineStarted += HandlePipelineQueueUpdate;
-        }
-        #endregion
-
-        #region Pipeline and Queue Update Message Handlers
-
-        private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
-        }
-
-        private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
-        }
-
-        private void HandlePipelineQueueUpdate(object sender, MageStatusEventArgs args) {
-        }
-
-        private void HandlePipelineQueueCompletion(object sender, MageStatusEventArgs args) {
-        }
-
-        #endregion
 
 
 
