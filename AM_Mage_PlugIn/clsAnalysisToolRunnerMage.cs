@@ -8,12 +8,12 @@ namespace AnalysisManager_Mage_PlugIn {
 
     public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase {
 
-    //    private ILog traceLog;
+        //    private ILog traceLog;
 
         public clsAnalysisToolRunnerMage() {
-         }
+        }
 
-         public override IJobParams.CloseOutType RunTool() {
+        public override IJobParams.CloseOutType RunTool() {
 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
@@ -26,7 +26,8 @@ namespace AnalysisManager_Mage_PlugIn {
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
 
             // run the appropriate Mage pipeline(s) according to mode parameter
-            RunMage();
+
+            blnSuccess = RunMage();
 
             //Add the current job data to the summary file
             if (!UpdateSummaryFile()) {
@@ -39,6 +40,10 @@ namespace AnalysisManager_Mage_PlugIn {
                 CopyFailedResultsToArchiveFolder();
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
+
+            m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+            m_Dataset = m_jobParams.GetParam("OutputFolderName");
+            m_jobParams.SetParam("OutputFolderName", m_jobParams.GetParam("StepOutputFolderName"));
 
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
@@ -53,24 +58,34 @@ namespace AnalysisManager_Mage_PlugIn {
                 return result;
             }
 
+            result = CopyResultsFolderToServer();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                //TODO: What do we do here?
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
         /// run the appropriate Mage pipeline(s) according to mode parameter
         /// </summary>
-        private void RunMage() {
-
+        private bool RunMage() {
+            bool ok = false;
             string mageMode = m_jobParams.GetParam("MageMode");
             switch (mageMode) {
                 case "ExtractJobsFromDataPackage":
+                    String dataPackageID = m_jobParams.GetParam("DataPackageID"); ;
                     MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
-                    mageObj.ExtractJobsFromDataPackage();
+                    mageObj.ExtractJobsFromDataPackage(dataPackageID);
+                    mageObj.GetDatasetFactorsFromDataPackage(dataPackageID);
+                    ok = true;
                     break;
-                default: 
+                default:
                     // Future: throw an error
                     break;
             }
+            return ok;
         }
 
         protected void CopyFailedResultsToArchiveFolder() {

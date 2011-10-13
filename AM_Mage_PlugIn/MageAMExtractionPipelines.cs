@@ -45,21 +45,13 @@ namespace AnalysisManager_Mage_PlugIn {
             this.mMonitor = monitor;
         }
 
-
-        #region Initialization
-
-        #endregion
-
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        public void ExtractJobsFromDataPackage() {
+        public void ExtractJobsFromDataPackage(String dataPackageID) {
             GetExtractionParametersFromJobParameters();
-            String dataPackageID = mJobParms.GetParam("DataPackageID"); ;
             BaseModule jobList = GetListOfJobsFromDataPackage(dataPackageID);
             ExtractFromJobs(jobList);
-
-            // GetDatasetFactorsFromDataPackage(dataPackageID);
         }
 
         /// <summary>
@@ -120,7 +112,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// 
         /// </summary>
         public void GetDatasetFactorsFromDataPackage(String dataPackageID) {
-            String sql = "SELECT Dataset, Dataset_ID, Factor, Value FROM V_Custom_Factors_List_Report WHERE Dataset IN (SELECT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})";
+            // FUTURE: better query
+            String sql = "SELECT Dataset, Dataset_ID, Factor, Value FROM DMS5.dbo.V_Custom_Factors_List_Report WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})";
             sql = string.Format(sql, dataPackageID);
 
             MSSQLReader reader = MakeDBReaderModule(sql);
@@ -149,9 +142,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <returns></returns>
         private MSSQLReader MakeDBReaderModule(String sql) {
             MSSQLReader reader = new MSSQLReader();
-            //reader.Server = "gigasax";
-            //reader.Database = "DMS5";
-            reader.ConnectionString = mMgrParms.GetParam("brokerconnectionstring");
+            reader.ConnectionString = mMgrParms.GetParam("ConnectionString");
             reader.SQLText = sql;
             return reader;
         }
