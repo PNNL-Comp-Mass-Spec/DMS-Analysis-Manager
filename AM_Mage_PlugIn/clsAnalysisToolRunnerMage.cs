@@ -3,27 +3,17 @@ using System.IO;
 using System;
 using Mage;
 using MageDisplayLib;
-using log4net;
 
 namespace AnalysisManager_Mage_PlugIn {
 
-    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase, IPipelineMonitor {
+    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerBase {
 
-        private ILog traceLog;
+    //    private ILog traceLog;
 
         public clsAnalysisToolRunnerMage() {
-            Initialize();
-        }
+         }
 
-        private void Initialize() {
-            // Set log4net path and kick the logger into action
-            string LogFileName = Path.Combine(SavedState.DataDirectory, "log.txt");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            traceLog = LogManager.GetLogger("TraceLog");
-            traceLog.Info("Starting");
-        }
- 
-        public override IJobParams.CloseOutType RunTool() {
+         public override IJobParams.CloseOutType RunTool() {
 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
@@ -75,6 +65,7 @@ namespace AnalysisManager_Mage_PlugIn {
             switch (mageMode) {
                 case "ExtractJobsFromDataPackage":
                     MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+                    mageObj.ExtractJobsFromDataPackage();
                     break;
                 default: 
                     // Future: throw an error
@@ -161,35 +152,35 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
         }
+        /*
+                #region Pipeline Utilities
 
-        #region Pipeline Utilities
+                public void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline) {
+                    pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
+                    pipeline.OnRunCompleted += HandlePipelineCompletion;
+                }
 
-        public void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline) {
-            pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
-            pipeline.OnRunCompleted += HandlePipelineCompletion;
-        }
-
-        public void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue) {
-            pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
-            pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
-        }
+                public void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue) {
+                    pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
+                    pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
+                }
  
-        #endregion
+                #endregion
 
-        #region Pipeline Update Message Handlers
+                #region Pipeline Update Message Handlers
 
-        private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
-        }
+                private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
+                    Console.WriteLine(args.Message);
+                }
 
-        private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
-        }
-
-
-        #endregion
+                private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
+                    Console.WriteLine(args.Message);
+                }
 
 
+                #endregion
+
+        */
 
     }
 }
