@@ -1,24 +1,23 @@
 ﻿using System.IO;
 using AnalysisManagerBase;
 using System;
+using Ape;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
-    {
+   class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
+   {
 
-        #region "Module Variables"
-        protected const float PROGRESS_PCT_APE_RUNNING = 5;
-        protected const float PROGRESS_PCT_APE_DONE = 95;
-        protected clsRunDosProgram CmdRunner;
+       #region "Module Variables"
+       private static bool _shouldExit = false;
+        //protected const float PROGRESS_PCT_APE_RUNNING = 5;
+       protected const float PROGRESS_PCT_APE_DONE = 95;
+       #endregion
 
-        #endregion
-        
-        public override IJobParams.CloseOutType RunTool()
+       public override IJobParams.CloseOutType RunTool()
         {
-
-            string CmdStr = null;
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+            m_jobParams.SetParam("DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
+           IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
 
             //Do the base class stuff
@@ -28,60 +27,13 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Ape");
+           
+            blnSuccess =  RunApe();
+           
+            // Store the Ape version info in the database
+            //StoreToolVersionInfo("");
 
-            CmdRunner = new clsRunDosProgram(m_WorkDir);
-
-            if (m_DebugLevel > 4)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
-            }
-
-            // Determine the path to the MultiAlign folder
-            string progLoc = null;
-            //progLoc = DetermineProgramLocation("Ape", "ApeProgLoc", "ApeConsole.exe");
-            progLoc = "C:\\Development\\MDART_Versions\\ApeConsole\\bin\\x86\\Debug\\ApeConsole.exe";
-
-            if (string.IsNullOrWhiteSpace(progLoc))
-            {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Store the MultiAlign version info in the database
-            StoreToolVersionInfo(progLoc);
-
-            string MultiAlignResultFilename = m_jobParams.GetParam("ResultFilename");
-
-            if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
-            {
-                MultiAlignResultFilename = m_Dataset;
-            }
-
-            // Set up and execute a program runner to run MultiAlign
-            CmdStr = " -dbname " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeDbName")) + " -workflow " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeWorkflow"));
-            if (m_DebugLevel >= 1)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
-            }
-
-            CmdRunner.CreateNoWindow = true;
-            CmdRunner.CacheStandardOutput = true;
-            CmdRunner.EchoOutputToConsole = true;
-
-            CmdRunner.WriteConsoleOutputToFile = false;
-            
-
-            if (!CmdRunner.RunProgram(progLoc, CmdStr, "Ape", true))
-            {
-                m_message = "Error running MultiAlign";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
-                blnSuccess = false;
-            }
-            else
-            {
-                blnSuccess = true;
-            }
-
-            //Stop the job timer
+           //Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
             m_progress = PROGRESS_PCT_APE_DONE;
 
@@ -105,6 +57,10 @@ namespace AnalysisManager_Ape_PlugIn
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
+            m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+            m_Dataset = m_jobParams.GetParam("OutputFolderName");
+            m_jobParams.SetParam("OutputFolderName", m_jobParams.GetParam("StepOutputFolderName"));
+
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -112,7 +68,7 @@ namespace AnalysisManager_Ape_PlugIn
                 return result;
             }
 
-            result = MoveResultFiles();
+           result = MoveResultFiles();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //TODO: What do we do here?
@@ -128,18 +84,59 @@ namespace AnalysisManager_Ape_PlugIn
             //strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
             //diPlotsFolder.MoveTo(strTargetFolderPath);
 
-            //result = CopyResultsFolderToServer();
-            //if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            //{
-            //    //TODO: What do we do here?
-            //    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            //    return result;
-            //}
+            //m_Dataset = m_jobParams.GetParam("StepOutputFolderName");
+            //m_jobParams.SetParam("transferFolderPath", Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName")));
+
+            result = CopyResultsFolderToServer();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
 
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
             ////ZipResult
 
         }
+
+       protected bool RunApe()
+       {
+           bool blnSuccess = false;
+
+           SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+           {
+               Console.WriteLine(msg);
+
+               if (done)
+               {
+                   if (success)
+                   {
+                       m_message = "Ape successfully ran workflow" + m_jobParams.GetParam("ApeWorkflowName");
+                       clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message + ", job " + m_JobNum);
+                       blnSuccess = true;
+                   }
+                   else
+                   {
+                       if (!_shouldExit)
+                       {
+                           m_message = "Error running Ape";
+                           clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                           blnSuccess = false;
+                       }
+                   }
+               }
+
+           });
+
+           string apeWorkflow = Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeWorkflowName"));
+           string apeDatabase = Path.Combine(m_WorkDir, "Results.db3");
+
+           SqlServerToSQLite.StartWorkflow(1, 3, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
+
+           return blnSuccess;
+
+       }
 
         protected void CopyFailedResultsToArchiveFolder()
         {
@@ -224,28 +221,6 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
-            }
-
-        }
-
-        /// <summary>
-        /// Event handler for CmdRunner.LoopWaiting event
-        /// </summary>
-        /// <remarks></remarks>
-        private void CmdRunner_LoopWaiting()
-        //handles CmdRunner.LoopWaiting
-        {
-            System.DateTime dtLastStatusUpdate = System.DateTime.UtcNow;
-
-            //Synchronize the stored Debug level with the value stored in the database
-            const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-            base.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
-
-            //Update the status file (limit the updates to every 5 seconds)
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
-            {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_APE_RUNNING, 0, "", "", "", false);
             }
 
         }
