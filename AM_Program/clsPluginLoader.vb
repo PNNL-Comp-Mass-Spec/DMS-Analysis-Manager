@@ -127,14 +127,17 @@ Namespace AnalysisManagerBase
                 'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower
                 '    myToolRunner = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB, IToolRunner)
 
-            End Select
+				'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower
+				'	myToolRunner = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv, IToolRunner)
+
+			End Select
 
             Return myToolRunner
         End Function
 
         Private Shared Function DebugModeGetAnalysisResources(ByVal className As String) As IAnalysisResources
 
-            Dim myModule As IAnalysisResources
+			Dim myModule As IAnalysisResources = Nothing
 
             Select Case className.ToLower
                 'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower
@@ -192,7 +195,10 @@ Namespace AnalysisManagerBase
                 'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower
                 '    myModule = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB, IAnalysisResources)
 
-            End Select
+				'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()
+				'	myModule = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisResourcesMSDeconv, IAnalysisResources)
+
+			End Select
 
             Return myModule
 
@@ -367,9 +373,11 @@ Namespace AnalysisManagerBase
                         ''Catch any exceptions
                         m_msgList.Add(e.Message)
                     End Try
-                End If
-            End If
-            clsSummaryFile.Add("Loaded resourcer: " & className & " from " & assyName)
+				End If
+				clsSummaryFile.Add("Loaded resourcer: " & className & " from " & assyName)
+			Else
+				clsSummaryFile.Add("Unable to load resourcer for tool " & ToolName)
+			End If
             Return myModule
         End Function
 

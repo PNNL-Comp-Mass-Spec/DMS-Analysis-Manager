@@ -48,8 +48,34 @@ Namespace AnalysisManagerBase
 			Dim myFVI As FileVersionInfo
 			For Each fiTemp In fi
 				myFVI = FileVersionInfo.GetVersionInfo(fiTemp.FullName)
-				''Console.WriteLine(myFVI.ToString)
-				clsSummaryFile.Add(myFVI.ToString)
+
+				Dim strFileInfo As String
+				strFileInfo = "File:             " & fiTemp.FullName & Environment.NewLine
+
+				If Not String.IsNullOrWhiteSpace(myFVI.InternalName) AndAlso myFVI.InternalName <> fiTemp.Name Then
+					strFileInfo &= "InternalName:     " & myFVI.InternalName & Environment.NewLine
+				End If
+
+				If myFVI.InternalName <> myFVI.OriginalFilename Then
+					strFileInfo &= "OriginalFilename: " & myFVI.OriginalFilename & Environment.NewLine
+				End If
+
+				If Not String.IsNullOrWhiteSpace(myFVI.ProductName) Then
+					strFileInfo &= "Product:          " & myFVI.ProductName & Environment.NewLine
+				End If
+
+				strFileInfo &= "ProductVersion:   " & myFVI.ProductVersion & Environment.NewLine
+
+				If myFVI.FileVersion <> myFVI.ProductVersion Then
+					strFileInfo &= "FileVersion:      " & myFVI.FileVersion & Environment.NewLine
+				End If
+
+				If Not String.IsNullOrWhiteSpace(myFVI.FileDescription) AndAlso myFVI.FileDescription <> myFVI.ProductName Then
+					strFileInfo &= "FileDescription:  " & myFVI.FileDescription & Environment.NewLine
+				End If
+
+				' clsSummaryFile.Add(myFVI.ToString)
+				clsSummaryFile.Add(strFileInfo)
 			Next fiTemp
 
 		End Sub

@@ -400,7 +400,7 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
 	<summary>
  Looks for this dataset's mzXML file
- Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, orMSXML_Gen_1_126_DatasetID
  If the MSXML folder (or the .mzXML file) cannot be found, then returns False
  </summary>
 	<param name="WorkDir"></param>
@@ -619,6 +619,32 @@ AnalysisManagerProg
 	<param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.LoadDatasetLocationsFromDB(System.Data.DataTable@)">
+	<summary>
+ Lookups up dataset information for a data package
+ </summary>
+	<param name="ResultTable"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.ValidateFreeMemorySize(System.String,System.String)">
+	<summary>
+ Validates that sufficient free memory is available to run Java
+ </summary>
+	<param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
+	<param name="strStepToolName">Step tool name to use when posting log entries</param>
+	<returns>True if sufficient free memory; false if not enough free memory</returns>
+	<remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+ These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.ValidateFreeMemorySize(System.String,System.String,System.Boolean)">
+	<summary>
+ Validates that sufficient free memory is available to run Java
+ </summary>
+	<param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
+	<param name="strStepToolName">Step tool name to use when posting log entries</param>
+	<param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
+	<returns>True if sufficient free memory; false if not enough free memory</returns>
+	<remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+ These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.#ctor">
 	<summary>
  Constructor

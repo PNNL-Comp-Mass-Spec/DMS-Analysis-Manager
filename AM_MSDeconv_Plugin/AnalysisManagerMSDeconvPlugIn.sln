@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSDeconvPlugIn", "AnalysisManagerMSDeconvPlugIn.vbproj", "{2999072A-B9F2-4E0E-976A-76C74A6F2B53}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2999072A-B9F2-4E0E-976A-76C74A6F2B53}.Debug|x86.ActiveCfg = Debug|x86
+		{2999072A-B9F2-4E0E-976A-76C74A6F2B53}.Debug|x86.Build.0 = Debug|x86
+		{2999072A-B9F2-4E0E-976A-76C74A6F2B53}.Release|x86.ActiveCfg = Release|x86
+		{2999072A-B9F2-4E0E-976A-76C74A6F2B53}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

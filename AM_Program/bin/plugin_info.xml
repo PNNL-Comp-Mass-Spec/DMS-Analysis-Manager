@@ -217,6 +217,16 @@
 		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator"
 		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="msdeconv" 
+		Class="AnalysisManagerMSDeconvPlugin.clsAnalysisToolRunnerMSDeconv" 
+		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msalign" 
+		Class="AnalysisManagerMSAlignPlugin.clsAnalysisToolRunnerMSAlign" 
+		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -425,6 +435,16 @@
 		Tool="multialign_aggregator" 
 		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator"
 		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msdeconv" 
+		Class="AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv" 
+		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msalign" 
+		Class="AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign" 
+		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
 	/>
 
 </Resourcers>

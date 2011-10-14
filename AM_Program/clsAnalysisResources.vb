@@ -855,7 +855,7 @@ Namespace AnalysisManagerBase
 
         ''' <summary>
         ''' Looks for this dataset's mzXML file
-        ''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID or MSXML_Gen_1_93_DatasetID
+		''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, orMSXML_Gen_1_126_DatasetID
         ''' If the MSXML folder (or the .mzXML file) cannot be found, then returns False
         ''' </summary>
         ''' <param name="WorkDir"></param>
@@ -881,7 +881,8 @@ Namespace AnalysisManagerBase
 
             ' Initialize the values we'll look for
             lstValuesToCheck.Add(39)            ' MSXML_Gen_1_39_DatasetID
-            lstValuesToCheck.Add(93)            ' MSXML_Gen_1_93_DatasetID
+			lstValuesToCheck.Add(93)			' MSXML_Gen_1_93_DatasetID
+			lstValuesToCheck.Add(126)			' MSXML_Gen_1_126_DatasetID
 
             For Each intVersion As Integer In lstValuesToCheck
 
@@ -2703,6 +2704,12 @@ Namespace AnalysisManagerBase
 
         End Function
 
+		''' <summary>
+		''' Lookups up dataset information for a data package
+		''' </summary>
+		''' <param name="ResultTable"></param>
+		''' <returns></returns>
+		''' <remarks></remarks>
         Protected Function LoadDatasetLocationsFromDB(ByRef ResultTable As DataTable) As Boolean
 
             'Requests Dataset information from a data package
@@ -2763,10 +2770,100 @@ Namespace AnalysisManagerBase
 
         End Function
 
+		Public Shared Function GetFreeMemoryMB() As Single
+
+			Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+
+			Dim sngFreeMemory As Single
+
+			Try
+				If mFreeMemoryPerformanceCounter Is Nothing Then
+					mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+					mFreeMemoryPerformanceCounter.ReadOnly = True
+				End If
+
+				sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+
+			Catch ex As Exception
+				' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+				' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
+				' Alternatively, add the user to the "Administrators" group.
+				' In either case, you will need to reboot the computer for the change to take effect
+				If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+				End If
+			End Try
+
+			Return sngFreeMemory
+
+		End Function
+
+		''' <summary>
+		''' Validates that sufficient free memory is available to run Java
+		''' </summary>
+		''' <param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
+		''' <param name="strStepToolName">Step tool name to use when posting log entries</param>
+		''' <returns>True if sufficient free memory; false if not enough free memory</returns>
+		''' <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+		''' These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
+		Protected Function ValidateFreeMemorySize(ByVal strJavaMemorySizeJobParamName As String, ByVal strStepToolName As String) As Boolean
+
+			Dim blnLogFreeMemoryOnSuccess As Boolean = True
+			Return ValidateFreeMemorySize(strJavaMemorySizeJobParamName, strStepToolName, blnLogFreeMemoryOnSuccess)
+
+		End Function
+
+		''' <summary>
+		''' Validates that sufficient free memory is available to run Java
+		''' </summary>
+		''' <param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
+		''' <param name="strStepToolName">Step tool name to use when posting log entries</param>
+		''' <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
+		''' <returns>True if sufficient free memory; false if not enough free memory</returns>
+		''' <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+		''' These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
+
+		Protected Function ValidateFreeMemorySize(ByVal strMemorySizeJobParamName As String, ByVal strStepToolName As String, ByVal blnLogFreeMemoryOnSuccess As Boolean) As Boolean
+			Dim intFreeMemoryRequiredMB As Integer
+
+			' Lookup parameter strMemorySizeJobParamName; assume 2000 MB if not defined
+			intFreeMemoryRequiredMB = clsGlobal.GetJobParameter(m_jobParams, strMemorySizeJobParamName, 2000)
+
+			' Require intFreeMemoryRequiredMB be at least 0.5 GB
+			If intFreeMemoryRequiredMB < 512 Then intFreeMemoryRequiredMB = 512
+
+			If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
+
+			Return ValidateFreeMemorySize(intFreeMemoryRequiredMB, strStepToolName, blnLogFreeMemoryOnSuccess)
+
+		End Function
+
+		Public Shared Function ValidateFreeMemorySize(ByVal intFreeMemoryRequiredMB As Integer, ByVal strStepToolName As String, ByVal blnLogFreeMemoryOnSuccess As Boolean) As Boolean
+			Dim sngFreeMemoryMB As Single
+			Dim strMessage As String
+
+			sngFreeMemoryMB = GetFreeMemoryMB()
+
+			If intFreeMemoryRequiredMB >= sngFreeMemoryMB Then
+				strMessage = "Not enough free memory to run " & strStepToolName
+
+				strMessage &= "; need " & intFreeMemoryRequiredMB & " MB but system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+				Return False
+			Else
+				If blnLogFreeMemoryOnSuccess Then
+					strMessage = strStepToolName & " will use " & intFreeMemoryRequiredMB & " MB; system has " & sngFreeMemoryMB.ToString("0") & " MB available"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+				End If
+
+				Return True
+			End If
+		End Function
 
 #End Region
 
 
-    End Class
+	End Class
 
 End Namespace

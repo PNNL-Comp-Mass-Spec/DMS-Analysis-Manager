@@ -45,7 +45,7 @@ AnalysisManagerMSGFDBPlugIn
 	<param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
 	<returns>Options string if success; empty string if an error</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFValidateMod(System.String,System.String@)">
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDbValidateMod(System.String,System.String@)">
 	<summary>
  Validates that the modification definition text
  </summary>
@@ -73,14 +73,6 @@ AnalysisManagerMSGFDBPlugIn
  </summary>
 	<returns>True if success; false if failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ValidateFreeMemorySize">
-	<summary>
- Lookups the amount of memory that will be reserved for Java
- If this value is &gt;= the free memory, then returns CLOSEOUT_FAILED
- Otherwise, returns CLOSEOUT_SUCCESS
- </summary>
-	<returns></returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults(System.String)">
 	<summary>
  Zips MSGFDB Output File
@@ -103,22 +95,6 @@ AnalysisManagerMSGFDBPlugIn
  Creates a lock file
  </summary>
 	<returns>True if success; false if failure</returns>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.ValidateFreeMemorySize(System.Int32,System.Int32)">
-	<summary>
- Lookups the amount of memory that will be reserved for Java
- If this value is &gt;= the free memory, then returns CLOSEOUT_FAILED
- Otherwise, returns CLOSEOUT_SUCCESS
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB.ValidateFreeMemorySize">
-	<summary>
- Lookups the amount of memory that will be reserved for Java
- If this value is &gt;= the free memory, then returns CLOSEOUT_FAILED
- Otherwise, returns CLOSEOUT_SUCCESS
- </summary>
-	<returns></returns>
-	<remarks></remarks>
 </member>
 </members>
 </doc>

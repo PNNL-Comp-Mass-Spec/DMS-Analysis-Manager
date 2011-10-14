@@ -1902,9 +1902,19 @@ Public Class clsMSGFRunner
         blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", True)
 
         If Not mToolVersionWritten Then
-            If String.IsNullOrWhiteSpace(mMSGFVersion) Then
-                ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
-            End If
+			If String.IsNullOrWhiteSpace(mMSGFVersion) Then
+				Dim fiConsoleOutputfile As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+				If fiConsoleOutputfile.Length = 0 Then
+					' File is 0-bytes; delete it
+					Try
+						fiConsoleOutputfile.Delete()
+					Catch ex As Exception
+						' Ignore errors here
+					End Try
+				Else
+					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+				End If
+			End If
             mToolVersionWritten = StoreToolVersionInfo()
         End If
 

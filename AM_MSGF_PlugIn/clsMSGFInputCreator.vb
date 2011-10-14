@@ -380,7 +380,7 @@ Public MustInherit Class clsMSGFInputCreator
                 blnSkipLine = False
 
                 If Not String.IsNullOrEmpty(strLineIn) Then
-                    strSplitLine = strLineIn.Split(ControlChars.Tab)
+					strSplitLine = strLineIn.Split(ControlChars.Tab)
 
                     If Not blnHeaderLineParsed Then
                         If Not clsMSGFInputCreator.IsNumber(strSplitLine(0)) Then
