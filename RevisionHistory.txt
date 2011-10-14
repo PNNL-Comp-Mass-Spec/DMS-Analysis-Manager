@@ -1,5 +1,12 @@
 Analysis Tool Manager History
 
+October 13, 2011
+	- Added MSDeconv plugin
+	- Moved ValidateFreeMemorySize into clsAnalysisResources
+	- Updated function RetrieveMZXmlFile to also look for MSXML_Gen_1_126_DatasetID
+	- Streamlined the text in the _AnalysisSummary.txt file created by clsStatusFile
+	- Updated MSGF plugin to delete the MSGF_ConsoleOutput.txt file if it is empty
+
 October 6, 2011
 	- Updated AnalysisManagerInspResultsAssemblyPlugIn.dll to report CLOSEOUT_NO_DATA when assembled results file is empty
 
