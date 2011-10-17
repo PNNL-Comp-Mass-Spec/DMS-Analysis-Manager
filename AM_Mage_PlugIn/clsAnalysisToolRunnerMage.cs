@@ -13,6 +13,10 @@ namespace AnalysisManager_Mage_PlugIn {
         public clsAnalysisToolRunnerMage() {
         }
 
+        /// <summary>
+        /// Run the Mage tool and disposition the results
+        /// </summary>
+        /// <returns></returns>
         public override IJobParams.CloseOutType RunTool() {
 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
@@ -68,18 +72,31 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
-        /// run the appropriate Mage pipeline(s) according to mode parameter
+        /// run the Mage pipeline(s) listed in "MageOperations" parameter
         /// </summary>
         private bool RunMage() {
             bool ok = false;
-            string mageMode = m_jobParams.GetParam("MageMode");
-            switch (mageMode) {
-                case "ExtractJobsFromDataPackage":
-                    String dataPackageID = m_jobParams.GetParam("DataPackageID"); ;
-                    MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
-                    mageObj.ExtractJobsFromDataPackage(dataPackageID);
-                    mageObj.GetDatasetFactorsFromDataPackage(dataPackageID);
-                    ok = true;
+            string mageOperations = m_jobParams.GetParam("MageOperations");
+            foreach (string mageOperation in mageOperations.Split(',')) {
+                ok = RunMageOperation(mageOperation.Trim());
+                if (!ok) break;
+            }
+            return ok;
+        }
+
+        /// <summary>
+        /// Run a single Mage operation
+        /// </summary>
+        /// <param name="mageOperation"></param>
+        /// <returns></returns>
+        private bool RunMageOperation(string mageOperation) {
+            bool ok = false;
+            switch (mageOperation) {
+                case "ExtractFromJobs":
+                    ok = ExtractFromJobs();
+                    break;
+                case "GetFactors":
+                    ok = GetFactors();
                     break;
                 default:
                     // Future: throw an error
@@ -87,6 +104,26 @@ namespace AnalysisManager_Mage_PlugIn {
             }
             return ok;
         }
+
+        #region Mage Operations
+
+        private bool GetFactors() {
+            bool ok = true;
+            String sql = SQL.GetSQL("FactorsSource", m_jobParams);
+            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+            mageObj.GetDatasetFactors(sql);
+            return ok;
+        }
+
+        private bool ExtractFromJobs() {
+            bool ok = true;
+            String sql = SQL.GetSQL("ExtractionSource", m_jobParams);
+            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+            mageObj.ExtractFromJobs(sql);
+            return ok;
+        }
+
+        #endregion
 
         protected void CopyFailedResultsToArchiveFolder() {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);

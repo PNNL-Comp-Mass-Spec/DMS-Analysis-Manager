@@ -69,6 +69,7 @@
     <Compile Include="IPipelineMonitor.cs" />
     <Compile Include="MageAMExtractionPipelines.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SQL.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AM_Program\AnalysisManagerProg.vbproj">

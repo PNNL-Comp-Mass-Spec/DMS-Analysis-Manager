@@ -39,6 +39,12 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #endregion
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="jobParms"></param>
+        /// <param name="mgrParms"></param>
+        /// <param name="monitor"></param>
         public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms, clsAnalysisToolRunnerMage monitor) {
             this.mJobParms = jobParms;
             this.mMgrParms = mgrParms;
@@ -48,10 +54,10 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        public void ExtractJobsFromDataPackage(String dataPackageID) {
+        public void ExtractFromJobs(String dataPackageID) {
             GetExtractionParametersFromJobParameters();
-            BaseModule jobList = GetListOfJobsFromDataPackage(dataPackageID);
-            ExtractFromJobs(jobList);
+            BaseModule jobList = GetListOfJobs(dataPackageID);
+            ExtractFromJobsList(jobList);
         }
 
         /// <summary>
@@ -79,11 +85,9 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Get a list of jobs to process
         /// </summary>
+        /// <param name="sql">Query to use a source of jobs</param>
         /// <returns>A Mage module containing list of jobs</returns>
-        private BaseModule GetListOfJobsFromDataPackage(String dataPackageID) {
-            String sql = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}";
-            sql = string.Format(sql, dataPackageID);
-
+        private BaseModule GetListOfJobs(string sql) {
             SimpleSink jobList = new SimpleSink();
 
             MSSQLReader reader = MakeDBReaderModule(sql);
@@ -99,7 +103,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Build pipeline to perform extraction operation against jobs in jobList
         /// </summary>
         /// <param name="jobList">List of jobs to perform extraction from</param>
-        private void ExtractFromJobs(BaseModule jobList) {
+        private void ExtractFromJobsList(BaseModule jobList) {
             mPipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, mExtractionParms, mDestination);
             foreach (ProcessingPipeline p in mPipelineQueue.Pipelines.ToArray()) {
                 //        mMonitor.ConnectPipelineToStatusHandlers(p);
@@ -109,13 +113,11 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
-        /// 
+        /// make Mage pipeline using given sql as source of factors and use it 
+        /// to create and populate a factors table in a SQLite database (in crosstab format)
         /// </summary>
-        public void GetDatasetFactorsFromDataPackage(String dataPackageID) {
-            // FUTURE: better query
-            String sql = "SELECT Dataset, Dataset_ID, Factor, Value FROM DMS5.dbo.V_Custom_Factors_List_Report WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})";
-            sql = string.Format(sql, dataPackageID);
-
+        /// <param name="sql">Query to use a source of factors</param>
+        public void GetDatasetFactors(string sql) {
             MSSQLReader reader = MakeDBReaderModule(sql);
 
             CrosstabFilter crosstab = new CrosstabFilter();
@@ -138,7 +140,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Create a new MSSQLReader module to do a specific query
         /// </summary>
-        /// <param name="sql"></param>
+        /// <param name="sql">Query to use</param>
         /// <returns></returns>
         private MSSQLReader MakeDBReaderModule(String sql) {
             MSSQLReader reader = new MSSQLReader();
