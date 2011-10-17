@@ -1,6 +1,9 @@
 Analysis Tool Manager History
 
 October 17, 2011
+	- Now adding header line to MSAlign_ResultTable.txt file if we use MSAlign v0.5
+
+October 15, 2011
 	- Added MSAlign plugin
 		- Supports MSAlign v0.5 and v0.6
 		- In addition to the text result files, zips the files that MSAlign creates in the html and xml folders

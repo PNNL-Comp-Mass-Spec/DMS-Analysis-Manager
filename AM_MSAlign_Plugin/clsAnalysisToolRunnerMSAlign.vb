@@ -270,6 +270,69 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Function
 
+	Protected Function AddResultTableHeaderLine(ByVal strSourceFilePath As String) As Boolean
+
+		Dim srInFile As System.IO.StreamReader
+		Dim swOutFile As System.IO.StreamWriter
+
+		Try
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding header line to MSAlign_ResultTable.txt file")
+			End If
+
+			' Open the input file
+			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+			' Create the output file
+			Dim strTargetFilePath As String
+			strTargetFilePath = strSourceFilePath & ".tmp"
+			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+			Dim strHeaderLine As String
+			strHeaderLine = "Prsm_ID" & ControlChars.Tab & _
+			  "Spectrum_ID" & ControlChars.Tab & _
+			  "Protein_Sequence_ID" & ControlChars.Tab & _
+			  "Spectrum_ID" & ControlChars.Tab & _
+			  "Scan(s)" & ControlChars.Tab & _
+			  "#peaks" & ControlChars.Tab & _
+			  "Charge" & ControlChars.Tab & _
+			  "Precursor_mass" & ControlChars.Tab & _
+			  "Protein_name" & ControlChars.Tab & _
+			  "Protein_mass" & ControlChars.Tab & _
+			  "First_residue" & ControlChars.Tab & _
+			  "Last_residue" & ControlChars.Tab & _
+			  "Peptide" & ControlChars.Tab & _
+			  "#unexpected_modifications" & ControlChars.Tab & _
+			  "#matched_peaks" & ControlChars.Tab & _
+			  "#matched_fragment_ions" & ControlChars.Tab & _
+			  "E-value"
+
+			swOutFile.WriteLine(strHeaderLine)
+
+			While srInFile.Peek > -1
+				swOutFile.WriteLine(srInFile.ReadLine)
+			End While
+
+			srInFile.Close()
+			swOutFile.Close()
+
+			System.Threading.Thread.Sleep(500)
+
+			' Delete the source file, then rename the new file to match the source file
+			System.IO.File.Delete(strSourceFilePath)
+			System.Threading.Thread.Sleep(500)
+
+			System.IO.File.Move(strTargetFilePath, strSourceFilePath)
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateInputPropertiesFile: " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
 	Protected Sub CopyFailedResultsToArchiveFolder()
 
 		Dim result As IJobParams.CloseOutType
@@ -546,7 +609,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
 			fiFastaFile.CopyTo(System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.FastaFileName))
-			
+
 			' Move the _msdeconv.msalign file to the MSInput folder
 			fiFiles = fiSourceFolder.GetFiles("*" & clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX)
 			If fiFiles.Length = 0 Then
@@ -847,6 +910,11 @@ Public Class clsAnalysisToolRunnerMSAlign
 				End If
 			Next
 
+			If blnRunningVersion0Pt5 Then
+				' Add a header to the _ResultTable.txt file
+				AddResultTableHeaderLine(System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX))
+			End If
+
 			' Zip the Html and XML folders
 			ZipMSAlignResultFolder("html")
 			ZipMSAlignResultFolder("XML")
@@ -869,24 +937,25 @@ Public Class clsAnalysisToolRunnerMSAlign
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
 
-	Private Sub ZipMSAlignResultFolder(ByVal strFolderName As String)
+	Protected Function ZipMSAlignResultFolder(ByVal strFolderName As String) As Boolean
 
 		Dim objZipper As Ionic.Zip.ZipFile
 		Dim strTargetFilePath As String
 		Dim strSourceFolderPath As String
 
-		strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
-		strSourceFolderPath = System.IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
+		Try
+			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
+			strSourceFolderPath = System.IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
 
-		' Confirm that the folder has one or more files or subfolders
-		Dim diSourceFolder As New System.IO.DirectoryInfo(strSourceFolderPath)
-		If diSourceFolder.GetFileSystemInfos.Length = 0 Then
-
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign results folder is empty; nothing to zip: " & strSourceFolderPath)
+			' Confirm that the folder has one or more files or subfolders
+			Dim diSourceFolder As New System.IO.DirectoryInfo(strSourceFolderPath)
+			If diSourceFolder.GetFileSystemInfos.Length = 0 Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign results folder is empty; nothing to zip: " & strSourceFolderPath)
+				End If
+				Return False
 			End If
 
-		Else
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath & strTargetFilePath)
 			End If
@@ -895,9 +964,15 @@ Public Class clsAnalysisToolRunnerMSAlign
 			objZipper.AddDirectory(strSourceFolderPath)
 			objZipper.Save()
 			System.Threading.Thread.Sleep(500)
-		End If
 
-	End Sub
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateInputPropertiesFile: " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
 
 #End Region
 
