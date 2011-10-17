@@ -22,6 +22,7 @@ AnalysisManagerMSDeconvPlugIn
 	<summary>
  Stores the tool version info in the database
  </summary>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv.TrimConsoleOutputFile(System.String)">
 	<summary>

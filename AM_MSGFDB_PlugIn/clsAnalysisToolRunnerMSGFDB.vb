@@ -66,7 +66,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim strMSGFDbCmdLineOptions As String
 
 		Dim result As IJobParams.CloseOutType
-		Dim eReturnCode As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
 
 		Dim blnSuccess As Boolean
@@ -291,13 +290,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			'Stop the job timer
 			m_StopTime = System.DateTime.UtcNow
 
-			If blnProcessingError Then
-				' Something went wrong
-				' In order to help diagnose things, we will move whatever files were created into the result folder, 
-				'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
 			'Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
@@ -309,10 +301,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			GC.WaitForPendingFinalizers()
 
 			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Move the source files and any results to the Failed Job folder
-				' Useful for debugging MSGFDB problems
+				' Something went wrong
+				' In order to help diagnose things, we will move whatever files were created into the result folder, 
+				'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				CopyFailedResultsToArchiveFolder()
-				Return result
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			result = MakeResultsFolder()
@@ -326,7 +319,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 				m_message = "Error moving files into results folder"
-				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			result = CopyResultsFolderToServer()

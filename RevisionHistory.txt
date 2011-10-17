@@ -1,5 +1,10 @@
 Analysis Tool Manager History
 
+October 17, 2011
+	- Added MSAlign plugin
+		- Supports MSAlign v0.5 and v0.6
+		- In addition to the text result files, zips the files that MSAlign creates in the html and xml folders
+
 October 13, 2011
 	- Added MSDeconv plugin
 	- Moved ValidateFreeMemorySize into clsAnalysisResources

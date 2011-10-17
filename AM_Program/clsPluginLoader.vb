@@ -130,6 +130,9 @@ Namespace AnalysisManagerBase
 				'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower
 				'	myToolRunner = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv, IToolRunner)
 
+				'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower
+				'	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
+
 			End Select
 
             Return myToolRunner
@@ -197,6 +200,9 @@ Namespace AnalysisManagerBase
 
 				'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()
 				'	myModule = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisResourcesMSDeconv, IAnalysisResources)
+
+				'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()
+				'	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
 
 			End Select
 
