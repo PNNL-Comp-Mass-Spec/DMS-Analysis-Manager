@@ -78,6 +78,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Dim result As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
 
+		Dim eResult As IJobParams.CloseOutType
 		Dim blnSuccess As Boolean
 
 		Try
@@ -198,11 +199,31 @@ Public Class clsAnalysisToolRunnerMSAlign
 				End If
 
 				blnProcessingError = True
+				eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 			Else
 				' Make sure the output files were created
 				If Not ValidateAndCopyResultFiles(blnRunningVersion0Pt5) Then
 					blnProcessingError = True
+				End If
+
+				Dim strResultTableFilePath As String
+				strResultTableFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX)
+
+				If blnRunningVersion0Pt5 Then
+					' Add a header to the _ResultTable.txt file
+					AddResultTableHeaderLine(strResultTableFilePath)
+				End If
+
+				' Make sure the _ResultTable.txt file is not empty
+				If blnProcessingError Then
+					eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Else
+					If ValidateResultTableFile(strResultTableFilePath) Then
+						eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+					Else
+						eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+					End If
 				End If
 
 				m_StatusTools.UpdateAndWrite(m_progress)
@@ -266,7 +287,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+		Return eResult
 
 	End Function
 
@@ -309,9 +330,9 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			swOutFile.WriteLine(strHeaderLine)
 
-			While srInFile.Peek > -1
+			Do While srInFile.Peek > -1
 				swOutFile.WriteLine(srInFile.ReadLine)
-			End While
+			Loop
 
 			srInFile.Close()
 			swOutFile.Close()
@@ -325,7 +346,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			System.IO.File.Move(strTargetFilePath, strSourceFilePath)
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateInputPropertiesFile: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in AddResultTableHeaderLine: " & ex.Message)
 			Return False
 		End Try
 
@@ -910,11 +931,6 @@ Public Class clsAnalysisToolRunnerMSAlign
 				End If
 			Next
 
-			If blnRunningVersion0Pt5 Then
-				' Add a header to the _ResultTable.txt file
-				AddResultTableHeaderLine(System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX))
-			End If
-
 			' Zip the Html and XML folders
 			ZipMSAlignResultFolder("html")
 			ZipMSAlignResultFolder("XML")
@@ -929,6 +945,68 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Else
 			Return True
 		End If
+
+	End Function
+
+	Protected Function ValidateResultTableFile(ByVal strSourceFilePath As String) As Boolean
+
+		Dim srInFile As System.IO.StreamReader
+		Dim strLineIn As String
+
+		Try
+			Dim blnValidFile As Boolean
+			blnValidFile = False
+
+			If Not System.IO.File.Exists(strSourceFilePath) Then
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_ResultTable.txt file not found: " & strSourceFilePath)
+				End If
+				Return False
+			End If
+
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the MSAlign_ResultTable.txt file is not empty")
+			End If
+
+			' Open the input file
+			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+			Do While srInFile.Peek > -1
+				strLineIn = srInFile.ReadLine
+
+				If Not String.IsNullOrEmpty(strLineIn) Then
+
+					Dim strSplitLine() As String
+					strSplitLine = strLineIn.Split(ControlChars.Tab)
+
+					If strSplitLine.Length > 0 Then
+						Dim intValue As Integer
+						If Integer.TryParse(strSplitLine(0), intValue) Then
+							' Integer found in the first column; line is valid
+							blnValidFile = True
+							Exit Do
+						End If
+					End If
+				End If
+			Loop
+
+			srInFile.Close()
+
+			If Not blnValidFile Then
+				Dim Msg As String
+				Msg = "MSAlign_ResultTable.txt file is empty"
+				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+				Return False
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateResultTableFile: " & ex.Message)
+			Return False
+		End Try
+
+		Return True
 
 	End Function
 
@@ -966,7 +1044,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			System.Threading.Thread.Sleep(500)
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateInputPropertiesFile: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ZipMSAlignResultFolder: " & ex.Message)
 			Return False
 		End Try
 
