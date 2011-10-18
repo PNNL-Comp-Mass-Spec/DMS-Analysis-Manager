@@ -131,8 +131,10 @@ namespace AnalysisManager_Ape_PlugIn
 
            string apeWorkflow = Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeWorkflowName"));
            string apeDatabase = Path.Combine(m_WorkDir, "Results.db3");
+           int apeWorkflowStart = Convert.ToInt32(m_jobParams.GetParam("ApeWorkflowStart"));
+           int apeWorkflowEnd = Convert.ToInt32(m_jobParams.GetParam("ApeWorkflowEnd"));
 
-           SqlServerToSQLite.StartWorkflow(1, 3, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
+           SqlServerToSQLite.StartWorkflow(apeWorkflowStart, apeWorkflowEnd, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
 
            return blnSuccess;
 
