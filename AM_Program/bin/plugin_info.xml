@@ -227,6 +227,21 @@
 		Class="AnalysisManagerMSAlignPlugin.clsAnalysisToolRunnerMSAlign" 
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="ape" 
+		Class="AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe"
+		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="mage" 
+		Class="AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage"  
+		AssemblyFile="AnalysisManager_Mage_PlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="cyclops" 
+		Class="AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops"
+		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -445,6 +460,21 @@
 		Tool="msalign" 
 		Class="AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign" 
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="ape" 
+		Class="AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe"
+		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="mage" 
+		Class="AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage"
+		AssemblyFile="AnalysisManager_Mage_PlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="cyclops" 
+		Class="AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops"
+		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" 
 	/>
 
 </Resourcers>
