@@ -27,11 +27,11 @@ namespace AnalysisManager_Cyclops_PlugIn
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!CopyFileToWorkDir("MyTestFile.csv", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
-            {
-                //Errors were reported in function call, so just return
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
+            //if (!CopyFileToWorkDir("MyTestFile.csv", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
+            //{
+            //    Errors were reported in function call, so just return
+            //    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            //}
 
 
             string strInputFileExtension = string.Empty;
