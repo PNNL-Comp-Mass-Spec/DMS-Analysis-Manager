@@ -1,6 +1,9 @@
 ﻿using System.IO;
+using System.Collections.Generic;
 using System;
 using AnalysisManagerBase;
+
+using Cyclops;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
@@ -10,14 +13,12 @@ namespace AnalysisManager_Cyclops_PlugIn
         #region "Module Variables"
         protected const float PROGRESS_PCT_CYCLOPS_RUNNING = 5;
         protected const float PROGRESS_PCT_CYCLOPS_DONE = 95;
-        protected clsRunDosProgram CmdRunner;
 
         #endregion
 
         public override IJobParams.CloseOutType RunTool()
         {
 
-            string CmdStr = null;
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
 
@@ -28,60 +29,27 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
-
-            CmdRunner = new clsRunDosProgram(m_WorkDir);
-
+            
             if (m_DebugLevel > 4)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
-            }
-
-            // Determine the path to the MultiAlign folder
-            // Joe: This will be used if you are going to implement via command line
-            string progLoc = null;
-            //progLoc = DetermineProgramLocation("Ape", "ApeProgLoc", "ApeConsole.exe");
-            progLoc = "C:\\Development\\MDART_Versions\\ApeConsole\\bin\\x86\\Debug\\ApeConsole.exe";
-
-            if (string.IsNullOrWhiteSpace(progLoc))
-            {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
-
+            }            
+           
             // Store the MultiAlign version info in the database
-            StoreToolVersionInfo(progLoc);
-
-            string MultiAlignResultFilename = m_jobParams.GetParam("ResultFilename");
-
-            if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
-            {
-                MultiAlignResultFilename = m_Dataset;
-            }
-
-            // Set up and execute a program runner to run MultiAlign
-            CmdStr = " -dbname " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeDbName")) + " -workflow " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeWorkflow"));
-            if (m_DebugLevel >= 1)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
-            }
-
-            CmdRunner.CreateNoWindow = true;
-            CmdRunner.CacheStandardOutput = true;
-            CmdRunner.EchoOutputToConsole = true;
-
-            CmdRunner.WriteConsoleOutputToFile = false;
-
-
-            if (!CmdRunner.RunProgram(progLoc, CmdStr, "Cyclops", true))
-            {
-                m_message = "Error running Cyclops";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
-                blnSuccess = false;
-            }
-            else
-            {
-                blnSuccess = true;
-            }
-
+            //StoreToolVersionInfo(progLoc);
+            Dictionary<string, string> d_Params = new Dictionary<string, string>();
+            d_Params.Add("Job", m_jobParams.GetParam("Job"));
+            d_Params.Add("RDLL", @"C:\Program Files\R\R-2.13.1\bin\i386");
+            d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
+            //d_Params.Add("CyclopsWorkflowName", "Cyclops_CSV_FileExample.xml");
+            d_Params.Add("workDir", m_WorkDir);
+            d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
+            d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
+            
+            clsCyclopsModel cm = new clsCyclopsModel(d_Params);
+            cm.AssembleModulesFromXML();
+            blnSuccess = cm.Run();
+            
             //Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
             m_progress = PROGRESS_PCT_CYCLOPS_DONE;
@@ -105,6 +73,10 @@ namespace AnalysisManager_Cyclops_PlugIn
                 CopyFailedResultsToArchiveFolder();
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
+
+            m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+            m_Dataset = m_jobParams.GetParam("OutputFolderName");
+            m_jobParams.SetParam("OutputFolderName", m_jobParams.GetParam("StepOutputFolderName"));
 
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
@@ -130,13 +102,13 @@ namespace AnalysisManager_Cyclops_PlugIn
             //strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
             //diPlotsFolder.MoveTo(strTargetFolderPath);
 
-            //result = CopyResultsFolderToServer();
-            //if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            //{
-            //    //TODO: What do we do here?
-            //    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            //    return result;
-            //}
+            result = CopyResultsFolderToServer();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
 
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
             ////ZipResult

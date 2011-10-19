@@ -31,8 +31,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnalysisManagerProg">
+      <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    </Reference>
+    <Reference Include="R.NET, Version=1.4.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\R Files\RdotNet\32bit\R.NET.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,9 +54,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AM_Program\AnalysisManagerProg.vbproj">
-      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
-      <Name>AnalysisManagerProg</Name>
+    <ProjectReference Include="..\..\Cyclops\Cyclops\Cyclops.csproj">
+      <Project>{4C274553-EDFD-4983-8610-004200798179}</Project>
+      <Name>Cyclops</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
