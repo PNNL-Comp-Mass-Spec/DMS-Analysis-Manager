@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+October 20, 2011
+	- Updated MSGF plugin to keep temporary files if KeepMSGFInputFile=True in the job parameters
+
 October 19, 2011
 	- Now creating a _ScanType.txt file when running MSGFDB
 		- Allows for analysis of CID, ETD, and HCD spectra in a single analysis

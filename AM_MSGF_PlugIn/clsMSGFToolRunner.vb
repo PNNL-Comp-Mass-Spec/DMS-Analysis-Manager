@@ -98,6 +98,8 @@ Public Class clsMSGFRunner
 	Protected mProcessingMSGFDBCollisionModeData As Boolean
 	Protected mCollisionModeIteration As Integer
 
+	Protected mKeepMSGFInputFiles As Boolean = False
+
 	Protected mToolVersionWritten As Boolean
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
@@ -188,6 +190,7 @@ Public Class clsMSGFRunner
 		mMSGFVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
 
+		mKeepMSGFInputFiles = clsGlobal.GetJobParameter(m_jobParams, "KeepMSGFInputFile", False)
 		blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
 
 		Try
@@ -269,7 +272,7 @@ Public Class clsMSGFRunner
 					blnProcessingError = True
 				Else
 					' MSGF successfully completed
-					If Not clsGlobal.GetJobParameter(m_jobParams, "KeepMSGFInputFile", False) Then
+					If Not mKeepMSGFInputFiles Then
 						' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
 						clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(mMSGFInputFilePath))
 					End If
@@ -900,6 +903,18 @@ Public Class clsMSGFRunner
 
 	End Function
 
+	Protected Sub DeleteTemporaryfile(ByVal strFilePath As String)
+
+		Try
+			If System.IO.File.Exists(strFilePath) Then
+				System.IO.File.Delete(strFilePath)
+			End If
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strFilePath, ex)
+		End Try
+
+	End Sub
+
 	Public Shared Function GetPeptideHitResultType(ByVal strPeptideHitResultType As String) As ePeptideHitResultType
 		Select Case strPeptideHitResultType.ToLower
 			Case "Peptide_Hit".ToLower
@@ -997,13 +1012,6 @@ Public Class clsMSGFRunner
 		End Select
 
 		Return strPHRPResultsFileName
-
-	End Function
-
-	Protected Function GetSegmentFilePath(ByVal strFilePath As String, ByVal intSegmentNumber As Integer) As String
-
-		Dim fiFile As System.IO.FileInfo = New System.IO.FileInfo(strFilePath)
-		Return System.IO.Path.Combine(fiFile.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & intSegmentNumber.ToString & fiFile.Extension)
 
 	End Function
 
@@ -1955,22 +1963,14 @@ Public Class clsMSGFRunner
 
 			System.Threading.Thread.Sleep(500)
 
-			' Delete the temporary files
-			Try
-				If System.IO.File.Exists(strInputFileTempPath) Then
-					System.IO.File.Delete(strInputFileTempPath)
-				End If
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strInputFileTempPath, ex)
-			End Try
+			If Not mKeepMSGFInputFiles Then
 
-			Try
-				If System.IO.File.Exists(strResultFileTempPath) Then
-					System.IO.File.Delete(strResultFileTempPath)
-				End If
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strResultFileTempPath, ex)
-			End Try
+				' Delete the temporary files
+				DeleteTemporaryfile(strInputFileTempPath)
+				DeleteTemporaryfile(strResultFileTempPath)
+
+			End If
+
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDBCachedData", ex)
@@ -2062,20 +2062,12 @@ Public Class clsMSGFRunner
 
 				' Delete the segment files
 				For Each udtSegmentFile In lstSegmentFileInfo
-					Try
-						System.IO.File.Delete(udtSegmentFile.FilePath)
-					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting segment file " & udtSegmentFile.FilePath, ex)
-					End Try
+					DeleteTemporaryfile(udtSegmentFile.FilePath)
 				Next
 
 				' Delete the result files
 				For Each strResultFile As String In lstResultFiles
-					Try
-						System.IO.File.Delete(strResultFile)
-					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting segment result file " & strResultFile, ex)
-					End Try
+					DeleteTemporaryfile(strResultFile)
 				Next
 			End If
 		End If
@@ -2151,11 +2143,7 @@ Public Class clsMSGFRunner
 				Dim fiConsoleOutputfile As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 				If fiConsoleOutputfile.Length = 0 Then
 					' File is 0-bytes; delete it
-					Try
-						fiConsoleOutputfile.Delete()
-					Catch ex As Exception
-						' Ignore errors here
-					End Try
+					DeleteTemporaryfile(fiConsoleOutputfile.FullName)
 				Else
 					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 				End If
