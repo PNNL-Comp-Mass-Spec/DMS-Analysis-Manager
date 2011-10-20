@@ -1,5 +1,13 @@
 Analysis Tool Manager History
 
+October 19, 2011
+	- Now creating a _ScanType.txt file when running MSGFDB
+		- Allows for analysis of CID, ETD, and HCD spectra in a single analysis
+		- Created using MASIC ScanStats files
+	- Updated MSGF to support MSGFDB results having a mix of CID, ETD, and HCD spectra
+		- Must run MSGF twice; first on the CID and HCD spectra, and then on the ETD spectra
+	- New version of Ionic.Zip.dll
+
 October 17, 2011
 	- Now adding header line to MSAlign_ResultTable.txt file if we use MSAlign v0.5
 

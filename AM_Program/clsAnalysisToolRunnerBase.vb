@@ -398,7 +398,7 @@ Namespace AnalysisManagerBase
             Dim strExtension As String
             Dim htRejectStats As System.Collections.Hashtable
             Dim htAcceptStats As System.Collections.Hashtable
-            Dim objExtension As IDictionaryEnumerator
+			Dim objExtension As System.Collections.IDictionaryEnumerator
 
             Dim blnErrorEncountered As Boolean = False
 

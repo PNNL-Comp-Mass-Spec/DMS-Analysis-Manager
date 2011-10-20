@@ -95,6 +95,15 @@ AnalysisManagerMSGFDBPlugIn
  Creates a lock file
  </summary>
 	<returns>True if success; false if failure</returns>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsScanTypeFileCreator.TryGetValueInt(System.String[],System.Int32,System.Int32@)">
+	<summary>
+ Tries to convert the text at index intColIndex of strData to an integer
+ </summary>
+	<param name="strData"></param>
+	<param name="intColIndex"></param>
+	<param name="intValue"></param>
+	<returns>True if success; false if intColIndex is less than 0 or if the text cannot be converted to an integer</returns>
+	<remarks></remarks>
 </member>
 </members>
 </doc>

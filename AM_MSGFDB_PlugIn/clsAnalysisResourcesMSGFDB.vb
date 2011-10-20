@@ -42,16 +42,26 @@ Public Class clsAnalysisResourcesMSGFDB
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		'Retrieve unzipped dta files (do not de-concatenate since MSGFDB uses the _Dta.txt file directly)
+		' Retrieve unzipped dta files (do not de-concatenate since MSGFDB uses the _Dta.txt file directly)
 		If Not RetrieveDtaFiles(False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+
 		'Add all the extensions of the files to delete after run
 		clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
 		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
 		clsGlobal.m_FilesToDeleteExt.Add("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
+
+		clsGlobal.m_FilesToDeleteExt.Add("_ScanStats.txt")
+		clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
 
 		' If the _dta.txt file is over 2 GB in size, then condense it
 

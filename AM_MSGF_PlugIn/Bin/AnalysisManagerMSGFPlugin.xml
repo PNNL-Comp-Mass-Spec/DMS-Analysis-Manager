@@ -101,23 +101,23 @@ AnalysisManagerMSGFPlugin
  Examines the Sequest, X!Tandem, or Inspect param file to determine if ETD mode is enabled
  </summary>
 	<param name="eResultType"></param>
-	<param name="strParamFilePath"></param>
+	<param name="strSearchToolParamFilePath"></param>
 	<returns>True if success; false if an error</returns>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabledSequest(System.String)">
 	<summary>
  Examines the Sequest param file to determine if ETD mode is enabled
- If it is, then sets m_ETDMode to True
+ If it is, then sets mETDMode to True
  </summary>
-	<param name="strParamFilePath">Sequest parameter file to read</param>
+	<param name="strSearchToolParamFilePath">Sequest parameter file to read</param>
 	<returns>True if success; false if an error</returns>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabledXTandem(System.String)">
 	<summary>
  Examines the X!Tndem param file to determine if ETD mode is enabled
- If it is, then sets m_ETDMode to True
+ If it is, then sets mETDMode to True
  </summary>
-	<param name="strParamFilePath">X!Tandem XML parameter file to read</param>
+	<param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
 	<returns>True if success; false if an error</returns>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Boolean)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Boolean,System.Int32@)">
 	<summary>
  Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
  Uses the ModSummary.txt file to determine the dynamic and static mods used
@@ -125,7 +125,7 @@ AnalysisManagerMSGFPlugin
 	<param name="eResultType"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMZXMLFile">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMZXMLFile(System.String)">
 	<summary>
  Generate the mzXML
  </summary>

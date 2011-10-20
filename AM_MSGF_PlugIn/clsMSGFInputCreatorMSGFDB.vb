@@ -103,9 +103,10 @@ Public Class clsMSGFInputCreatorMSGFDB
                     .Peptide = LookupColumnValue(strColumns, DATA_COLUMN_Peptide, mColumnHeaders)
                     .Charge = CType(LookupColumnValue(strColumns, DATA_COLUMN_Charge, mColumnHeaders, 0), Short)
                     .ProteinFirst = LookupColumnValue(strColumns, DATA_COLUMN_Protein, mColumnHeaders)
-                    .ResultID = LookupColumnValue(strColumns, DATA_COLUMN_ResultID, mColumnHeaders, 0)
+					.ResultID = LookupColumnValue(strColumns, DATA_COLUMN_ResultID, mColumnHeaders, 0)
+					.CollisionMode = LookupColumnValue(strColumns, DATA_COLUMN_FragMethod, mColumnHeaders, String.Empty)
 
-                    .PassesFilters = True
+					.PassesFilters = True
 
                     blnSuccess = True
                 End If

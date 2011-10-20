@@ -117,6 +117,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 			End If
 
+			' Create the ScanType file (lists scan type for each scan number)
+			If Not CreateScanTypeFile() Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+			End If
 
 			' Define the path to the fasta file
 			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
@@ -466,7 +472,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete")
 				End If
 			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
+				If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
+					If mPeptideToProteinMapper.StatusMessage.Length > 0 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
+					End If
+				End If
 
 				If blnIgnorePeptideToProteinMapperErrors Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
@@ -492,6 +505,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function CreateScanTypeFile() As Boolean
+
+		Dim objScanTypeFileCreator As clsScanTypeFileCreator
+		objScanTypeFileCreator = New clsScanTypeFileCreator(m_WorkDir, m_Dataset)
+
+		If objScanTypeFileCreator.CreateScanTypeFile() Then
+			Return True
+		Else
+			m_message = "Error creating scan type file: " & objScanTypeFileCreator.ErrorMessage
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
 
 	End Function
 

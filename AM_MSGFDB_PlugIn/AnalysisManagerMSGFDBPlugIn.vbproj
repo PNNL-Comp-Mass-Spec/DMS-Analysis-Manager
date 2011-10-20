@@ -66,8 +66,12 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="ThermoRawFileReaderDLL">
+      <HintPath>..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
     <Import Include="System.Collections" />
     <Import Include="System.Collections.Generic" />
@@ -78,6 +82,7 @@
     <Compile Include="clsAnalysisResourcesMSGFDB.vb" />
     <Compile Include="clsAnalysisToolRunnerMSGFDB.vb" />
     <Compile Include="clsCreateMSGFDBSuffixArrayFiles.vb" />
+    <Compile Include="clsScanTypeFileCreator.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

@@ -855,7 +855,7 @@ Namespace AnalysisManagerBase
 
         ''' <summary>
         ''' Looks for this dataset's mzXML file
-		''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, orMSXML_Gen_1_126_DatasetID
+		''' Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_126_DatasetID
         ''' If the MSXML folder (or the .mzXML file) cannot be found, then returns False
         ''' </summary>
         ''' <param name="WorkDir"></param>
@@ -924,6 +924,88 @@ Namespace AnalysisManagerBase
             Return False
 
         End Function
+
+		''' <summary>
+		''' Looks for this dataset's ScanStats files (previously created by MASIC)
+		''' Looks for the files in any SIC folder that exists for the dataset
+		''' </summary>
+		''' <param name="WorkDir"></param>
+		''' <param name="CreateStoragePathInfoOnly"></param>
+		''' <returns>True if the file was found and retrieved, otherwise False</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function RetrieveScanStatsFiles(ByVal WorkDir As String, _
+		   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+
+			' Copies this dataset's .mzXML file to the working directory
+			Dim DSName As String = m_jobParams.GetParam("datasetNum")
+			Dim DatasetID As String = m_jobParams.GetParam("DatasetID")
+			Dim ServerPath As String
+			Dim ScanStatsFilename As String
+
+			Dim MaxRetryCount As Integer = 1
+
+			' Look for the MASIC Results folder
+			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+			ScanStatsFilename = DSName & "_ScanStats.txt"
+			ServerPath = FindValidFolder(DSName, "", "SIC*", MaxRetryCount)
+
+			If Not String.IsNullOrEmpty(ServerPath) Then
+
+				Dim diFolderInfo As System.IO.DirectoryInfo
+				diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
+
+				If diFolderInfo.Exists Then
+
+					'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+					Dim diSubfolders() As System.IO.DirectoryInfo = diFolderInfo.GetDirectories("SIC*")
+					If diSubfolders.Length > 0 Then
+
+						' MASIC Results Folder Found
+						' If more than one folder, then use the folder with the newest _ScanStats.txt file
+						Dim diSourceFile As System.IO.FileInfo
+						Dim dtNewestScanStatsFileDate As System.DateTime
+						Dim strNewestScanStatsFilePath As String = String.Empty
+
+						For Each diSubFolder As System.IO.DirectoryInfo In diSubfolders
+							diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(diSubFolder.FullName, ScanStatsFilename))
+							If diSourceFile.Exists Then
+								If String.IsNullOrEmpty(strNewestScanStatsFilePath) OrElse diSourceFile.LastWriteTimeUtc > dtNewestScanStatsFileDate Then
+									strNewestScanStatsFilePath = diSourceFile.FullName
+									dtNewestScanStatsFileDate = diSourceFile.LastWriteTimeUtc
+								End If
+							End If
+						Next
+
+						If Not String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
+							diSourceFile = New System.IO.FileInfo(strNewestScanStatsFilePath)
+
+							If m_DebugLevel >= 3 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStats.txt file: " & diSourceFile.FullName)
+							End If
+
+							If CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+								' ScanStats File successfully copied
+								' Also look for and copy the _ScanStatsEx.txt file
+
+								If CopyFileToWorkDir(DSName & "_ScanStatsEx.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+									' ScanStatsEx file successfully copied
+
+									Return True
+
+								End If
+							End If
+						End If
+
+					End If
+
+				End If
+
+			End If
+
+			m_message = "_ScanStats.txt file not found"
+			Return False
+
+		End Function
 
         ''' <summary>
         ''' Retrieves an Agilent .D folder for the analysis job in progress

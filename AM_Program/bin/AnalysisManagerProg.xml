@@ -400,12 +400,21 @@ AnalysisManagerProg
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveMZXmlFile(System.String,System.Boolean,System.String@)">
 	<summary>
  Looks for this dataset's mzXML file
- Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, orMSXML_Gen_1_126_DatasetID
+ Hard-coded to look for a folder named MSXML_Gen_1_39_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_126_DatasetID
  If the MSXML folder (or the .mzXML file) cannot be found, then returns False
  </summary>
 	<param name="WorkDir"></param>
 	<param name="CreateStoragePathInfoOnly"></param>
 	<param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
+	<returns>True if the file was found and retrieved, otherwise False</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveScanStatsFiles(System.String,System.Boolean)">
+	<summary>
+ Looks for this dataset's ScanStats files (previously created by MASIC)
+ Looks for the files in any SIC folder that exists for the dataset
+ </summary>
+	<param name="WorkDir"></param>
+	<param name="CreateStoragePathInfoOnly"></param>
 	<returns>True if the file was found and retrieved, otherwise False</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotDFolder(System.String,System.Boolean,System.Boolean)">

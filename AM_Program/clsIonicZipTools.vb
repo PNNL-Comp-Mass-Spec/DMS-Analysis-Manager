@@ -45,15 +45,15 @@ Public Class clsIonicZipTools
     ''' </summary>
     ''' <param name="objZipper"></param>
     ''' <remarks></remarks>
-    Protected Sub DisposeZipper(ByRef objZipper As Ionic.Zip.ZipFile)
+	Protected Sub DisposeZipper(ByRef objZipper As Ionic.Zip.ZipFile)
 
-        objZipper = Nothing
+		objZipper = Nothing
 
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
-        System.Threading.Thread.Sleep(100)
+		GC.Collect()
+		GC.WaitForPendingFinalizers()
+		System.Threading.Thread.Sleep(100)
 
-    End Sub
+	End Sub
 
     Protected Sub ReportZipStats(ByVal fiFileSystemInfo As System.IO.FileSystemInfo, _
                                  ByVal dtStartTime As System.DateTime, _
