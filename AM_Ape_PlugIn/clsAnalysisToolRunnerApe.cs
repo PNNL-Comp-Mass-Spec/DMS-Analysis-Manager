@@ -137,6 +137,12 @@ namespace AnalysisManager_Ape_PlugIn
 
            SqlServerToSQLite.StartWorkflow(apeWorkflowStart, apeWorkflowEnd, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
 
+           String LogFileName = Path.Combine("C:\\Development\\AM_Releases\\AnalysisManagerMac\\Analysis_Manager\\AM_Program\\bin", "AnaysisMgr");
+           log4net.GlobalContext.Properties["LogName"] = LogFileName;
+
+            //Make the initial log entry
+            clsLogTools.ChangeLogFileName(LogFileName);
+
            return blnSuccess;
 
        }
