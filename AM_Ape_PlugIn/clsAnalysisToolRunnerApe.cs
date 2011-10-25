@@ -2,6 +2,7 @@
 using AnalysisManagerBase;
 using System;
 using Ape;
+using log4net;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -113,7 +114,7 @@ namespace AnalysisManager_Ape_PlugIn
                    if (success)
                    {
                        m_message = "Ape successfully ran workflow" + m_jobParams.GetParam("ApeWorkflowName");
-                       clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message + ", job " + m_JobNum);
+                       //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message + ", job " + m_JobNum);
                        blnSuccess = true;
                    }
                    else
@@ -121,7 +122,7 @@ namespace AnalysisManager_Ape_PlugIn
                        if (!_shouldExit)
                        {
                            m_message = "Error running Ape";
-                           clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                           //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
                            blnSuccess = false;
                        }
                    }
