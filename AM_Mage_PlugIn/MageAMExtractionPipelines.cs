@@ -55,9 +55,9 @@ namespace AnalysisManager_Mage_PlugIn {
             String extractionType = RequireJobParam("ExtractionType"); //"Sequest First Hits"
             mExtractionParms.RType = ResultType.TypeList[extractionType];
 
-            mExtractionParms.KeepAllResults = RequireJobParam("KeepAllResults"); //"Yes"
-            mExtractionParms.ResultFilterSetID = RequireJobParam("ResultFilterSetID"); // "All Pass"
-            mExtractionParms.MSGFCutoff = RequireJobParam("MSGFCutoff"); // "All Pass"
+            mExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
+            mExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
+            mExtractionParms.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
 
             // ouput parameters
             mDestination.Type = DestinationType.Types.SQLite_Output;
