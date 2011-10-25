@@ -1331,7 +1331,8 @@ Public Class clsMSGFRunner
 			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5)
 			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6)
 			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 8)
+			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8)
+			objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
 
 			' Read the data from the MSGF Result file
 			srMSGFResults = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))

@@ -50,9 +50,8 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 #Region "Module Variables"
 
-	' FUTURE: Populate this with a tool version reported to the console (not yet implemented in MSAlign)
-	' Protected mToolVersionWritten As Boolean
-	' Protected mMSAlignVersion As String
+	Protected mToolVersionWritten As Boolean
+	Protected mMSAlignVersion As String
 
 	Protected mMSAlignProgLoc As String
 	Protected mConsoleOutputErrorMsg As String
@@ -110,16 +109,15 @@ Public Class clsAnalysisToolRunnerMSAlign
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Store the MSAlign version info in the database
-			StoreToolVersionInfo()
-
 			If mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.5" & System.IO.Path.DirectorySeparatorChar) Then
 				blnRunningVersion0Pt5 = True
 			End If
 
-			' FUTURE: store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
-			' mToolVersionWritten = False
-			' mMSAlignVersion = String.Empty
+			' Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
+			' (only valid for MSAlign 0.6.2 or newer)
+
+			mToolVersionWritten = False
+			mMSAlignVersion = String.Empty
 			mConsoleOutputErrorMsg = String.Empty
 
 			' Clear InputProperties parameters
@@ -171,14 +169,12 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
 
-			' FUTURE: If we parse out the program version from the console output, then
-			'         delete the call to StoreToolVersionInfo above and uncomment this code
-			'If Not mToolVersionWritten Then
-			'	If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-			'		ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-			'	End If
-			'	mToolVersionWritten = StoreToolVersionInfo()
-			'End If
+			If Not mToolVersionWritten Then
+				If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+				End If
+				mToolVersionWritten = StoreToolVersionInfo()
+			End If
 
 			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -709,23 +705,23 @@ Public Class clsAnalysisToolRunnerMSAlign
 				intLinesRead += 1
 
 				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					' FUTURE: parse out the MSAlign version
-					'If intLinesRead = 1 Then
-					'	If strLineIn.ToLower.Contains("deconv") Then
-					'		If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-					'			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
-					'		End If
+					If intLinesRead = 1 Then
+						' Parse out the MSAlign version
+						If strLineIn.ToLower.Contains("align") Then
+							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
+							End If
 
-					'		mMSAlignVersion = String.Copy(strLineIn)
-					'	Else
-					'		If strLineIn.ToLower.Contains("error") Then
-					'			If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-					'				mConsoleOutputErrorMsg = "Error running MSAlign:"
-					'			End If
-					'			mConsoleOutputErrorMsg &= "; " & strLineIn
-					'		End If
-					'	End If
-					'End If
+							mMSAlignVersion = String.Copy(strLineIn)
+						Else
+							If strLineIn.ToLower.Contains("error") Then
+								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+									mConsoleOutputErrorMsg = "Error running MSAlign:"
+								End If
+								mConsoleOutputErrorMsg &= "; " & strLineIn
+							End If
+						End If
+					End If
 
 					' Update progress if the line starts with Processing spectrum
 					If strLineIn.StartsWith("Processing spectrum") Then
@@ -777,8 +773,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		' FUTURE: store the specific version
-		'strToolVersionInfo = String.Copy(mMSAlignVersion)
+		strToolVersionInfo = String.Copy(mMSAlignVersion)
 
 		' Store paths to key files in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
@@ -1079,10 +1074,9 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 
-			' FUTURE: store the specific version
-			'If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-			'	mToolVersionWritten = StoreToolVersionInfo()
-			'End If
+			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+				mToolVersionWritten = StoreToolVersionInfo()
+			End If
 
 		End If
 

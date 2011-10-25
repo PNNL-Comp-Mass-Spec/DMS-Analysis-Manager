@@ -28,7 +28,7 @@ Public MustInherit Class clsMSGFInputCreator
 		Public Charge As Short
 		Public ProteinFirst As String
 		Public ResultID As Integer
-		Public CollisionMode As String				' CID, ETD, or HCD; only used by MSGFDB
+		Public CollisionMode As String				' CID, ETD, HCD, or n/a
 		Public PassesFilters As Boolean
 
 		Public Sub Clear()
@@ -38,7 +38,7 @@ Public MustInherit Class clsMSGFInputCreator
 			Charge = 0
 			ProteinFirst = String.Empty
 			ResultID = 0
-			CollisionMode = String.Empty
+			CollisionMode = "n/a"
 			PassesFilters = False
 		End Sub
 	End Structure
