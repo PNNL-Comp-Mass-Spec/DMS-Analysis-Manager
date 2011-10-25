@@ -31,6 +31,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnalysisManagerProg, Version=2.2.4310.20012, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <ExecutableExtension>.exe</ExecutableExtension>
+      <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\log4net.dll</HintPath>
@@ -68,14 +73,10 @@
     <Compile Include="clsAnalysisToolRunnerMage.cs" />
     <Compile Include="IPipelineMonitor.cs" />
     <Compile Include="MageAMExtractionPipelines.cs" />
+    <Compile Include="MageAMFileProcessingPipelines.cs" />
+    <Compile Include="MageAMPipelineBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQL.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\AM_Program\AnalysisManagerProg.vbproj">
-      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
-      <Name>AnalysisManagerProg</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="lib\log4net.dll" />

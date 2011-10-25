@@ -98,6 +98,9 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "GetFactors":
                     ok = GetFactors();
                     break;
+                case "ImportDataPackageFiles":
+                    ok = ImportDataPackageFiles();
+                    break;
                 default:
                     // Future: throw an error
                     break;
@@ -110,7 +113,7 @@ namespace AnalysisManager_Mage_PlugIn {
         private bool GetFactors() {
             bool ok = true;
             String sql = SQL.GetSQL("FactorsSource", m_jobParams);
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
             mageObj.GetDatasetFactors(sql);
             return ok;
         }
@@ -118,10 +121,17 @@ namespace AnalysisManager_Mage_PlugIn {
         private bool ExtractFromJobs() {
             bool ok = true;
             String sql = SQL.GetSQL("ExtractionSource", m_jobParams);
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams, this);
+            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
             mageObj.ExtractFromJobs(sql);
             return ok;
         }
+
+        private bool ImportDataPackageFiles() {
+            bool ok = true;
+            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            mageObj.ImportFilesToSQLite();
+            return ok;
+       }
 
         #endregion
 
@@ -204,35 +214,7 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
         }
-        /*
-                #region Pipeline Utilities
 
-                public void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline) {
-                    pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
-                    pipeline.OnRunCompleted += HandlePipelineCompletion;
-                }
-
-                public void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue) {
-                    pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
-                    pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
-                }
- 
-                #endregion
-
-                #region Pipeline Update Message Handlers
-
-                private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
-                    Console.WriteLine(args.Message);
-                }
-
-                private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
-                    Console.WriteLine(args.Message);
-                }
-
-
-                #endregion
-
-        */
 
     }
 }
