@@ -21,7 +21,7 @@ namespace AnalysisManager_Mage_PlugIn {
             : base(jobParms, mgrParms) {
         }
 
- 
+
         #endregion
 
         /// <summary>
@@ -34,22 +34,19 @@ namespace AnalysisManager_Mage_PlugIn {
             string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, RequireJobParam("StepInputFolderName"), mResultsDBFileName);
 
             if (File.Exists(priorResultsDBFilePath)) {
-                File.Copy(priorResultsDBFilePath, mWorkingDir);
+                string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+                File.Copy(priorResultsDBFilePath, workingFilePath);
             }
         }
 
         /// <summary>
         /// Import the contents of files in the given source folder that pass the given name filter
-        /// into the results SQLite database
+        /// into the results SQLite database.
+        /// Optionally confine to names in given delimited file name list
         /// </summary>
-        public void ImportFilesToSQLite() {
+        public void ImportFilesToSQLiteResultsDB(string inputFolderPath, string fileNameList) {
             GetPriorResultsToWorkDir();
-
-            string dataPackageStorageFolderRoot = RequireJobParam("transferFolderPath");
-            string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, RequireJobParam("DataPackageSourceFolderName"));
-            string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-            string dbTableName = GetJobParam("DBTableName");
-
+            HashSet<string> fileNameSet = GetFileNameSet(fileNameList);
 
             FileListFilter reader = new FileListFilter();
             reader.AddFolderPath(inputFolderPath);
@@ -64,12 +61,22 @@ namespace AnalysisManager_Mage_PlugIn {
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
 
-            // reader.FileTypeColumnName = "Item";
             int folderIdx = fileList.ColumnIndex[reader.SourceFolderColumnName];
             int fileIdx = fileList.ColumnIndex[reader.FileColumnName];
+            // int itemIdx = fileList.ColumnIndex["FileTypeColumnName"];
+
+            string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+            string dbTableName = GetJobParam("DBTableName");
+
             foreach (Object[] row in fileList.Rows) {
-                string inputFilePath = Path.Combine(row[folderIdx].ToString(), row[fileIdx].ToString());
-                ImportFileToSQLite(inputFilePath, dbFilePath, dbTableName);
+                string sourceFolderPath = row[folderIdx].ToString();
+                string sourceFileName = row[fileIdx].ToString();
+                string sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
+                string workingFilePath = Path.Combine(mWorkingDir, sourceFileName);
+                if (fileNameList == "" || fileNameSet.Contains(sourceFileName)) {
+                    File.Copy(sourceFilePath, workingFilePath);
+                    ImportFileToSQLite(workingFilePath, dbFilePath, dbTableName);
+                }
             }
         }
 
@@ -91,8 +98,21 @@ namespace AnalysisManager_Mage_PlugIn {
             ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, writer);
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
-       }
+        }
 
+        /// <summary>
+        /// Convert comma-delimited list of file names into a hash set
+        /// </summary>
+        /// <param name="fileList"></param>
+        /// <returns></returns>
+        protected HashSet<string> GetFileNameSet(string fileNameList) {
+            HashSet<string> set = new HashSet<string>();
+            String[] fileNames = fileNameList.Split(',');
+            foreach (string fileName in fileNames) {
+                set.Add(fileName.Trim());
+            }
+            return set;
+        }
 
     }
 }

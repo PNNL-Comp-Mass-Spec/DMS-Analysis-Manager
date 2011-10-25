@@ -72,7 +72,7 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
-        /// run the Mage pipeline(s) listed in "MageOperations" parameter
+        /// sequentially run the Mage operations listed in "MageOperations" parameter
         /// </summary>
         private bool RunMage() {
             bool ok = false;
@@ -101,6 +101,9 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "ImportDataPackageFiles":
                     ok = ImportDataPackageFiles();
                     break;
+                case "GetFDRTables":
+                    ok = ImportFDRTables();
+                    break;
                 default:
                     // Future: throw an error
                     break;
@@ -109,6 +112,7 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         #region Mage Operations
+
 
         private bool GetFactors() {
             bool ok = true;
@@ -126,10 +130,21 @@ namespace AnalysisManager_Mage_PlugIn {
             return ok;
         }
 
-        private bool ImportDataPackageFiles() {
+        private bool ImportFDRTables() {
             bool ok = true;
             MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
-            mageObj.ImportFilesToSQLite();
+            string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
+            string inputfileList = mageObj.GetJobParam("MageFDRFiles");
+            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, inputfileList);
+            return ok;
+        }
+
+       private bool ImportDataPackageFiles() {
+            bool ok = true;
+            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
+            string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
+            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, "");
             return ok;
        }
 

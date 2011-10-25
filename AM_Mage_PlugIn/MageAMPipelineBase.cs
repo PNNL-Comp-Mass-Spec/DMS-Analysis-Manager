@@ -48,7 +48,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #region Utility Methods
 
-        protected string RequireMgrParam(string paramName) {
+        public string RequireMgrParam(string paramName) {
             string val = mMgrParms.GetParam(paramName);
             if (val == "") {
                 throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
@@ -56,7 +56,7 @@ namespace AnalysisManager_Mage_PlugIn {
             return val;
         }
 
-        protected string RequireJobParam(string paramName) {
+        public string RequireJobParam(string paramName) {
             string val = mJobParms.GetParam(paramName);
             if (val == "") {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -64,11 +64,11 @@ namespace AnalysisManager_Mage_PlugIn {
             return val;
         }
 
-        protected string GetJobParam(string paramName) {
+        public string GetJobParam(string paramName) {
             return mJobParms.GetParam(paramName);
         }
 
-        protected string GetJobParam(string paramName, string defaultValue) {
+        public string GetJobParam(string paramName, string defaultValue) {
             string val = mJobParms.GetParam(paramName);
             if (val == "") val = defaultValue;
             return val;
