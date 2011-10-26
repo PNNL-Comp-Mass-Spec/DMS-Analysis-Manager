@@ -31,11 +31,13 @@ namespace AnalysisManager_Mage_PlugIn {
         protected void GetPriorResultsToWorkDir() {
             string dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
 
-            string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, RequireJobParam("StepInputFolderName"), mResultsDBFileName);
-
-            if (File.Exists(priorResultsDBFilePath)) {
-                string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-                File.Copy(priorResultsDBFilePath, workingFilePath);
+            string stepInputFolderName = GetJobParam("StepInputFolderName");
+            if (stepInputFolderName != "") {
+                string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, mResultsDBFileName);
+                if (File.Exists(priorResultsDBFilePath)) {
+                    string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+                    File.Copy(priorResultsDBFilePath, workingFilePath);
+                }
             }
         }
 
@@ -46,7 +48,6 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         public void ImportFilesToSQLiteResultsDB(string inputFolderPath, string fileNameList) {
             GetPriorResultsToWorkDir();
-            HashSet<string> fileNameSet = GetFileNameSet(fileNameList);
 
             FileListFilter reader = new FileListFilter();
             reader.AddFolderPath(inputFolderPath);
@@ -68,6 +69,7 @@ namespace AnalysisManager_Mage_PlugIn {
             string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
             string dbTableName = GetJobParam("DBTableName");
 
+            HashSet<string> fileNameSet = GetFileNameSet(fileNameList);
             foreach (Object[] row in fileList.Rows) {
                 string sourceFolderPath = row[folderIdx].ToString();
                 string sourceFileName = row[fileIdx].ToString();

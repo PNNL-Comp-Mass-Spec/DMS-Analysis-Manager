@@ -30,7 +30,6 @@ namespace AnalysisManager_Mage_PlugIn {
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
 
             // run the appropriate Mage pipeline(s) according to mode parameter
-
             blnSuccess = RunMage();
 
             //Add the current job data to the summary file
