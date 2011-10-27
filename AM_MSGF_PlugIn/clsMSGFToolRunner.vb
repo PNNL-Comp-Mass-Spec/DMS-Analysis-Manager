@@ -2073,6 +2073,17 @@ Public Class clsMSGFRunner
 			End If
 		End If
 
+		Try
+			' Delete the Console_Output.txt file if it is empty
+			Dim fiConsoleOutputFile As System.IO.FileInfo
+			fiConsoleOutputFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+			If fiConsoleOutputFile.Exists AndAlso fiConsoleOutputFile.Length = 0 Then
+				fiConsoleOutputFile.Delete()
+			End If
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete the " & MSGF_CONSOLE_OUTPUT & " file", ex)
+		End Try
+
 		Return blnSuccess
 
 	End Function

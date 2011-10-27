@@ -4,6 +4,7 @@ October 24, 2011
 	- Updated MSGF plugin to use n/a for the Collision_Mode column when processing non-MSGFDB results
 		- Necessary, since if the Collision_Mode column is empty, then MSGF reports the computed SpecProb values in the wrong results column
 	- Now reading the tool version from the MSAlign console output file
+	- Updated MSGFPlugin to delete the Console_Output.txt file if it is empty
 
 October 20, 2011
 	- Updated MSGF plugin to keep temporary files if KeepMSGFInputFile=True in the job parameters
