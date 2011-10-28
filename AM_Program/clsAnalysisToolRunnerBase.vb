@@ -132,7 +132,7 @@ Namespace AnalysisManagerBase
             m_WorkDir = m_mgrParams.GetParam("workdir")
             m_MachName = m_mgrParams.GetParam("MgrName")
             m_JobNum = m_jobParams.GetParam("Job")
-            m_Dataset = m_jobParams.GetParam("DatasetNum")
+			m_Dataset = m_jobParams.GetParam("DatasetNum")
             m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 

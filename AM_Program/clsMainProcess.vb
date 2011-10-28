@@ -441,7 +441,7 @@ Namespace AnalysisManagerProg
             Dim MgrName As String = m_MgrSettings.GetParam("MgrName")
             Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("Job"))
             Dim StepNum As Integer = CIntSafe(m_AnalysisTask.GetParam("Step"), 0)
-            Dim Dataset As String = m_AnalysisTask.GetParam("DatasetNum")
+			Dim Dataset As String = m_AnalysisTask.GetParam("DatasetNum")
             Dim WorkDirPath As String = m_MgrSettings.GetParam("workdir")
             Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
             Dim ErrorMessage As String = String.Empty

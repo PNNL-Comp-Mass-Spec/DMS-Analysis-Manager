@@ -13,8 +13,14 @@ Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources
 
 	Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
+	Private WithEvents mMSFileInfoScanner As MSFileInfoScanner.clsMSFileInfoScanner
+
+	Private mMSFileInfoScannerErrorCount As Integer
 
 	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+
+		Dim strDatasetName As String
+		strDatasetName = m_jobParams.GetParam("DatasetNum")
 
 		'Clear out list of files to delete or keep when packaging the results
 		clsGlobal.ResetFilesToDeleteOrKeep()
@@ -49,8 +55,11 @@ Public Class clsAnalysisResourcesMSGFDB
 		End If
 
 		If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			' _ScanStats.txt file not found
+			' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
+			If Not GenerateScanStatsFile(strDatasetName) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 		End If
 
 		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
@@ -60,17 +69,81 @@ Public Class clsAnalysisResourcesMSGFDB
 		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
 		clsGlobal.m_FilesToDeleteExt.Add("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
-		clsGlobal.m_FilesToDeleteExt.Add("_ScanStats.txt")
+		clsGlobal.m_FilesToDeleteExt.Add(SCAN_STATS_FILE_SUFFIX)
 		clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
 
 		' If the _dta.txt file is over 2 GB in size, then condense it
 
-		If Not ValidateDTATextFileSize(m_WorkingDir, m_jobParams.GetParam("datasetNum") & "_dta.txt") Then
+		If Not ValidateDTATextFileSize(m_WorkingDir, strDatasetName & "_dta.txt") Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function GenerateScanStatsFile(strDatasetName As String) As Boolean
+
+		Dim strRawDataType As String
+		Dim strInputFilePath As String = String.Empty
+
+		Dim blnSuccess As Boolean
+
+		Try
+			' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
+
+			strRawDataType = m_jobParams.GetParam("RawDataType")
+
+			Select Case strRawDataType.ToLower
+				Case RAW_DATA_TYPE_DOT_RAW_FILES
+					strInputFilePath = strDatasetName & DOT_RAW_EXTENSION
+				Case RAW_DATA_TYPE_DOT_UIMF_FILES
+					strInputFilePath = strDatasetName & DOT_UIMF_EXTENSION
+				Case Else
+					m_message = "Invalid dataset type for auto-generating ScanStats.txt file: " & strRawDataType
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+					Return False
+
+			End Select
+
+			strInputFilePath = System.IO.Path.Combine(m_WorkingDir, strInputFilePath)
+
+			If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+				m_message = "Error retrieving spectra file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
+				Return False
+			End If
+
+			' Make sure the raw data file does not get copied to the results folder
+			clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(strInputFilePath))
+
+			mMSFileInfoScannerErrorCount = 0
+			mMSFileInfoScanner = New MSFileInfoScanner.clsMSFileInfoScanner()
+
+			mMSFileInfoScanner.CheckFileIntegrity = False
+			mMSFileInfoScanner.CreateDatasetInfoFile = False
+			mMSFileInfoScanner.CreateScanStatsFile = True
+			mMSFileInfoScanner.SaveLCMS2DPlots = False
+			mMSFileInfoScanner.SaveTICAndBPIPlots = False
+			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
+
+			blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, m_WorkingDir)
+
+			System.Threading.Thread.Sleep(500)
+			Try
+				System.IO.File.Delete(strInputFilePath)
+			Catch ex As Exception
+				' Ignore errors here
+			End Try
+
+		Catch ex As Exception
+			m_message = "Exception in GenerateScanStatsFile"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return blnSuccess
 
 	End Function
 
@@ -169,4 +242,14 @@ Public Class clsAnalysisResourcesMSGFDB
 		End If
 	End Sub
 
+	Private Sub mMSFileInfoScanner_ErrorEvent(Message As String) Handles mMSFileInfoScanner.ErrorEvent
+		mMSFileInfoScannerErrorCount += 1
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " & Message)
+	End Sub
+
+	Private Sub mMSFileInfoScanner_MessageEvent(Message As String) Handles mMSFileInfoScanner.MessageEvent
+		If m_DebugLevel >= 3 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & Message)
+		End If
+	End Sub
 End Class

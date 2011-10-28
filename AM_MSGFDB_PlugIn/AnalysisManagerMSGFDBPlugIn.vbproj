@@ -57,6 +57,9 @@
     <Reference Include="CondenseCDTAFile">
       <HintPath>..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
+    <Reference Include="MSFileInfoScanner">
+      <HintPath>..\AM_Common\MSFileInfoScanner.dll</HintPath>
+    </Reference>
     <Reference Include="PeptideToProteinMapEngine">
       <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>

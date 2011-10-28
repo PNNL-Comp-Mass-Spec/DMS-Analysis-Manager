@@ -349,7 +349,7 @@ Namespace AnalysisManagerBase
                 If Not m_jobParams Is Nothing Then
                     .WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
                     .WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
-                    .WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("datasetNum"))
+					.WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("DatasetNum"))
                     .WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
                     .WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
                     .WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
