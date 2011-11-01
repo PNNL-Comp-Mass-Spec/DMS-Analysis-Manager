@@ -94,11 +94,11 @@ namespace AnalysisManager_Mage_PlugIn {
         #region Pipeline Update Message Handlers
 
         private void HandlePipelineUpdate(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
         }
 
         private void HandlePipelineCompletion(object sender, MageStatusEventArgs args) {
-            Console.WriteLine(args.Message);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
         }
 
 
