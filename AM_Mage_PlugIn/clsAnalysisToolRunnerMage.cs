@@ -27,10 +27,20 @@ namespace AnalysisManager_Mage_PlugIn {
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MageExtractor");
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
+
+            //Change the name of the log file for the local log file to the plug in log filename
+            String LogFileName = Path.Combine(m_WorkDir, "Mage_Log");
+            log4net.GlobalContext.Properties["LogName"] = LogFileName;
+            clsLogTools.ChangeLogFileName(LogFileName);
 
             // run the appropriate Mage pipeline(s) according to mode parameter
             blnSuccess = RunMage();
+
+            //Change the name of the log file for the local log file to the plug in log filename
+            LogFileName = m_mgrParams.GetParam("logfilename");
+            log4net.GlobalContext.Properties["LogName"] = LogFileName;
+            clsLogTools.ChangeLogFileName(LogFileName);
 
             //Add the current job data to the summary file
             if (!UpdateSummaryFile()) {
