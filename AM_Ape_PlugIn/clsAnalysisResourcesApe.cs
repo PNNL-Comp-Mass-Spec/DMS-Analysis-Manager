@@ -16,13 +16,77 @@ namespace AnalysisManager_Ape_PlugIn
             //Clear out list of files to delete or keep when packaging the blnSuccesss
             clsGlobal.ResetFilesToDeleteOrKeep();
 
+            bool blnSuccess = true;
+            blnSuccess = RunApeGetResources();
+
+            if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+
+        /// <summary>
+        /// run the Ape pipeline(s) listed in "ApeOperations" parameter
+        /// </summary>
+        protected bool RunApeGetResources()
+        {
+            bool blnSuccess = false;
+
+            string mageOperations = m_jobParams.GetParam("ApeOperations");
+            foreach (string mageOperation in mageOperations.Split(','))
+            {
+                blnSuccess = RunApeOperation(mageOperation.Trim());
+                if (!blnSuccess) break;
+            }
+
+            return blnSuccess;
+
+        }
+
+        /// <summary>
+        /// Run a single Ape operation
+        /// </summary>
+        /// <param name="apeOperation"></param>
+        /// <returns></returns>
+        private bool RunApeOperation(string apeOperation)
+        {
+            bool blnSuccess =  true;
+
+            switch (apeOperation)
+            {
+                case "RunWorkflow":
+                    blnSuccess = GetWorkflowFiles();
+                    break;
+                case "GetImprovResults":
+                    break;
+                case "GetViperResults":
+                    break;
+                default:
+                    // Future: throw an error
+                    break;
+            }
+            return blnSuccess;
+        }
+
+
+        #region Ape Operations
+
+        private bool GetWorkflowFiles()
+        {
+            bool blnSuccess = true;
+
             string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
             string analysisType = m_jobParams.GetParam("AnalysisType");
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
             {
                 //Errors were reported in function call, so just return
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
             string strInputFileExtension = string.Empty;
@@ -33,25 +97,31 @@ namespace AnalysisManager_Ape_PlugIn
             if (strApeWorkflowFileName == null || strApeWorkflowFileName.Length == 0)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Ape Workflow not defined in the job parameters for this job; unable to continue");
-                return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                return false;
             }
 
             string strApeWorkflowFileStoragePath = "\\\\gigasax\\DMS_Workflows\\Ape\\" + analysisType;
 
             //Now copy the Ape workflow file to the working directory
-           if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowFileStoragePath, m_WorkingDir))
+            if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowFileStoragePath, m_WorkingDir))
             {
                 //Errors were reported in function call, so just return
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
-            if (m_DebugLevel >= 1)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
-            }
-
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return blnSuccess;
         }
-    
+
+        private bool GetImprovResults()
+        {
+            bool blnSuccess = true;
+
+            return blnSuccess;
+        }
+
+        #endregion
+
+
+
     }
 }
