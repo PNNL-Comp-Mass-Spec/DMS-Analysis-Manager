@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using AnalysisManagerBase;
+using log4net;
 
 using Cyclops;
 
@@ -45,11 +46,21 @@ namespace AnalysisManager_Cyclops_PlugIn
             d_Params.Add("workDir", m_WorkDir);
             d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
             d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
-            
+
+            //Change the name of the log file for the local log file to the plug in log filename
+            String LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
+            log4net.GlobalContext.Properties["LogName"] = LogFileName;
+            clsLogTools.ChangeLogFileName(LogFileName);
+
             clsCyclopsModel cm = new clsCyclopsModel(d_Params);
             cm.AssembleModulesFromXML();
             blnSuccess = cm.Run();
-            
+
+            //Change the name of the log file for the local log file to the plug in log filename
+            LogFileName = m_mgrParams.GetParam("logfilename");
+            log4net.GlobalContext.Properties["LogName"] = LogFileName;
+            clsLogTools.ChangeLogFileName(LogFileName);
+
             //Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
             m_progress = PROGRESS_PCT_CYCLOPS_DONE;
