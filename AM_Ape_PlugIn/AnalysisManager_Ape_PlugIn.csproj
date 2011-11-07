@@ -49,6 +49,9 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesApe.cs" />
     <Compile Include="clsAnalysisToolRunnerApe.cs" />
+    <Compile Include="clsApeAMBase.cs" />
+    <Compile Include="clsApeAMGetImprovResults.cs" />
+    <Compile Include="clsApeAMRunWorkflow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

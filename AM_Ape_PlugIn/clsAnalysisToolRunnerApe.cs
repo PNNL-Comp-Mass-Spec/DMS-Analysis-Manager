@@ -37,12 +37,26 @@ namespace AnalysisManager_Ape_PlugIn
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 
-            blnSuccess =  RunApe();
+            try
+            {
+                blnSuccess = RunApe();
 
-            //Change the name of the log file for the local log file to the plug in log filename
-            LogFileName = m_mgrParams.GetParam("logfilename");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+                //Change the name of the log file for the local log file to the plug in log filename
+                LogFileName = m_mgrParams.GetParam("logfilename");
+                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                clsLogTools.ChangeLogFileName(LogFileName);
+            }
+            catch (Exception ex)
+            {
+                //Change the name of the log file for the local log file to the plug in log filename
+                LogFileName = m_mgrParams.GetParam("logfilename");
+                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                clsLogTools.ChangeLogFileName(LogFileName);
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Cyclops: " + ex.Message);
+                blnSuccess = false;
+            }
+
 
            // Store the Ape version info in the database
             //StoreToolVersionInfo("");
@@ -132,8 +146,10 @@ namespace AnalysisManager_Ape_PlugIn
 
        }
        
+        #region Ape Operations
+
        /// <summary>
-       /// Run a single Ape operation
+       /// Run defined Ape operation(s)
        /// </summary>
        /// <param name="apeOperation"></param>
        /// <returns></returns>
@@ -143,128 +159,23 @@ namespace AnalysisManager_Ape_PlugIn
            switch (apeOperation)
            {
                case "RunWorkflow":
-                   blnSuccess = RunWorkflow();
+                   clsApeAMRunWorkflow apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
+                   blnSuccess = apeWfObj.RunWorkflow(m_jobParams.GetParam("DataPackageID"));
                    break;
 
                case "GetImprovResults":
-                   blnSuccess = GetImprovResults();
+                   clsApeAMGetImprovResults apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
+                   blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
                    break;
 
                default:
+                   blnSuccess = false;
+                   m_message = "Ape Operation: "  + apeOperation + "not recognized.";
                    // Future: throw an error
                    break;
            }
            return blnSuccess;
        }
-
-       #region Ape Operations
-
-       private bool RunWorkflow()
-       {
-           bool blnSuccess = true;
-           SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
-           {
-               Console.WriteLine(msg);
-
-               if (done)
-               {
-                   if (success)
-                   {
-                       m_message = "Ape successfully ran workflow" + m_jobParams.GetParam("ApeWorkflowName");
-                       //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message + ", job " + m_JobNum);
-                       blnSuccess = true;
-                   }
-                   else
-                   {
-                       if (!_shouldExit)
-                       {
-                           m_message = "Error running Ape";
-                           //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
-                           blnSuccess = false;
-                       }
-                   }
-               }
-
-           });
-
-           string apeWorkflow = Path.Combine(m_WorkDir, m_jobParams.GetParam("ApeWorkflowName"));
-           string apeDatabase = Path.Combine(m_WorkDir, "Results.db3");
-           int apeWorkflowStart = Convert.ToInt32(m_jobParams.GetParam("ApeWorkflowStart"));
-           int apeWorkflowEnd = Convert.ToInt32(m_jobParams.GetParam("ApeWorkflowEnd"));
-
-           SqlServerToSQLite.StartWorkflow(apeWorkflowStart, apeWorkflowEnd, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
-
-           return blnSuccess;
-       }
-
-       private bool GetImprovResults()
-       {
-           bool blnSuccess = true;
-           SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
-           {
-               Console.WriteLine(msg);
-
-               if (done)
-               {
-                   if (success)
-                   {
-                       m_message = "Ape successfully ran workflow" + m_jobParams.GetParam("ApeWorkflowName");
-                       //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message + ", job " + m_JobNum);
-                       blnSuccess = true;
-                   }
-                   else
-                   {
-                       if (!_shouldExit)
-                       {
-                           m_message = "Error running Ape";
-                           //clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
-                           blnSuccess = false;
-                       }
-                   }
-               }
-
-           });
-
-           string apeImprovMTSServerName = m_jobParams.GetParam("ImprovMTSServer");
-           string apeImprovMTSDatabaseName = m_jobParams.GetParam("ImprovMTSDatabase");
-           string apeImprovMinPMTQuality = m_jobParams.GetParam("ImprovMinPMTQuality");
-           string apeDatabase = Path.Combine(m_WorkDir, "Results.db3");
-
-           List<string> paramList = new List<string>();
-           paramList.Add(apeImprovMTSDatabaseName + ";@MTDBName;" + apeImprovMTSDatabaseName + ";False;sqldbtype.varchar;;");
-           paramList.Add(apeImprovMinPMTQuality + ";@minimumPMTQualityScore;0;False;sqldbtype.real;;");
-           paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
-           paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
-
-           string dotnetConnString = "Server=" + apeImprovMTSServerName + ";database=PRISM_IFC;uid=mtuser;Password=mt4fun";
-
-          SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 4, dotnetConnString, GetExperimentList(), apeDatabase, mHandle);
-
-           return blnSuccess;
-       }
-
-       private string GetExperimentList()
-       {
-           string constr = m_mgrParams.GetParam("connectionstring");
-           string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + m_jobParams.GetParam("DataPackageID");
-           string expList = string.Empty;
-           using (SqlConnection conn = new SqlConnection(constr))
-           {
-               conn.Open();
-               // Get the experiments from the Data Package
-               SqlCommand query = new SqlCommand(sqlText, conn);
-               using (SqlDataReader reader = query.ExecuteReader())
-               {
-                   while (reader.Read())
-                   {
-                       expList += reader[0].ToString() + ", ";
-                   }
-               }
-           }
-
-           return expList;
-       }
-
 
        #endregion
 
