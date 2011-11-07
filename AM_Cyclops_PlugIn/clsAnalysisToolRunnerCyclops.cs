@@ -42,7 +42,6 @@ namespace AnalysisManager_Cyclops_PlugIn
             d_Params.Add("Job", m_jobParams.GetParam("Job"));
             d_Params.Add("RDLL", @"C:\Program Files\R\R-2.13.1\bin\i386");
             d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
-            //d_Params.Add("CyclopsWorkflowName", "Cyclops_CSV_FileExample.xml");
             d_Params.Add("workDir", m_WorkDir);
             d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
             d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
@@ -73,7 +72,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             //Make sure objects are released
             System.Threading.Thread.Sleep(2000);
-            //2 second delay
+            //2 second delay          
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
@@ -106,12 +105,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             //// Move the Plots folder to the result files folder
             //Joe: Are you going to have a plots folder?
-            //System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-            //diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
+            System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
+            diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
 
-            //string strTargetFolderPath = null;
-            //strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-            //diPlotsFolder.MoveTo(strTargetFolderPath);
+            string strTargetFolderPath = null;
+            strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            diPlotsFolder.MoveTo(strTargetFolderPath);
 
             result = CopyResultsFolderToServer();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
