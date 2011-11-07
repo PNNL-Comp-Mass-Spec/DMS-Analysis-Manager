@@ -34,9 +34,12 @@
     <Reference Include="AnalysisManagerProg">
       <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+    <Reference Include="Cyclops, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Cyclops\Cyclops\bin\Release\log4net.dll</HintPath>
+      <HintPath>bin\Debug\Cyclops.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\AM_Ape_PlugIn\bin\Debug\log4net.dll</HintPath>
     </Reference>
     <Reference Include="R.NET, Version=1.4.1.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
@@ -55,17 +58,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesCyclops.cs" />
     <Compile Include="clsAnalysisToolRunnerCyclops.cs" />
-    <Compile Include="clsLogTools.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Cyclops\Cyclops\Cyclops.csproj">
-      <Project>{4C274553-EDFD-4983-8610-004200798179}</Project>
-      <Name>Cyclops</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Logging.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -51,15 +51,28 @@ namespace AnalysisManager_Cyclops_PlugIn
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 
-            clsCyclopsModel cm = new clsCyclopsModel(d_Params);
-            cm.AssembleModulesFromXML();
-            blnSuccess = cm.Run();
+            try
+            {
+                clsCyclopsModel cm = new clsCyclopsModel(d_Params);
+                cm.AssembleModulesFromXML();
+                blnSuccess = cm.Run();
 
-            //Change the name of the log file for the local log file to the plug in log filename
-            LogFileName = m_mgrParams.GetParam("logfilename");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+                //Change the name of the log file for the local log file to the plug in log filename
+                LogFileName = m_mgrParams.GetParam("logfilename");
+                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                clsLogTools.ChangeLogFileName(LogFileName);
+            }
+            catch (Exception ex)
+            {
+                //Change the name of the log file for the local log file to the plug in log filename
+                LogFileName = m_mgrParams.GetParam("logfilename");
+                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                clsLogTools.ChangeLogFileName(LogFileName);
 
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Cyclops: " + ex.Message);
+                blnSuccess = false;
+            }
+  
             //Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
             m_progress = PROGRESS_PCT_CYCLOPS_DONE;
