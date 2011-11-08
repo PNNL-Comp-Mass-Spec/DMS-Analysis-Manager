@@ -75,7 +75,7 @@ Namespace AnalysisManagerBase
 
         '    'Verify the results folder exists
         '    If Not System.IO.Directory.Exists(ResultsFolderPath) Then
-        '        m_logger.PostEntry("Results folder not found, job " & m_jobParams.GetParam("Job"), _
+		'        m_logger.PostEntry("Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job"), _
         '            ILogger.logMsgType.logError, LOG_DATABASE)
         '        m_message = "Results folder not found"
         '        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -83,7 +83,7 @@ Namespace AnalysisManagerBase
 
         '    'Verify xfer directory exists
         '    If Not System.IO.Directory.Exists(XferDir) Then
-        '        m_logger.PostEntry("Transfer folder not found, job " & m_jobParams.GetParam("Job"), _
+		'        m_logger.PostEntry("Transfer folder not found, job " & m_jobParams.GetParam("StepParameters", "Job"), _
         '            ILogger.logMsgType.logError, LOG_DATABASE)
         '        m_message = "Transfer folder not found"
         '        CopyFailedResultsToArchiveFolder(ResultsFolderPath)
@@ -102,7 +102,7 @@ Namespace AnalysisManagerBase
         '        Try
         '            System.IO.Directory.CreateDirectory(XferDir)
         '        Catch err As Exception
-        '            m_logger.PostError("Unable to create server results folder, job " & m_jobParams.GetParam("Job"), _
+		'            m_logger.PostError("Unable to create server results folder, job " & m_jobParams.GetParam("StepParameters", "Job"), _
         '                    err, LOG_DATABASE)
         '            m_message = "Unable to create server results folder"
         '            CopyFailedResultsToArchiveFolder(ResultsFolderPath)
@@ -114,7 +114,7 @@ Namespace AnalysisManagerBase
         '    Try
         '        CopyDirectory(ResultsFolderPath, System.IO.Path.Combine(XferDir, ResultsFolderName), True, DEFAULT_RETRY_COUNT, False)
         '    Catch err As Exception
-        '        m_logger.PostError("Error copying results folder, job " & m_jobParams.GetParam("Job"), err, LOG_DATABASE)
+		'        m_logger.PostError("Error copying results folder, job " & m_jobParams.GetParam("StepParameters", "Job"), err, LOG_DATABASE)
         '        m_message = "Unable to create server results folder"
         '        CopyFailedResultsToArchiveFolder(ResultsFolderPath)
         '        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -342,14 +342,14 @@ Namespace AnalysisManagerBase
                 .WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
                 If Not m_jobParams Is Nothing Then
                     .WriteLine("JobToolDescription" & ControlChars.Tab & m_jobParams.GetCurrentJobToolDescription())
-                    .WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("Job"))
-                    .WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("Step"))
+					.WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
+					.WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
                 End If
                 .WriteLine("Date" & ControlChars.Tab & System.DateTime.Now().ToString)
                 If Not m_jobParams Is Nothing Then
                     .WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
                     .WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
-					.WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("DatasetNum"))
+					.WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("JobParameters", "DatasetNum"))
                     .WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
                     .WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
                     .WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))

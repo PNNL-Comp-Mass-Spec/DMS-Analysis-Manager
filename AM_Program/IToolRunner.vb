@@ -34,7 +34,6 @@ Namespace AnalysisManagerBase
 
         Function RunTool() As IJobParams.CloseOutType
 
-        Sub SetResourcerDataFileList(ByVal DataFileList() As String)
 #End Region
 
     End Interface

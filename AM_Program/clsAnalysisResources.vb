@@ -116,12 +116,6 @@ Namespace AnalysisManagerBase
                 Return m_message
             End Get
         End Property
-
-        'Public ReadOnly Property DataFileList() As String() Implements IAnalysisResources.DataFileList
-        '	Get
-        '		Return m_DataFileList
-        '	End Get
-        'End Property
 #End Region
 
 #Region "Event handlers"
@@ -191,7 +185,7 @@ Namespace AnalysisManagerBase
 
             m_mgrParams = mgrParams
             m_jobParams = jobParams
-            '			m_JobNum = m_jobParams.GetParam("Job")
+			'			m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
             '            m_MachName = m_mgrParams.GetParam("MgrName")
             m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
@@ -353,7 +347,7 @@ Namespace AnalysisManagerBase
                 End If
 
                 Dim Fi As New System.IO.FileInfo(SourceFile)
-				Dim TargetName As String = m_jobParams.GetParam("DatasetNum") & Fi.Extension
+				Dim TargetName As String = m_jobParams.GetParam("JobParameters", "DatasetNum") & Fi.Extension
 				DestFilePath = System.IO.Path.Combine(OutDir, TargetName)
 
 				If CreateStoragePathInfoOnly Then
@@ -782,7 +776,7 @@ Namespace AnalysisManagerBase
 														   ByVal FileExtension As String, _
 														   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim DataFileName As String = DSName & FileExtension
 			Dim DSFolderPath As String = FindValidFolder(DSName, DataFileName)
 
@@ -808,7 +802,7 @@ Namespace AnalysisManagerBase
 			'Data files are in a subfolder off of the main dataset folder
 			'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim ServerPath As String = FindValidFolder(DSName, "", "*" & DOT_D_EXTENSION)
 
 			Dim DSFolders() As String
@@ -870,8 +864,8 @@ Namespace AnalysisManagerBase
 														 ByRef SourceFilePath As String) As Boolean
 
 			' Copies this dataset's .mzXML file to the working directory
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
-			Dim DatasetID As String = m_jobParams.GetParam("DatasetID")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
+			Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 			Dim MSXmlFoldernameBase As String = "MSXML_Gen_1_"
 			Dim MzXMLFilename As String = DSName & ".mzXML"
 			Dim ServerPath As String
@@ -939,8 +933,8 @@ Namespace AnalysisManagerBase
 		   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 			' Copies this dataset's .mzXML file to the working directory
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
-			Dim DatasetID As String = m_jobParams.GetParam("DatasetID")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
+			Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 			Dim ServerPath As String
 			Dim ScanStatsFilename As String
 
@@ -1053,7 +1047,7 @@ Namespace AnalysisManagerBase
 														  ByVal objFileNamesToSkip As List(Of String)) As Boolean
 
 			'Copies a data folder ending in FolderExtension to the working directory
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
 			If Not FolderExtension.StartsWith(".") Then
 				FolderExtension = "." & FolderExtension
@@ -1113,7 +1107,7 @@ Namespace AnalysisManagerBase
 
 			Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim ChameleonCachedDataFolder As String = m_mgrParams.GetParam("ChameleonCachedDataFolder")
 			Dim diCachedDataFolder As System.IO.DirectoryInfo
 
@@ -1390,7 +1384,7 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Private Function RetrieveSFolders(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim ZipFiles() As String
 			Dim DSWorkFolder As String
 			Dim UnZipper As clsIonicZipTools
@@ -1522,7 +1516,7 @@ Namespace AnalysisManagerBase
 		Private Function CopySFoldersToWorkDir(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 			'
-			Dim DSName As String = m_jobParams.GetParam("DatasetNum")
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim DSFolderPath As String = FindValidFolder(DSName, "s*.zip")
 
 			Dim ZipFiles() As String
@@ -1882,7 +1876,7 @@ Namespace AnalysisManagerBase
 					If FileNameToFind.Length > 0 Then
 						m_message &= " containing file " & FileNameToFind
 					End If
-					Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("Job") & ", Dataset " & DSName
+					Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("StepParameters", "Job") & ", Dataset " & DSName
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
 				End If
 
@@ -2082,7 +2076,7 @@ Namespace AnalysisManagerBase
 				' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 				blnSuccess = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion(m_jobParams.GetParam("ToolName")), _
 				 System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
-				 WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("DatasetID")))
+				 WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("JobParameters", "DatasetID")))
 
 				If blnSuccess Then
 					If m_DebugLevel >= 3 Then
@@ -2190,13 +2184,13 @@ Namespace AnalysisManagerBase
 			Dim SourceFolderPath As String
 
 			'Retrieve zipped DTA file
-			SourceFileName = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
+			SourceFileName = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_dta.zip"
 			SourceFolderPath = FindDataFile(SourceFileName)
 
 			If SourceFolderPath = "" Then
 				' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
 
-				SourceFileName = m_jobParams.GetParam("DatasetNum") & "_dta.txt"
+				SourceFileName = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_dta.txt"
 				SourceFolderPath = FindDataFile(SourceFileName)
 
 				If SourceFolderPath = "" Then
@@ -2245,7 +2239,7 @@ Namespace AnalysisManagerBase
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
 				Dim BackWorker As New System.ComponentModel.BackgroundWorker
 				Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
-				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), m_WorkingDir)
+				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file")
@@ -2265,7 +2259,7 @@ Namespace AnalysisManagerBase
 		Protected Overridable Function RetrieveOutFiles(ByVal UnConcatenate As Boolean) As Boolean
 
 			'Retrieve zipped OUT file
-			Dim ZippedFileName As String = m_jobParams.GetParam("DatasetNum") & "_out.zip"
+			Dim ZippedFileName As String = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_out.zip"
 			Dim ZippedFolderName As String = FindDataFile(ZippedFileName)
 
 			If ZippedFolderName = "" Then Return False 'No folder found containing the zipped OUT files
@@ -2288,7 +2282,7 @@ Namespace AnalysisManagerBase
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated OUT file")
 				Dim BackWorker As New System.ComponentModel.BackgroundWorker
 				Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
-				FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("DatasetNum"), m_mgrParams.GetParam("WorkDir"))
+				FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_mgrParams.GetParam("WorkDir"))
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated OUT file")

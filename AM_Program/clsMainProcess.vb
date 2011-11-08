@@ -192,7 +192,7 @@ Namespace AnalysisManagerProg
                         'There was a problem deleting non result files with the last job.  Attempt to delete files again
                         If Not CleanWorkDir(strWorkingDir) Then
                             If blnOneTaskStarted Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job") & "; see folder " & strWorkingDir)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & strWorkingDir)
                                 m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
                             Else
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & strWorkingDir)
@@ -439,9 +439,9 @@ Namespace AnalysisManagerProg
 
             Dim eToolRunnerResult As IJobParams.CloseOutType
             Dim MgrName As String = m_MgrSettings.GetParam("MgrName")
-            Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("Job"))
-            Dim StepNum As Integer = CIntSafe(m_AnalysisTask.GetParam("Step"), 0)
-			Dim Dataset As String = m_AnalysisTask.GetParam("DatasetNum")
+			Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("StepParameters", "Job"))
+			Dim StepNum As Integer = CIntSafe(m_AnalysisTask.GetParam("StepParameters", "Step"), 0)
+			Dim Dataset As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
             Dim WorkDirPath As String = m_MgrSettings.GetParam("workdir")
             Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
             Dim ErrorMessage As String = String.Empty
@@ -514,22 +514,20 @@ Namespace AnalysisManagerProg
             CreateStatusFlagFile()
             Try
                 eToolRunnerResult = m_Resource.GetResources()
-                If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    '						m_ToolRunner.SetResourcerDataFileList(m_Resource.DataFileList)
-                Else
-                    ErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
-                    If Not m_Resource.Message Is Nothing Then
-                        ErrorMessage &= "; " & m_Resource.Message
-                    End If
+				If Not eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+					ErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
+					If Not m_Resource.Message Is Nothing Then
+						ErrorMessage &= "; " & m_Resource.Message
+					End If
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
-                    m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_Resource.Message)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+					m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_Resource.Message)
 
-                    clsGlobal.CleanWorkDir(WorkDirPath)
-                    UpdateStatusIdle("Error encountered: " & ErrorMessage)
-                    clsGlobal.DeleteStatusFlagFile(m_DebugLevel)
-                    Return False
-                End If
+					clsGlobal.CleanWorkDir(WorkDirPath)
+					UpdateStatusIdle("Error encountered: " & ErrorMessage)
+					clsGlobal.DeleteStatusFlagFile(m_DebugLevel)
+					Return False
+				End If
             Catch Err As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Getting resources, " & _
                  Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
@@ -655,7 +653,7 @@ Namespace AnalysisManagerProg
                     'Clean the working directory
                     Try
                         If Not CleanWorkDir(WorkDirPath) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("Job"))
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
                             CreateErrorDeletingFilesFlagFile()
                             Return False

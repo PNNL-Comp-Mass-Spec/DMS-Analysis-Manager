@@ -19,7 +19,6 @@ Namespace AnalysisManagerBase
 
 #Region "Properties"
 		ReadOnly Property Message() As String
-		'		ReadOnly Property DataFileList() As String()
 #End Region
 
 #Region "Methods"

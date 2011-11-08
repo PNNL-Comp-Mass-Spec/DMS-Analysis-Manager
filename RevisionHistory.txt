@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+November 7, 2011
+	- Updated the job parameter objects to track section name
+		- Can lookup job parameter by name alone, or using section name and parameter name
+
 October 27, 2011
 	- Updated MSGFDB to create the ScanStats.txt file from a .Raw file if the ScanStats.txt file cannot be found in a MASIC results folder
 
@@ -103,7 +107,7 @@ August 22, 2011
 	- Updated the MSGF plugin support for MSGF-DB results
 
 August 19, 2011
-	- Updated teh MSGF plugin to support columns Ions_Observed, Ions_Expected, and DelM_PPM (though they're not actually used by the plugin)
+	- Updated the MSGF plugin to support columns Ions_Observed, Ions_Expected, and DelM_PPM (though they're not actually used by the plugin)
 	- Now determining the location of ReadW using ReAdWProgLoc
 
 August 17, 2011

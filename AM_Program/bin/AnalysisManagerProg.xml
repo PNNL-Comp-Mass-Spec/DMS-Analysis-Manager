@@ -12,12 +12,57 @@ AnalysisManagerProg
  </summary>
 	<param name="mgrParams">IMgrParams object containing manager parameters</param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.InitializeJobParams">
+	<summary>
+ Initializes the job parameters dictionary 
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetParam(System.String)">
 	<summary>
- Gets a task parameter from the task params class
+ Gets a job parameter with the given name (in any parameter section)
  </summary>
 	<param name="Name">Key name for parameter</param>
-	<returns>Value for specified parameter</returns>
+	<returns>Value for specified parameter; empty string if not found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetParam(System.String,System.String)">
+	<summary>
+ Gets a job parameter with the given name in the specified parameter section
+ </summary>
+	<param name="Section">Section name for parameter</param>
+	<param name="Name">Key name for parameter</param>
+	<returns>Value for specified parameter; empty string if not found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SetParam(System.String,System.String)">
+	<summary>
+ Add/updates the value for the given parameter
+ </summary>
+	<param name="ParamName">Parameter name</param>
+	<param name="ParamValue">Parameter value</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.SetParam(System.String,System.String,System.String)">
+	<summary>
+ Add/updates the value for the given parameter
+ </summary>
+	<param name="Section">Section name</param>
+	<param name="ParamName">Parameter name</param>
+	<param name="ParamValue">Parameter value</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.TryGetParam(System.String,System.String@)">
+	<summary>
+ Attempts to retrieve the specified parameter (looks in all parameter sections)
+ </summary>
+	<param name="ParamName">Parameter Name</param>
+	<param name="ParamValue">Output: parameter value</param>
+	<returns>True if success, False if not found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.TryGetParam(System.String,System.String,System.String@)">
+	<summary>
+ Attempts to retrieve the specified parameter in the specified parameter section
+ </summary>
+	<param name="Section">Section Name</param>
+	<param name="ParamName">Parameter Name</param>
+	<param name="ParamValue">Output: parameter value</param>
+	<returns>True if success, False if not found</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.AddAdditionalParameter(System.String,System.String)">
 	<summary>
@@ -25,7 +70,16 @@ AnalysisManagerProg
  </summary>
 	<param name="ParamName">Name of parameter</param>
 	<param name="ParamValue">Value for parameter</param>
-	<returns>TRUE for success, FALSE for error</returns>
+	<returns>True if success, False if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisJob.AddAdditionalParameter(System.String,System.String,System.String)">
+	<summary>
+ Adds a parameter to the class
+ </summary>
+	<param name="SectionName">Section name for parameter</param>
+	<param name="ParamName">Name of parameter</param>
+	<param name="ParamValue">Value for parameter</param>
+	<returns>True if success, False if an error</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.RequestTask">
 	<summary>
@@ -74,7 +128,7 @@ AnalysisManagerProg
 	<remarks>EvalCode and EvalMsg not presently used</remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisJob.GetCurrentJobToolDescription">
 	<summary>
- Uses the "ToolName" and "StepTool" entries in m_jobParams to generate the tool name for the current analysis job
+ Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
  Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
  </summary>
 	<returns>Tool name</returns>

@@ -72,9 +72,7 @@ Namespace AnalysisManagerBase
         Protected m_FileVersion As String
         Protected m_FileDate As String
 
-        Protected m_ResourcerDataFileList() As String
-
-        Protected m_IonicZipTools As clsIonicZipTools
+		Protected m_IonicZipTools As clsIonicZipTools
         Protected m_NeedToAbortProcessing As Boolean
 
 #End Region
@@ -131,8 +129,8 @@ Namespace AnalysisManagerBase
             m_StatusTools = StatusTools
             m_WorkDir = m_mgrParams.GetParam("workdir")
             m_MachName = m_mgrParams.GetParam("MgrName")
-            m_JobNum = m_jobParams.GetParam("Job")
-			m_Dataset = m_jobParams.GetParam("DatasetNum")
+			m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
+			m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
             m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
@@ -605,7 +603,7 @@ Namespace AnalysisManagerBase
                 swToolVersionFile.WriteLine("Date: " & System.DateTime.Now().ToString(DATE_TIME_FORMAT))
                 swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
                 swToolVersionFile.WriteLine("Job: " & m_JobNum)
-                swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("Step"))
+				swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
                 swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
                 swToolVersionFile.WriteLine("ToolVersionInfo:")
 
@@ -702,11 +700,11 @@ Namespace AnalysisManagerBase
 
                 .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
                 .Parameters.Item("@job").Direction = ParameterDirection.Input
-                .Parameters.Item("@job").Value = CInt(m_jobParams.GetParam("Job"))
+				.Parameters.Item("@job").Value = CInt(m_jobParams.GetParam("StepParameters", "Job"))
 
                 .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
                 .Parameters.Item("@step").Direction = ParameterDirection.Input
-                .Parameters.Item("@step").Value = CInt(m_jobParams.GetParam("Step"))
+				.Parameters.Item("@step").Value = CInt(m_jobParams.GetParam("StepParameters", "Step"))
 
                 .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
                 .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
@@ -797,7 +795,7 @@ Namespace AnalysisManagerBase
 
                 'Add the data
                 clsSummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
-                clsSummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("Step"))
+				clsSummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
                 clsSummaryFile.Add("Date" & ControlChars.Tab & System.DateTime.Now().ToString)
                 clsSummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
                 clsSummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
@@ -817,8 +815,8 @@ Namespace AnalysisManagerBase
                 clsSummaryFile.Add(System.Environment.NewLine)
 
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") _
-                 & " - " & ex.Message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
+				 & " - " & ex.Message)
                 Return False
             End Try
 
@@ -1088,16 +1086,6 @@ Namespace AnalysisManagerBase
 
         End Function
 
-        'TODO: Is this really necessary now?
-        Public Sub SetResourcerDataFileList(ByVal DataFileList() As String) Implements IToolRunner.SetResourcerDataFileList
-            If DataFileList Is Nothing Then
-                ReDim m_ResourcerDataFileList(-1)
-            Else
-                ReDim m_ResourcerDataFileList(DataFileList.Length - 1)
-                Array.Copy(DataFileList, m_ResourcerDataFileList, DataFileList.Length)
-            End If
-        End Sub
-
         ''' <summary>
         ''' Copies the files from the results folder to the transfer folder on the server
         ''' </summary>
@@ -1126,7 +1114,7 @@ Namespace AnalysisManagerBase
 
                 ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
                 If ResultsFolderName Is Nothing OrElse ResultsFolderName.Length = 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("Job"))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
                     m_message = "Results folder not found"
                     'TODO: Handle errors
                     ' Without a source folder; there isn't much we can do
@@ -1137,7 +1125,7 @@ Namespace AnalysisManagerBase
 
                 'Verify the source folder exists
                 If Not System.IO.Directory.Exists(SourceFolderPath) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("Job") & ", folder " & SourceFolderPath)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
                     m_message = "Results folder not found"
                     'TODO: Handle errors
                     ' Without a source folder; there isn't much we can do
@@ -1168,7 +1156,7 @@ Namespace AnalysisManagerBase
                 'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
                 ' First make sure "DatasetNum" is defined
                 If String.IsNullOrEmpty(m_Dataset) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("Job"))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
                     m_message = "Dataset name is undefined"
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
