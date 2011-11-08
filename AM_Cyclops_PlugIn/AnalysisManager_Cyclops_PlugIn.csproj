@@ -36,14 +36,14 @@
     </Reference>
     <Reference Include="Cyclops, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\Cyclops.dll</HintPath>
+      <HintPath>lib\Cyclops.dll</HintPath>
     </Reference>
     <Reference Include="log4net">
-      <HintPath>..\AM_Ape_PlugIn\bin\Debug\log4net.dll</HintPath>
+      <HintPath>..\AM_Common\log4net.dll</HintPath>
     </Reference>
     <Reference Include="R.NET, Version=1.4.1.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\R Files\RdotNet\32bit\R.NET.dll</HintPath>
+      <HintPath>lib\R.NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -61,6 +61,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\AM_Common"
+copy "$(TargetPath)" "$(ProjectDir)..\AM_Program\bin"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

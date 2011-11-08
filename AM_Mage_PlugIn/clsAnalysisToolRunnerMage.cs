@@ -27,6 +27,9 @@ namespace AnalysisManager_Mage_PlugIn {
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
+		    // Store the Mage version info in the database
+			StoreToolVersionInfo();
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
 
             //Change the name of the log file for the local log file to the plug in log filename
@@ -49,7 +52,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             if (!blnSuccess) {
                 // Move the source files and any results to the Failed Job folder
-                // Useful for debugging MultiAlign problems
+                // Useful for debugging problems
                 CopyFailedResultsToArchiveFolder();
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
@@ -60,20 +63,20 @@ namespace AnalysisManager_Mage_PlugIn {
 
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                //TODO: What do we do here?
+                // MakeResultsFolder handles posting to local log, so set database error message and exit
+				m_message = "Error making results folder";
                 return result;
             }
 
             result = MoveResultFiles();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                //TODO: What do we do here?
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+               // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+				m_message = "Error moving files into results folder";
                 return result;
             }
 
             result = CopyResultsFolderToServer();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                //TODO: What do we do here?
                 // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return result;
             }
@@ -205,30 +208,22 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc) {
+        protected bool StoreToolVersionInfo() {
 
             string strToolVersionInfo = string.Empty;
-            System.IO.FileInfo ioMultiAlignProg = default(System.IO.FileInfo);
+			string strMagePath;
 
             if (m_DebugLevel >= 2) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
             }
 
-            ioMultiAlignProg = new System.IO.FileInfo(strMultiAlignProgLoc);
-
-            // Lookup the version of MultiAlign
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioMultiAlignProg.FullName);
-
-            // Lookup the version of additional DLLs
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"));
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"));
+            // Lookup the version of Mage
+			strMagePath = System.IO.Path.Combine(m_WorkDir, "Mage.dll");
+			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMagePath);
 
             // Store paths to key DLLs in ioToolFiles
             System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
-            ioToolFiles.Add(new System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
+            ioToolFiles.Add(new System.IO.FileInfo(strMagePath));
 
             try {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
@@ -238,7 +233,6 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
         }
-
 
     }
 }

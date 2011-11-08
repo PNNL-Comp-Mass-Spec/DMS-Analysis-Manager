@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnalysisManagerProg">
+      <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    </Reference>
     <Reference Include="Ape">
       <HintPath>lib\Ape.dll</HintPath>
     </Reference>
@@ -55,15 +58,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AM_Program\AnalysisManagerProg.vbproj">
-      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
-      <Name>AnalysisManagerProg</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Ape.vbproj" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\AM_Common"
+copy "$(TargetPath)" "$(ProjectDir)..\AM_Program\bin"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
