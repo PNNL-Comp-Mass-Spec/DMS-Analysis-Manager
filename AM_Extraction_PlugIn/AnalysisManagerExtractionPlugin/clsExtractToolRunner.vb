@@ -975,17 +975,11 @@ Public Class clsExtractToolRunner
             ioPHRP = New System.IO.DirectoryInfo(progLoc)
 
             ' verify that program file exists
-            If ioPHRP.Exists Then
-                Dim oAssemblyName As System.Reflection.AssemblyName
-                Dim strDLLPath As String = System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll")
-                oAssemblyName = System.Reflection.Assembly.LoadFrom(strDLLPath).GetName
-
-                Dim strNameAndVersion As String
-                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
-            End If
+			If ioPHRP.Exists Then
+				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
+			End If
 
         Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
@@ -995,18 +989,18 @@ Public Class clsExtractToolRunner
         If m_jobParams.GetParam("ResultType") = "Peptide_Hit" Then
             'Sequest result type
 
-            ' Lookup the version of the PeptideFileExtractor
-            Try
-                Dim oAssemblyName As System.Reflection.AssemblyName
-                oAssemblyName = System.Reflection.Assembly.Load("PeptideFileExtractor").GetName
+			' Lookup the version of the PeptideFileExtractor
+			Try
+				Dim oAssemblyName As System.Reflection.AssemblyName
+				oAssemblyName = System.Reflection.Assembly.Load("PeptideFileExtractor").GetName
 
-                Dim strNameAndVersion As String
-                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+				Dim strNameAndVersion As String
+				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
-            Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
-            End Try
+			Catch ex As System.Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
+			End Try
 
             ' Lookup the version of the PeptideProphetRunner
 
@@ -1014,36 +1008,11 @@ Public Class clsExtractToolRunner
             Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
 
             If ioPeptideProphetRunner.Exists() Then
-                ' Lookup the version of the PeptideProphetRunner
-                Try
-                    Dim oAssemblyName As System.Reflection.AssemblyName
-                    oAssemblyName = System.Reflection.Assembly.LoadFrom(ioPeptideProphetRunner.FullName).GetName
+				' Lookup the version of the PeptideProphetRunner
+				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioPeptideProphetRunner.FullName)
 
-                    Dim strNameAndVersion As String
-                    strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                    strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-                Catch ex As System.Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideProphetRunner: " & ex.Message)
-                End Try
-
-                ' Lookup the version of the PeptideProphetLibrary
-                Try
-                    Dim oAssemblyName As System.Reflection.AssemblyName
-                    Dim strDLLPath As String = System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll")
-                    oAssemblyName = System.Reflection.Assembly.LoadFrom(strDLLPath).GetName
-
-                    Dim strNameAndVersion As String
-                    strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                    strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-                Catch ex As System.Exception
-                    ' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
-                    '  <startup useLegacyV2RuntimeActivationPolicy="true">
-                    '    <supportedRuntime version="v4.0" />
-                    '  </startup>
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideProphetLibrary: " & ex.Message)
-                End Try
+				' Lookup the version of the PeptideProphetLibrary
+				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
             End If
 
 

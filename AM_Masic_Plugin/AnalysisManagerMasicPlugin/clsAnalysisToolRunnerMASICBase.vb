@@ -398,26 +398,14 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-        Dim strMASICExePath As String = m_mgrParams.GetParam("masicprogloc")
+		Dim strMASICExePath As String = m_mgrParams.GetParam("masicprogloc")
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of MASIC
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            Dim ioFile As System.IO.FileInfo = New System.IO.FileInfo(strMASICExePath)
-            oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFile.FullName).GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MASIC: " & ex.Message)
-        End Try
+		' Lookup the version of MASIC
+		MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strMASICExePath)
 
         ' Store path to MASIC.exe in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

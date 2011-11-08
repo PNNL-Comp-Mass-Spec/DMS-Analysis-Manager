@@ -397,34 +397,15 @@ Public Class clsDtaGenToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of DeconMSn
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.LoadFrom(strDtaGeneratorAppPath).GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSn: " & ex.Message)
-        End Try
+		' Lookup the version of DeconMSn
+		MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDtaGeneratorAppPath)
 
         ' Lookup the version of DeconMSnEngine
         Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            Dim ioDeconMSnInfo As System.IO.FileInfo = New System.IO.FileInfo(strDtaGeneratorAppPath)
+			Dim ioDeconMSnInfo As System.IO.FileInfo = New System.IO.FileInfo(strDtaGeneratorAppPath)
+			strDeconMSnEnginePath = System.IO.Path.Combine(ioDeconMSnInfo.DirectoryName, "DeconMSnEngine.dll")
 
-            If ioDeconMSnInfo.Exists Then
-                Dim ioDeconMSnEngineInfo As System.IO.FileInfo
-                strDeconMSnEnginePath = System.IO.Path.Combine(ioDeconMSnInfo.DirectoryName, "deconmsnengine.dll")
-                ioDeconMSnEngineInfo = New System.IO.FileInfo(strDeconMSnEnginePath)
-                oAssemblyName = System.Reflection.Assembly.LoadFrom(ioDeconMSnEngineInfo.FullName).GetName
-
-                Dim strNameAndVersion As String
-                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-            End If           
+			MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconMSnEnginePath)
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSnEngine.dll: " & ex.Message)

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMultiAlignPlugIn", "AnalysisManagerMultiAlignPlugIn.vbproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMultiAlignPlugIn", "AnalysisManagerMultiAlignPlugIn.vbproj", "{9733CBC1-40A3-48B8-9416-E6ADED82184E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9349F3CD-E706-455A-A002-20A1C4EE3AB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9733CBC1-40A3-48B8-9416-E6ADED82184E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9733CBC1-40A3-48B8-9416-E6ADED82184E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9733CBC1-40A3-48B8-9416-E6ADED82184E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9733CBC1-40A3-48B8-9416-E6ADED82184E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
