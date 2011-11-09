@@ -279,7 +279,8 @@ Public Class clsAnalysisToolRunnerMSAlign
 			End If
 
 		Catch ex As Exception
-			m_message = "Error in MSAlignPlugin->RunTool: " & ex.Message
+			m_message = "Error in MSAlignPlugin->RunTool"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
