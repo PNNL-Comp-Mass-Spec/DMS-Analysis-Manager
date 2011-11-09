@@ -356,7 +356,7 @@ Namespace AnalysisManagerBase
                     .WriteLine("LegacyOrganismDBName" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
                     .WriteLine("ProteinCollectionList" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
                     .WriteLine("ProteinOptionsList" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
-                    .WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("generatedFastaName"))
+                    .WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
                 End If
             End With
 

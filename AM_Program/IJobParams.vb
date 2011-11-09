@@ -44,10 +44,8 @@ Namespace AnalysisManagerBase
 		Function GetParam(ByVal Name As String) As String
 		Function GetParam(ByVal Section As String, ByVal Name As String) As String
 
-		Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean
 		Function AddAdditionalParameter(ByVal ParamSection As String, ByVal ParamName As String, ByVal ParamValue As String) As Boolean
 
-		Sub SetParam(ByVal KeyName As String, ByVal Value As String)
 		Sub SetParam(ByVal Section As String, ByVal KeyName As String, ByVal Value As String)
 #End Region
 

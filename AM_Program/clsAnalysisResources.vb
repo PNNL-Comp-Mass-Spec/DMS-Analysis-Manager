@@ -1908,7 +1908,7 @@ Namespace AnalysisManagerBase
 
 			'Fasta file was successfully generated. Put the private name of the generated fastafile in the
 			'	job data class for other methods to use
-			If Not m_jobParams.AddAdditionalParameter("generatedFastaName", m_FastaFileName) Then
+			If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error adding parameter 'generatedFastaName' to m_jobParams")
 				Return False
 			End If
@@ -2075,7 +2075,7 @@ Namespace AnalysisManagerBase
 
 				' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 				blnSuccess = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion(m_jobParams.GetParam("ToolName")), _
-				 System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")), _
+				 System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")), _
 				 WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("JobParameters", "DatasetID")))
 
 				If blnSuccess Then
@@ -2613,34 +2613,34 @@ Namespace AnalysisManagerBase
                     DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
 
                     'Add all potential paths to job params
-                    If Not m_jobParams.AddAdditionalParameter("DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then
-                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ServerStoragePath' not found in the DatasetInformation associated with the data package"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        Return False
-                    End If
+					If Not m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then
+						m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ServerStoragePath' not found in the DatasetInformation associated with the data package"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return False
+					End If
 
-                    If Not m_jobParams.AddAdditionalParameter("DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then
-                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ArchiveStoragePath' not found in the DatasetInformation associated with the data package"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        Return False
-                    End If
+					If Not m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", DbCStr(CurRow(DatasetInformation.Columns("ArchiveStoragePath")))) Then
+						m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ArchiveStoragePath' not found in the DatasetInformation associated with the data package"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return False
+					End If
 
-                    If Not m_jobParams.AddAdditionalParameter("inputFolderName", DbCStr(CurRow(DatasetInformation.Columns("ResultsFolder")))) Then
-                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ResultsFolder' not found in the DatasetInformation associated with the data package"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        Return False
-                    End If
+					If Not m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", DbCStr(CurRow(DatasetInformation.Columns("ResultsFolder")))) Then
+						m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ResultsFolder' not found in the DatasetInformation associated with the data package"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return False
+					End If
 
-                    If Not m_jobParams.AddAdditionalParameter("DatasetFolderName", DbCStr(CurRow(DatasetInformation.Columns("DatasetFolder")))) Then
-                        m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'DatasetFolder' not found in the DatasetInformation associated with the data package"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        Return False
-                    End If
+					If Not m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", DbCStr(CurRow(DatasetInformation.Columns("DatasetFolder")))) Then
+						m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'DatasetFolder' not found in the DatasetInformation associated with the data package"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return False
+					End If
 
                     ' Add the SharedResultsFolder if it isn't blank
                     SharedResultsFolder = DbCStr(CurRow(DatasetInformation.Columns("SharedResultsFolder")))
                     If Not String.IsNullOrEmpty(SharedResultsFolder) Then
-                        m_jobParams.AddAdditionalParameter("SharedResultsFolders", SharedResultsFolder)
+						m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", SharedResultsFolder)
                     End If
 
                     clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))

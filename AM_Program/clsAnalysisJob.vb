@@ -59,7 +59,10 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Protected Sub InitializeJobParams()
 
-			m_JobParams = New System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+			If m_JobParams Is Nothing Then
+				m_JobParams = New System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+			End If
+
 			m_JobParams.Clear()
 
 		End Sub
@@ -83,7 +86,7 @@ Namespace AnalysisManagerBase
 		End Function
 
 		''' <summary>
-		''' Gets a job parameter with the given name in the specified parameter section
+		''' Gets a job parameter with the given name, preferentially using the specified parameter section
 		''' </summary>
 		''' <param name="Section">Section name for parameter</param>
 		''' <param name="Name">Key name for parameter</param>
@@ -101,16 +104,8 @@ Namespace AnalysisManagerBase
 
 		End Function
 
-		''' <summary>
-		''' Add/updates the value for the given parameter
-		''' </summary>
-		''' <param name="ParamName">Parameter name</param>
-		''' <param name="ParamValue">Parameter value</param>
-		''' <remarks></remarks>
-		Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
-			Dim Section As String = String.Empty
-			SetParam(Section, ParamName, ParamValue)
-		End Sub
+		'' The two-parameter form of this function is no longer supported
+		'' Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 
 		''' <summary>
 		''' Add/updates the value for the given parameter
@@ -176,6 +171,19 @@ Namespace AnalysisManagerBase
 		''' <returns>True if success, False if not found</returns>
 		''' <remarks></remarks>
 		Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String) As Boolean
+			Return TryGetParam(Section, ParamName, ParamValue, True)
+		End Function
+
+		''' <summary>
+		''' Attempts to retrieve the specified parameter in the specified parameter section
+		''' </summary>
+		''' <param name="Section">Section Name</param>
+		''' <param name="ParamName">Parameter Name</param>
+		''' <param name="ParamValue">Output: parameter value</param>
+		''' <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
+		''' <returns>True if success, False if not found</returns>
+		''' <remarks></remarks>
+		Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
 
 			Dim oParams As System.Collections.Generic.Dictionary(Of String, String)
 			ParamValue = String.Empty
@@ -191,33 +199,19 @@ Namespace AnalysisManagerBase
 				End If
 			End If
 
-			Return False
-
-		End Function
-
-		''' <summary>
-		''' Adds a parameter to the class
-		''' </summary>
-		''' <param name="ParamName">Name of parameter</param>
-		''' <param name="ParamValue">Value for parameter</param>
-		''' <returns>True if success, False if an error</returns>
-		''' <remarks></remarks>
-		Public Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean _
-		 Implements IJobParams.AddAdditionalParameter
-
-			Try
-				If ParamValue Is Nothing Then ParamValue = String.Empty
-
-				Me.SetParam(ParamName, ParamValue)
-
-				Return True
-			Catch ex As Exception
-				Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			If SearchAllSectionsIfNotFound Then
+				' Parameter not found in the specified section
+				' Search for the entry in other sections
+				Return TryGetParam(ParamName, ParamValue)
+			Else
 				Return False
-			End Try
+			End If
 
 		End Function
+
+
+		'' The two-parameter version of this function is no longer supported
+		'' Public Function AddAdditionalParameter(ByVal ParamName As String, ByVal ParamValue As String) As Boolean Implements IJobParams.AddAdditionalParameter
 
 		''' <summary>
 		''' Adds a parameter to the class
@@ -282,6 +276,8 @@ Namespace AnalysisManagerBase
 			Dim strProductVersion As String = Application.ProductVersion
 			If strProductVersion Is Nothing Then strProductVersion = "??"
 			m_TaskWasClosed = False
+
+			InitializeJobParams()
 
 			Try
 				'Set up the command object prior to SP execution
@@ -394,7 +390,7 @@ Namespace AnalysisManagerBase
 
 				xmlWriter.WriteXMLToFile(paramXml, xmlParameterFilePath)
 
-				If Not AddAdditionalParameter("genJobParamsFilename", xmlParameterFilename) Then Return False
+				If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return False
 
 				Dim Msg As String = "Job Parameters successfully saved to file: " & xmlParameterFilePath
 
@@ -481,7 +477,7 @@ Namespace AnalysisManagerBase
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 				.Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
 
-				.Parameters.Item("@job").Direction = ParameterDirection.Input				
+				.Parameters.Item("@job").Direction = ParameterDirection.Input
 				.Parameters.Item("@job").Value = CInt(Me.GetParam("StepParameters", "Job"))
 
 				.Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
@@ -508,7 +504,7 @@ Namespace AnalysisManagerBase
 				.Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
 
 				Dim strValue As String = String.Empty
-				If Me.TryGetParam("generatedFastaName", strValue) Then
+				If Me.TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
 					.Parameters.Item("@organismDBName").Value = strValue
 				Else
 					.Parameters.Item("@organismDBName").Value = String.Empty

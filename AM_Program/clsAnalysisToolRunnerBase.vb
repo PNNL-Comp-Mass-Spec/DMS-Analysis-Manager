@@ -810,7 +810,7 @@ Namespace AnalysisManagerBase
                 clsSummaryFile.Add("Legacy Organism Db Name" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
                 clsSummaryFile.Add("Protein Collection List" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
                 clsSummaryFile.Add("Protein Options List" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
-                clsSummaryFile.Add("Fasta File Name" & ControlChars.Tab & m_jobParams.GetParam("generatedFastaName"))
+                clsSummaryFile.Add("Fasta File Name" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
                 clsSummaryFile.Add("Analysis Time (hh:mm:ss)" & ControlChars.Tab & CalcElapsedTime(m_StartTime, m_StopTime))
 
                 'Add another separator

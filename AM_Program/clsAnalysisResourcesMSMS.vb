@@ -92,7 +92,7 @@ Namespace AnalysisManagerMSMSResourceBase
 
 			'Fasta file was successfully generated. Put the private name of the generated fastafile in the
 			'	job data class for other methods to use
-			If Not m_jobParams.AddAdditionalParameter("generatedFastaName", m_FastaFileName) Then Return False
+			If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then Return False
 
 			'We got to here OK, so return
 			Return True

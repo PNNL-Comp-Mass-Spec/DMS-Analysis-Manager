@@ -407,14 +407,14 @@ Public Class clsCodeTest
 		''m_mgrParams.SetParam("MgrName", "Monroe_Test")
 		''m_mgrParams.SetParam("debuglevel", "2")
 
-		''objJobParams.SetParam("StepTool", "TestStepTool")
-		''objJobParams.SetParam("ToolName", "TestTool")
-		''objJobParams.SetParam("DatasetNum", "QC_05_2_05Dec05_Doc_0508-08")
-		''objJobParams.SetParam("NumberOfClonedSteps", "25")
+		''objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		''objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+		''objJobParams.SetParam("JobParameters", "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08")
+		''objJobParams.SetParam("JobParameters", "NumberOfClonedSteps", "25")
 
-		''objJobParams.SetParam("Job", "12345")
-		''objJobParams.SetParam("OutputFolderName", "Tst_Results")
-		''objJobParams.SetParam("ClonedStepsHaveEqualNumSpectra", "True")
+		''objJobParams.SetParam("StepParameters", "Job", "12345")
+		''objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+		''objJobParams.SetParam("JobParameters", "ClonedStepsHaveEqualNumSpectra", "True")
 
 		''objToolRunner = New clsAnalysisToolRunnerDtaSplit
 		''objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
@@ -514,11 +514,11 @@ Public Class clsCodeTest
 		m_mgrParams.SetParam("MgrName", "Monroe_Test")
 		m_mgrParams.SetParam("debuglevel", "0")
 
-		objJobParams.SetParam("StepTool", "TestStepTool")
-		objJobParams.SetParam("ToolName", "TestTool")
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
 
-		objJobParams.SetParam("Job", "12345")
-		objJobParams.SetParam("OutputFolderName", "Tst_Results")
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
 
 		objToolRunner = New clsCodeTestAM
 		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
@@ -542,14 +542,14 @@ Public Class clsCodeTest
 		m_mgrParams.SetParam("MgrName", "Monroe_Test")
 		m_mgrParams.SetParam("debuglevel", "0")
 
-		objJobParams.SetParam("StepTool", "TestStepTool")
-		objJobParams.SetParam("ToolName", "TestTool")
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
 
-		objJobParams.SetParam("Job", "12345")
-		objJobParams.SetParam("OutputFolderName", "Tst_Results_" & System.DateTime.Now.ToString("hh_mm_ss"))
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" & System.DateTime.Now.ToString("hh_mm_ss"))
 
-		objJobParams.SetParam("transferFolderPath", "\\proto-3\DMS3_XFER")
-		objJobParams.SetParam("DatasetNum", "Test_Dataset")
+		objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-3\DMS3_XFER")
+		objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset")
 
 		objToolRunner = New clsCodeTestAM
 		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
@@ -593,11 +593,11 @@ Public Class clsCodeTest
 		m_mgrParams.SetParam("debuglevel", "3")
 		m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
 
-		objJobParams.SetParam("StepTool", "TestStepTool")
-		objJobParams.SetParam("ToolName", "TestTool")
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
 
-		objJobParams.SetParam("Job", "12345")
-		objJobParams.SetParam("OutputFolderName", "Tst_Results")
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
 
 		objResources.Setup(m_mgrParams, objJobParams)
 
@@ -626,16 +626,16 @@ Public Class clsCodeTest
 		m_mgrParams.SetParam("debuglevel", "3")
 		m_mgrParams.SetParam("ChameleonCachedDataFolder", "H:\9T_Imaging")
 
-		objJobParams.SetParam("StepTool", "TestStepTool")
-		objJobParams.SetParam("ToolName", "TestTool")
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
 
-		objJobParams.SetParam("Job", "12345")
-		objJobParams.SetParam("OutputFolderName", "Test_Results")
-		objJobParams.SetParam("datasetNum", "ratjoint071110_INCAS_MS")
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results")
+		objJobParams.SetParam("JobParameters", "DatasetNum", "ratjoint071110_INCAS_MS")
 
-		objJobParams.SetParam("DatasetStoragePath", "\\proto-4\9T_Imaging_DMS1")
-		objJobParams.SetParam("DatasetArchivePath", "\\a2.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1")
-		objJobParams.SetParam("transferFolderPath", "\\proto-4\DMS3_Xfer")
+		objJobParams.SetParam("JobParameters", "DatasetStoragePath", "\\proto-4\9T_Imaging_DMS1")
+		objJobParams.SetParam("JobParameters", "DatasetArchivePath", "\\a2.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1")
+		objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-4\DMS3_Xfer")
 
 
 		objResources.Setup(m_mgrParams, objJobParams)
