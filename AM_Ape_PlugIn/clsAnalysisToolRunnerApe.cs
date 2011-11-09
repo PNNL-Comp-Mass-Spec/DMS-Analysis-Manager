@@ -19,105 +19,114 @@ namespace AnalysisManager_Ape_PlugIn
 
 
        public override IJobParams.CloseOutType RunTool()
-        {
-            m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-            bool blnSuccess = false;
+       {
+			try 
+			{
 
-            //Do the base class stuff
-            if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
-            {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
+				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
+				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+				bool blnSuccess = false;
 
-		    // Store the Ape version info in the database
-			StoreToolVersionInfo();
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Ape");
-
-            //Change the name of the log file for the local log file to the plug in log filename
-            String LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
-
-            try
-            {
-                blnSuccess = RunApe();
-
-                // Change the name of the log file back to the analysis manager log file
-                LogFileName = m_mgrParams.GetParam("logfilename");
-                log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                clsLogTools.ChangeLogFileName(LogFileName);
-
-				if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
+				//Do the base class stuff
+				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+				{
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
-            }
-            catch (Exception ex)
-            {
-				// Change the name of the log file back to the analysis manager log file
-                LogFileName = m_mgrParams.GetParam("logfilename");
-                log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                clsLogTools.ChangeLogFileName(LogFileName);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + ex.Message);
-                blnSuccess = false;
-				m_message = "Error running Ape";
-            }
+				// Store the Ape version info in the database
+				StoreToolVersionInfo();
 
-            //Stop the job timer
-            m_StopTime = System.DateTime.UtcNow;
-            m_progress = PROGRESS_PCT_APE_DONE;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Ape");
 
-            //Add the current job data to the summary file
-            if (!UpdateSummaryFile())
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-            }
+				//Change the name of the log file for the local log file to the plug in log filename
+				String LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
+				log4net.GlobalContext.Properties["LogName"] = LogFileName;
+				clsLogTools.ChangeLogFileName(LogFileName);
 
-            //Make sure objects are released
-			//2 second delay
-            System.Threading.Thread.Sleep(2000);            
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+				try
+				{
+					blnSuccess = RunApe();
 
-            if (!blnSuccess)
-            {
-                // Move the source files and any results to the Failed Job folder
-                // Useful for debugging MultiAlign problems
-                CopyFailedResultsToArchiveFolder();
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
+					// Change the name of the log file back to the analysis manager log file
+					LogFileName = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = LogFileName;
+					clsLogTools.ChangeLogFileName(LogFileName);
 
-            m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-            m_Dataset = m_jobParams.GetParam("OutputFolderName");
-			m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
+					}
+				}
+				catch (Exception ex)
+				{
+					// Change the name of the log file back to the analysis manager log file
+					LogFileName = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = LogFileName;
+					clsLogTools.ChangeLogFileName(LogFileName);
 
-            result = MakeResultsFolder();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-				m_message = "Error making results folder";
-                return result;
-            }
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + ex.Message);
+					blnSuccess = false;
+					m_message = "Error running Ape";
+				}
 
-           result = MoveResultFiles();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				m_message = "Error moving files into results folder";
-                return result;
-            }
+				//Stop the job timer
+				m_StopTime = System.DateTime.UtcNow;
+				m_progress = PROGRESS_PCT_APE_DONE;
 
-            result = CopyResultsFolderToServer();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
+				//Add the current job data to the summary file
+				if (!UpdateSummaryFile())
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+				}
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
-            ////ZipResult
+				//Make sure objects are released
+				//2 second delay
+				System.Threading.Thread.Sleep(2000);            
+				GC.Collect();
+				GC.WaitForPendingFinalizers();
+
+				if (!blnSuccess)
+				{
+					// Move the source files and any results to the Failed Job folder
+					// Useful for debugging MultiAlign problems
+					CopyFailedResultsToArchiveFolder();
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
+
+				m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+				m_Dataset = m_jobParams.GetParam("OutputFolderName");
+				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+
+				result = MakeResultsFolder();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// MakeResultsFolder handles posting to local log, so set database error message and exit
+					m_message = "Error making results folder";
+					return result;
+				}
+
+			   result = MoveResultFiles();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+					m_message = "Error moving files into results folder";
+					return result;
+				}
+
+				result = CopyResultsFolderToServer();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+					return result;
+				}
+
+			} catch (Exception ex) {
+				m_message = "Error in ApePlugin->RunTool";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+
+			}
+
+			return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -215,7 +224,7 @@ namespace AnalysisManager_Ape_PlugIn
             if (m_DebugLevel < 2)
                 m_DebugLevel = 2;
 
-            // Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
+            // Try to save whatever files are in the work directory
             string strFolderPathToArchive = null;
             strFolderPathToArchive = string.Copy(m_WorkDir);
 
@@ -226,7 +235,7 @@ namespace AnalysisManager_Ape_PlugIn
 					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
 					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
 				}
-				catch (Exception ex)
+				catch
 				{
 					// Ignore errors here
 				}

@@ -21,97 +21,107 @@ namespace AnalysisManager_Mage_PlugIn {
         public override IJobParams.CloseOutType RunTool() {
 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-            bool blnSuccess = false;
-
-            //Do the base class stuff
-            if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)) {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
-
-		    // Store the Mage version info in the database
-			StoreToolVersionInfo();
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
-
-            //Change the name of the log file for the local log file to the plug in log filename
-            String LogFileName = Path.Combine(m_WorkDir, "Mage_Log");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
 
 			try {
+			
+				bool blnSuccess = false;
 
-				// run the appropriate Mage pipeline(s) according to mode parameter
-				blnSuccess = RunMage();
+				//Do the base class stuff
+				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)) {
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
-                // Change the name of the log file back to the analysis manager log file
-				LogFileName = m_mgrParams.GetParam("logfilename");
+				// Store the Mage version info in the database
+				StoreToolVersionInfo();
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
+
+				//Change the name of the log file for the local log file to the plug in log filename
+				String LogFileName = Path.Combine(m_WorkDir, "Mage_Log");
 				log4net.GlobalContext.Properties["LogName"] = LogFileName;
 				clsLogTools.ChangeLogFileName(LogFileName);
 
-				if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + m_message);
+				try {
+
+					// run the appropriate Mage pipeline(s) according to mode parameter
+					blnSuccess = RunMage();
+
+					// Change the name of the log file back to the analysis manager log file
+					LogFileName = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = LogFileName;
+					clsLogTools.ChangeLogFileName(LogFileName);
+
+					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + m_message);
+					}
+				} catch (Exception ex) {
+					// Change the name of the log file back to the analysis manager log file
+					LogFileName = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = LogFileName;
+					clsLogTools.ChangeLogFileName(LogFileName);
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + ex.Message);
+					blnSuccess = false;
+
+					m_message = "Error running Mage";
+					if (ex.Message.Contains("ImportFiles\\--No Files Found")) {
+						m_message += "; ImportFiles folder in the data package is empty or does not exist";
+					}
+
 				}
+
+				//Stop the job timer
+				m_StopTime = System.DateTime.UtcNow;
+				m_progress = PROGRESS_PCT_MAGE_DONE;
+
+				//Add the current job data to the summary file
+				if (!UpdateSummaryFile()) {
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+				}
+
+				//Make sure objects are released
+				//2 second delay
+				System.Threading.Thread.Sleep(2000);
+				GC.Collect();
+				GC.WaitForPendingFinalizers();
+
+				if (!blnSuccess) {
+					// Move the source files and any results to the Failed Job folder
+					// Useful for debugging problems
+					CopyFailedResultsToArchiveFolder();
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
+
+				m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+				m_Dataset = m_jobParams.GetParam("OutputFolderName");
+				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+
+				result = MakeResultsFolder();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+					// MakeResultsFolder handles posting to local log, so set database error message and exit
+					m_message = "Error making results folder";
+					return result;
+				}
+
+				result = MoveResultFiles();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+					// Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+					m_message = "Error moving files into results folder";
+					return result;
+				}
+
+				result = CopyResultsFolderToServer();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+					// Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+					return result;
+				}
+
 			} catch (Exception ex) {
-				// Change the name of the log file back to the analysis manager log file
-				LogFileName = m_mgrParams.GetParam("logfilename");
-				log4net.GlobalContext.Properties["LogName"] = LogFileName;
-				clsLogTools.ChangeLogFileName(LogFileName);
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + ex.Message);
-				blnSuccess = false;
-
-				m_message = "Error running Mage";
-				if (ex.Message.Contains("ImportFiles\\--No Files Found")) {
-					m_message += "; ImportFiles folder in the data package is empty or does not exist";
-				}
-
+				m_message = "Error in MagePlugin->RunTool";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 			}
 
-			//Stop the job timer
-			m_StopTime = System.DateTime.UtcNow;
-			m_progress = PROGRESS_PCT_MAGE_DONE;
-
-            //Add the current job data to the summary file
-            if (!UpdateSummaryFile()) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-            }
-
-			//Make sure objects are released
-			//2 second delay
-			System.Threading.Thread.Sleep(2000);
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
-
-            if (!blnSuccess) {
-                // Move the source files and any results to the Failed Job folder
-                // Useful for debugging problems
-                CopyFailedResultsToArchiveFolder();
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-            m_Dataset = m_jobParams.GetParam("OutputFolderName");
-            m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
-
-            result = MakeResultsFolder();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-				m_message = "Error making results folder";
-                return result;
-            }
-
-            result = MoveResultFiles();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				m_message = "Error moving files into results folder";
-                return result;
-            }
-
-            result = CopyResultsFolderToServer();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -229,7 +239,7 @@ namespace AnalysisManager_Mage_PlugIn {
             if (m_DebugLevel < 2)
                 m_DebugLevel = 2;
 
-            // Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
+            // Try to save whatever files are in the work directory
             string strFolderPathToArchive = null;
             strFolderPathToArchive = string.Copy(m_WorkDir);
 
@@ -240,7 +250,7 @@ namespace AnalysisManager_Mage_PlugIn {
 					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
 					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
 				}
-				catch (Exception ex)
+				catch
 				{
 					// Ignore errors here
 				}
