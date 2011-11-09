@@ -1,7 +1,0 @@
-bin\AnalysisManagerSequestPlugin.dll
-bin\AnalysisManagerSequestPlugin.pdb
-bin\AnalysisManagerSequestPlugin.xml
-obj\Debug\ResolveAssemblyReference.cache
-obj\Debug\AnalysisManagerSequestPlugin.dll
-obj\Debug\AnalysisManagerSequestPlugin.xml
-obj\Debug\AnalysisManagerSequestPlugin.pdb
