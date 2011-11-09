@@ -129,102 +129,11 @@ namespace AnalysisManager_Mage_PlugIn {
         /// sequentially run the Mage operations listed in "MageOperations" parameter
         /// </summary>
         private bool RunMage() {
-			bool blnSuccess = false;
-			int iOperations = 0;
-
+            // run the appropriate Mage pipeline(s) according to operations list parameter
             string mageOperations = m_jobParams.GetParam("MageOperations");
-
-			if (string.IsNullOrWhiteSpace(mageOperations)) {
-				m_message = "MageOperations parameter is not defined";
-				return false;
-			}
-
-            foreach (string mageOperation in mageOperations.Split(',')) {
-				if (!string.IsNullOrWhiteSpace(mageOperation)) {
-					iOperations += 1;
-					blnSuccess = RunMageOperation(mageOperation.Trim());
-					if (!blnSuccess) {
-						m_message = "Error running Mage operation " + mageOperation;
-						break;
-					}
-				}
-            }
-
-			if (iOperations == 0) {
-				m_message = "MageOperations parameter was empty";
-				return false;
-			}
-
-			return blnSuccess;
+            MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            return ops.RunMageOperations(mageOperations);
         }
-
-        /// <summary>
-        /// Run a single Mage operation
-        /// </summary>
-        /// <param name="mageOperation"></param>
-        /// <returns></returns>
-        private bool RunMageOperation(string mageOperation) {
-            bool blnSuccess = false;
-
-			// Note: case statements must be lowercase
-            switch (mageOperation.ToLower()) {
-                case "extractfromjobs":
-                    blnSuccess = ExtractFromJobs();
-                    break;
-                case "getfactors":
-                    blnSuccess = GetFactors();
-                    break;
-                case "importdatapackagefiles":
-                    blnSuccess = ImportDataPackageFiles();
-                    break;
-                case "getfdrtables":
-                    blnSuccess = ImportFDRTables();
-                    break;
-                default:
-                    // Future: throw an error
-                    break;
-            }
-            return blnSuccess;
-        }
-
-        #region Mage Operations
-
-
-        private bool GetFactors() {
-            bool ok = true;
-            String sql = SQL.GetSQL("FactorsSource", m_jobParams);
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
-            mageObj.GetDatasetFactors(sql);
-            return ok;
-        }
-
-        private bool ExtractFromJobs() {
-            bool ok = true;
-            String sql = SQL.GetSQL("ExtractionSource", m_jobParams);
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
-            mageObj.ExtractFromJobs(sql);
-            return ok;
-        }
-
-        private bool ImportFDRTables() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
-            string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
-            string inputfileList = mageObj.GetJobParam("MageFDRFiles");
-            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, inputfileList);
-            return ok;
-        }
-
-       private bool ImportDataPackageFiles() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
-            string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
-            string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
-            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, "");
-            return ok;
-       }
-
-        #endregion
 
         protected void CopyFailedResultsToArchiveFolder() {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);

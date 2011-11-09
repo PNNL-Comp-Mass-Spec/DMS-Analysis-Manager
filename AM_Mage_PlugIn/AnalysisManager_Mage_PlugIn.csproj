@@ -74,6 +74,7 @@
     <Compile Include="IPipelineMonitor.cs" />
     <Compile Include="MageAMExtractionPipelines.cs" />
     <Compile Include="MageAMFileProcessingPipelines.cs" />
+    <Compile Include="MageAMOperations.cs" />
     <Compile Include="MageAMPipelineBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQL.cs" />
