@@ -614,7 +614,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			' Define the path to the fasta file
 			Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-			Dim strFASTAFilePath As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+			Dim strFASTAFilePath As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
 			Dim fiFastaFile As System.IO.FileInfo = New System.IO.FileInfo(strFASTAFilePath)
 

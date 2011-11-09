@@ -425,7 +425,7 @@ Public Class clsAnalysisResourcesSeq
         ' We do this after we have successfully retrieved the DTA files and unzipped them
         If CBool(m_mgrParams.GetParam("cluster")) Then
             'Check the cluster nodes, updating local database copies as necessary
-            If Not VerifyDatabase(m_jobParams.GetParam("generatedFastaName"), LocOrgDBFolder) Then
+            If Not VerifyDatabase(m_jobParams.GetParam("PeptideSearch", "generatedFastaName"), LocOrgDBFolder) Then
                 'Errors were reported in function call, so just return
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If

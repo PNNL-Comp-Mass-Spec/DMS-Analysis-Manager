@@ -43,7 +43,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim result As IJobParams.CloseOutType
-        Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+        Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
         'Do the base class stuff

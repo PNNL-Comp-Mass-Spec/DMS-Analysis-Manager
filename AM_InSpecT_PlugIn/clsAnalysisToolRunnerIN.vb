@@ -238,7 +238,7 @@ Public Class clsAnalysisToolRunnerIN
         Try
             ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
-            fastaFilename = m_jobParams.GetParam("generatedFastaName")
+            fastaFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
 			inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 

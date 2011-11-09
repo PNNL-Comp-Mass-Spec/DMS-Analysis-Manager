@@ -126,7 +126,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Define the path to the fasta file
 			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
-			strFASTAFilePath = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+			strFASTAFilePath = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
 			Dim fiFastaFile As System.IO.FileInfo
 			fiFastaFile = New System.IO.FileInfo(strFASTAFilePath)
@@ -388,7 +388,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
 		' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-		Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+		Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 		Dim strInputFilePath As String
 
 		Dim blnIgnorePeptideToProteinMapperErrors As Boolean

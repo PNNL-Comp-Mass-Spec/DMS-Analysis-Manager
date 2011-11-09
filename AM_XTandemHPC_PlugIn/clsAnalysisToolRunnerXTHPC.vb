@@ -79,7 +79,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         m_NumClonedSteps = CInt(m_jobParams.GetParam("NumberOfClonedSteps"))
 
         ' Update the account name
-        m_HPCAccountName = m_jobParams.GetParam("HPCAccountName")
+        m_HPCAccountName = m_jobParams.GetParam("ParallelInspect", "HPCAccountName")
         If m_HPCAccountName Is Nothing OrElse m_HPCAccountName.Length = 0 Then
             m_HPCAccountName = clsAnalysisResourcesXTHPC.HPC_ACCOUNT_NAME
         End If
@@ -1362,7 +1362,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     Protected Function FastaFilesEqual() As Boolean
         Dim result As Boolean = False
 
-        Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+        Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
 
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 

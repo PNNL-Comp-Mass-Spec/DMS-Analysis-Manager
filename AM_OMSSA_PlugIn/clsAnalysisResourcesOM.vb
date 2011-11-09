@@ -91,7 +91,7 @@ Public Class clsAnalysisResourcesOM
 
         Try
             ' set up formatdb.exe to reference the organsim DB file (fasta)
-            Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+            Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
             Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running formatdb.exe")
@@ -178,7 +178,7 @@ Public Class clsAnalysisResourcesOM
         Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
         Dim FastaFilename As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 
-        Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
+        Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         Dim MSInfilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & ".xml")
         Dim MSOmxOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om.omx")
         Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om_large.omx")

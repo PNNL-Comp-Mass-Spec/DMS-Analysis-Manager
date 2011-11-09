@@ -29,7 +29,7 @@ Public Class clsCreateInspectIndexedDB
         Dim WorkingDir As String = mgrParams.GetParam("WorkDir")
         Dim InspectDir As String = mgrParams.GetParam("inspectdir")
         Dim orgDbDir As String = mgrParams.GetParam("orgdbdir")
-        Dim dbFilename As String = System.IO.Path.Combine(orgDbDir, jobParams.GetParam("generatedFastaName"))
+        Dim dbFilename As String = System.IO.Path.Combine(orgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         Dim dbLockFilename As String = System.IO.Path.Combine(orgDbDir, System.IO.Path.GetFileNameWithoutExtension(dbFilename) & "_trie.lock")
         Dim dbTrieFilename As String = System.IO.Path.Combine(orgDbDir, System.IO.Path.GetFileNameWithoutExtension(dbFilename) & ".trie")
         Dim pythonProgLoc As String = mgrParams.GetParam("pythonprogloc")

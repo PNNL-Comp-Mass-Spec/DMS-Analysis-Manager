@@ -164,7 +164,7 @@ Public Class clsAnalysisResourcesDtaRefinery
         Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
         Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
 
-        Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName"))
+        Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
         Dim result As Boolean = True
         Dim fiTemplateFile As System.IO.FileInfo

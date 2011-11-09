@@ -64,7 +64,7 @@ Public Class clsCreateInspectIndexedDB
                 sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS
             End If
 
-            strDBFileNameInput = System.IO.Path.Combine(OrgDbDir, jobParams.GetParam("generatedFastaName"))
+            strDBFileNameInput = System.IO.Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"))
             blnUseShuffledDB = AnalysisManagerBase.clsGlobal.CBoolSafe(jobParams.GetParam("InspectUsesShuffledDB"), False)
 
             strOutputNameBase = System.IO.Path.GetFileNameWithoutExtension(strDBFileNameInput)

@@ -371,7 +371,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		'Set up a program runner and text file for each processor
 		ReDim RunProgs(NumProcessors - 1)
 		ReDim Textfiles(NumProcessors - 1)
-		CmdStr = "-D" & Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("generatedFastaName")) _
+		CmdStr = "-D" & Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) _
 		  & " -P" & m_jobParams.GetParam("parmFileName") & " -R"
 		For ProcIndx = 0 To NumProcessors - 1
 			DumStr = Path.Combine(m_WorkDir, "FileList" & ProcIndx.ToString & ".txt")

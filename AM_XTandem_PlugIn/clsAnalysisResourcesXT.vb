@@ -101,7 +101,7 @@ Public Class clsAnalysisResourcesXT
         ' set up taxonomy file to reference the organsim DB file (fasta)
 
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-        Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+        Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
         Dim OrgFilePath As String = System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)

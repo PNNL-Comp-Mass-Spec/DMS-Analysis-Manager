@@ -455,7 +455,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         'Set settings file name
         'This is the job parameters file that contains the settings information
-        m_SettingsFileName = m_jobParams.GetParam("genJobParamsFilename")
+		m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename")
 
         'Source folder name
         If m_WorkDir = "" Then

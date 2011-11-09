@@ -102,7 +102,7 @@ Public Class clsAnalysisResourcesXTHPC
         ' set up taxonomy file to reference the organsim DB file (fasta)
 
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-        Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+        Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
         Dim OrgFilePath As String = System.IO.Path.Combine(clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "fasta/", OrgDBName)
@@ -286,7 +286,7 @@ Public Class clsAnalysisResourcesXTHPC
             DatasetName = m_jobParams.GetParam("DatasetNum")
 
 
-            strNumCloneSteps = m_jobParams.GetParam("NumberOfClonedSteps")
+            strNumCloneSteps = m_jobParams.GetParam("ParallelInspect", "NumberOfClonedSteps")
 
             If strNumCloneSteps Is Nothing OrElse _
                strNumCloneSteps.Length = 0 OrElse _
@@ -295,7 +295,7 @@ Public Class clsAnalysisResourcesXTHPC
                 ' Error determining the number of cloned steps
                 ' Set the value to 1 and update m_jobParams
                 intNumClonedSteps = 1
-                m_jobParams.AddAdditionalParameter("NumberOfClonedSteps", intNumClonedSteps.ToString)
+                m_jobParams.AddAdditionalParameter("ParallelInspect", "NumberOfClonedSteps", intNumClonedSteps.ToString)
             End If
 
             'Determine the number of parallelized steps
@@ -467,7 +467,7 @@ Public Class clsAnalysisResourcesXTHPC
             strOut = "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & JobNum & "_" & File_Index & "/"
             WriteUnix(swOut, strOut)
 
-            m_jobParams.AddAdditionalParameter("HPCAccountName", HPC_ACCOUNT_NAME)
+            m_jobParams.AddAdditionalParameter("ParallelInspect", "HPCAccountName", HPC_ACCOUNT_NAME)
 
             strOut = "/apps/moab/current/bin/msub ../Job" & JobNum & "_msub" & File_Index & "/" & MsubFilename & " -A " & HPC_ACCOUNT_NAME & " > ../Job" & JobNum & "_msub" & File_Index & "/" & MsubOutFilename & " 2>&1"
             WriteUnix(swOut, strOut)
@@ -570,7 +570,7 @@ Public Class clsAnalysisResourcesXTHPC
 
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
-        Dim OrgDBName As String = m_jobParams.GetParam("generatedFastaName")
+        Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
 
         Dim JobNum As String = m_jobParams.GetParam("Job")
 
@@ -731,7 +731,7 @@ Public Class clsAnalysisResourcesXTHPC
 
             WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "fasta/")
 
-            WriteUnix(swOut, "ls -lrt " & m_jobParams.GetParam("generatedFastaName") & " | awk '{print $5}' > fastafiles_Job" & JobNum & ".txt")
+            WriteUnix(swOut, "ls -lrt " & m_jobParams.GetParam("PeptideSearch", "generatedFastaName") & " | awk '{print $5}' > fastafiles_Job" & JobNum & ".txt")
 
             swOut.Close()
 

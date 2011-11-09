@@ -493,7 +493,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
         ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-        Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("generatedFastaName"))
+        Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         Dim strInputFilePath As String
 
         Dim blnIgnorePeptideToProteinMapperErrors As Boolean
@@ -843,7 +843,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         ' The following code is only required if you use the -a and -d switches
         ''Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-        ''Dim fastaFilename As String = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("generatedFastaName"))
+        ''Dim fastaFilename As String = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         ''Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
 
         Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
