@@ -36,8 +36,9 @@ namespace AnalysisManager_Cyclops_PlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
             }            
            
-            // Store the MultiAlign version info in the database
-            //StoreToolVersionInfo(progLoc);
+            // Store the Cyclops version info in the database
+            StoreToolVersionInfo();
+
             Dictionary<string, string> d_Params = new Dictionary<string, string>();
             d_Params.Add("Job", m_jobParams.GetParam("Job"));
             d_Params.Add("RDLL", @"C:\Program Files\R\R-2.13.1\bin\i386");
@@ -84,8 +85,8 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
 
             //Make sure objects are released
-            System.Threading.Thread.Sleep(2000);
-            //2 second delay          
+			//2 second delay
+			System.Threading.Thread.Sleep(2000);
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
@@ -99,37 +100,38 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
             m_Dataset = m_jobParams.GetParam("OutputFolderName");
-            m_jobParams.SetParam("OutputFolderName", m_jobParams.GetParam("StepOutputFolderName"));
+            m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //TODO: What do we do here?
+				// MakeResultsFolder handles posting to local log, so set database error message and exit
                 return result;
             }
 
             result = MoveResultFiles();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //TODO: What do we do here?
                 // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return result;
             }
 
-            //// Move the Plots folder to the result files folder
-            //Joe: Are you going to have a plots folder?
+			// ToDo: Remove this code if not needed
+            // Move the Plots folder to the result files folder
             System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
             diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
 
-            string strTargetFolderPath = null;
-            strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-            diPlotsFolder.MoveTo(strTargetFolderPath);
+			if (diPlotsFolder.Exists) 
+			{
+				string strTargetFolderPath = null;
+				strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+				diPlotsFolder.MoveTo(strTargetFolderPath);
+			}
 
             result = CopyResultsFolderToServer();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //TODO: What do we do here?
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+				// Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return result;
             }
 
@@ -190,39 +192,37 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+        protected bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo = string.Empty;
-            System.IO.FileInfo ioMultiAlignProg = default(System.IO.FileInfo);
+			string strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-            }
+			if (m_DebugLevel >= 2) {
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+			}
 
-            ioMultiAlignProg = new System.IO.FileInfo(strMultiAlignProgLoc);
+			try {
+				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
 
-            // Lookup the version of MultiAlign
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioMultiAlignProg.FullName);
+				string strNameAndVersion = null;
+				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+			} catch (Exception ex) {
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
+				return false;
+			}
 
-            // Lookup the version of additional DLLs
-            //Joe: Need to list your dlls here for version logging
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "Cyclops.dll"));
+			// Store paths to key DLLs
+			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+			ioToolFiles.Add(new System.IO.FileInfo("Cyclops.dll"));
 
-            // Store paths to key DLLs in ioToolFiles
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "Cyclops.dll")));
+			try {
+				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+			} catch (Exception ex) {
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+				return false;
+			}
 
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
 
         }
 

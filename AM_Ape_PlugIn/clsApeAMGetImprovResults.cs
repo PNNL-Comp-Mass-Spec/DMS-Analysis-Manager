@@ -33,7 +33,7 @@ namespace AnalysisManager_Ape_PlugIn
         #endregion
 
         /// <summary>
-        /// Setup and run Mage Extractor pipleline according to job parameters
+        /// Setup and run Ape pipeline according to job parameters
         /// </summary>
         public bool GetImprovResults(String dataPackageID)
         {

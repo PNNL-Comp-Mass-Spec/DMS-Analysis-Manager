@@ -37,11 +37,22 @@ namespace AnalysisManager_Ape_PlugIn
         {
             bool blnSuccess = false;
 
-            string mageOperations = m_jobParams.GetParam("ApeOperations");
-            foreach (string mageOperation in mageOperations.Split(','))
+			string apeOperations = m_jobParams.GetParam("ApeOperations");
+
+			if (string.IsNullOrWhiteSpace(apeOperations)) {
+				m_message = "ApeOperations parameter is not defined";
+				return false;
+			}
+
+			foreach (string apeOperation in apeOperations.Split(','))
             {
-                blnSuccess = RunApeOperation(mageOperation.Trim());
-                if (!blnSuccess) break;
+				if (!string.IsNullOrWhiteSpace(apeOperation)) {
+					blnSuccess = RunApeOperation(apeOperation.Trim());
+					if (!blnSuccess) {
+						m_message = "Error running Ape resources operation " + apeOperation;
+						break;
+					}
+				}
             }
 
             return blnSuccess;
@@ -57,14 +68,15 @@ namespace AnalysisManager_Ape_PlugIn
         {
             bool blnSuccess =  true;
 
-            switch (apeOperation)
+			// Note: case statements must be lowercase
+            switch (apeOperation.ToLower())
             {
-                case "RunWorkflow":
+                case "runworkflow":
                     blnSuccess = GetWorkflowFiles();
                     break;
-                case "GetImprovResults":
+                case "getimprovresults":
                     break;
-                case "GetViperResults":
+                case "getviperresults":
                     break;
                 default:
                     // Future: throw an error

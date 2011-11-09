@@ -75,7 +75,7 @@ namespace AnalysisManager_Mage_PlugIn {
                 string sourceFileName = row[fileIdx].ToString();
                 string sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
                 string workingFilePath = Path.Combine(mWorkingDir, sourceFileName);
-                if (fileNameList == "" || fileNameSet.Contains(sourceFileName)) {
+                if (string.IsNullOrWhiteSpace(fileNameList) || fileNameSet.Contains(sourceFileName)) {
                     File.Copy(sourceFilePath, workingFilePath);
                     ImportFileToSQLite(workingFilePath, dbFilePath, dbTableName);
                 }

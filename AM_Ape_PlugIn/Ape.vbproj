@@ -102,7 +102,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="TableFunctions">
-      <HintPath>bin\TableFunctions.dll</HintPath>
+      <HintPath>..\AM_Common\TableFunctions.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

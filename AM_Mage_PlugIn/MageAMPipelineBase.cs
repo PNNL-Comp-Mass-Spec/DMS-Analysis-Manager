@@ -50,7 +50,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
         public string RequireMgrParam(string paramName) {
             string val = mMgrParms.GetParam(paramName);
-            if (val == "") {
+            if (string.IsNullOrWhiteSpace(val)) {
                 throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
             }
             return val;
@@ -58,7 +58,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
         public string RequireJobParam(string paramName) {
             string val = mJobParms.GetParam(paramName);
-            if (val == "") {
+			if (string.IsNullOrWhiteSpace(val)) {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
@@ -70,7 +70,8 @@ namespace AnalysisManager_Mage_PlugIn {
 
         public string GetJobParam(string paramName, string defaultValue) {
             string val = mJobParms.GetParam(paramName);
-            if (val == "") val = defaultValue;
+			if (string.IsNullOrWhiteSpace(val))
+				val = defaultValue;
             return val;
         }
 

@@ -20,7 +20,7 @@ namespace AnalysisManager_Ape_PlugIn
 
        public override IJobParams.CloseOutType RunTool()
         {
-            m_jobParams.SetParam("DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
+            m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
             bool blnSuccess = false;
 
@@ -44,27 +44,28 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 blnSuccess = RunApe();
 
-                //Change the name of the log file for the local log file to the plug in log filename
+                // Change the name of the log file back to the analysis manager log file
                 LogFileName = m_mgrParams.GetParam("logfilename");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
+
+				if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
+				}
             }
             catch (Exception ex)
             {
-                //Change the name of the log file for the local log file to the plug in log filename
+				// Change the name of the log file back to the analysis manager log file
                 LogFileName = m_mgrParams.GetParam("logfilename");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Cyclops: " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + ex.Message);
                 blnSuccess = false;
+				m_message = "Error running Ape";
             }
 
-
-           // Store the Ape version info in the database
-            //StoreToolVersionInfo("");
-
-           //Stop the job timer
+            //Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
             m_progress = PROGRESS_PCT_APE_DONE;
 
@@ -75,8 +76,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             //Make sure objects are released
-            System.Threading.Thread.Sleep(2000);
-            //2 second delay
+			//2 second delay
+            System.Threading.Thread.Sleep(2000);            
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
@@ -90,7 +91,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
             m_Dataset = m_jobParams.GetParam("OutputFolderName");
-            m_jobParams.SetParam("OutputFolderName", m_jobParams.GetParam("StepOutputFolderName"));
+			m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
             result = MakeResultsFolder();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
@@ -108,17 +109,6 @@ namespace AnalysisManager_Ape_PlugIn
                 return result;
             }
 
-            //// Move the Plots folder to the result files folder
-            //System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-            //diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
-
-            //string strTargetFolderPath = null;
-            //strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-            //diPlotsFolder.MoveTo(strTargetFolderPath);
-
-            //m_Dataset = m_jobParams.GetParam("StepOutputFolderName");
-            //m_jobParams.SetParam("transferFolderPath", Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName")));
-
             result = CopyResultsFolderToServer();
             if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -132,18 +122,37 @@ namespace AnalysisManager_Ape_PlugIn
         }
 
        /// <summary>
-       /// run the Ape pipeline(s) listed in "ApeOperations" parameter
+       /// Run the Ape pipeline(s) listed in "ApeOperations" parameter
        /// </summary>
        protected bool RunApe()
        {
            bool blnSuccess = false;
+		   int iOperations = 0;
 
            string apeOperations = m_jobParams.GetParam("ApeOperations");
+
+		   if (string.IsNullOrWhiteSpace(apeOperations)) {
+			   m_message = "ApeOperations parameter is not defined";
+			   return false;
+		   }
+
            foreach (string apeOperation in apeOperations.Split(','))
            {
-               blnSuccess = RunApeOperation(apeOperation.Trim());
-               if (!blnSuccess) break;
+			   if (!string.IsNullOrWhiteSpace(apeOperation)) {
+				   iOperations += 1;
+
+				   blnSuccess = RunApeOperation(apeOperation.Trim());
+				   if (!blnSuccess) {
+					   m_message = "Error running Ape operation " + apeOperation;
+					   break;
+				   }
+			   }
            }
+
+		   if (iOperations == 0) {
+			   m_message = "ApeOperations parameter was empty";
+			   return false;
+		   }
 
            return blnSuccess;
 
@@ -159,21 +168,31 @@ namespace AnalysisManager_Ape_PlugIn
        private bool RunApeOperation(string apeOperation)
        {
            bool blnSuccess = false;
-           switch (apeOperation)
+
+		   // Note: case statements must be lowercase
+           switch (apeOperation.ToLower())
            {
-               case "RunWorkflow":
+               case "runworkflow":
                    clsApeAMRunWorkflow apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
                    blnSuccess = apeWfObj.RunWorkflow(m_jobParams.GetParam("DataPackageID"));
-                   break;
 
-               case "GetImprovResults":
+				   // Sleep for a few seconds to give SqlServerToSQLite.ConvertDatasetToSQLiteFile a chance to finish
+				   System.Threading.Thread.Sleep(2000);
+
+				   break;
+
+               case "getimprovresults":
                    clsApeAMGetImprovResults apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
                    blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
+
+				   // Sleep for a few seconds to give SqlServerToSQLite.ConvertDatasetToSQLiteFile a chance to finish
+				   System.Threading.Thread.Sleep(2000);
+
                    break;
 
                default:
                    blnSuccess = false;
-                   m_message = "Ape Operation: "  + apeOperation + "not recognized.";
+                   m_message = "Ape Operation: " + apeOperation + "not recognized.";
                    // Future: throw an error
                    break;
            }
@@ -200,17 +219,20 @@ namespace AnalysisManager_Ape_PlugIn
             string strFolderPathToArchive = null;
             strFolderPathToArchive = string.Copy(m_WorkDir);
 
-            try
-            {
-                System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
+			// If necessary, delete extra files with the following
+			/* 
+				try
+				{
+					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
+					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+				}
+				catch (Exception ex)
+				{
+					// Ignore errors here
+				}
+		    */
+			
+		   // Make the results folder
             result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -238,19 +260,28 @@ namespace AnalysisManager_Ape_PlugIn
         {
 
             string strToolVersionInfo = string.Empty;
-			string strApePath;
 
             if (m_DebugLevel >= 2) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
             }
 
-            // Lookup the version of Ape
-			strMagePath = System.IO.Path.Combine(m_WorkDir, "Ape.dll");
-			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strApePath);
+			try
+			{
+				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Ape").GetName();
 
-            // Store paths to key DLLs in ioToolFiles
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo(strApePath));
+				string strNameAndVersion = null;
+				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+			}
+			catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Ape: " + ex.Message);
+                return false;
+            }
+
+			// Store paths to key DLLs
+			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+			ioToolFiles.Add(new System.IO.FileInfo("Ape.dll"));
 
             try
             {
