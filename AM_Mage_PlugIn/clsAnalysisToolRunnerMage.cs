@@ -10,6 +10,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
 		#region "Module Variables"
 
+		protected const float PROGRESS_PCT_MAGE_START = 5;
 		protected const float PROGRESS_PCT_MAGE_DONE = 95;
 
 		#endregion
@@ -35,6 +36,8 @@ namespace AnalysisManager_Mage_PlugIn {
 				StoreToolVersionInfo();
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
+				m_progress = PROGRESS_PCT_MAGE_START;
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
 				//Change the name of the log file for the local log file to the plug in log filename
 				String LogFileName = Path.Combine(m_WorkDir, "Mage_Log");
@@ -131,6 +134,12 @@ namespace AnalysisManager_Mage_PlugIn {
         private bool RunMage() {
             // run the appropriate Mage pipeline(s) according to operations list parameter
             string mageOperations = m_jobParams.GetParam("MageOperations");
+
+			if (string.IsNullOrWhiteSpace(mageOperations)) {
+				m_message = "MageOperations parameter is not defined";
+				return false;
+			}
+
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
             return ops.RunMageOperations(mageOperations);
         }
