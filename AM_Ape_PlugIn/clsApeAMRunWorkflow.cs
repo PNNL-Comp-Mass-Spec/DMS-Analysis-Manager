@@ -73,6 +73,7 @@ namespace AnalysisManager_Ape_PlugIn
             int apeWorkflowStart = Convert.ToInt32(GetJobParam("ApeWorkflowStart"));
             int apeWorkflowEnd = Convert.ToInt32(GetJobParam("ApeWorkflowEnd"));
 
+			SqlServerToSQLite.ProgressChanged += new SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
             SqlServerToSQLite.StartWorkflow(apeWorkflowStart, apeWorkflowEnd, apeWorkflow, apeDatabase, apeDatabase, false, false, mHandle);
 
             return blnSuccess;

@@ -9,6 +9,7 @@ namespace AnalysisManager_Ape_PlugIn
 {
     class clsApeAMGetImprovResults : clsApeAMBase
     {
+
         #region Member Variables
    
         /// <summary>
@@ -83,6 +84,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             string dotnetConnString = "Server=" + apeImprovMTSServerName + ";database=PRISM_IFC;uid=mtuser;Password=mt4fun";
 
+			SqlServerToSQLite.ProgressChanged += new SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
             SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 4, dotnetConnString, GetExperimentList(), apeDatabase, mHandle);
 
             return blnSuccess;
@@ -110,7 +112,6 @@ namespace AnalysisManager_Ape_PlugIn
             return expList;
         }
 
-
-
     }
+	
 }

@@ -11,11 +11,8 @@ namespace AnalysisManager_Cyclops_PlugIn
     class clsAnalysisToolRunnerCyclops: clsAnalysisToolRunnerBase
     {
 
-        #region "Module Variables"
-        protected const float PROGRESS_PCT_CYCLOPS_RUNNING = 5;
-        protected const float PROGRESS_PCT_CYCLOPS_DONE = 95;
-
-        #endregion
+		protected const float PROGRESS_PCT_CYCLOPS_START = 5;
+		protected const float PROGRESS_PCT_CYCLOPS_DONE = 95;
 
         public override IJobParams.CloseOutType RunTool()
         {
@@ -32,7 +29,10 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
-            
+				m_progress = PROGRESS_PCT_CYCLOPS_START;
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+
+
 				if (m_DebugLevel > 4)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
@@ -249,27 +249,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         }
 
-        /// <summary>
-        /// Event handler for CmdRunner.LoopWaiting event
-        /// </summary>
-        /// <remarks></remarks>
-        private void CmdRunner_LoopWaiting()
-        //handles CmdRunner.LoopWaiting
-        {
-            System.DateTime dtLastStatusUpdate = System.DateTime.UtcNow;
 
-            //Synchronize the stored Debug level with the value stored in the database
-            const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-            base.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
-
-            //Update the status file (limit the updates to every 5 seconds)
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
-            {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_CYCLOPS_RUNNING, 0, "", "", "", false);
-            }
-
-        }
-
-    }
+	}
 }

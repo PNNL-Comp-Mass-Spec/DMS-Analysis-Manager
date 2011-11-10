@@ -10,13 +10,11 @@ namespace AnalysisManager_Ape_PlugIn
 {
    class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
    {
+	   protected const float PROGRESS_PCT_APE_START = 1;
+	   protected const float PROGRESS_PCT_APE_DONE = 99;
 
-       #region "Module Variables"
-       private static bool _shouldExit = false;
-       protected const float PROGRESS_PCT_APE_DONE = 95;
-
-       #endregion
-
+	   protected string m_CurrentApeTask = string.Empty;
+	   protected System.DateTime m_LastStatusUpdateTime;
 
        public override IJobParams.CloseOutType RunTool()
        {
@@ -36,15 +34,21 @@ namespace AnalysisManager_Ape_PlugIn
 				// Store the Ape version info in the database
 				StoreToolVersionInfo();
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Ape");
+				m_CurrentApeTask = "Running Ape";
+				m_LastStatusUpdateTime = System.DateTime.UtcNow;
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
-				//Change the name of the log file for the local log file to the plug in log filename
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentApeTask);
+
+				//Change the name of the log file for the local log file to the plugin log filename
 				String LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
 				log4net.GlobalContext.Properties["LogName"] = LogFileName;
 				clsLogTools.ChangeLogFileName(LogFileName);
 
 				try
 				{
+					m_progress = PROGRESS_PCT_APE_START;
+
 					blnSuccess = RunApe();
 
 					// Change the name of the log file back to the analysis manager log file
@@ -182,7 +186,11 @@ namespace AnalysisManager_Ape_PlugIn
            switch (apeOperation.ToLower())
            {
                case "runworkflow":
-                   clsApeAMRunWorkflow apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
+				   clsApeAMRunWorkflow apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
+
+				   // Attach the progress event handler
+				   apeWfObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+
                    blnSuccess = apeWfObj.RunWorkflow(m_jobParams.GetParam("DataPackageID"));
 
 				   // Sleep for a few seconds to give SqlServerToSQLite.ConvertDatasetToSQLiteFile a chance to finish
@@ -192,6 +200,10 @@ namespace AnalysisManager_Ape_PlugIn
 
                case "getimprovresults":
                    clsApeAMGetImprovResults apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
+
+				   // Attach the progress event handler
+				   apeImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+
                    blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
 
 				   // Sleep for a few seconds to give SqlServerToSQLite.ConvertDatasetToSQLiteFile a chance to finish
@@ -207,6 +219,22 @@ namespace AnalysisManager_Ape_PlugIn
            }
            return blnSuccess;
        }
+
+	   void ApeProgressChanged(object sender, clsApeAMBase.ProgressChangedEventArgs e) {
+
+			// Update the step tool progress
+			// However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
+			if (e.percentComplete > 0 && e.percentComplete < 100)
+				m_progress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
+
+			if (!string.IsNullOrEmpty(e.taskDescription))
+				m_CurrentApeTask = e.taskDescription;
+
+			if (System.DateTime.UtcNow.Subtract(m_LastStatusUpdateTime).TotalSeconds >= 10) {
+				m_LastStatusUpdateTime = System.DateTime.UtcNow;
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+			}
+	   }
 
        #endregion
 

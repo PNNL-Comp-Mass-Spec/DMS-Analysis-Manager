@@ -8,6 +8,11 @@ namespace AnalysisManager_Ape_PlugIn
 {
     class clsApeAMBase
     {
+		#region "Event Delegates and Classes"
+			public event ProgressChangedEventHandler ProgressChanged;
+			public delegate void ProgressChangedEventHandler(object sender, ProgressChangedEventArgs e);
+		#endregion
+
         #region Member Variables
         protected string mResultsDBFileName = "";
 
@@ -18,8 +23,7 @@ namespace AnalysisManager_Ape_PlugIn
         protected IMgrParams mMgrParms;
 
         #endregion
-
-
+		
         #region Constructors
 
         public clsApeAMBase(IJobParams jobParms, IMgrParams mgrParms) {
@@ -70,8 +74,20 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
+		protected void OnProgressChanged(string TaskDescription, float PctComplete) {
+			if (ProgressChanged != null)
+				ProgressChanged(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
+		}	
 
+		public class ProgressChangedEventArgs : EventArgs {
+			public readonly string taskDescription;     // Current task
+			public readonly float percentComplete;      // number between 0 and 100
 
+			public ProgressChangedEventArgs(string strTaskDescription, float fPercentComplete) {
+				taskDescription = strTaskDescription;
+				percentComplete = fPercentComplete;
+			}
+		}
 
     }
 }
