@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+November 14, 2011
+	- Added function StoreToolVersionInfoOneFile64Bit, which uses 64-bit app DLLVersionInspector.exe to determine the version of a 64-bit DLL or .Exe
+		- Updated LCMSFeatureFinder plugin to use this function instead of looking for a folder named 32BitDLLs
+
 November 7, 2011
 	- Updated the job parameter objects to track section name
 		- Can lookup job parameter by name alone, or using section name and parameter name

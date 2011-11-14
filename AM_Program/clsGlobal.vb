@@ -169,6 +169,15 @@ Namespace AnalysisManagerBase
 
         End Function
 
+		Public Shared Function PossiblyQuotePath(strPath As String) As String
+			If strPath.IndexOf(" "c) > 0 Then
+				Return """" & strPath & """"
+			Else
+				Return strPath
+			End If
+
+		End Function
+
         ''' <summary>
         ''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
         ''' This function does not need to be called, since function MoveResultFiles ignores files in list FilesToDelete

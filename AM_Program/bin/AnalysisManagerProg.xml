@@ -800,6 +800,15 @@ AnalysisManagerProg
  </summary>
 	<param name="strToolVersionInfo">Version info string to append the veresion info to</param>
 	<param name="strDLLFilePath">Path to the DLL</param>
+ 	  ''' <returns>True if success; false if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.StoreToolVersionInfoOneFile64Bit(System.String@,System.String)">
+	<summary>
+ Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
+ </summary>
+	<param name="strToolVersionInfo"></param>
+	<param name="strDLLFilePath"></param>
+	<returns>True if success; false if an error</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.UpdateSummaryFile">
 	<summary>
