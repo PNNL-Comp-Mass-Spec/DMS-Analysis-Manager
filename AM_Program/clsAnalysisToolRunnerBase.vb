@@ -894,18 +894,27 @@ Namespace AnalysisManagerBase
 						.WriteConsoleOutputToFile = False
 
 						.DebugLevel = 1
-						.MonitorInterval = 1000
+						.MonitorInterval = 250
 					End With
 
 					blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
 
-					If blnSuccess Then
+					If Not blnSuccess Then
 						Return False
 					End If
 
-					System.Threading.Thread.Sleep(250)
+					System.Threading.Thread.Sleep(100)
 
 					blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
+
+					' Delete the version info file
+					Try
+						System.Threading.Thread.Sleep(100)
+						System.IO.File.Delete(strVersionInfoFilePath)
+					Catch ex As Exception
+						' Ignore errors here
+					End Try
+
 
 					If Not blnSuccess OrElse String.IsNullOrWhiteSpace(strVersion) Then
 						Return False

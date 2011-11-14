@@ -63,7 +63,8 @@ Public Class clsAnalysisToolRunnerLCMSFF
 		blnSuccess = StoreToolVersionInfo(progLoc)
 		If Not blnSuccess Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			m_message = "Error determining FeatureFinder version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
         ' Set up and execute a program runner to run the LCMS Feature Finder
