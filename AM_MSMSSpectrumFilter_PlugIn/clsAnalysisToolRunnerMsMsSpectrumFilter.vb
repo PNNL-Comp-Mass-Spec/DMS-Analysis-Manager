@@ -41,7 +41,11 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
         ' Store the MSMSSpectrumFilter version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining MSMSSpectrumFilter version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         m_Status = ISpectraFilter.ProcessStatus.SFILT_STARTING
 
@@ -517,7 +521,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MSMSSpectrumFilterAM: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MSMSSpectrumFilterAM: " & ex.Message)
+			Return False
         End Try
 
         ' Lookup the version of the MsMsDataFileReader
@@ -530,7 +535,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MsMsDataFileReader: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MsMsDataFileReader: " & ex.Message)
+			Return False
         End Try
 
         ' Store the path to MsMsDataFileReader.dll in ioToolFiles

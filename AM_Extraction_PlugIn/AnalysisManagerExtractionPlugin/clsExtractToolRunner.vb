@@ -53,7 +53,11 @@ Public Class clsExtractToolRunner
             MyBase.RunTool()
 
             ' Store the AnalysisManager version info in the database
-            StoreToolVersionInfo()
+			If Not StoreToolVersionInfo() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining version of Data Extraction tools"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
             Select Case m_jobParams.GetParam("ResultType")
                 Case "Peptide_Hit"  'Sequest result type
@@ -962,6 +966,7 @@ Public Class clsExtractToolRunner
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -979,10 +984,12 @@ Public Class clsExtractToolRunner
 				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
 			Else
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
+				Return False
 			End If
 
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
+			Return False
         End Try
 
 
@@ -1000,6 +1007,7 @@ Public Class clsExtractToolRunner
 
 			Catch ex As System.Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
+				Return False
 			End Try
 
             ' Lookup the version of the PeptideProphetRunner
@@ -1009,12 +1017,13 @@ Public Class clsExtractToolRunner
 
             If ioPeptideProphetRunner.Exists() Then
 				' Lookup the version of the PeptideProphetRunner
-				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioPeptideProphetRunner.FullName)
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioPeptideProphetRunner.FullName)
+				If Not blnSuccess Then Return False
 
 				' Lookup the version of the PeptideProphetLibrary
-				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
+				If Not blnSuccess Then Return False
             End If
-
 
         End If
 

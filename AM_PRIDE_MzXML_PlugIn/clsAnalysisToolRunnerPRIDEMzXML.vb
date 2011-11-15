@@ -42,7 +42,12 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         ' Store the MSDataFileTrimmer version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining MSDataFileTrimmer version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
 

@@ -235,8 +235,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Store the DeconTools version info in the database
-        StoreToolVersionInfo()
+		' Store the Decon2LS version info in the database
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining Decon2LS version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         mDecon2LSFailedMidLooping = False
 
@@ -694,7 +698,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+			Return False
         End Try
 
         ' Lookup the version of DeconEngine
@@ -707,7 +712,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+			Return False
         End Try
 
         ' Store paths to key DLLs in ioToolFiles

@@ -33,7 +33,11 @@ namespace AnalysisManager_Mage_PlugIn {
 				}
 
 				// Store the Mage version info in the database
-				StoreToolVersionInfo();
+				if (!StoreToolVersionInfo()) {
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					m_message = "Error determining Mage version";
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
 				m_progress = PROGRESS_PCT_MAGE_START;

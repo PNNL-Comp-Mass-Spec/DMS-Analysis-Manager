@@ -59,7 +59,11 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End If
 
         ' Store the MultiAlign version info in the database
-        StoreToolVersionInfo(progLoc)
+		If Not StoreToolVersionInfo(progLoc) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining MultiAlign version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         Dim MultiAlignResultFilename As String = m_jobParams.GetParam("ResultFilename")
 
@@ -221,6 +225,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioMultiAlignProg As System.IO.FileInfo
+		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -229,13 +234,21 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
 
         ' Lookup the version of MultiAlign 
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioMultiAlignProg.FullName)
+		If Not blnSuccess Then Return False
 
         ' Lookup the version of additional DLLs
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLProteomics.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+		If Not blnSuccess Then Return False
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

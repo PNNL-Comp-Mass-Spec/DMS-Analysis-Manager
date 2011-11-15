@@ -111,7 +111,11 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         MyBase.RunTool()
 
         ' Store the MASIC version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining MASIC version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         'Start the job timer
         m_StartTime = System.DateTime.UtcNow
@@ -399,13 +403,15 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         Dim strToolVersionInfo As String = String.Empty
 		Dim strMASICExePath As String = m_mgrParams.GetParam("masicprogloc")
+		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
 		' Lookup the version of MASIC
-		MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strMASICExePath)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strMASICExePath)
+		If Not blnSuccess Then Return False
 
         ' Store path to MASIC.exe in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

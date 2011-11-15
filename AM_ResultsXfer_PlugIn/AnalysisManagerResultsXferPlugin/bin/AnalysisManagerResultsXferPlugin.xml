@@ -16,7 +16,7 @@ AnalysisManagerResultsXferPlugin
 	<summary>
  Performs the results transfer
  </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<returns>IJobParams.CloseOutType indicating success or failure&gt;</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerResultsXferPlugin.clsResultXferToolRunner.StoreToolVersionInfo">
 	<summary>

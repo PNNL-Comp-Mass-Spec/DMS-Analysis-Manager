@@ -32,7 +32,11 @@ namespace AnalysisManager_Ape_PlugIn
 				}
 
 				// Store the Ape version info in the database
-				StoreToolVersionInfo();
+				if (!StoreToolVersionInfo()) {
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					m_message = "Error determining Ape version";
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
 				m_CurrentApeTask = "Running Ape";
 				m_LastStatusUpdateTime = System.DateTime.UtcNow;

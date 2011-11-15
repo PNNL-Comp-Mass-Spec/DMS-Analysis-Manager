@@ -57,7 +57,12 @@ Public Class clsAnalysisToolRunnerOM
         End If
 
         ' Store the OMSSA version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining OMSSA version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then

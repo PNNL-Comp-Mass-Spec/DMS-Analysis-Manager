@@ -66,7 +66,12 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End If
 
         ' Store the ReadW version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining MSXMLGen version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 
         If CreateMZXMLFile() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -222,14 +227,16 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             ProgramPath = System.IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
 
         Else
-            ' Invalid value for MSXMLGenerator
-            ProgramPath = String.Empty
+			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
+			Return False
         End If
 
         If Not String.IsNullOrEmpty(ProgramPath) Then
             ioToolFiles.Add(New System.IO.FileInfo(ProgramPath))
         Else
-            ' Invalid value for MSXMLGenerator
+			' Invalid value for ProgramPath
+			m_message = "MSXMLGenerator program path is empty"
+			Return False
         End If
 
         Try

@@ -64,7 +64,11 @@ Public Class clsAnalysisToolRunnerICR
         If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
         ' Store the ICR2LS version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining ICR2LS version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         'Verify a parm file has been specified
         ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))

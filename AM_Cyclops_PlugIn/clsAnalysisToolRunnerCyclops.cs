@@ -39,7 +39,11 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}            
            
 				// Store the Cyclops version info in the database
-				StoreToolVersionInfo();
+				if (!StoreToolVersionInfo()) {
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					m_message = "Error determining Cyclops version";
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
 				// Determine the path to the R DLLs
 				string RProgLoc = m_mgrParams.GetParam("RProgLoc");

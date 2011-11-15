@@ -43,7 +43,12 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         ' Store the AScore version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining AScore version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running AScore")
 

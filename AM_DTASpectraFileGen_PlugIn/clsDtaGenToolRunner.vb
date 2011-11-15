@@ -237,12 +237,19 @@ Public Class clsDtaGenToolRunner
 
 		SpectraGen.Setup(SetupParams)
 
-        ' Store the DeconTools version info in the database
+		' Store the DeconTools version info in the database
+		Dim blnSuccess As Boolean
         If SpectraGen.DtaToolNameLoc.ToLower().Contains("deconmsn.exe") Then
-            StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
+			blnSuccess = StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
         Else
-            StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
+			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
         End If
+
+		If Not blnSuccess Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining " & SpectraGen.DtaToolNameLoc & " version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		'Start the spectra generation process
 		Try
@@ -408,7 +415,8 @@ Public Class clsDtaGenToolRunner
 			MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconMSnEnginePath)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSnEngine.dll: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSnEngine.dll: " & ex.Message)
+			Return False
         End Try
 
         ' Store paths to key files in ioToolFiles

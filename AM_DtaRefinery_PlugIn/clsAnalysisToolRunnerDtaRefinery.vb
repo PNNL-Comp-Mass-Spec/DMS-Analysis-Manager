@@ -52,7 +52,12 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         End If
 
         ' Store the DTARefinery and X!Tandem version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining DTA Refinery version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -207,8 +212,11 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             ioToolFiles.Add(ioDtaRefineryFileInfo)
 
             Dim strXTandemModuleLoc As String = System.IO.Path.Combine(ioDtaRefineryFileInfo.DirectoryName, "aux_xtandem_module\tandem_5digit_precision.exe")
-            ioToolFiles.Add(New System.IO.FileInfo(strXTandemModuleLoc))
-        End If
+			ioToolFiles.Add(New System.IO.FileInfo(strXTandemModuleLoc))
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTARefinery not found: " & ioDtaRefineryFileInfo.FullName)
+			Return False
+		End If
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

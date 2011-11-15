@@ -80,7 +80,11 @@ Public Class clsAnalysisToolRunnerDtaSplit
             MyBase.RunTool()
 
             ' Store the AnalysisManager version info in the database
-            StoreToolVersionInfo()
+			If Not StoreToolVersionInfo() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining DtaSplit version"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
             strCDTAFile = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
@@ -452,7 +456,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerDtaSplitPlugIn: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerDtaSplitPlugIn: " & ex.Message)
+			Return False
         End Try
 
         ' Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles

@@ -44,7 +44,11 @@ Public Class clsResultXferToolRunner
 		MyBase.RunTool()
 
         ' Store the AnalysisManager version info in the database
-        StoreToolVersionInfo()
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining AnalysisManager version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         ' Transfer the results
 		Result = PerformResultsXfer()
@@ -100,7 +104,7 @@ Public Class clsResultXferToolRunner
 	''' <summary>
 	''' Performs the results transfer
 	''' </summary>
-	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+	''' <returns>IJobParams.CloseOutType indicating success or failure></returns>
 	''' <remarks></remarks>
 	Protected Overridable Function PerformResultsXfer() As AnalysisManagerBase.IJobParams.CloseOutType
 
@@ -243,7 +247,8 @@ Public Class clsResultXferToolRunner
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerProg: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerProg: " & ex.Message)
+			Return False
         End Try
 
         ' Lookup the version of AnalysisManagerResultsXferPlugin
@@ -256,7 +261,8 @@ Public Class clsResultXferToolRunner
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerResultsXferPlugin: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerResultsXferPlugin: " & ex.Message)
+			Return False
         End Try
 
         ' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles

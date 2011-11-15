@@ -110,7 +110,11 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             MyBase.RunTool()
 
             ' Store the AnalysisManager version info in the database
-            StoreToolVersionInfo()
+			If Not StoreToolVersionInfo() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining Inspect Results Assembly version"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
             'Determine if this is a parallelized job
             numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
@@ -954,6 +958,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -969,14 +974,22 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerInspResultsAssemblyPlugIn: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerInspResultsAssemblyPlugIn: " & ex.Message)
+			Return False
         End Try
 
         ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll"))
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll"))
+		If Not blnSuccess Then Return False
+
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll"))
+		If Not blnSuccess Then Return False
 
         ' Store the path to important DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

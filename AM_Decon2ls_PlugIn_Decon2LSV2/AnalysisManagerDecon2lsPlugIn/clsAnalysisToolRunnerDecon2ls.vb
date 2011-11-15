@@ -375,7 +375,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         ' Store the DeconTools version info in the database
-        StoreToolVersionInfo(progLoc)
+		If Not StoreToolVersionInfo(progLoc) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining DeconTools version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         ' Reset the log file tracking variables
         mDeconToolsFinishedDespiteProgRunnerError = False
@@ -812,6 +816,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         Dim strToolVersionInfo As String = String.Empty
         Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
         Dim ioDeconToolsInfo As System.IO.FileInfo
+		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -831,23 +836,28 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         ' Lookup the version of the DeconConsole application
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioDeconToolsInfo.FullName)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioDeconToolsInfo.FullName)
+		If Not blnSuccess Then Return False
 
         ' Lookup the version of the DeconTools Backend (in the DeconTools folder)
         Dim strDeconToolsBackendPath As String = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll")
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
+		If Not blnSuccess Then Return False
 
         ' Lookup the version of the UIMFLibrary (in the DeconTools folder)
         Dim strDLLPath As String = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll")
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		If Not blnSuccess Then Return False
 
         ' Lookup the version of DeconEngine (in the DeconTools folder)
         strDLLPath = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		If Not blnSuccess Then Return False
 
         ' Lookup the version of DeconEngineV2 (in the DeconTools folder)
         strDLLPath = System.IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		If Not blnSuccess Then Return False
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

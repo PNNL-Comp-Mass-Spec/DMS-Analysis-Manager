@@ -116,7 +116,11 @@ Public Class clsAnalysisToolRunnerIN
             OrgDbDir = m_mgrParams.GetParam("orgdbdir")
 
             ' Store the Inspect version info in the database
-            StoreToolVersionInfo(InspectDir)
+			If Not StoreToolVersionInfo(InspectDir) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining Inspect version"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create .trie file")
