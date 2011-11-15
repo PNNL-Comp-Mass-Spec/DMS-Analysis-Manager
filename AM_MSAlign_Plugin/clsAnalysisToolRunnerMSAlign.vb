@@ -421,6 +421,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			mMSAlignWorkFolderPath = diMSAlignWork.FullName
 
 			' Create the subdirectories
+			diMSAlignWork.CreateSubdirectory("etc")
 			diMSAlignWork.CreateSubdirectory("html")
 			diMSAlignWork.CreateSubdirectory("jar")
 			diMSAlignWork.CreateSubdirectory("msinput")
@@ -430,6 +431,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			' Copy all files in the jar and xsl folders to the target
 			Dim lstSubfolderNames As New System.Collections.Generic.List(Of String)()
+			lstSubfolderNames.Add("etc")
 			lstSubfolderNames.Add("jar")
 			lstSubfolderNames.Add("xsl")
 
