@@ -48,36 +48,59 @@ Public Class clsAnalysisResourcesMSGFDB
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		' Retrieve unzipped dta files (do not de-concatenate since MSGFDB uses the _Dta.txt file directly)
-		If Not RetrieveDtaFiles(False) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+		' The ToolName job parameter holds the name of the job script we are executing
+		Dim strScriptName As String = m_jobParams.GetParam("ToolName")
 
-		If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
-			' _ScanStats.txt file not found
-			' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
-			If Not GenerateScanStatsFile(strDatasetName) Then
+		If strScriptName.ToLower().Contains("mzxml") Then
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
+
+			' Retrieve the .mzXML file for this dataset
+			' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
+			' Instead, use FindAndRetrieveMiscFiles 
+
+			' Note that capitalization matters for the extension; it must be .mzXML
+			Dim FileToGet As String = m_jobParams.GetParam("DatasetNum") & ".mzXML"
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+			clsGlobal.FilesToDelete.Add(FileToGet)
+
+		Else
+			' Retrieve the _DTA.txt file
+			' Retrieve unzipped dta files (do not de-concatenate since MSGFDB uses the _Dta.txt file directly)
+			If Not RetrieveDtaFiles(False) Then
+				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+			If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
+				' _ScanStats.txt file not found
+				' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
+				If Not GenerateScanStatsFile(strDatasetName) Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+			End If
+
+			' If the _dta.txt file is over 2 GB in size, then condense it
+			If Not ValidateDTATextFileSize(m_WorkingDir, strDatasetName & "_dta.txt") Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 		End If
 
-		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 
 		'Add all the extensions of the files to delete after run
+		clsGlobal.m_FilesToDeleteExt.Add(".mzXML")
 		clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
 		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
 		clsGlobal.m_FilesToDeleteExt.Add("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
 		clsGlobal.m_FilesToDeleteExt.Add(SCAN_STATS_FILE_SUFFIX)
 		clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
-
-		' If the _dta.txt file is over 2 GB in size, then condense it
-
-		If Not ValidateDTATextFileSize(m_WorkingDir, strDatasetName & "_dta.txt") Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

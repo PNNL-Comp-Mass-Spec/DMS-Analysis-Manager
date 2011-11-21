@@ -79,6 +79,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Dim objIndexedDBCreator As New clsCreateMSGFDBSuffixArrayFiles
 
+		Dim strScriptName As String
+		Dim blnUsingMzXML As Boolean
+
 		Try
 			'Call base class for initial setup
 			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -112,16 +115,25 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			mMSGFDbVersion = String.Empty
 			mConsoleOutputErrorMsg = String.Empty
 
-			' Make sure the _DTA.txt file is valid
-			If Not ValidateCDTAFile() Then
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-			End If
+			strScriptName = m_jobParams.GetParam("ToolName")
 
-			' Create the ScanType file (lists scan type for each scan number)
-			If Not CreateScanTypeFile() Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			If strScriptName.ToLower().Contains("mzxml") Then
+				blnUsingMzXML = True
 			Else
-				clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+				blnUsingMzXML = False
+
+				' Make sure the _DTA.txt file is valid
+				If Not ValidateCDTAFile() Then
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+				End If
+
+				' Create the ScanType file (lists scan type for each scan number)
+				If Not CreateScanTypeFile() Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Else
+					clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+				End If
+
 			End If
 
 			' Define the path to the fasta file
@@ -208,7 +220,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 
 			' Define the input file, output file, and fasta file
-			CmdStr &= " -s " & m_Dataset & "_dta.txt"
+			If blnUsingMzXML Then
+				CmdStr &= " -s " & m_Dataset & ".mzXML"
+			Else
+				CmdStr &= " -s " & m_Dataset & "_dta.txt"
+			End If
+
 			CmdStr &= " -o " & ResultsFileName
 			CmdStr &= " -d " & fiFastaFile.FullName
 

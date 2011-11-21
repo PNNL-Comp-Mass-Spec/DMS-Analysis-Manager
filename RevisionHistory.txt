@@ -2,6 +2,7 @@ Analysis Tool Manager History
 
 November 20, 2011
 	- Updated MultiAlign plugins to use StoreToolVersionInfoOneFile64Bit
+	- Updated MSGFDB to support processing a .mzXML file instead of a _DTA.txt file
 
 November 14, 2011
 	- Added function StoreToolVersionInfoOneFile64Bit, which uses 64-bit app DLLVersionInspector.exe to determine the version of a 64-bit DLL or .Exe

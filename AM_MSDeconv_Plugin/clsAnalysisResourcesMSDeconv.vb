@@ -27,7 +27,7 @@ Public Class clsAnalysisResourcesMSDeconv
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
 
 		' Retrieve the .mzXML file for this dataset
-		' Do not use RetrieveMZXmlFile since that function looks for folder any valid MSXML_Gen folder for this dataset
+		' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
 		' Instead, use FindAndRetrieveMiscFiles 
 
 		' Note that capitalization matters for the extension; it must be .mzXML
