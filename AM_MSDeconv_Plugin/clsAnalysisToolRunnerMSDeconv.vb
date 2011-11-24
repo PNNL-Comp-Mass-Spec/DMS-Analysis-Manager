@@ -145,10 +145,21 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				blnProcessingError = True
 
 			Else
-				' Make sure the output file was created
-				If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, ResultsFileName)) Then
+				' Make sure the output file was created and is not zero-bytes
+				' If the input .mzXML file only has MS spectra and no MS/MS spectra, then the output file will be empty
+				Dim ioResultsFile As System.IO.FileInfo
+				ioResultsFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, ResultsFileName))
+				If Not ioResultsFile.Exists() Then
 					Dim Msg As String
 					Msg = "MSDeconv results file not found"
+					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
+
+					blnProcessingError = True
+				ElseIf ioResultsFile.Length = 0 Then
+					Dim Msg As String
+					Msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra"
 					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
