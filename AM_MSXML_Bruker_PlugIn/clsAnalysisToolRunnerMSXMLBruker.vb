@@ -67,7 +67,9 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         ' Store the CompassXport version info in the database
 		If Not StoreToolVersionInfo() Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining CompassXport version"
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error determining CompassXport version"
+			End If
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -232,7 +234,13 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
             ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("CompassXportLoc")))
         Else
-			m_message = "Invalid value for MSXMLGenerator; should be " & COMPASS_XPORT
+			If String.IsNullOrEmpty(msXmlGenerator) Then
+				m_message = "Job Parameter MSXMLGenerator is not defined"
+			Else
+				m_message = "Invalid value for MSXMLGenerator, should be " & COMPASS_XPORT & ", not " & msXmlGenerator
+			End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
         End If
 
