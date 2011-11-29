@@ -1,5 +1,11 @@
 Analysis Tool Manager History
 
+November 28, 2011
+	- Updated MSAlign plugin to ignore the etc folder when running v0.5 of MSAlign
+
+November 23, 2011
+	- Now validating that the MSDeconv results file is not empty
+
 November 20, 2011
 	- Updated MultiAlign plugins to use StoreToolVersionInfoOneFile64Bit
 	- Updated MSGFDB to support processing a .mzXML file instead of a _DTA.txt file

@@ -125,7 +125,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			mMSAlignWorkFolderPath = String.Empty
 
 			' Copy the MS Align program files and associated files to the work directory
-			If Not CopyMSAlignProgramFiles(mMSAlignProgLoc) Then
+			If Not CopyMSAlignProgramFiles(mMSAlignProgLoc, blnRunningVersion0Pt5) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -390,7 +390,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Sub
 
-	Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String) As Boolean
+	Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String, ByVal blnRunningVersion0Pt5 As Boolean) As Boolean
 
 		Dim fiMSAlignJarFile As System.IO.FileInfo
 		Dim diMSAlignSrc As System.IO.DirectoryInfo
@@ -421,19 +421,23 @@ Public Class clsAnalysisToolRunnerMSAlign
 			mMSAlignWorkFolderPath = diMSAlignWork.FullName
 
 			' Create the subdirectories
-			diMSAlignWork.CreateSubdirectory("etc")
 			diMSAlignWork.CreateSubdirectory("html")
 			diMSAlignWork.CreateSubdirectory("jar")
 			diMSAlignWork.CreateSubdirectory("msinput")
 			diMSAlignWork.CreateSubdirectory("msoutput")
 			diMSAlignWork.CreateSubdirectory("xml")
 			diMSAlignWork.CreateSubdirectory("xsl")
+			If Not blnRunningVersion0Pt5 Then
+				diMSAlignWork.CreateSubdirectory("etc")
+			End If
 
 			' Copy all files in the jar and xsl folders to the target
 			Dim lstSubfolderNames As New System.Collections.Generic.List(Of String)()
-			lstSubfolderNames.Add("etc")
 			lstSubfolderNames.Add("jar")
 			lstSubfolderNames.Add("xsl")
+			If Not blnRunningVersion0Pt5 Then
+				lstSubfolderNames.Add("etc")
+			End If
 
 			For Each strSubFolder As String In lstSubfolderNames
 				Dim strTargetSubfolder = System.IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
