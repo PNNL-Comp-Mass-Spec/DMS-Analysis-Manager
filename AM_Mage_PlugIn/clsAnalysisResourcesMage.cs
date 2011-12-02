@@ -1,18 +1,15 @@
 ﻿using System;
 using AnalysisManagerBase;
 using Mage;
+using AnalysisManager_MAC;
+
 
 namespace AnalysisManager_Mage_PlugIn
 {
 
-    public class clsAnalysisResourcesMage : clsAnalysisResources
+    public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
     {
 
 
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
-        {
-              return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
-        }
- 
     }
 }

@@ -69,11 +69,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsAnalysisResourcesMAC.cs" />
     <Compile Include="clsAnalysisResourcesMage.cs" />
+    <Compile Include="clsAnalysisToolRunnerMAC.cs" />
     <Compile Include="clsAnalysisToolRunnerMage.cs" />
     <Compile Include="IPipelineMonitor.cs" />
     <Compile Include="MageAMExtractionPipelines.cs" />
+    <Compile Include="MageAMFileContentProcessor.cs" />
     <Compile Include="MageAMFileProcessingPipelines.cs" />
+    <Compile Include="ModuleAddAlias.cs" />
     <Compile Include="MageAMOperations.cs" />
     <Compile Include="MageAMPipelineBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

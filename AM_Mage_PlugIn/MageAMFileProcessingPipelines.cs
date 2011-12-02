@@ -8,6 +8,10 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_Mage_PlugIn {
 
+    /// <summary>
+    /// Class that defines basic Mage pipelines and functions that 
+    /// provide sub-operations that make up operations that Mac Mage plug-in can execute
+    /// </summary>
     public class MageAMFileProcessingPipelines : MageAMPipelineBase {
 
         #region Constructors
@@ -21,32 +25,41 @@ namespace AnalysisManager_Mage_PlugIn {
             : base(jobParms, mgrParms) {
         }
 
-
         #endregion
 
         /// <summary>
-        /// Copy the results SQLite database file produced by the previous job step (if it exists)
-        /// to the working directory
+        /// Import contents of results files for jobs given by SQL query that satisfy given file name selector
+        /// into given table in output SQLite database.  Apply given file process to the contents.
         /// </summary>
-        protected void GetPriorResultsToWorkDir() {
-            string dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
+        /// <param name="jobListQuery">Query to run to get list of jobs</param>
+        /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
+        /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
+        /// <param name="fileProcessName">Process to apply to file content extraction</param>
+        public void ImportJobResults(String jobListQuery, string fileNameSelector, string tableName, string fileProcessName) {
 
-            string stepInputFolderName = GetJobParam("StepInputFolderName");
-            if (stepInputFolderName != "") {
-                string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, mResultsDBFileName);
-                if (File.Exists(priorResultsDBFilePath)) {
-                    string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-                    File.Copy(priorResultsDBFilePath, workingFilePath);
-                }
-            }
+            // get list of jobs from data package that have ReporterIon results 
+            BaseModule jobList = GetListOfDMSItems(jobListQuery);
+
+            // get selected list reporter ion files from list of jobs
+            string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+            SimpleSink fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+
+            // import contents of each file in list
+            MageAMFileContentProcessor contentProc = new MageAMFileContentProcessor(this);
+            contentProc.DBTableName = tableName;
+            contentProc.Operation = fileProcessName;
+            ProcessingPipeline p = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
+            ConnectPipelineToStatusHandlers(p);
+            p.RunRoot(null);
         }
 
         /// <summary>
         /// Import the contents of files in the given source folder that pass the given name filter
         /// into the results SQLite database.
-        /// Optionally confine to names in given delimited file name list
-        /// </summary>
-        public void ImportFilesToSQLiteResultsDB(string inputFolderPath, string fileNameList) {
+        /// /// </summary>
+        /// <param name="inputFolderPath">Path to folder containing files to be imported</param>
+        /// <param name="fileNameList">List of specific file names that will be imported (ignored if blank)</param>
+        public void ImportFilesInFolderToSQLite(string inputFolderPath, string fileNameList, string importMode) {
             GetPriorResultsToWorkDir();
 
             FileListFilter reader = new FileListFilter();
@@ -58,36 +71,27 @@ namespace AnalysisManager_Mage_PlugIn {
 
             SimpleSink fileList = new SimpleSink();
 
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("GetFileListPipeline", reader, fileList);
-            ConnectPipelineToStatusHandlers(pipeline);
-            pipeline.RunRoot(null);
+            ProcessingPipeline fileListPipeline = ProcessingPipeline.Assemble("GetFileListPipeline", reader, fileList);
+            ConnectPipelineToStatusHandlers(fileListPipeline);
+            fileListPipeline.RunRoot(null);
 
-            int folderIdx = fileList.ColumnIndex[reader.SourceFolderColumnName];
-            int fileIdx = fileList.ColumnIndex[reader.FileColumnName];
-            // int itemIdx = fileList.ColumnIndex["FileTypeColumnName"];
-
-            string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-            string dbTableName = GetJobParam("DBTableName");
-
-            HashSet<string> fileNameSet = GetFileNameSet(fileNameList);
-            foreach (Object[] row in fileList.Rows) {
-                string sourceFolderPath = row[folderIdx].ToString();
-                string sourceFileName = row[fileIdx].ToString();
-                string sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
-                string workingFilePath = Path.Combine(mWorkingDir, sourceFileName);
-                if (string.IsNullOrWhiteSpace(fileNameList) || fileNameSet.Contains(sourceFileName)) {
-                    File.Copy(sourceFilePath, workingFilePath);
-                    ImportFileToSQLite(workingFilePath, dbFilePath, dbTableName);
-                }
-            }
+            MageAMFileContentProcessor contentProc = new MageAMFileContentProcessor(this);
+            contentProc.SourceFolderColumnName = reader.SourceFolderColumnName;
+            contentProc.SourceFileColumnName = reader.FileColumnName;
+            contentProc.Operation = importMode;
+            contentProc.DBTableName = "";
+            contentProc.FileNameList = fileNameList;
+            ProcessingPipeline fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
+            ConnectPipelineToStatusHandlers(fileImportPipeline);
+            fileImportPipeline.RunRoot(null);
         }
 
         /// <summary>
         /// Import the contents of the given file into the given table in the given results SQLite database
         /// </summary>
-        /// <param name="inputFilePath"></param>
-        /// <param name="dbFilePath"></param>
-        /// <param name="dbTableName"></param>
+        /// <param name="inputFilePath">Full path to file whose contents are will be imported</param>
+        /// <param name="dbFilePath">Full path to SQLite DB file into which file contents will be imported</param>
+        /// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
         public void ImportFileToSQLite(string inputFilePath, string dbFilePath, string dbTableName) {
             DelimitedFileReader reader = new DelimitedFileReader();
             reader.FilePath = inputFilePath;
@@ -103,17 +107,124 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
-        /// Convert comma-delimited list of file names into a hash set
+        /// Import the contents of the given file into the given table in the given results SQLite database
+        /// and perform given column mapping
         /// </summary>
-        /// <param name="fileList"></param>
-        /// <returns></returns>
-        protected HashSet<string> GetFileNameSet(string fileNameList) {
-            HashSet<string> set = new HashSet<string>();
-            String[] fileNames = fileNameList.Split(',');
-            foreach (string fileName in fileNames) {
-                set.Add(fileName.Trim());
+        /// <param name="inputFilePath">Full path to file whose contents are will be imported</param>
+        /// <param name="dbFilePath">Full path to SQLite DB file into which file contents will be imported</param>
+        /// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
+        /// <param name="outputColumnList">Mage output column spec</param>
+        /// <param name="context">Mage context (dictionary to supply lookup values for new output columns)</param>
+        public void ImportFileToSQLiteWithColumnMods(string inputFilePath, string dbFilePath, string dbTableName, string outputColumnList, Dictionary<string, string> context) {
+            DelimitedFileReader reader = new DelimitedFileReader();
+            reader.FilePath = inputFilePath;
+
+            BaseModule filter = new NullFilter();
+            filter.OutputColumnList = outputColumnList;
+            filter.SetContext(context);
+
+            SQLiteWriter writer = new SQLiteWriter();
+            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            writer.DbPath = dbFilePath;
+            writer.TableName = tableName;
+
+            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
+            ConnectPipelineToStatusHandlers(pipeline);
+            pipeline.RunRoot(null);
+        }
+
+        /// <summary>
+        /// Get list of selected files from list of folders
+        /// </summary>
+        /// <param name="folderListSource">Mage object that contains list of folders</param>
+        /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
+        /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
+        /// <returns>Mage object containing list of files</returns>
+        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns) {
+            SimpleSink sinkObject = new SimpleSink();
+
+            // create file filter module and initialize it
+            FileListFilter fileFilter = new FileListFilter();
+            fileFilter.FileNameSelector = fileNameSelector;
+            fileFilter.SourceFolderColumnName = "Folder";
+            fileFilter.FileColumnName = "Name";
+            fileFilter.OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns;
+            fileFilter.FileSelectorMode = "RegEx";
+            fileFilter.IncludeFilesOrFolders = "File";
+            fileFilter.RecursiveSearch = "No";
+            fileFilter.SubfolderSearchName = "*";
+
+            // build, wire, and run pipeline
+            ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
+            return sinkObject;
+        }
+
+        /*
+               /// <summary>
+                /// make Mage pipeline using given sql as source of factors and use it 
+                /// to create and populate a factors table in a SQLite database (in crosstab format)
+                /// </summary>
+                /// <param name="sql">Query to use a source of factors</param>
+                public void GetDatasetFactors(string sql) {
+                    MSSQLReader reader = MakeDBReaderModule(sql);
+
+                    CrosstabFilter crosstab = new CrosstabFilter();
+                    crosstab.EntityNameCol = "Dataset";
+                    crosstab.EntityIDCol = "Dataset_ID";
+                    crosstab.FactorNameCol = "Factor";
+                    crosstab.FactorValueCol = "Value";
+
+                    SQLiteWriter writer = new SQLiteWriter();
+                    writer.DbPath = Path.Combine(mWorkingDir, mResultsDBFileName);
+                    writer.TableName = "t_factors";
+
+                    ProcessingPipeline pipeline = ProcessingPipeline.Assemble("CrosstabFactors", reader, crosstab, writer);
+
+                    ConnectPipelineToStatusHandlers(pipeline);
+                    pipeline.RunRoot(null);
+                }
+         */
+
+        /// <summary>
+        /// make Mage pipeline using given sql as source of factors and use it 
+        /// to create and populate a factors table in a SQLite database (in crosstab format)
+        /// </summary>
+        /// <param name="sql">Query to use a source of factors</param>
+        public void GetDatasetFactors(string sql) {
+
+            // first pipeline - get factors crosstab to sink object
+            MSSQLReader reader = MakeDBReaderModule(sql);
+
+            CrosstabFilter crosstab = new CrosstabFilter();
+            crosstab.EntityNameCol = "Dataset";
+            crosstab.EntityIDCol = "Dataset_ID";
+            crosstab.FactorNameCol = "Factor";
+            crosstab.FactorValueCol = "Value";
+
+            SimpleSink sink = new SimpleSink();
+
+            ProcessingPipeline readPipeline = ProcessingPipeline.Assemble("ReadFactors", reader, crosstab, sink);
+            ConnectPipelineToStatusHandlers(readPipeline);
+            readPipeline.RunRoot(null);
+
+            // second pipeline - write factors to SQLite DB
+            // (and add "Alias" factor if not already present in factors)
+            ProcessingPipeline writePipeline;
+
+            SQLiteWriter writer = new SQLiteWriter();
+            writer.DbPath = Path.Combine(mWorkingDir, mResultsDBFileName);
+            writer.TableName = "t_factors";
+
+            if (!sink.ColumnIndex.ContainsKey("Alias")) {
+                ModuleAddAlias filter = new ModuleAddAlias();
+                filter.SetFactors(sink);
+                writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, filter, writer);
+            } else {
+                writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);
             }
-            return set;
+
+            ConnectPipelineToStatusHandlers(writePipeline);
+            writePipeline.RunRoot(null);
         }
 
     }

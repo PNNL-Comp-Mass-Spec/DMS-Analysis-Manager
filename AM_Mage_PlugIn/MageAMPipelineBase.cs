@@ -35,6 +35,16 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #endregion
 
+        #region Properties
+
+        public string WorkingDir {
+            get {
+                return mWorkingDir;
+            }
+        }
+
+        #endregion
+
         #region Constructors
 
         public MageAMPipelineBase(IJobParams jobParms, IMgrParams mgrParms) {
@@ -47,6 +57,11 @@ namespace AnalysisManager_Mage_PlugIn {
         #endregion
 
         #region Utility Methods
+
+        public string GetSQLiteResultsDBFilePath() {
+            string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+            return dbFilePath;
+        }
 
         public string RequireMgrParam(string paramName) {
             string val = mMgrParms.GetParam(paramName);
@@ -75,6 +90,51 @@ namespace AnalysisManager_Mage_PlugIn {
             return val;
         }
 
+        /// <summary>
+        /// Create a new MSSQLReader module to do a specific query
+        /// </summary>
+        /// <param name="sql">Query to use</param>
+        /// <returns></returns>
+        protected MSSQLReader MakeDBReaderModule(String sql) {
+            MSSQLReader reader = new MSSQLReader();
+            reader.ConnectionString = RequireMgrParam("ConnectionString");
+            reader.SQLText = sql;
+            return reader;
+        }
+
+        /// <summary>
+        /// Get a list of items from DMS
+        /// </summary>
+        /// <param name="sql">Query to use a source of jobs</param>
+        /// <returns>A Mage module containing list of jobs</returns>
+        public BaseModule GetListOfDMSItems(string sql) {
+            SimpleSink itemList = new SimpleSink();
+
+            MSSQLReader reader = MakeDBReaderModule(sql);
+
+            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
+            ConnectPipelineToStatusHandlers(pipeline);
+            pipeline.RunRoot(null);
+
+            return itemList;
+        }
+
+        /// <summary>
+        /// Copy the results SQLite database file produced by the previous job step (if it exists)
+        /// to the working directory
+        /// </summary>
+        protected void GetPriorResultsToWorkDir() {
+            string dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
+
+            string stepInputFolderName = GetJobParam("StepInputFolderName");
+            if (stepInputFolderName != "") {
+                string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, mResultsDBFileName);
+                if (File.Exists(priorResultsDBFilePath)) {
+                    string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+                    File.Copy(priorResultsDBFilePath, workingFilePath);
+                }
+            }
+        }
 
         #endregion
 

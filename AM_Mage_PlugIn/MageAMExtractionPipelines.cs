@@ -10,9 +10,16 @@ using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn {
 
+    /// <summary>
+    /// Class that defines basic Mage pipelines and functions that 
+    /// provide sub-operations that make up file extraction operations 
+    /// that Mac Mage plug-in can execute.
+    /// 
+    /// These extraction operations are essentially identical to the operations
+    /// permormed by the MageFileExtractor tool.
+    /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase {
 
- 
         #region Member Variables
    
         /// <summary>
@@ -38,9 +45,9 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        public void ExtractFromJobs(String dataPackageID) {
+        public void ExtractFromJobs(String sql) {
             GetExtractionParametersFromJobParameters();
-            BaseModule jobList = GetListOfJobs(dataPackageID);
+            BaseModule jobList = GetListOfDMSItems(sql);
             ExtractFromJobsList(jobList);
         }
 
@@ -66,23 +73,6 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
-        /// Get a list of jobs to process
-        /// </summary>
-        /// <param name="sql">Query to use a source of jobs</param>
-        /// <returns>A Mage module containing list of jobs</returns>
-        protected BaseModule GetListOfJobs(string sql) {
-            SimpleSink jobList = new SimpleSink();
-
-            MSSQLReader reader = MakeDBReaderModule(sql);
-
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Jobs", reader, jobList);
-            ConnectPipelineToStatusHandlers(pipeline);
-            pipeline.RunRoot(null);
-
-            return jobList;
-        }
-
-        /// <summary>
         /// Build pipeline to perform extraction operation against jobs in jobList
         /// </summary>
         /// <param name="jobList">List of jobs to perform extraction from</param>
@@ -94,43 +84,5 @@ namespace AnalysisManager_Mage_PlugIn {
             ConnectPipelineQueueToStatusHandlers(mPipelineQueue);
             mPipelineQueue.RunRoot(null);
         }
-
-        /// <summary>
-        /// make Mage pipeline using given sql as source of factors and use it 
-        /// to create and populate a factors table in a SQLite database (in crosstab format)
-        /// </summary>
-        /// <param name="sql">Query to use a source of factors</param>
-        public void GetDatasetFactors(string sql) {
-            MSSQLReader reader = MakeDBReaderModule(sql);
-
-            CrosstabFilter crosstab = new CrosstabFilter();
-            crosstab.EntityNameCol = "Dataset";
-            crosstab.EntityIDCol = "Dataset_ID";
-            crosstab.FactorNameCol = "Factor";
-            crosstab.FactorValueCol = "Value";
-
-            SQLiteWriter writer = new SQLiteWriter();
-            writer.DbPath = Path.Combine(mWorkingDir, mResultsDBFileName);
-            writer.TableName = "t_factors";
-
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("CrosstabFactors", reader, crosstab, writer);
-
-            ConnectPipelineToStatusHandlers(pipeline);
-            pipeline.RunRoot(null);
-        }
-
-        /// <summary>
-        /// Create a new MSSQLReader module to do a specific query
-        /// </summary>
-        /// <param name="sql">Query to use</param>
-        /// <returns></returns>
-        protected MSSQLReader MakeDBReaderModule(String sql) {
-            MSSQLReader reader = new MSSQLReader();
-            reader.ConnectionString = RequireMgrParam("ConnectionString");
-            reader.SQLText = sql;
-            return reader;
-        }
-
-
     }
 }

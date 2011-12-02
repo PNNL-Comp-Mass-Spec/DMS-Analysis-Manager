@@ -10,55 +10,49 @@ namespace AnalysisManager_Mage_PlugIn {
     /// <summary>
     /// Get SQL for queries
     /// </summary>
-    class SQL {
+    public class SQL {
 
-        /// <summary>
-        /// Indexed list of sql templates
-        /// </summary>
-        private static Dictionary<string, string> sqlTemplates = new Dictionary<string, string> { 
-            {"JobsFromDataPackageID", "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}"},
-            {"FactorsFromDataPackageID", "SELECT Dataset, Dataset_ID, Factor, Value FROM DMS5.dbo.V_Custom_Factors_List_Report WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})"} // FUTURE: better query
- 
+        // holds a single query definition template
+        public class QueryTemplate {
+            public string templateSQL { get; set; }
+            public string paramNameList { get; set; }
+            public QueryTemplate(string sql, string list) {
+                templateSQL = sql;
+                paramNameList = list;
+            }
+        }
+
+        // Definition of query templates
+        private static Dictionary<string, QueryTemplate> queryTemplates = new Dictionary<string, QueryTemplate> {
+            {"JobsFromDataPackageID", 
+                new QueryTemplate("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}", 
+                    "DataPackageID") },
+            {"JobsFromDataPackageIDForTool",
+                new QueryTemplate("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool = '{1}'", 
+                    "DataPackageID, Tool") },
+            {"FactorsFromDataPackageID",
+                new QueryTemplate("SELECT Dataset, Dataset_ID, Factor, Value FROM DMS5.dbo.V_Custom_Factors_List_Report WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})", 
+                    "DataPackageID") },
         };
 
         /// <summary>
-        /// Indexed list of parameter names for templates
+        /// Get the query template for the given query name
         /// </summary>
-        private static Dictionary<string, string> sqlParamNames = new Dictionary<string, string> { 
-            {"JobsFromDataPackageID", "DataPackageID"},
-            {"FactorsFromDataPackageID", "DataPackageID"} 
+        /// <param name="queryName">Name of query template</param>
+        /// <returns>QueryTemplate object</returns>
+        public static QueryTemplate GetQueryTemplate(string queryName) {
+            return queryTemplates[queryName];
+        }
  
-        };
-
         /// <summary>
-        /// Lookup sql template using key, and, if found, add in values from args
+        /// Build SQL statement from query template and parameter values
         /// </summary>
-        /// <param name="key">Index to sql template</param>
-        /// <param name="args">Runtime values to insert into template</param>
-        /// <returns></returns>
-        public static string GetSQL(string sourceParamName, IJobParams parms) {
-            String sourceQueryName = parms.GetParam(sourceParamName);
-            string sql = "";
-            string sqlTemplate = sqlTemplates[sourceQueryName];
-            if (sqlTemplate != "") {
-                Object[] vals = GetParamValues(sourceQueryName, parms);
-                sql = string.Format(sqlTemplate, vals);
-            }
-            return sql;
+        /// <param name="qt">Query template object</param>
+        /// <param name="paramVals">array of parameter values to be substituted into the query template</param>
+        /// <returns>SQL</returns>
+        public static string GetSQL(QueryTemplate qt, string[] paramVals) {
+            return string.Format(qt.templateSQL, paramVals);
         }
 
-        /// <summary>
-        /// look up list of parameter names using key, and return array of corresponding values
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        private static object[] GetParamValues(string sourceQueryName, IJobParams parms) {
-            List<string> paramValues = new List<string>();
-            foreach (string paramName in sqlParamNames[sourceQueryName].Split(',')) {
-                string val = parms.GetParam(paramName.Trim());
-                paramValues.Add(val);
-            }
-            return paramValues.ToArray();
-        }
     }
 }

@@ -7,7 +7,11 @@ using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn {
 
-    class MageAMOperations {
+    /// <summary>
+    /// Class that defines Mac Mage operations that can be selected by the 
+    /// "MageOperations" parameter
+    /// </summary>
+    public class MageAMOperations {
 
         #region Member Variables
 
@@ -48,7 +52,7 @@ namespace AnalysisManager_Mage_PlugIn {
         public bool RunMageOperation(string mageOperation) {
             bool blnSuccess = false;
 
-			// Note: case statements must be lowercase
+            // Note: case statements must be lowercase
             switch (mageOperation.ToLower()) {
                 case "extractfromjobs":
                     blnSuccess = ExtractFromJobs();
@@ -62,6 +66,12 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "getfdrtables":
                     blnSuccess = ImportFDRTables();
                     break;
+                case "importfirsthits":
+                    blnSuccess = ImportFirstHits();
+                    break;
+                case "importreporterions":
+                    blnSuccess = ImportReporterIons();
+                    break;
                 default:
                     // Future: throw an error
                     break;
@@ -69,20 +79,20 @@ namespace AnalysisManager_Mage_PlugIn {
             return blnSuccess;
         }
 
-        #region Mage Operations
+        #region Mage Operations Functions
 
         private bool GetFactors() {
             bool ok = true;
-            String sql = SQL.GetSQL("FactorsSource", m_jobParams);
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
+            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            string sql = GetSQLForQuery("FactorsSource", mageObj);
             mageObj.GetDatasetFactors(sql);
             return ok;
         }
 
         private bool ExtractFromJobs() {
             bool ok = true;
-            String sql = SQL.GetSQL("ExtractionSource", m_jobParams);
             MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
+            string sql = GetSQLForQuery("ExtractionSource", mageObj);
             mageObj.ExtractFromJobs(sql);
             return ok;
         }
@@ -92,7 +102,7 @@ namespace AnalysisManager_Mage_PlugIn {
             MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
             string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
             string inputfileList = mageObj.GetJobParam("MageFDRFiles");
-            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, inputfileList);
+            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, inputfileList, "CopyAndImport");
             return ok;
         }
 
@@ -101,8 +111,60 @@ namespace AnalysisManager_Mage_PlugIn {
             MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
             string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
             string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
-            mageObj.ImportFilesToSQLiteResultsDB(inputFolderPath, "");
+            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", "CopyAndImport");
             return ok;
+        }
+
+        private bool ImportReporterIons() {
+            bool ok = true;
+            m_jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
+            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            string sql = GetSQLForQuery("ReporterIonSource", mageObj);
+            mageObj.ImportJobResults(sql, "_ReporterIons.txt", "reporter_ions", "SimpleImport");
+            return ok;
+        }
+
+        private bool ImportFirstHits() {
+            bool ok = true;
+            m_jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
+            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            string sql = GetSQLForQuery("FirstHitsSource", mageObj);
+            mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
+            return ok;
+        }
+
+        #endregion
+
+        #region Utility Functions
+
+        /// <summary>
+        /// Get an executable SQL statement by populating a given query template
+        /// with actual parameter values
+        /// </summary>
+        /// <param name="sourceName">Name of parameter that contains name of query template to use</param>
+        /// <param name="mageObject">Object holding a copy of job parameters</param>
+        /// <returns>Executable SQL statement</returns>
+        private string GetSQLForQuery(string sourceName, MageAMPipelineBase mageObject) {
+            string sqlTemplateName = mageObject.GetJobParam(sourceName);
+            SQL.QueryTemplate qt = SQL.GetQueryTemplate(sqlTemplateName);
+            string[] ps = GetParamValues(mageObject, qt.paramNameList);
+            return SQL.GetSQL(qt, ps);
+        }
+
+        /// <summary>
+        /// Returns an array of parameter values for the given list of parameter names
+        /// </summary>
+        /// <param name="parms">Parameter object holding parameter values</param>
+        /// <param name="paramNameList">Comma delimited list of parameter names to retrieve values for</param>
+        /// <param name="mageObject">Object holding a copy of job parameters</param>
+        /// <returns>Array of values (order will match param name list)</returns>
+        public static string[] GetParamValues(MageAMPipelineBase mageObject, string paramNameList) {
+            List<string> paramValues = new List<string>();
+            foreach (string paramName in paramNameList.Split(',')) {
+                string val = mageObject.GetJobParam(paramName.Trim());
+                paramValues.Add(val);
+            }
+            return paramValues.ToArray();
         }
 
         #endregion
