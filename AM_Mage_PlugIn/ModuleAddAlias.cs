@@ -37,6 +37,13 @@ namespace AnalysisManager_Mage_PlugIn {
             return true;
         }
 
+        /// <summary>
+        /// Get alias for given dataset.
+        /// Use existing lookup value, if one exists,
+        /// otherwise create a suitable alias and save it to the lookup
+        /// </summary>
+        /// <param name="dataset">Dataset Name</param>
+        /// <returns>Alias for dataset name</returns>
         private string MakeAlias(string dataset) {
             string alias = dataset;
             if (datasetAliases.ContainsKey(dataset)) {
@@ -58,18 +65,20 @@ namespace AnalysisManager_Mage_PlugIn {
             return alias;
         }
 
-        public void SetFactors(SimpleSink factorsObj) {
-            // FUTURE: This code is under construction
- /*           // set up column indexes
-            int dIdx = factorsObj.ColumnIndex["Dataset"];
-            int iIdx = factorsObj.ColumnIndex["Dataset_ID"];
+        /// <summary>
+        /// Use contents of Mage simple sink object to build 
+        /// a lookup table of dataset names to short label equivalents
+        /// </summary>
+        /// <param name="factorsObj">Mage simple sink object holding </param>
+        public void SetupAliasLookup(SimpleSink factorsObj, bool stripPrefix = false) {
+           // set up column indexes
+           int dIdx = factorsObj.ColumnIndex["Dataset"];
 
             // get non-duplicate set of dataset names
             HashSet<string> uniqueNameSet = new HashSet<string>();
             foreach (Object[] row in factorsObj.Rows) {
                 uniqueNameSet.Add(row[dIdx].ToString());
             }
-
             // get sortable list of unique dataset names
             List<string> nameList = new List<string>(uniqueNameSet);
             nameList.Sort();
@@ -77,7 +86,6 @@ namespace AnalysisManager_Mage_PlugIn {
             foreach (string name in nameList) {
                 nameLookup.Add(name, "");
             }
-
             // build lookup of unique short names for each dataset using sorted list of names
             for(int currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++) {
                 int adjacentNameIdx = currentNameIdx + 1;
@@ -89,19 +97,11 @@ namespace AnalysisManager_Mage_PlugIn {
                     nameLookup[nameList[adjacentNameIdx]] = nameList[adjacentNameIdx].Substring(0, width + 1);
                 }
             }
-
-            foreach (string name in nameLookup.Keys) {
-                Console.WriteLine(string.Format("{0} -> {1}", name, nameLookup[name]));
+            // set mode to use this lookup
+            if (nameLookup.Count > 0) {
+                datasetAliases = nameLookup;
+                if (stripPrefix) StripOffCommonPrefix();
             }
-
-            // get list of datasets indexed by dataset ID
-            Dictionary<string, string> datasetNames = new Dictionary<string, string>();
-            foreach (Object[] row in factorsObj.Rows) {
-                string datasetID = row[iIdx].ToString();
-                string dataset = row[dIdx].ToString();
-                datasetNames.Add(datasetID, dataset);
-            }
-*/
         }
 
         // get the minimum number of initial characters necessary to distinquish s1 from s2
@@ -115,6 +115,44 @@ namespace AnalysisManager_Mage_PlugIn {
                 }
             }
             return width;
+        }
+
+        /// <summary>
+        /// Go through alias lookup table and strip off 
+        /// any prefix characters that are shared by all the aliases
+        /// </summary>
+        private void StripOffCommonPrefix() {
+            // find width of common prefix for all alias values
+            int width = 1;
+            bool matched = true;
+            while (matched) {
+                string candidatePrefix = "";
+                foreach (string alias in datasetAliases.Values) {
+                    if (string.IsNullOrEmpty(candidatePrefix)) {
+                        candidatePrefix = alias.Substring(0, width);
+                    } else {
+                        if(candidatePrefix != alias.Substring(0, width)) {
+                            matched = false;
+                            break;
+                        }
+                    }
+                }
+                if (matched) {
+                    width++;
+                } else {
+                    break;
+                }
+            }
+            // strip off common prefix (if there was one)
+            if (width > 1) {
+                int start = width - 1;
+                string[] datasets = datasetAliases.Keys.ToArray();
+                foreach (string dataset in datasets) {
+                    string alias = datasetAliases[dataset];
+                    string strippedAlias = alias.Substring(start);
+                    datasetAliases[dataset] = strippedAlias;
+                }
+            }
         }
 
     }

@@ -159,32 +159,6 @@ namespace AnalysisManager_Mage_PlugIn {
             return sinkObject;
         }
 
-        /*
-               /// <summary>
-                /// make Mage pipeline using given sql as source of factors and use it 
-                /// to create and populate a factors table in a SQLite database (in crosstab format)
-                /// </summary>
-                /// <param name="sql">Query to use a source of factors</param>
-                public void GetDatasetFactors(string sql) {
-                    MSSQLReader reader = MakeDBReaderModule(sql);
-
-                    CrosstabFilter crosstab = new CrosstabFilter();
-                    crosstab.EntityNameCol = "Dataset";
-                    crosstab.EntityIDCol = "Dataset_ID";
-                    crosstab.FactorNameCol = "Factor";
-                    crosstab.FactorValueCol = "Value";
-
-                    SQLiteWriter writer = new SQLiteWriter();
-                    writer.DbPath = Path.Combine(mWorkingDir, mResultsDBFileName);
-                    writer.TableName = "t_factors";
-
-                    ProcessingPipeline pipeline = ProcessingPipeline.Assemble("CrosstabFactors", reader, crosstab, writer);
-
-                    ConnectPipelineToStatusHandlers(pipeline);
-                    pipeline.RunRoot(null);
-                }
-         */
-
         /// <summary>
         /// make Mage pipeline using given sql as source of factors and use it 
         /// to create and populate a factors table in a SQLite database (in crosstab format)
@@ -217,7 +191,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             if (!sink.ColumnIndex.ContainsKey("Alias")) {
                 ModuleAddAlias filter = new ModuleAddAlias();
-                filter.SetFactors(sink);
+                filter.SetupAliasLookup(sink);
                 writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, filter, writer);
             } else {
                 writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);
