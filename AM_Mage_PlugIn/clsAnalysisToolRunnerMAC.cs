@@ -7,6 +7,9 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_MAC {
 
+    /// <summary>
+    /// This class provides a generic base for MAC tool run operations common to all MAC tool plug-ins.
+    /// </summary>
     public abstract class clsAnalysisToolRunnerMAC : clsAnalysisToolRunnerBase {
 
         #region "Module Variables"
@@ -122,6 +125,9 @@ namespace AnalysisManager_MAC {
         /// </summary>
         protected abstract bool RunMACTool();
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected void CopyFailedResultsToArchiveFolder() {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 
@@ -139,19 +145,6 @@ namespace AnalysisManager_MAC {
             string strFolderPathToArchive = null;
             strFolderPathToArchive = string.Copy(m_WorkDir);
 
-            // If necessary, delete extra files with the following
-            /* 
-                try
-                {
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-
             // Make the results folder
             result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
@@ -166,7 +159,6 @@ namespace AnalysisManager_MAC {
             // Copy the results folder to the Archive folder
             clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
         }
 
 
