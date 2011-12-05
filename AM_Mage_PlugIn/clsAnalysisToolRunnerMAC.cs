@@ -11,12 +11,12 @@ namespace AnalysisManager_MAC {
 
         #region "Module Variables"
 
-        protected const float PROGRESS_PCT_MAGE_DONE = 95;
+        protected const float PROGRESS_PCT_MAC_DONE = 95;
 
         #endregion
 
         /// <summary>
-        /// Run the Mage tool and disposition the results
+        /// Run the MAC tool and disposition the results
         /// </summary>
         /// <returns></returns>
         public override IJobParams.CloseOutType RunTool() {
@@ -32,19 +32,19 @@ namespace AnalysisManager_MAC {
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the Mage version info in the database
+                // Store the MAC tool version info in the database
                 StoreToolVersionInfo();
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Mage Plugin");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MAC Plugin");
 
 
                 try {
 
-                    // run the appropriate Mage pipeline(s) according to mode parameter
+                    // run the appropriate MAC pipeline(s) according to mode parameter
                     blnSuccess = RunMACTool();
 
                     if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + m_message);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + m_message);
                     }
                 } catch (Exception ex) {
                     // Change the name of the log file back to the analysis manager log file
@@ -52,10 +52,10 @@ namespace AnalysisManager_MAC {
                     log4net.GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Mage: " + ex.Message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message);
                     blnSuccess = false;
 
-                    m_message = "Error running Mage";
+                    m_message = "Error running MAC";
                     if (ex.Message.Contains("ImportFiles\\--No Files Found")) {
                         m_message += "; ImportFiles folder in the data package is empty or does not exist";
                     }
@@ -64,7 +64,7 @@ namespace AnalysisManager_MAC {
 
                 //Stop the job timer
                 m_StopTime = System.DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_MAGE_DONE;
+                m_progress = PROGRESS_PCT_MAC_DONE;
 
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile()) {
@@ -109,7 +109,7 @@ namespace AnalysisManager_MAC {
                 }
 
             } catch (Exception ex) {
-                m_message = "Error in MagePlugin->RunTool";
+                m_message = "Error in MAC Plugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
@@ -179,25 +179,18 @@ namespace AnalysisManager_MAC {
             string strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info for primary tool assembly");
             }
 
             try {
-                System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
-
-                string strNameAndVersion = null;
-                strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+                strToolVersionInfo = GetToolNameAndVersion();
             } catch (Exception ex) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Mage: " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for primary tool assembly: " + ex.Message);
                 return false;
             }
 
             // Store paths to key DLLs
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo("Mage.dll"));
-            ioToolFiles.Add(new System.IO.FileInfo("MageExtContentFilters.dll"));
-            ioToolFiles.Add(new System.IO.FileInfo("MageExtExtractionFilters.dll"));
+            List<System.IO.FileInfo> ioToolFiles = GetToolSupplementalVersionInfo();
 
             try {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
@@ -207,5 +200,19 @@ namespace AnalysisManager_MAC {
             }
 
         }
+
+        /// <summary>
+        /// Subclass must override this to provide version info for primary MAC tool assembly
+        /// </summary>
+        /// <returns></returns>
+        protected abstract string GetToolNameAndVersion();
+
+        /// <summary>
+        /// Subclass must override this to provide version info for any supplemental MAC tool assemblies
+        /// </summary>
+        /// <returns></returns>
+        protected abstract List<System.IO.FileInfo> GetToolSupplementalVersionInfo();
+
+ 
     }
 }

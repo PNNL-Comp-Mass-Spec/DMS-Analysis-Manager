@@ -1,5 +1,6 @@
 ﻿using AnalysisManagerBase;
 using System.IO;
+using System.Collections.Generic;
 using System;
 using Mage;
 using MageDisplayLib;
@@ -30,6 +31,32 @@ namespace AnalysisManager_Mage_PlugIn {
             clsLogTools.ChangeLogFileName(LogFileName);
 
             return ok;
+        }
+
+ 
+        /// <summary>
+        /// Get name and version info for primary Mage MAC tool assembly
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetToolNameAndVersion() {
+            string strToolVersionInfo = string.Empty;
+            System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
+            string strNameAndVersion = null;
+            strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+            return strToolVersionInfo;
+        }
+
+       /// <summary>
+        /// Get file version info for supplemental Mage assemblies
+        /// </summary>
+        /// <returns>List of file info for supplemental DLLs</returns>
+        protected override List<System.IO.FileInfo> GetToolSupplementalVersionInfo() {
+            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+            ioToolFiles.Add(new System.IO.FileInfo("Mage.dll"));
+            ioToolFiles.Add(new System.IO.FileInfo("MageExtContentFilters.dll"));
+            ioToolFiles.Add(new System.IO.FileInfo("MageExtExtractionFilters.dll"));
+            return ioToolFiles;
         }
 
     }

@@ -52,12 +52,16 @@ namespace AnalysisManager_Mage_PlugIn {
             if (datasetAliases.ContainsKey(dataset)) {
                 alias = datasetAliases[dataset];
             } else {
-                // find or make and remember a unique short label for this dataset
                 alias = MakeAlias(dataset);
             }
             return alias;
         }
 
+        /// <summary>
+        ///  make and remember a unique short label for this dataset
+        /// </summary>
+        /// <param name="dataset"></param>
+        /// <returns></returns>
         private string MakeAlias(string dataset) {
             string alias = dataset;
             for (int width = 8; width < dataset.Length; width++) {
