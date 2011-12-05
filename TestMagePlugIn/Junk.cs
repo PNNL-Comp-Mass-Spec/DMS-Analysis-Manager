@@ -2,72 +2,38 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AnalysisManager_Mage_PlugIn;
+
 
 namespace TestMagePlugIn {
 
     class Junk {
 
         public void TestAlias() {
-            List<string> dList = new List<string> {
-                "DTRA_iTRAQ_0_10Gy_C3_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C2_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C2_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C1_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C1_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C3_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C3_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C3_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C2_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C2_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C2_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C1_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C1_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C3_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C2_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C1_R2_5Nov10_Griffin_10-06-16", 
-                "DTRA_iTRAQ_0_10Gy_C1_5Nov10_Griffin_10-06-15", 
-                "DTRA_iTRAQ_0_10Gy_C3_R2_5Nov10_Griffin_10-06-16"
+            HashSet<string> dSet = new HashSet<string>() {
+                "DTRA_iTRAQ_0_10Gy_C1_5Nov10_Griffin_10-06-15",
+                "DTRA_iTRAQ_0_10Gy_C1_R2_5Nov10_Griffin_10-06-16",
+                "DTRA_iTRAQ_0_10Gy_C2_5Nov10_Griffin_10-06-15",
+                "DTRA_iTRAQ_0_10Gy_C2_R2_5Nov10_Griffin_10-06-16",
+                "DTRA_iTRAQ_0_10Gy_C3_5Nov10_Griffin_10-06-15",
+                "DTRA_iTRAQ_0_10Gy_C3_R2_5Nov10_Griffin_10-06-16",
             };
 
-            // find length of shortest item
-            int pShortest = 0;
-            foreach (string dItem in dList) {
-                int len = dItem.Length;
-                if (pShortest == 0) {
-                    pShortest = len;
-                }
-                if (dItem.Length < pShortest) {
-                    pShortest = len;
-                }
+            Dictionary<string, string> lookup;
+
+            lookup = ModuleAddAlias.BuildAliasLookupTable(dSet);
+
+            Console.WriteLine("------");
+            foreach(string name in lookup.Keys) {
+                Console.WriteLine(string.Format("{0} -> {1}", name, lookup[name]));
             }
 
-            // find largest common prefix
-            int pSize = 1;
-            bool same = true;
-            string prefix = "";
-            while (same) {
-                string pTemp = "";
-                foreach (string dItem in dList) {
-                    string tmp = dItem.Substring(0, pSize);
-                    char c = dItem.ElementAt(pSize);
-                    if (string.IsNullOrEmpty(pTemp)) {
-                        pTemp = tmp;
-                    } else {
-                        if (tmp != pTemp) {
-                            same = false;
-                            break;
-                        }
-                    }
-                }
-                if (same) {
-                    pSize++;
-                    prefix = pTemp;
-                }
-                if (pSize > pShortest) {
-                    break;
-                }
+            ModuleAddAlias.StripOffCommonPrefix(lookup);
+
+            Console.WriteLine("------");
+            foreach (string name in lookup.Keys) {
+                Console.WriteLine(string.Format("{0} -> {1}", name, lookup[name]));
             }
-            Console.WriteLine("boink");
 
         }
     }
