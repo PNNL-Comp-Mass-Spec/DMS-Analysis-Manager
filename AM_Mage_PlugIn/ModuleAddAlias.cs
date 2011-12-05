@@ -9,14 +9,18 @@ namespace AnalysisManager_Mage_PlugIn {
     /// <summary>
     /// Mage filter module that adds and "Alias" column to data stream
     /// </summary>
-    class ModuleAddAlias : ContentFilter {
+    public class ModuleAddAlias : ContentFilter {
 
+        // Column indexes
         private int aliasColIdx;
         private int datasetIdx;
+
+        // lookup table for dataset aliases
         private Dictionary<string, string> datasetAliases = new Dictionary<string, string>();
 
         public override void Prepare() {
             base.Prepare();
+            // make sure alias column is in output (in case it isn't in input)
             OutputColumnList = "Dataset, Dataset_ID, Alias|+|text, *";
          }
 
@@ -25,11 +29,12 @@ namespace AnalysisManager_Mage_PlugIn {
             datasetIdx = OutputColumnPos["Dataset"];
         }
 
+        // handle a data row - make sure alias field has an appropriate value
         protected override bool CheckFilter(ref object[] vals) {
             if (OutputColumnDefs != null) {
                 object[] outRow = MapDataRow(vals);
                 string dataset = outRow[datasetIdx].ToString();
-                outRow[aliasColIdx] = MakeAlias(dataset);
+                outRow[aliasColIdx] = LookupAlias(dataset);
                 vals = outRow;
             }
             return true;
@@ -42,22 +47,28 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="dataset">Dataset Name</param>
         /// <returns>Alias for dataset name</returns>
-        private string MakeAlias(string dataset) {
+        private string LookupAlias(string dataset) {
             string alias = dataset;
             if (datasetAliases.ContainsKey(dataset)) {
                 alias = datasetAliases[dataset];
             } else {
                 // find or make and remember a unique short label for this dataset
-                for (int width = 8; width < dataset.Length; width++) {
-                    string candidateAlias = dataset.Substring(0, width);
-                    if (candidateAlias.Last() == '_') {
-                        continue;
-                    }
-                    if (!datasetAliases.ContainsValue(candidateAlias)) {
-                        alias = candidateAlias;
-                        datasetAliases.Add(dataset, alias);
-                        break;
-                    }
+                alias = MakeAlias(dataset);
+            }
+            return alias;
+        }
+
+        private string MakeAlias(string dataset) {
+            string alias = dataset;
+            for (int width = 8; width < dataset.Length; width++) {
+                string candidateAlias = dataset.Substring(0, width);
+                if (candidateAlias.Last() == '_') {
+                    continue;
+                }
+                if (!datasetAliases.ContainsValue(candidateAlias)) {
+                    alias = candidateAlias;
+                    datasetAliases.Add(dataset, alias);
+                    break;
                 }
             }
             return alias;
@@ -92,7 +103,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="uniqueNameSet">unique set of names to build alias lookup from</param>
         /// <returns>Lookup table of aliases for names, indexed by name</returns>
-        public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth) {
+        public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true) {
 
             // get sorted list of unique dataset names
             List<string> nameList = new List<string>(uniqueNameSet);
@@ -128,7 +139,7 @@ namespace AnalysisManager_Mage_PlugIn {
                 }
             }
 
-            // next set aliases
+            // next set aliases using previously calculated widths
             foreach (string name in nameList) {
                 if (padAliasWidth) {
                     nameLookup[name] = name.Substring(0, maxWidth + 1);
@@ -156,7 +167,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Go through alias lookup table and strip off 
         /// any prefix characters that are shared by all the aliases
         /// </summary>
-        private static void StripOffCommonPrefix(Dictionary<string, string> nameLookup) {
+        public static void StripOffCommonPrefix(Dictionary<string, string> nameLookup) {
             // find width of common prefix for all alias values
             int width = 1;
             bool matched = true;
