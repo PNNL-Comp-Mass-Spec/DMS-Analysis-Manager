@@ -191,7 +191,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             if (!sink.ColumnIndex.ContainsKey("Alias")) {
                 ModuleAddAlias filter = new ModuleAddAlias();
-                filter.SetupAliasLookup(sink);
+               filter.SetupAliasLookup(sink);
                 writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, filter, writer);
             } else {
                 writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);

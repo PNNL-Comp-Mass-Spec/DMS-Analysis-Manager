@@ -12,18 +12,16 @@ namespace AnalysisManager_Mage_PlugIn {
     class ModuleAddAlias : ContentFilter {
 
         private int aliasColIdx;
-        private int datqasetIDIdx;
         private int datasetIdx;
         private Dictionary<string, string> datasetAliases = new Dictionary<string, string>();
 
         public override void Prepare() {
             base.Prepare();
             OutputColumnList = "Dataset, Dataset_ID, Alias|+|text, *";
-        }
+         }
 
         protected override void ColumnDefsFinished() {
             aliasColIdx = OutputColumnPos["Alias"];
-            datqasetIDIdx = OutputColumnPos["Dataset_ID"];
             datasetIdx = OutputColumnPos["Dataset"];
         }
 
@@ -70,44 +68,81 @@ namespace AnalysisManager_Mage_PlugIn {
         /// a lookup table of dataset names to short label equivalents
         /// </summary>
         /// <param name="factorsObj">Mage simple sink object holding </param>
-        public void SetupAliasLookup(SimpleSink factorsObj, bool stripPrefix = false) {
-           // set up column indexes
-           int dIdx = factorsObj.ColumnIndex["Dataset"];
+        public void SetupAliasLookup(SimpleSink factorsObj, bool PadAliases = true, bool StripPrefix = false) {
 
             // get non-duplicate set of dataset names
             HashSet<string> uniqueNameSet = new HashSet<string>();
+            int dIdx = factorsObj.ColumnIndex["Dataset"];
             foreach (Object[] row in factorsObj.Rows) {
                 uniqueNameSet.Add(row[dIdx].ToString());
             }
-            // get sortable list of unique dataset names
-            List<string> nameList = new List<string>(uniqueNameSet);
-            nameList.Sort();
-            Dictionary<string, string> nameLookup = new Dictionary<string, string>();
-            foreach (string name in nameList) {
-                nameLookup.Add(name, "");
-            }
-            // build lookup of unique short names for each dataset using sorted list of names
-            for(int currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++) {
-                int adjacentNameIdx = currentNameIdx + 1;
-                int width = GetUniqueWidth(nameList[currentNameIdx], nameList[adjacentNameIdx]);
-                if(nameLookup[nameList[currentNameIdx]].Length < width+1) {
-                    nameLookup[nameList[currentNameIdx]] = nameList[currentNameIdx].Substring(0, width + 1);
-                }
-                if (nameLookup[nameList[adjacentNameIdx]].Length < width + 1) {
-                    nameLookup[nameList[adjacentNameIdx]] = nameList[adjacentNameIdx].Substring(0, width + 1);
-                }
-            }
-            // set mode to use this lookup
+
+            // build alias lookup table for names
+            Dictionary<string, string> nameLookup = BuildAliasLookupTable(uniqueNameSet, PadAliases);
+
+            // set up to use the lookup table
             if (nameLookup.Count > 0) {
+                if (StripPrefix) StripOffCommonPrefix(nameLookup);
                 datasetAliases = nameLookup;
-                if (stripPrefix) StripOffCommonPrefix();
             }
         }
 
+        /// <summary>
+        /// Builds a lookup table of aliases given a unique set of names
+        /// </summary>
+        /// <param name="uniqueNameSet">unique set of names to build alias lookup from</param>
+        /// <returns>Lookup table of aliases for names, indexed by name</returns>
+        public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth) {
+
+            // get sorted list of unique dataset names
+            List<string> nameList = new List<string>(uniqueNameSet);
+            nameList.Sort();
+
+            // create lookup tables for alias widths and alaises
+            Dictionary<string, string> nameLookup = new Dictionary<string, string>();
+            Dictionary<string, int> aliasWidths = new Dictionary<string, int>();
+            foreach (string name in nameList) {
+                nameLookup.Add(name, "");
+                aliasWidths.Add(name, 0);
+            }
+
+            // first, build lookup of aiias widths
+            int maxWidth = 0;
+            for (int currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++) {
+                // we examine current name and adjacent name in sorted list
+                int adjacentNameIdx = currentNameIdx + 1;
+                string currentName = nameList[currentNameIdx];
+                string adjacentName = nameList[adjacentNameIdx];
+
+                // check overlap of current name with adjacent name in list
+                int width = GetUniqueWidth(currentName, adjacentName);
+                maxWidth = (width > maxWidth) ? width : maxWidth;
+
+                // set width for alias for current name
+                if (aliasWidths[currentName] < width + 1) {
+                    aliasWidths[currentName] = width + 1;
+                }
+                // set width for alias for adjacent name
+                if (aliasWidths[adjacentName] < width + 1) {
+                    aliasWidths[adjacentName] = width + 1;
+                }
+            }
+
+            // next set aliases
+            foreach (string name in nameList) {
+                if (padAliasWidth) {
+                    nameLookup[name] = name.Substring(0, maxWidth + 1);
+                } else {
+                    nameLookup[name] = name.Substring(0, aliasWidths[name]);
+                }
+            }
+            return nameLookup;
+        }
+
         // get the minimum number of initial characters necessary to distinquish s1 from s2
-        private int GetUniqueWidth(string s1, string s2) {
+        private static int GetUniqueWidth(string s1, string s2) {
             int width = 0;
-            int len = (s1.Length > s2.Length)?s2.Length:s1.Length;
+            int len = (s1.Length > s2.Length) ? s2.Length : s1.Length;
             for (int i = 0; i < len; i++) {
                 if (s1.ElementAt(i) != s2.ElementAt(i)) {
                     width = i;
@@ -121,17 +156,17 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Go through alias lookup table and strip off 
         /// any prefix characters that are shared by all the aliases
         /// </summary>
-        private void StripOffCommonPrefix() {
+        private static void StripOffCommonPrefix(Dictionary<string, string> nameLookup) {
             // find width of common prefix for all alias values
             int width = 1;
             bool matched = true;
             while (matched) {
                 string candidatePrefix = "";
-                foreach (string alias in datasetAliases.Values) {
+                foreach (string alias in nameLookup.Values) {
                     if (string.IsNullOrEmpty(candidatePrefix)) {
                         candidatePrefix = alias.Substring(0, width);
                     } else {
-                        if(candidatePrefix != alias.Substring(0, width)) {
+                        if (candidatePrefix != alias.Substring(0, width)) {
                             matched = false;
                             break;
                         }
@@ -146,11 +181,11 @@ namespace AnalysisManager_Mage_PlugIn {
             // strip off common prefix (if there was one)
             if (width > 1) {
                 int start = width - 1;
-                string[] datasets = datasetAliases.Keys.ToArray();
+                string[] datasets = nameLookup.Keys.ToArray();
                 foreach (string dataset in datasets) {
-                    string alias = datasetAliases[dataset];
+                    string alias = nameLookup[dataset];
                     string strippedAlias = alias.Substring(start);
-                    datasetAliases[dataset] = strippedAlias;
+                    nameLookup[dataset] = strippedAlias;
                 }
             }
         }
