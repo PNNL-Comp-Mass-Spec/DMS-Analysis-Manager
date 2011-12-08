@@ -925,16 +925,28 @@ Namespace AnalysisManagerBase
 		''' Looks for this dataset's ScanStats files (previously created by MASIC)
 		''' Looks for the files in any SIC folder that exists for the dataset
 		''' </summary>
-		''' <param name="WorkDir"></param>
-		''' <param name="CreateStoragePathInfoOnly"></param>
+		''' <param name="WorkDir">Working directory</param>
+		''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 		''' <returns>True if the file was found and retrieved, otherwise False</returns>
 		''' <remarks></remarks>
-		Protected Overridable Function RetrieveScanStatsFiles(ByVal WorkDir As String, _
-		   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		Protected Overridable Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-			' Copies this dataset's .mzXML file to the working directory
+			Return RetrieveScanAndSICStatsFiles(WorkDir, False, CreateStoragePathInfoOnly)
+
+		End Function
+
+		''' <summary>
+		''' Looks for this dataset's MASIC results files
+		''' Looks for the files in any SIC folder that exists for the dataset
+		''' </summary>
+		''' <param name="WorkDir">Working directory</param>
+		''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+		''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+
 			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
-			Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 			Dim ServerPath As String
 			Dim ScanStatsFilename As String
 
@@ -945,17 +957,22 @@ Namespace AnalysisManagerBase
 			ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
 			ServerPath = FindValidFolder(DSName, "", "SIC*", MaxRetryCount)
 
-			If Not String.IsNullOrEmpty(ServerPath) Then
+			If String.IsNullOrEmpty(ServerPath) Then
+				m_message = "Dataset folder path not defined"
+			Else
 
 				Dim diFolderInfo As System.IO.DirectoryInfo
 				diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
 
-				If diFolderInfo.Exists Then
+				If Not diFolderInfo.Exists Then
+					m_message = "Dataset folder not found: " & diFolderInfo.FullName
+				Else
 
-					'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+					'See if the ServerPath folder actually contains a subfolder that starts with "SIC"
 					Dim diSubfolders() As System.IO.DirectoryInfo = diFolderInfo.GetDirectories("SIC*")
-					If diSubfolders.Length > 0 Then
-
+					If diSubfolders.Length = 0 Then
+						m_message = "Dataset folder does not contain any MASIC results folders: " & diFolderInfo.FullName
+					Else
 						' MASIC Results Folder Found
 						' If more than one folder, then use the folder with the newest _ScanStats.txt file
 						Dim diSourceFile As System.IO.FileInfo
@@ -972,34 +989,96 @@ Namespace AnalysisManagerBase
 							End If
 						Next
 
-						If Not String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
-							diSourceFile = New System.IO.FileInfo(strNewestScanStatsFilePath)
-
-							If m_DebugLevel >= 3 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStats.txt file: " & diSourceFile.FullName)
-							End If
-
-							If CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-								' ScanStats File successfully copied
-								' Also look for and copy the _ScanStatsEx.txt file
-
-								If CopyFileToWorkDir(DSName & "_ScanStatsEx.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-									' ScanStatsEx file successfully copied
-
-									Return True
-
-								End If
-							End If
+						If String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
+							m_message = "MASIC ScanStats file not found below " & diFolderInfo.FullName
+						Else
+							Return RetrieveScanAndSICStatsFiles(WorkDir, System.IO.Path.GetDirectoryName(strNewestScanStatsFilePath), RetrieveSICStatsFile, CreateStoragePathInfoOnly)
 						End If
+					End If
+				End If
+			End If
 
+			Return False
+
+		End Function
+
+		''' <summary>
+		''' 
+		''' </summary>
+		''' <param name="WorkDir">Working directory</param>
+		''' <param name="MASICResultsFolderPath">Source folder to copy files from</param>
+		''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+		''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal MASICResultsFolderPath As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+
+			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
+
+			Dim ScanStatsFilename As String
+
+			Dim MaxRetryCount As Integer = 1
+
+			' Look for the MASIC Results folder
+			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+			ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
+
+			If String.IsNullOrEmpty(MASICResultsFolderPath) Then
+				m_message = "MASIC Results folder path not defined"
+			Else
+
+				Dim diFolderInfo As System.IO.DirectoryInfo
+				Dim diSourceFile As System.IO.FileInfo
+				diFolderInfo = New System.IO.DirectoryInfo(MASICResultsFolderPath)
+
+				If Not diFolderInfo.Exists Then
+					m_message = "MASIC Resuls folder not found: " & diFolderInfo.FullName
+				Else
+
+					diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, ScanStatsFilename))
+
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStats.txt file: " & diSourceFile.FullName)
+					End If
+
+					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+						m_message = SCAN_STATS_FILE_SUFFIX & " file not found at " & diSourceFile.Directory.FullName
+					Else
+
+						' ScanStats File successfully copied
+						' Also look for and copy the _ScanStatsEx.txt file
+
+						If Not CopyFileToWorkDir(DSName & "_ScanStatsEx.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+							m_message = "_ScanStatsEx.txt file not found at " & diSourceFile.Directory.FullName
+						Else
+
+							' ScanStatsEx file successfully copied
+
+							If RetrieveSICStatsFile Then
+
+								' Also look for and copy the _SICStats.txt file
+								If Not CopyFileToWorkDir(DSName & "_SICStats.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+									m_message = "_SICStats.txt file not found at " & diSourceFile.Directory.FullName
+								Else
+									' All files successfully copied
+									Return True
+								End If
+
+							Else
+								' All files successfully copied
+								Return True
+							End If
+
+						End If
 					End If
 
 				End If
 
 			End If
 
-			m_message = SCAN_STATS_FILE_SUFFIX & " file not found"
+
 			Return False
+
 
 		End Function
 
@@ -1743,10 +1822,10 @@ Namespace AnalysisManagerBase
 		''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder; can contain a wildcard, e.g. SEQ*</param>
 		''' <returns>Path to the most appropriate dataset folder</returns>
 		''' <remarks></remarks>
-		Private Function FindValidFolder(ByVal DSName As String, _
-										 ByVal FileNameToFind As String, _
-										 ByVal FolderNameToFind As String, _
-										 ByVal MaxRetryCount As Integer) As String
+		Protected Function FindValidFolder(ByVal DSName As String, _
+		   ByVal FileNameToFind As String, _
+		   ByVal FolderNameToFind As String, _
+		   ByVal MaxRetryCount As Integer) As String
 
 			Dim strBestPath As String = String.Empty
 			Dim PathsToCheck() As String

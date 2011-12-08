@@ -462,9 +462,28 @@ AnalysisManagerProg
  Looks for this dataset's ScanStats files (previously created by MASIC)
  Looks for the files in any SIC folder that exists for the dataset
  </summary>
-	<param name="WorkDir"></param>
-	<param name="CreateStoragePathInfoOnly"></param>
+	<param name="WorkDir">Working directory</param>
+	<param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 	<returns>True if the file was found and retrieved, otherwise False</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveScanAndSICStatsFiles(System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Looks for this dataset's MASIC results files
+ Looks for the files in any SIC folder that exists for the dataset
+ </summary>
+	<param name="WorkDir">Working directory</param>
+	<param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+	<param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveScanAndSICStatsFiles(System.String,System.String,System.Boolean,System.Boolean)">
+	<summary>
+	</summary>
+	<param name="WorkDir">Working directory</param>
+	<param name="MASICResultsFolderPath">Source folder to copy files from</param>
+	<param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+	<param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveDotDFolder(System.String,System.Boolean,System.Boolean)">
 	<summary>

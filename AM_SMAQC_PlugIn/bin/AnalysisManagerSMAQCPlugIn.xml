@@ -1,0 +1,53 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+AnalysisManagerSMAQCPlugIn
+</name>
+</assembly>
+<members>
+<member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.RunTool">
+	<summary>
+ Runs SMAQC tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB(System.Int32@)">
+	<summary>
+ Looks up the InstrumentID for the dataset associated with this job
+ </summary>
+	<param name="InstrumentID">Output parameter</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.LoadSMAQCResults(System.String)">
+	<summary>
+ Extract the results from a SMAQC results file
+ </summary>
+	<param name="ResultsFilePath"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.ParseConsoleOutputFile(System.String)">
+	<summary>
+ Parse the SMAQC console output file to track progress
+ </summary>
+	<param name="strConsoleOutputFilePath"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.ZipSMAQCResults(System.String)">
+	<summary>
+ Zips SMAQC Output File
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
+</member>
+</members>
+</doc>

@@ -133,6 +133,9 @@ Namespace AnalysisManagerBase
 				'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower
 				'	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
 
+				'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower
+				'	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
+
 			End Select
 
 			Return myToolRunner
@@ -203,6 +206,10 @@ Namespace AnalysisManagerBase
 
 				'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()
 				'	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
+
+				'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower
+				'	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)
+
 
 			End Select
 

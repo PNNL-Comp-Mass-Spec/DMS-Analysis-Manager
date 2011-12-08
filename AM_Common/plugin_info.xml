@@ -242,6 +242,11 @@
 		Class="AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops"
 		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="smaqc" 
+		Class="AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC"
+		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -475,6 +480,11 @@
 		Tool="cyclops" 
 		Class="AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops"
 		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="smaqc" 
+		Class="AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC"
+		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" 
 	/>
 
 </Resourcers>

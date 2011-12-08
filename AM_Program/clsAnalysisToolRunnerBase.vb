@@ -591,6 +591,14 @@ Namespace AnalysisManagerBase
 
         End Function
 
+		Protected Function PossiblyQuotePath(ByVal strPath As String) As String
+			If strPath.Contains(" "c) Then
+				Return """" & strPath & """"
+			Else
+				Return strPath
+			End If
+		End Function
+
 		Protected Function ReadVersionInfoFile(ByVal strDLLFilePath As String, ByVal strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
 
 			' Open strVersionInfoFilePath and read the Version= line
