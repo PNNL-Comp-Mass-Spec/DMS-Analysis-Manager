@@ -196,6 +196,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Read the MSGFDB Parameter File
 			strMSGFDbCmdLineOptions = ParseMSGFDBParameterFile(strParameterFilePath, FastaFileSizeKB)
+			If String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Problem parsing MSGFDB parameter file"
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 			ResultsFileName = m_Dataset & "_msgfdb.txt"
 
 			If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
@@ -400,7 +407,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Sub
 
-	Private Function CreatePeptideToProteinMapping(ResultsFileName As String) As IJobParams.CloseOutType
+	Private Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String) As IJobParams.CloseOutType
 
 		Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
@@ -431,6 +438,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				End If
 			Loop
 
+			srInFile.Close()
+
 			If intLinesRead <= 1 Then
 				' File is empty or only contains a header line
 				m_message = "No results above threshold"
@@ -442,7 +451,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			m_message = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
-				m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+			 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		End Try
@@ -484,9 +493,20 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			mPeptideToProteinMapper.CloseLogFileNow()
 
+			Dim strResultsFilePath As String
+			strResultsFilePath = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING
+			strResultsFilePath = System.IO.Path.Combine(m_WorkDir, strResultsFilePath)
+
 			If blnSuccess Then
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete")
+				If Not System.IO.File.Exists(strResultsFilePath) Then
+					m_message = "Peptide to protein mapping file was not created"
+					blnSuccess = False
+				Else
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete")
+					End If
+
+					blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
 				End If
 			Else
 				If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
@@ -500,18 +520,25 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				If blnIgnorePeptideToProteinMapperErrors Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-					Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+					If System.IO.File.Exists(strResultsFilePath) Then
+						blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
+					Else
+						blnSuccess = True
+					End If
+
 				Else
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					m_message = "Error in CreatePeptideToProteinMapping"
+					blnSuccess = False
 				End If
 			End If
 
 		Catch ex As Exception
 
-			m_message = "Error in CreatePeptideToProteinMapping"
+			m_message = "Exception in CreatePeptideToProteinMapping"
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & _
-				m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+			 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
 			If blnIgnorePeptideToProteinMapperErrors Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
@@ -521,7 +548,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		If blnSuccess Then
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 	End Function
 
@@ -908,9 +939,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 					If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
 						If strModClean.Contains(",opt,") Then
-							' Auto-change this mod to a static (fixed) mod
-							strModClean.Replace(",opt,", ",fix,")
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Updated static mod to contain ',fix,' instead of ',opt,': " & strStaticMod)
+							' Static (fixed) mod is listed as dynamic
+							' Abort the analysis since the parameter file is misleading and needs to be fixed							
+							m_message = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strStaticMod)
+							Return False
 						End If
 						swModFile.WriteLine(strModClean)
 					Else
@@ -929,9 +962,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 					If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
 						If strModClean.Contains(",fix,") Then
-							' Auto-change this mod to a dynamic (optional) mod
-							strModClean.Replace(",fix,", ",opt,")
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Updated dynamic mod to contain ',opt,' instead of ',fix,': " & strDynamicMod)
+							' Dynamic (optional) mod is listed as static
+							' Abort the analysis since the parameter file is misleading and needs to be fixed							
+							m_message = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strDynamicMod)
+							Return False
 						End If
 						swModFile.WriteLine(strModClean)
 					Else
@@ -1036,7 +1071,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 							If Integer.TryParse(strValue, intValue) Then
 								sbOptions.Append(" -uniformAAProb " & intValue)
 							Else
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid value for uniformAAProb in MSGFDB parameter file: " & strLineIn)
+								m_message = "Invalid value for uniformAAProb in MSGFDB parameter file"
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strLineIn)
+								srParamFile.Close()
+								Return String.Empty
 							End If
 						End If
 
@@ -1056,7 +1094,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 						If Integer.TryParse(strValue, intValue) Then
 							intNumMods = intValue
 						Else
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid value for NumMods in MSGFDB parameter file: " & strLineIn)
+							m_message = "Invalid value for NumMods in MSGFDB parameter file"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strLineIn)
+							srParamFile.Close()
+							Return String.Empty
 						End If
 
 					ElseIf IsMatch(strKey, "StaticMod") Then
@@ -1260,6 +1301,86 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End Try
 
 		Return blnDataFound
+
+	End Function
+
+	Private Function ValidatePeptideToProteinMapResults(ByVal strPeptideToProteinMapFilePath As String, ByVal blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
+
+		Const PROTEIN_NAME_NO_MATCH As String = "__NoMatch__"
+
+		Dim blnSuccess As Boolean = False
+
+		Dim intPeptideCount As Integer = 0
+		Dim intPeptideCountNoMatch As Integer = 0
+		Dim intLinesRead As Integer = 0
+
+		Try
+			' Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
+
+			Dim srInFile As System.IO.StreamReader
+			Dim strLineIn As String
+
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Validating peptide to protein mapping, file " & System.IO.Path.GetFileName(strPeptideToProteinMapFilePath))
+			End If
+
+			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strPeptideToProteinMapFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+			Do While srInFile.Peek > -1
+				strLineIn = srInFile.ReadLine()
+				intLinesRead += 1
+
+				If intLinesRead > 1 AndAlso Not String.IsNullOrEmpty(strLineIn) Then
+					intPeptideCount += 1
+					If strLineIn.Contains(PROTEIN_NAME_NO_MATCH) Then
+						intPeptideCountNoMatch += 1
+					End If
+				End If
+			Loop
+
+			srInFile.Close()
+
+			If intPeptideCount = 0 Then
+				m_message = "Peptide to protein mapping file is empty"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & ", file " & System.IO.Path.GetFileName(strPeptideToProteinMapFilePath))
+				blnSuccess = False
+
+			ElseIf intPeptideCountNoMatch = 0 Then
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping validation complete; processed " & intPeptideCount & " peptides")
+				End If
+
+				blnSuccess = True
+
+			Else
+				Dim dblErrorPercent As Double	' Value between 0 and 100
+				dblErrorPercent = intPeptideCountNoMatch / intPeptideCount * 100.0
+
+				Dim strErrorMsg As String
+				strErrorMsg = dblErrorPercent.ToString("0.0") & "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file"
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMsg)
+
+				If blnIgnorePeptideToProteinMapperErrors Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+					blnSuccess = True
+
+				Else
+					m_message = strErrorMsg
+					blnSuccess = False
+				End If
+			End If
+
+		Catch ex As Exception
+
+			m_message = "Error validating peptide to protein map file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
+			 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+			blnSuccess = False
+
+		End Try
+
+		Return blnSuccess
 
 	End Function
 

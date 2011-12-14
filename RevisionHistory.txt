@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+December 14, 2011
+	- Updated MSGFDB plugin to abort processing if a parameter file parsing error occurs
+	- Updated MSGFDB plugin to validate that the _PepToProtMap.txt file does not have any __NoMatch__ entries
+
 November 28, 2011
 	- Updated MSAlign plugin to ignore the etc folder when running v0.5 of MSAlign
 

@@ -354,16 +354,13 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' Bump up the debug level if less than 2
 		If m_DebugLevel < 2 Then m_DebugLevel = 2
 
-		' Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+		If clsGlobal.FilesToDelete.Contains(SMAQC_CONSOLE_OUTPUT) Then
+			clsGlobal.FilesToDelete.Remove(SMAQC_CONSOLE_OUTPUT)
+		End If
+
+		' Try to save whatever files are in the work directory
 		Dim strFolderPathToArchive As String
 		strFolderPathToArchive = String.Copy(m_WorkDir)
-
-		Try
-			System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
-			System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
 
 		' Make the results folder
 		result = MakeResultsFolder()
