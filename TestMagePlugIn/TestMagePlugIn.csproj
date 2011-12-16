@@ -69,6 +69,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Dev2AScore.cs" />
+    <Compile Include="DevAscore.cs" />
+    <Compile Include="MageDataTableSource.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

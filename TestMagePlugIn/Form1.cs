@@ -54,8 +54,5 @@ namespace TestMagePlugIn {
             Junk junk = new Junk();
             junk.TestAlias();
         }
-
-
-
     }
 }
