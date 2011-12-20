@@ -52,9 +52,6 @@ namespace AnalysisManager_AScore_PlugIn
             switch (ascoreOperation.ToLower())
             {
                 case "runascorephospho":
-                    //We will have to figure out a better way to get the resources (files needed by AScore)
-                    //clsAScoreAMGetPhospho ascoreResObj = new clsAScoreAMGetPhospho(m_jobParams, m_mgrParams);
-                    //blnSuccess = ascoreResObj.GetAScoreFiles(m_jobParams.GetParam("DataPackageID"));
 
                     clsAScoreAMRunPhospho ascoreToolObj = new clsAScoreAMRunPhospho(m_jobParams, m_mgrParams);
                     // Attach the progress event handler

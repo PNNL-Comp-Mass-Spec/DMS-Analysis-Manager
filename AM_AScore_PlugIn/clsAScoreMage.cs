@@ -8,6 +8,8 @@ using Mage;
 using MageExtExtractionFilters;
 using AScore_DLL.Managers;
 using AScore_DLL.Managers.DatasetManagers;
+using PRISM;
+using Ionic;
 
 namespace AnalysisManager_AScore_PlugIn 
    {
@@ -20,6 +22,12 @@ namespace AnalysisManager_AScore_PlugIn
         protected string mWorkingDir;
         protected JobParameters mJP;
         protected ManagerParameters mMP;
+        protected static clsIonicZipTools m_IonicZipTools;
+        protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
+        protected static string mMessage = "";
+        protected string mStrExternalUnzipperFilePath = null;
+        protected string mSearchType = "";
+        protected string mParamFilename = "";
 
         #endregion
 
@@ -43,6 +51,9 @@ namespace AnalysisManager_AScore_PlugIn
             this.mMP = new ManagerParameters(mgrParms);
             this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
+            this.mStrExternalUnzipperFilePath = mMP.RequireMgrParam("zipprogram");
+            this.mSearchType = mJP.RequireJobParam("AScoreSearchType");
+            this.mParamFilename = mJP.RequireJobParam("AScoreParamFilename");
         }
 
         #endregion
@@ -89,6 +100,9 @@ namespace AnalysisManager_AScore_PlugIn
             ascoreModule.ExtractionParms = GetExtractionParametersFromJobParameters();
             ascoreModule.WorkingDir = mWorkingDir;
             ascoreModule.ResultsDBFileName = mResultsDBFileName;
+            ascoreModule.strExternalUnzipperFilePath = mStrExternalUnzipperFilePath;
+            ascoreModule.paramFilename = mParamFilename;
+            ascoreModule.searchType = mSearchType;
             ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule).RunRoot(null);
         }
 
@@ -219,6 +233,9 @@ namespace AnalysisManager_AScore_PlugIn
             public string ExtractedResultsFileName { get; set; }
             public string WorkingDir { get; set; }
             public string ResultsDBFileName { get; set; }
+            public string strExternalUnzipperFilePath { get; set; }
+            public string searchType { get; set; }
+            public string paramFilename { get; set; }
 
             #endregion
 
@@ -268,37 +285,37 @@ namespace AnalysisManager_AScore_PlugIn
                 // TODO: make the call to AScore
                 string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
                 string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                string paramFile = Path.Combine(WorkingDir, "parameterFileForGmax.xml"); //paramFileName);
+                string paramFile = Path.Combine(WorkingDir, paramFilename); //paramFileName);
 
                 ParameterFileManager paramManager = new ParameterFileManager(paramFile);
                 DtaManager dtaManager = new DtaManager(dtaFile);
                 DatasetManager datasetManager;
 
-                //switch (searchType)
-                //{
-                //    case "xtandem":
-                //        datasetManager = new XTandemFHT(fhtFile);
-                //        break;
-                //    case "sequest":
-                datasetManager = new SequestFHT(fhtFile);
-                //        break;
-                //    case "inspect":
-                //        datasetManager = new InspectFHT(fhtFile);
-                //        break;
-                //    default:
-                //        Console.WriteLine("Incorrect search type check again");
-                //        return;
-                //}
+                switch (searchType)
+                {
+                    case "xtandem":
+                        datasetManager = new XTandemFHT(fhtFile);
+                        break;
+                    case "sequest":
+                        datasetManager = new SequestFHT(fhtFile);
+                        break;
+                    case "inspect":
+                        datasetManager = new InspectFHT(fhtFile);
+                        break;
+                    default:
+                        Console.WriteLine("Incorrect search type check again");
+                        return false;
+                }
 
                 AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
 
 
                 // Delete extracted_results file and DTA file
-                File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
-                File.Delete(dtaFilePath);
+                //File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
+                //File.Delete(dtaFilePath);
 
                 // load AScore results into SQLite database
-                string tableName = "??"; // TODO: how do we name table
+                string tableName = "T_AScoreResults"; // TODO: how do we name table
                 string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                 clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
 
@@ -332,18 +349,29 @@ namespace AnalysisManager_AScore_PlugIn
 
             // look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
             private string CopyDTAResults(string resultsFolderPath) {
-                string dtaResultsFilename = "dta_results.zip";
-                string zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
-                string unzippedDTAResultsFileName = "dta_results.txt";
+                string dtaResultsFilename = ""; //"dta_results.zip";
+                string zippedDTAResultsFilePath = ""; // Path.Combine(WorkingDir, dtaResultsFilename);
+                string unzippedDTAResultsFileName = ""; // "dta_results.txt";
                 string unzippedDTAResultsFilePath = Path.Combine(WorkingDir, unzippedDTAResultsFileName);
                 string[] files = Directory.GetFiles(resultsFolderPath, "*_dta.zip");
                 if (files.Length > 0) {
+                    dtaResultsFilename = System.IO.Path.GetFileName(files[0]);
+                    zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
+                    
+                    unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
+
                     File.Copy(files[0], zippedDTAResultsFilePath);
+
+                    if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
+                    {
+                    }
+
                     // TODO: unzip it
                     File.Delete(zippedDTAResultsFilePath);
                 }
                 return unzippedDTAResultsFilePath;
             }
+
 
             // Build Mage source module containing one job to process
             private BaseModule MakeJobSourceModule(string[] jobFieldNames, object[] jobFields) {
@@ -361,6 +389,96 @@ namespace AnalysisManager_AScore_PlugIn
                 }
                 return obj.ToArray();
             }
+
+
+            private bool UnzipFileStart(string ZipFilePath, string OutFolderPath, string CallingFunctionName, bool ForceExternalZipProgramUse)
+            {
+
+                System.IO.FileInfo fiFileInfo = null;
+                float sngFileSizeMB = 0;
+
+                bool blnUseExternalUnzipper = false;
+                bool blnSuccess = false;
+
+                string strUnzipperName = string.Empty;
+
+                DateTime dtStartTime = default(DateTime);
+                DateTime dtEndTime = default(DateTime);
+                m_IonicZipTools = new clsIonicZipTools(1, WorkingDir);
+
+                try
+                {
+                    if (ZipFilePath == null)
+                        ZipFilePath = string.Empty;
+
+                    if (strExternalUnzipperFilePath == null)
+                        strExternalUnzipperFilePath = string.Empty;
+
+                    fiFileInfo = new System.IO.FileInfo(ZipFilePath);
+                    sngFileSizeMB = Convert.ToSingle(fiFileInfo.Length / 1024.0 / 1024);
+
+                    // Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
+                    // However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
+                    if (ForceExternalZipProgramUse || sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
+                    {
+                        if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na")
+                        {
+                            if (System.IO.File.Exists(strExternalUnzipperFilePath))
+                            {
+                                blnUseExternalUnzipper = true;
+                            }
+                        }
+
+                        if (!blnUseExternalUnzipper)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip");
+                        }
+                    }
+
+                    if (blnUseExternalUnzipper)
+                    {
+                        strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath);
+
+                        PRISM.Files.ZipTools UnZipper = new PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath);
+
+                        dtStartTime = DateTime.UtcNow;
+                        blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath);
+                        dtEndTime = DateTime.UtcNow;
+
+                        if (blnSuccess)
+                        {
+                            m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, strUnzipperName);
+                        }
+                        else
+                        {
+                            mMessage = "Error unzipping " + System.IO.Path.GetFileName(ZipFilePath) + " using " + strUnzipperName;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + mMessage);
+                            UnZipper = null;
+                        }
+                    }
+                    else
+                    {
+                        // Use Ionic.Zip
+                        strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
+                        blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    mMessage = "Exception while unzipping '" + ZipFilePath + "'";
+                    if (!string.IsNullOrEmpty(strUnzipperName))
+                        mMessage += " using " + strUnzipperName;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                    blnSuccess = false;
+                }
+
+                return blnSuccess;
+
+            }
+
+
 
             #endregion
         }
