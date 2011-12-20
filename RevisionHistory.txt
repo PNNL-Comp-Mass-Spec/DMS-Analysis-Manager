@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+December 19, 2011
+	- Updated MSAlign plugin to validate that the activation key (or instrument key for v0.5) is not FILE when running a MSAlign_Bruker dataset
+		- Required since the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+
 December 14, 2011
 	- Updated MSGFDB plugin to abort processing if a parameter file parsing error occurs
 	- Updated MSGFDB plugin to validate that the _PepToProtMap.txt file does not have any __NoMatch__ entries

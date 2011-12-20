@@ -473,6 +473,9 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Const TABLE_OUTPUT_FILENAME As String = "tableOutputFileName"
 		Const DETAIL_OUTPUT_FILENAME As String = "detailOutputFileName"
 
+		Const INSTRUMENT_TYPE_KEY As String = "instrument"			' This only applies to v0.5 of MSAlign
+		Const INSTRUMENT_ACTIVATION_TYPE_KEY As String = "activation"
+
 		Dim srInFile As System.IO.StreamReader
 		Dim swOutFile As System.IO.StreamWriter
 		Dim strLineIn As String
@@ -524,6 +527,27 @@ Public Class clsAnalysisToolRunnerMSAlign
 							strValue = strLineIn.Substring(intEqualsIndex + 1).Trim()
 						Else
 							strValue = String.Empty
+						End If
+
+						If strKeyName.ToLower() = INSTRUMENT_ACTIVATION_TYPE_KEY OrElse strKeyName.ToLower() = INSTRUMENT_TYPE_KEY Then
+							' If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+							' The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+							Dim strToolName As String
+							strToolName = m_jobParams.GetParam("ToolName")
+
+							If strToolName = "MSAlign_Bruker" Then
+								If strValue.ToUpper() = "FILE" Then
+									m_message = "Must specify an explicit scan type for " & strKeyName & " in the MSAlign parameter file (CID, HCD, or ETD)"
+
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag")
+
+									swOutFile.Close()
+									srInFile.Close()
+
+									Return False
+
+								End If
+							End If
 						End If
 
 						' Examine the key name to determine what to do
