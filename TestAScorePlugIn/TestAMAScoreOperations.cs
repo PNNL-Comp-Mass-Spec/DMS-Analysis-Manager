@@ -19,7 +19,7 @@ namespace TestAScorePlugIn {
             Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
-                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2010\154_FengsTest_Package" },
+                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
                 { "DataPackageSourceFolderName", "ImportFiles" },
                 { "ResultsBaseName", "Results" },
                 { "ExtractionType", "Sequest First Hits"},
@@ -33,7 +33,10 @@ namespace TestAScorePlugIn {
                 { "StepOutputFolderName", "Step_1_ASCORE" },
                 { "DatasetNum", "Aggregation" },
                 { "TargetJobFileList", "sequest:_syn.txt:copy,sequest:_fht.txt:copy,sequest:_dta.zip:copy,masic_finnigan:_reporterions.txt:copy,masic_finnigan:_ScanStatsEx.txt:copy" },
-                { "DataPackageID", "154" }
+                { "DataPackageID", "162" },
+
+                { "AScoreParamFilename", "parameterFileForGmax.xml" },
+                { "AScoreSearchType", "sequest" }
             };
 
             Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
@@ -42,7 +45,9 @@ namespace TestAScorePlugIn {
                 { "workdir", @"C:\DMS_WorkDir" },
                 { "logfilename", "AM_AnalysisManager_Log" },
                 { "ConnectionString", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
+                { "zipprogram", @"C:\PKWare\Pkzipc\Pkzipc.exe" },
                 { "MgrName", "Test_harness" }
+
             };
             MgrParamsStub m_mgrParams = new MgrParamsStub(mMgrParms);
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
