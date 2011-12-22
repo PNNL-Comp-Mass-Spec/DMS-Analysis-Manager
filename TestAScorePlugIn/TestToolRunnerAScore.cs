@@ -35,7 +35,7 @@ namespace TestAScorePlugIn {
                 { "DataPackageID", "159" }
             };
 
-        public void TestRunPhospho() {
+        public void TestRunAScore() {
             clsAnalysisResourcesAScore ascoreResourcer = new clsAnalysisResourcesAScore();
             clsAnalysisToolRunnerAScore ascoreToolRunner = new clsAnalysisToolRunnerAScore();
 

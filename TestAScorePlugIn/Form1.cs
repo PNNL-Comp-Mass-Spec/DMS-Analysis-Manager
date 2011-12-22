@@ -17,14 +17,15 @@ namespace TestAScorePlugIn {
 
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerAScore ttr = new TestToolRunnerAScore();
-            ttr.TestRunPhospho();
+            ttr.TestRunAScore();
         }
 
-        private void Test_GetImprovResults_Click(object sender, EventArgs e)
+        private void Test_GetAScoreResults_Click(object sender, EventArgs e)
         {
-            TestAMAScoreOperations tpp = new TestAMAScoreOperations();
-            tpp.Test_RunPhospho();
+            TestAMAScore tpp = new TestAMAScore();
+            tpp.Test_RunAScore();
         }
+
 
     }
 }

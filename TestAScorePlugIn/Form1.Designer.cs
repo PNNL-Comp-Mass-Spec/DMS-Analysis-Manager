@@ -23,19 +23,19 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
-            this.Test_GetImprovResults = new System.Windows.Forms.Button();
+            this.Test_GetAScoreResults = new System.Windows.Forms.Button();
             this.Test_Tool_Runner = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // Test_GetImprovResults
+            // Test_GetAScoreResults
             // 
-            this.Test_GetImprovResults.Location = new System.Drawing.Point(16, 12);
-            this.Test_GetImprovResults.Name = "Test_GetImprovResults";
-            this.Test_GetImprovResults.Size = new System.Drawing.Size(200, 23);
-            this.Test_GetImprovResults.TabIndex = 0;
-            this.Test_GetImprovResults.Text = "Test RunPhospho";
-            this.Test_GetImprovResults.UseVisualStyleBackColor = true;
-            this.Test_GetImprovResults.Click += new System.EventHandler(this.Test_GetImprovResults_Click);
+            this.Test_GetAScoreResults.Location = new System.Drawing.Point(16, 12);
+            this.Test_GetAScoreResults.Name = "Test_GetAScoreResults";
+            this.Test_GetAScoreResults.Size = new System.Drawing.Size(200, 23);
+            this.Test_GetAScoreResults.TabIndex = 0;
+            this.Test_GetAScoreResults.Text = "Test Run AScore";
+            this.Test_GetAScoreResults.UseVisualStyleBackColor = true;
+            this.Test_GetAScoreResults.Click += new System.EventHandler(this.Test_GetAScoreResults_Click);
             // 
             // Test_Tool_Runner
             // 
@@ -53,7 +53,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(275, 300);
             this.Controls.Add(this.Test_Tool_Runner);
-            this.Controls.Add(this.Test_GetImprovResults);
+            this.Controls.Add(this.Test_GetAScoreResults);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -62,7 +62,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button Test_GetImprovResults;
+        private System.Windows.Forms.Button Test_GetAScoreResults;
         private System.Windows.Forms.Button Test_Tool_Runner;
     }
 }
