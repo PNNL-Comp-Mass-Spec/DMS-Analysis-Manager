@@ -45,10 +45,9 @@ namespace AnalysisManager_AScore_PlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentAScoreTask);
 
 				//Change the name of the log file for the local log file to the plugin log filename
-                //TODO: See if AScore is using log4net
-                //String LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
-                //log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                //clsLogTools.ChangeLogFileName(LogFileName);
+                String LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
+                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                clsLogTools.ChangeLogFileName(LogFileName);
 
 				try
 				{
@@ -57,10 +56,9 @@ namespace AnalysisManager_AScore_PlugIn
 					blnSuccess = RunAScore();
 
 					// Change the name of the log file back to the analysis manager log file
-                    //TODO: See if AScore is using log4net
-                    //LogFileName = m_mgrParams.GetParam("logfilename");
-                    //log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    //clsLogTools.ChangeLogFileName(LogFileName);
+                    LogFileName = m_mgrParams.GetParam("logfilename");
+                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                    clsLogTools.ChangeLogFileName(LogFileName);
 
 					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running AScore: " + m_message);
@@ -69,10 +67,9 @@ namespace AnalysisManager_AScore_PlugIn
 				catch (Exception ex)
 				{
 					// Change the name of the log file back to the analysis manager log file
-                    //TODO: See if AScore is using log4net
-                    //LogFileName = m_mgrParams.GetParam("logfilename");
-                    //log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    //clsLogTools.ChangeLogFileName(LogFileName);
+                    LogFileName = m_mgrParams.GetParam("logfilename");
+                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                    clsLogTools.ChangeLogFileName(LogFileName);
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running AScore: " + ex.Message);
 					blnSuccess = false;
@@ -147,9 +144,9 @@ namespace AnalysisManager_AScore_PlugIn
        protected bool RunAScore()
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
-           string ascoreOperations = m_jobParams.GetParam("AScoreOperations");
-           clsAScoreAMOperations ops = new clsAScoreAMOperations(m_jobParams, m_mgrParams);
-           return ops.RunAScoreOperations(ascoreOperations);
+           clsAScoreMage dvas = new clsAScoreMage(m_jobParams, m_mgrParams);
+           dvas.Run();
+           return true;
        }
        
 

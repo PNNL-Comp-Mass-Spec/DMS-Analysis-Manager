@@ -66,6 +66,8 @@ namespace AnalysisManager_AScore_PlugIn
         public void Run() {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
+            GetAScoreParameterFile();
+
             SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "sequest");
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
@@ -77,6 +79,29 @@ namespace AnalysisManager_AScore_PlugIn
 
 
         #region Mage Pipelines and Utilities
+
+        private bool GetAScoreParameterFile()
+        {
+
+            //' Retrieve the AScore Parameter .xml file specified for this job
+            if (string.IsNullOrEmpty(mParamFilename))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
+            }
+        
+            string strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
+            string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(strMAParameterFileStoragePath)) {
+                strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
+            }
+
+            File.Copy(Path.Combine(strMAParameterFileStoragePath, mParamFilename), Path.Combine(mWorkingDir, mParamFilename));
+
+            //Errors were reported in function call, so just return
+            return true;
+
+        }
 
         /// <summary>
         /// query DMS to get list of data package jobs to process
@@ -309,15 +334,14 @@ namespace AnalysisManager_AScore_PlugIn
 
                 AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
 
-
-                // Delete extracted_results file and DTA file
-                //File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
-                //File.Delete(dtaFilePath);
-
                 // load AScore results into SQLite database
                 string tableName = "T_AScoreResults"; // TODO: how do we name table
                 string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                 clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
+
+                // Delete extracted_results file and DTA file
+                File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
+                //File.Delete(dtaFilePath);
 
                 // optionally delete AScore results file
                 // TODO: do the deletions

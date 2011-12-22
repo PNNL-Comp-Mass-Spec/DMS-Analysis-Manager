@@ -73,9 +73,6 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesAScore.cs" />
     <Compile Include="clsAnalysisToolRunnerAScore.cs" />
-    <Compile Include="clsAScoreAMBase.cs" />
-    <Compile Include="clsAScoreAMOperations.cs" />
-    <Compile Include="clsAScoreAMRunPhospho.cs" />
     <Compile Include="clsAScoreMage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
