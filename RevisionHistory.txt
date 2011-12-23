@@ -1,5 +1,18 @@
 Analysis Tool Manager History
 
+December 22, 2011
+	- Now validating drive free space in key places
+		- For Results_Transfer, simply validating the dataset storage path
+		- For other analysis tools, validating:
+			- Working directory
+			- OrgDB directory
+			- Remote transfer directory
+		- Disables the manager locally if the working directory or OrgDB directory free space falls below 750 MB
+		- Fails out the job if the Remote Transfer Directory free space is below 10 GB
+		- Fails out the job if the Dataset storage Path free space is below 10 GB
+	- Updated to abort requesting new tasks if 3 requests in a row result in a deadlock error
+	- Updated MSGF to use "MSGFDB.jar ui.MSGF"
+
 December 19, 2011
 	- Updated MSAlign plugin to validate that the activation key (or instrument key for v0.5) is not FILE when running a MSAlign_Bruker dataset
 		- Required since the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)

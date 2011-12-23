@@ -410,7 +410,7 @@ Public Class clsExtractToolRunner
             '   Get the _fht.txt and _FScore_fht.txt files from the _inspect.txt file in the _inspect_fht.zip file
             '   Get the other files from the _inspect.txt file in the_inspect.zip file
 
-            ' Extract _inspect.txt from the _inspect_fht.zip file
+			' Extract _inspect.txt from the _inspect_fht.zip file
             strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip")
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 

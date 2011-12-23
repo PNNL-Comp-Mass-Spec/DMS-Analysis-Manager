@@ -69,6 +69,7 @@ Public Class clsMSGFRunner
 
 	Protected Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
 	Protected Const MSGF_JAR_NAME As String = "MSGF.jar"
+	Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
 	Public Enum ePeptideHitResultType
 		Unknown = 0
@@ -103,6 +104,7 @@ Public Class clsMSGFRunner
 	Protected mToolVersionWritten As Boolean
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
+	Protected mUsingMSGFDB As Boolean = True
 	Protected mJavaProgLoc As String = String.Empty
 
 	Protected mConsoleOutputErrorMsg As String
@@ -143,6 +145,8 @@ Public Class clsMSGFRunner
 		Dim blnDoNotFilterPeptides As Boolean
 		Dim intMSGFInputFileLineCount As Integer = 0
 
+		Dim blnUsingMSGFDB As Boolean = True
+
 		' Set this to success for now
 		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -174,14 +178,25 @@ Public Class clsMSGFRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		' Determine the path to the MSGFDB program
-		mMSGFProgLoc = DetermineProgramLocation("MSGF", "MSGFLoc", MSGF_JAR_NAME)
+		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
+		mMSGFProgLoc = DetermineMSGFProgramLocation(blnUsingMSGFDB)
+		mUsingMSGFDB = blnUsingMSGFDB
+
+		If String.IsNullOrEmpty(mMSGFProgLoc) Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error determining MSGF program location"
+			End If
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		' Determine the path to ReadW
 		Dim msXmlGenerator As String = "ReadW.exe"
 		mReadWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
 
-		If String.IsNullOrWhiteSpace(mMSGFProgLoc) Then
+		If String.IsNullOrWhiteSpace(mReadWProgramPath) Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error determining ReadW program location"
+			End If
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -435,7 +450,7 @@ Public Class clsMSGFRunner
 
 		Const MSGFDB_FRAG_METHOD_TAG As String = "FragmentationMethodID"
 
-		Dim srParamFile As System.IO.StreamReader
+		Dim srParamFile As System.IO.StreamReader = Nothing
 		Dim strLineIn As String
 
 		Dim strFragMode As String
@@ -513,7 +528,6 @@ Public Class clsMSGFRunner
 		End Try
 
 		Return True
-
 
 	End Function
 
@@ -914,6 +928,44 @@ Public Class clsMSGFRunner
 		End Try
 
 	End Sub
+
+	Protected Function DetermineMSGFProgramLocation(ByRef blnUsingMSGFDB As Boolean) As String
+
+		Dim strStepToolName As String = "MSGFDB"
+		Dim strProgLocManagerParamName As String = "MSGFDbProgLoc"
+		Dim strExeName As String = MSGFDB_JAR_NAME
+
+		blnUsingMSGFDB = True
+
+		' Note that as of 12/20/2011 we are using MSGFDB.jar to access the MSGF class
+		' In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
+
+		' Check whether the settings file specifies that a specific version of the step tool be used
+		Dim strStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
+
+		If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
+
+			' Specific version is defined
+			' Check whether the version is one of the known versions for the old MSGF
+			Select Case strStepToolVersion.ToLower()
+				Case "v2010-11-16", "v2011-09-02", "v6393", "v6432"
+					' Use MSGF
+
+					strStepToolName = "MSGF"
+					strProgLocManagerParamName = "MSGFLoc"
+					strExeName = MSGF_JAR_NAME
+
+					blnUsingMSGFDB = False
+
+				Case Else
+					' Use MSGFDB
+
+			End Select
+		End If
+
+		Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion)
+
+	End Function
 
 	Public Shared Function GetPeptideHitResultType(ByVal strPeptideHitResultType As String) As ePeptideHitResultType
 		Select Case strPeptideHitResultType.ToLower
@@ -2120,10 +2172,17 @@ Public Class clsMSGFRunner
 		m_StatusTools.CurrentOperation = "Running MSGF"
 		m_StatusTools.UpdateAndWrite(m_progress)
 
-		CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & PossiblyQuotePath(mMSGFProgLoc)
-		CmdStr &= " -i " & PossiblyQuotePath(strInputFilePath)		   ' Input file
-		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)																   ' Folder containing .mzXML file
-		CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)	   ' Output file
+		CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M "
+
+		If mUsingMSGFDB Then
+			CmdStr &= "-cp " & PossiblyQuotePath(mMSGFProgLoc) & " ui.MSGF"
+		Else
+			CmdStr &= "-jar " & PossiblyQuotePath(mMSGFProgLoc)
+		End If
+
+		CmdStr &= " -i " & PossiblyQuotePath(strInputFilePath)			 ' Input file
+		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML file
+		CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)		 ' Output file
 
 		If mETDMode Then
 			CmdStr &= " -m 1"	' ETD fragmentation

@@ -144,8 +144,8 @@ Public Class clsAnalysisResourcesExtraction
                 ' This file contains top hit for each scan (no filters)
                 FileToGet = strDataset & "_inspect_fht.zip"
                 If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-                    'Errors were reported in function call
-                    ' Don't treat this as a critical error
+					'Errors were reported in function call, so just return
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
                 End If
                 clsGlobal.FilesToDelete.Add(FileToGet)
 

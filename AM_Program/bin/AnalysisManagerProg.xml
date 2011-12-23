@@ -757,6 +757,16 @@ AnalysisManagerProg
 	<param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
 	<returns>The path to the program, or an empty string if there is a problem</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.DetermineProgramLocation(System.String,System.String,System.String,System.String)">
+	<summary>
+ Determine the path to the correct version of the step tool
+ </summary>
+	<param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+	<param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+	<param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+	<param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+	<returns>The path to the program, or an empty string if there is a problem</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB">
 	<summary>
  Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
@@ -1839,6 +1849,24 @@ AnalysisManagerProg
 	<param name="MinutesBetweenUpdates"></param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.GetDiskFreeSpace(System.String,System.Int64@,System.Int64@,System.Int64@)">
+	<summary>
+ Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
+ </summary>
+	<param name="strDirectoryPath"></param>
+	<param name="lngFreeBytesAvailableToUser"></param>
+	<param name="lngTotalDriveCapacityBytes"></param>
+	<param name="lngTotalNumberOfFreeBytes"></param>
+	<returns>True if success, false if a problem</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerProg.clsMainProcess.ValidateFreeDiskSpace(System.String@)">
+	<summary>
+ Confirms that the drive with the working directory has sufficient free space
+ Confirms that the remote share for storing results is accessible and has sufficient free space
+ </summary>
+	<param name="ErrorMessage"></param>
+	<returns></returns>
+	<remarks>Disables the manager if the working directory drive does not have enough space</remarks>
 </member><member name="M:AnalysisManagerProg.clsMainProcess.InitStatusTools">
 	<summary>
  Initializes the status file writing tool

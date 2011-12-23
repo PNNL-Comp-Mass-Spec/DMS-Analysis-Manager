@@ -151,7 +151,7 @@ Public Class clsAnalysisResourcesMSGF
             End If
             clsGlobal.FilesToDelete.Add(FileToGet)
 
-            FileToGet = DatasetName & clsMSGFRunner.XT_SEQ_TO_PROTEIN_MAP_SUFFIX
+			FileToGet = DatasetName & clsMSGFRunner.XT_SEQ_TO_PROTEIN_MAP_SUFFIX
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                 'Errors were reported in function call, so just return
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE

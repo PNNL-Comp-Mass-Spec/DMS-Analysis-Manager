@@ -16,580 +16,599 @@ Imports AnalysisManagerBase.clsGlobal
 Namespace AnalysisManagerBase
 
 	Public Class clsAnalysisToolRunnerBase
-        Implements IToolRunner
+		Implements IToolRunner
 
-        '*********************************************************************************************************
-        'Base class for analysis tool runner
-        '*********************************************************************************************************
+		'*********************************************************************************************************
+		'Base class for analysis tool runner
+		'*********************************************************************************************************
 
 #Region "Constants"
-        Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"
-        Protected Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
+		Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"
+		Protected Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
 #End Region
 
 #Region "Module variables"
-        'status tools
-        Protected m_StatusTools As IStatusFile
+		'status tools
+		Protected m_StatusTools As IStatusFile
 
-        ' access to the job parameters
-        Protected m_jobParams As IJobParams
+		' access to the job parameters
+		Protected m_jobParams As IJobParams
 
-        ' access to mgr parameters
-        Protected m_mgrParams As IMgrParams
+		' access to mgr parameters
+		Protected m_mgrParams As IMgrParams
 
-        ' access to settings file parameters
-        Protected m_settingsFileParams As New PRISM.Files.XmlSettingsFileAccessor
+		' access to settings file parameters
+		Protected m_settingsFileParams As New PRISM.Files.XmlSettingsFileAccessor
 
-        ' progress of run (in percent); This is a value between 0 and 100
-        Protected m_progress As Single = 0
+		' progress of run (in percent); This is a value between 0 and 100
+		Protected m_progress As Single = 0
 
-        '	status code
-        Protected m_status As IStatusFile.EnumMgrStatus
+		'	status code
+		Protected m_status As IStatusFile.EnumMgrStatus
 
-        'DTA count for status report
-        Protected m_DtaCount As Integer = 0
+		'DTA count for status report
+		Protected m_DtaCount As Integer = 0
 
-        ' for posting a general explanation for external consumption
-        Protected m_message As String = String.Empty
+		' for posting a general explanation for external consumption
+		Protected m_message As String = String.Empty
 
-        'Debug level
-        Protected m_DebugLevel As Short
+		'Debug level
+		Protected m_DebugLevel As Short
 
-        'Working directory, machine name, & job number (used frequently by subclasses)
-        Protected m_WorkDir As String
-        Protected m_MachName As String
-        Protected m_JobNum As String
-        Protected m_Dataset As String
+		'Working directory, machine name, & job number (used frequently by subclasses)
+		Protected m_WorkDir As String
+		Protected m_MachName As String
+		Protected m_JobNum As String
+		Protected m_Dataset As String
 
-        'Elapsed time information
-        Protected m_StartTime As Date
-        Protected m_StopTime As Date
+		'Elapsed time information
+		Protected m_StartTime As Date
+		Protected m_StopTime As Date
 
-        'Results folder name
-        Protected m_ResFolderName As String
+		'Results folder name
+		Protected m_ResFolderName As String
 
-        'DLL file info
-        Protected m_FileVersion As String
-        Protected m_FileDate As String
+		'DLL file info
+		Protected m_FileVersion As String
+		Protected m_FileDate As String
 
 		Protected m_IonicZipTools As clsIonicZipTools
-        Protected m_NeedToAbortProcessing As Boolean
+		Protected m_NeedToAbortProcessing As Boolean
 
 #End Region
 
 #Region "Properties"
-        'Publicly accessible results folder name and path
-        Public ReadOnly Property ResFolderName() As String Implements IToolRunner.ResFolderName
-            Get
-                Return m_ResFolderName
-            End Get
-        End Property
+		'Publicly accessible results folder name and path
+		Public ReadOnly Property ResFolderName() As String Implements IToolRunner.ResFolderName
+			Get
+				Return m_ResFolderName
+			End Get
+		End Property
 
-        ' explanation of what happened to last operation this class performed
-        Public ReadOnly Property Message() As String Implements IToolRunner.Message
-            Get
-                Return m_message
-            End Get
-        End Property
+		' explanation of what happened to last operation this class performed
+		Public ReadOnly Property Message() As String Implements IToolRunner.Message
+			Get
+				Return m_message
+			End Get
+		End Property
 
-        Public ReadOnly Property NeedToAbortProcessing() As Boolean Implements IToolRunner.NeedToAbortProcessing
-            Get
-                Return m_NeedToAbortProcessing
-            End Get
-        End Property
+		Public ReadOnly Property NeedToAbortProcessing() As Boolean Implements IToolRunner.NeedToAbortProcessing
+			Get
+				Return m_NeedToAbortProcessing
+			End Get
+		End Property
 
-        ' the state of completion of the job (as a percentage)
-        Public ReadOnly Property Progress() As Single Implements IToolRunner.Progress
-            Get
-                Return m_progress
-            End Get
-        End Property
+		' the state of completion of the job (as a percentage)
+		Public ReadOnly Property Progress() As Single Implements IToolRunner.Progress
+			Get
+				Return m_progress
+			End Get
+		End Property
 #End Region
 
 #Region "Methods"
-        ''' <summary>
-        ''' Constructor
-        ''' </summary>
-        ''' <remarks>Does nothing at present</remarks>
-        Public Sub New()
-        End Sub
+		''' <summary>
+		''' Constructor
+		''' </summary>
+		''' <remarks>Does nothing at present</remarks>
+		Public Sub New()
+		End Sub
 
-        ''' <summary>
-        ''' Initializes class
-        ''' </summary>
-        ''' <param name="mgrParams">Object holding manager parameters</param>
-        ''' <param name="jobParams">Object holding job parameters</param>
-        ''' <param name="StatusTools">Object for status reporting</param>
-        ''' <remarks></remarks>
-        Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-          ByVal StatusTools As IStatusFile) Implements IToolRunner.Setup
+		''' <summary>
+		''' Initializes class
+		''' </summary>
+		''' <param name="mgrParams">Object holding manager parameters</param>
+		''' <param name="jobParams">Object holding job parameters</param>
+		''' <param name="StatusTools">Object for status reporting</param>
+		''' <remarks></remarks>
+		Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
+		  ByVal StatusTools As IStatusFile) Implements IToolRunner.Setup
 
-            m_mgrParams = mgrParams
-            m_jobParams = jobParams
-            m_StatusTools = StatusTools
-            m_WorkDir = m_mgrParams.GetParam("workdir")
-            m_MachName = m_mgrParams.GetParam("MgrName")
+			m_mgrParams = mgrParams
+			m_jobParams = jobParams
+			m_StatusTools = StatusTools
+			m_WorkDir = m_mgrParams.GetParam("workdir")
+			m_MachName = m_mgrParams.GetParam("MgrName")
 			m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
 			m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
-            m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
-            m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
+			m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
+			m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
-            m_ResFolderName = m_jobParams.GetParam("OutputFolderName")
+			m_ResFolderName = m_jobParams.GetParam("OutputFolderName")
 
-            If m_DebugLevel > 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.Setup()")
-            End If
+			If m_DebugLevel > 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.Setup()")
+			End If
 
-            m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
-            m_NeedToAbortProcessing = False
+			m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
+			m_NeedToAbortProcessing = False
 
-        End Sub
+		End Sub
 
-        ''' <summary>
-        ''' Loads the job settings file
-        ''' </summary>
-        ''' <returns>TRUE for success, FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Function LoadSettingsFile() As Boolean
-            Dim fileName As String = m_jobParams.GetParam("settingsFileName")
-            If fileName <> "na" Then
-                Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
-                If File.Exists(filePath) Then            'XML tool Loadsettings returns True even if file is not found, so separate check reqd
-                    Return m_settingsFileParams.LoadSettings(filePath)
-                Else
-                    Return False            'Settings file wasn't found
-                End If
-            Else
-                Return True       'Settings file wasn't required
-            End If
+		''' <summary>
+		''' Loads the job settings file
+		''' </summary>
+		''' <returns>TRUE for success, FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Function LoadSettingsFile() As Boolean
+			Dim fileName As String = m_jobParams.GetParam("settingsFileName")
+			If fileName <> "na" Then
+				Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
+				If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
+					Return m_settingsFileParams.LoadSettings(filePath)
+				Else
+					Return False			'Settings file wasn't found
+				End If
+			Else
+				Return True		  'Settings file wasn't required
+			End If
 
-        End Function
+		End Function
 
-        ''' <summary>
-        ''' Runs the analysis tool
-        ''' Major work is performed by overrides
-        ''' </summary>
-        ''' <returns>CloseoutType enum representing completion status</returns>
-        ''' <remarks></remarks>
-        Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
+		''' <summary>
+		''' Runs the analysis tool
+		''' Major work is performed by overrides
+		''' </summary>
+		''' <returns>CloseoutType enum representing completion status</returns>
+		''' <remarks></remarks>
+		Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
 
-            ' Synchronize the stored Debug level with the value stored in the database
-            GetCurrentMgrSettingsFromDB()
+			' Synchronize the stored Debug level with the value stored in the database
+			GetCurrentMgrSettingsFromDB()
 
-            'Make log entry
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+			'Make log entry
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
-            'Start the job timer
-            m_StartTime = System.DateTime.UtcNow
+			'Start the job timer
+			m_StartTime = System.DateTime.UtcNow
 
-            'Remainder of method is supplied by subclasses
+			'Remainder of method is supplied by subclasses
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-        End Function
+		End Function
 
-        ''' <summary>
-        ''' Determine the path to the correct version of the step tool
-        ''' </summary>
-        ''' <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
-        ''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        ''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
-        ''' <returns>The path to the program, or an empty string if there is a problem</returns>
-        ''' <remarks></remarks>
-        Protected Function DetermineProgramLocation(ByVal strStepToolName As String, _
-                                                    ByVal strProgLocManagerParamName As String, _
-                                                    ByVal strExeName As String) As String
+		''' <summary>
+		''' Determine the path to the correct version of the step tool
+		''' </summary>
+		''' <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+		''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+		''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+		''' <returns>The path to the program, or an empty string if there is a problem</returns>
+		''' <remarks></remarks>
+		Protected Function DetermineProgramLocation(ByVal strStepToolName As String, _
+			 ByVal strProgLocManagerParamName As String, _
+			 ByVal strExeName As String) As String
 
-            ' Lookup the path to the folder that contains the Step tool
-            Dim progLoc As String = m_mgrParams.GetParam(strProgLocManagerParamName)
+			' Check whether the settings file specifies that a specific version of the step tool be used
+			Dim strStepToolVersion As String = m_jobParams.GetParam(strStepToolName & "_Version")
 
-            If String.IsNullOrWhiteSpace(progLoc) Then
-                m_message = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return String.Empty
-            End If
+			Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion)
 
-            ' Check whether the settings file specifies that a specific version of the step tool be used
-            Dim strStepToolVersion As String = m_jobParams.GetParam(strStepToolName & "_Version")
+		End Function
 
-            If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
+		''' <summary>
+		''' Determine the path to the correct version of the step tool
+		''' </summary>
+		''' <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+		''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+		''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+		''' <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+		''' <returns>The path to the program, or an empty string if there is a problem</returns>
+		''' <remarks></remarks>
+		Protected Function DetermineProgramLocation(ByVal strStepToolName As String, _
+		   ByVal strProgLocManagerParamName As String, _
+		   ByVal strExeName As String, _
+		   ByVal strStepToolVersion As String) As String
 
-                ' Specific version is defined; verify that the folder exists
-                progLoc = System.IO.Path.Combine(progLoc, strStepToolVersion)
+			' Lookup the path to the folder that contains the Step tool
+			Dim progLoc As String = m_mgrParams.GetParam(strProgLocManagerParamName)
 
-                If Not System.IO.Directory.Exists(progLoc) Then
-                    m_message = "Version-specific folder not found for " & strStepToolName
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-                    Return String.Empty
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of " & strStepToolName & ": " & progLoc)
-                End If
-            End If
+			If String.IsNullOrWhiteSpace(progLoc) Then
+				m_message = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return String.Empty
+			End If
 
-            ' Define the path to the .Exe, then verify that it exists
-            progLoc = System.IO.Path.Combine(progLoc, strExeName)
+			' Check whether the settings file specifies that a specific version of the step tool be used
+			If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
 
-            If Not System.IO.File.Exists(progLoc) Then
-                m_message = "Cannot find " & strStepToolName & " program file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-                Return String.Empty
-            End If
+				' Specific version is defined; verify that the folder exists
+				progLoc = System.IO.Path.Combine(progLoc, strStepToolVersion)
 
-            Return progLoc
+				If Not System.IO.Directory.Exists(progLoc) Then
+					m_message = "Version-specific folder not found for " & strStepToolName
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+					Return String.Empty
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of " & strStepToolName & ": " & progLoc)
+				End If
+			End If
 
-        End Function
+			' Define the path to the .Exe, then verify that it exists
+			progLoc = System.IO.Path.Combine(progLoc, strExeName)
 
-        ''' <summary>
-        ''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
-        ''' </summary>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
-        Protected Function GetCurrentMgrSettingsFromDB() As Boolean
-            GetCurrentMgrSettingsFromDB(0)
-        End Function
+			If Not System.IO.File.Exists(progLoc) Then
+				m_message = "Cannot find " & strStepToolName & " program file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+				Return String.Empty
+			End If
 
-        ''' <summary>
-        ''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
-        ''' </summary>
-        ''' <param name="intUpdateIntervalSeconds">The minimum number of seconds between updates; if fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur</param>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
-        Protected Function GetCurrentMgrSettingsFromDB(ByVal intUpdateIntervalSeconds As Integer) As Boolean
-            GetCurrentMgrSettingsFromDB(intUpdateIntervalSeconds, m_mgrParams, m_DebugLevel)
-        End Function
+			Return progLoc
 
-        ''' <summary>
-        ''' Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
-        ''' </summary>
-        ''' <param name="DebugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
-        ''' <returns>True for success; False for error</returns>
-        ''' <remarks></remarks>
-        Public Shared Function GetCurrentMgrSettingsFromDB(ByVal intUpdateIntervalSeconds As Integer, _
-                                                           ByRef objMgrParams As IMgrParams, _
-                                                           ByRef DebugLevel As Short) As Boolean
+		End Function
 
-            Dim MyConnection As System.Data.SqlClient.SqlConnection
-            Dim MyCmd As New System.Data.SqlClient.SqlCommand
-            Dim drSqlReader As System.Data.SqlClient.SqlDataReader
-            Dim ConnectionString As String
+		''' <summary>
+		''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
+		''' </summary>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Protected Function GetCurrentMgrSettingsFromDB() As Boolean
+			GetCurrentMgrSettingsFromDB(0)
+		End Function
 
-            Dim strParamName As String
-            Dim strParamValue As String
-            Dim intValueCountRead As Integer = 0
+		''' <summary>
+		''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
+		''' </summary>
+		''' <param name="intUpdateIntervalSeconds">The minimum number of seconds between updates; if fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Protected Function GetCurrentMgrSettingsFromDB(ByVal intUpdateIntervalSeconds As Integer) As Boolean
+			GetCurrentMgrSettingsFromDB(intUpdateIntervalSeconds, m_mgrParams, m_DebugLevel)
+		End Function
 
-            Dim intNewDebugLevel As Short
+		''' <summary>
+		''' Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
+		''' </summary>
+		''' <param name="DebugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
+		''' <returns>True for success; False for error</returns>
+		''' <remarks></remarks>
+		Public Shared Function GetCurrentMgrSettingsFromDB(ByVal intUpdateIntervalSeconds As Integer, _
+			  ByRef objMgrParams As IMgrParams, _
+			  ByRef DebugLevel As Short) As Boolean
 
-            Static dtLastUpdateTime As System.DateTime
+			Dim MyConnection As System.Data.SqlClient.SqlConnection
+			Dim MyCmd As New System.Data.SqlClient.SqlCommand
+			Dim drSqlReader As System.Data.SqlClient.SqlDataReader
+			Dim ConnectionString As String
 
-            Try
+			Dim strParamName As String
+			Dim strParamValue As String
+			Dim intValueCountRead As Integer = 0
 
-                If intUpdateIntervalSeconds > 0 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
-                    Return True
-                End If
-                dtLastUpdateTime = System.DateTime.UtcNow
+			Dim intNewDebugLevel As Short
 
-                If DebugLevel >= 5 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
-                End If
+			Static dtLastUpdateTime As System.DateTime
 
-                ConnectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr")
-                MyConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
-                MyConnection.Open()
+			Try
 
-                'Set up the command object prior to SP execution
-                With MyCmd
-                    .CommandType = CommandType.Text
-                    .CommandText = "SELECT ParameterName, ParameterValue FROM V_MgrParams " & _
-                                   "WHERE ManagerName = '" & objMgrParams.GetParam("MgrName") & "' AND " & _
-                                        " ParameterName IN ('debuglevel')"
+				If intUpdateIntervalSeconds > 0 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
+					Return True
+				End If
+				dtLastUpdateTime = System.DateTime.UtcNow
 
-                    .Connection = MyConnection
-                End With
+				If DebugLevel >= 5 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
+				End If
 
-                'Execute the SP
-                drSqlReader = MyCmd.ExecuteReader(CommandBehavior.CloseConnection)
+				ConnectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr")
+				MyConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+				MyConnection.Open()
 
-                While drSqlReader.Read
-                    strParamName = drSqlReader.GetString(0)
-                    strParamValue = drSqlReader.GetString(1)
+				'Set up the command object prior to SP execution
+				With MyCmd
+					.CommandType = CommandType.Text
+					.CommandText = "SELECT ParameterName, ParameterValue FROM V_MgrParams " & _
+					   "WHERE ManagerName = '" & objMgrParams.GetParam("MgrName") & "' AND " & _
+					  " ParameterName IN ('debuglevel')"
 
-                    If Not strParamName Is Nothing And Not strParamValue Is Nothing Then
-                        Select Case strParamName
-                            Case "debuglevel"
-                                intNewDebugLevel = Short.Parse(strParamValue)
+					.Connection = MyConnection
+				End With
 
-                                If DebugLevel > 0 AndAlso intNewDebugLevel <> DebugLevel Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level changed from " & DebugLevel.ToString & " to " & intNewDebugLevel.ToString)
-                                    DebugLevel = intNewDebugLevel
-                                End If
-                                intValueCountRead += 1
-                            Case Else
-                                ' Unknown parameter
-                        End Select
-                    End If
-                End While
+				'Execute the SP
+				drSqlReader = MyCmd.ExecuteReader(CommandBehavior.CloseConnection)
 
-                drSqlReader.Close()
+				While drSqlReader.Read
+					strParamName = drSqlReader.GetString(0)
+					strParamValue = drSqlReader.GetString(1)
 
-            Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB" & ex.Message)
-            End Try
+					If Not strParamName Is Nothing And Not strParamValue Is Nothing Then
+						Select Case strParamName
+							Case "debuglevel"
+								intNewDebugLevel = Short.Parse(strParamValue)
 
-            If intValueCountRead > 0 Then
-                Return True
-            Else
-                Return False
-            End If
+								If DebugLevel > 0 AndAlso intNewDebugLevel <> DebugLevel Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level changed from " & DebugLevel.ToString & " to " & intNewDebugLevel.ToString)
+									DebugLevel = intNewDebugLevel
+								End If
+								intValueCountRead += 1
+							Case Else
+								' Unknown parameter
+						End Select
+					End If
+				End While
 
-        End Function
+				drSqlReader.Close()
 
-        ''' <summary>
-        ''' Creates a results folder after analysis complete
-        ''' </summary>
-        ''' <returns>CloseOutType enum indicating success or failure</returns>
-        ''' <remarks></remarks>
-        Protected Overridable Function MakeResultsFolder() As IJobParams.CloseOutType
+			Catch ex As System.Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB" & ex.Message)
+			End Try
 
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
+			If intValueCountRead > 0 Then
+				Return True
+			Else
+				Return False
+			End If
 
-            'Makes results folder and moves files into it
-            Dim ResFolderNamePath As String
+		End Function
 
-            'Log status (both locally and in the DB)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
-            ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+		''' <summary>
+		''' Creates a results folder after analysis complete
+		''' </summary>
+		''' <returns>CloseOutType enum indicating success or failure</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function MakeResultsFolder() As IJobParams.CloseOutType
 
-            'make the results folder
-            Try
-                Directory.CreateDirectory(ResFolderNamePath)
-            Catch Err As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error making results folder, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(Err))
-                m_message = AppendToComment(m_message, "Error making results folder")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End Try
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 
-        End Function
+			'Makes results folder and moves files into it
+			Dim ResFolderNamePath As String
 
-        ''' <summary>
-        ''' Moves result files after tool has completed
-        ''' </summary>
-        ''' <returns>CloseOutType enum indicating success or failure</returns>
-        ''' <remarks></remarks>
-        Protected Overridable Function MoveResultFiles() As IJobParams.CloseOutType
-            Const REJECT_LOGGING_THRESHOLD As Integer = 10
-            Const ACCEPT_LOGGING_THRESHOLD As Integer = 50
-            Const LOG_LEVEL_REPORT_ACCEPT_OR_REJECT As Integer = 5
+			'Log status (both locally and in the DB)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
+			ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
 
-            'Makes results folder and moves files into it
-            Dim ResFolderNamePath As String = String.Empty
-            Dim strTargetFilePath As String = String.Empty
+			'make the results folder
+			Try
+				Directory.CreateDirectory(ResFolderNamePath)
+			Catch Err As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error making results folder, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(Err))
+				m_message = AppendToComment(m_message, "Error making results folder")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
 
-            Dim Files() As String
-            Dim TmpFile As String = String.Empty
-            Dim TmpFileNameLcase As String = String.Empty
-            Dim OkToMove As Boolean = False
-            Dim ext As String
-            Dim excpt As String
-            Dim intIndex As Integer
-            Dim strLogMessage As String
+		End Function
 
-            Dim strExtension As String
-            Dim htRejectStats As System.Collections.Hashtable
-            Dim htAcceptStats As System.Collections.Hashtable
+		''' <summary>
+		''' Moves result files after tool has completed
+		''' </summary>
+		''' <returns>CloseOutType enum indicating success or failure</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function MoveResultFiles() As IJobParams.CloseOutType
+			Const REJECT_LOGGING_THRESHOLD As Integer = 10
+			Const ACCEPT_LOGGING_THRESHOLD As Integer = 50
+			Const LOG_LEVEL_REPORT_ACCEPT_OR_REJECT As Integer = 5
+
+			'Makes results folder and moves files into it
+			Dim ResFolderNamePath As String = String.Empty
+			Dim strTargetFilePath As String = String.Empty
+
+			Dim Files() As String
+			Dim TmpFile As String = String.Empty
+			Dim TmpFileNameLcase As String = String.Empty
+			Dim OkToMove As Boolean = False
+			Dim ext As String
+			Dim excpt As String
+			Dim intIndex As Integer
+			Dim strLogMessage As String
+
+			Dim strExtension As String
+			Dim htRejectStats As System.Collections.Hashtable
+			Dim htAcceptStats As System.Collections.Hashtable
 			Dim objExtension As System.Collections.IDictionaryEnumerator
 
-            Dim blnErrorEncountered As Boolean = False
+			Dim blnErrorEncountered As Boolean = False
 
-            'Move files into results folder
-            Try
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
-                ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
-                htRejectStats = New System.Collections.Hashtable
-                htAcceptStats = New System.Collections.Hashtable
+			'Move files into results folder
+			Try
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
+				ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				htRejectStats = New System.Collections.Hashtable
+				htAcceptStats = New System.Collections.Hashtable
 
-                'Log status
-                If m_DebugLevel >= 2 Then
-                    strLogMessage = "Move Result Files to " & ResFolderNamePath
-                    If m_DebugLevel >= 3 Then
-                        strLogMessage &= "; FilesToDelete contains " & FilesToDelete.Count.ToString & " entries" & _
-                                         "; m_FilesToDeleteExt contains " & m_FilesToDeleteExt.Count.ToString & " entries" & _
-                                         "; m_ExceptionFiles contains " & m_ExceptionFiles.Count.ToString & " entries"
-                    End If
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strLogMessage)
-                End If
-
-
-                ' Make sure the entries in FilesToDelete are all lowercase
-                For intIndex = 0 To clsGlobal.FilesToDelete.Count - 1
-                    clsGlobal.FilesToDelete(intIndex) = clsGlobal.FilesToDelete(intIndex).ToLower
-                Next intIndex
-
-                ' Make sure FilesToDelete is sorted
-                FilesToDelete.Sort()
-
-                ' Make sure the entries in clsGlobal.m_FilesToDeleteExt are all lowercase
-                For intIndex = 0 To clsGlobal.m_FilesToDeleteExt.Count - 1
-                    clsGlobal.m_FilesToDeleteExt(intIndex) = clsGlobal.m_FilesToDeleteExt(intIndex).ToLower
-                Next intIndex
-
-                ' Make sure the entries in  clsGlobal.m_ExceptionFiles are all lowercase
-                For intIndex = 0 To clsGlobal.m_ExceptionFiles.Count - 1
-                    clsGlobal.m_ExceptionFiles(intIndex) = clsGlobal.m_ExceptionFiles(intIndex).ToLower
-                Next intIndex
+				'Log status
+				If m_DebugLevel >= 2 Then
+					strLogMessage = "Move Result Files to " & ResFolderNamePath
+					If m_DebugLevel >= 3 Then
+						strLogMessage &= "; FilesToDelete contains " & FilesToDelete.Count.ToString & " entries" & _
+						  "; m_FilesToDeleteExt contains " & m_FilesToDeleteExt.Count.ToString & " entries" & _
+						  "; m_ExceptionFiles contains " & m_ExceptionFiles.Count.ToString & " entries"
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strLogMessage)
+				End If
 
 
-                ' Obtain a list of all files in the working directory
-                Files = Directory.GetFiles(m_WorkDir, "*.*")
+				' Make sure the entries in FilesToDelete are all lowercase
+				For intIndex = 0 To clsGlobal.FilesToDelete.Count - 1
+					clsGlobal.FilesToDelete(intIndex) = clsGlobal.FilesToDelete(intIndex).ToLower
+				Next intIndex
 
-                ' Check each file against clsGlobal.m_FilesToDeleteExt and clsGlobal.m_ExceptionFiles
-                For Each TmpFile In Files
-                    OkToMove = True
-                    TmpFileNameLcase = System.IO.Path.GetFileName(TmpFile).ToLower
+				' Make sure FilesToDelete is sorted
+				FilesToDelete.Sort()
 
-                    ' Check to see if the filename is defined in FilesToDelete
-                    ' Note that entries in FilesToDelete are already lowercase (thanks to a for loop earlier in this function)
-                    If FilesToDelete.BinarySearch(TmpFileNameLcase) >= 0 Then
-                        ' File found in the FilesToDelete list; do not move it
-                        OkToMove = False
-                    End If
+				' Make sure the entries in clsGlobal.m_FilesToDeleteExt are all lowercase
+				For intIndex = 0 To clsGlobal.m_FilesToDeleteExt.Count - 1
+					clsGlobal.m_FilesToDeleteExt(intIndex) = clsGlobal.m_FilesToDeleteExt(intIndex).ToLower
+				Next intIndex
 
-                    If OkToMove Then
-                        'Check to see if the file ends with an entry specified in m_FilesToDeleteExt
-                        ' Note that entries in m_FilesToDeleteExt are already lowercase (thanks to a for loop earlier in this function)
-                        For Each ext In clsGlobal.m_FilesToDeleteExt
-                            If TmpFileNameLcase.EndsWith(ext) Then
-                                OkToMove = False
-                                Exit For
-                            End If
-                        Next
-                    End If
+				' Make sure the entries in  clsGlobal.m_ExceptionFiles are all lowercase
+				For intIndex = 0 To clsGlobal.m_ExceptionFiles.Count - 1
+					clsGlobal.m_ExceptionFiles(intIndex) = clsGlobal.m_ExceptionFiles(intIndex).ToLower
+				Next intIndex
 
-                    If Not OkToMove Then
-                        ' Check to see if the file is a result file that got captured as a non result file
-                        ' Note that entries in m_ExceptionFiles are already lowercase (thanks to a for loop earlier in this function)
-                        For Each excpt In clsGlobal.m_ExceptionFiles
-                            If TmpFileNameLcase.Contains(excpt) Then
-                                OkToMove = True
-                                Exit For
-                            End If
-                        Next
-                    End If
 
-                    ' Look for invalid characters in the filename
-                    '	(Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ascii codes) in working directory) 
-                    ' Note: now evaluating each character in the filename
-                    If OkToMove Then
-                        Dim intAscValue As Integer
-                        For Each chChar As Char In System.IO.Path.GetFileName(TmpFile).ToCharArray
-                            intAscValue = System.Convert.ToInt32(chChar)
-                            If intAscValue <= 31 Or intAscValue >= 128 Then
-                                ' Invalid character found
-                                OkToMove = False
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
-                                Exit For
-                            End If
-                        Next
-                    Else
-                        If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-                            strExtension = System.IO.Path.GetExtension(TmpFile)
-                            If htRejectStats.Contains(strExtension) Then
-                                htRejectStats(strExtension) = CInt(htRejectStats(strExtension)) + 1
-                            Else
-                                htRejectStats.Add(strExtension, 1)
-                            End If
+				' Obtain a list of all files in the working directory
+				Files = Directory.GetFiles(m_WorkDir, "*.*")
 
-                            ' Only log the first 10 times files of a given extension are rejected
-                            '  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with htRejectStats
-                            If CInt(htRejectStats(strExtension)) <= REJECT_LOGGING_THRESHOLD Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " & TmpFile)
-                            End If
-                        End If
-                    End If
+				' Check each file against clsGlobal.m_FilesToDeleteExt and clsGlobal.m_ExceptionFiles
+				For Each TmpFile In Files
+					OkToMove = True
+					TmpFileNameLcase = System.IO.Path.GetFileName(TmpFile).ToLower
 
-                    'If valid file name, then move file to results folder
-                    If OkToMove Then
-                        If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-                            strExtension = System.IO.Path.GetExtension(TmpFile).ToLower
-                            If htAcceptStats.Contains(strExtension) Then
-                                htAcceptStats(strExtension) = CInt(htAcceptStats(strExtension)) + 1
-                            Else
-                                htAcceptStats.Add(strExtension, 1)
-                            End If
+					' Check to see if the filename is defined in FilesToDelete
+					' Note that entries in FilesToDelete are already lowercase (thanks to a for loop earlier in this function)
+					If FilesToDelete.BinarySearch(TmpFileNameLcase) >= 0 Then
+						' File found in the FilesToDelete list; do not move it
+						OkToMove = False
+					End If
 
-                            ' Only log the first 50 times files of a given extension are accepted
-                            If CInt(htAcceptStats(strExtension)) <= ACCEPT_LOGGING_THRESHOLD Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
-                            End If
-                        End If
+					If OkToMove Then
+						'Check to see if the file ends with an entry specified in m_FilesToDeleteExt
+						' Note that entries in m_FilesToDeleteExt are already lowercase (thanks to a for loop earlier in this function)
+						For Each ext In clsGlobal.m_FilesToDeleteExt
+							If TmpFileNameLcase.EndsWith(ext) Then
+								OkToMove = False
+								Exit For
+							End If
+						Next
+					End If
 
-                        Try
-                            strTargetFilePath = System.IO.Path.Combine(ResFolderNamePath, System.IO.Path.GetFileName(TmpFile))
-                            System.IO.File.Move(TmpFile, strTargetFilePath)
-                        Catch ex As Exception
-                            Try
-                                ' Move failed
-                                ' Attempt to copy the file instead of moving the file
-                                System.IO.File.Copy(TmpFile, strTargetFilePath, True)
-                                ' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
+					If Not OkToMove Then
+						' Check to see if the file is a result file that got captured as a non result file
+						' Note that entries in m_ExceptionFiles are already lowercase (thanks to a for loop earlier in this function)
+						For Each excpt In clsGlobal.m_ExceptionFiles
+							If TmpFileNameLcase.Contains(excpt) Then
+								OkToMove = True
+								Exit For
+							End If
+						Next
+					End If
 
-                            Catch ex2 As Exception
-                                ' Copy also failed
-                                ' Continue moving files; we'll fail the results at the end of this function
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " MoveResultFiles: error moving/copying file: " & TmpFile & ex.Message)
-                                blnErrorEncountered = True
-                            End Try
-                        End Try
-                    End If
-                Next
+					' Look for invalid characters in the filename
+					'	(Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ascii codes) in working directory) 
+					' Note: now evaluating each character in the filename
+					If OkToMove Then
+						Dim intAscValue As Integer
+						For Each chChar As Char In System.IO.Path.GetFileName(TmpFile).ToCharArray
+							intAscValue = System.Convert.ToInt32(chChar)
+							If intAscValue <= 31 Or intAscValue >= 128 Then
+								' Invalid character found
+								OkToMove = False
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
+								Exit For
+							End If
+						Next
+					Else
+						If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
+							strExtension = System.IO.Path.GetExtension(TmpFile)
+							If htRejectStats.Contains(strExtension) Then
+								htRejectStats(strExtension) = CInt(htRejectStats(strExtension)) + 1
+							Else
+								htRejectStats.Add(strExtension, 1)
+							End If
 
-                If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-                    ' Look for any extensions in htAcceptStats that had over 50 accepted files
-                    objExtension = htAcceptStats.GetEnumerator
-                    Do While objExtension.MoveNext
-                        If CInt(objExtension.Value) > ACCEPT_LOGGING_THRESHOLD Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
-                        End If
-                    Loop
+							' Only log the first 10 times files of a given extension are rejected
+							'  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with htRejectStats
+							If CInt(htRejectStats(strExtension)) <= REJECT_LOGGING_THRESHOLD Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " & TmpFile)
+							End If
+						End If
+					End If
 
-                    ' Look for any extensions in htRejectStats that had over 10 rejected files
-                    objExtension = htRejectStats.GetEnumerator
-                    Do While objExtension.MoveNext
-                        If CInt(objExtension.Value) > REJECT_LOGGING_THRESHOLD Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
-                        End If
-                    Loop
-                End If
+					'If valid file name, then move file to results folder
+					If OkToMove Then
+						If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
+							strExtension = System.IO.Path.GetExtension(TmpFile).ToLower
+							If htAcceptStats.Contains(strExtension) Then
+								htAcceptStats(strExtension) = CInt(htAcceptStats(strExtension)) + 1
+							Else
+								htAcceptStats.Add(strExtension, 1)
+							End If
 
-            Catch Err As Exception
-                If m_DebugLevel > 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder")
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & TmpFile)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & System.IO.Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile)))
-                End If
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & Err.Message)
-                m_message = AppendToComment(m_message, "Error moving results files")
+							' Only log the first 50 times files of a given extension are accepted
+							If CInt(htAcceptStats(strExtension)) <= ACCEPT_LOGGING_THRESHOLD Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
+							End If
+						End If
 
-                blnErrorEncountered = True
-            End Try
+						Try
+							strTargetFilePath = System.IO.Path.Combine(ResFolderNamePath, System.IO.Path.GetFileName(TmpFile))
+							System.IO.File.Move(TmpFile, strTargetFilePath)
+						Catch ex As Exception
+							Try
+								' Move failed
+								' Attempt to copy the file instead of moving the file
+								System.IO.File.Copy(TmpFile, strTargetFilePath, True)
+								' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
 
-            Try
-                'Make the summary file
-                OutputSummary(ResFolderNamePath)
-            Catch ex As Exception
-                ' Ignore errors here
-            End Try
+							Catch ex2 As Exception
+								' Copy also failed
+								' Continue moving files; we'll fail the results at the end of this function
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " MoveResultFiles: error moving/copying file: " & TmpFile & ex.Message)
+								blnErrorEncountered = True
+							End Try
+						End Try
+					End If
+				Next
 
-            If blnErrorEncountered Then
-                ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+				If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
+					' Look for any extensions in htAcceptStats that had over 50 accepted files
+					objExtension = htAcceptStats.GetEnumerator
+					Do While objExtension.MoveNext
+						If CInt(objExtension.Value) > ACCEPT_LOGGING_THRESHOLD Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
+						End If
+					Loop
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            Else
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            End If
+					' Look for any extensions in htRejectStats that had over 10 rejected files
+					objExtension = htRejectStats.GetEnumerator
+					Do While objExtension.MoveNext
+						If CInt(objExtension.Value) > REJECT_LOGGING_THRESHOLD Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
+						End If
+					Loop
+				End If
 
-        End Function
+			Catch Err As Exception
+				If m_DebugLevel > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & TmpFile)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & System.IO.Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile)))
+				End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & Err.Message)
+				m_message = AppendToComment(m_message, "Error moving results files")
+
+				blnErrorEncountered = True
+			End Try
+
+			Try
+				'Make the summary file
+				OutputSummary(ResFolderNamePath)
+			Catch ex As Exception
+				' Ignore errors here
+			End Try
+
+			If blnErrorEncountered Then
+				' Try to save whatever files were moved into the results folder
+				Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			End If
+
+		End Function
 
 		Protected Function PossiblyQuotePath(ByVal strPath As String) As String
 			If strPath.Contains(" "c) Then
@@ -692,130 +711,130 @@ Namespace AnalysisManagerBase
 
 		End Function
 
-        ''' <summary>
-        ''' Communicates with database to record the tool version(s) for the current step task
-        ''' </summary>
-        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-        ''' <returns>True for success, False for failure</returns>
-        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
-            Return SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
-        End Function
+		''' <summary>
+		''' Communicates with database to record the tool version(s) for the current step task
+		''' </summary>
+		''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+		''' <returns>True for success, False for failure</returns>
+		''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+		Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
+			Return SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
+		End Function
 
-        ''' <summary>
-        ''' Communicates with database to record the tool version(s) for the current step task
-        ''' </summary>
-        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-        ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-        ''' <returns>True for success, False for failure</returns>
-        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-                                                  ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo)) As Boolean
+		''' <summary>
+		''' Communicates with database to record the tool version(s) for the current step task
+		''' </summary>
+		''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+		''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+		''' <returns>True for success, False for failure</returns>
+		''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+		Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+		   ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo)) As Boolean
 
-            Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
-        End Function
+			Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
+		End Function
 
-        ''' <summary>
-        ''' Communicates with database to record the tool version(s) for the current step task
-        ''' </summary>
-        ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-        ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-        ''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
-        ''' <returns>True for success, False for failure</returns>
-        ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-                                                  ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo), _
-                                                  ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
+		''' <summary>
+		''' Communicates with database to record the tool version(s) for the current step task
+		''' </summary>
+		''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+		''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+		''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+		''' <returns>True for success, False for failure</returns>
+		''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+		Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+		   ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo), _
+		   ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
 
-            Dim strExeInfo As String = String.Empty
-            Dim strToolVersionInfoCombined As String
+			Dim strExeInfo As String = String.Empty
+			Dim strToolVersionInfoCombined As String
 
-            Dim Outcome As Boolean = False
-            Dim ResCode As Integer
+			Dim Outcome As Boolean = False
+			Dim ResCode As Integer
 
-            If Not ioToolFiles Is Nothing Then
+			If Not ioToolFiles Is Nothing Then
 
-                For Each ioFileInfo As System.IO.FileInfo In ioToolFiles
-                    Try
-                        If ioFileInfo.Exists Then
-                            strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
+				For Each ioFileInfo As System.IO.FileInfo In ioToolFiles
+					Try
+						If ioFileInfo.Exists Then
+							strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
 
-                            If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
-                            End If
+							If m_DebugLevel >= 2 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
+							End If
 
-                        Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
-                        End If
+						Else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
+						End If
 
-                    Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
-                    End Try
-                Next
-            End If
+					Catch ex As Exception
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
+					End Try
+				Next
+			End If
 
-            ' Append the .Exe info to strToolVersionInfo
-            If String.IsNullOrEmpty(strExeInfo) Then
-                strToolVersionInfoCombined = String.Copy(strToolVersionInfo)
-            Else
-                strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo)
-            End If
+			' Append the .Exe info to strToolVersionInfo
+			If String.IsNullOrEmpty(strExeInfo) Then
+				strToolVersionInfoCombined = String.Copy(strToolVersionInfo)
+			Else
+				strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo)
+			End If
 
-            If blnSaveToolVersionTextFile Then
-                SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined)
-            End If
+			If blnSaveToolVersionTextFile Then
+				SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined)
+			End If
 
-            'Setup for execution of the stored procedure
-            Dim MyCmd As New System.Data.SqlClient.SqlCommand
-            With MyCmd
-                .CommandType = CommandType.StoredProcedure
-                .CommandText = SP_NAME_SET_TASK_TOOL_VERSION
+			'Setup for execution of the stored procedure
+			Dim MyCmd As New System.Data.SqlClient.SqlCommand
+			With MyCmd
+				.CommandType = CommandType.StoredProcedure
+				.CommandText = SP_NAME_SET_TASK_TOOL_VERSION
 
-                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-                .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
-                .Parameters.Item("@job").Direction = ParameterDirection.Input
+				.Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
+				.Parameters.Item("@job").Direction = ParameterDirection.Input
 				.Parameters.Item("@job").Value = CInt(m_jobParams.GetParam("StepParameters", "Job"))
 
-                .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
-                .Parameters.Item("@step").Direction = ParameterDirection.Input
+				.Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
+				.Parameters.Item("@step").Direction = ParameterDirection.Input
 				.Parameters.Item("@step").Value = CInt(m_jobParams.GetParam("StepParameters", "Step"))
 
-                .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
-                .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
-                .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
-            End With
+				.Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
+				.Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
+				.Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
+			End With
 
-            Dim objAnalysisTask As clsAnalysisJob
-            Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
+			Dim objAnalysisTask As clsAnalysisJob
+			Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-            objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
+			objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
-            'Execute the SP (retry the call up to 4 times)
-            ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
+			'Execute the SP (retry the call up to 4 times)
+			ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
 
-            objAnalysisTask = Nothing
+			objAnalysisTask = Nothing
 
-            If ResCode = 0 Then
-                Outcome = True
-            Else
-                Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                Outcome = False
-            End If
+			If ResCode = 0 Then
+				Outcome = True
+			Else
+				Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+				Outcome = False
+			End If
 
-            Return Outcome
+			Return Outcome
 
-        End Function
+		End Function
 
-        ''' <summary>
-        ''' Determines the version info for a DLL using reflection
-        ''' </summary>
-        ''' <param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+		''' <summary>
+		''' Determines the version info for a DLL using reflection
+		''' </summary>
+		''' <param name="strToolVersionInfo">Version info string to append the veresion info to</param>
 		''' <param name="strDLLFilePath">Path to the DLL</param>
 		''' 	  ''' <returns>True if success; false if an error</returns>
-        ''' <remarks></remarks>
+		''' <remarks></remarks>
 		Protected Overridable Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 
 			Dim ioFileInfo As System.IO.FileInfo
@@ -1376,8 +1395,8 @@ Namespace AnalysisManagerBase
 
 				' Copy the files and subfolders
 				eResult = CopyResulsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
-						 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
-						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+				   objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+				   intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
 				If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
@@ -1410,12 +1429,12 @@ Namespace AnalysisManagerBase
 		''' <param name="TargetFolderPath"></param>
 		''' <remarks></remarks>
 		Private Function CopyResulsFolderRecursive(ByVal RootSourceFolderPath As String, ByVal SourceFolderPath As String, ByVal TargetFolderPath As String, _
-					 ByRef objAnalysisResults As clsAnalysisResults, _
-					 ByRef blnErrorEncountered As Boolean, _
-					 ByRef intFailedFileCount As Integer, _
-					 ByVal intRetryCount As Integer, _
-					 ByVal intRetryHoldoffSeconds As Integer, _
-					 ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
+		 ByRef objAnalysisResults As clsAnalysisResults, _
+		 ByRef blnErrorEncountered As Boolean, _
+		 ByRef intFailedFileCount As Integer, _
+		 ByVal intRetryCount As Integer, _
+		 ByVal intRetryHoldoffSeconds As Integer, _
+		 ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
 
 			Dim objSourceFolderInfo As System.IO.DirectoryInfo
 			Dim objSourceFile As System.IO.FileInfo
@@ -1482,12 +1501,12 @@ Namespace AnalysisManagerBase
 					If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
 						' Copy file and overwrite existing
 						objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-								  intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 					Else
 						' Copy file only if it doesn't currently exist
 						If Not System.IO.File.Exists(strTargetPath) Then
 							objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-									  intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+							 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 						End If
 					End If
 				Catch ex As Exception
@@ -1512,8 +1531,8 @@ Namespace AnalysisManagerBase
 				strTargetFolderPathCurrent = System.IO.Path.Combine(TargetFolderPath, objSubFolder.Name)
 
 				eResult = CopyResulsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
-						 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
-						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+				   objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+				   intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
 				If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
@@ -1567,7 +1586,7 @@ Namespace AnalysisManagerBase
 		''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
 		''' <returns>True if success; false if an error</returns>
 		Protected Function ZipFile(ByVal SourceFilePath As String, _
-				 ByVal DeleteSourceAfterZip As Boolean) As Boolean
+		   ByVal DeleteSourceAfterZip As Boolean) As Boolean
 			Dim blnSuccess As Boolean
 			m_IonicZipTools.DebugLevel = m_DebugLevel
 			blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
@@ -1588,8 +1607,8 @@ Namespace AnalysisManagerBase
 		''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
 		''' <returns>True if success; false if an error</returns>
 		Protected Function ZipFile(ByVal SourceFilePath As String, _
-				 ByVal DeleteSourceAfterZip As Boolean, _
-				 ByVal ZipFilePath As String) As Boolean
+		   ByVal DeleteSourceAfterZip As Boolean, _
+		   ByVal ZipFilePath As String) As Boolean
 			Dim blnSuccess As Boolean
 			m_IonicZipTools.DebugLevel = m_DebugLevel
 			blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
