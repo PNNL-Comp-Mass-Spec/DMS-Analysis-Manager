@@ -11,8 +11,7 @@ using AScore_DLL.Managers.DatasetManagers;
 using PRISM;
 using Ionic;
 
-namespace AnalysisManager_AScore_PlugIn 
-   {
+namespace AnalysisManager_AScore_PlugIn {
 
     public class clsAScoreMage {
 
@@ -80,15 +79,13 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Mage Pipelines and Utilities
 
-        private bool GetAScoreParameterFile()
-        {
+        private bool GetAScoreParameterFile() {
 
             //' Retrieve the AScore Parameter .xml file specified for this job
-            if (string.IsNullOrEmpty(mParamFilename))
-            {
+            if (string.IsNullOrEmpty(mParamFilename)) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
             }
-        
+
             string strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
             string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath)) {
@@ -144,6 +141,7 @@ namespace AnalysisManager_AScore_PlugIn
             MageFileImport importer = new MageFileImport();
             importer.DBTableName = tableName;
             importer.DBFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+            importer.ImportColumnList = "Dataset_ID|+|text, *";
 
             ProcessingPipeline.Assemble("File_Import", fileList, importer).RunRoot(null);
         }
@@ -215,6 +213,31 @@ namespace AnalysisManager_AScore_PlugIn
             writer.TableName = tableName;
 
             ProcessingPipeline.Assemble("ImportFileToSQLitePipeline", reader, writer).RunRoot(null);
+        }
+        /*--*/
+        /// <summary>
+        /// Import the contents of the given file into the given table in the given results SQLite database
+        /// and perform given column mapping
+        /// </summary>
+        /// <param name="inputFilePath">Full path to file whose contents are will be imported</param>
+        /// <param name="dbFilePath">Full path to SQLite DB file into which file contents will be imported</param>
+        /// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
+        /// <param name="outputColumnList">Mage output column spec</param>
+        /// <param name="context">Mage context (dictionary to supply lookup values for new output columns)</param>
+        public static void ImportFileToSQLiteWithColumnMods(string inputFilePath, string dbFilePath, string dbTableName, string outputColumnList, Dictionary<string, string> context) {
+            DelimitedFileReader reader = new DelimitedFileReader();
+            reader.FilePath = inputFilePath;
+
+            BaseModule filter = new NullFilter();
+            filter.OutputColumnList = outputColumnList;
+            filter.SetContext(context);
+
+            SQLiteWriter writer = new SQLiteWriter();
+            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            writer.DbPath = dbFilePath;
+            writer.TableName = tableName;
+
+            ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer).RunRoot(null);
         }
 
         /// <summary>
@@ -302,7 +325,7 @@ namespace AnalysisManager_AScore_PlugIn
                 string resultsFolderPath = vals[resultsFldrIdx].ToString();
                 string paramFileName = vals[paramFileIdx].ToString();
                 string dtaFilePath = CopyDTAResults(resultsFolderPath);
-                
+
                 // process extracted results file and DTA file with AScore
                 string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
                 string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
@@ -316,8 +339,7 @@ namespace AnalysisManager_AScore_PlugIn
                 DtaManager dtaManager = new DtaManager(dtaFile);
                 DatasetManager datasetManager;
 
-                switch (searchType)
-                {
+                switch (searchType) {
                     case "xtandem":
                         datasetManager = new XTandemFHT(fhtFile);
                         break;
@@ -360,6 +382,16 @@ namespace AnalysisManager_AScore_PlugIn
                 ProcessingPipeline plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
                 plof.RunRoot(null);
 
+                // add job metadata to results database via a Mage pipeline
+                DestinationType resultsDB;
+                string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
+                resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
+                ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB).RunRoot(null);
+
+                // add file metadata to results database via a Mage pipeline
+                resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_file_list");
+                ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB).RunRoot(null);
+
                 // extract contents of files
                 //DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
                 DestinationType destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
@@ -381,13 +413,12 @@ namespace AnalysisManager_AScore_PlugIn
                 if (files.Length > 0) {
                     dtaResultsFilename = System.IO.Path.GetFileName(files[0]);
                     zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
-                    
+
                     unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
 
                     File.Copy(files[0], zippedDTAResultsFilePath);
 
-                    if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
-                    {
+                    if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false)) {
                     }
 
                     // TODO: unzip it
@@ -415,8 +446,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
 
-            private bool UnzipFileStart(string ZipFilePath, string OutFolderPath, string CallingFunctionName, bool ForceExternalZipProgramUse)
-            {
+            private bool UnzipFileStart(string ZipFilePath, string OutFolderPath, string CallingFunctionName, bool ForceExternalZipProgramUse) {
 
                 System.IO.FileInfo fiFileInfo = null;
                 float sngFileSizeMB = 0;
@@ -430,8 +460,7 @@ namespace AnalysisManager_AScore_PlugIn
                 DateTime dtEndTime = default(DateTime);
                 m_IonicZipTools = new clsIonicZipTools(1, WorkingDir);
 
-                try
-                {
+                try {
                     if (ZipFilePath == null)
                         ZipFilePath = string.Empty;
 
@@ -443,24 +472,19 @@ namespace AnalysisManager_AScore_PlugIn
 
                     // Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
                     // However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-                    if (ForceExternalZipProgramUse || sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
-                    {
-                        if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na")
-                        {
-                            if (System.IO.File.Exists(strExternalUnzipperFilePath))
-                            {
+                    if (ForceExternalZipProgramUse || sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB) {
+                        if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na") {
+                            if (System.IO.File.Exists(strExternalUnzipperFilePath)) {
                                 blnUseExternalUnzipper = true;
                             }
                         }
 
-                        if (!blnUseExternalUnzipper)
-                        {
+                        if (!blnUseExternalUnzipper) {
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip");
                         }
                     }
 
-                    if (blnUseExternalUnzipper)
-                    {
+                    if (blnUseExternalUnzipper) {
                         strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath);
 
                         PRISM.Files.ZipTools UnZipper = new PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath);
@@ -469,27 +493,20 @@ namespace AnalysisManager_AScore_PlugIn
                         blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath);
                         dtEndTime = DateTime.UtcNow;
 
-                        if (blnSuccess)
-                        {
+                        if (blnSuccess) {
                             m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, strUnzipperName);
-                        }
-                        else
-                        {
+                        } else {
                             mMessage = "Error unzipping " + System.IO.Path.GetFileName(ZipFilePath) + " using " + strUnzipperName;
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + mMessage);
                             UnZipper = null;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         // Use Ionic.Zip
                         strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
                         blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath);
                     }
 
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     mMessage = "Exception while unzipping '" + ZipFilePath + "'";
                     if (!string.IsNullOrEmpty(strUnzipperName))
                         mMessage += " using " + strUnzipperName;
@@ -523,6 +540,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             public string DBTableName { get; set; }
             public string DBFilePath { get; set; }
+            public string ImportColumnList { get; set; }
 
             #endregion
 
@@ -543,7 +561,11 @@ namespace AnalysisManager_AScore_PlugIn
 
             // import contents of given file to SQLite database table
             protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context) {
-                clsAScoreMage.ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
+                if (string.IsNullOrEmpty(ImportColumnList)) {
+                    clsAScoreMage.ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
+                } else {
+                    clsAScoreMage.ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, this.ImportColumnList, context);
+                }
             }
 
             #endregion
