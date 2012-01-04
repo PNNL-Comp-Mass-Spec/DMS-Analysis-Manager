@@ -16,7 +16,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 	'Class for running MSAlign analysis
 	'*********************************************************************************************************
 
-#Region "Constants"
+#Region "Constants and Enums"
 	Protected Const MSAlign_CONSOLE_OUTPUT As String = "MSAlign_ConsoleOutput.txt"
 	Protected Const MSAlign_JAR_NAME As String = "MSAlign.jar"
 
@@ -29,6 +29,13 @@ Public Class clsAnalysisToolRunnerMSAlign
 	Protected Const RESULT_DETAILS_NAME_SUFFIX As String = "_MSAlign_ResultDetails.txt"
 	Protected Const RESULT_DETAILS_NAME_LEGACY As String = "result.txt"
 
+	' Note that newer versions are assumed to have higher enum values
+	Protected Enum eMSAlignVersionType
+		Unknown = 0
+		v0pt5 = 1
+		v0pt6 = 2
+		v0pt7 = 3
+	End Enum
 #End Region
 
 #Region "Structures"
@@ -72,7 +79,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 		Dim CmdStr As String
 		Dim intJavaMemorySize As Integer
-		Dim blnRunningVersion0Pt5 As Boolean
+		Dim eMSalignVersion As eMSAlignVersionType
 
 		Dim result As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
@@ -109,8 +116,16 @@ Public Class clsAnalysisToolRunnerMSAlign
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
+			eMSalignVersion = eMSAlignVersionType.Unknown
 			If mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.5" & System.IO.Path.DirectorySeparatorChar) Then
-				blnRunningVersion0Pt5 = True
+				eMSalignVersion = eMSAlignVersionType.v0pt5
+			ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.6.") Then
+				eMSalignVersion = eMSAlignVersionType.v0pt6
+			ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.7.") Then
+				eMSalignVersion = eMSAlignVersionType.v0pt7
+			Else
+				' Assume v0.7
+				eMSalignVersion = eMSAlignVersionType.v0pt7
 			End If
 
 			' Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
@@ -125,12 +140,12 @@ Public Class clsAnalysisToolRunnerMSAlign
 			mMSAlignWorkFolderPath = String.Empty
 
 			' Copy the MS Align program files and associated files to the work directory
-			If Not CopyMSAlignProgramFiles(mMSAlignProgLoc, blnRunningVersion0Pt5) Then
+			If Not CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSalignVersion) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Initialize the MSInput folder
-			If Not InitializeMSInputFolder(mMSAlignWorkFolderPath, blnRunningVersion0Pt5) Then
+			If Not InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSalignVersion) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -141,7 +156,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 			'Set up and execute a program runner to run MSAlign
-			If blnRunningVersion0Pt5 Then
+			If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 				CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\malign.jar;jar\* edu.ucsd.msalign.spec.web.Pipeline .\"
 			Else
 				CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\"
@@ -156,7 +171,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 				.CacheStandardOutput = False
 				.EchoOutputToConsole = True
 
-				If blnRunningVersion0Pt5 Then
+				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 					.WriteConsoleOutputToFile = False
 				Else
 					.WriteConsoleOutputToFile = True
@@ -199,14 +214,14 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			Else
 				' Make sure the output files were created
-				If Not ValidateAndCopyResultFiles(blnRunningVersion0Pt5) Then
+				If Not ValidateAndCopyResultFiles(eMSalignVersion) Then
 					blnProcessingError = True
 				End If
 
 				Dim strResultTableFilePath As String
 				strResultTableFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX)
 
-				If blnRunningVersion0Pt5 Then
+				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 					' Add a header to the _ResultTable.txt file
 					AddResultTableHeaderLine(strResultTableFilePath)
 				End If
@@ -246,7 +261,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			GC.Collect()
 			GC.WaitForPendingFinalizers()
 
-			If Not blnRunningVersion0Pt5 Then
+			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
 				' Trim the console output file to remove the majority of the % finished messages
 				TrimConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 			End If
@@ -294,6 +309,8 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Dim swOutFile As System.IO.StreamWriter
 
 		Try
+			If Not System.IO.File.Exists(strSourceFilePath) Then Return False
+
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding header line to MSAlign_ResultTable.txt file")
 			End If
@@ -390,7 +407,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Sub
 
-	Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String, ByVal blnRunningVersion0Pt5 As Boolean) As Boolean
+	Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
 		Dim fiMSAlignJarFile As System.IO.FileInfo
 		Dim diMSAlignSrc As System.IO.DirectoryInfo
@@ -427,7 +444,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			diMSAlignWork.CreateSubdirectory("msoutput")
 			diMSAlignWork.CreateSubdirectory("xml")
 			diMSAlignWork.CreateSubdirectory("xsl")
-			If Not blnRunningVersion0Pt5 Then
+			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
 				diMSAlignWork.CreateSubdirectory("etc")
 			End If
 
@@ -435,7 +452,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			Dim lstSubfolderNames As New System.Collections.Generic.List(Of String)()
 			lstSubfolderNames.Add("jar")
 			lstSubfolderNames.Add("xsl")
-			If Not blnRunningVersion0Pt5 Then
+			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
 				lstSubfolderNames.Add("etc")
 			End If
 
@@ -465,7 +482,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Function
 
-	Protected Function CreateInputPropertiesFile(ByVal strParamFilePath As String, ByVal strMSInputFolderPath As String, blnRunningVersion0Pt5 As Boolean) As Boolean
+	Protected Function CreateInputPropertiesFile(ByVal strParamFilePath As String, ByVal strMSInputFolderPath As String, eMSalignVersion As eMSAlignVersionType) As Boolean
 
 		Const DB_FILENAME_LEGACY As String = "database"
 		Const DB_FILENAME As String = "databaseFileName"
@@ -473,8 +490,12 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Const TABLE_OUTPUT_FILENAME As String = "tableOutputFileName"
 		Const DETAIL_OUTPUT_FILENAME As String = "detailOutputFileName"
 
+		' These key names must be lowercase
 		Const INSTRUMENT_TYPE_KEY As String = "instrument"			' This only applies to v0.5 of MSAlign
 		Const INSTRUMENT_ACTIVATION_TYPE_KEY As String = "activation"
+		Const SEARCH_TYPE_KEY As String = "searchtype"
+		Const CUTOFF_TYPE_KEY As String = "cutofftype"
+		Const CUTOFF_KEY As String = "cutoff"
 
 		Dim srInFile As System.IO.StreamReader
 		Dim swOutFile As System.IO.StreamWriter
@@ -484,15 +505,20 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Dim strKeyName As String
 		Dim strValue As String
 		Dim dctLegacyKeyMap As System.Collections.Generic.Dictionary(Of String, String)
+		Dim blnEValueCutoffType As Boolean = False
 
 		Try
 			' Initialize the dictionary that maps new names to legacy names
+			' Version 0.5 used the legacy names, e.g. it used "threshold" instead of "eValueThreshold"
 			dctLegacyKeyMap = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 			dctLegacyKeyMap.Add("errorTolerance", "fragmentTolerance")
 			dctLegacyKeyMap.Add("eValueThreshold", "threshold")
 			dctLegacyKeyMap.Add("shiftNumber", "shifts")
 			dctLegacyKeyMap.Add("cysteineProtection", "protection")
 			dctLegacyKeyMap.Add("activation", "instrument")
+
+			' Note: Starting with version 0.7, the "eValueThreshold" parameter was replaced with two new parameters:
+			' cutoffType and cutoff
 
 			' Open the input file
 			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
@@ -502,7 +528,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 			' Write out the database name and input file name
-			If blnRunningVersion0Pt5 Then
+			If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 				swOutFile.WriteLine(DB_FILENAME_LEGACY & "=" & mInputPropertyValues.FastaFileName)
 				' Input file name is assumed to be input_data
 			Else
@@ -550,6 +576,25 @@ Public Class clsAnalysisToolRunnerMSAlign
 							End If
 						End If
 
+						If strKeyName.ToLower() = SEARCH_TYPE_KEY Then
+							If strValue.ToUpper() = "TARGET+DECOY" Then
+								' Make sure the protein collection is not a Decoy protein collection
+								Dim strProteinOptions As String
+								strProteinOptions = m_jobParams.GetParam("ProteinOptions")
+
+								If strProteinOptions.ToLower().Contains("seq_direction=decoy") Then
+									m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy"
+
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+
+									swOutFile.Close()
+									srInFile.Close()
+
+									Return False
+								End If
+							End If
+						End If
+
 						' Examine the key name to determine what to do
 						Select Case strKeyName.ToLower()
 							Case DB_FILENAME_LEGACY.ToLower(), DB_FILENAME.ToLower(), SPEC_FILENAME.ToLower()
@@ -558,7 +603,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 								' Skip this line; we'll define it later							
 							Case Else
 
-								If blnRunningVersion0Pt5 Then
+								If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 									' Running a legacy version; rename the keys
 
 									Dim strLegacyKeyName As String = String.Empty
@@ -583,14 +628,54 @@ Public Class clsAnalysisToolRunnerMSAlign
 												strValue = "CID"
 												clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the msalign file")
 											End If
+										ElseIf strKeyName.ToLower() = CUTOFF_TYPE_KEY Then
+											If strValue.ToUpper() = "EVALUE" Then
+												blnEValueCutoffType = True
+											End If
+										ElseIf strKeyName.ToLower() = CUTOFF_KEY Then
+											' v0.5 doesn't support the cutoff parameter
+											' If the parameter file had cutoffType=EVALUE then we're OK; otherwise abort
+											If blnEValueCutoffType Then
+												strLegacyKeyName = "threshold"
+											Else
+												m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.5"
+												clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+												swOutFile.Close()
+												srInFile.Close()
+												Return False
+											End If
+
 										End If
 
 										swOutFile.WriteLine(strLegacyKeyName & "=" & strValue)
 									End If
 								Else
 
-									' Write out as-is
-									swOutFile.WriteLine(strLineIn)
+									If eMSalignVersion >= eMSAlignVersionType.v0pt7 AndAlso strKeyName.ToLower() = "eValueThreshold" Then
+										' v0.7 and up use cutoffType and cutoff instead of eValueThreshold
+										swOutFile.WriteLine("cutoffType=EVALUE")
+										swOutFile.WriteLine("cutoff=" & strValue)
+
+									ElseIf eMSalignVersion = eMSAlignVersionType.v0pt6 AndAlso strKeyName.ToLower() = CUTOFF_TYPE_KEY Then
+										If strValue.ToUpper() = "EVALUE" Then
+											blnEValueCutoffType = True
+										End If
+									ElseIf eMSalignVersion = eMSAlignVersionType.v0pt6 AndAlso strKeyName.ToLower() = CUTOFF_KEY Then
+										If blnEValueCutoffType Then
+											' v0.6 doesn't support the cutoff parameter, just eValueThreshold
+											swOutFile.WriteLine("eValueThreshold=" & strValue)
+										Else
+											m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.6"
+											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+											swOutFile.Close()
+											srInFile.Close()
+											Return False
+										End If
+									Else
+										' Write out as-is
+										swOutFile.WriteLine(strLineIn)
+									End If
+
 								End If
 						End Select
 					Else
@@ -602,7 +687,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			Loop
 
 
-			If blnRunningVersion0Pt5 Then
+			If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 				mInputPropertyValues.ResultTableFileName = RESULT_TABLE_NAME_LEGACY
 				mInputPropertyValues.ResultDetailsFileName = RESULT_DETAILS_NAME_LEGACY
 			Else
@@ -610,7 +695,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 				mInputPropertyValues.ResultDetailsFileName = m_Dataset & RESULT_DETAILS_NAME_SUFFIX
 			End If
 
-			If Not blnRunningVersion0Pt5 Then
+			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
 				swOutFile.WriteLine(TABLE_OUTPUT_FILENAME & "=" & mInputPropertyValues.ResultTableFileName)
 				swOutFile.WriteLine(DETAIL_OUTPUT_FILENAME & "=" & mInputPropertyValues.ResultDetailsFileName)
 			End If
@@ -622,6 +707,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			System.IO.File.Copy(strOutputFilePath, System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileName(strOutputFilePath)), True)
 
 		Catch ex As Exception
+			m_message = "Exception in CreateInputPropertiesFile"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateInputPropertiesFile: " & ex.Message)
 			Return False
 		End Try
@@ -631,7 +717,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 	End Function
 
 
-	Protected Function InitializeMSInputFolder(ByVal strMSAlignWorkFolderPath As String, ByVal blnRunningVersion0Pt5 As Boolean) As Boolean
+	Protected Function InitializeMSInputFolder(ByVal strMSAlignWorkFolderPath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
 		Dim strMSInputFolderPath As String
 		Dim fiFiles() As System.IO.FileInfo
@@ -664,7 +750,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory")
 				Return False
 			Else
-				If blnRunningVersion0Pt5 Then
+				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 					' Rename the file to input_data when we move it
 					mInputPropertyValues.SpectrumFileName = "input_data"
 				Else
@@ -675,7 +761,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			Dim strParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
-			If Not CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, blnRunningVersion0Pt5) Then
+			If Not CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, eMSalignVersion) Then
 				Return False
 			End If
 
@@ -914,7 +1000,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Sub
 
-	Protected Function ValidateAndCopyResultFiles(ByVal blnRunningVersion0Pt5 As Boolean) As Boolean
+	Protected Function ValidateAndCopyResultFiles(ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
 		Dim strResultsFolderPath As String = System.IO.Path.Combine(mMSAlignWorkFolderPath, "msoutput")
 		Dim lstResultsFilesToMove As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
@@ -942,7 +1028,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 					Dim strTargetFileName As String
 					strTargetFileName = String.Copy(strSourceFileName)
 
-					If blnRunningVersion0Pt5 Then
+					If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
 						' Rename the file when we copy it
 						Select Case strSourceFileName
 							Case RESULT_TABLE_NAME_LEGACY

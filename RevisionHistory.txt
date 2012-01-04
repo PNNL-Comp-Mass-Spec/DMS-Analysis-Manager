@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+January 4, 2012
+	- Updated MSAlign plugin to support MSAlign v0.7
+		- The eValueThreshold parameter has been replaced with two parameters, cutoffType and cutoff
+
 December 22, 2011
 	- Now validating drive free space in key places
 		- For Results_Transfer, simply validating the dataset storage path
