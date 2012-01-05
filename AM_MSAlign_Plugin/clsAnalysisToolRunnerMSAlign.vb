@@ -1091,10 +1091,13 @@ Public Class clsAnalysisToolRunnerMSAlign
 					Dim strSplitLine() As String
 					strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-					If strSplitLine.Length > 0 Then
+					If strSplitLine.Length > 1 Then
+						' Look for an integer in the first or second column
+						' Version 0.5 and 0.6 had Prsm_ID in the first column
+						' Version 0.7 moved Prsm_ID to the second column
 						Dim intValue As Integer
-						If Integer.TryParse(strSplitLine(0), intValue) Then
-							' Integer found in the first column; line is valid
+						If Integer.TryParse(strSplitLine(1), intValue) OrElse Integer.TryParse(strSplitLine(0), intValue) Then
+							' Integer found; line is valid
 							blnValidFile = True
 							Exit Do
 						End If
@@ -1147,7 +1150,13 @@ Public Class clsAnalysisToolRunnerMSAlign
 			End If
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath & strTargetFilePath)
+				Dim strLogMessage As String = "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath
+
+				If m_DebugLevel >= 2 Then
+					strLogMessage &= ": " & strTargetFilePath
+				End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage)
+
 			End If
 
 			objZipper = New Ionic.Zip.ZipFile(strTargetFilePath)
