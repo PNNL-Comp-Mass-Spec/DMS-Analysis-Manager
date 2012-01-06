@@ -313,6 +313,7 @@ AnalysisManagerProg
 	<param name="InpFolder">Path to folder where input file is located</param>
 	<param name="OutDir">Destination directory for file copy</param>
 	<param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	<param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.CopyFileToWorkDirWithRename(System.String,System.String,System.String)">
@@ -660,7 +661,15 @@ AnalysisManagerProg
  Finds the server or archive folder where specified file is located
  </summary>
 	<param name="FileToFind">Name of the file to search for</param>
-	<returns></returns>
+	<returns>Path to the file if found; empty string if not found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindDataFile(System.String,System.Boolean)">
+	<summary>
+ Finds the server or archive folder where specified file is located
+ </summary>
+	<param name="FileToFind">Name of the file to search for</param>
+	<param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+	<returns>Path to the file if found; empty string if not found</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindAndRetrieveMiscFiles(System.String,System.Boolean)">
 	<summary>
@@ -668,6 +677,15 @@ AnalysisManagerProg
  </summary>
 	<param name="FileName">Name of file to be retrieved</param>
 	<param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindAndRetrieveMiscFiles(System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+ </summary>
+	<param name="FileName">Name of file to be retrieved</param>
+	<param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+	<param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveSettingsFileFromDb">

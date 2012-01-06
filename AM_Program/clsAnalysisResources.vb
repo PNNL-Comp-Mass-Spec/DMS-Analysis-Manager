@@ -11,342 +11,345 @@ Option Strict On
 
 Namespace AnalysisManagerBase
 
-    Public MustInherit Class clsAnalysisResources
-        Implements IAnalysisResources
+	Public MustInherit Class clsAnalysisResources
+		Implements IAnalysisResources
 
-        '*********************************************************************************************************
-        'Base class for job resource class
-        '*********************************************************************************************************
+		'*********************************************************************************************************
+		'Base class for job resource class
+		'*********************************************************************************************************
 
 #Region "Constants"
-        Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
-        Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
-        Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
+		Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
+		Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
+		Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
 
-        Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
+		Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
-        ' Define the maximum file size to process using IonicZip; 
-        '  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
-        '  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
-        '   SharpZipLib unzips the file in 130 seconds
-        '   WinRar      unzips the file in 120 seconds
-        '   PKZipC      unzips the file in  84 seconds
-        '
-        ' Re-tested on 1/7/2011 with a 611 MB file
-        '   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
-        '   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
-        '   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
-        '   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
-        '
-        ' For smaller files, the speed differences are much less noticable
+		' Define the maximum file size to process using IonicZip; 
+		'  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
+		'  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
+		'   SharpZipLib unzips the file in 130 seconds
+		'   WinRar      unzips the file in 120 seconds
+		'   PKZipC      unzips the file in  84 seconds
+		'
+		' Re-tested on 1/7/2011 with a 611 MB file
+		'   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
+		'   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
+		'   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
+		'   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
+		'
+		' For smaller files, the speed differences are much less noticable
 
-        Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
+		Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
 
-        ' Note: These constants need to be all lowercase
-        Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"                'Agilent ion trap data, Agilent TOF data
-        Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"          'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-        Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"              'Micromass QTOF data
+		' Note: These constants need to be all lowercase
+		Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"				'Agilent ion trap data, Agilent TOF data
+		Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"			'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+		Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"				'Micromass QTOF data
 
-        Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"                'Finnigan ion trap/LTQ-FT data
-        Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"              'Agilent/QSTAR TOF data
-        Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"              'IMS_UIMF (IMS_Agilent_TOF in DMS)
-        Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"            'mzXML
+		Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"				'Finnigan ion trap/LTQ-FT data
+		Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"				'Agilent/QSTAR TOF data
+		Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"				'IMS_UIMF (IMS_Agilent_TOF in DMS)
+		Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"			'mzXML
 
-        ' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
-        ' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
+		' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+		' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
-        ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
-        ' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
-        ' 15T datasets also have raw_data_type "bruker_ft"
-        ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-        Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
+		' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
+		' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
+		' 15T datasets also have raw_data_type "bruker_ft"
+		' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+		Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
 
-        ' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
-        ' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
-        Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
+		' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+		' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+		Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
 
-        ' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-        ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-        Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
+		' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+		' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+		Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
 
-        ' The following is used by instrument Maxis_01
-        ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-        Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
+		' The following is used by instrument Maxis_01
+		' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+		Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
 
-        Public Const DOT_WIFF_EXTENSION As String = ".wiff"
-        Public Const DOT_D_EXTENSION As String = ".d"
-        Public Const DOT_RAW_EXTENSION As String = ".raw"
-        Public Const DOT_UIMF_EXTENSION As String = ".uimf"
-        Public Const DOT_MZXML_EXTENSION As String = ".mzxml"
+		Public Const DOT_WIFF_EXTENSION As String = ".wiff"
+		Public Const DOT_D_EXTENSION As String = ".d"
+		Public Const DOT_RAW_EXTENSION As String = ".raw"
+		Public Const DOT_UIMF_EXTENSION As String = ".uimf"
+		Public Const DOT_MZXML_EXTENSION As String = ".mzxml"
 
-        Public Const DOT_MGF_EXTENSION As String = ".mgf"
-        Public Const DOT_CDF_EXTENSION As String = ".cdf"
+		Public Const DOT_MGF_EXTENSION As String = ".mgf"
+		Public Const DOT_CDF_EXTENSION As String = ".cdf"
 
-        Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
+		Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
 		Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
 
-        Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
-        Public Const BRUKER_SER_FILE As String = "ser"
+		Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
+		Public Const BRUKER_SER_FILE As String = "ser"
 #End Region
 
 #Region "Module variables"
-        Protected m_jobParams As IJobParams
-        Protected m_mgrParams As IMgrParams
-        Protected m_WorkingDir As String
-        Protected m_message As String
-        Protected m_DebugLevel As Short
+		Protected m_jobParams As IJobParams
+		Protected m_mgrParams As IMgrParams
+		Protected m_WorkingDir As String
+		Protected m_message As String
+		Protected m_DebugLevel As Short
 
-        Protected m_GenerationStarted As Boolean = False
-        Protected m_GenerationComplete As Boolean = False
-        Protected m_FastaToolsCnStr As String = ""
-        Protected m_FastaFileName As String = ""
-        Protected m_FastaGenTimeOut As Boolean = False
-        Protected m_FastaGenStartTime As DateTime = System.DateTime.UtcNow
+		Protected m_GenerationStarted As Boolean = False
+		Protected m_GenerationComplete As Boolean = False
+		Protected m_FastaToolsCnStr As String = ""
+		Protected m_FastaFileName As String = ""
+		Protected m_FastaGenTimeOut As Boolean = False
+		Protected m_FastaGenStartTime As DateTime = System.DateTime.UtcNow
 
-        Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
-        Protected WithEvents m_FastaTimer As System.Timers.Timer
-        Protected m_IonicZipTools As clsIonicZipTools
+		Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
+		Protected WithEvents m_FastaTimer As System.Timers.Timer
+		Protected m_IonicZipTools As clsIonicZipTools
 #End Region
 
 #Region "Properties"
-        ' explanation of what happened to last operation this class performed
-        Public Overridable ReadOnly Property Message() As String Implements IAnalysisResources.Message
-            Get
-                Return m_message
-            End Get
-        End Property
+		' explanation of what happened to last operation this class performed
+		Public Overridable ReadOnly Property Message() As String Implements IAnalysisResources.Message
+			Get
+				Return m_message
+			End Get
+		End Property
 #End Region
 
 #Region "Event handlers"
-        Private Sub m_FastaTools_FileGenerationStarted(ByVal taskMsg As String) Handles m_FastaTools.FileGenerationStarted
+		Private Sub m_FastaTools_FileGenerationStarted(ByVal taskMsg As String) Handles m_FastaTools.FileGenerationStarted
 
-            m_GenerationStarted = True
+			m_GenerationStarted = True
 
-        End Sub
+		End Sub
 
-        Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
+		Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
-            m_FastaFileName = System.IO.Path.GetFileName(FullOutputPath)      'Get the name of the fasta file that was generated
-            m_GenerationComplete = True     'Set the completion flag
+			m_FastaFileName = System.IO.Path.GetFileName(FullOutputPath)	  'Get the name of the fasta file that was generated
+			m_GenerationComplete = True		'Set the completion flag
 
-        End Sub
+		End Sub
 
-        Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
-            Const MINIMUM_LOG_INTERVAL_SEC As Integer = 10
-            Static dtLastLogTime As DateTime
-            Static dblFractionDoneSaved As Double = -1
+		Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
+			Const MINIMUM_LOG_INTERVAL_SEC As Integer = 10
+			Static dtLastLogTime As DateTime
+			Static dblFractionDoneSaved As Double = -1
 
-            Dim blnForcelog As Boolean = False
+			Dim blnForcelog As Boolean = False
 
-            If m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT) Then
-                blnForcelog = True
-            End If
+			If m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT) Then
+				blnForcelog = True
+			End If
 
-            If m_DebugLevel >= 3 OrElse blnForcelog Then
-                ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-                If blnForcelog OrElse _
-                   System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
-                   fractionDone - dblFractionDoneSaved >= 0.25 Then
-                    dtLastLogTime = System.DateTime.UtcNow
-                    dblFractionDoneSaved = fractionDone
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " & (fractionDone * 100).ToString("0.0") & "% complete, " & statusMsg)
-                End If
-            End If
+			If m_DebugLevel >= 3 OrElse blnForcelog Then
+				' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
+				If blnForcelog OrElse _
+				   System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+				   fractionDone - dblFractionDoneSaved >= 0.25 Then
+					dtLastLogTime = System.DateTime.UtcNow
+					dblFractionDoneSaved = fractionDone
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " & (fractionDone * 100).ToString("0.0") & "% complete, " & statusMsg)
+				End If
+			End If
 
-        End Sub
+		End Sub
 
-        Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
+		Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
 
-            If System.DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
-                m_FastaGenTimeOut = True      'Set the timeout flag so an error will be reported
-                m_GenerationComplete = True     'Set the completion flag so the fasta generation wait loop will exit
-            End If
+			If System.DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
+				m_FastaGenTimeOut = True	  'Set the timeout flag so an error will be reported
+				m_GenerationComplete = True		'Set the completion flag so the fasta generation wait loop will exit
+			End If
 
-        End Sub
+		End Sub
 #End Region
 
 #Region "Methods"
-        ''' <summary>
-        ''' Constructor
-        ''' </summary>
-        ''' <remarks>Does nothing at present</remarks>
-        Public Sub New()
+		''' <summary>
+		''' Constructor
+		''' </summary>
+		''' <remarks>Does nothing at present</remarks>
+		Public Sub New()
 
-        End Sub
+		End Sub
 
-        ''' <summary>
-        ''' Initialize class
-        ''' </summary>
-        ''' <param name="mgrParams">Manager parameter object</param>
-        ''' <param name="jobParams">Job parameter object</param>
-        ''' <remarks></remarks>
-        Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams) Implements IAnalysisResources.Setup
+		''' <summary>
+		''' Initialize class
+		''' </summary>
+		''' <param name="mgrParams">Manager parameter object</param>
+		''' <param name="jobParams">Job parameter object</param>
+		''' <remarks></remarks>
+		Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams) Implements IAnalysisResources.Setup
 
-            m_mgrParams = mgrParams
-            m_jobParams = jobParams
+			m_mgrParams = mgrParams
+			m_jobParams = jobParams
 			'			m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
-            '            m_MachName = m_mgrParams.GetParam("MgrName")
-            m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
-            m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
+			'            m_MachName = m_mgrParams.GetParam("MgrName")
+			m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
+			m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
 
-            m_WorkingDir = m_mgrParams.GetParam("workdir")
+			m_WorkingDir = m_mgrParams.GetParam("workdir")
 
-            m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
+			m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 
-        End Sub
+		End Sub
 
-        Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
+		Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
-                                             ByVal InpFolder As String, _
-                                             ByVal OutDir As String) As Boolean
-            Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
-        End Function
+		''' <summary>
+		''' Copies specified file from storage server to local working directory
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
+		 ByVal InpFolder As String, _
+		 ByVal OutDir As String) As Boolean
+			Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
+		End Function
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
-                                             ByVal InpFolder As String, _
-                                             ByVal OutDir As String, _
-                                             ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-            Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
-        End Function
+		''' <summary>
+		''' Copies specified file from storage server to local working directory
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
+		  ByVal InpFolder As String, _
+		  ByVal OutDir As String, _
+		  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
-                                                       ByVal InpFolder As String, _
-                                                       ByVal OutDir As String, _
-                                                       ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-                                                       ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+			Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
 
-            Dim SourceFile As String = String.Empty
-            Dim DestFilePath As String = String.Empty
+		End Function
 
-            Try
-                SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
-                DestFilePath = System.IO.Path.Combine(OutDir, InpFile)
+		''' <summary>
+		''' Copies specified file from storage server to local working directory
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+		''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
+		   ByVal InpFolder As String, _
+		   ByVal OutDir As String, _
+		   ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+		   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-                'Verify source file exists
-                If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
-                    m_message = "File not found: " & SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
-                    Return False
-                End If
+			Dim SourceFile As String = String.Empty
+			Dim DestFilePath As String = String.Empty
 
-                If CreateStoragePathInfoOnly Then
-                    ' Create a storage path info file
-                    Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
-                End If
+			Try
+				SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
+				DestFilePath = System.IO.Path.Combine(OutDir, InpFile)
 
-                If CopyFileWithRetry(SourceFile, DestFilePath, True) Then
-                    If m_DebugLevel > 3 Then
-                        Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File copied: " & SourceFile
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-                    End If
-                    Return True
-                Else
-                    m_message = "Error copying file " & SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return False
-                End If
+				'Verify source file exists
+				If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
+					m_message = "File not found: " & SourceFile
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
+					Return False
+				End If
 
-            Catch ex As Exception
-                If SourceFile Is Nothing Then SourceFile = InpFile
-                If SourceFile Is Nothing Then SourceFile = "??"
+				If CreateStoragePathInfoOnly Then
+					' Create a storage path info file
+					Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
+				End If
 
-                m_message = "Exception in CopyFileToWorkDir for " & SourceFile
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            End Try
+				If CopyFileWithRetry(SourceFile, DestFilePath, True) Then
+					If m_DebugLevel > 3 Then
+						Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File copied: " & SourceFile
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+					End If
+					Return True
+				Else
+					m_message = "Error copying file " & SourceFile
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return False
+				End If
 
-            Return False
+			Catch ex As Exception
+				If SourceFile Is Nothing Then SourceFile = InpFile
+				If SourceFile Is Nothing Then SourceFile = "??"
 
-        End Function
+				m_message = "Exception in CopyFileToWorkDir for " & SourceFile
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			End Try
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
-                                                       ByVal InpFolder As String, _
-                                                       ByVal OutDir As String) As Boolean
-            Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
-        End Function
+			Return False
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
-                                                       ByVal InpFolder As String, _
-                                                       ByVal OutDir As String, _
-                                                       ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-            Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
-        End Function
+		End Function
 
-        ''' <summary>
-        ''' Copies specified file from storage server to local working directory, renames destination with dataset name
-        ''' </summary>
-        ''' <param name="InpFile">Name of file to copy</param>
-        ''' <param name="InpFolder">Path to folder where input file is located</param>
-        ''' <param name="OutDir">Destination directory for file copy</param>
-        ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        ''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt, and this file's first line will be the full path to the source file</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
-                                                       ByVal InpFolder As String, _
-                                                       ByVal OutDir As String, _
-                                                       ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-                                                       ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		''' <summary>
+		''' Copies specified file from storage server to local working directory
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
+		  ByVal InpFolder As String, _
+		  ByVal OutDir As String) As Boolean
+			Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
+		End Function
+
+		''' <summary>
+		''' Copies specified file from storage server to local working directory
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
+		  ByVal InpFolder As String, _
+		  ByVal OutDir As String, _
+		  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
+			Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
+		End Function
+
+		''' <summary>
+		''' Copies specified file from storage server to local working directory, renames destination with dataset name
+		''' </summary>
+		''' <param name="InpFile">Name of file to copy</param>
+		''' <param name="InpFolder">Path to folder where input file is located</param>
+		''' <param name="OutDir">Destination directory for file copy</param>
+		''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+		''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt, and this file's first line will be the full path to the source file</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
+		  ByVal InpFolder As String, _
+		  ByVal OutDir As String, _
+		  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+		  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 
-            Dim SourceFile As String = String.Empty
-            Dim DestFilePath As String = String.Empty
+			Dim SourceFile As String = String.Empty
+			Dim DestFilePath As String = String.Empty
 
-            Try
-                SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
+			Try
+				SourceFile = System.IO.Path.Combine(InpFolder, InpFile)
 
-                'Verify source file exists
-                If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
-                    m_message = "File not found: " & SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
-                    Return False
-                End If
+				'Verify source file exists
+				If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
+					m_message = "File not found: " & SourceFile
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
+					Return False
+				End If
 
-                Dim Fi As New System.IO.FileInfo(SourceFile)
+				Dim Fi As New System.IO.FileInfo(SourceFile)
 				Dim TargetName As String = m_jobParams.GetParam("JobParameters", "DatasetNum") & Fi.Extension
 				DestFilePath = System.IO.Path.Combine(OutDir, TargetName)
 
@@ -421,7 +424,7 @@ Namespace AnalysisManagerBase
 		''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
 		''' <remarks></remarks>
 		Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As System.Collections.Generic.Queue(Of String), _
-										ByVal strFileToQueueForDeletion As String)
+		  ByVal strFileToQueueForDeletion As String)
 
 			If strFilesToDelete.Count > 0 Then
 				' Call the garbage collector, then try to delete the first queued file
@@ -497,9 +500,9 @@ Namespace AnalysisManagerBase
 		''' <returns>True if success, false otherwise</returns>
 		''' <remarks></remarks>
 		Public Shared Function GetBrukerImagingFileCoords(ByVal strCoord As String, _
-														  ByRef R As Integer, _
-														  ByRef X As Integer, _
-														  ByRef Y As Integer) As Boolean
+		  ByRef R As Integer, _
+		  ByRef X As Integer, _
+		  ByRef Y As Integer) As Boolean
 
 			Static reRegExRXY As System.Text.RegularExpressions.Regex
 			Static reRegExRX As System.Text.RegularExpressions.Regex
@@ -545,8 +548,8 @@ Namespace AnalysisManagerBase
 		''' <returns></returns>
 		''' <remarks></remarks>
 		Public Shared Function GetBrukerImagingSectionFilter(ByRef objJobParams As IJobParams, _
-															 ByRef StartSectionX As Integer, _
-															 ByRef EndSectionX As Integer) As Boolean
+		  ByRef StartSectionX As Integer, _
+		  ByRef EndSectionX As Integer) As Boolean
 
 			Dim blnApplySectionFilter As Boolean
 
@@ -696,8 +699,8 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveSpectra(ByVal RawDataType As String, _
-													   ByVal WorkDir As String, _
-													   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		  ByVal WorkDir As String, _
+		  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 			Dim blnSuccess As Boolean = False
 			Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -773,8 +776,8 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDatasetFile(ByVal WorkDir As String, _
-														   ByVal FileExtension As String, _
-														   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		   ByVal FileExtension As String, _
+		   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			Dim DataFileName As String = DSName & FileExtension
@@ -796,8 +799,8 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveMgfFile(ByVal WorkDir As String, _
-													   ByVal GetCdfAlso As Boolean, _
-													   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		  ByVal GetCdfAlso As Boolean, _
+		  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 			'Data files are in a subfolder off of the main dataset folder
 			'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
@@ -860,8 +863,8 @@ Namespace AnalysisManagerBase
 		''' <returns>True if the file was found and retrieved, otherwise False</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveMZXmlFile(ByVal WorkDir As String, _
-														 ByVal CreateStoragePathInfoOnly As Boolean, _
-														 ByRef SourceFilePath As String) As Boolean
+		 ByVal CreateStoragePathInfoOnly As Boolean, _
+		 ByRef SourceFilePath As String) As Boolean
 
 			' Copies this dataset's .mzXML file to the working directory
 			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
@@ -1089,8 +1092,8 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotDFolder(ByVal WorkDir As String, _
-														  ByVal CreateStoragePathInfoOnly As Boolean, _
-														  ByVal blnSkipBAFFiles As Boolean) As Boolean
+		  ByVal CreateStoragePathInfoOnly As Boolean, _
+		  ByVal blnSkipBAFFiles As Boolean) As Boolean
 			Dim objFileNamesToSkip As List(Of String)
 
 			objFileNamesToSkip = New List(Of String)
@@ -1108,7 +1111,7 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotRawFolder(ByVal WorkDir As String, _
-															ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		 ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 			Return RetrieveDotXFolder(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, New List(Of String))
 		End Function
 
@@ -1121,9 +1124,9 @@ Namespace AnalysisManagerBase
 		''' <returns>TRUE for success; FALSE for failure</returns>
 		''' <remarks></remarks>
 		Protected Overridable Function RetrieveDotXFolder(ByVal WorkDir As String, _
-														  ByVal FolderExtension As String, _
-														  ByVal CreateStoragePathInfoOnly As Boolean, _
-														  ByVal objFileNamesToSkip As List(Of String)) As Boolean
+		  ByVal FolderExtension As String, _
+		  ByVal CreateStoragePathInfoOnly As Boolean, _
+		  ByVal objFileNamesToSkip As List(Of String)) As Boolean
 
 			'Copies a data folder ending in FolderExtension to the working directory
 			Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
@@ -1182,7 +1185,7 @@ Namespace AnalysisManagerBase
 		''' <returns></returns>
 		''' <remarks></remarks>
 		Public Function RetrieveBrukerMALDIImagingFolders(ByVal WorkDir As String, _
-														  ByVal UnzipOverNetwork As Boolean) As Boolean
+		  ByVal UnzipOverNetwork As Boolean) As Boolean
 
 			Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
@@ -1746,7 +1749,7 @@ Namespace AnalysisManagerBase
 		End Function
 
 		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
-														 ByVal RetryHoldoffSeconds As Integer) As Boolean
+		 ByVal RetryHoldoffSeconds As Integer) As Boolean
 			Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT)
 		End Function
 
@@ -1758,8 +1761,8 @@ Namespace AnalysisManagerBase
 		''' <returns></returns>
 		''' <remarks></remarks>
 		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
-														 ByVal RetryHoldoffSeconds As Integer, _
-														 ByVal MaxRetryCount As Integer) As Boolean
+		 ByVal RetryHoldoffSeconds As Integer, _
+		 ByVal MaxRetryCount As Integer) As Boolean
 
 			Dim RetryCount As Integer
 
@@ -1798,15 +1801,15 @@ Namespace AnalysisManagerBase
 		''' <returns>Path to the most appropriate dataset folder</returns>
 		''' <remarks></remarks>
 		Private Function FindValidFolder(ByVal DSName As String, _
-										 ByVal FileNameToFind As String) As String
+		   ByVal FileNameToFind As String) As String
 
 			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT)
 
 		End Function
 
 		Private Function FindValidFolder(ByVal DSName As String, _
-										 ByVal FileNameToFind As String, _
-										 ByVal FolderNameToFind As String) As String
+		   ByVal FileNameToFind As String, _
+		   ByVal FolderNameToFind As String) As String
 
 			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT)
 
@@ -2194,7 +2197,7 @@ Namespace AnalysisManagerBase
 		  ByVal WorkDir As String) As Boolean
 
 			'Copy the file
-			If Not CopyFileToWorkDir(FileName, FilePath, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+			If Not CopyFileToWorkDir(FileName, FilePath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
 				Return False
 			End If
 
@@ -2343,13 +2346,13 @@ Namespace AnalysisManagerBase
 
 			If ZippedFolderName = "" Then Return False 'No folder found containing the zipped OUT files
 			'Copy the file
-			If Not CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
+			If Not CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
 				Return False
 			End If
 
 			'Unzip concatenated OUT file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated OUT file")
-			If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), ZippedFileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveOutFiles", False) Then
+			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "clsAnalysisResources.RetrieveOutFiles", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenated OUT file unzipped")
 				End If
@@ -2361,7 +2364,7 @@ Namespace AnalysisManagerBase
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated OUT file")
 				Dim BackWorker As New System.ComponentModel.BackgroundWorker
 				Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
-				FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_mgrParams.GetParam("WorkDir"))
+				FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated OUT file")
@@ -2372,326 +2375,373 @@ Namespace AnalysisManagerBase
 
 		End Function
 
-        ''' <summary>
-        ''' Finds the server or archive folder where specified file is located
-        ''' </summary>
-        ''' <param name="FileToFind">Name of the file to search for</param>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
-        Protected Overridable Function FindDataFile(ByVal FileToFind As String) As String
-
-            Dim FoldersToSearch As New System.Collections.Generic.List(Of String)
-            Dim TempDir As String = String.Empty
-            Dim FileFound As Boolean = False
-
-            Dim strParentFolderPath As String = String.Empty
-            Dim strDatasetFolderName As String
-            Dim strInputFolderName As String
-
-            Dim strSharedResultFolders As String
-
-            Dim SharedResultFolderNames As New System.Collections.Generic.List(Of String)
-
-            Try
-                ' Fill collection with possible folder locations
-                ' The order of searching is:
-                '  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
-                '  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
-                '  c. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
-                '
-                ' Note that "SharedResultsFolders" will typically only contain one folder path, 
-                '  but can contain a comma-separated list of folders
-
-                strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
-                strInputFolderName = m_jobParams.GetParam("inputFolderName")
-                strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
-
-                If strSharedResultFolders.Contains(",") Then
-
-                    ' Split on commas and populate SharedResultFolderNames
-                    For Each strItem As String In strSharedResultFolders.Split(","c)
-                        If strItem.Trim.Length > 0 Then
-                            SharedResultFolderNames.Add(strItem.Trim)
-                        End If
-                    Next
-
-                    ' Reverse the list so that the last item in strSharedResultFolders is the first item in SharedResultFolderNames
-                    SharedResultFolderNames.Reverse()
-                Else
-                    ' Just one item in strSharedResultFolders
-                    SharedResultFolderNames.Add(strSharedResultFolders)
-                End If
-
-
-                For intParentFolderIndex As Integer = 0 To 2
-
-                    Select Case intParentFolderIndex
-                        Case 0
-                            strParentFolderPath = m_jobParams.GetParam("transferFolderPath")    'Xfer folder
-                        Case 1
-                            strParentFolderPath = m_jobParams.GetParam("DatasetStoragePath")    'Storage server
-                        Case 2
-                            strParentFolderPath = m_jobParams.GetParam("DatasetArchivePath")    'Archive
-                        Case Else
-                            ' Programming bug
-                            strParentFolderPath = String.Empty
-                    End Select
-
-                    FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder / Input folder
-
-                    For Each strItem As String In SharedResultFolderNames
-                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strItem))          ' Parent Folder / Shared results folder
-                    Next
-
-                Next
-
-                ' Now search for FileToFind in each folder in FoldersToSearch
-                For Each TempDir In FoldersToSearch
-                    Try
-                        If System.IO.Directory.Exists(TempDir) Then
-                            If System.IO.File.Exists(System.IO.Path.Combine(TempDir, FileToFind)) Then
-                                FileFound = True
-                                Exit For
-                            End If
-                        End If
-                    Catch ex As Exception
-                        ' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
-                        m_message = "Exception in FindDataFile looking for: " & FileToFind & " in " & TempDir & ": " & ex.Message
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    End Try
-                Next
-
-                If FileFound Then
-                    If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " & FileToFind)
-                    End If
-                    Return TempDir
-                Else
-                    'Big problem, data file not found
-                    m_message = "Data file not found: " & FileToFind
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return String.Empty
-                End If
-
-            Catch ex As Exception
-                m_message = "Exception in FindDataFile looking for: " & FileToFind
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            End Try
-
-            ' We'll only get here if an exception occurs
-            Return String.Empty
-
-        End Function
-
-        Private Function FindDataFileAddFolder(ByVal strParentFolderPath As String, _
-                                               ByVal strDatasetFolderName As String, _
-                                               ByVal strInputFolderName As String) As String
-            Dim strTargetFolderPath As String
-
-            strTargetFolderPath = System.IO.Path.Combine(strParentFolderPath, strDatasetFolderName)
-            strTargetFolderPath = System.IO.Path.Combine(strTargetFolderPath, strInputFolderName)
-
-            Return strTargetFolderPath
-
-        End Function
-
-        ''' <summary>
-        ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-        ''' </summary>
-        ''' <param name="FileName">Name of file to be retrieved</param>
-        ''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks></remarks>
-        Protected Overridable Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean) As Boolean
-
-            'Find file location
-            Dim FolderName As String = FindDataFile(FileName)
-
-            'Exit if file was not found
-            If FolderName = "" Then Return False 'No folder found containing the specified file
-
-            'Copy the file
-            If Not CopyFileToWorkDir(FileName, FolderName, m_mgrParams.GetParam("WorkDir"), clsLogTools.LogLevels.ERROR) Then
-                Return False
-            End If
-
-            'Return or unzip file, as specified
-            If Not Unzip Then Return True
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " & FileName)
-            If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), FileName), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " & FileName)
-                End If
-            End If
-
-
-            Return True
-
-        End Function
-
-        ''' <summary>
-        ''' Creates the specified settings file from db info
-        ''' </summary>
-        ''' <returns>TRUE if file created successfully; FALSE otherwise</returns>
-        ''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
-        Protected Friend Overridable Function RetrieveSettingsFileFromDb() As Boolean
-
-            Dim OutputFile As String = System.IO.Path.Combine(m_mgrParams.GetParam("workdir"), m_jobParams.GetParam("SettingsFileName"))
-
-            Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
-
-        End Function
-
-        ''' <summary>
-        ''' Creates an XML formatted settings file based on data from broker
-        ''' </summary>
-        ''' <param name="FileText">String containing XML file contents</param>
-        ''' <param name="FileNamePath">Name of file to create</param>
-        ''' <returns>TRUE for success; FALSE for failure</returns>
-        ''' <remarks>XML handling based on code provided by Matt Monroe</remarks>
-        Private Function CreateSettingsFile(ByVal FileText As String, ByVal FileNamePath As String) As Boolean
-
-            Dim objFormattedXMLWriter As New clsFormattedXMLWriter
-
-            If Not objFormattedXMLWriter.WriteXMLToFile(FileText, FileNamePath) Then
-                m_message = "Error creating settings file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " " & FileNamePath & ": " & objFormattedXMLWriter.ErrMsg)
-                Return False
-            Else
-                Return True
-            End If
-
-        End Function
-
-        ''' <summary>
-        ''' Unzips all files in the specified Zip file
-        ''' If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
-        ''' Otherwise, uses PKZipC (provided PKZipC.exe exists)
-        ''' </summary>
-        ''' <param name="ZipFilePath">File to unzip</param>
-        ''' <param name="OutFolderPath">Target directory for the extracted files</param>
-        ''' <param name="CallingFunctionName">Calling function name (used for debugging purposes)</param>
-        ''' <param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
-        Public Function UnzipFileStart(ByVal ZipFilePath As String, _
-                                       ByVal OutFolderPath As String, _
-                                       ByVal CallingFunctionName As String, _
-                                       ByVal ForceExternalZipProgramUse As Boolean) As Boolean
-
-            Dim fiFileInfo As System.IO.FileInfo
-            Dim sngFileSizeMB As Single
-
-            Dim blnUseExternalUnzipper As Boolean = False
-            Dim blnSuccess As Boolean = False
-
-            Dim strExternalUnzipperFilePath As String
-            Dim strUnzipperName As String = String.Empty
-
-            Dim dtStartTime As DateTime
-            Dim dtEndTime As DateTime
-
-            Try
-                If ZipFilePath Is Nothing Then ZipFilePath = String.Empty
-
-                If CallingFunctionName Is Nothing OrElse CallingFunctionName.Length = 0 Then
-                    CallingFunctionName = "??"
-                End If
-
-                strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram")
-                If strExternalUnzipperFilePath Is Nothing Then strExternalUnzipperFilePath = String.Empty
-
-                fiFileInfo = New System.IO.FileInfo(ZipFilePath)
-                sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
-
-                If Not fiFileInfo.Exists Then
-                    ' File not found
-                    m_message = "Error unzipping '" & ZipFilePath & "': File not found (called from " & CallingFunctionName & ")"
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return False
-                End If
-
-                ' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
-                ' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-                If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
-                    If strExternalUnzipperFilePath.Length > 0 AndAlso _
-                       strExternalUnzipperFilePath.ToLower <> "na" Then
-                        If System.IO.File.Exists(strExternalUnzipperFilePath) Then
-                            blnUseExternalUnzipper = True
-                        End If
-                    End If
-
-                    If Not blnUseExternalUnzipper Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " & strExternalUnzipperFilePath & "; will instead use Ionic.Zip")
-                    End If
-                End If
-
-                If blnUseExternalUnzipper Then
-                    strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath)
-
-                    Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
-
-                    dtStartTime = DateTime.UtcNow
-                    blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
-                    dtEndTime = DateTime.UtcNow
-
-                    If blnSuccess Then
-                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
-                    Else
-                        m_message = "Error unzipping " & System.IO.Path.GetFileName(ZipFilePath) & " using " & strUnzipperName
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName & ": " & m_message)
-                        UnZipper = Nothing
-                    End If
-                Else
-                    ' Use Ionic.Zip
-                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
-                    m_IonicZipTools.DebugLevel = m_DebugLevel
-                    blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath)
-                End If
-
-            Catch ex As Exception
-                m_message = "Exception while unzipping '" & ZipFilePath & "'"
-                If Not String.IsNullOrEmpty(strUnzipperName) Then m_message &= " using " & strUnzipperName
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                blnSuccess = False
-            End Try
-
-            Return blnSuccess
-
-        End Function
-
-        Public Function RetrieveAggregateFiles(ByVal FilesToRetrieveExt As String()) As Boolean
-
-            Dim SourceFolderPath As String = String.Empty
-            Dim SharedResultsFolder As String = String.Empty
-            Dim DatasetName As String
-            Dim SourceFilename As String = String.Empty
-            Dim DatasetInformation As New DataTable
-            Dim SplitString As String()
-            Dim Tool As String
-            Dim blnsuccess As Boolean = False
-            Dim WorkDir As String = m_mgrParams.GetParam("WorkDir")
-            Dim FilterValue As String = String.Empty
-            Dim i As Integer = 0
-
-            Try
-                If Not LoadDatasetLocationsFromDB(DatasetInformation) Then
-                    Return False
-                End If
-            Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDatasetLocationsFromDB", ex)
-                Return False
-            End Try
-
-            Dim CurRow As DataRow
-            Try
-                For Each CurRow In DatasetInformation.Rows
-                    DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
-
-                    'Add all potential paths to job params
+		''' <summary>
+		''' Finds the server or archive folder where specified file is located
+		''' </summary>
+		''' <param name="FileToFind">Name of the file to search for</param>
+		''' <returns>Path to the file if found; empty string if not found</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function FindDataFile(ByVal FileToFind As String) As String
+			Return FindDataFile(FileToFind, True)
+		End Function
+
+		''' <summary>
+		''' Finds the server or archive folder where specified file is located
+		''' </summary>
+		''' <param name="FileToFind">Name of the file to search for</param>
+		''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+		''' <returns>Path to the file if found; empty string if not found</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean) As String
+
+			Dim FoldersToSearch As New System.Collections.Generic.List(Of String)
+			Dim TempDir As String = String.Empty
+			Dim FileFound As Boolean = False
+
+			Dim strParentFolderPath As String = String.Empty
+			Dim strDatasetFolderName As String
+			Dim strInputFolderName As String
+
+			Dim strSharedResultFolders As String
+
+			Dim SharedResultFolderNames As New System.Collections.Generic.List(Of String)
+
+			Try
+				' Fill collection with possible folder locations
+				' The order of searching is:
+				'  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
+				'  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
+				'  c. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
+				'
+				' Note that "SharedResultsFolders" will typically only contain one folder path, 
+				'  but can contain a comma-separated list of folders
+
+				strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
+				strInputFolderName = m_jobParams.GetParam("inputFolderName")
+				strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
+
+				If strSharedResultFolders.Contains(",") Then
+
+					' Split on commas and populate SharedResultFolderNames
+					For Each strItem As String In strSharedResultFolders.Split(","c)
+						If strItem.Trim.Length > 0 Then
+							SharedResultFolderNames.Add(strItem.Trim)
+						End If
+					Next
+
+					' Reverse the list so that the last item in strSharedResultFolders is the first item in SharedResultFolderNames
+					SharedResultFolderNames.Reverse()
+				Else
+					' Just one item in strSharedResultFolders
+					SharedResultFolderNames.Add(strSharedResultFolders)
+				End If
+
+				Dim intIndexEnd As Integer
+				If SearchArchivedDatasetFolder Then
+					intIndexEnd = 2
+				Else
+					intIndexEnd = 1
+				End If
+
+				For intParentFolderIndex As Integer = 0 To intIndexEnd
+
+					Select Case intParentFolderIndex
+						Case 0
+							strParentFolderPath = m_jobParams.GetParam("transferFolderPath")	'Xfer folder
+						Case 1
+							strParentFolderPath = m_jobParams.GetParam("DatasetStoragePath")	'Storage server
+						Case 2
+							strParentFolderPath = m_jobParams.GetParam("DatasetArchivePath")	'Archive
+						Case Else
+							' Programming bug
+							strParentFolderPath = String.Empty
+					End Select
+
+					If Not String.IsNullOrEmpty(strParentFolderPath) Then
+						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))	' Parent Folder / Input folder
+
+						For Each strSharedFolderName As String In SharedResultFolderNames
+							FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))			' Parent Folder / Shared results folder
+						Next
+					End If
+
+				Next
+
+				' Now search for FileToFind in each folder in FoldersToSearch
+				For Each TempDir In FoldersToSearch
+					Try
+						If System.IO.Directory.Exists(TempDir) Then
+							If System.IO.File.Exists(System.IO.Path.Combine(TempDir, FileToFind)) Then
+								FileFound = True
+								Exit For
+							End If
+						End If
+					Catch ex As Exception
+						' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
+						m_message = "Exception in FindDataFile looking for: " & FileToFind & " in " & TempDir & ": " & ex.Message
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					End Try
+				Next
+
+				If FileFound Then
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " & FileToFind)
+					End If
+					Return TempDir
+				Else
+					' Data file not found
+					' Log this as an error if SearchArchivedDatasetFolder=True
+					' Log this as a warnign if SearchArchivedDatasetFolder=False
+
+
+					If SearchArchivedDatasetFolder Then
+						m_message = "Data file not found: " & FileToFind
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Else
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " & FileToFind)
+					End If
+
+					Return String.Empty
+				End If
+
+			Catch ex As Exception
+				m_message = "Exception in FindDataFile looking for: " & FileToFind
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			End Try
+
+			' We'll only get here if an exception occurs
+			Return String.Empty
+
+		End Function
+
+		Private Function FindDataFileAddFolder(ByVal strParentFolderPath As String, _
+		   ByVal strDatasetFolderName As String, _
+		   ByVal strInputFolderName As String) As String
+			Dim strTargetFolderPath As String
+
+			strTargetFolderPath = System.IO.Path.Combine(strParentFolderPath, strDatasetFolderName)
+			strTargetFolderPath = System.IO.Path.Combine(strTargetFolderPath, strInputFolderName)
+
+			Return strTargetFolderPath
+
+		End Function
+
+		''' <summary>
+		''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+		''' </summary>
+		''' <param name="FileName">Name of file to be retrieved</param>
+		''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean) As Boolean
+
+			Return FindAndRetrieveMiscFiles(FileName, Unzip, True)
+		End Function
+
+		''' <summary>
+		''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+		''' </summary>
+		''' <param name="FileName">Name of file to be retrieved</param>
+		''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+		''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks></remarks>
+		Protected Overridable Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean, ByVal SearchArchivedDatasetFolder As Boolean) As Boolean
+
+			'Find file location
+			Dim FolderName As String
+			Dim CreateStoragePathInfoFile As Boolean = False
+
+			' Look for the file in the various folders
+			FolderName = FindDataFile(FileName, SearchArchivedDatasetFolder)
+
+			' Exit if file was not found
+			If String.IsNullOrEmpty(FolderName) Then
+				' No folder found containing the specified file
+				Return False
+			End If
+
+			' Copy the file
+			If Not CopyFileToWorkDir(FileName, FolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
+				Return False
+			End If
+
+			'Return or unzip file, as specified
+			If Not Unzip Then Return True
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " & FileName)
+			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " & FileName)
+				End If
+			End If
+
+
+			Return True
+
+		End Function
+
+		''' <summary>
+		''' Creates the specified settings file from db info
+		''' </summary>
+		''' <returns>TRUE if file created successfully; FALSE otherwise</returns>
+		''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
+		Protected Friend Overridable Function RetrieveSettingsFileFromDb() As Boolean
+
+			Dim OutputFile As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
+
+			Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
+
+		End Function
+
+		''' <summary>
+		''' Creates an XML formatted settings file based on data from broker
+		''' </summary>
+		''' <param name="FileText">String containing XML file contents</param>
+		''' <param name="FileNamePath">Name of file to create</param>
+		''' <returns>TRUE for success; FALSE for failure</returns>
+		''' <remarks>XML handling based on code provided by Matt Monroe</remarks>
+		Private Function CreateSettingsFile(ByVal FileText As String, ByVal FileNamePath As String) As Boolean
+
+			Dim objFormattedXMLWriter As New clsFormattedXMLWriter
+
+			If Not objFormattedXMLWriter.WriteXMLToFile(FileText, FileNamePath) Then
+				m_message = "Error creating settings file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " " & FileNamePath & ": " & objFormattedXMLWriter.ErrMsg)
+				Return False
+			Else
+				Return True
+			End If
+
+		End Function
+
+		''' <summary>
+		''' Unzips all files in the specified Zip file
+		''' If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
+		''' Otherwise, uses PKZipC (provided PKZipC.exe exists)
+		''' </summary>
+		''' <param name="ZipFilePath">File to unzip</param>
+		''' <param name="OutFolderPath">Target directory for the extracted files</param>
+		''' <param name="CallingFunctionName">Calling function name (used for debugging purposes)</param>
+		''' <param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Public Function UnzipFileStart(ByVal ZipFilePath As String, _
+		 ByVal OutFolderPath As String, _
+		 ByVal CallingFunctionName As String, _
+		 ByVal ForceExternalZipProgramUse As Boolean) As Boolean
+
+			Dim fiFileInfo As System.IO.FileInfo
+			Dim sngFileSizeMB As Single
+
+			Dim blnUseExternalUnzipper As Boolean = False
+			Dim blnSuccess As Boolean = False
+
+			Dim strExternalUnzipperFilePath As String
+			Dim strUnzipperName As String = String.Empty
+
+			Dim dtStartTime As DateTime
+			Dim dtEndTime As DateTime
+
+			Try
+				If ZipFilePath Is Nothing Then ZipFilePath = String.Empty
+
+				If CallingFunctionName Is Nothing OrElse CallingFunctionName.Length = 0 Then
+					CallingFunctionName = "??"
+				End If
+
+				strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram")
+				If strExternalUnzipperFilePath Is Nothing Then strExternalUnzipperFilePath = String.Empty
+
+				fiFileInfo = New System.IO.FileInfo(ZipFilePath)
+				sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
+
+				If Not fiFileInfo.Exists Then
+					' File not found
+					m_message = "Error unzipping '" & ZipFilePath & "': File not found (called from " & CallingFunctionName & ")"
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return False
+				End If
+
+				' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
+				' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
+				If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
+					If strExternalUnzipperFilePath.Length > 0 AndAlso _
+					   strExternalUnzipperFilePath.ToLower <> "na" Then
+						If System.IO.File.Exists(strExternalUnzipperFilePath) Then
+							blnUseExternalUnzipper = True
+						End If
+					End If
+
+					If Not blnUseExternalUnzipper Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " & strExternalUnzipperFilePath & "; will instead use Ionic.Zip")
+					End If
+				End If
+
+				If blnUseExternalUnzipper Then
+					strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath)
+
+					Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
+
+					dtStartTime = DateTime.UtcNow
+					blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
+					dtEndTime = DateTime.UtcNow
+
+					If blnSuccess Then
+						m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
+					Else
+						m_message = "Error unzipping " & System.IO.Path.GetFileName(ZipFilePath) & " using " & strUnzipperName
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName & ": " & m_message)
+						UnZipper = Nothing
+					End If
+				Else
+					' Use Ionic.Zip
+					strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
+					m_IonicZipTools.DebugLevel = m_DebugLevel
+					blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath)
+				End If
+
+			Catch ex As Exception
+				m_message = "Exception while unzipping '" & ZipFilePath & "'"
+				If Not String.IsNullOrEmpty(strUnzipperName) Then m_message &= " using " & strUnzipperName
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+				blnSuccess = False
+			End Try
+
+			Return blnSuccess
+
+		End Function
+
+		Public Function RetrieveAggregateFiles(ByVal FilesToRetrieveExt As String()) As Boolean
+
+			Dim SourceFolderPath As String = String.Empty
+			Dim SharedResultsFolder As String = String.Empty
+			Dim DatasetName As String
+			Dim SourceFilename As String = String.Empty
+			Dim DatasetInformation As New DataTable
+			Dim SplitString As String()
+			Dim Tool As String
+			Dim blnsuccess As Boolean = False
+			Dim FilterValue As String = String.Empty
+			Dim i As Integer = 0
+
+			Try
+				If Not LoadDatasetLocationsFromDB(DatasetInformation) Then
+					Return False
+				End If
+			Catch ex As System.Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDatasetLocationsFromDB", ex)
+				Return False
+			End Try
+
+			Dim CurRow As DataRow
+			Try
+				For Each CurRow In DatasetInformation.Rows
+					DatasetName = DbCStr(CurRow(DatasetInformation.Columns("Dataset")))
+
+					'Add all potential paths to job params
 					If Not m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", DbCStr(CurRow(DatasetInformation.Columns("ServerStoragePath")))) Then
 						m_message = "clsAnalysisResources.RetrieveAggregateFiles; Column 'ServerStoragePath' not found in the DatasetInformation associated with the data package"
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -2716,150 +2766,150 @@ Namespace AnalysisManagerBase
 						Return False
 					End If
 
-                    ' Add the SharedResultsFolder if it isn't blank
-                    SharedResultsFolder = DbCStr(CurRow(DatasetInformation.Columns("SharedResultsFolder")))
-                    If Not String.IsNullOrEmpty(SharedResultsFolder) Then
+					' Add the SharedResultsFolder if it isn't blank
+					SharedResultsFolder = DbCStr(CurRow(DatasetInformation.Columns("SharedResultsFolder")))
+					If Not String.IsNullOrEmpty(SharedResultsFolder) Then
 						m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", SharedResultsFolder)
-                    End If
+					End If
 
-                    clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
+					clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
 
-                    FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName")))
-                    Tool = DbCStr(CurRow(DatasetInformation.Columns("Tool")))
+					FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName")))
+					Tool = DbCStr(CurRow(DatasetInformation.Columns("Tool")))
 
-                    For Each FileNameExt As String In FilesToRetrieveExt
-                        SplitString = FileNameExt.Split(":"c)
-                        SourceFilename = DatasetName & SplitString(1)
-                        If SplitString(0).ToLower() = Tool.ToLower() Then
-                            SourceFolderPath = FindDataFile(SourceFilename)
-                            If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, WorkDir, clsLogTools.LogLevels.ERROR) Then
-                                m_message = "CopyFileToWorkDir returned False for " & SourceFilename & " using folder " & SourceFolderPath
-                                If m_DebugLevel >= 1 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                                End If
-                                Return False
-                            Else
-                                If m_DebugLevel >= 1 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & SourceFilename & " from folder " & SourceFolderPath)
-                                End If
-                            End If
+					For Each FileNameExt As String In FilesToRetrieveExt
+						SplitString = FileNameExt.Split(":"c)
+						SourceFilename = DatasetName & SplitString(1)
+						If SplitString(0).ToLower() = Tool.ToLower() Then
+							SourceFolderPath = FindDataFile(SourceFilename)
+							If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+								m_message = "CopyFileToWorkDir returned False for " & SourceFilename & " using folder " & SourceFolderPath
+								If m_DebugLevel >= 1 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+								End If
+								Return False
+							Else
+								If m_DebugLevel >= 1 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & SourceFilename & " from folder " & SourceFolderPath)
+								End If
+							End If
 
-                            If SourceFilename.ToLower.Contains(".zip") Then
-                                'Unzip file
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " & SourceFilename)
-                                If UnzipFileStart(System.IO.Path.Combine(m_mgrParams.GetParam("WorkDir"), SourceFilename), m_mgrParams.GetParam("WorkDir"), "clsAnalysisResources.RetrieveAggregateFiles", False) Then
-                                    If m_DebugLevel >= 1 Then
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
-                                    End If
-                                    clsGlobal.m_FilesToDeleteExt.Add(SourceFilename)
-                                    RetrieveAggregateFilesRename(WorkDir, System.IO.Path.GetFileNameWithoutExtension(SourceFilename) & ".txt", FilterValue, SplitString(2))
-                                Else
-                                    Return False
-                                End If
+							If SourceFilename.ToLower.Contains(".zip") Then
+								'Unzip file
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " & SourceFilename)
+								If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, SourceFilename), m_WorkingDir, "clsAnalysisResources.RetrieveAggregateFiles", False) Then
+									If m_DebugLevel >= 1 Then
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
+									End If
+									clsGlobal.m_FilesToDeleteExt.Add(SourceFilename)
+									RetrieveAggregateFilesRename(m_WorkingDir, System.IO.Path.GetFileNameWithoutExtension(SourceFilename) & ".txt", FilterValue, SplitString(2))
+								Else
+									Return False
+								End If
 
-                            End If
+							End If
 
-                            'Rename the files where dataset name will cause collisions
-                            RetrieveAggregateFilesRename(WorkDir, SourceFilename, FilterValue, SplitString(2))
-                        End If
-                    Next
-                Next
+							'Rename the files where dataset name will cause collisions
+							RetrieveAggregateFilesRename(m_WorkingDir, SourceFilename, FilterValue, SplitString(2))
+						End If
+					Next
+				Next
 
-                blnsuccess = True
+				blnsuccess = True
 
-            Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath, ex)
-                blnsuccess = False
-            Finally
-                DatasetInformation.Dispose()
-            End Try
+			Catch ex As System.Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " & SourceFilename & " from folder " & SourceFolderPath, ex)
+				blnsuccess = False
+			Finally
+				DatasetInformation.Dispose()
+			End Try
 
-            Return blnsuccess
+			Return blnsuccess
 
-        End Function
+		End Function
 
-        Private Function RetrieveAggregateFilesRename(ByVal workDir As String, _
-                                                      ByVal SourceFilename As String, _
-                                                      ByVal filterValue As String, _
-                                                      ByVal SaveFile As String) As Boolean
-            Dim newFilename As String = ""
-            Dim ext As String = ""
-            Dim filenameNoExt As String = "'"
+		Private Function RetrieveAggregateFilesRename(ByVal workDir As String, _
+		 ByVal SourceFilename As String, _
+		 ByVal filterValue As String, _
+		 ByVal SaveFile As String) As Boolean
+			Dim newFilename As String = ""
+			Dim ext As String = ""
+			Dim filenameNoExt As String = "'"
 
-            Try
-                Select Case m_jobParams.GetParam("StepTool").ToLower
-                    Case "phospho_fdr_aggregator"
-                        Dim fi As New System.IO.FileInfo(System.IO.Path.Combine(workDir, SourceFilename))
-                        ext = System.IO.Path.GetExtension(SourceFilename)
-                        filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(SourceFilename)
+			Try
+				Select Case m_jobParams.GetParam("StepTool").ToLower
+					Case "phospho_fdr_aggregator"
+						Dim fi As New System.IO.FileInfo(System.IO.Path.Combine(workDir, SourceFilename))
+						ext = System.IO.Path.GetExtension(SourceFilename)
+						filenameNoExt = System.IO.Path.GetFileNameWithoutExtension(SourceFilename)
 
-                        If filterValue.ToLower.Contains("_hcd") Then
-                            newFilename = filenameNoExt & "_hcd" & ext
+						If filterValue.ToLower.Contains("_hcd") Then
+							newFilename = filenameNoExt & "_hcd" & ext
 
-                        ElseIf filterValue.ToLower.Contains("_etd") Then
-                            newFilename = filenameNoExt & "_etd" & ext
+						ElseIf filterValue.ToLower.Contains("_etd") Then
+							newFilename = filenameNoExt & "_etd" & ext
 
-                        ElseIf filterValue.ToLower.Contains("_cid") Then
-                            newFilename = filenameNoExt & "_cid" & ext
+						ElseIf filterValue.ToLower.Contains("_cid") Then
+							newFilename = filenameNoExt & "_cid" & ext
 
-                        Else
-                            newFilename = SourceFilename
-                        End If
+						Else
+							newFilename = SourceFilename
+						End If
 
-                        If newFilename <> SourceFilename Then
-                            Dim intRetryCount As Integer
-                            Dim blnSuccess As Boolean = False
-                            Dim strExceptionMsg As String = "unknown reason"
+						If newFilename <> SourceFilename Then
+							Dim intRetryCount As Integer
+							Dim blnSuccess As Boolean = False
+							Dim strExceptionMsg As String = "unknown reason"
 
-                            Do
-                                Try
-                                    fi.MoveTo(System.IO.Path.Combine(workDir, newFilename))
-                                    blnSuccess = True
-                                Catch ex As System.IO.IOException
-                                    intRetryCount += 1
-                                    If intRetryCount = 1 Then
-                                        strExceptionMsg = String.Copy(ex.Message)
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " & fi.Name & " in folder " & workDir & "; will retry after garbage collection")
-                                        GC.Collect()
-                                        GC.WaitForPendingFinalizers()
-                                        System.Threading.Thread.Sleep(1000)
-                                    End If
-                                End Try
-                            Loop While Not blnSuccess And intRetryCount <= 1
+							Do
+								Try
+									fi.MoveTo(System.IO.Path.Combine(workDir, newFilename))
+									blnSuccess = True
+								Catch ex As System.IO.IOException
+									intRetryCount += 1
+									If intRetryCount = 1 Then
+										strExceptionMsg = String.Copy(ex.Message)
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " & fi.Name & " in folder " & workDir & "; will retry after garbage collection")
+										GC.Collect()
+										GC.WaitForPendingFinalizers()
+										System.Threading.Thread.Sleep(1000)
+									End If
+								End Try
+							Loop While Not blnSuccess And intRetryCount <= 1
 
-                            If Not blnSuccess Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Unable to rename file" & fi.Name & " to " & newFilename & " in folder " & workDir & ": " & strExceptionMsg)
-                                Return False
-                            End If
-                        End If
+							If Not blnSuccess Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Unable to rename file" & fi.Name & " to " & newFilename & " in folder " & workDir & ": " & strExceptionMsg)
+								Return False
+							End If
+						End If
 
-                        If SaveFile.ToLower = "nocopy" Then
-                            clsGlobal.m_FilesToDeleteExt.Add(newFilename)
-                        End If
+						If SaveFile.ToLower = "nocopy" Then
+							clsGlobal.m_FilesToDeleteExt.Add(newFilename)
+						End If
 
-                        Return True
+						Return True
 
-                End Select
+				End Select
 
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " & newFilename & " from folder " & workDir, ex)
-                Return False
-            End Try
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " & newFilename & " from folder " & workDir, ex)
+				Return False
+			End Try
 
-            Return True
+			Return True
 
-        End Function
+		End Function
 
-        Protected Function DbCStr(ByVal InpObj As Object) As String
+		Protected Function DbCStr(ByVal InpObj As Object) As String
 
-            'If input object is DbNull, returns "", otherwise returns String representation of object
-            If InpObj Is DBNull.Value Then
-                Return String.Empty
-            Else
-                Return CStr(InpObj)
-            End If
+			'If input object is DbNull, returns "", otherwise returns String representation of object
+			If InpObj Is DBNull.Value Then
+				Return String.Empty
+			Else
+				Return CStr(InpObj)
+			End If
 
-        End Function
+		End Function
 
 		''' <summary>
 		''' Lookups up dataset information for a data package
@@ -2867,65 +2917,65 @@ Namespace AnalysisManagerBase
 		''' <param name="ResultTable"></param>
 		''' <returns></returns>
 		''' <remarks></remarks>
-        Protected Function LoadDatasetLocationsFromDB(ByRef ResultTable As DataTable) As Boolean
+		Protected Function LoadDatasetLocationsFromDB(ByRef ResultTable As DataTable) As Boolean
 
-            'Requests Dataset information from a data package
-            Dim RetryCount As Short = 3
+			'Requests Dataset information from a data package
+			Dim RetryCount As Short = 3
 
-            Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID " & _
-                                   "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
-                                   "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
-                                   "Order by Dataset, Tool"
+			Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID " & _
+			  "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
+			  "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
+			  "Order by Dataset, Tool"
 
-            Dim Dt As DataTable = Nothing
+			Dim Dt As DataTable = Nothing
 
-            'Get a table to hold the results of the query
-            While RetryCount > 0
-                Try
-                    Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
-                        Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(SqlStr, Cn)
-                            Using Ds As DataSet = New DataSet
-                                Da.Fill(Ds)
-                                Dt = Ds.Tables(0)
-                            End Using  'Ds
-                        End Using  'Da
-                    End Using  'Cn
-                    Exit While
-                Catch ex As System.Exception
-                    RetryCount -= 1S
-                    m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Exception getting aggregate list from database: " & ex.Message & "; ConnectionString: " & ConnectionString
-                    m_message &= ", RetryCount = " & RetryCount.ToString
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    System.Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
-                End Try
-            End While
+			'Get a table to hold the results of the query
+			While RetryCount > 0
+				Try
+					Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+						Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(SqlStr, Cn)
+							Using Ds As DataSet = New DataSet
+								Da.Fill(Ds)
+								Dt = Ds.Tables(0)
+							End Using  'Ds
+						End Using  'Da
+					End Using  'Cn
+					Exit While
+				Catch ex As System.Exception
+					RetryCount -= 1S
+					m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Exception getting aggregate list from database: " & ex.Message & "; ConnectionString: " & ConnectionString
+					m_message &= ", RetryCount = " & RetryCount.ToString
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
+				End Try
+			End While
 
-            'If loop exited due to errors, return false
-            If RetryCount < 1 Then
-                m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Excessive failures attempting to retrieve aggregate list from database"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Dt.Dispose()
-                Return False
-            End If
+			'If loop exited due to errors, return false
+			If RetryCount < 1 Then
+				m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; Excessive failures attempting to retrieve aggregate list from database"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Dt.Dispose()
+				Return False
+			End If
 
-            'Verify at least one row returned
-            If Dt.Rows.Count < 1 Then
-                ' No data was returned
-                m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; The file paths return from the database was empty."
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Dt.Dispose()
-                Return False
-            End If
+			'Verify at least one row returned
+			If Dt.Rows.Count < 1 Then
+				' No data was returned
+				m_message = "clsAnalysisResources.LoadDatasetLocationsFromDB; The file paths return from the database was empty."
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Dt.Dispose()
+				Return False
+			End If
 
-            ResultTable = Dt
+			ResultTable = Dt
 
-            Dt.Dispose()
+			Dt.Dispose()
 
-            Return True
+			Return True
 
-        End Function
+		End Function
 
 		Public Shared Function GetFreeMemoryMB() As Single
 
