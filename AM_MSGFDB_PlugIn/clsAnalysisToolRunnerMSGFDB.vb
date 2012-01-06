@@ -31,6 +31,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 97
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
+	Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
+
 	Protected Enum eThreadProgressSteps
 		PreprocessingSpectra = 0
 		DatabaseSearch = 1
@@ -47,6 +49,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected mMSGFDbVersion As String
 	Protected mMSGFDbProgLoc As String
 	Protected mConsoleOutputErrorMsg As String
+
+	Protected mResultsIncludeDecoyPeptides As Boolean = False
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -414,6 +418,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 		Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 		Dim strInputFilePath As String
+		Dim strFastaFilePath As String
 
 		Dim blnIgnorePeptideToProteinMapperErrors As Boolean
 		Dim blnSuccess As Boolean
@@ -421,6 +426,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		UpdateStatusRunning(PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
 
 		strInputFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
+		strFastaFilePath = System.IO.Path.Combine(OrgDbDir, dbFilename)
 
 		Try
 			' Validate that the input file has at least one entry; if not, then no point in continuing
@@ -456,6 +462,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		End Try
 
+		If mResultsIncludeDecoyPeptides Then
+			' Read the original fasta file to create a decoy fasta file
+			strFastaFilePath = GenerateDecoyFastaFile(strFastaFilePath, m_WorkDir)
+
+			If String.IsNullOrEmpty(strFastaFilePath) Then
+				' Problem creating the decoy fasta file
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Error creating a decoy version of the fasta file"
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(strFastaFilePath))
+		End If
+
 		Try
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
@@ -482,7 +503,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				.PeptideInputFileFormat = PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile
 				.PeptideFileSkipFirstLine = False
 				.ProteinDataRemoveSymbolCharacters = True
-				.ProteinInputFilePath = System.IO.Path.Combine(OrgDbDir, dbFilename)
+				.ProteinInputFilePath = strFastaFilePath
 				.SaveProteinToPeptideMappingFile = True
 				.SearchAllProteinsForPeptideSequence = True
 				.SearchAllProteinsSkipCoverageComputationSteps = True
@@ -571,12 +592,92 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	' Read the original fasta file to create a decoy fasta file
+	''' <summary>
+	''' Creates a decoy version of the fasta file specified by strInputFilePath
+	''' This new file will include the original proteins plus reversed versions of the original proteins
+	''' Protein names will be prepended with REV_
+	''' </summary>
+	''' <param name="strInputFilePath">Fasta file to process</param>
+	''' <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
+	''' <returns>Full path to the decoy fasta file</returns>
+	''' <remarks></remarks>
+	Protected Function GenerateDecoyFastaFile(ByVal strInputFilePath As String, ByVal strOutputDirectoryPath As String) As String
+
+		Const PROTEIN_LINE_START_CHAR As Char = ">"c
+		Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
+
+		Dim strDecoyFastaFilePath As String = String.Empty
+		Dim ioSourceFile As System.IO.FileInfo
+
+		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
+		Dim swProteinOutputFile As System.IO.StreamWriter
+
+		Dim blnInputProteinFound As Boolean
+
+
+		Try
+			ioSourceFile = New System.IO.FileInfo(strInputFilePath)
+			If Not ioSourceFile.Exists Then
+				m_message = "Fasta file not found: " & ioSourceFile.FullName
+				Return String.Empty
+			End If
+
+			strDecoyFastaFilePath = System.IO.Path.Combine(strOutputDirectoryPath, System.IO.Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
+
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating decoy fasta file at " & strDecoyFastaFilePath)
+			End If
+
+			objFastaFileReader = New ProteinFileReader.FastaFileReader
+			With objFastaFileReader
+				.ProteinLineStartChar = PROTEIN_LINE_START_CHAR
+				.ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
+			End With
+
+			If Not objFastaFileReader.OpenFile(strInputFilePath) Then
+				m_message = "Error reading fasta file with ProteinFileReader to create decoy file"
+				Return String.Empty
+			End If
+
+			swProteinOutputFile = New System.IO.StreamWriter(New System.IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+			Do
+				blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
+
+				If blnInputProteinFound Then
+					' Write the forward protein
+					swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+					WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
+
+					' Write the decoy protein
+					swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & "REV_" & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+					WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
+				End If
+
+			Loop While blnInputProteinFound
+
+			swProteinOutputFile.Close()
+			objFastaFileReader.CloseFile()
+
+		Catch ex As Exception
+			m_message = "Exception creating decoy fasta file"
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "GenerateDecoyFastaFile, " & m_message, ex)
+			Return String.Empty
+		End Try
+
+		Return strDecoyFastaFilePath
+
+	End Function
+
 	Protected Function GetMSFGDBParameterNames() As System.Collections.Generic.Dictionary(Of String, String)
 		Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
-		dctParamNames = New System.Collections.Generic.Dictionary(Of String, String)(25)
+		dctParamNames = New System.Collections.Generic.Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
 		dctParamNames.Add("PMTolerance", "t")
 		dctParamNames.Add("TDA", "tda")
+		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, MSGFDB_OPTION_SHOWDECOY)
 		dctParamNames.Add("FragmentationMethodID", "m")
 		dctParamNames.Add("InstrumentID", "inst")
 		dctParamNames.Add("EnzymeID", "e")
@@ -1020,6 +1121,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		sbOptions = New System.Text.StringBuilder(500)
 
+		' This is set to True if the parameter file contains showDecoy=1
+		mResultsIncludeDecoyPeptides = False
 
 		Try
 
@@ -1059,6 +1162,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					' Check whether strKey is one of the standard keys defined in dctParamNames
 					If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
 						sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+
+						If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
+							If Integer.TryParse(strValue, intValue) Then
+								If intValue > 0 Then
+									mResultsIncludeDecoyPeptides = True
+								End If
+							End If
+						End If
 
 					ElseIf IsMatch(strKey, "uniformAAProb") Then
 						If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
@@ -1225,6 +1336,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	Private Function ReverseString(ByVal strText As String) As String
+
+		Dim chReversed() As Char = strText.ToCharArray()
+		Array.Reverse(chReversed)
+		Return New String(chReversed)
+
+	End Function
+
 	''' <summary>
 	''' Stores the tool version info in the database
 	''' </summary>
@@ -1384,6 +1503,17 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	Private Sub WriteProteinSequence(ByRef swOutFile As System.IO.StreamWriter, ByVal strSequence As String)
+		Dim intIndex As Integer = 0
+		Dim intLength As Integer
+
+		Do While intIndex < strSequence.Length
+			intLength = Math.Min(60, strSequence.Length - intIndex)
+			swOutFile.WriteLine(strSequence.Substring(intIndex, intLength))
+			intIndex += 60
+		Loop
+
+	End Sub
 	''' <summary>
 	''' Zips MSGFDB Output File
 	''' </summary>

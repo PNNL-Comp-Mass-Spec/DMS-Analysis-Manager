@@ -12,6 +12,88 @@ AnalysisManagerMSGFDBPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.GenerateDecoyFastaFile(System.String,System.String)">
+	<summary>
+ Creates a decoy version of the fasta file specified by strInputFilePath
+ This new file will include the original proteins plus reversed versions of the original proteins
+ Protein names will be prepended with REV_
+ </summary>
+	<param name="strInputFilePath">Fasta file to process</param>
+	<param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
+	<returns>Full path to the decoy fasta file</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.IsMatch(System.String,System.String)">
+	<summary>
+ Compare to strings (not case sensitive)
+ </summary>
+	<param name="strText1"></param>
+	<param name="strText2"></param>
+	<returns>True if they match; false if not</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseConsoleOutputFile(System.String)">
+	<summary>
+ Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
+ </summary>
+	<param name="strConsoleOutputFilePath"></param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDBModifications(System.String,System.Text.StringBuilder@,System.Int32,System.Collections.Generic.List{System.String}@,System.Collections.Generic.List{System.String}@)">
+	<summary>
+ Parses the static and dynamic modification information to create the MSGFDB Mods file
+ </summary>
+	<param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
+	<param name="sbOptions">String builder of command line arguments to pass to MSGFDB</param>
+	<param name="intNumMods">Max Number of Modifications per peptide</param>
+	<param name="lstStaticMods">List of Static Mods</param>
+	<param name="lstDynamicMods">List of Dynamic Mods</param>
+	<returns>True if success, false if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDBParameterFile(System.String,System.Single)">
+	<summary>
+ Read the MSGFDB options file and convert the options to command line switches
+ </summary>
+	<param name="strParameterFilePath">Path to the MSGFDB Parameter File</param>
+	<param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
+	<returns>Options string if success; empty string if an error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDbValidateMod(System.String,System.String@)">
+	<summary>
+ Validates that the modification definition text
+ </summary>
+	<param name="strMod">Modification definition</param>
+	<param name="strModClean">Cleaned-up modification definition (output param)</param>
+	<returns>True if valid; false if invalid</returns>
+	<remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSFDBParamLine(System.Text.StringBuilder@,System.String,System.String,System.String)">
+	<summary>
+	</summary>
+	<param name="sbOptions"></param>
+	<param name="strKeyName"></param>
+	<param name="strValue"></param>
+	<param name="strParameterName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ValidateCDTAFile">
+	<summary>
+ Make sure the _DTA.txt file exists and has at least one spectrum in it
+ </summary>
+	<returns>True if success; false if failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults(System.String)">
+	<summary>
+ Zips MSGFDB Output File
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.CreateSuffixArrayFiles(System.String,System.Int32,System.String,System.String,System.String,System.String,System.Boolean)">
 	<summary>
  Convert .Fasta file to indexed DB files compatible with MSGFDB
