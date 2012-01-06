@@ -104,7 +104,10 @@ Public Class clsMSGFRunner
 	Protected mToolVersionWritten As Boolean
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
+
 	Protected mUsingMSGFDB As Boolean = True
+	Protected mMSGFDBVersion As String = "Unknown"
+
 	Protected mJavaProgLoc As String = String.Empty
 
 	Protected mConsoleOutputErrorMsg As String
@@ -145,8 +148,6 @@ Public Class clsMSGFRunner
 		Dim blnDoNotFilterPeptides As Boolean
 		Dim intMSGFInputFileLineCount As Integer = 0
 
-		Dim blnUsingMSGFDB As Boolean = True
-
 		' Set this to success for now
 		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -179,8 +180,7 @@ Public Class clsMSGFRunner
 		End If
 
 		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
-		mMSGFProgLoc = DetermineMSGFProgramLocation(blnUsingMSGFDB)
-		mUsingMSGFDB = blnUsingMSGFDB
+		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)		
 
 		If String.IsNullOrEmpty(mMSGFProgLoc) Then
 			If String.IsNullOrEmpty(m_message) Then
@@ -959,8 +959,13 @@ Public Class clsMSGFRunner
 
 				Case Else
 					' Use MSGFDB
-
+					blnUsingMSGFDB = True
+					mMSGFDBVersion = String.Copy(strStepToolVersion)
 			End Select
+		Else
+			' Usse MSGFDB
+			blnUsingMSGFDB = True
+			mMSGFDBVersion = "Production_Release"
 		End If
 
 		Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion)
@@ -2184,13 +2189,40 @@ Public Class clsMSGFRunner
 		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML file
 		CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)		 ' Output file
 
-		If mETDMode Then
-			CmdStr &= " -m 1"	' ETD fragmentation
-		Else
-			CmdStr &= " -m 0"	' CID fragmentation
+		' MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
+		' MSGFDB v7097 and later use: 
+		'   -m 0 means as written in the spectrum or CID if no info
+		'   -m 1 means CID
+		'   -m 2 means ETD
+		'   -m 3 means HCD
+
+		Dim intMSGFDBVersion As Integer = Integer.MaxValue
+
+		If mUsingMSGFDB Then
+			If Not String.IsNullOrEmpty(mMSGFDBVersion) AndAlso mMSGFDBVersion.StartsWith("v") Then
+				If Integer.TryParse(mMSGFDBVersion.Substring(1), intMSGFDBVersion) Then
+					' Using a specific version of MSGFDB
+					' intMSGFDBVersion should now be something like 6434, 6841, 6964, 7097 etc.
+				Else
+					' Unable to parse out an integer from mMSGFDBVersion
+					intMSGFDBVersion = Integer.MaxValue
+				End If
+			End If
 		End If
 
-		CmdStr &= " -e 1"		' Enzyme is Trypsin
+		If mUsingMSGFDB AndAlso intMSGFDBVersion >= 7097 Then
+			' Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
+			CmdStr &= " -m 0"	' as-written in the input file
+		Else
+			If mETDMode Then
+				CmdStr &= " -m 1"	' ETD fragmentation
+			Else
+				CmdStr &= " -m 0"	' CID fragmentation
+			End If
+		End If
+
+
+		CmdStr &= " -e 1"		' Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
 		CmdStr &= " -fixMod 0"	' No fixed mods on cysteine
 		CmdStr &= " -x 0"		' Write out all matches for each spectrum
 		CmdStr &= " -p 1"		' SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
