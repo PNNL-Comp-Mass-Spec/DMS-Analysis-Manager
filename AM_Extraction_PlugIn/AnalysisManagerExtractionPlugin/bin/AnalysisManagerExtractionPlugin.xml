@@ -32,6 +32,12 @@ AnalysisManagerExtractionPlugin
 	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	<returns>IJobParams.CloseOutType specifying results</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.RetrieveDefaultMassCorrectionTagsFile">
+	<summary>
+ Copies the default Mass Correction Tags file to the working directory
+ </summary>
+	<returns>True if success, otherwise false</returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.RetrieveMiscFiles">
 	<summary>
  Retrieves misc files (ie, ModDefs) needed for extraction

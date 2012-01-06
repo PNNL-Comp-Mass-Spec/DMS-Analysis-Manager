@@ -232,7 +232,7 @@ Public Class clsExtractToolRunner
 		If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) And _
 		  (Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA) Then
             'log error and return result calling routine handles the error appropriately
-            Msg = "Error encoutered during extraction"
+			Msg = "Error encountered during extraction"
             m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.PerformPeptideExtraction(); " & Msg)
             Return Result
