@@ -1120,6 +1120,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim lstStaticMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
 		Dim lstDynamicMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
 
+		Dim blnShowDecoyParamPresent As Boolean = False
 		Dim blnShowDecoy As Boolean = False
 		Dim blnTDA As Boolean = False
 
@@ -1168,6 +1169,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 						sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
 
 						If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
+							blnShowDecoyParamPresent = True
 							If Integer.TryParse(strValue, intValue) Then
 								If intValue > 0 Then
 									blnShowDecoy = True
@@ -1240,6 +1242,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			If blnShowDecoy And blnTDA Then
 				' Parameter file contains both TDA=1 and showDecoy=1
 				mResultsIncludeDecoyPeptides = True
+			End If
+
+			If Not blnShowDecoyParamPresent Then
+				' Add showDecoy to sbOptions
+				sbOptions.Append(" -showDecoy 0")
 			End If
 
 		Catch ex As Exception
