@@ -31,6 +31,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 97
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
+	Protected Const MSGFDB_OPTION_TDA As String = "TDA"
 	Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
 
 	Protected Enum eThreadProgressSteps
@@ -676,8 +677,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		dctParamNames = New System.Collections.Generic.Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
 		dctParamNames.Add("PMTolerance", "t")
-		dctParamNames.Add("TDA", "tda")
-		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, MSGFDB_OPTION_SHOWDECOY)
+		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
+		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
 		dctParamNames.Add("FragmentationMethodID", "m")
 		dctParamNames.Add("InstrumentID", "inst")
 		dctParamNames.Add("EnzymeID", "e")
@@ -1119,9 +1120,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim lstStaticMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
 		Dim lstDynamicMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
 
+		Dim blnShowDecoy As Boolean = False
+		Dim blnTDA As Boolean = False
+
 		sbOptions = New System.Text.StringBuilder(500)
 
-		' This is set to True if the parameter file contains showDecoy=1
+		' This is set to True if the parameter file contains both TDA=1 and showDecoy=1
 		mResultsIncludeDecoyPeptides = False
 
 		Try
@@ -1166,7 +1170,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 						If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
 							If Integer.TryParse(strValue, intValue) Then
 								If intValue > 0 Then
-									mResultsIncludeDecoyPeptides = True
+									blnShowDecoy = True
+								End If
+							End If
+						ElseIf IsMatch(strKey, MSGFDB_OPTION_TDA) Then
+							If Integer.TryParse(strValue, intValue) Then
+								If intValue > 0 Then
+									blnTDA = True
 								End If
 							End If
 						End If
@@ -1226,6 +1236,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Loop
 
 			srParamFile.Close()
+
+			If blnShowDecoy And blnTDA Then
+				' Parameter file contains both TDA=1 and showDecoy=1
+				mResultsIncludeDecoyPeptides = True
+			End If
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception reading MSGFDB parameter file: " & ex.Message)

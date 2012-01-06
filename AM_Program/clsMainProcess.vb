@@ -945,6 +945,7 @@ Namespace AnalysisManagerProg
 
 			Dim DatasetStoragePath As String
 			Dim DatasetStorageMinFreeSpaceGB As Integer
+			Dim ioDatasetStoragePath As System.IO.DirectoryInfo
 
 			Dim WorkingDir As String
 			Dim WorkingDirMinFreeSpaceMB As Integer
@@ -966,6 +967,17 @@ Namespace AnalysisManagerProg
 
 					DatasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
 					DatasetStorageMinFreeSpaceGB = CIntSafe(m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB"), DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
+
+					ioDatasetStoragePath = New System.IO.DirectoryInfo(DatasetStoragePath)
+					If Not ioDatasetStoragePath.Exists Then
+						' Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
+						' Try to use the parent folder (or the parent of the parent)
+						Do While Not ioDatasetStoragePath.Exists AndAlso Not ioDatasetStoragePath.Parent Is Nothing
+							ioDatasetStoragePath = ioDatasetStoragePath.Parent
+						Loop
+
+						DatasetStoragePath = ioDatasetStoragePath.FullName
+					End If
 
 					If Not ValidateFreeDiskSpaceWork("Dataset directory", DatasetStoragePath, DatasetStorageMinFreeSpaceGB * 1024, ErrorMessage, clsLogTools.LoggerTypes.LogFile) Then
 						Return False

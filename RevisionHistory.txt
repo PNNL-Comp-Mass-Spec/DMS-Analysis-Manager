@@ -1,5 +1,16 @@
 Analysis Tool Manager History
 
+January 5, 2012
+	- Updated functions FindAndRetrieveMiscFiles and FindDataFile to include option SearchArchivedDatasetFolder 
+		- Allows to specify that only the Proto storage server should be searched for a file; skip the Archive
+	- Updated the DataExtractor plugin to not search the Archive when looking for the _ModDefs.txt file or MassCorrectionTags file
+	- Updated MSGF plugin to support MSGFDB v7097, which now treats the -m switch the same for both MSGFDB and MSGF
+		- Now always using -m 0 when processing mzXML files with MSGF via MSGFDB
+	- Updated MSGFDB plugin to support the -showDecoy switch
+		- When TDA=1 and showDecoy=1 are present in the parameter file, then the results will contain peptides from reverse proteins (protein name starts with REV_)
+		- Consequently, we use ProteinFileReader.dll to generate a decoy version of the source Fasta file prior to calling the PeptideToProteinMapEngine
+	- Updated ValidateFreeDiskSpace to use the parent folder if the dataset storage path doesn't exist 
+
 January 4, 2012
 	- Updated MSAlign plugin to support MSAlign v0.7
 		- The eValueThreshold parameter has been replaced with two parameters, cutoffType and cutoff
