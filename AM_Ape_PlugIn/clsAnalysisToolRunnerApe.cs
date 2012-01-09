@@ -121,7 +121,7 @@ namespace AnalysisManager_Ape_PlugIn
 					return result;
 				}
 
-                //result = CopyResultsFolderToServer();
+                result = CopyResultsFolderToServer();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
