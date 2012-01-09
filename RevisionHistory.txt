@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+January 8, 2012
+	- Updated MSGF plugin to simply copy the MSGFDB-based SpecProb value into the _fht_MSGF.txt and _syn_MSGF.txt files, rather than re-running MSGF
+
 January 5, 2012
 	- Updated functions FindAndRetrieveMiscFiles and FindDataFile to include option SearchArchivedDatasetFolder 
 		- Allows to specify that only the Proto storage server should be searched for a file; skip the Archive

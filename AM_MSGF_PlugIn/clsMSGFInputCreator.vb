@@ -24,11 +24,12 @@ Public MustInherit Class clsMSGFInputCreator
 	Protected Structure udtPHRPDataLine
 		Public Title As String
 		Public ScanNumber As Integer
-		Public Peptide As String				' Aka annotation
+		Public Peptide As String			' Aka annotation
 		Public Charge As Short
 		Public ProteinFirst As String
 		Public ResultID As Integer
-		Public CollisionMode As String				' CID, ETD, HCD, or n/a
+		Public CollisionMode As String		' CID, ETD, HCD, or n/a
+		Public SpecProb As String			' Only used by MSGFDB; stored as string to preserve formatting
 		Public PassesFilters As Boolean
 
 		Public Sub Clear()
@@ -39,6 +40,7 @@ Public MustInherit Class clsMSGFInputCreator
 			ProteinFirst = String.Empty
 			ResultID = 0
 			CollisionMode = "n/a"
+			SpecProb = String.Empty
 			PassesFilters = False
 		End Sub
 	End Structure
@@ -92,6 +94,12 @@ Public MustInherit Class clsMSGFInputCreator
 		Set(ByVal value As Boolean)
 			mDoNotFilterPeptides = value
 		End Set
+	End Property
+
+	Public ReadOnly Property ErrorMessage() As String
+		Get
+			Return mErrorMessage
+		End Get
 	End Property
 
 	Public ReadOnly Property MSGFInputFileLineCount() As Integer

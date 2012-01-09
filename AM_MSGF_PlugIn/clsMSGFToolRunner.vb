@@ -211,111 +211,127 @@ Public Class clsMSGFRunner
 		Try
 			blnProcessingError = False
 
-			' Parse the Sequest, X!Tandem, or Inspect parameter file to determine if ETD mode was used
-			Dim strSearchToolParamFilePath As String
-			strSearchToolParamFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
 
-			blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath)
-			If Not blnSuccess Then
-				Msg = "Error examining param file to determine if ETD mode was enabled)"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			If mUsingMSGFDB And eResultType = ePeptideHitResultType.MSGFDB Then
+				' Don't actually run MSGF
+				' Simply copy the values from the MSGFDB result file
+
+				StoreToolVersionInfoMSGFDBResults()
+
+				If Not CreateMSGFResultsFromMSGFDBResults() Then
+					blnProcessingError = True
+				End If
+
 			Else
-				m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD
-				m_StatusTools.UpdateAndWrite(m_progress)
-			End If
 
-			' Create the _MSGF_input.txt file
-			blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, intMSGFInputFileLineCount)
+				' Parse the Sequest, X!Tandem, or Inspect parameter file to determine if ETD mode was used
+				Dim strSearchToolParamFilePath As String
+				strSearchToolParamFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
 
-			If Not blnSuccess Then
-				Msg = "Error creating MSGF input file"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-				blnProcessingError = True
-			Else
-				m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED
-				m_StatusTools.UpdateAndWrite(m_progress)
-			End If
+				blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath)
+				If Not blnSuccess Then
+					Msg = "Error examining param file to determine if ETD mode was enabled)"
+					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Else
+					m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD
+					m_StatusTools.UpdateAndWrite(m_progress)
+				End If
 
-
-			If Not blnProcessingError Then
-				' Create the .mzXML file
-				' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
-				blnSuccess = CreateMZXMLFile(m_WorkDir)
+				' Create the _MSGF_input.txt file
+				blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, intMSGFInputFileLineCount)
 
 				If Not blnSuccess Then
-					Msg = "Error creating .mzXML file"
+					Msg = "Error creating MSGF input file"
 					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
 					blnProcessingError = True
 				Else
-					m_progress = PROGRESS_PCT_MZXML_CREATED
+					m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED
 					m_StatusTools.UpdateAndWrite(m_progress)
 				End If
-			End If
 
 
-			If Not blnProcessingError Then
-				blnUseExistingMSGFResults = clsGlobal.GetJobParameter(m_jobParams, "UseExistingMSGFResults", False)
+				If Not blnProcessingError Then
+					' Create the .mzXML file
+					' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
+					blnSuccess = CreateMZXMLFile(m_WorkDir)
 
-				If blnUseExistingMSGFResults Then
-					' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
-					' If that file exists, use it as the official MSGF results file
-					' The assumption is that this file will have been created by manually running MSGF on another computer
-
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
-					End If
-
-					If RetrievePreGeneratedDataFile(System.IO.Path.GetFileName(mMSGFResultsFilePath)) Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file successfully copied to the work directory")
-						blnSuccess = True
+					If Not blnSuccess Then
+						Msg = "Error creating .mzXML file"
+						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						blnProcessingError = True
 					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file not found")
-						blnSuccess = False
+						m_progress = PROGRESS_PCT_MZXML_CREATED
+						m_StatusTools.UpdateAndWrite(m_progress)
+					End If
+				End If
+
+
+				If Not blnProcessingError Then
+					blnUseExistingMSGFResults = clsGlobal.GetJobParameter(m_jobParams, "UseExistingMSGFResults", False)
+
+					If blnUseExistingMSGFResults Then
+						' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
+						' If that file exists, use it as the official MSGF results file
+						' The assumption is that this file will have been created by manually running MSGF on another computer
+
+						If m_DebugLevel >= 1 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
+						End If
+
+						If RetrievePreGeneratedDataFile(System.IO.Path.GetFileName(mMSGFResultsFilePath)) Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file successfully copied to the work directory")
+							blnSuccess = True
+						Else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file not found")
+							blnSuccess = False
+						End If
+
+					Else
+						' Run MSGF
+						' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
+						blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath)
 					End If
 
-				Else
-					' Run MSGF
-					' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
-					blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath)
-				End If
+					If Not blnSuccess Then
+						Msg = "Error running MSGF"
+						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						blnProcessingError = True
+					Else
+						' MSGF successfully completed
+						If Not mKeepMSGFInputFiles Then
+							' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
+							clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(mMSGFInputFilePath))
+						End If
 
-				If Not blnSuccess Then
-					Msg = "Error running MSGF"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-					blnProcessingError = True
-				Else
-					' MSGF successfully completed
-					If Not mKeepMSGFInputFiles Then
-						' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
-						clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(mMSGFInputFilePath))
+						m_progress = PROGRESS_PCT_MSGF_COMPLETE
+						m_StatusTools.UpdateAndWrite(m_progress)
 					End If
-
-					m_progress = PROGRESS_PCT_MSGF_COMPLETE
-					m_StatusTools.UpdateAndWrite(m_progress)
 				End If
-			End If
 
-			If Not blnProcessingError Then
-				' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
-				' Will also make sure that all of the peptides have numeric SpecProb values
-				' For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
+				If Not blnProcessingError Then
+					' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
+					' Will also make sure that all of the peptides have numeric SpecProb values
+					' For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
 
-				' Sleep for 1 second to give the MSGF results file a chance to finalize
-				System.Threading.Thread.Sleep(1000)
+					' Sleep for 1 second to give the MSGF results file a chance to finalize
+					System.Threading.Thread.Sleep(1000)
 
-				blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath)
+					blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath)
 
-				If Not blnSuccess Then
-					Msg = "MSGF results file post-processing error"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-					blnPostProcessingError = True
+					If Not blnSuccess Then
+						Msg = "MSGF results file post-processing error"
+						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						blnPostProcessingError = True
+					End If
 				End If
-			End If
 
-			' Make sure the MSGF Input Creator log file is closed
-			mMSGFInputCreator.CloseLogFileNow()
+				' Make sure the MSGF Input Creator log file is closed
+				mMSGFInputCreator.CloseLogFileNow()
+
+
+			End If
 
 			'Stop the job timer
 			m_StopTime = System.DateTime.UtcNow
@@ -691,7 +707,7 @@ Public Class clsMSGFRunner
 						If objAttributeNode Is Nothing Then
 							' Node does not have an attribute named "type"
 						Else
-							If objAttributeNode.Value.ToLower = "input" Then
+							If objAttributeNode.Value.ToLower() = "input" Then
 								' Valid node; examine its InnerText value
 								If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
 									mETDMode = True
@@ -814,6 +830,45 @@ Public Class clsMSGFRunner
 		End If
 
 		Return blnSuccess
+
+	End Function
+
+	Private Function CreateMSGFResultsFromMSGFDBResults() As Boolean
+
+		Dim objDynamicMods As New System.Collections.Generic.SortedDictionary(Of String, String)
+		Dim objStaticMods As New System.Collections.Generic.SortedDictionary(Of String, String)
+
+		Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+
+		If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
+			Return False
+		End If
+
+		If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()) Then
+			Return False
+		End If
+
+		Return True
+
+	End Function
+
+	Private Function CreateMSGFResultsFromMSGFDBResults(ByRef objMSGFInputCreator As clsMSGFInputCreatorMSGFDB, ByVal strSynOrFHT As String) As Boolean
+
+		Dim strSourceFilePath As String
+		Dim blnSuccess As Boolean
+
+		strSourceFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
+		blnSuccess = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(strSourceFilePath, strSynOrFHT)
+
+		If Not blnSuccess Then
+			m_message = "Error creating MSGF file for " & System.IO.Path.GetFileName(strSourceFilePath)
+			If Not String.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage) Then
+				m_message &= ": " & objMSGFInputCreator.ErrorMessage
+			End If
+			Return False
+		Else
+			Return True
+		End If
 
 	End Function
 
@@ -941,34 +996,35 @@ Public Class clsMSGFRunner
 		' In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
 
 		' Check whether the settings file specifies that a specific version of the step tool be used
-		Dim strStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
+		Dim strMSGFStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
 
-		If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
+		If Not String.IsNullOrWhiteSpace(strMSGFStepToolVersion) Then
 
 			' Specific version is defined
 			' Check whether the version is one of the known versions for the old MSGF
-			Select Case strStepToolVersion.ToLower()
-				Case "v2010-11-16", "v2011-09-02", "v6393", "v6432"
-					' Use MSGF
 
-					strStepToolName = "MSGF"
-					strProgLocManagerParamName = "MSGFLoc"
-					strExeName = MSGF_JAR_NAME
+			If IsLegacyMSGFVersion(strMSGFStepToolVersion) Then
+				' Use MSGF
 
-					blnUsingMSGFDB = False
+				strStepToolName = "MSGF"
+				strProgLocManagerParamName = "MSGFLoc"
+				strExeName = MSGF_JAR_NAME
 
-				Case Else
-					' Use MSGFDB
-					blnUsingMSGFDB = True
-					mMSGFDBVersion = String.Copy(strStepToolVersion)
-			End Select
+				blnUsingMSGFDB = False
+
+			Else
+				' Use MSGFDB
+				blnUsingMSGFDB = True
+				mMSGFDBVersion = String.Copy(strMSGFStepToolVersion)
+			End If
+
 		Else
-			' Usse MSGFDB
+			' Use MSGFDB
 			blnUsingMSGFDB = True
 			mMSGFDBVersion = "Production_Release"
 		End If
 
-		Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion)
+		Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion)
 
 	End Function
 
@@ -1069,6 +1125,21 @@ Public Class clsMSGFRunner
 		End Select
 
 		Return strPHRPResultsFileName
+
+	End Function
+
+	Public Shared Function IsLegacyMSGFVersion(ByVal strStepToolVersion As String) As Boolean
+
+		Select Case strStepToolVersion.ToLower()
+			Case "v2010-11-16", "v2011-09-02", "v6393", "v6432"
+				' Legacy MSGF
+				Return True
+
+			Case Else
+				' Using MSGF inside MSGFDB
+				Return False
+
+		End Select
 
 	End Function
 
@@ -2490,6 +2561,46 @@ Public Class clsMSGFRunner
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex)
+			Return False
+		End Try
+
+	End Function
+
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfoMSGFDBResults() As Boolean
+
+		Dim strToolVersionInfo As String = String.Empty
+		Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
+
+		' Lookup the version of AnalysisManagerMSGFPlugin
+		Try
+			Dim oAssemblyName As System.Reflection.AssemblyName
+			oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerMSGFPlugin").GetName
+
+			Dim strNameAndVersion As String
+			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerMSGFPlugin: " & ex.Message)
+			Return False
+		End Try
+
+		' Store the path to MSGFDB.jar in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(mMSGFProgLoc))
+
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
 		End Try
 
