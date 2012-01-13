@@ -610,6 +610,12 @@ Namespace AnalysisManagerBase
 
 		End Function
 
+		''' <summary>
+		''' Adds double quotes around a path if it contains a space
+		''' </summary>
+		''' <param name="strPath"></param>
+		''' <returns>The path (updated if necessary)</returns>
+		''' <remarks></remarks>
 		Protected Function PossiblyQuotePath(ByVal strPath As String) As String
 			If strPath.Contains(" "c) Then
 				Return """" & strPath & """"
@@ -618,6 +624,30 @@ Namespace AnalysisManagerBase
 			End If
 		End Function
 
+		''' <summary>
+		''' Updates the dataset name to the final folder name in the transferFolderPath job parameter
+		''' Updates the transfer folder path to remove the final folder
+		''' </summary>
+		''' <remarks></remarks>
+		Protected Sub RedefineAggregationJobDatasetAndTransferFolder()
+
+			Dim strTransferFolderPath As String = m_jobParams.GetParam("transferFolderPath")
+			Dim diTransferFolder As New System.IO.DirectoryInfo(strTransferFolderPath)
+
+			m_Dataset = diTransferFolder.Name
+			strTransferFolderPath = diTransferFolder.Parent.FullName
+			m_jobParams.SetParam("JobParameters", "transferFolderPath", strTransferFolderPath)
+
+		End Sub
+
+		''' <summary>
+		''' Extracts the contents of the Version= line in a Tool Version Info file
+		''' </summary>
+		''' <param name="strDLLFilePath"></param>
+		''' <param name="strVersionInfoFilePath"></param>
+		''' <param name="strVersion"></param>
+		''' <returns></returns>
+		''' <remarks></remarks>
 		Protected Function ReadVersionInfoFile(ByVal strDLLFilePath As String, ByVal strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
 
 			' Open strVersionInfoFilePath and read the Version= line
@@ -686,6 +716,13 @@ Namespace AnalysisManagerBase
 
 		End Function
 
+		''' <summary>
+		''' Creates a Tool Version Info file
+		''' </summary>
+		''' <param name="strFolderPath"></param>
+		''' <param name="strToolVersionInfo"></param>
+		''' <returns></returns>
+		''' <remarks></remarks>
 		Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
 			Dim swToolVersionFile As System.IO.StreamWriter
 			Dim strToolVersionFilePath As String

@@ -103,6 +103,9 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
+		' Override the dataset name and transfer folder path so that the results get copied to the correct location
+		MyBase.RedefineAggregationJobDatasetAndTransferFolder()
+
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
@@ -167,51 +170,50 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
     End Sub
 
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo() As Boolean
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+		Dim strToolVersionInfo As String = String.Empty
+		Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 
-        Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
+		' Store paths to key files in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
 
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+	End Function
 
-    End Function
+	''' <summary>
+	''' Event handler for CmdRunner.LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+		' Synchronize the stored Debug level with the value stored in the database
+		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+		'Update the status file (limit the updates to every 5 seconds)
+		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = System.DateTime.UtcNow
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_PRIDEMZXML_RUNNING, 0, "", "", "", False)
+		End If
 
-        'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_PRIDEMZXML_RUNNING, 0, "", "", "", False)
-        End If
-
-    End Sub
+	End Sub
 
 #End Region
 

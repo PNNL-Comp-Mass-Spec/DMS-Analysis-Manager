@@ -817,6 +817,36 @@ AnalysisManagerProg
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.PossiblyQuotePath(System.String)">
+	<summary>
+ Adds double quotes around a path if it contains a space
+ </summary>
+	<param name="strPath"></param>
+	<returns>The path (updated if necessary)</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.RedefineAggregationJobDatasetAndTransferFolder">
+	<summary>
+ Updates the dataset name to the final folder name in the transferFolderPath job parameter
+ Updates the transfer folder path to remove the final folder
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.ReadVersionInfoFile(System.String,System.String,System.String@)">
+	<summary>
+ Extracts the contents of the Version= line in a Tool Version Info file
+ </summary>
+	<param name="strDLLFilePath"></param>
+	<param name="strVersionInfoFilePath"></param>
+	<param name="strVersion"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.SaveToolVersionInfoFile(System.String,System.String)">
+	<summary>
+ Creates a Tool Version Info file
+ </summary>
+	<param name="strFolderPath"></param>
+	<param name="strToolVersionInfo"></param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisToolRunnerBase.SetStepTaskToolVersion(System.String)">
 	<summary>
  Communicates with database to record the tool version(s) for the current step task

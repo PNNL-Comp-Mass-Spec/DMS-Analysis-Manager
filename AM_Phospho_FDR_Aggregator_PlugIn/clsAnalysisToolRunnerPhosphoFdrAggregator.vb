@@ -90,18 +90,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
-
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
-
-        'Make sure objects are released
+		' Sleep 2 seconds before continuing
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
 
         If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
             result = ConcatenateResultFiles("_cid_outputAScore.txt")
@@ -127,6 +117,21 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             End If
         End If
 
+		'Stop the job timer
+		m_StopTime = System.DateTime.UtcNow
+
+		'Add the current job data to the summary file
+		If Not UpdateSummaryFile() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		End If
+
+		'Make sure objects are released
+		System.Threading.Thread.Sleep(2000)		   '2 second delay
+		GC.Collect()
+		GC.WaitForPendingFinalizers()
+
+		' Override the dataset name and transfer folder path so that the results get copied to the correct location
+		MyBase.RedefineAggregationJobDatasetAndTransferFolder()
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
