@@ -1,5 +1,11 @@
 Analysis Tool Manager History
 
+January 18, 2012
+	- Updated Decon2LSV2 plugin to support DeconConsole v4400 (which only requires dataset file path and parameter file path, and not dataset type)
+
+January 16, 2012
+	- Updated MSDeconv plugin to support paameters MSDeconvIncludeMS1 and MSDeconvOutputFormat
+
 January 12, 2012
 	- Updated the PRIDE_MZXML and Phospho_FDR_Aggregator plugins to redefine the dataset name and transfer folder path so that results are stored directly below the data package instead of in a subfolder named Aggregation
 

@@ -42,6 +42,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 		Dim CmdStr As String
 		Dim intJavaMemorySize As Integer
+		Dim blnIncludeMS1Spectra As Boolean
+		Dim strOutputFormat As String
 
 		Dim result As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
@@ -85,6 +87,28 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 			ResultsFileName = m_Dataset & "_msdeconv.msalign"
 
+			blnIncludeMS1Spectra = clsGlobal.CBoolSafe(m_jobParams.GetParam("MSDeconvIncludeMS1"))
+			strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat")
+
+			If String.IsNullOrEmpty(strOutputFormat) Then
+				strOutputFormat = "msalign"
+			Else
+				Select Case strOutputFormat.ToLower()
+					Case "mgf"
+						strOutputFormat = "mgf"
+						ResultsFileName = m_Dataset & "_msdeconv.mgf"
+					Case "text"
+						strOutputFormat = "text"
+						ResultsFileName = m_Dataset & "_msdeconv.txt"
+					Case "msalign"
+						strOutputFormat = "msalign"
+					Case Else
+						m_message = "Invalid output format: " & strOutputFormat
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End Select
+			End If
+
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDeconv")
 
 			' Lookup the amount of memory to reserve for Java; default to 2 GB 
@@ -98,7 +122,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			' Define the input file and processing options
 			' Note that capitalization matters for the extension; it must be .mzXML
 			CmdStr &= " " & m_Dataset & ".mzXML"
-			CmdStr &= " -o msalign -t centroided"
+			CmdStr &= " -o " & strOutputFormat & " -t centroided"
+
+			If blnIncludeMS1Spectra Then
+				CmdStr &= " -l"
+			End If
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
