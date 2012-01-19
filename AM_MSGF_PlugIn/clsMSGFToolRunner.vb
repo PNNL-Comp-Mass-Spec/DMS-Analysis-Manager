@@ -64,6 +64,9 @@ Public Class clsMSGFRunner
 	Public Const XT_RESULT_TO_SEQ_MAP_SUFFIX As String = "_xt_ResultToSeqMap.txt"
 	Public Const XT_SEQ_TO_PROTEIN_MAP_SUFFIX As String = "_xt_SeqToProteinMap.txt"
 
+	Public Const PHRP_MOD_DEFS_SUFFIX As String = "_ModDefs.txt"
+	Public Const PHRP_MOD_SUMMARY_SUFFIX As String = "_ModSummary.txt"
+
 	Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
 	Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05			' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
 
@@ -1054,19 +1057,19 @@ Public Class clsMSGFRunner
 		Select Case eResultType
 			Case ePeptideHitResultType.Sequest
 				' Sequest
-				strModSummaryName = strDatasetName & "_syn_ModSummary.txt"
+				strModSummaryName = strDatasetName & "_syn" & PHRP_MOD_SUMMARY_SUFFIX
 
 			Case ePeptideHitResultType.XTandem
 				' X!Tandem
-				strModSummaryName = strDatasetName & "_xt_ModSummary.txt"
+				strModSummaryName = strDatasetName & "_xt" & PHRP_MOD_SUMMARY_SUFFIX
 
 			Case ePeptideHitResultType.Inspect
 				' Inspect
-				strModSummaryName = strDatasetName & "_inspect_syn_ModSummary.txt"
+				strModSummaryName = strDatasetName & "_inspect_syn" & PHRP_MOD_SUMMARY_SUFFIX
 
 			Case ePeptideHitResultType.MSGFDB
 				' MSGFDB
-				strModSummaryName = strDatasetName & "_msgfdb_syn_ModSummary.txt"
+				strModSummaryName = strDatasetName & "_msgfdb_syn" & PHRP_MOD_SUMMARY_SUFFIX
 
 		End Select
 
@@ -1775,6 +1778,12 @@ Public Class clsMSGFRunner
 			objStaticMods.Clear()
 
 
+			If Not System.IO.File.Exists(strModSummaryFilePath) Then
+				' _ModSummary.txt file not found
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP ModSummary file not found: " & strModSummaryFilePath)
+				Return False
+			End If
+
 			' Read the data from the ModSummary.txt file
 			' The first line is typically a header line:
 			' Modification_Symbol	Modification_Mass	Target_Residues	Modification_Type	Mass_Correction_Tag	Occurence_Count
@@ -1797,6 +1806,9 @@ Public Class clsMSGFRunner
 							' Parse the header line to confirm the column ordering
 							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
 							blnSkipLine = True
+						Else
+							' Header line not present
+							' This will be the case if we copied the _ModDefs.txt file and renamed it to _ModSummary.txt (due to the _ModSummary.txt file being missing)
 						End If
 
 						blnHeaderLineParsed = True

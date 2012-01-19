@@ -2,6 +2,7 @@ Analysis Tool Manager History
 
 January 18, 2012
 	- Updated Decon2LSV2 plugin to support DeconConsole v4400 (which only requires dataset file path and parameter file path, and not dataset type)
+	- Updated MSGF plugin to use the _ModDefs.txt file if the synopsis file is 0 bytes and the _ModSummary.txt file is missing
 
 January 16, 2012
 	- Updated MSDeconv plugin to support paameters MSDeconvIncludeMS1 and MSDeconvOutputFormat

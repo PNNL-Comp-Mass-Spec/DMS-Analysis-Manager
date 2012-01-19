@@ -70,7 +70,8 @@ Public Class clsAnalysisResourcesMSGF
         Dim DatasetName As String
         Dim RawDataType As String
 
-        Dim FileToGet As String
+		Dim FileToGet As String
+		Dim SynFileSizeBytes As Int64
         Dim strMzXMLFilePath As String = String.Empty
 
         Dim blnSuccess As Boolean = False
@@ -136,24 +137,22 @@ Public Class clsAnalysisResourcesMSGF
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			clsGlobal.FilesToDelete.Add(FileToGet)
-
-			' Get the ModSummary.txt file        
-			FileToGet = clsMSGFRunner.GetModSummaryFileName(eResultType, DatasetName)
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
 		FileToGet = clsMSGFRunner.GetPHRPSynopsisFileName(eResultType, DatasetName)
+		SynFileSizeBytes = 0
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			clsGlobal.FilesToDelete.Add(FileToGet)
+
+			Dim ioSynFile As System.IO.FileInfo = New System.IO.FileInfo(FileToGet)
+			If ioSynFile.Exists Then
+				SynFileSizeBytes = ioSynFile.Length
+			End If
 		End If
 
 		' Get the Sequest, X!Tandem, or Inspect PHRP _fht.txt file
@@ -162,6 +161,40 @@ Public Class clsAnalysisResourcesMSGF
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			End If
+			clsGlobal.FilesToDelete.Add(FileToGet)
+		End If
+
+		If Not blnOnlyCopyFHTandSYNfiles Then
+			' Get the ModSummary.txt file        
+			FileToGet = clsMSGFRunner.GetModSummaryFileName(eResultType, DatasetName)
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				' _ModSummary.txt file not found
+				' This will happen if the synopsis file is empty
+				' Try to copy the _ModDefs.txt file instead
+
+				If SynFileSizeBytes = 0 Then
+					' If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
+					Dim strModDefsFile As String
+					Dim strTargetFile As String = System.IO.Path.Combine(m_WorkingDir, FileToGet)
+
+					strModDefsFile = System.IO.Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & clsMSGFRunner.PHRP_MOD_DEFS_SUFFIX
+
+					If FindAndRetrieveMiscFiles(strModDefsFile, False) Then
+						' Rename the file to end in _ModSummary.txt
+						strModDefsFile = System.IO.Path.Combine(m_WorkingDir, strModDefsFile)
+
+						System.IO.File.Copy(strModDefsFile, strTargetFile, True)
+						System.Threading.Thread.Sleep(100)
+						System.IO.File.Delete(strModDefsFile)
+					Else
+						'Errors were reported in function call, so just return
+						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+					End If
+				Else
+					'Errors were reported in function call, so just return
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+				End If
 			End If
 			clsGlobal.FilesToDelete.Add(FileToGet)
 		End If
