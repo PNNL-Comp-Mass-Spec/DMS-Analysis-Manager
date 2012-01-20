@@ -2035,10 +2035,14 @@ Namespace AnalysisManagerBase
 			Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
 			Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
 
-			If CollectionList.Length > 0 AndAlso Not CollectionList.ToLower = "na" Then
+			If Not String.IsNullOrWhiteSpace(CollectionList) AndAlso Not CollectionList.ToLower() = "na" Then
 				OrgDBDescription = "Protein collection: " & CollectionList & " with options " & CreationOpts
-			Else
+			ElseIf Not String.IsNullOrWhiteSpace(LegacyFasta) AndAlso Not LegacyFasta.ToLower() = "na" Then
 				OrgDBDescription = "Legacy DB: " & LegacyFasta
+			Else
+				m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), " & m_message)
+				Return False
 			End If
 
 			If m_DebugLevel >= 2 Then

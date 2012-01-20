@@ -968,6 +968,12 @@ Namespace AnalysisManagerProg
 					DatasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
 					DatasetStorageMinFreeSpaceGB = CIntSafe(m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB"), DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 
+					If String.IsNullOrEmpty(DatasetStoragePath) Then
+						ErrorMessage = "DatasetStoragePath job parameter is empty"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage)
+						Return False
+					End If
+
 					ioDatasetStoragePath = New System.IO.DirectoryInfo(DatasetStoragePath)
 					If Not ioDatasetStoragePath.Exists Then
 						' Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
