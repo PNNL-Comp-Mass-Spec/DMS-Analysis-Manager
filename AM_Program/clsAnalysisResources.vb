@@ -2778,7 +2778,7 @@ Namespace AnalysisManagerBase
 
 					clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
 
-					FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName")))
+                    FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName"))) & DbCStr(CurRow(DatasetInformation.Columns("ParameterFileName")))
 					Tool = DbCStr(CurRow(DatasetInformation.Columns("Tool")))
 
 					For Each FileNameExt As String In FilesToRetrieveExt
@@ -2928,10 +2928,10 @@ Namespace AnalysisManagerBase
 
 			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-			Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID " & _
-			  "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
-			  "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
-			  "Order by Dataset, Tool"
+            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID, ParameterFileName " & _
+     "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
+     "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
+     "Order by Dataset, Tool"
 
 			Dim Dt As DataTable = Nothing
 
