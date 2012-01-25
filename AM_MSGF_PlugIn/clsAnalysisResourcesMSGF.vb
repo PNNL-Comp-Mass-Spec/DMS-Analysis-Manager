@@ -44,6 +44,7 @@ Public Class clsAnalysisResourcesMSGF
 
         ' Make sure the machine has enough free memory to run MSGF
 		If Not ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF") Then
+			m_message = "Not enough free memory to run MSGF"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 

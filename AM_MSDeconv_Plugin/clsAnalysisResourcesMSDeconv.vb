@@ -21,6 +21,7 @@ Public Class clsAnalysisResourcesMSDeconv
 
 		' Make sure the machine has enough free memory to run MSDeconv
 		If Not ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv") Then
+			m_message = "Not enough free memory to run MSDeconv"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 

@@ -23,6 +23,7 @@ Public Class clsAnalysisResourcesMSAlign
 
 		' Make sure the machine has enough free memory to run MSAlign
 		If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
+			m_message = "Not enough free memory to run MSAlign"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 

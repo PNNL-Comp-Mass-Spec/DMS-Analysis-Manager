@@ -27,6 +27,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		' Make sure the machine has enough free memory to run MSGFDB
 		If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
+			m_message = "Not enough free memory to run MSGFDB"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -75,12 +76,29 @@ Public Class clsAnalysisResourcesMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
-			If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
-				' _ScanStats.txt file not found
-				' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
-				If Not GenerateScanStatsFile(strDatasetName) Then
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Dim strAssumedScanType As String
+			strAssumedScanType = m_jobParams.GetParam("AssumedScanType")
+
+			If Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
+				' Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
+				Select Case strAssumedScanType.ToUpper()
+					Case "CID", "ETD", "HCD"
+						If m_DebugLevel >= 1 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Assuming scan type is '" & strAssumedScanType & "'")
+						End If
+					Case Else
+						m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End Select
+			Else
+				' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+				If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
+					' _ScanStats.txt file not found
+					' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
+					If Not GenerateScanStatsFile(strDatasetName) Then
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
 				End If
 			End If
 
@@ -133,7 +151,11 @@ Public Class clsAnalysisResourcesMSGFDB
 			strInputFilePath = System.IO.Path.Combine(m_WorkingDir, strInputFilePath)
 
 			If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+				Dim strExtraMsg As String = m_message
 				m_message = "Error retrieving spectra file"
+				If Not String.isnullorwhitespace(strExtraMsg) Then
+					m_message &= "; " & strExtraMsg
+				End If
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
 				Return False
 			End If

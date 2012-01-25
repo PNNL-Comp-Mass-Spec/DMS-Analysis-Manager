@@ -33,6 +33,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	Protected Const MSGFDB_OPTION_TDA As String = "TDA"
 	Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
+	Protected Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
 
 	Protected Enum eThreadProgressSteps
 		PreprocessingSpectra = 0
@@ -86,6 +87,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Dim strScriptName As String
 		Dim blnUsingMzXML As Boolean
+		Dim strAssumedScanType As String = String.Empty
 
 		Try
 			'Call base class for initial setup
@@ -132,11 +134,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 				End If
 
-				' Create the ScanType file (lists scan type for each scan number)
-				If Not CreateScanTypeFile() Then
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				Else
-					clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+				strAssumedScanType = m_jobParams.GetParam("AssumedScanType")
+
+				If String.IsNullOrWhiteSpace(strAssumedScanType) Then
+					' Create the ScanType file (lists scan type for each scan number)
+					If Not CreateScanTypeFile() Then
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					Else
+						clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+					End If
 				End If
 
 			End If
@@ -200,7 +206,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 			' Read the MSGFDB Parameter File
-			strMSGFDbCmdLineOptions = ParseMSGFDBParameterFile(strParameterFilePath, FastaFileSizeKB)
+			strMSGFDbCmdLineOptions = ParseMSGFDBParameterFile(strParameterFilePath, FastaFileSizeKB, strAssumedScanType)
 			If String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
 				If String.IsNullOrEmpty(m_message) Then
 					m_message = "Problem parsing MSGFDB parameter file"
@@ -249,6 +255,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
 
 			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGFDB", blnLogFreeMemoryOnSuccess) Then
+				m_message = "Not enough free memory to run MSGFDB"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -586,8 +593,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		If objScanTypeFileCreator.CreateScanTypeFile() Then
 			Return True
 		Else
-			m_message = "Error creating scan type file: " & objScanTypeFileCreator.ErrorMessage
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Dim strErrorMessage = "Error creating scan type file: " & objScanTypeFileCreator.ErrorMessage
+			m_message = String.Copy(strErrorMessage)
+
+			If Not String.IsNullOrEmpty(objScanTypeFileCreator.ExceptionDetails) Then
+				strErrorMessage &= "; " & objScanTypeFileCreator.ExceptionDetails
+			End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage)
 			Return False
 		End If
 
@@ -1099,7 +1112,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
 	''' <returns>Options string if success; empty string if an error</returns>
 	''' <remarks></remarks>
-	Protected Function ParseMSGFDBParameterFile(ByVal strParameterFilePath As String, ByVal FastaFileSizeKB As Single) As String
+	Protected Function ParseMSGFDBParameterFile(ByVal strParameterFilePath As String, ByVal FastaFileSizeKB As Single, ByVal strAssumedScanType As String) As String
 		Const DEFINE_MAX_THREADS As Boolean = True
 		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
@@ -1166,6 +1179,24 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 					' Check whether strKey is one of the standard keys defined in dctParamNames
 					If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
+
+						If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+							' Override FragmentationMethodID using strAssumedScanType
+							Select Case strAssumedScanType.ToUpper()
+								Case "CID"
+									strValue = "1"
+								Case "ETD"
+									strValue = "2"
+								Case "HCD"
+									strValue = "3"
+								Case Else
+									' Invalid string
+									m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+									Return String.Empty
+							End Select
+						End If
+
 						sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
 
 						If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then

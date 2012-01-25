@@ -1,7 +1,10 @@
 Analysis Tool Manager History
 
-January 19, 2012
+January 24, 2012
+	- Updated MSGFDB plugin to support AssumedScanType in the settings file
 
+January 19, 2012
+	- Added validation for various job parameters to assure they're not blank.
 
 January 18, 2012
 	- Updated Decon2LSV2 plugin to support DeconConsole v4400 (which only requires dataset file path and parameter file path, and not dataset type)

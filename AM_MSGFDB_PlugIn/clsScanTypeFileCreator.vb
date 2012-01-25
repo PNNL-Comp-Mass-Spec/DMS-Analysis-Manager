@@ -3,6 +3,8 @@
 Public Class clsScanTypeFileCreator
 
 	Protected mErrorMessage As String
+	Protected mExceptionDetails As String
+
 	Protected mScanTypeMap As System.Collections.Generic.Dictionary(Of Integer, String)
 
 	Protected mWorkDir As String
@@ -21,6 +23,12 @@ Public Class clsScanTypeFileCreator
 	Public ReadOnly Property ErrorMessage As String
 		Get
 			Return mErrorMessage
+		End Get
+	End Property
+
+	Public ReadOnly Property ExceptionDetails As String
+		Get
+			Return mExceptionDetails
 		End Get
 	End Property
 
@@ -48,6 +56,7 @@ Public Class clsScanTypeFileCreator
 		mWorkDir = strWorkDirectoryPath
 		mDatasetName = strDatasetName
 		mErrorMessage = String.Empty
+		mExceptionDetails = String.Empty
 		mScanTypeFilePath = String.Empty
 	End Sub
 
@@ -153,7 +162,8 @@ Public Class clsScanTypeFileCreator
 
 
 		Catch ex As Exception
-			mErrorMessage = "Exception in CacheScanTypeUsingScanStatsEx"
+			mErrorMessage = "Exception in CacheScanTypeUsingScanStatsEx: " & ex.GetType.Name
+			mExceptionDetails = ex.Message
 			Return False
 		End Try
 
@@ -186,6 +196,8 @@ Public Class clsScanTypeFileCreator
 
 		Try
 			mErrorMessage = String.Empty
+			mExceptionDetails = String.Empty
+
 			mValidScanTypeLineCount = 0
 
 			strScanStatsFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "_ScanStats.txt")
@@ -271,7 +283,8 @@ Public Class clsScanTypeFileCreator
 			swOutFile.Close()
 
 		Catch ex As Exception
-			mErrorMessage = "Exception in CreateScanTypeFile"
+			mErrorMessage = "Exception in CreateScanTypeFile: " & ex.GetType.Name
+			mExceptionDetails = ex.Message
 			Return False
 		End Try
 

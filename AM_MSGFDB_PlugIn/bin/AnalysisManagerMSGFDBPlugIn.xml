@@ -47,7 +47,7 @@ AnalysisManagerMSGFDBPlugIn
 	<param name="lstDynamicMods">List of Dynamic Mods</param>
 	<returns>True if success, false if an error</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDBParameterFile(System.String,System.Single)">
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ParseMSGFDBParameterFile(System.String,System.Single,System.String)">
 	<summary>
  Read the MSGFDB options file and convert the options to command line switches
  </summary>
