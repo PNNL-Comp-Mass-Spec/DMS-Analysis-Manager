@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+January 31, 2012
+	- Updated MSXml plugin to support Bruker Amazon Ion Trap .D folders (which have an analysis.yep file instead of an analysis.baf file)
+	- Updated MSGFDB plugin to obtain the .mxML file when running script MSGFDB_Bruker
+
 January 24, 2012
 	- Updated MSGFDB plugin to support AssumedScanType in the settings file
 

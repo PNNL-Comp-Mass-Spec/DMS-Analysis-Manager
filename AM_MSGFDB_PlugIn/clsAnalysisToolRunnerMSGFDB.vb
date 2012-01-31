@@ -124,7 +124,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			strScriptName = m_jobParams.GetParam("ToolName")
 
-			If strScriptName.ToLower().Contains("mzxml") Then
+			If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfdb_bruker") Then
 				blnUsingMzXML = True
 			Else
 				blnUsingMzXML = False

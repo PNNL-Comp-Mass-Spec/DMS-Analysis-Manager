@@ -1086,7 +1086,7 @@ Namespace AnalysisManagerBase
 		End Function
 
 		''' <summary>
-		''' Retrieves an Agilent .D folder for the analysis job in progress
+		''' Retrieves an Agilent or Bruker .D folder for the analysis job in progress
 		''' </summary>
 		''' <param name="WorkDir">Destination directory for copy</param>
 		''' <returns>TRUE for success; FALSE for failure</returns>

@@ -84,48 +84,54 @@ Public Class clsCompassXportRunner
         Dim strMSXmlFormatName As String = "mzXML"
         Dim intFormatMode As Integer
 
-        Dim strAnalysisBafFilePath As String
-        Dim strOutputFilePath As String
+		Dim strSourceFolderPath As String
+		Dim strInputFilePath As String
+		Dim strOutputFilePath As String
 
-        Dim blnSuccess As Boolean
+		Dim blnSuccess As Boolean
 
-        mErrorMessage = String.Empty
+		mErrorMessage = String.Empty
 
-        ' Resolve the output file format
-        If mOutputType = MSXMLOutputTypeConstants.Invalid Then
-            mOutputType = MSXMLOutputTypeConstants.mzXML
-            intFormatMode = 0
-        Else
-            intFormatMode = CInt(mOutputType)
-        End If
+		' Resolve the output file format
+		If mOutputType = MSXMLOutputTypeConstants.Invalid Then
+			mOutputType = MSXMLOutputTypeConstants.mzXML
+			intFormatMode = 0
+		Else
+			intFormatMode = CInt(mOutputType)
+		End If
 
-        strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
+		strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
 
-        ' Define the input file path
-        strAnalysisBafFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_D_EXTENSION)
-        strAnalysisBafFilePath = System.IO.Path.Combine(strAnalysisBafFilePath, "analysis.baf")
+		' Define the input file path
+		strSourceFolderPath = System.IO.Path.Combine(mWorkDir, mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_D_EXTENSION)
+		strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.baf")
 
-        If Not System.IO.File.Exists(strAnalysisBafFilePath) Then
-            mErrorMessage = "Analysis.baf file not found: " & strAnalysisBafFilePath
-            Return False
-        End If
+		If Not System.IO.File.Exists(strInputFilePath) Then
+			' Analysis.baf not found; look for analysis.yep instead
+			strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.yep")
 
-        ' Define the output file path
-        strOutputFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "." & strMSXmlFormatName)
+			If Not System.IO.File.Exists(strInputFilePath) Then
+				mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_D_EXTENSION
+				Return False
+			End If
+		End If
 
-        ' Verify that program file exists
-        If Not System.IO.File.Exists(mCompassXportProgramPath) Then
-            mErrorMessage = "Cannot find CompassXport exe program file: " & mCompassXportProgramPath
-            Return False
-        End If
+		' Define the output file path
+		strOutputFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "." & strMSXmlFormatName)
 
-        CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mCompassXportProgramPath))
+		' Verify that program file exists
+		If Not System.IO.File.Exists(mCompassXportProgramPath) Then
+			mErrorMessage = "Cannot find CompassXport exe program file: " & mCompassXportProgramPath
+			Return False
+		End If
 
-        'Set up and execute a program runner to run CompassXport executable
+		CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mCompassXportProgramPath))
 
-        CmdStr = " -mode " & intFormatMode.ToString() & _
-                 " -a " & strAnalysisBafFilePath & _
-                 " -o " & strOutputFilePath
+		'Set up and execute a program runner to run CompassXport executable
+
+		CmdStr = " -mode " & intFormatMode.ToString() & _
+				 " -a " & strInputFilePath & _
+				 " -o " & strOutputFilePath
 
         If mCentroidMSXML Then
             ' Centroiding is enabled
