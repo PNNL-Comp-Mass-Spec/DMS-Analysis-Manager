@@ -107,7 +107,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="sql">Query to use a source of jobs</param>
         /// <returns>A Mage module containing list of jobs</returns>
-        public BaseModule GetListOfDMSItems(string sql) {
+        public SimpleSink GetListOfDMSItems(string sql) {
             SimpleSink itemList = new SimpleSink();
 
             MSSQLReader reader = MakeDBReaderModule(sql);

@@ -54,6 +54,31 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         /// <summary>
+        /// Import list of results files (full paths) for jobs given by SQL query that satisfy given file name selector
+        /// into given table in output SQLite database.
+        /// </summary>
+        /// <param name="jobListQuery">Query to run to get list of jobs</param>
+        /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
+        /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
+        /// <param name="fileProcessName">Process to apply to file content extraction</param>
+        public void ImportFileList(String jobListQuery, string fileNameSelector, string tableName) {
+
+            // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
+            SimpleSink jobList = GetListOfDMSItems(jobListQuery);
+
+            // get selected list files from list of datasets
+            string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
+            SimpleSink fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+
+            // import file list to SQLite
+            string dbFilePath = GetSQLiteResultsDBFilePath();
+            SQLiteWriter writer = new SQLiteWriter();
+            writer.DbPath = dbFilePath;
+            writer.TableName = tableName;
+            ProcessingPipeline.Assemble("Pipeline", fileList, writer).RunRoot(null);
+        }
+
+        /// <summary>
         /// Import the contents of files in the given source folder that pass the given name filter
         /// into the results SQLite database.
         /// /// </summary>
@@ -201,5 +226,19 @@ namespace AnalysisManager_Mage_PlugIn {
             writePipeline.RunRoot(null);
         }
 
+        /// <summary>
+        /// make Mage pipeline to use given sql to get list of jobs 
+        /// from data package into a SQLite database table
+        /// </summary>
+        /// <param name="sql"></param>
+        public void ImportJobList(string sql, string tableName) {
+            SimpleSink jobList = GetListOfDMSItems(sql);
+
+            SQLiteWriter writer = new SQLiteWriter();
+
+            writer.DbPath = GetSQLiteResultsDBFilePath();
+            writer.TableName = tableName;
+            ProcessingPipeline.Assemble("JobListPipeline", jobList, writer).RunRoot(null);
+        }
     }
 }

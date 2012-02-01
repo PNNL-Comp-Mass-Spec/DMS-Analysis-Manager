@@ -49,8 +49,7 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TableFunctions, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="TableFunctions">
       <HintPath>lib\TableFunctions.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -61,6 +60,7 @@
     <Compile Include="clsApeAMGetImprovResults.cs" />
     <Compile Include="clsApeAMOperations.cs" />
     <Compile Include="clsApeAMRunWorkflow.cs" />
+    <Compile Include="clsApeAMGetQRollupResults.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

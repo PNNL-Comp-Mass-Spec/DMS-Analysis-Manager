@@ -78,6 +78,9 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
                 case "getviperresults":
                     break;
+                case "getqrollupresults":
+                    blnSuccess = GetQRollupFiles();
+                    break;
                 default:
                     // Future: throw an error
                     break;
@@ -123,6 +126,23 @@ namespace AnalysisManager_Ape_PlugIn
 
             return blnSuccess;
         }
+
+        private bool GetQRollupFiles()
+        {
+            bool blnSuccess = true;
+
+            string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+            string analysisType = m_jobParams.GetParam("AnalysisType");
+
+            if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
+            {
+                //Errors were reported in function call, so just return
+                return false;
+            }
+
+            return blnSuccess;
+        }
+
 
         private bool GetImprovResults()
         {

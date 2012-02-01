@@ -7,7 +7,7 @@ using Ape;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMGetImprovResults : clsApeAMBase
+    class clsApeAMGetQRollupResults : clsApeAMBase
     {
 
         #region Member Variables
@@ -27,7 +27,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
         /// <param name="monitor"></param>
-        public clsApeAMGetImprovResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        public clsApeAMGetQRollupResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
         {           
         }
 
@@ -36,14 +36,14 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetImprovResults(String dataPackageID)
+        public bool GetQRollupResults(String dataPackageID)
         {
             bool blnSuccess = true;
-            blnSuccess = GetImprovResultsAll();
+            blnSuccess = GetQRollupResultsAll();
             return blnSuccess;
         }
 
-        private bool GetImprovResultsAll()
+        private bool GetQRollupResultsAll()
         {
             bool blnSuccess = true;
             SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
@@ -55,7 +55,7 @@ namespace AnalysisManager_Ape_PlugIn
                     if (success)
                     {
                         //m_message = "Ape successfully ran workflow" + GetJobParam("ApeWorkflowName");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully created Improv datbase." + GetJobParam("ApeWorkflowName"));
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
@@ -71,29 +71,29 @@ namespace AnalysisManager_Ape_PlugIn
 
             });
 
-            string apeImprovMTSServerName = GetJobParam("ImprovMTSServer");
-            string apeImprovMTSDatabaseName = GetJobParam("ImprovMTSDatabase");
-            string apeImprovMinPMTQuality = GetJobParam("ImprovMinPMTQuality");
+            string apeQRollupMTSServerName = GetJobParam("QRollupMTSServer");
+            string apeQRollupMTSDatabaseName = GetJobParam("QRollupMTSDatabase");
             string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
             List<string> paramList = new List<string>();
-            paramList.Add(apeImprovMTSDatabaseName + ";@MTDBName;" + apeImprovMTSDatabaseName + ";False;sqldbtype.varchar;;");
-            paramList.Add(apeImprovMinPMTQuality + ";@minimumPMTQualityScore;0;False;sqldbtype.real;;");
-            paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
+            paramList.Add(apeQRollupMTSDatabaseName + ";@MTDBName;" + apeQRollupMTSDatabaseName + ";False;sqldbtype.varchar;;");
+            paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeQRollupMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeQRollupMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
 
-            string dotnetConnString = "Server=" + apeImprovMTSServerName + ";database=PRISM_IFC;uid=mtuser;Password=mt4fun";
+            string dotnetConnString = "Server=" + apeQRollupMTSServerName + ";database=" + apeQRollupMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
 			SqlServerToSQLite.ProgressChanged += new SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 4, dotnetConnString, GetExperimentList(), apeDatabase, mHandle);
-
+            SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 5, dotnetConnString, GetIDList(), apeDatabase, mHandle);
+            
             return blnSuccess;
         }
 
-        private string GetExperimentList()
+        private string GetIDList()
         {
             string constr = RequireMgrParam("connectionstring");
-            string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + GetJobParam("DataPackageID");
+            string sqlText = "SELECT vmts.QID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
+                             "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " + 
+                             "WHERE Data_Package_ID = " + GetJobParam("DataPackageID") + " and Tool = 'Decon2LS_V2'";
             string expList = string.Empty;
             using (SqlConnection conn = new SqlConnection(constr))
             {

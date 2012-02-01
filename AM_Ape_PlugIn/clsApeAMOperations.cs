@@ -71,6 +71,16 @@ namespace AnalysisManager_Ape_PlugIn
 
                     break;
 
+                case "getqrollupresults":
+                    clsApeAMGetQRollupResults apeQImpObj = new clsApeAMGetQRollupResults(m_jobParams, m_mgrParams);
+
+                    // Attach the progress event handler
+                    apeQImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+
+                    blnSuccess = apeQImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
+
+                    break;
+
                 default:
                     blnSuccess = false;
                     //m_message = "Ape Operation: " + apeOperation + "not recognized.";
