@@ -32,6 +32,12 @@ namespace TestApePlugIn {
             tpp.Test_GetImprovResults();
         }
 
+        private void Test_GetQRollupResults_Click(object sender, EventArgs e)
+        {
+            TestAMApeOperations tpp = new TestAMApeOperations();
+            tpp.Test_GetQRollupResults();
+        }
+
 
     }
 }

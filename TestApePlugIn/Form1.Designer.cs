@@ -26,6 +26,7 @@
             this.Test_GetImprovResults = new System.Windows.Forms.Button();
             this.Test_RunWorkflow = new System.Windows.Forms.Button();
             this.Test_Tool_Runner = new System.Windows.Forms.Button();
+            this.Test_GetQRollupResults = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // Test_GetImprovResults
@@ -58,11 +59,22 @@
             this.Test_Tool_Runner.UseVisualStyleBackColor = true;
             this.Test_Tool_Runner.Click += new System.EventHandler(this.Test_Tool_Runner_Click);
             // 
+            // Test_GetQRollupResults
+            // 
+            this.Test_GetQRollupResults.Location = new System.Drawing.Point(16, 70);
+            this.Test_GetQRollupResults.Name = "Test_GetQRollupResults";
+            this.Test_GetQRollupResults.Size = new System.Drawing.Size(200, 23);
+            this.Test_GetQRollupResults.TabIndex = 3;
+            this.Test_GetQRollupResults.Text = "Test Get QRollup Results";
+            this.Test_GetQRollupResults.UseVisualStyleBackColor = true;
+            this.Test_GetQRollupResults.Click += new System.EventHandler(this.Test_GetQRollupResults_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(275, 300);
+            this.Controls.Add(this.Test_GetQRollupResults);
             this.Controls.Add(this.Test_Tool_Runner);
             this.Controls.Add(this.Test_RunWorkflow);
             this.Controls.Add(this.Test_GetImprovResults);
@@ -77,6 +89,7 @@
         private System.Windows.Forms.Button Test_GetImprovResults;
         private System.Windows.Forms.Button Test_RunWorkflow;
         private System.Windows.Forms.Button Test_Tool_Runner;
+        private System.Windows.Forms.Button Test_GetQRollupResults;
     }
 }
 
