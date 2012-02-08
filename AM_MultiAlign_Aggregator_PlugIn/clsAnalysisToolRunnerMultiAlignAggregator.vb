@@ -18,9 +18,31 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
     '*********************************************************************************************************
 
 #Region "Module Variables"
-    Protected Const PROGRESS_PCT_MULTIALIGN_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_MULTI_ALIGN_DONE As Single = 95
+	'Protected Const PROGRESS_PCT_MULTIALIGN_RUNNING As Single = 5
+	'Protected Const PROGRESS_PCT_MULTI_ALIGN_DONE As Single = 95
 
+	' This dictionary defines the % complete values for each of the progress steps
+	' It is populated by sub InitializeProgressStepDictionaries
+	Protected mProgressStepPercentComplete As System.Collections.Generic.SortedDictionary(Of eProgressSteps, Int16)
+
+	' This dictionary associates key log text entries with the corresponding progress step for each
+	' It is populated by sub InitializeProgressStepDictionaries
+	Protected mProgressStepLogText As System.Collections.Generic.SortedDictionary(Of String, eProgressSteps)
+
+	Protected Enum eProgressSteps
+		Starting = 0
+		LoadingMTDB = 1
+		LoadingDatasets = 2
+		LinkingMSFeatures = 3
+		AligningDatasets = 4
+		PerformingClustering = 5
+		PerformingPeakMatching = 6
+		CreatingFinalPlots = 7
+		CreatingReport = 8
+		Complete = 9
+	End Enum
+
+	Protected m_MultialignErroMessage As String = String.Empty
     Protected WithEvents CmdRunner As clsRunDosProgram  
 
 #End Region
@@ -43,6 +65,8 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign")
+
+		InitializeProgressStepDictionaries()
 
         CmdRunner = New clsRunDosProgram(m_WorkDir)
 
@@ -86,7 +110,10 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
         End With
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", True) Then
-            m_message = "Error running MultiAlign"
+			m_message = "Error running MultiAlign"
+			If Not String.IsNullOrEmpty(m_MultialignErroMessage) Then
+				m_message &= ": " & m_MultialignErroMessage
+			End If
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
         Else
@@ -95,7 +122,7 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
         'Stop the job timer
         m_StopTime = System.DateTime.UtcNow
-        m_progress = PROGRESS_PCT_MULTI_ALIGN_DONE
+		m_progress = mProgressStepPercentComplete.Item(eProgressSteps.Complete)
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -217,21 +244,244 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 
     End Sub
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strMultiAlignProgLoc As String) As Boolean
+	''' <summary>
+	''' Populates dictionary mProgressStepPercentComplete(), which is used by ParseMultiAlignLogFile
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub InitializeProgressStepDictionaries()
 
-        Dim strToolVersionInfo As String = String.Empty
-        Dim ioMultiAlignProg As System.IO.FileInfo
+		mProgressStepPercentComplete = New System.Collections.Generic.SortedDictionary(Of eProgressSteps, Int16)
+
+		mProgressStepPercentComplete.Add(eProgressSteps.Starting, 5)
+		mProgressStepPercentComplete.Add(eProgressSteps.LoadingMTDB, 6)
+		mProgressStepPercentComplete.Add(eProgressSteps.LoadingDatasets, 7)
+		mProgressStepPercentComplete.Add(eProgressSteps.LinkingMSFeatures, 45)
+		mProgressStepPercentComplete.Add(eProgressSteps.AligningDatasets, 50)
+		mProgressStepPercentComplete.Add(eProgressSteps.PerformingClustering, 75)
+		mProgressStepPercentComplete.Add(eProgressSteps.PerformingPeakMatching, 85)
+		mProgressStepPercentComplete.Add(eProgressSteps.CreatingFinalPlots, 90)
+		mProgressStepPercentComplete.Add(eProgressSteps.CreatingReport, 95)
+		mProgressStepPercentComplete.Add(eProgressSteps.Complete, 97)
+
+		mProgressStepLogText = New System.Collections.Generic.SortedDictionary(Of String, eProgressSteps)
+		mProgressStepLogText.Add("[LogStart]", eProgressSteps.Starting)
+		mProgressStepLogText.Add(" - Loading Mass Tag database from database", eProgressSteps.LoadingMTDB)
+		mProgressStepLogText.Add(" - Loading dataset data files", eProgressSteps.LoadingDatasets)
+		mProgressStepLogText.Add(" - Linking MS Features", eProgressSteps.LinkingMSFeatures)
+		mProgressStepLogText.Add(" - Aligning datasets", eProgressSteps.AligningDatasets)
+		mProgressStepLogText.Add(" - Performing clustering", eProgressSteps.PerformingClustering)
+		mProgressStepLogText.Add(" - Performing Peak Matching", eProgressSteps.PerformingPeakMatching)
+		mProgressStepLogText.Add(" - Creating Final Plots", eProgressSteps.CreatingFinalPlots)
+		mProgressStepLogText.Add(" - Creating report", eProgressSteps.CreatingReport)
+		mProgressStepLogText.Add(" - Analysis Complete", eProgressSteps.Complete)
+
+	End Sub
+
+	''' <summary>
+	''' Parse the MultiAlign log file to track the search progress
+	''' Looks in the work directory to auto-determine the log file name
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub ParseMultiAlignLogFile()
+
+		Dim diWorkDirectory As System.IO.DirectoryInfo
+		Dim fiFiles() As System.IO.FileInfo
+		Dim strLogFilePath As String = String.Empty
+
+		Try
+			diWorkDirectory = New System.IO.DirectoryInfo(m_WorkDir)
+			fiFiles = diWorkDirectory.GetFiles("*-log*.txt")
+
+			If fiFiles.Length >= 1 Then
+				strLogFilePath = fiFiles(0).FullName
+
+				If fiFiles.Length > 1 Then
+					' Use the newest file in fiFiles
+					Dim intBestIndex As Integer = 0
+
+					For intIndex As Integer = 1 To fiFiles.Length - 1
+						If fiFiles(intIndex).LastWriteTimeUtc > fiFiles(intBestIndex).LastWriteTimeUtc Then
+							intBestIndex = intIndex
+						End If
+					Next
+
+					strLogFilePath = fiFiles(intBestIndex).FullName
+				End If
+
+			End If
+
+			If Not String.IsNullOrWhiteSpace(strLogFilePath) Then
+				ParseMultiAlignLogFile(strLogFilePath)
+			End If
+
+		Catch ex As Exception
+			' Ignore errors here
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error finding the MultiAlign log file at " & m_WorkDir & ": " & ex.Message)
+			End If
+
+		End Try
+
+	End Sub
+
+	''' <summary>
+	''' Parse the MultiAlign log file to track the search progress
+	''' </summary>
+	''' <param name="strLogFilePath">Full path to the log file</param>
+	''' <remarks></remarks>
+	Private Sub ParseMultiAlignLogFile(ByVal strLogFilePath As String)
+
+		' The MultiAlign log file is quite big, but we can keep track of progress by looking for known text in the log file lines
+		' Dictionary mProgressStepLogText keeps track of the lines of text to match while mProgressStepPercentComplete keeps track of the % complete values to use
+
+		' For certain long-running steps we can compute a more precise version of % complete by keeping track of the number of datasets processed
+
+		'Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+
+		'Dim oMatch As System.Text.RegularExpressions.Match
+
+		Try
+			If Not System.IO.File.Exists(strLogFilePath) Then
+				If m_DebugLevel >= 4 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MultiAlign log file not found: " & strLogFilePath)
+				End If
+
+				Exit Sub
+			End If
+
+			If m_DebugLevel >= 4 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strLogFilePath)
+			End If
+
+
+			Dim srInFile As System.IO.StreamReader
+			Dim strLineIn As String
+			Dim intLinesRead As Integer
+
+			Dim eProgress As eProgressSteps = eProgressSteps.Starting
+
+			Dim blnMatchFound As Boolean = False
+			Dim intTotalDatasets As Integer = 0
+			Dim intDatasetsLoaded As Integer = 0
+			Dim intDatasetsAligned As Integer = 0
+			Dim intChargeStatesClustered As Integer = 0
+
+			' Open the file for read; don't lock it (to thus allow MultiAlign to still write to it)
+			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+			intLinesRead = 0
+			Do While srInFile.Peek() > -1
+				strLineIn = srInFile.ReadLine()
+				intLinesRead += 1
+
+				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+					blnMatchFound = False
+
+					' Update progress if the line contains any of the entries in mProgressStepLogText
+					For Each lstItem As System.Collections.Generic.KeyValuePair(Of String, eProgressSteps) In mProgressStepLogText
+						If strLineIn.Contains(lstItem.Key) Then
+							If eProgress < lstItem.Value Then
+								eProgress = lstItem.Value
+							End If
+							blnMatchFound = True
+							Exit For
+						End If
+					Next
+
+					If Not blnMatchFound Then
+						If strLineIn.Contains("Dataset Information: ") Then
+							intTotalDatasets += 1
+						ElseIf strLineIn.Contains("- Adding features to cache database") Then
+							intDatasetsLoaded += 1
+						ElseIf strLineIn.Contains("- Features Aligned -") Then
+							intDatasetsAligned += 1
+						ElseIf strLineIn.Contains("- Clustering Charge State") Then
+							intChargeStatesClustered += 1
+						ElseIf strLineIn.Contains("No baseline dataset or database was selected") Then
+							m_MultialignErroMessage = "No baseline dataset or database was selected"
+						End If
+					End If
+
+				End If
+			Loop
+
+			srInFile.Close()
+
+			' Compute the actual progress
+			Dim intActualProgress As Int16
+			If mProgressStepPercentComplete.TryGetValue(eProgress, intActualProgress) Then
+
+				Dim sngActualProgress As Single = intActualProgress
+
+				' Possibly bump up dblActualProgress incrementally
+
+				If intTotalDatasets > 0 Then
+
+					' This is a number between 0 and 100
+					Dim dblSubProgressPercent As Double = 0
+
+					If eProgress = eProgressSteps.LoadingDatasets Then
+						dblSubProgressPercent = intDatasetsLoaded * 100 / intTotalDatasets
+
+					ElseIf eProgress = eProgressSteps.AligningDatasets Then
+						dblSubProgressPercent = intDatasetsAligned * 100 / intTotalDatasets
+
+					ElseIf eProgress = eProgressSteps.PerformingClustering Then
+						' The majority of the data will be charge 1 through 7
+						' Thus, we're dividing by 7 here, which means dblSubProgressPercent might be larger than 100; we'll account for that below
+						dblSubProgressPercent = intChargeStatesClustered * 100 / 7
+					End If
+
+					If dblSubProgressPercent > 0 Then
+						If dblSubProgressPercent > 100 Then dblSubProgressPercent = 100
+
+						' Bump up dblActualProgress based on dblSubProgressPercent
+						Dim intProgressNext As Int16
+
+						If mProgressStepPercentComplete.TryGetValue(CType(eProgress + 1, eProgressSteps), intProgressNext) Then
+							sngActualProgress += CSng(dblSubProgressPercent * (intProgressNext - intActualProgress) / 100.0)
+						End If
+
+					End If
+
+				End If
+
+				If m_progress < sngActualProgress Then
+					m_progress = sngActualProgress
+
+					If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 10 Then
+						dtLastProgressWriteTime = System.DateTime.UtcNow
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0.0") & "% complete")
+					End If
+
+				End If
+			End If
+
+		Catch ex As Exception
+			' Ignore errors here
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MultiAlign log file (" & strLogFilePath & "): " & ex.Message)
+			End If
+		End Try
+
+	End Sub
+
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo(ByVal strMultiAlignProgLoc As String) As Boolean
+
+		Dim strToolVersionInfo As String = String.Empty
+		Dim ioMultiAlignProg As System.IO.FileInfo
 		Dim blnSuccess As Boolean
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
 
-        ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
+		ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
 		If Not ioMultiAlignProg.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
@@ -244,11 +494,11 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 			Return False
 		End If
 
-        ' Lookup the version of MultiAlign 
+		' Lookup the version of MultiAlign 
 		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioMultiAlignProg.FullName)
 		If Not blnSuccess Then Return False
 
-        ' Lookup the version of additional DLLs
+		' Lookup the version of additional DLLs
 		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
 		If Not blnSuccess Then Return False
 
@@ -261,40 +511,46 @@ Public Class clsAnalysisToolRunnerMultiAlignAggregator
 		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
 		If Not blnSuccess Then Return False
 
-        ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
+		' Store paths to key DLLs in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
-    End Function
+	End Function
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+	''' <summary>
+	''' Event handler for CmdRunner.LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+		Static dtLastMultialignLogFileParse As System.DateTime = System.DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+		' Synchronize the stored Debug level with the value stored in the database
+		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-        'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MULTIALIGN_RUNNING, 0, "", "", "", False)
-        End If
+		'Update the status file (limit the updates to every 5 seconds)
+		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = System.DateTime.UtcNow
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
+		End If
 
-    End Sub
+		If System.DateTime.UtcNow.Subtract(dtLastMultialignLogFileParse).TotalSeconds >= 15 Then
+			dtLastMultialignLogFileParse = System.DateTime.UtcNow
+			ParseMultiAlignLogFile()
+		End If
 
-   
+	End Sub
+
+
 #End Region
 
 End Class

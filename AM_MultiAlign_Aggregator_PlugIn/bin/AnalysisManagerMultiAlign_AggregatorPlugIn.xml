@@ -12,6 +12,23 @@ AnalysisManagerMultiAlign_AggregatorPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.InitializeProgressStepDictionaries">
+	<summary>
+ Populates dictionary mProgressStepPercentComplete(), which is used by ParseMultiAlignLogFile
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.ParseMultiAlignLogFile">
+	<summary>
+ Parse the MultiAlign log file to track the search progress
+ Looks in the work directory to auto-determine the log file name
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.ParseMultiAlignLogFile(System.String)">
+	<summary>
+ Parse the MultiAlign log file to track the search progress
+ </summary>
+	<param name="strLogFilePath">Full path to the log file</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator.StoreToolVersionInfo(System.String)">
 	<summary>
  Stores the tool version info in the database

@@ -43,3 +43,5 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_Aggregator_PlugIn\obj\Debug\AnalysisManagerMultiAlign_AggregatorPlugIn.pdb
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_Aggregator_PlugIn\bin\PeptideFileExtractor.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_Aggregator_PlugIn\bin\Ionic.Zip.xml
+F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_Aggregator_PlugIn\bin\PRISM.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_MultiAlign_Aggregator_PlugIn\bin\PRISM.xml
