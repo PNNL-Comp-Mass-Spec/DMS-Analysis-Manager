@@ -101,11 +101,6 @@ Public Class clsAnalysisResourcesMSGF
         ' Make sure the dataset type is valid
         RawDataType = m_jobParams.GetParam("RawDataType")
 
-        If RawDataType.ToLower <> RAW_DATA_TYPE_DOT_RAW_FILES Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Dataset type " & RawDataType & " is not supported; must be " & RAW_DATA_TYPE_DOT_RAW_FILES)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
 		If eResultType = clsMSGFRunner.ePeptideHitResultType.MSGFDB Then
 			' We do not need the mzXML file, the parameter file, or various other files if we are running MSGFDB and running MSGF v6432 or later
 			' Determine this by looking for job parameter MSGF_Version
@@ -128,6 +123,12 @@ Public Class clsAnalysisResourcesMSGF
 		Else
 			' Not running MSGFDB or running MSFDB but using legacy msgf
 			blnOnlyCopyFHTandSYNfiles = False
+
+			If RawDataType.ToLower <> RAW_DATA_TYPE_DOT_RAW_FILES Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Dataset type " & RawDataType & " is not supported; must be " & RAW_DATA_TYPE_DOT_RAW_FILES)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 		End If
 
 		If Not blnOnlyCopyFHTandSYNfiles Then

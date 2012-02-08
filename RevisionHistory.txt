@@ -1,5 +1,10 @@
 Analysis Tool Manager History
 
+February 7, 2012
+	- Updated MultiAlign Aggregator plugin to parse the Multialign log file to estimate processing progress
+	- Now parsing out exception messages from the DeconTools log file
+	- Updated MSGF Plugin to skip the validation of RawDataType if parsing a .mzXML file
+
 January 31, 2012
 	- Updated MSXml plugin to support Bruker Amazon Ion Trap .D folders (which have an analysis.yep file instead of an analysis.baf file)
 	- Updated MSGFDB plugin to obtain the .mxML file when running script MSGFDB_Bruker

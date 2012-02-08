@@ -648,7 +648,7 @@ Namespace AnalysisManagerProg
 			End If
 
 			'Close out the job
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 0)
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 100)
 			Try
 				'Close out the job as a success
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, m_Completions_Msg, m_EvalCode, m_EvalMessage)

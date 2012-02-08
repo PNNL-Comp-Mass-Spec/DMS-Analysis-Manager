@@ -12,23 +12,24 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerDecon2ls
-    Inherits clsAnalysisToolRunnerBase
+	Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants"
-    Private Const DECON2LS_SCANS_FILE_SUFFIX As String = "_scans.csv"
-    Private Const DECON2LS_ISOS_FILE_SUFFIX As String = "_isos.csv"
-    Private Const DECON2LS_PEAKS_FILE_SUFFIX As String = "_peaks.dat"
+	Private Const DECON2LS_SCANS_FILE_SUFFIX As String = "_scans.csv"
+	Private Const DECON2LS_ISOS_FILE_SUFFIX As String = "_isos.csv"
+	Private Const DECON2LS_PEAKS_FILE_SUFFIX As String = "_peaks.dat"
 
 #End Region
 
 #Region "Module variables"
 
-    Protected mRawDataType As String = String.Empty
+	Protected mRawDataType As String = String.Empty
 
-    Protected mInputFilePath As String = String.Empty
+	Protected mInputFilePath As String = String.Empty
 
 	Protected mDeconConsoleBuild As Integer = 0
 
+	Protected mDeconToolsExceptionThrown As Boolean
 	Protected mDeconToolsFinishedDespiteProgRunnerError As Boolean
 
 	Protected mDeconToolsStatus As udtDeconToolsStatusType
@@ -387,6 +388,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		End If
 
 		' Reset the log file tracking variables
+		mDeconToolsExceptionThrown = False
 		mDeconToolsFinishedDespiteProgRunnerError = False
 
 		' Reset the state variables
@@ -415,7 +417,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		End If
 
 		' Determine reason for Decon2LS finish
-		If mDeconToolsFinishedDespiteProgRunnerError Then
+		If mDeconToolsFinishedDespiteProgRunnerError And Not mDeconToolsExceptionThrown Then
 			' ProgRunner reported an error code
 			' However, the log file says things completed successfully
 			' We'll trust the log file
@@ -468,9 +470,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 
 	Protected Function StartDeconTools(ByVal ProgLoc As String, _
-									 ByVal strInputFilePath As String, _
-									 ByVal strParamFilePath As String, _
-									 ByVal eFileType As DeconToolsFileTypeConstants) As DeconToolsStateType
+			 ByVal strInputFilePath As String, _
+			 ByVal strParamFilePath As String, _
+			 ByVal eFileType As DeconToolsFileTypeConstants) As DeconToolsStateType
 
 		Dim blnSuccess As Boolean
 		Dim eDeconToolsStatus As DeconToolsStateType = DeconToolsStateType.Idle
@@ -532,7 +534,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 			ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
 
-			If blnSuccess Then
+			If mDeconToolsExceptionThrown Then
+				eDeconToolsStatus = DeconToolsStateType.ErrorCode
+			ElseIf blnSuccess Then
 				eDeconToolsStatus = DeconToolsStateType.Complete
 			ElseIf blnFinishedProcessing Then
 				mDeconToolsFinishedDespiteProgRunnerError = True
@@ -642,7 +646,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As System.DateTime)
 
 		Dim fiFileInfo As System.IO.FileInfo
-		Dim srInFile As System.IO.StreamReader
 
 		Dim strLogFilePath As String
 		Dim strLineIn As String
@@ -664,53 +667,67 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			End Select
 
 			If System.IO.File.Exists(strLogFilePath) Then
-				srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-				Do While srInFile.Peek >= 0
-					strLineIn = srInFile.ReadLine
+				Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						intCharIndex = strLineIn.ToLower.IndexOf("finished file processing")
-						If intCharIndex >= 0 Then
+					Do While srInFile.Peek >= 0
+						strLineIn = srInFile.ReadLine
 
-							blnDateValid = False
-							If intCharIndex > 1 Then
-								' Parse out the date from strLineIn
-								If System.DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
-									blnDateValid = True
-								Else
-									' Unable to parse out the date
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
+						If Not String.IsNullOrWhiteSpace(strLineIn) Then
+							intCharIndex = strLineIn.ToLower().IndexOf("finished file processing")
+							If intCharIndex >= 0 Then
+
+								blnDateValid = False
+								If intCharIndex > 1 Then
+									' Parse out the date from strLineIn
+									If System.DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+										blnDateValid = True
+									Else
+										' Unable to parse out the date
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
+									End If
 								End If
+
+								If Not blnDateValid Then
+									fiFileInfo = New System.IO.FileInfo(strLogFilePath)
+									dtFinishTime = fiFileInfo.LastWriteTime
+								End If
+
+								If m_DebugLevel >= 3 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools log file reports 'finished file processing' at " & dtFinishTime.ToString())
+								End If
+
+								blnFinishedProcessing = True
+								Exit Do
 							End If
 
-							If Not blnDateValid Then
-								fiFileInfo = New System.IO.FileInfo(strLogFilePath)
-								dtFinishTime = fiFileInfo.LastWriteTime
+							intCharIndex = strLineIn.ToLower.IndexOf("scan/frame")
+							If intCharIndex >= 0 Then
+								strScanFrameLine = strLineIn.Substring(intCharIndex)
 							End If
 
-							If m_DebugLevel >= 3 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools log file reports 'finished file processing' at " & dtFinishTime.ToString())
+							intCharIndex = strLineIn.IndexOf("ERROR THROWN")
+							If intCharIndex > 0 Then
+								' An exception was reported in the log file; treat this as a fatal error
+								m_message = "Error thrown by DeconTools"
+
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconTools reports " & strLineIn.Substring(intCharIndex))
+								mDeconToolsExceptionThrown = True
+
 							End If
 
-							blnFinishedProcessing = True
-							Exit Do
 						End If
+					Loop
 
-						intCharIndex = strLineIn.ToLower.IndexOf("scan/frame")
-						If intCharIndex >= 0 Then
-							strScanFrameLine = strLineIn.Substring(intCharIndex)
-						End If
-					End If
-				Loop
+				End Using
 			End If
 
 		Catch ex As System.Exception
-			' Ignore errors here
-		Finally
-			If Not srInFile Is Nothing Then
-				srInFile.Close()
+			' Ignore errors here		
+			If m_DebugLevel >= 4 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exception in ParseDeconToolsLogFile: " & ex.Message)
 			End If
+
 		End Try
 
 		If Not String.IsNullOrWhiteSpace(strScanFrameLine) Then
@@ -758,7 +775,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		If intCharIndex > 0 Then
 			Try
 				Return New System.Collections.Generic.KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
-																					  strData.Substring(intCharIndex + 1).Trim())
+								   strData.Substring(intCharIndex + 1).Trim())
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
@@ -1069,70 +1086,70 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 #End Region
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+	''' <summary>
+	''' Event handler for CmdRunner.LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
-        Static dtLastLogCheckTime As System.DateTime = System.DateTime.UtcNow
+		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+		Static dtLastLogCheckTime As System.DateTime = System.DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+		' Synchronize the stored Debug level with the value stored in the database
+		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-        'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
-        End If
-
-
-        ' Parse the log file every 30 seconds to determine the % complete
-        If System.DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
-            dtLastLogCheckTime = System.DateTime.UtcNow
-
-            Dim dtFinishTime As System.DateTime
-            Dim blnFinishedProcessing As Boolean
-
-            ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
-
-            Debug.WriteLine("Current Scan: " & mDeconToolsStatus.CurrentLCScan)
-            If m_DebugLevel >= 2 Then
-
-                Dim strProgressMessage As String
-
-                If mDeconToolsStatus.IsUIMF Then
-                    strProgressMessage = "Frame=" & mDeconToolsStatus.CurrentLCScan
-                Else
-                    strProgressMessage = "Scan=" & mDeconToolsStatus.CurrentLCScan
-                End If
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "... " & strProgressMessage & ", " & m_progress.ToString("0.0") & "% complete")
-
-            End If
-
-            Const MAX_LOGFINISHED_WAITTIME_SECONDS As Integer = 120
-            If blnFinishedProcessing Then
-                ' The Decon2LS Log File reports that the task is complete
-                ' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
-
-                If System.DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, but the DeconTools CmdRunner is still active")
-
-                    mDeconToolsFinishedDespiteProgRunnerError = True
-
-                    ' Abort processing
-                    CmdRunner.AbortProgramNow()
-
-                    System.Threading.Thread.Sleep(3000)
-                End If
-            End If
-
-        End If
+		'Update the status file (limit the updates to every 5 seconds)
+		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = System.DateTime.UtcNow
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
+		End If
 
 
-    End Sub
+		' Parse the log file every 30 seconds to determine the % complete
+		If System.DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
+			dtLastLogCheckTime = System.DateTime.UtcNow
+
+			Dim dtFinishTime As System.DateTime
+			Dim blnFinishedProcessing As Boolean
+
+			ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
+
+			Debug.WriteLine("Current Scan: " & mDeconToolsStatus.CurrentLCScan)
+			If m_DebugLevel >= 2 Then
+
+				Dim strProgressMessage As String
+
+				If mDeconToolsStatus.IsUIMF Then
+					strProgressMessage = "Frame=" & mDeconToolsStatus.CurrentLCScan
+				Else
+					strProgressMessage = "Scan=" & mDeconToolsStatus.CurrentLCScan
+				End If
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "... " & strProgressMessage & ", " & m_progress.ToString("0.0") & "% complete")
+
+			End If
+
+			Const MAX_LOGFINISHED_WAITTIME_SECONDS As Integer = 120
+			If blnFinishedProcessing Then
+				' The Decon2LS Log File reports that the task is complete
+				' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+
+				If System.DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, but the DeconTools CmdRunner is still active")
+
+					mDeconToolsFinishedDespiteProgRunnerError = True
+
+					' Abort processing
+					CmdRunner.AbortProgramNow()
+
+					System.Threading.Thread.Sleep(3000)
+				End If
+			End If
+
+		End If
+
+
+	End Sub
 
 End Class
