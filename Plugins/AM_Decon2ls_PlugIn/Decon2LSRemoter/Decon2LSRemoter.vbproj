@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -77,12 +77,12 @@
   <ItemGroup>
     <Reference Include="DeconEngine">
       <Name>DeconEngine</Name>
-      <HintPath>..\AnalysisManagerDecon2lsPlugIn\bin\DeconEngine.dll</HintPath>
+      <HintPath>..\bin\DeconEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DMSDecon2LS">
       <Name>DMSDecon2LS</Name>
-      <HintPath>..\AnalysisManagerDecon2lsPlugIn\bin\DMSDecon2LS.dll</HintPath>
+      <HintPath>..\bin\DMSDecon2LS.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System">
