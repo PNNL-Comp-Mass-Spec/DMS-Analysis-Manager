@@ -39,7 +39,7 @@
       <HintPath>lib\Cyclops.dll</HintPath>
     </Reference>
     <Reference Include="log4net">
-      <HintPath>..\AM_Common\log4net.dll</HintPath>
+      <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
     <Reference Include="R.NET, Version=1.4.1.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
