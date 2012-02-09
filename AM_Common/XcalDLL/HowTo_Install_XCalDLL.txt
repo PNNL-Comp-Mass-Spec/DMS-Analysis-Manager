@@ -1,0 +1,26 @@
+
+1) Copy files from \\floyd\software\Xcalibur\XcalDLL to C:\XCalDll
+2) Start the Windows Command Prompt using Right Click->"Run as Administrator"
+3) CD into the MicrosoftFoundationClasses_VS9_Installer folder and run vcredist_x86-2008.exe
+ c:
+ cd \XcalDLL\MicrosoftFoundationClasses_VS9_Installer
+ vcredist_x86-2008.exe
+4) CD up a folder and run RegisterFiles.bat
+ cd \XcalDLL
+ RegisterFiles.bat
+5) Test that things are working using Test_DeconMSn.bat
+ - DeconMSn should now read Shed_PMA_Biotin_400o2000_010203.RAW and create file Shed_PMA_Biotin_400o2000_010203_dta.txt
+6) Open up the new _dta.txt file and make sure it has data like this:
+ 
+=================================== "Shed_PMA_Biotin_400o2000_010203.518.518.1.dta" ==================================
+1926.046875 1   scan=518 cs=1
+566.46033 19812.00
+567.12646 8.00
+702.60388 24709.00
+838.52258 190832.00
+839.39954 1.00
+973.34900 3471.00
+974.44031 102554.00
+975.18262 4.00
+1109.81787 49524.00
+etc.
