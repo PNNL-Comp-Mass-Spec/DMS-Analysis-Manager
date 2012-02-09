@@ -75,11 +75,11 @@
   <ItemGroup>
     <Reference Include="DeconEngineV2, Version=1.0.3434.30786, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\DeconEngineV2.dll</HintPath>
+      <HintPath>..\..\..\..\AM_Common\DeconEngineV2.dll</HintPath>
     </Reference>
     <Reference Include="DMSDeconToolsV2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\DMSDeconToolsV2.dll</HintPath>
+      <HintPath>..\..\..\..\AM_Common\DMSDeconToolsV2.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>

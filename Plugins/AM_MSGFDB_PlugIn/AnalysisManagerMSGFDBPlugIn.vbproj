@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -52,29 +52,29 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AnalysisManagerProg">
-      <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
     <Reference Include="CondenseCDTAFile">
-      <HintPath>..\AM_Common\CondenseCDTAFile.dll</HintPath>
+      <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
     <Reference Include="MSFileInfoScanner">
-      <HintPath>..\AM_Common\MSFileInfoScanner.dll</HintPath>
+      <HintPath>..\..\AM_Common\MSFileInfoScanner.dll</HintPath>
     </Reference>
     <Reference Include="PeptideToProteinMapEngine">
-      <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
+      <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <HintPath>..\AM_Common\PRISM.dll</HintPath>
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="ProteinFileReader, Version=1.1.3847.22126, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\ProteinFileReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="ThermoRawFileReaderDLL">
-      <HintPath>..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -94,8 +94,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\AM_Common"
-copy "$(TargetPath)" "$(ProjectDir)..\AM_Program\bin"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
