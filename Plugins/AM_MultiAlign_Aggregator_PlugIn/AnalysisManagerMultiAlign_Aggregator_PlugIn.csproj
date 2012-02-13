@@ -31,12 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg">
-      <HintPath>..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
-    </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Program\bin\log4net.dll</HintPath>
+    <Reference Include="log4net">
+      <HintPath>lib\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Mage">
       <HintPath>lib\Mage.dll</HintPath>
@@ -62,10 +58,16 @@
     <Compile Include="clsMultiAlignMage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\AM_Program\AnalysisManagerProg.vbproj">
+      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
+      <Name>AnalysisManagerProg</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\AM_Common"
-copy "$(TargetPath)" "$(ProjectDir)..\AM_Program\bin"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
