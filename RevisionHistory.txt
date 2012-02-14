@@ -1,5 +1,12 @@
 Analysis Tool Manager History
 
+February 14, 2012
+	- Moved verification of the working directory (including auto-deleting old files) to after the managers checks if it is active
+
+February 13, 2012
+	- Updated SMAQC to support version 1.0.4423
+	- Converted MultiAlign Aggregator plugin from VB to C# and added a test harness
+
 February 7, 2012
 	- Updated MultiAlign Aggregator plugin to parse the Multialign log file to estimate processing progress
 	- Now parsing out exception messages from the DeconTools log file

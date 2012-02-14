@@ -32,6 +32,18 @@ AnalysisManagerSMAQCPlugIn
  </summary>
 	<param name="strConsoleOutputFilePath"></param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.ReadAndStoreSMAQCResults(System.String)">
+	<summary>
+ Read the SMAQC results files, convert to XML, and post to DMS
+ </summary>
+	<param name="ResultsFilePath">Path to the SMAQC results file</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.RenameSMAQCLogFile">
+	<summary>
+ Renames the SMAQC log file
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC.StoreToolVersionInfo(System.String)">
 	<summary>
  Stores the tool version info in the database

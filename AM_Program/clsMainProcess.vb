@@ -188,33 +188,6 @@ Namespace AnalysisManagerProg
 				While (LoopCount < MaxLoopCount) And blnRequestJobs
 
 					UpdateStatusIdle("No analysis jobs found")
-					If DetectErrorDeletingFilesFlagFile() Then
-						'Delete the Error Deleting status flag file first, so next time through this step is skipped
-						DeleteErrorDeletingFilesFlagFile()
-
-						'There was a problem deleting non result files with the last job.  Attempt to delete files again
-						If Not CleanWorkDir(strWorkingDir) Then
-							If blnOneTaskStarted Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & strWorkingDir)
-								m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
-							Else
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & strWorkingDir)
-							End If
-							CreateStatusFlagFile()
-							UpdateStatusFlagFileExists()
-							Exit Sub
-						End If
-						'successful delete of files in working directory, so delete the status flag file
-						DeleteStatusFlagFile(m_DebugLevel)
-					End If
-
-					'Verify that an error hasn't left the the system in an odd state
-					If StatusFlagFileError(strWorkingDir) Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
-						UpdateStatusFlagFileExists()
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
-						Exit Sub
-					End If
 
 					' Check for configuration change
 					' This variable will be true if the CaptureTaskManager.exe.config file has been updated
@@ -270,6 +243,34 @@ Namespace AnalysisManagerProg
 						m_MgrSettings.AckManagerUpdateRequired()
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 						UpdateStatusIdle("Manager update is required")
+						Exit Sub
+					End If
+
+					If DetectErrorDeletingFilesFlagFile() Then
+						'Delete the Error Deleting status flag file first, so next time through this step is skipped
+						DeleteErrorDeletingFilesFlagFile()
+
+						'There was a problem deleting non result files with the last job.  Attempt to delete files again
+						If Not CleanWorkDir(strWorkingDir) Then
+							If blnOneTaskStarted Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & strWorkingDir)
+								m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
+							Else
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & strWorkingDir)
+							End If
+							CreateStatusFlagFile()
+							UpdateStatusFlagFileExists()
+							Exit Sub
+						End If
+						'successful delete of files in working directory, so delete the status flag file
+						DeleteStatusFlagFile(m_DebugLevel)
+					End If
+
+					'Verify that an error hasn't left the the system in an odd state
+					If StatusFlagFileError(strWorkingDir) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
+						UpdateStatusFlagFileExists()
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 						Exit Sub
 					End If
 

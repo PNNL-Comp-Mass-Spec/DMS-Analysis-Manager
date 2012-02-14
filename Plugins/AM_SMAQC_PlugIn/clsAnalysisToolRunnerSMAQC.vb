@@ -81,11 +81,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			End If
 
-			' Temp Hack: copy config.xml and SMAQC.s3db from the SMAQC.exe folder to the work directory
-			If Not CopySMAQCRuntimeFiles(System.IO.Path.GetDirectoryName(progLoc)) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
-
 			mConsoleOutputErrorMsg = String.Empty
 
 			' The parameter file name specifies the name of the .XML file listing the Measurements to run
@@ -123,9 +118,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 				' Future ToDo: Create a console output file; can't do so at present since SMAQC crashes
 
-				.WriteConsoleOutputToFile = False
+				.WriteConsoleOutputToFile = True
 				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT)
 			End With
+
+			' We will delete the console output file later since it has the same content as the log file
+			clsGlobal.FilesToDelete.Add(SMAQC_CONSOLE_OUTPUT)
 
 			m_progress = PROGRESS_PCT_SMAQC_STARTING
 
@@ -138,12 +136,11 @@ Public Class clsAnalysisToolRunnerSMAQC
 				Dim swConsoleOutputfile As New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 				swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
 				swConsoleOutputfile.Close()
-
-				System.Threading.Thread.Sleep(250)
-				ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
-
-				clsGlobal.FilesToDelete.Add(SMAQC_CONSOLE_OUTPUT)
 			End If
+
+			' Parse the console output file one more time to check for errors
+			System.Threading.Thread.Sleep(250)
+			ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
 			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -181,6 +178,9 @@ Public Class clsAnalysisToolRunnerSMAQC
 					blnProcessingError = True
 				End If
 			End If
+
+			' Rename the SMAQC log file to remove the datestamp
+			RenameSMAQCLogFile()
 
 			' Don't move the AnalysisSummary.txt file to the results folder; it doesn't have any useful information
 			clsGlobal.FilesToDelete.Add("SMAQC_AnalysisSummary.txt")
@@ -241,31 +241,32 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	End Function
 
-	Protected Function CopySMAQCRuntimeFiles(ByVal strSourceFolder As String) As Boolean
+	' No longer needed
+	''Protected Function CopySMAQCRuntimeFiles(ByVal strSourceFolder As String) As Boolean
 
-		Dim lstSourceFileNames As New System.Collections.Generic.List(Of String)
+	''	Dim lstSourceFileNames As New System.Collections.Generic.List(Of String)
 
-		Try
-			lstSourceFileNames.Add("config.xml")
-			lstSourceFileNames.Add("SMAQC.s3db")
+	''	Try
+	''		lstSourceFileNames.Add("config.xml")
+	''		lstSourceFileNames.Add("SMAQC.s3db")
 
-			For Each strSourceFileName In lstSourceFileNames
-				Dim strSourcePath As String
-				strSourcePath = System.IO.Path.Combine(strSourceFolder, strSourceFileName)
-				System.IO.File.Copy(strSourcePath, System.IO.Path.Combine(m_WorkDir, strSourceFileName), True)
+	''		For Each strSourceFileName In lstSourceFileNames
+	''			Dim strSourcePath As String
+	''			strSourcePath = System.IO.Path.Combine(strSourceFolder, strSourceFileName)
+	''			System.IO.File.Copy(strSourcePath, System.IO.Path.Combine(m_WorkDir, strSourceFileName), True)
 
-				clsGlobal.FilesToDelete.Add(strSourceFileName)
-			Next
+	''			clsGlobal.FilesToDelete.Add(strSourceFileName)
+	''		Next
 
-		Catch ex As Exception
-			m_message = "Error copying SMAQC runtime files"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try	
+	''	Catch ex As Exception
+	''		m_message = "Error copying SMAQC runtime files"
+	''		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+	''		Return False
+	''	End Try	
 
-		Return True
+	''	Return True
 
-	End Function
+	''End Function
 
 	''' <summary>
 	''' Looks up the InstrumentID for the dataset associated with this job
@@ -444,15 +445,14 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' Instrument ID: 1
 		' Scan Date: 2011-12-06 19:03:51
 		' [Data]
-		' Measurement Name, Measurement Value
-		' C_1A, 0.002028
-		' C_1B, 0.00583
-		' C_2A, 23.5009
-		' C_3B, 25.99
-		' C_4A, 23.28
-		' C_4B, 26.8
-		' C_4C, 27.18
-
+		' Dataset, Measurement Name, Measurement Value
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_1A, 0.002028
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_1B, 0.00583
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_2A, 23.5009
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_3B, 25.99
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4A, 23.28
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4B, 26.8
+		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4C, 27.18
 
 		' The measurments are returned via this list
 		Dim lstResults As New System.Collections.Generic.List(Of udtSMAQCResultType)
@@ -486,20 +486,19 @@ Public Class clsAnalysisToolRunnerSMAQC
 						blnMeasurementsFound = True
 					End If
 				ElseIf Not blnHeadersFound Then
-					If strLineIn.StartsWith("Measurement Name") Then
+					If strLineIn.StartsWith("Dataset") Then
 						blnHeadersFound = True
-
 					End If
 				Else
 					' This is a measurement result line
 					strSplitLine = strLineIn.Split(","c)
 
-					If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 2 Then
+					If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 3 Then
 						Dim udtResult As udtSMAQCResultType = New udtSMAQCResultType
 						udtResult.Clear()
 
-						udtResult.Name = strSplitLine(0)
-						udtResult.Value = strSplitLine(1)
+						udtResult.Name = strSplitLine(1).Trim()
+						udtResult.Value = strSplitLine(2).Trim()
 
 						lstResults.Add(udtResult)
 					End If
@@ -523,26 +522,32 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		' Example Console output:
 		'
-		' 12/06/2011 07:3:38 PM - [Version Info]
-		' 12/06/2011 07:3:38 PM - Loading Assemblies
-		' 12/06/2011 07:3:38 PM - mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
-		' 12/06/2011 07:3:38 PM - SMAQC, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-		' 12/06/2011 07:3:38 PM - [System Information]
-		' 12/06/2011 07:3:38 PM - OS Version: Microsoft Windows NT 6.1.7601 Service Pack 1
-		' 12/06/2011 07:3:38 PM - Processor Count: 4
-		' 12/06/2011 07:3:38 PM - Operating System Type: 64-Bit OS
-		' 12/06/2011 07:3:38 PM - Page Size: 4096
-		' 12/06/2011 07:3:38 PM - [LogStart]
-		' 12/06/2011 07:3:38 PM - -----------------------------------------------------
-		' SMAQC Version 0.02 [BUILD DATE: Nov 13, 2011]
-		' Searching for Text Files!...
-		' Parsing and Inserting Data into DB Temp Tables!...
-		' Now running Measurements!
-		' Saving Scan Results!...
-		' Scan output has been saved to: F:\Temp\SMAQC_Test\Results.txt
-		' SMAQC analysis complete
+		' 2/13/2012 07:15:41 PM - [Version Info]
+		' 2/13/2012 07:15:41 PM - Loading Assemblies
+		' 2/13/2012 07:15:41 PM - mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+		' 2/13/2012 07:15:41 PM - SMAQC, Version=1.0.4423.30421, Culture=neutral, PublicKeyToken=null
+		' 2/13/2012 07:15:41 PM - [System Information]
+		' 2/13/2012 07:15:41 PM - OS Version: Microsoft Windows NT 6.1.7601 Service Pack 1
+		' 2/13/2012 07:15:41 PM - Processor Count: 4
+		' 2/13/2012 07:15:41 PM - Operating System Type: 64-Bit OS
+		' 2/13/2012 07:15:41 PM - Page Size: 4096
+		' 2/13/2012 07:15:41 PM - [LogStart]
+		' 2/13/2012 07:15:41 PM - -----------------------------------------------------
+		' 2/13/2012 07:15:41 PM - SMAQC Version 1.02 [BUILD DATE: Feb 10, 2012]
+		' 2/13/2012 07:15:42 PM - Searching for Text Files!...
+		' 2/13/2012 07:15:42 PM - Parsing and Inserting Data into DB Temp Tables!...
+		' 2/13/2012 07:15:45 PM - Now running Measurements on QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45!
+		' 2/13/2012 07:15:47 PM - Saving Scan Results!...
+		' 2/13/2012 07:15:47 PM - Scan output has been saved to E:\DMS_WorkDir\QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45_SMAQC.txt
+		' 2/13/2012 07:15:47 PM - SMAQC analysis complete
 
 		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+
+		' This RegEx matches lines in the form:
+		' 2/13/2012 07:15:42 PM - Searching for Text Files!...
+		Static reMatchTimeStamp As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+		Dim reMatch As System.Text.RegularExpressions.Match
 
 		Try
 
@@ -574,6 +579,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 				intLinesRead += 1
 
 				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+					' Remove the timestamp from the start of the line (if present)
+					reMatch = reMatchTimeStamp.Match(strLineIn)
+					If reMatch.Success Then
+						strLineIn = strLineIn.Substring(reMatch.Length)
+					End If
 
 					' Update progress if the line starts with one of the expected phrases
 					If strLineIn.StartsWith("Searching for Text Files") Then
@@ -692,7 +703,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			intStartIndex = strXMLResults.IndexOf("?>")
 			If intStartIndex > 0 Then
-				strXMLResultsClean = strXMLResults.Substring(intStartIndex + 2).Trim
+				strXMLResultsClean = strXMLResults.Substring(intStartIndex + 2).Trim()
 			Else
 				strXMLResultsClean = strXMLResults
 			End If
@@ -756,6 +767,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	End Function
 
+	''' <summary>
+	''' Read the SMAQC results files, convert to XML, and post to DMS
+	''' </summary>
+	''' <param name="ResultsFilePath">Path to the SMAQC results file</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Protected Function ReadAndStoreSMAQCResults(ByVal ResultsFilePath As String) As Boolean
 
 		Dim blnSuccess As Boolean
@@ -793,6 +810,39 @@ Public Class clsAnalysisToolRunnerSMAQC
 		Return blnSuccess
 
 	End Function
+
+	''' <summary>
+	''' Renames the SMAQC log file
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub RenameSMAQCLogFile()
+		Dim diWorkDir As System.IO.DirectoryInfo
+		Dim fiFiles() As System.IO.FileInfo
+		Dim strLogFilePathNew As String
+
+		Try
+
+			diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+
+			fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt")
+
+			If Not fiFiles Is Nothing AndAlso fiFiles.Length > 0 Then
+
+				' There should only be one file; just parse fiFiles(0)
+				strLogFilePathNew = System.IO.Path.Combine(m_WorkDir, "SMAQC_log.txt")
+
+				If System.IO.File.Exists(strLogFilePathNew) Then
+					System.IO.File.Delete(strLogFilePathNew)
+				End If
+
+				fiFiles(0).MoveTo(strLogFilePathNew)
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception renaming SMAQC log file", ex)
+		End Try
+
+	End Sub
 
 	''' <summary>
 	''' Stores the tool version info in the database
