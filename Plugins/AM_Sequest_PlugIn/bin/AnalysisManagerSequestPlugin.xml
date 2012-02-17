@@ -6,60 +6,7 @@ AnalysisManagerSequestPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean)">
-	<summary>
- Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
- </summary>
-	<param name="strFile1">First file</param>
-	<param name="strFile2">Second file</param>
-	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean,System.String[]@)">
-	<summary>
- Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
- </summary>
-	<param name="strFile1">First file</param>
-	<param name="strFile2">Second file</param>
-	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	<param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyDatabase(System.String,System.String)">
-	<summary>
- Verifies the fasta file required by the job is distributed to all the cluster nodes
- </summary>
-	<param name="OrgDBName">Fasta file name</param>
-	<param name="OrgDBPath">Fasta file location on analysis machine</param>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.GetHostList(System.String)">
-	<summary>
- Reads the list of nodes from the hosts config file
- </summary>
-	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
-	<returns>returns a string collection containing IP addresses for each node</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.Boolean@)">
-	<summary>
- Verifies specified database is present on the node. If present, compares date and size. If not
-	present, copies database from master
- </summary>
-	<param name="OrgDBFilePath">Full path to the source file</param>
-	<param name="DestPath">Fasta storage location on cluster node</param>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.#ctor">
+<member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.#ctor">
 	<summary>
  Constructor
  </summary>
@@ -195,6 +142,65 @@ AnalysisManagerSequestPlugin
 	<param name="JobNum">Job number</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.CheckForExistingOutFiles">
+	<summary>
+ Look for existing .Out files
+ </summary>
+	<returns>True if existing .Out files are present</returns>
+	<remarks>Note that this sub is similar to CheckForExistingOutFiles() in clsAnalysisToolRunnerSeqBase but this sub only looks for the .out files; it doesn't move them.</remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean)">
+	<summary>
+ Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
+ </summary>
+	<param name="strFile1">First file</param>
+	<param name="strFile2">Second file</param>
+	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean,System.String[]@)">
+	<summary>
+ Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 
+ </summary>
+	<param name="strFile1">First file</param>
+	<param name="strFile2">Second file</param>
+	<param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	<param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	<param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	<param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyDatabase(System.String,System.String)">
+	<summary>
+ Verifies the fasta file required by the job is distributed to all the cluster nodes
+ </summary>
+	<param name="OrgDBName">Fasta file name</param>
+	<param name="OrgDBPath">Fasta file location on analysis machine</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.GetHostList(System.String)">
+	<summary>
+ Reads the list of nodes from the hosts config file
+ </summary>
+	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
+	<returns>returns a string collection containing IP addresses for each node</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.Boolean@)">
+	<summary>
+ Verifies specified database is present on the node. If present, compares date and size. If not
+	present, copies database from master
+ </summary>
+	<param name="OrgDBFilePath">Full path to the source file</param>
+	<param name="DestPath">Fasta storage location on cluster node</param>
+	<returns>TRUE for success; FALSE for failure</returns>
+	<remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
 </member>
 </members>
 </doc>

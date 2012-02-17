@@ -2062,6 +2062,7 @@ Namespace AnalysisManagerBase
 				m_FastaTimer.Start()
 				HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
 			Catch Ex As Exception
+				m_message = "Exception generating OrgDb file"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file; " & OrgDBDescription & "; " & _
 				 "; " & clsGlobal.GetExceptionStackTrace(Ex))
 				Return False
@@ -2323,8 +2324,8 @@ Namespace AnalysisManagerBase
 			'Unconcatenate DTA file if needed
 			If UnConcatenate Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
-				Dim BackWorker As New System.ComponentModel.BackgroundWorker
-				Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
+
+				Dim FileSplitter As New clsSplitCattedFiles()
 				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
 
 				If m_DebugLevel >= 1 Then
@@ -2366,8 +2367,8 @@ Namespace AnalysisManagerBase
 			'Unconcatenate OUT file if needed
 			If UnConcatenate Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated OUT file")
-				Dim BackWorker As New System.ComponentModel.BackgroundWorker
-				Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
+
+				Dim FileSplitter As New clsSplitCattedFiles()
 				FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
 
 				If m_DebugLevel >= 1 Then

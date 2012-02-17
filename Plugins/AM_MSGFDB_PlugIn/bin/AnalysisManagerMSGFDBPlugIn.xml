@@ -6,7 +6,18 @@ AnalysisManagerMSGFDBPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.RunTool">
+<member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.CreateSuffixArrayFiles(System.String,System.Int32,System.String,System.String,System.String,System.String,System.Boolean)">
+	<summary>
+ Convert .Fasta file to indexed DB files compatible with MSGFDB
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.CreateLockFile(System.String)">
+	<summary>
+ Creates a lock file
+ </summary>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.RunTool">
 	<summary>
  Runs MSGFDB tool
  </summary>
@@ -94,17 +105,6 @@ AnalysisManagerMSGFDBPlugIn
  Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.CreateSuffixArrayFiles(System.String,System.Int32,System.String,System.String,System.String,System.String,System.Boolean)">
-	<summary>
- Convert .Fasta file to indexed DB files compatible with MSGFDB
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsCreateMSGFDBSuffixArrayFiles.CreateLockFile(System.String)">
-	<summary>
- Creates a lock file
- </summary>
-	<returns>True if success; false if failure</returns>
 </member><member name="M:AnalysisManagerMSGFDBPlugIn.clsScanTypeFileCreator.TryGetValueInt(System.String[],System.Int32,System.Int32@)">
 	<summary>
  Tries to convert the text at index intColIndex of strData to an integer

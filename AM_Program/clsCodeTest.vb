@@ -387,8 +387,7 @@ Public Class clsCodeTest
 	Public Function TestUncat(ByVal rootFileName As String, ByVal strResultsFolder As String) As Boolean
 		Console.WriteLine("Splitting concatenated DTA file")
 
-		Dim BackWorker As New System.ComponentModel.BackgroundWorker
-		Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
+		Dim FileSplitter As New clsSplitCattedFiles()
 		FileSplitter.SplitCattedDTAsOnly(rootFileName, strResultsFolder)
 
 		Console.WriteLine("Completed splitting concatenated DTA file")

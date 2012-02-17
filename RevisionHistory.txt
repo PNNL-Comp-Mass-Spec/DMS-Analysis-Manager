@@ -1,5 +1,11 @@
 Analysis Tool Manager History
 
+February 17, 2012
+	- Now reporting "Exception generating OrgDb file" in the completion code if a an exception occurs while creating the fasta file
+	- Updated clsSplitCattedFiles to support receiving a list of DTA files to skip when de-concatenating a _DTA.txt file
+	- Now dynamically adjusting the amount of memory reserved for BuildSA based on the source Fasta file size
+	- Updated Sequest plugin to generate a list of DTA files to skip if resuming a failed job using existing .out files
+
 February 14, 2012
 	- Moved verification of the working directory (including auto-deleting old files) to after the managers checks if it is active
 

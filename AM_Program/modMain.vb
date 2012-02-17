@@ -101,6 +101,8 @@ Module modMain
 						objTest.TestZipAndUnzip()
 						'objTest.TestMALDIDataUnzip("")
 
+						'objTest.TestMSGFResultsSummarizer()
+
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
 					End Try

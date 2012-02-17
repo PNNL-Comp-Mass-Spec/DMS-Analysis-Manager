@@ -32,285 +32,290 @@ Imports System.Collections.Generic
 
 Public Class clsSplitCattedFiles
 
-    Private m_bkg As System.ComponentModel.BackgroundWorker
-    Private r_FileSeparator As Regex
-    Private r_FileNameParts As Regex
-    Private r_DTAFirstLine As Regex
-    Private m_ResultsFileCount As Integer = Nothing
+	Private r_FileSeparator As Regex
+	Private r_FileNameParts As Regex
+	Private r_DTAFirstLine As Regex
+	Private m_ResultsFileCount As Integer = Nothing
 
-    Sub New(ByVal BackgroundWorker As System.ComponentModel.BackgroundWorker)
-        Me.m_bkg = BackgroundWorker
+	Sub New()
 
-        Me.r_FileSeparator = New Regex("^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$", _
-            RegexOptions.CultureInvariant _
-            Or RegexOptions.Compiled)
+		Me.r_FileSeparator = New Regex("^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$", _
+		 RegexOptions.CultureInvariant _
+		 Or RegexOptions.Compiled)
 
-        Me.r_FileNameParts = New Regex("^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)", _
-            RegexOptions.CultureInvariant _
-            Or RegexOptions.Compiled)
+		Me.r_FileNameParts = New Regex("^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)", _
+		 RegexOptions.CultureInvariant _
+		 Or RegexOptions.Compiled)
 
-        Me.r_DTAFirstLine = New Regex( _
-              "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$", _
-            RegexOptions.CultureInvariant _
-            Or RegexOptions.Compiled)
+		Me.r_DTAFirstLine = New Regex( _
+		   "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$", _
+		 RegexOptions.CultureInvariant _
+		 Or RegexOptions.Compiled)
 
-    End Sub
+	End Sub
 
-    Public Sub SplitCattedDTAsAndOuts(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-        Me.SplitCattedDTAsOnly(rootFileName, resultsFolderPath)
-        Me.SplitCattedOutsOnly(rootFileName, resultsFolderPath)
-    End Sub
+	Public Sub SplitCattedDTAsAndOuts(ByVal rootFileName As String, ByVal resultsFolderPath As String)
+		Me.SplitCattedDTAsOnly(rootFileName, resultsFolderPath)
+		Me.SplitCattedOutsOnly(rootFileName, resultsFolderPath)
+	End Sub
 
-    Public Sub SplitCattedDTAsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-        Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_dta.txt")
-        Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
-        If fi.Exists Then
-            If Not Me.m_ResultsFileCount > 0 Then
-                Me.CountOutFiles(fullPath)
-            End If
-            Me.SplitCattedFile(fullPath)
-        End If
-    End Sub
+	Public Sub SplitCattedDTAsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
+		SplitCattedDTAsOnly(rootFileName, resultsFolderPath, New System.Collections.Generic.List(Of String))
+	End Sub
 
-    Public Sub SplitCattedOutsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-        Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_out.txt")
-        Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
-        If fi.Exists Then
-            If Not Me.m_ResultsFileCount > 0 Then
-                Me.CountOutFiles(fullPath)
-            End If
-            Me.SplitCattedFile(fullPath)
-        End If
-    End Sub
+	Public Sub SplitCattedDTAsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
+		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_dta.txt")
+		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
+		If fi.Exists Then
+			If Not Me.m_ResultsFileCount > 0 Then
+				Me.CountOutFiles(fullPath)
+			End If
+			Me.SplitCattedFile(fullPath, lstFilesToSkip)
+		End If
+	End Sub
 
-    Private Sub SplitCattedFile(ByVal filePath As String)
-        Dim tr As System.IO.StreamReader = Nothing
-        Dim s As String
-        Dim fileText As Queue(Of String) = New Queue(Of String)
-        Dim objFileSepMatch As Match = Nothing
-        Dim objFileNameParts As Match = Nothing
+	Public Sub SplitCattedOutsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
+		SplitCattedOutsOnly(rootFileName, resultsFolderPath, New System.Collections.Generic.List(Of String))
+	End Sub
 
-        Dim fileCounter As Integer = 0
-        Dim fileName As String = String.Empty
+	Public Sub SplitCattedOutsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
+		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_out.txt")
+		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
+		If fi.Exists Then
+			If Not Me.m_ResultsFileCount > 0 Then
+				Me.CountOutFiles(fullPath)
+			End If
+			Me.SplitCattedFile(fullPath, lstFilesToSkip)
+		End If
+	End Sub
 
-        Dim strFileType As String = String.Empty
+	''' <summary>
+	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
+	''' </summary>
+	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
+	''' <remarks></remarks>
+	Private Sub SplitCattedFile(ByVal filePath As String)
+		SplitCattedFile(filePath, New System.Collections.Generic.List(Of String))
+	End Sub
 
-        '        Dim state As PeptideFileExtractor.clsUserProgressState = Nothing
-        Dim resultsFolder As String = System.IO.Path.GetDirectoryName(filePath)
+	''' <summary>
+	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
+	''' </summary>
+	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
+	''' <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
+	''' <remarks></remarks>
+	Private Sub SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
+		Dim tr As System.IO.StreamReader = Nothing
+		Dim s As String
+		Dim fileText As Queue(Of String) = New Queue(Of String)
+		Dim objFileSepMatch As Match = Nothing
+		Dim objFileNameParts As Match = Nothing
 
-        Try
-            tr = New System.IO.StreamReader(filePath)
-            s = tr.ReadLine
-            If s.Length = 0 Then
-                s = tr.ReadLine
-            End If
+		Dim fileCounter As Integer = 0
+		Dim fileName As String = String.Empty
 
-            While s IsNot Nothing
-                objFileSepMatch = Me.r_FileSeparator.Match(s)
-                If objFileSepMatch.Success Then
-                    objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
-                    If objFileNameParts.Success Then
-                        strFileType = objFileNameParts.Groups("filetype").Value
-                    Else
-                        strFileType = String.Empty
-                    End If
+		Dim strFileType As String = String.Empty
+		Dim resultsFolder As String = System.IO.Path.GetDirectoryName(filePath)
 
-                    If fileCounter > 0 Then
-                        ' Process the data stored in queue fileText, saving to file fileName
-                        ProcessSplitFile(fileText, fileName, resultsFolder)
-                        'If fileCounter Mod 25 = 0 Then
-                        '    state = New PeptideFileExtractor.clsUserProgressState( _
-                        '        fileCounter, _
-                        '        Me.m_ResultsFileCount, "Extracting " + _
-                        '            splitMatch.Groups("filetype").Value + _
-                        '            " files.. (" + fileCounter.ToString + _
-                        '            " of " + Me.m_ResultsFileCount.ToString + ")")
+		Dim dctFilesToSkip As System.Collections.Generic.Dictionary(Of String, Integer) = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
-                        '    Me.m_bkg.ReportProgress(CType(fileCounter / Me.m_ResultsFileCount * 100.0, Integer), state)
-                        'End If
-                        's = tr.ReadLine
-                    End If
-                    If objFileNameParts.Success Then
-                        With objFileNameParts
-                            fileName = _
-                              .Groups("rootname").Value + "." + _
-                              .Groups("startscan").Value.ToString + "." + _
-                              .Groups("endscan").Value.ToString + "." + _
-                              .Groups("chargestate").Value + "." + _
-                              .Groups("filetype").Value
-                        End With
-                    Else
-                        fileName = objFileSepMatch.Groups("filename").Value
-                    End If
+		Try
+			If lstFilesToSkip.Count > 0 Then
+				' Copy data from lstFilesToSkip into dctFilesToSkip
+				' We're using dctFilesToSkip to speed up lookups of entries and to allow for case-insensitive matching (at the expense of increased memory usage)
+				For Each strItem As String In lstFilesToSkip
+					dctFilesToSkip.Add(strItem, 0)
+				Next
+			End If
 
-                    fileCounter += 1
-                    s = tr.ReadLine
-                End If
+			tr = New System.IO.StreamReader(filePath)
+			s = tr.ReadLine
+			If s.Length = 0 Then
+				s = tr.ReadLine
+			End If
 
-                fileText.Enqueue(s)
+			While s IsNot Nothing
+				objFileSepMatch = Me.r_FileSeparator.Match(s)
 
-                s = tr.ReadLine
-            End While
+				If objFileSepMatch.Success Then
+					objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
+					If objFileNameParts.Success Then
+						strFileType = objFileNameParts.Groups("filetype").Value
+					Else
+						strFileType = String.Empty
+					End If
 
-            ' Process the data stored in queue fileText, saving to file fileName
-            ProcessSplitFile(fileText, fileName, resultsFolder)
-            'state = New PeptideFileExtractor.clsUserProgressState( _
-            '                    fileCounter, _
-            '                    Me.m_ResultsFileCount, fileCounter.ToString + " " + _
-            '                        splitMatch.Groups("filetype").Value + _
-            '                        " files extracted")
+					If fileCounter > 0 Then
+						' Process the data stored in queue fileText, saving to file fileName
+						ProcessSplitFile(fileText, fileName, resultsFolder, dctFilesToSkip)
+					End If
 
-            'Me.m_bkg.ReportProgress(CType(fileCounter / Me.m_ResultsFileCount * 100.0, Integer), state)
+					If objFileNameParts.Success Then
+						With objFileNameParts
+							fileName = _
+							  .Groups("rootname").Value + "." + _
+							  .Groups("startscan").Value.ToString + "." + _
+							  .Groups("endscan").Value.ToString + "." + _
+							  .Groups("chargestate").Value + "." + _
+							  .Groups("filetype").Value
+						End With
+					Else
+						fileName = objFileSepMatch.Groups("filename").Value
+					End If
 
-            tr.Close()
+					fileCounter += 1
+					s = tr.ReadLine
+				End If
 
-        Catch ex As Exception
-            Exit Sub
-        End Try
+				fileText.Enqueue(s)
 
+				s = tr.ReadLine
+			End While
 
-    End Sub
+			' Process the data stored in queue fileText, saving to file fileName
+			ProcessSplitFile(fileText, fileName, resultsFolder, dctFilesToSkip)
 
-    Private Function ProcessSplitFile( _
-        ByVal fileText As Queue(Of String), _
-        ByVal exportFileName As String, _
-        ByVal resultsFolder As String) As Integer
+			tr.Close()
 
-        Dim filetype As String = System.IO.Path.GetExtension(exportFileName).TrimStart("."c)
-
-        Dim lineCounter As Integer = 0
-        Dim tw As System.IO.StreamWriter
-
-        tw = New System.IO.StreamWriter( _
-            System.IO.Path.Combine(resultsFolder, exportFileName), _
-            False)
-        Dim dtaLineMatch As Match = Nothing
-        Dim outputLine As String
-
-        If Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
-            outputLine = fileText.Dequeue
-
-            ' See if this line contains the extra information of the form: scan=1000 cs=1
-            dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
-            If dtaLineMatch.Success Then
-                ' Yes, it has the extra information
-                ' Only write out the parent mass and charge state for the line
-                outputLine = dtaLineMatch.Groups("parentmass").Value + " " + _
-                             dtaLineMatch.Groups("chargestate").Value
-            Else
-                ' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
-            End If
-            tw.WriteLine(outputLine)
-        End If
-
-        While fileText.Count > 0
-            outputLine = fileText.Dequeue
-            If outputLine.Length > 0 And filetype = "dta" Then
-                ' Writing out a dta file line
-                tw.WriteLine(outputLine)
-                lineCounter += 1
-            ElseIf fileText.Count > 0 And filetype = "out" Then
-                ' Writing out an out file line
-                tw.WriteLine(outputLine)
-                lineCounter += 1
-            Else
-                ' Writing out a line for another, non-specific file type
-                tw.WriteLine(outputLine)
-                lineCounter += 1
-            End If
-        End While
-
-        tw.Close()
-        tw = Nothing
-
-    End Function
-
-    Private Function CountOutFiles(ByVal filePath As String) As Integer
-
-        Dim fi As System.IO.FileInfo = New System.IO.FileInfo(filePath)
-        Dim tr As System.IO.TextReader
-        Dim s As String
-        Dim outFileCount As Integer
-        Dim currPos As Long
-        Dim lineCount As Long
-        '        Dim state As PeptideFileExtractor.clsUserProgressState
-
-        Dim lineEndCharCount As Integer = LineEndCharacterCount(fi)
-
-        Dim r As New Regex("^===*", RegexOptions.Compiled)
-        If fi.Exists Then
-
-            tr = fi.OpenText
-            s = tr.ReadLine
-
-            Do While Not s Is Nothing
-                lineCount += 1
-                currPos += s.Length + lineEndCharCount
-                If r.IsMatch(s) Then outFileCount += 1
-                s = tr.ReadLine
-                'If lineCount Mod 5000 = 0 Then
-                '    state = New PeptideFileExtractor.clsUserProgressState( _
-                '        currPos, _
-                '        fi.Length, "Counting Results Records... (" + Math.Round(currPos / fi.Length * 100.0, 0).ToString + "% Complete)")
-                '    Me.m_bkg.ReportProgress(CType(currPos / fi.Length * 100.0, Integer), state)
-                '    If Me.m_bkg.CancellationPending Then Exit Do
-                'End If
-            Loop
+		Catch ex As Exception
+			Exit Sub
+		End Try
 
 
-            'state = New PeptideFileExtractor.clsUserProgressState( _
-            '                        currPos, _
-            '                        fi.Length, outFileCount.ToString + " Records found")
-            'Me.m_bkg.ReportProgress(100, state)
+	End Sub
 
-            tr.Close()
-            tr = Nothing
-            fi = Nothing
+	Private Sub ProcessSplitFile( _
+	 ByRef fileText As Queue(Of String), _
+	 ByVal exportFileName As String, _
+	 ByVal resultsFolder As String, _
+	 ByRef dctDTAsToSkip As System.Collections.Generic.Dictionary(Of String, Integer))
 
-            Me.m_ResultsFileCount = outFileCount
-            Return outFileCount
+		Dim filetype As String = System.IO.Path.GetExtension(exportFileName).TrimStart("."c)
 
-        End If
+		Dim lineCounter As Integer = 0
+		Dim tw As System.IO.StreamWriter
 
-    End Function
+		If dctDTAsToSkip.ContainsKey(exportFileName) Then
+			' Empty the queue and skip this file
+			fileText.Clear()
+			Return
+		End If
 
-    ''' <summary>
-    ''' This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
-    ''' When found, the next byte is examined
-    ''' If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
-    ''' </summary>
-    ''' <param name="fi"></param>
-    ''' <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
-    ''' <remarks></remarks>
-    Private Function LineEndCharacterCount(ByVal fi As System.IO.FileInfo) As Integer
-        Dim tr As System.IO.TextReader
-        Dim testcode As Integer
-        Dim testcode2 As Integer
-        Dim counter As Long
-        Dim endCount As Integer = 1         ' Initially assume a one-byte line terminator
+		tw = New System.IO.StreamWriter(System.IO.Path.Combine(resultsFolder, exportFileName), False)
+		Dim dtaLineMatch As Match = Nothing
+		Dim outputLine As String
 
-        If (fi.Exists) Then
-            tr = fi.OpenText
-            For counter = 1 To fi.Length
-                testcode = tr.Read()
-                If testcode = 10 Or testcode = 13 Then
-                    testcode2 = tr.Read()
-                    If testcode2 = 10 Or testcode2 = 13 Then
-                        endCount = 2
-                        Exit For
-                    Else
-                        endCount = 1
-                        Exit For
-                    End If
-                End If
-            Next
+		If Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
+			outputLine = fileText.Dequeue
 
-            tr.Close()
-        End If
+			' See if this line contains the extra information of the form: scan=1000 cs=1
+			dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
+			If dtaLineMatch.Success Then
+				' Yes, it has the extra information
+				' Only write out the parent mass and charge state for the line
+				outputLine = dtaLineMatch.Groups("parentmass").Value + " " + _
+				 dtaLineMatch.Groups("chargestate").Value
+			Else
+				' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
+			End If
+			tw.WriteLine(outputLine)
+		End If
 
-        tr = Nothing
-        Return endCount
+		While fileText.Count > 0
+			outputLine = fileText.Dequeue
+			If outputLine.Length > 0 And filetype = "dta" Then
+				' Writing out a dta file line
+				tw.WriteLine(outputLine)
+				lineCounter += 1
+			ElseIf fileText.Count > 0 And filetype = "out" Then
+				' Writing out an out file line
+				tw.WriteLine(outputLine)
+				lineCounter += 1
+			Else
+				' Writing out a line for another, non-specific file type
+				tw.WriteLine(outputLine)
+				lineCounter += 1
+			End If
+		End While
 
-    End Function
+		tw.Close()
+		tw = Nothing
+
+	End Sub
+
+	Private Function CountOutFiles(ByVal filePath As String) As Integer
+
+		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(filePath)
+		Dim tr As System.IO.TextReader
+		Dim s As String
+		Dim outFileCount As Integer
+		Dim currPos As Long
+		Dim lineCount As Long
+		'        Dim state As PeptideFileExtractor.clsUserProgressState
+
+		Dim lineEndCharCount As Integer = LineEndCharacterCount(fi)
+
+		Dim r As New Regex("^===*", RegexOptions.Compiled)
+		If fi.Exists Then
+
+			tr = fi.OpenText
+			s = tr.ReadLine
+
+			Do While Not s Is Nothing
+				lineCount += 1
+				currPos += s.Length + lineEndCharCount
+				If r.IsMatch(s) Then outFileCount += 1
+				s = tr.ReadLine
+			Loop
+
+			tr.Close()
+			tr = Nothing
+			fi = Nothing
+
+			Me.m_ResultsFileCount = outFileCount
+			Return outFileCount
+
+		End If
+
+	End Function
+
+	''' <summary>
+	''' This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
+	''' When found, the next byte is examined
+	''' If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
+	''' </summary>
+	''' <param name="fi"></param>
+	''' <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
+	''' <remarks></remarks>
+	Private Function LineEndCharacterCount(ByVal fi As System.IO.FileInfo) As Integer
+		Dim tr As System.IO.TextReader
+		Dim testcode As Integer
+		Dim testcode2 As Integer
+		Dim counter As Long
+		Dim endCount As Integer = 1			' Initially assume a one-byte line terminator
+
+		If (fi.Exists) Then
+			tr = fi.OpenText
+			For counter = 1 To fi.Length
+				testcode = tr.Read()
+				If testcode = 10 Or testcode = 13 Then
+					testcode2 = tr.Read()
+					If testcode2 = 10 Or testcode2 = 13 Then
+						endCount = 2
+						Exit For
+					Else
+						endCount = 1
+						Exit For
+					End If
+				End If
+			Next
+
+			tr.Close()
+		End If
+
+		tr = Nothing
+		Return endCount
+
+	End Function
 
 End Class

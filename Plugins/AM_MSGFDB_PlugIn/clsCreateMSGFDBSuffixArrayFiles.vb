@@ -176,8 +176,22 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				End If
 
 
-				' Reserve 2 GB of ram for BuildSA; Sangtae says this should accomodate at least a 200 MB fasta file
+				' Determine the amount of ram to reserve for BuildSA
+				' Examine the size of the .Fasta file to determine how much ram to reserve
 				Dim intJavaMemorySizeMB As Integer = 2000
+
+				Dim intFastaFileSizeMB As Integer
+				intFastaFileSizeMB = CInt(fiFastaFile.Length / 1024.0 / 1024.0)
+
+				If intFastaFileSizeMB <= 125 Then
+					intJavaMemorySizeMB = 2000
+				ElseIf intFastaFileSizeMB <= 250 Then
+					intJavaMemorySizeMB = 4000
+				ElseIf intFastaFileSizeMB <= 375 Then
+					intJavaMemorySizeMB = 6000
+				Else
+					intJavaMemorySizeMB = 8000
+				End If
 
 				' Make sure the machine has enough free memory to run BuildSA
 				If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", False) Then

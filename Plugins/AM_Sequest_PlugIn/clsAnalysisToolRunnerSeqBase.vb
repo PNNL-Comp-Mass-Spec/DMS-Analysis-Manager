@@ -23,6 +23,10 @@ Public Class clsAnalysisToolRunnerSeqBase
 	'Base class for Sequest analysis
 	'*********************************************************************************************************
 
+#Region "Member variables"
+	Private m_DtaCountAddon As Integer = 0
+#End Region
+
 #Region "Methods"
 	''' <summary>
 	''' Constructor
@@ -64,18 +68,19 @@ Public Class clsAnalysisToolRunnerSeqBase
 		'Do the base class stuff
 		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
+		' Check whether or not we are resuming a job that stopped prematurely
+		' Look for a folder in the FailedResultsFolder that is named the same as the ResultsFolder for this job
+		' If that folder contains a file named "Resume.txt", then copy any .Out files from that folder to the work directory
+		' Next, de-concatenate the _DTA.txt file, skipping DTAs for which we already have a .Out file
+		CheckForExistingOutFiles()
+
         ' Make sure at least one .DTA file exists
         If Not ValidateDTAFiles Then
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
         ' Count the number of .Dta files and cache in m_DtaCount
-        CalculateNewStatus(True)
-
-        ' Check whether or not we are resuming a job that stopped prematurely
-        ' Look for a folder in the FailedResultsFolder that is named the same as the ResultsFolder for this job
-        ' If that folder contains a file named "Resume.txt", then copy any .Out files from that folder to the work directory, then delete the corresponding .Dta files
-        CheckForExistingOutFiles()
+		CalculateNewStatus(True)
 
         'Run Sequest
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
@@ -177,7 +182,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         If blnUpdateDTACount Then
             'Get DTA count
             FileArray = Directory.GetFiles(m_WorkDir, "*.dta")
-            m_DtaCount = FileArray.GetLength(0)
+			m_DtaCount = FileArray.GetLength(0) + m_DtaCountAddon
         End If
 
         'Get OUT file count
@@ -200,18 +205,19 @@ Public Class clsAnalysisToolRunnerSeqBase
         Dim strFailedResultsFolderPath As String
         Dim ioSourceFolder As System.IO.DirectoryInfo
         Dim ioFileList() As System.IO.FileInfo
-        Dim ioDtaFile As System.IO.FileInfo
 
-        Dim strDTAFilePath As String
-        Dim strExistingSeqLogFileRenamed As String
+		Dim strExistingSeqLogFileRenamed As String
 
         Dim intIndex As Integer
         Dim intOutFilesCopied As Integer
         Dim intDtaFilesDeleted As Integer
 
+		Dim lstDTAsToSkip As System.Collections.Generic.List(Of String)
+
         Try
 
-            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
+            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")			
+			m_DtaCountAddon = 0
 
             If strFailedResultsFolderPath Is Nothing OrElse strFailedResultsFolderPath.Length = 0 Then
                 ' Failed results folder path is not defined; cannot continue
@@ -230,6 +236,8 @@ Public Class clsAnalysisToolRunnerSeqBase
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for existing .Out files at " & strFailedResultsFolderPath)
             End If
+
+			lstDTAsToSkip = New System.Collections.Generic.List(Of String)
 
             ioSourceFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
             If ioSourceFolder.Exists Then
@@ -254,13 +262,7 @@ Public Class clsAnalysisToolRunnerSeqBase
                                 .CopyTo(System.IO.Path.Combine(m_WorkDir, .Name), True)
                                 intOutFilesCopied += 1
 
-                                ' Delete the corresponding .Dta file in m_Workdir
-                                strDTAFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(.Name) & ".dta")
-                                ioDtaFile = New System.IO.FileInfo(strDTAFilePath)
-                                If ioDtaFile.Exists Then
-                                    ioDtaFile.Delete()
-                                    intDtaFilesDeleted += 1
-                                End If
+								lstDTAsToSkip.Add(System.IO.Path.GetFileNameWithoutExtension(.Name) & ".dta")
                             End If
                         End With
                     Next intIndex
@@ -287,6 +289,18 @@ Public Class clsAnalysisToolRunnerSeqBase
                 End If
 
             End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file (skipping " & lstDTAsToSkip.Count & " existing DTAs with existing .Out files)")
+
+			' Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
+			Dim FileSplitter As New clsSplitCattedFiles()
+			FileSplitter.SplitCattedDTAsOnly(m_Dataset, m_WorkDir, lstDTAsToSkip)
+
+			m_DtaCountAddon = lstDTAsToSkip.Count
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file")
+			End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)

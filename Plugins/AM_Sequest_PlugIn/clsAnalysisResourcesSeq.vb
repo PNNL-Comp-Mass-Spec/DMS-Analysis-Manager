@@ -19,7 +19,7 @@ Public Class clsAnalysisResourcesSeq
 	'Subclass for Sequest-specific tasks:
 	'	1) Distributes OrgDB files to cluster nodes if running on a cluster
 	'	2) Uses ParamFileGenerator to create Sequest param file from database instead of copying it
-	'	3) Retrieves zipped DTA files, unzips, and un-concatenates them
+	'	3) Retrieves zipped DTA files, unzips, and de-concatenates them
 	'*********************************************************************************************************
 
 #Region "Methods"
@@ -126,71 +126,79 @@ Public Class clsAnalysisResourcesSeq
 
     End Sub
 
-    Protected Sub CheckForExistingOutFiles()
+	''' <summary>
+	''' Look for existing .Out files
+	''' </summary>
+	''' <returns>True if existing .Out files are present</returns>
+	''' <remarks>Note that this sub is similar to CheckForExistingOutFiles() in clsAnalysisToolRunnerSeqBase but this sub only looks for the .out files; it doesn't move them.</remarks>
+	Protected Function CheckForExistingOutFiles() As Boolean
 
-        ' Note that this sub is similar to CheckForExistingOutFiles() in clsAnalysisToolRunnerSeqBase
-        '  but this sub only looks for the .out files; it doesn't move them.
+		Const RESUME_FILE_NAME As String = "Resume.txt"
 
-        Const RESUME_FILE_NAME As String = "Resume.txt"
+		Dim strResultFolderName As String
+		Dim strFailedResultsFolderPath As String
+		Dim ioSourceFolder As System.IO.DirectoryInfo
+		Dim ioFileList() As System.IO.FileInfo
 
-        Dim strResultFolderName As String
-        Dim strFailedResultsFolderPath As String
-        Dim ioSourceFolder As System.IO.DirectoryInfo
-        Dim ioFileList() As System.IO.FileInfo
+		Dim intIndex As Integer
+		Dim intValidOutFiles As Integer = 0
 
-        Dim intIndex As Integer
-        Dim intValidOutFiles As Integer
+		Try
+			strResultFolderName = m_jobParams.GetParam("OutputFolderName")
+			strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
 
-        Try
-            strResultFolderName = m_jobParams.GetParam("OutputFolderName")
-            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
+			If strResultFolderName Is Nothing OrElse strResultFolderName.Length = 0 Then
+				' Results folder name is not defined
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "m_ResFolderName is empty; this is unexpected")
+				Exit Try
+			End If
 
-            If strResultFolderName Is Nothing OrElse strResultFolderName.Length = 0 Then
-                ' Results folder name is not defined
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "m_ResFolderName is empty; this is unexpected")
-                Exit Try
-            End If
+			strFailedResultsFolderPath = System.IO.Path.Combine(strFailedResultsFolderPath, strResultFolderName)
 
-            strFailedResultsFolderPath = System.IO.Path.Combine(strFailedResultsFolderPath, strResultFolderName)
+			If m_DebugLevel >= 4 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for existing .Out files at " & strFailedResultsFolderPath)
+			End If
 
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for existing .Out files at " & strFailedResultsFolderPath)
-            End If
+			ioSourceFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
+			If ioSourceFolder.Exists Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archived results folder found for job " & m_jobParams.GetParam("Job") & "; checking for a file named " & RESUME_FILE_NAME)
+				End If
 
-            ioSourceFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
-            If ioSourceFolder.Exists Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archived results folder found for job " & m_jobParams.GetParam("Job") & "; checking for a file named " & RESUME_FILE_NAME)
-                End If
+				If ioSourceFolder.GetFiles(RESUME_FILE_NAME).Length > 0 Then
+					' Yes, folder contains a file named Resume.txt
+					' Are there any non-empty .Out files?
 
-                If ioSourceFolder.GetFiles(RESUME_FILE_NAME).Length > 0 Then
-                    ' Yes, folder contains a file named Resume.txt
-                    ' Are there any non-empty .Out files?
+					ioFileList = ioSourceFolder.GetFiles("*.out")
+					intValidOutFiles = 0
 
-                    ioFileList = ioSourceFolder.GetFiles("*.out")
-                    intValidOutFiles = 0
+					For intIndex = 0 To ioFileList.Length - 1
+						If ioFileList(intIndex).Length > 0 Then
+							intValidOutFiles += 1
+						End If
+					Next intIndex
 
-                    For intIndex = 0 To ioFileList.Length - 1
-                        If ioFileList(intIndex).Length > 0 Then
-                            intValidOutFiles += 1
-                        End If
-                    Next intIndex
+					If intValidOutFiles = 0 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Warning: did not find any existing .Out files in the archived results folder (" & strFailedResultsFolderPath & ")")
+					Else
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found " & intValidOutFiles & " .Out files in " & strFailedResultsFolderPath & "; these will be moved to the Work Directory prior to starting Sequest")
+					End If
 
-                    If intValidOutFiles = 0 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Warning: did not find any existing .Out files in the archived results folder (" & strFailedResultsFolderPath & ")")
-                    Else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found " & intValidOutFiles & " .Out files in " & strFailedResultsFolderPath & "; these will be moved to the Work Directory prior to starting Sequest")
-                    End If
+				End If
 
-                End If
+			End If
 
-            End If
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)
+		End Try
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingOutFiles: " & ex.Message)
-        End Try
+		If intValidOutFiles > 0 Then
+			Return True
+		Else
+			Return False
+		End If
 
-    End Sub
+	End Function
 
     ''' <summary>
     ''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
@@ -393,13 +401,14 @@ Public Class clsAnalysisResourcesSeq
     Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
 
         Dim LocOrgDBFolder As String
+		Dim blnExistingOutFiles As Boolean = False
 
         'Clear out list of files to delete or keep when packaging the results
         clsGlobal.ResetFilesToDeleteOrKeep()
 
         ' Look for existing .Out files in the Failed Results Folder; 
         ' if any are found, we'll post an entry to the log
-        CheckForExistingOutFiles()
+		blnExistingOutFiles = CheckForExistingOutFiles()
 
         'Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
         LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
@@ -415,30 +424,33 @@ Public Class clsAnalysisResourcesSeq
         ' Make sure the Sequest parameter file is present in the parameter file storage path
         ArchiveSequestParamFile()
 
-        'Retrieve unzipped dta files
-        If Not RetrieveDtaFiles(True) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		' Retrieve unzipped dta files
+		' Only de-concatenate if blnExistingOutFiles = False
+		Dim blnDeconcatenate As Boolean = Not blnExistingOutFiles
 
-        ' If running on a cluster, then distribute the database file across the nodes
-        ' We do this after we have successfully retrieved the DTA files and unzipped them
-        If CBool(m_mgrParams.GetParam("cluster")) Then
-            'Check the cluster nodes, updating local database copies as necessary
-            If Not VerifyDatabase(m_jobParams.GetParam("PeptideSearch", "generatedFastaName"), LocOrgDBFolder) Then
-                'Errors were reported in function call, so just return
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+		If Not RetrieveDtaFiles(blnDeconcatenate) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        End If
+		' If running on a cluster, then distribute the database file across the nodes
+		' We do this after we have successfully retrieved the DTA files and unzipped them
+		If CBool(m_mgrParams.GetParam("cluster")) Then
+			'Check the cluster nodes, updating local database copies as necessary
+			If Not VerifyDatabase(m_jobParams.GetParam("PeptideSearch", "generatedFastaName"), LocOrgDBFolder) Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-        'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+		End If
 
-        'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		'Add all the extensions of the files to delete after run
+		clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
+		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
+		clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+
+		'All finished
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
