@@ -126,8 +126,8 @@ Public Class clsAnalysisResourcesIN
         'Unconcatenate DTA file if needed
         If UnConcatenate Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
-            Dim BackWorker As New System.ComponentModel.BackgroundWorker
-            Dim FileSplitter As New clsSplitCattedFiles(BackWorker)
+
+			Dim FileSplitter As New clsSplitCattedFiles()
             '				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), WorkingDir)
             FileSplitter.SplitCattedDTAsOnly(strUnzippedFileNameRoot, WorkingDir)
 
