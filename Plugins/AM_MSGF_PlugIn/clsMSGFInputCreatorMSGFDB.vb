@@ -172,6 +172,14 @@ Public Class clsMSGFInputCreatorMSGFDB
 		Return strDatasetName & "_msgfdb_syn.txt"
 	End Function
 
+	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_msgfdb_syn_ResultToSeqMap.txt"
+	End Function
+
+	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_msgfdb_syn_SeqToProteinMap.txt"
+	End Function
+
 	Protected Overrides Sub InitializeFilePaths()
 
 		' Customize mPHRPResultFilePath for MSGFDB synopsis files

@@ -94,6 +94,14 @@ Public Class clsMSGFInputCreatorInspect
         Return strDatasetName & "_inspect_syn.txt"
     End Function
 
+	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_inspect_syn_ResultToSeqMap.txt"
+	End Function
+
+	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_inspect_syn_SeqToProteinMap.txt"
+	End Function
+
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for Inspect synopsis files

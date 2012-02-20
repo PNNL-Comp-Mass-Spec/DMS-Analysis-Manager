@@ -157,7 +157,27 @@ Public Class clsAnalysisResourcesMSGF
 			End If
 		End If
 
-		' Get the Sequest, X!Tandem, or Inspect PHRP _fht.txt file
+		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _fht.txt file
+		FileToGet = clsMSGFRunner.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			End If
+			clsGlobal.FilesToDelete.Add(FileToGet)
+		End If
+
+		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _ResultToSeqMap.txt file
+		FileToGet = clsMSGFRunner.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			End If
+			clsGlobal.FilesToDelete.Add(FileToGet)
+		End If
+
+		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _SeqToProteinMap.txt file
 		FileToGet = clsMSGFRunner.GetPHRPFirstHitsFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -201,17 +221,22 @@ Public Class clsAnalysisResourcesMSGF
 			clsGlobal.FilesToDelete.Add(FileToGet)
 		End If
 
-		If Not blnOnlyCopyFHTandSYNfiles AndAlso eResultType = clsMSGFRunner.ePeptideHitResultType.XTandem Then
-			' Grab a few more files for X!Tandem files so that we can extract the protein names and include these in the MSGF files
 
-			FileToGet = DatasetName & clsMSGFRunner.XT_RESULT_TO_SEQ_MAP_SUFFIX
+		' Copy the PHRP files so that we can extract the protein names
+		' This information is added the MSGF files for X!Tandem
+		' It is used by clsMSGFResultsSummarizer for all tools
+
+		FileToGet = clsMSGFRunner.GetPHRPResultToSeqMapFileName(eResultType, DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			clsGlobal.FilesToDelete.Add(FileToGet)
+		End If
 
-			FileToGet = DatasetName & clsMSGFRunner.XT_SEQ_TO_PROTEIN_MAP_SUFFIX
+		FileToGet = clsMSGFRunner.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE

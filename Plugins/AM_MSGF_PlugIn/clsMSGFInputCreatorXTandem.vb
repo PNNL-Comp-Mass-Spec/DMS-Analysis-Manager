@@ -72,6 +72,14 @@ Public Class clsMSGFInputCreatorXTandem
         Return strDatasetName & "_xt.txt"
     End Function
 
+	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_xt_syn_ResultToSeqMap.txt"
+	End Function
+
+	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal strDatasetName As String) As String
+		Return strDatasetName & "_xt_syn_SeqToProteinMap.txt"
+	End Function
+
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for X!Tandem _xt.txt files

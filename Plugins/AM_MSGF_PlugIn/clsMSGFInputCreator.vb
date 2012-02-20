@@ -700,16 +700,27 @@ Public MustInherit Class clsMSGFInputCreator
 
 		Dim intIndex As Integer
 
-		For intIndex = 0 To strColumns.Length - 1
-			If objColumnHeaders.ContainsKey(strColumns(intIndex)) Then
-				' Update the index associated with this column name
-				objColumnHeaders(strColumns(intIndex)) = intIndex
-			Else
-				' Ignore this column
-			End If
-		Next intIndex
+		' Reset the column indices in objColumnHeaders
+		If objColumnHeaders.Count > 0 Then
+			Dim strKeys() As String
+			ReDim strKeys(objColumnHeaders.Count - 1)
+			objColumnHeaders.Keys.CopyTo(strKeys, 0)
 
-	End Sub
+			For Each strKey As String In strKeys
+				objColumnHeaders(strKey) = -1
+			Next
+		End If
+
+        For intIndex = 0 To strColumns.Length - 1
+            If objColumnHeaders.ContainsKey(strColumns(intIndex)) Then
+                ' Update the index associated with this column name
+                objColumnHeaders(strColumns(intIndex)) = intIndex
+            Else
+                ' Ignore this column
+            End If
+        Next intIndex
+
+    End Sub
 
 	''' <summary>
 	''' Read data from a synopsis file or first hits file

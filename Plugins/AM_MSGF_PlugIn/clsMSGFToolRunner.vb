@@ -40,13 +40,6 @@ Public Class clsMSGFRunner
 	Protected Const MOD_SUMMARY_COLUMN_Mass_Correction_Tag As String = "Mass_Correction_Tag"
 	Protected Const MOD_SUMMARY_COLUMN_Occurence_Count As String = "Occurence_Count"
 
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Unique_Seq_ID As String = "Unique_Seq_ID"
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Cleavage_State As String = "Cleavage_State"
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Terminus_State As String = "Terminus_State"
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Protein_Name As String = "Protein_Name"
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Protein_EValue As String = "Protein_Expectation_Value_Log(e)"
-	Protected Const XT_SEQ_PROT_MAP_COLUMN_Protein_Intensity As String = "Protein_Intensity_Log(I)"
-
 	Public Const MSGF_RESULT_COLUMN_SpectrumFile As String = "#SpectrumFile"
 	Public Const MSGF_RESULT_COLUMN_Title As String = "Title"
 	Public Const MSGF_RESULT_COLUMN_ScanNumber As String = "Scan#"
@@ -60,9 +53,6 @@ Public Class clsMSGFRunner
 
 	Public Const MSGF_PHRP_DATA_SOURCE_SYN As String = "Syn"
 	Public Const MSGF_PHRP_DATA_SOURCE_FHT As String = "FHT"
-
-	Public Const XT_RESULT_TO_SEQ_MAP_SUFFIX As String = "_xt_ResultToSeqMap.txt"
-	Public Const XT_SEQ_TO_PROTEIN_MAP_SUFFIX As String = "_xt_SeqToProteinMap.txt"
 
 	Public Const PHRP_MOD_DEFS_SUFFIX As String = "_ModDefs.txt"
 	Public Const PHRP_MOD_SUMMARY_SUFFIX As String = "_ModSummary.txt"
@@ -183,7 +173,7 @@ Public Class clsMSGFRunner
 		End If
 
 		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
-		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)		
+		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)
 
 		If String.IsNullOrEmpty(mMSGFProgLoc) Then
 			If String.IsNullOrEmpty(m_message) Then
@@ -1131,6 +1121,60 @@ Public Class clsMSGFRunner
 
 	End Function
 
+	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
+
+		Dim strPHRPResultsFileName As String = String.Empty
+
+		Select Case eResultType
+			Case ePeptideHitResultType.Sequest
+				' Sequest: _syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPResultToSeqMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.XTandem
+				' X!Tandem: _xt.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPResultToSeqMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.Inspect
+				' Inspect: _inspect_syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPResultToSeqMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.MSGFDB
+				' MSGFDB: _msgfdb_syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPResultToSeqMapFileName(strDatasetName)
+
+		End Select
+
+		Return strPHRPResultsFileName
+
+	End Function
+
+	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
+
+		Dim strPHRPResultsFileName As String = String.Empty
+
+		Select Case eResultType
+			Case ePeptideHitResultType.Sequest
+				' Sequest: _syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPSeqToProteinMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.XTandem
+				' X!Tandem: _xt.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPSeqToProteinMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.Inspect
+				' Inspect: _inspect_syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPSeqToProteinMapFileName(strDatasetName)
+
+			Case ePeptideHitResultType.MSGFDB
+				' MSGFDB: _msgfdb_syn.txt
+				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPSeqToProteinMapFileName(strDatasetName)
+
+		End Select
+
+		Return strPHRPResultsFileName
+
+	End Function
+
 	Public Shared Function IsLegacyMSGFVersion(ByVal strStepToolVersion As String) As Boolean
 
 		Select Case strStepToolVersion.ToLower()
@@ -1146,10 +1190,22 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function LoadXTandemResultProteins(ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
+	''' <summary>
+	''' Load the proteins using the PHRP result files
+	''' Applies to X!Tandem results and Sequest, Inspect, or MSGFDB Synopsis file results
+	''' Does not apply to Sequest or MSGFDB First-Hits files
+	''' </summary>
+	''' <param name="eResultType"></param>
+	''' <param name="objProteinByResultID"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function LoadResultProteins(ByVal eResultType As ePeptideHitResultType, ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
 
 		' Tracks the ResultIDs that map to each SeqID
 		Dim objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))
+
+		Dim strResultToSeqMapFilename As String = String.Empty
+		Dim strSeqToProteinMapFilename As String = String.Empty
 
 		Dim blnSuccess As Boolean
 
@@ -1159,17 +1215,27 @@ Public Class clsMSGFRunner
 
 			If objProteinByResultID Is Nothing Then
 				objProteinByResultID = New System.Collections.Generic.SortedList(Of Integer, String)
+			Else
+				objProteinByResultID.Clear()
 			End If
 
-			blnSuccess = LoadXTandemResultToSeqMapping(objSeqToResultMap)
+			strResultToSeqMapFilename = GetPHRPResultToSeqMapFileName(eResultType, m_Dataset)
+			strSeqToProteinMapFilename = GetPHRPSeqToProteinMapFileName(eResultType, m_Dataset)
 
-			If blnSuccess Then
-				blnSuccess = LoadXTandemSeqToProteinMapping(objSeqToResultMap, objProteinByResultID)
+			If String.IsNullOrEmpty(strResultToSeqMapFilename) Then
+				blnSuccess = False
+			Else
+				blnSuccess = LoadResultToSeqMapping(System.IO.Path.Combine(m_WorkDir, strResultToSeqMapFilename), objSeqToResultMap)
+			End If
+
+
+			If blnSuccess AndAlso Not String.IsNullOrEmpty(strSeqToProteinMapFilename) Then
+				blnSuccess = LoadSeqToProteinMapping(System.IO.Path.Combine(m_WorkDir, strSeqToProteinMapFilename), objSeqToResultMap, objProteinByResultID)
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading X!Tandem protein results", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception loading X!Tandem protein results")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading protein results", ex)
+			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception loading protein results")
 			blnSuccess = False
 		End Try
 
@@ -1177,14 +1243,19 @@ Public Class clsMSGFRunner
 
 	End Function
 
-
-	Protected Function LoadXTandemResultToSeqMapping(ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))) As Boolean
+	''' <summary>
+	''' Load the Result to Seq mapping using the specified PHRP result file
+	''' </summary>
+	''' <param name="strFilePath"></param>
+	''' <param name="objSeqToResultMap"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function LoadResultToSeqMapping(ByVal strFilePath As String, ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))) As Boolean
 
 		Dim srInFile As System.IO.StreamReader
 
 		Dim objResultIDList As System.Collections.Generic.List(Of Integer)
 
-		Dim strFilePath As String
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
@@ -1196,7 +1267,6 @@ Public Class clsMSGFRunner
 		Try
 
 			' Read the data from the result to sequence map file
-			strFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & XT_RESULT_TO_SEQ_MAP_SUFFIX)
 			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
 			intLinesRead = 0
@@ -1232,8 +1302,8 @@ Public Class clsMSGFRunner
 			srInFile.Close()
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem result to seq map file", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem " & XT_RESULT_TO_SEQ_MAP_SUFFIX & " file")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading result to seq map file", ex)
+			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading " & System.IO.Path.GetFileName(strFilePath))
 			Return False
 		End Try
 
@@ -1241,9 +1311,18 @@ Public Class clsMSGFRunner
 
 	End Function
 
-
-	Protected Function LoadXTandemSeqToProteinMapping(ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer)), _
-				  ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
+	''' <summary>
+	''' Load the Sequence to Protein mapping using the specified PHRP result file
+	''' This function only keeps track of the first protein for each ResultID
+	''' </summary>
+	''' <param name="strFilePath"></param>
+	''' <param name="objSeqToResultMap"></param>
+	''' <param name="objProteinByResultID"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function LoadSeqToProteinMapping(ByVal strFilePath As String, _
+	  ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer)), _
+	  ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
 
 		Dim srInFile As System.IO.StreamReader
 
@@ -1251,7 +1330,6 @@ Public Class clsMSGFRunner
 
 		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
 
-		Dim strFilePath As String
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
@@ -1272,15 +1350,14 @@ Public Class clsMSGFRunner
 			objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 			' Define the default column mapping
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Unique_Seq_ID, 0)
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Cleavage_State, 1)
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Terminus_State, 2)
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Protein_Name, 3)
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Protein_EValue, 4)
-			objColumnHeaders.Add(XT_SEQ_PROT_MAP_COLUMN_Protein_Intensity, 5)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Unique_Seq_ID, 0)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Cleavage_State, 1)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Terminus_State, 2)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Name, 3)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_EValue, 4)
+			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Intensity, 5)
 
 			' Read the data from the sequence to protein map file
-			strFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & XT_SEQ_TO_PROTEIN_MAP_SUFFIX)
 			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
 			intLinesRead = 0
@@ -1295,7 +1372,7 @@ Public Class clsMSGFRunner
 					strSplitLine = strLineIn.Split(ControlChars.Tab)
 
 					If Not blnHeaderLineParsed Then
-						If strSplitLine(0).ToLower() = XT_SEQ_PROT_MAP_COLUMN_Unique_Seq_ID.ToLower Then
+						If strSplitLine(0).ToLower() = clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Unique_Seq_ID.ToLower Then
 							' Parse the header line to confirm the column ordering
 							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
 							blnSkipLine = True
@@ -1308,7 +1385,7 @@ Public Class clsMSGFRunner
 
 						If Integer.TryParse(strSplitLine(0), intSeqID) Then
 							If intSeqID <> intSeqIDPrevious Then
-								strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, XT_SEQ_PROT_MAP_COLUMN_Protein_Name, objColumnHeaders, String.Empty)
+								strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Name, objColumnHeaders, String.Empty)
 
 								If Not String.IsNullOrEmpty(strProtein) Then
 									' Find the ResultIDs in objResultToSeqMap() that have sequence ID intSeqID
@@ -1335,8 +1412,8 @@ Public Class clsMSGFRunner
 			srInFile.Close()
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading X!Tandem seq to protein map file", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem " & XT_SEQ_TO_PROTEIN_MAP_SUFFIX & " file")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading seq to protein map file", ex)
+			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading " & System.IO.Path.GetFileName(strFilePath))
 			Return False
 		End Try
 
@@ -1359,7 +1436,7 @@ Public Class clsMSGFRunner
 	''' <returns>True if success; false if one or more errors</returns>
 	''' <remarks></remarks>
 	Protected Function PostProcessMSGFResults(ByVal eResultType As ePeptideHitResultType, _
-				ByVal strMSGFResultsFilePath As String) As Boolean
+	   ByVal strMSGFResultsFilePath As String) As Boolean
 
 		Const MAX_ERRORS_TO_LOG As Integer = 5
 
@@ -1432,7 +1509,7 @@ Public Class clsMSGFRunner
 
 			If eResultType = ePeptideHitResultType.XTandem Then
 				' Need to read the ResultToSeqMap and SeqToProteinMap files so that we can determine the first protein name for each result
-				blnSuccess = LoadXTandemResultProteins(objProteinByResultID)
+				blnSuccess = LoadResultProteins(eResultType, objProteinByResultID)
 				If Not blnSuccess Then
 					Return False
 				End If
@@ -1443,7 +1520,7 @@ Public Class clsMSGFRunner
 
 			' Define the path to write the synopsis MSGF results to
 			strMSGFSynopsisResults = System.IO.Path.Combine(fiInputFile.DirectoryName, _
-						 System.IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
+			 System.IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
 
 
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
@@ -1490,7 +1567,7 @@ Public Class clsMSGFRunner
 					strSplitLine = strLineIn.Split(ControlChars.Tab)
 
 					If Not blnHeaderLineParsed Then
-						If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower Then
+						If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
 							' Parse the header line to confirm the column ordering
 							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
 							blnSkipLine = True
@@ -1555,11 +1632,11 @@ Public Class clsMSGFRunner
 						End If
 
 						strMSGFResultData = strScan & ControlChars.Tab & _
-							 strCharge & ControlChars.Tab & _
-							 strProtein & ControlChars.Tab & _
-							 strOriginalPeptide & ControlChars.Tab & _
-							 strSpecProb & ControlChars.Tab & _
-							 strNotes
+						  strCharge & ControlChars.Tab & _
+						  strProtein & ControlChars.Tab & _
+						  strOriginalPeptide & ControlChars.Tab & _
+						  strSpecProb & ControlChars.Tab & _
+						  strNotes
 
 						' Add this result to the cached string dictionary
 						mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData)
@@ -1591,12 +1668,12 @@ Public Class clsMSGFRunner
 									strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
 
 									swMSGFSynFile.WriteLine(strSkipInfo(0) & ControlChars.Tab & _
-											strScan & ControlChars.Tab & _
-											strCharge & ControlChars.Tab & _
-											strSkipInfo(1) & ControlChars.Tab & _
-											strOriginalPeptide & ControlChars.Tab & _
-											strSpecProb & ControlChars.Tab & _
-											strNotes)
+									  strScan & ControlChars.Tab & _
+									  strCharge & ControlChars.Tab & _
+									  strSkipInfo(1) & ControlChars.Tab & _
+									  strOriginalPeptide & ControlChars.Tab & _
+									  strSpecProb & ControlChars.Tab & _
+									  strNotes)
 
 								Next
 							End If
@@ -1729,8 +1806,8 @@ Public Class clsMSGFRunner
 	''' <param name="objStaticMods">List with amino acid names as the key and the corresponding mod mass</param>
 	''' <returns>True if success; false if an error</returns>
 	Protected Function ReadModSummaryFile(ByVal strModSummaryFilePath As String, _
-			   ByRef objDynamicMods As System.Collections.Generic.SortedDictionary(Of String, String), _
-			   ByRef objStaticMods As System.Collections.Generic.SortedDictionary(Of String, String)) As Boolean
+	  ByRef objDynamicMods As System.Collections.Generic.SortedDictionary(Of String, String), _
+	  ByRef objStaticMods As System.Collections.Generic.SortedDictionary(Of String, String)) As Boolean
 
 		Dim srModSummaryFile As System.IO.StreamReader
 		Dim strLineIn As String
@@ -2350,7 +2427,7 @@ Public Class clsMSGFRunner
 	End Function
 
 	Protected Function CombineMSGFResultFiles(ByVal strMSGFOutputFilePath As String, _
-				ByRef lstResultFiles As System.Collections.Generic.List(Of String)) As Boolean
+	   ByRef lstResultFiles As System.Collections.Generic.List(Of String)) As Boolean
 
 		Try
 
