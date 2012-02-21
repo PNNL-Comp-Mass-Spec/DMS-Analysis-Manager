@@ -320,26 +320,6 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Function PossiblyQuotePath(ByVal strPath As String) As String
-
-        If strPath Is Nothing OrElse strPath.Length = 0 Then
-            Return ""
-        Else
-
-            If strPath.Contains(" ") Then
-                If Not strPath.StartsWith("""") Then
-                    strPath = """" & strPath
-                End If
-
-                If Not strPath.EndsWith("""") Then
-                    strPath &= """"
-                End If
-            End If
-
-            Return strPath
-        End If
-    End Function
-
     Private Sub ResetStatusLogTimes()
         ' Initialize the last error posting time to 2 hours before the present
         mLastErrorPostingTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
