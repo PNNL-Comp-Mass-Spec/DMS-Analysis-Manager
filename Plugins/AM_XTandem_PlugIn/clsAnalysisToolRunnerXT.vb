@@ -76,13 +76,24 @@ Public Class clsAnalysisToolRunnerXT
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter")
         End If
 
-        ' verify that program file exists
-        Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then progLoc = "Parameter 'xtprogloc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find XTandem program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		' Define the path to the X!Tandem .Exe
+		Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
+		If progLoc.Length = 0 Then
+			m_message = "Parameter 'xtprogloc' not defined for this manager"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' Check whether we need to update the program location to use a specific version of X!Tandem
+		progLoc = DetermineXTandemProgramLocation(progLoc)
+
+		If String.IsNullOrWhiteSpace(progLoc) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		ElseIf Not System.IO.File.Exists(progLoc) Then
+			m_message = "Cannot find XTandem program file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         'Set up and execute a program runner to run X!Tandem
         CmdStr = "input.xml"
@@ -241,6 +252,35 @@ Public Class clsAnalysisToolRunnerXT
         End Try
 
     End Function
+
+	Protected Function DetermineXTandemProgramLocation(ByVal progLoc As String) As String
+
+		' Check whether the settings file specifies that a specific version of the step tool be used
+		Dim strXTandemStepToolVersion As String = m_jobParams.GetParam("XTandem_Version")
+
+		If Not String.IsNullOrWhiteSpace(strXTandemStepToolVersion) Then
+			' progLoc is currently "C:\DMS_Programs\DMS5\XTandem\bin\Tandem.exe" or "C:\DMS_Programs\XTandem\bin\x64\Tandem.exe"
+			' strXTandemStepToolVersion will be similar to "v2011.12.1.1"
+			' Insert the specific version just before \bin\ in progLoc
+
+			Dim intInsertIndex As Integer
+			intInsertIndex = progLoc.ToLower().IndexOf("\bin\")
+
+			If intInsertIndex > 0 Then
+				Dim strNewProgLoc As String
+				strNewProgLoc = System.IO.Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion)
+				strNewProgLoc = System.IO.Path.Combine(strNewProgLoc, progLoc.Substring(intInsertIndex + 1))
+				progLoc = String.Copy(strNewProgLoc)
+			Else
+				m_message = "XTandem program path does not contain \bin\"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+				progLoc = String.Empty
+			End If
+		End If
+
+		Return progLoc
+
+	End Function
 
     ''' <summary>
     ''' Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
