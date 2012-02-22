@@ -831,6 +831,7 @@ Public Class clsMSGFRunner
 		Dim objStaticMods As New System.Collections.Generic.SortedDictionary(Of String, String)
 
 		Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+		Dim blnSuccess As Boolean
 
 		If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
 			Return False
@@ -840,7 +841,11 @@ Public Class clsMSGFRunner
 			Return False
 		End If
 
-		Return True
+		' Summarize the results in the _syn_MSGF.txt file
+		' Post the results to the database
+		blnSuccess = SummarizeMSGFResults(ePeptideHitResultType.MSGFDB)
+
+		Return blnSuccess
 
 	End Function
 
