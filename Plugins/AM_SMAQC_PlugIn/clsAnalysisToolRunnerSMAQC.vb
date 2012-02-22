@@ -710,13 +710,13 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			' Call stored procedure strStoredProcedure using connection string strConnectionString
 
-			If strConnectionString Is Nothing OrElse strConnectionString.Length = 0 Then
+			If String.IsNullOrWhiteSpace(strConnectionString) Then
 				m_message = "Connection string empty in PostSMAQCResultsToDB"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Connection string not defined; unable to post the SMAQC results to the database")
 				Return False
 			End If
 
-			If strStoredProcedure Is Nothing OrElse strStoredProcedure.Length = 0 Then
+			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
 				strStoredProcedure = STORE_SMAQC_RESULTS_SP_NAME
 			End If
 

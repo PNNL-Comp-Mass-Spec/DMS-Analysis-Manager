@@ -102,9 +102,9 @@ Public Class clsMSXMLGenReadW
         'Set up and execute a program runner to run MS XML executable
         If mCentroidMSXML Then
             ' Centroiding is enabled
-            CmdStr = " --" & msXmlFormat & " " & " -c " & PossiblyQuotePath(RawFilePath)
+			CmdStr = " --" & msXmlFormat & " " & " -c " & clsAnalysisToolRunnerBase.PossiblyQuotePath(RawFilePath)
         Else
-            CmdStr = " --" & msXmlFormat & " " & PossiblyQuotePath(RawFilePath)
+			CmdStr = " --" & msXmlFormat & " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(RawFilePath)
         End If
 
         RaiseEvent ProgRunnerStarting(mReadWProgramPath & CmdStr)
@@ -132,14 +132,6 @@ Public Class clsMSXMLGenReadW
 
         Return blnSuccess
 
-    End Function
-
-    Protected Function PossiblyQuotePath(ByVal strPath As String) As String
-        If strPath.Contains(" "c) Then
-            Return """" & strPath & """"
-        Else
-            Return strPath
-        End If
     End Function
 
     ''' <summary>

@@ -15,7 +15,7 @@ Option Strict On
 Public Class clsMSGFResultsSummarizer
 
 #Region "Constants and Enums"
-    Public Const DEFAULT_MSGF_THRESHOLD As Double = 0.0000000001    ' 1E-10
+	Public Const DEFAULT_MSGF_THRESHOLD As Double = 0.0000000001	' 1E-10
 
     Public Const MSGF_RESULT_COLUMN_Result_ID As String = "Result_ID"
     Public Const MSGF_RESULT_COLUMN_Scan As String = "Scan"
@@ -32,66 +32,327 @@ Public Class clsMSGFResultsSummarizer
 	Public Const SEQ_PROT_MAP_COLUMN_Protein_EValue As String = "Protein_Expectation_Value_Log(e)"
 	Public Const SEQ_PROT_MAP_COLUMN_Protein_Intensity As String = "Protein_Intensity_Log(I)"
 
+	Protected Const FHT_COLUMN_Result_ID As String = "ResultID"
+	Protected Const FHT_COLUMN_Scan As String = "Scan"
+	Protected Const FHT_COLUMN_Charge As String = "Charge"
+
+	Protected Const FHT_COLUMN_Result_ID_Alt1 As String = "HitNum"		' Used by Sequest
+	Protected Const FHT_COLUMN_Result_ID_Alt2 As String = "Result_ID"	' Used by X!Tandem
+	Protected Const FHT_COLUMN_Scan_Alt As String = "ScanNum"			' Used by Sequest
+	Protected Const FHT_COLUMN_Charge_Alt As String = "ChargeState"		' Used by Sequest
+
+	Public Property DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+
+	Protected Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
 
 #End Region
 
     Private mErrorMessage As String = String.Empty
 
     Private mMSGFThreshold As Double = DEFAULT_MSGF_THRESHOLD
+	Private mPostJobPSMResultsToDB As Boolean = False
+	Private mSaveResultsToTextFile As Boolean = True
 
-    Private mPSMCount As Integer = 0
-    Private mUniquePeptideCount As Integer = 0
-    Private mUniqueProteinCount As Integer = 0
+	Private mSpectraSearched As Integer = 0
+	Private mTotalPSMs As Integer = 0
+	Private mUniquePeptideCount As Integer = 0
+	Private mUniqueProteinCount As Integer = 0
 
 	Private mResultType As clsMSGFRunner.ePeptideHitResultType
 	Private mDatasetName As String
+	Private mJob As Integer
 	Private mWorkDir As String
+	Private mConnectionString As String
 
+	' The following is auto-determined in ProcessMSGFResults
+	Private mMSGFSynopsisFileName As String = String.Empty
 
-    Public ReadOnly Property ErrorMessage As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+#Region "Properties"
+	Public ReadOnly Property ErrorMessage As String
+		Get
+			If String.IsNullOrEmpty(mErrorMessage) Then
+				Return String.Empty
+			Else
+				Return mErrorMessage
+			End If
+		End Get
+	End Property
 
-    Public Property MSGFThreshold As Double
-        Get
-            Return mMSGFThreshold
-        End Get
-        Set(value As Double)
-            mMSGFThreshold = value
-        End Set
-    End Property
+	Public Property MSGFThreshold As Double
+		Get
+			Return mMSGFThreshold
+		End Get
+		Set(value As Double)
+			mMSGFThreshold = value
+		End Set
+	End Property
 
-    Public ReadOnly Property PSMCount As Integer
-        Get
-            Return mPSMCount
-        End Get
-    End Property
+	Public ReadOnly Property MSGFSynopsisFileName As String
+		Get
+			If String.IsNullOrEmpty(mMSGFSynopsisFileName) Then
+				Return String.Empty
+			Else
+				Return mMSGFSynopsisFileName
+			End If
+		End Get
 
-    Public ReadOnly Property UniquePeptideCount As Integer
-        Get
-            Return mUniquePeptideCount
-        End Get
-    End Property
+	End Property
 
-    Public ReadOnly Property UniqueProteinCount As Integer
-        Get
-            Return mUniqueProteinCount
-        End Get
-    End Property
+	Public Property PostJobPSMResultsToDB() As Boolean
+		Get
+			Return mPostJobPSMResultsToDB
+		End Get
+		Set(value As Boolean)
+			mPostJobPSMResultsToDB = value
+		End Set
+	End Property
 
-	Public Sub New(ByVal eResultType As clsMSGFRunner.ePeptideHitResultType, ByVal strDatasetName As String, ByVal strSourceFolderPath As String)
+	Public ReadOnly Property SpectraSearched As Integer
+		Get
+			Return mSpectraSearched
+		End Get
+	End Property
 
+	Public ReadOnly Property TotalPSMs As Integer
+		Get
+			Return mTotalPSMs
+		End Get
+	End Property
+
+	Public Property SaveResultsToTextFile() As Boolean
+		Get
+			Return mSaveResultsToTextFile
+		End Get
+		Set(value As Boolean)
+			mSaveResultsToTextFile = value
+		End Set
+	End Property
+	Public ReadOnly Property UniquePeptideCount As Integer
+		Get
+			Return mUniquePeptideCount
+		End Get
+	End Property
+
+	Public ReadOnly Property UniqueProteinCount As Integer
+		Get
+			Return mUniqueProteinCount
+		End Get
+	End Property
+#End Region
+
+	Public Sub New(ByVal eResultType As clsMSGFRunner.ePeptideHitResultType, ByVal strDatasetName As String, ByVal intJob As Integer, ByVal strSourceFolderPath As String)
 		mResultType = eResultType
 		mDatasetName = strDatasetName
+		mJob = intJob
 		mWorkDir = strSourceFolderPath
+		mConnectionString = DEFAULT_CONNECTION_STRING
 	End Sub
+
+	Public Sub New(ByVal eResultType As clsMSGFRunner.ePeptideHitResultType, ByVal strDatasetName As String, ByVal intJob As Integer, ByVal strSourceFolderPath As String, ByVal strConnectionString As String)
+		mResultType = eResultType
+		mDatasetName = strDatasetName
+		mJob = intJob
+		mWorkDir = strSourceFolderPath
+		mConnectionString = strConnectionString
+	End Sub
+
+	Protected Function PostJobPSMResults() As Boolean
+		Return PostJobPSMResults(mJob, mConnectionString, STORE_JOB_PSM_RESULTS_SP_NAME)
+	End Function
+
+	Protected Function ExamineFirstHitsFile(ByVal strFirstHitsFilePath As String) As Boolean
+
+		Dim strLineIn As String
+		Dim strSplitLine() As String
+
+		Dim blnHeaderLineParsed As Boolean = False
+		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
+
+		Dim lstUniqueSpectra As System.Collections.Generic.Dictionary(Of String, Integer)
+
+		Dim intLinesRead As Integer
+		Dim blnSkipLine As Boolean
+
+		Dim intScan As Integer
+		Dim intCharge As Integer
+		Dim strScanChargeCombo As String
+
+		Dim blnSuccess As Boolean = False
+
+		Try
+
+			' Initialize the list that will be used to track the number of spectra searched
+			lstUniqueSpectra = New System.Collections.Generic.Dictionary(Of String, Integer)
+
+			' Initialize the column mapping
+			' Using a case-insensitive comparer
+			objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+
+			' Initialize the column mapping
+			objColumnHeaders.Add(FHT_COLUMN_Result_ID, -1)
+			objColumnHeaders.Add(FHT_COLUMN_Scan, -1)
+			objColumnHeaders.Add(FHT_COLUMN_Charge, -1)
+
+			Using srFHTFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strFirstHitsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				While srFHTFile.Peek > -1
+					strLineIn = srFHTFile.ReadLine()
+					intLinesRead += 1
+					blnSkipLine = False
+
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+						strSplitLine = strLineIn.Split(ControlChars.Tab)
+
+						If Not blnHeaderLineParsed Then
+							' Parse the header line to confirm the column ordering
+
+							' Standardize some column names first
+							For intIndex As Integer = 0 To strSplitLine.Length - 1
+								Select Case strSplitLine(intIndex)
+									Case FHT_COLUMN_Result_ID_Alt1, FHT_COLUMN_Result_ID_Alt2
+										strSplitLine(intIndex) = FHT_COLUMN_Result_ID
+
+									Case FHT_COLUMN_Scan_Alt
+										strSplitLine(intIndex) = FHT_COLUMN_Scan
+
+									Case FHT_COLUMN_Charge_Alt
+										strSplitLine(intIndex) = FHT_COLUMN_Charge
+								End Select
+							Next
+
+							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
+
+							blnHeaderLineParsed = True
+						End If
+
+						If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
+
+							intScan = clsMSGFInputCreator.LookupColumnValue(strSplitLine, FHT_COLUMN_Scan, objColumnHeaders, -1)
+
+							If intScan >= 0 Then
+
+								intCharge = clsMSGFInputCreator.LookupColumnValue(strSplitLine, FHT_COLUMN_Charge, objColumnHeaders, -1)
+
+								If intCharge >= 0 Then
+									strScanChargeCombo = intScan.ToString() & "_" & intCharge.ToString()
+
+									If Not lstUniqueSpectra.ContainsKey(strScanChargeCombo) Then
+										lstUniqueSpectra.Add(strScanChargeCombo, 0)
+									End If
+
+								End If
+
+							End If
+
+						End If
+					End If
+				End While
+
+			End Using
+
+			mSpectraSearched = lstUniqueSpectra.Count
+
+			blnSuccess = True
+
+		Catch ex As Exception
+			mErrorMessage = ex.Message
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
+
+	Protected Function PostJobPSMResults(ByVal intJob As Integer, _
+	 ByVal strConnectionString As String, _
+	 ByVal strStoredProcedure As String) As Boolean
+
+		Const MAX_RETRY_COUNT As Integer = 3
+
+		Dim objCommand As System.Data.SqlClient.SqlCommand
+
+		Dim blnSuccess As Boolean
+
+		Try
+
+			' Call stored procedure strStoredProcedure using connection string strConnectionString
+
+			If String.IsNullOrWhiteSpace(strConnectionString) Then
+				mErrorMessage = "Connection string empty in PostJobPSMResults"
+				Return False
+			End If
+
+			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
+				strStoredProcedure = STORE_JOB_PSM_RESULTS_SP_NAME
+			End If
+
+			objCommand = New System.Data.SqlClient.SqlCommand()
+
+			With objCommand
+				.CommandType = CommandType.StoredProcedure
+				.CommandText = strStoredProcedure
+
+				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+				.Parameters.Add(New SqlClient.SqlParameter("@Job", SqlDbType.Int))
+				.Parameters.Item("@Job").Direction = ParameterDirection.Input
+				.Parameters.Item("@Job").Value = intJob
+
+				.Parameters.Add(New SqlClient.SqlParameter("@MSGFThreshold", SqlDbType.Float))
+				.Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
+				.Parameters.Item("@MSGFThreshold").Value = mMSGFThreshold
+
+				.Parameters.Add(New SqlClient.SqlParameter("@SpectraSearched", SqlDbType.Int))
+				.Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
+				.Parameters.Item("@SpectraSearched").Value = mSpectraSearched
+
+				.Parameters.Add(New SqlClient.SqlParameter("@TotalPSMs", SqlDbType.Int))
+				.Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
+				.Parameters.Item("@TotalPSMs").Value = mTotalPSMs
+
+				.Parameters.Add(New SqlClient.SqlParameter("@UniquePeptides", SqlDbType.Int))
+				.Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
+				.Parameters.Item("@UniquePeptides").Value = mUniquePeptideCount
+
+				.Parameters.Add(New SqlClient.SqlParameter("@UniqueProteins", SqlDbType.Int))
+				.Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
+				.Parameters.Item("@UniqueProteins").Value = mUniqueProteinCount
+
+			End With
+
+			'Execute the SP (retry the call up to 3 times)
+			Dim ResCode As Integer
+			Dim strErrorMessage As String = String.Empty
+			ResCode = AnalysisManagerBase.clsGlobal.ExecuteSP(objCommand, strConnectionString, MAX_RETRY_COUNT, strErrorMessage)
+
+			If ResCode = 0 Then
+				blnSuccess = True
+			Else
+				mErrorMessage = "Error storing PSM Results in database, " & strStoredProcedure & " returned " & ResCode.ToString
+				If Not String.IsNullOrEmpty(strErrorMessage) Then
+					mErrorMessage &= "; " & strErrorMessage
+				End If
+				blnSuccess = False
+			End If
+
+		Catch ex As System.Exception
+			mErrorMessage = "Exception storing PSM Results in database: " & ex.Message
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
 
 	Public Function ProcessMSGFResults() As Boolean
 
+		Dim strPHRPFirstHitsFileName As String
+		Dim strPHRPFirstHitsFilePath As String
+
 		Dim strPHRPSynopsisFileName As String
 		Dim strMSGFResultsFilePath As String
+
 		Dim blnSuccess As Boolean
 
 		' The keys in this dictionary are Result_ID values
@@ -105,17 +366,36 @@ Public Class clsMSGFResultsSummarizer
 
 		Try
 			mErrorMessage = String.Empty
-			mPSMCount = 0
+			mSpectraSearched = 0
+			mTotalPSMs = 0
 			mUniquePeptideCount = 0
 			mUniqueProteinCount = 0
 
+			' We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
+			strPHRPFirstHitsFileName = clsMSGFRunner.GetPHRPFirstHitsFileName(mResultType, mDatasetName)
+
+			' We use the Synopsis file to count the number of peptides and proteins observed
 			strPHRPSynopsisFileName = clsMSGFRunner.GetPHRPSynopsisFileName(mResultType, mDatasetName)
-			strMSGFResultsFilePath = System.IO.Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) & clsMSGFInputCreator.MSGF_RESULT_FILENAME_SUFFIX
-			strMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, strMSGFResultsFilePath)
+
+			If mResultType = clsMSGFRunner.ePeptideHitResultType.XTandem Then
+				' X!Tandem results don't have first-hits files; use the Synopsis file
+				strPHRPFirstHitsFileName = strPHRPSynopsisFileName
+			End If
+
+			mMSGFSynopsisFileName = System.IO.Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) & clsMSGFInputCreator.MSGF_RESULT_FILENAME_SUFFIX
+
+
+			strPHRPFirstHitsFilePath = System.IO.Path.Combine(mWorkDir, strPHRPFirstHitsFileName)
+			strMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, mMSGFSynopsisFileName)
 
 			If Not System.IO.File.Exists(strMSGFResultsFilePath) Then
 				mErrorMessage = "File not found: " & strMSGFResultsFilePath
 				Return False
+			End If
+
+			If System.IO.File.Exists(strPHRPFirstHitsFilePath) Then
+				' Determine the number of MS/MS spectra searched
+				ExamineFirstHitsFile(strPHRPFirstHitsFilePath)
 			End If
 
 			lstPSMs = New System.Collections.Generic.Dictionary(Of Integer, String)
@@ -131,6 +411,14 @@ Public Class clsMSGFResultsSummarizer
 				If blnSuccess Then
 					' Summarize the results, counting the number of peptides, unique peptides, and proteins
 					blnSuccess = SummarizeResults(lstPSMs, objResultToSeqMap, objSeqToProteinMap)
+				End If
+
+				If blnSuccess AndAlso mSaveResultsToTextFile Then
+					blnSuccess = SaveResultsToFile()
+				End If
+
+				If blnSuccess AndAlso mPostJobPSMResultsToDB Then
+					blnSuccess = PostJobPSMResults()
 				End If
 			End If
 
@@ -284,8 +572,6 @@ Public Class clsMSGFResultsSummarizer
 
 		Dim srInFile As System.IO.StreamReader
 
-		Dim objResultIDList As System.Collections.Generic.List(Of Integer)
-
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
@@ -381,7 +667,7 @@ Public Class clsMSGFResultsSummarizer
 			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
 			intLinesRead = 0
-			
+
 			Do While srInFile.Peek >= 0
 				strLineIn = srInFile.ReadLine
 				intLinesRead += 1
@@ -439,6 +725,46 @@ Public Class clsMSGFResultsSummarizer
 
 	End Function
 
+	Protected Function SaveResultsToFile() As Boolean
+
+		Dim strOutputFilePath As String = "??"
+
+		Try
+			strOutputFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "_PSM_Stats.txt")
+
+			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+				' Header line
+				swOutFile.WriteLine( _
+				  "Dataset" & ControlChars.Tab & _
+				  "Job" & ControlChars.Tab & _
+				  "MSGF_Threshold" & ControlChars.Tab & _
+				  "Spectra_Searched" & ControlChars.Tab & _
+				  "Total_PSMs" & ControlChars.Tab & _
+				  "Unique_Peptides" & ControlChars.Tab & _
+				  "Unique_Proteins")
+
+				' Stats
+				swOutFile.WriteLine( _
+				 mDatasetName & ControlChars.Tab & _
+				 mJob & ControlChars.Tab & _
+				 mMSGFThreshold.ToString("0.00E+00") & ControlChars.Tab & _
+				 mSpectraSearched & ControlChars.Tab & _
+				 mTotalPSMs & ControlChars.Tab & _
+				 mUniquePeptideCount & ControlChars.Tab & _
+				 mUniqueProteinCount)
+
+			End Using
+
+		Catch ex As Exception
+			mErrorMessage = "Exception saving results to " & strOutputFilePath & ": " & ex.Message
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
 	''' <summary>
 	''' Summarize the results by inter-relating lstPSMs, objResultToSeqMap, and objSeqToProteinMap
 	''' </summary>
@@ -455,7 +781,6 @@ Public Class clsMSGFResultsSummarizer
 		' Link up with objResultToSeqMap to determine the unique number of filter-passing peptides
 		' Link up with objSeqToProteinMap to determine the unique number of proteins
 
-		
 		' The Keys are SeqID values; the values are observation count
 		Dim lstUniqueSequences As System.Collections.Generic.Dictionary(Of Integer, Integer)
 
@@ -499,11 +824,11 @@ Public Class clsMSGFResultsSummarizer
 				End If
 			Next
 
-
 			' Store the stats
-			mPSMCount = lstPSMs.Count
+			mTotalPSMs = lstPSMs.Count
 			mUniquePeptideCount = lstUniqueSequences.Count
 			mUniqueProteinCount = lstUniqueProteins.Count
+
 
 		Catch ex As Exception
 			mErrorMessage = "Exception summarizing results: " & ex.Message

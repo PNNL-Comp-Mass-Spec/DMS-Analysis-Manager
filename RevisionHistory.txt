@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+February 21, 2012
+	- Updated MSGF Plugin to summarize the results having MSGF < 1E-10
+	- Added MSGF_Results_Summarizer.exe program to allow for summarizing existing results and storing in DMS
+
 February 17, 2012
 	- Now reporting "Exception generating OrgDb file" in the completion code if a an exception occurs while creating the fasta file
 	- Updated clsSplitCattedFiles to support receiving a list of DTA files to skip when de-concatenating a _DTA.txt file

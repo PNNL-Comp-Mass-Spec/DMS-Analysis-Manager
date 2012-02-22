@@ -318,11 +318,11 @@ Public Class clsMSGFRunner
 						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
 						blnPostProcessingError = True
 					End If
+
 				End If
 
 				' Make sure the MSGF Input Creator log file is closed
 				mMSGFInputCreator.CloseLogFileNow()
-
 
 			End If
 
@@ -370,7 +370,6 @@ Public Class clsMSGFRunner
 
 			Result = CopyResultsFolderToServer()
 			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'TODO: What do we do here?
 				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 				Return Result
 			End If
@@ -1422,6 +1421,49 @@ Public Class clsMSGFRunner
 	End Function
 
 	''' <summary>
+	''' Compare intPrecursorMassErrorCount to intLinesRead
+	''' If more than 10% of the results have a precursor mass error, then set blnTooManyPrecursorMassMismatches to True
+	''' </summary>
+	''' <param name="intLinesRead"></param>
+	''' <param name="intPrecursorMassErrorCount"></param>
+	''' <param name="blnTooManyPrecursorMassMismatches"></param>
+	''' <remarks></remarks>
+	Private Sub PostProcessMSGFCheckPrecursorMassErrorCount(ByVal intLinesRead As Integer, ByVal intPrecursorMassErrorCount As Integer, ByRef blnTooManyPrecursorMassMismatches As Boolean)
+
+		Const MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT As Integer = 10
+
+		Dim sngPercentDataPrecursorMassError As Single
+		Dim Msg As String
+
+		Try
+			' If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
+			' then set blnTooManyPrecursorMassMismatches to True
+
+			blnTooManyPrecursorMassMismatches = False
+
+			If intLinesRead >= 2 AndAlso intPrecursorMassErrorCount > 0 Then
+				sngPercentDataPrecursorMassError = CSng(intPrecursorMassErrorCount / intLinesRead * 100)
+
+				Msg = sngPercentDataPrecursorMassError.ToString("0.0") & "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass"
+
+				If sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT Then
+					Msg &= "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+					blnTooManyPrecursorMassMismatches = True
+				Else
+					Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT & "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+				End If
+			End If
+
+		Catch ex As Exception
+			' Ignore errors here
+		End Try
+
+	End Sub
+
+
+	''' <summary>
 	''' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
 	''' Will also look for non-numeric values in the SpecProb column
 	''' Examples:
@@ -1435,63 +1477,19 @@ Public Class clsMSGFRunner
 	''' <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
 	''' <returns>True if success; false if one or more errors</returns>
 	''' <remarks></remarks>
-	Protected Function PostProcessMSGFResults(ByVal eResultType As ePeptideHitResultType, _
-	   ByVal strMSGFResultsFilePath As String) As Boolean
-
-		Const MAX_ERRORS_TO_LOG As Integer = 5
-
-		' If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
-		'  then return false
-		Const MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT As Integer = 10
-
-		Dim chSepChars() As Char = New Char() {ControlChars.Tab}
-
-		Dim srMSGFResults As System.IO.StreamReader
-		Dim swMSGFSynFile As System.IO.StreamWriter
-
-		Dim blnFirstHitsDataPresent As Boolean
+	Protected Function PostProcessMSGFResults(ByVal eResultType As ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
 
 		Dim fiInputFile As System.IO.FileInfo
 		Dim fiMSGFSynFile As System.IO.FileInfo
 
 		Dim strMSGFSynopsisResults As String = String.Empty
-
-		Dim strLineIn As String
-		Dim strSplitLine() As String
-
-		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
-
-		Dim intLinesRead As Integer
-		Dim intErrorCount As Integer
-		Dim intPrecursorMassErrorCount As Integer
-
-		Dim strOriginalPeptide As String
-		Dim strScan As String
-		Dim strCharge As String
-		Dim strProtein As String
-		Dim strPeptide As String
-		Dim strResultID As String
-		Dim strSpecProb As String
-		Dim strDataSource As String
-		Dim strNotes As String
-
-		Dim strMSGFResultData As String
-		Dim strOriginalPeptideInfo As String
-		Dim strProteinNew As String = String.Empty
-
-		Dim intResultID As Integer
-		Dim intIndex As Integer
-		Dim objSkipList As System.Collections.Generic.List(Of String)
-		Dim strSkipInfo() As String
+		Dim Msg As String
 
 		Dim objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)
 
-		Dim Msg As String
-		Dim sngPercentDataPrecursorMassError As Single
 		Dim blnSuccess As Boolean
-
-		Dim blnSkipLine As Boolean
-		Dim blnHeaderLineParsed As Boolean
+		Dim blnFirstHitsDataPresent As Boolean = False
+		Dim blnTooManyPrecursorMassMismatches As Boolean = False
 
 		Try
 			If String.IsNullOrEmpty(strMSGFResultsFilePath) Then
@@ -1522,174 +1520,10 @@ Public Class clsMSGFRunner
 			strMSGFSynopsisResults = System.IO.Path.Combine(fiInputFile.DirectoryName, _
 			 System.IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
 
-
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
 			m_StatusTools.UpdateAndWrite(m_progress)
 
-			' Initialize the column mapping
-			' Using a case-insensitive comparer
-			objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
-			' Define the default column mapping
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Title, 1)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_ScanNumber, 2)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Annotation, 3)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Charge, 4)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8)
-			objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
-
-			' Read the data from the MSGF Result file
-			srMSGFResults = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
-
-			' Create a new file for writing the Synopsis MSGF Results
-			swMSGFSynFile = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFSynopsisResults, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
-
-			' Write out the headers to swMSGFSynFile
-			mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
-
-			blnHeaderLineParsed = False
-			blnFirstHitsDataPresent = False
-
-			intLinesRead = 0
-			intErrorCount = 0
-			intPrecursorMassErrorCount = 0
-
-			Do While srMSGFResults.Peek >= 0
-				strLineIn = srMSGFResults.ReadLine
-				intLinesRead += 1
-				blnSkipLine = False
-
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-					If Not blnHeaderLineParsed Then
-						If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
-							' Parse the header line to confirm the column ordering
-							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
-							blnSkipLine = True
-						End If
-
-						blnHeaderLineParsed = True
-					End If
-
-					If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
-
-						strOriginalPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
-						strScan = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
-						strCharge = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
-						strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
-						strPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
-						strResultID = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
-						strSpecProb = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
-						strDataSource = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
-						strNotes = String.Empty
-
-						If eResultType = ePeptideHitResultType.XTandem Then
-							' Update the protein name
-							If Integer.TryParse(strResultID, intResultID) Then
-								If objProteinByResultID.TryGetValue(intResultID, strProteinNew) Then
-									strProtein = strProteinNew
-								End If
-							End If
-						End If
-
-						If Not Double.TryParse(strSpecProb, 0.0) Then
-							' The specProb column does not contain a number
-							intErrorCount += 1
-
-							If intErrorCount <= MAX_ERRORS_TO_LOG Then
-								' Log the first 5 instances to the log file as warnings
-
-								If strOriginalPeptide <> strPeptide Then
-									strOriginalPeptideInfo = ", original peptide sequence " & strOriginalPeptide
-								Else
-									strOriginalPeptideInfo = String.Empty
-								End If
-
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb is not numeric on line " & intLinesRead & " in the result file: " & strSpecProb & " (parent peptide " & strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID & strOriginalPeptideInfo & ")")
-							End If
-
-							If strSpecProb.Contains("precursor mass") Then
-								intPrecursorMassErrorCount += 1
-							End If
-
-							If strOriginalPeptide <> strPeptide Then
-								strNotes = strPeptide & "; " & strSpecProb
-							Else
-								strNotes = String.Copy(strSpecProb)
-							End If
-
-							' Change the spectrum probability to 1
-							strSpecProb = "1"
-						Else
-							If strOriginalPeptide <> strPeptide Then
-								strNotes = String.Copy(strPeptide)
-							End If
-						End If
-
-						strMSGFResultData = strScan & ControlChars.Tab & _
-						  strCharge & ControlChars.Tab & _
-						  strProtein & ControlChars.Tab & _
-						  strOriginalPeptide & ControlChars.Tab & _
-						  strSpecProb & ControlChars.Tab & _
-						  strNotes
-
-						' Add this result to the cached string dictionary
-						mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData)
-
-
-						If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
-							' First-hits file
-							blnFirstHitsDataPresent = True
-
-						Else
-							' Synopsis file
-
-							' Add this entry to the MSGF synopsis results
-							' Note that strOriginalPeptide has the original peptide sequence
-							swMSGFSynFile.WriteLine(strResultID & ControlChars.Tab & strMSGFResultData)
-
-							' See if any entries were skipped when reading the synopsis file used to create the MSGF input file
-							' If they were, add them to the validated MSGF file (to aid in linking up files later)
-
-							If Integer.TryParse(strResultID, intResultID) Then
-								objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID)
-
-								For intIndex = 0 To objSkipList.Count - 1
-
-									' Split the entry on the tab character
-									' The item left of the tab is the skipped result id
-									' the item right of the tab is the protein corresponding to the skipped result id
-
-									strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
-
-									swMSGFSynFile.WriteLine(strSkipInfo(0) & ControlChars.Tab & _
-									  strScan & ControlChars.Tab & _
-									  strCharge & ControlChars.Tab & _
-									  strSkipInfo(1) & ControlChars.Tab & _
-									  strOriginalPeptide & ControlChars.Tab & _
-									  strSpecProb & ControlChars.Tab & _
-									  strNotes)
-
-								Next
-							End If
-						End If
-
-					End If
-				End If
-
-			Loop
-
-			srMSGFResults.Close()
-			swMSGFSynFile.Close()
-
-			If intErrorCount > 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb was not numeric for " & intErrorCount & " entries in the MSGF result file")
-			End If
+			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, objProteinByResultID, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
 
 		Catch ex As Exception
 			Msg = "Error post-processing the MSGF Results file: " & _
@@ -1697,24 +1531,23 @@ Public Class clsMSGFRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
 
-			If Not srMSGFResults Is Nothing Then srMSGFResults.Close()
-			If Not swMSGFSynFile Is Nothing Then swMSGFSynFile.Close()
-
 			Return False
 		End Try
 
 		Try
-			' Now replace the _MSGF.txt file with the _MSGF_validated.txt file
+			' Now replace the _MSGF.txt file with the _MSGF_PostProcess.txt file
 			' For example, replace:
 			'   QC_Shew_Dataset_syn_MSGF.txt
-			' With:
-			'   QC_Shew_Dataset_syn_MSGF_validated.txt
+			' With the contents of:
+			'   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
 
 			System.Threading.Thread.Sleep(500)
 
+			' Delete the original file
 			fiInputFile.Delete()
 			System.Threading.Thread.Sleep(500)
 
+			' Rename the _PostProcess.txt file
 			fiMSGFSynFile = New System.IO.FileInfo(strMSGFSynopsisResults)
 
 			fiMSGFSynFile.MoveTo(strMSGFResultsFilePath)
@@ -1728,33 +1561,11 @@ Public Class clsMSGFRunner
 			Return False
 		End Try
 
-		Dim blnTooManyPrecursorMassMismatches As Boolean
-		blnTooManyPrecursorMassMismatches = False
-
-		Try
-			' Compare intPrecursorMassErrorCount to intLinesRead
-			' If more than 10% of the results have a precursor mass error, then return false
-			blnSuccess = True
-
-			If intLinesRead >= 2 AndAlso intPrecursorMassErrorCount > 0 Then
-				sngPercentDataPrecursorMassError = CSng(intPrecursorMassErrorCount / intLinesRead * 100)
-
-				Msg = sngPercentDataPrecursorMassError.ToString("0.0") & "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass"
-
-				If sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT Then
-					Msg &= "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-					blnTooManyPrecursorMassMismatches = True
-				Else
-					Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT & "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
-					blnSuccess = True
-				End If
-			End If
-
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+		If blnSuccess Then
+			' Summarize the results in the _syn_MSGF.txt file
+			' Post the results to the database
+			SummarizeMSGFResults(eResultType)
+		End If
 
 		If blnSuccess AndAlso blnFirstHitsDataPresent Then
 			' Write out the First-Hits file results
@@ -1769,12 +1580,236 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function PossiblyQuotePath(ByVal strPath As String) As String
-		If strPath.Contains(" "c) Then
-			Return """" & strPath & """"
-		Else
-			Return strPath
+	''' <summary>
+	''' Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
+	''' </summary>
+	''' <param name="eResultType"></param>
+	''' <param name="strMSGFResultsFilePath"></param>
+	''' <param name="strMSGFSynopsisResults"></param>
+	''' <param name="objProteinByResultID"></param>
+	''' <param name="blnFirstHitsDataPresent"></param>
+	''' <param name="blnTooManyPrecursorMassMismatches"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function PostProcessMSGFResultsWork(ByVal eResultType As ePeptideHitResultType, _
+	  ByVal strMSGFResultsFilePath As String, _
+	  ByVal strMSGFSynopsisResults As String, _
+	  ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String), _
+	  ByRef blnFirstHitsDataPresent As Boolean, _
+	  ByRef blnTooManyPrecursorMassMismatches As Boolean) As Boolean
+
+		Const MAX_ERRORS_TO_LOG As Integer = 5
+
+		Dim chSepChars() As Char = New Char() {ControlChars.Tab}
+
+		Dim strLineIn As String
+		Dim strSplitLine() As String
+
+		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
+
+		Dim intLinesRead As Integer
+		Dim intErrorCount As Integer
+		Dim intPrecursorMassErrorCount As Integer
+
+		Dim strOriginalPeptide As String
+		Dim strScan As String
+		Dim strCharge As String
+		Dim strProtein As String
+		Dim strPeptide As String
+		Dim strResultID As String
+		Dim strSpecProb As String
+		Dim strDataSource As String
+		Dim strNotes As String
+
+		Dim strMSGFResultData As String
+		Dim strOriginalPeptideInfo As String
+		Dim strProteinNew As String = String.Empty
+
+		Dim intResultID As Integer
+		Dim intIndex As Integer
+		Dim objSkipList As System.Collections.Generic.List(Of String)
+		Dim strSkipInfo() As String
+
+		Dim blnSkipLine As Boolean
+		Dim blnHeaderLineParsed As Boolean
+
+		'''''''''''''''''''''''''''''
+		' Note: Do not put a Try/Catch block in this function
+		' Allow the calling function to catch any errors
+		'''''''''''''''''''''''''''''
+
+		' Initialize the column mapping
+		' Using a case-insensitive comparer
+		objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+
+		' Define the default column mapping
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Title, 1)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_ScanNumber, 2)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Annotation, 3)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Charge, 4)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8)
+		objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
+
+		' Read the data from the MSGF Result file
+		Using srMSGFResults As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+
+			' Create a new file for writing the Synopsis MSGF Results
+			Using swMSGFSynFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFSynopsisResults, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+
+				' Write out the headers to swMSGFSynFile
+				mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
+
+				blnHeaderLineParsed = False
+				blnFirstHitsDataPresent = False
+
+				intLinesRead = 0
+				intErrorCount = 0
+				intPrecursorMassErrorCount = 0
+
+				Do While srMSGFResults.Peek >= 0
+					strLineIn = srMSGFResults.ReadLine
+					intLinesRead += 1
+					blnSkipLine = False
+
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						strSplitLine = strLineIn.Split(ControlChars.Tab)
+
+						If Not blnHeaderLineParsed Then
+							If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
+								' Parse the header line to confirm the column ordering
+								clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
+								blnSkipLine = True
+							End If
+
+							blnHeaderLineParsed = True
+						End If
+
+						If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
+
+							strOriginalPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
+							strScan = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
+							strCharge = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
+							strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
+							strPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
+							strResultID = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
+							strSpecProb = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
+							strDataSource = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
+							strNotes = String.Empty
+
+							If eResultType = ePeptideHitResultType.XTandem Then
+								' Update the protein name
+								If Integer.TryParse(strResultID, intResultID) Then
+									If objProteinByResultID.TryGetValue(intResultID, strProteinNew) Then
+										strProtein = strProteinNew
+									End If
+								End If
+							End If
+
+							If Not Double.TryParse(strSpecProb, 0.0) Then
+								' The specProb column does not contain a number
+								intErrorCount += 1
+
+								If intErrorCount <= MAX_ERRORS_TO_LOG Then
+									' Log the first 5 instances to the log file as warnings
+
+									If strOriginalPeptide <> strPeptide Then
+										strOriginalPeptideInfo = ", original peptide sequence " & strOriginalPeptide
+									Else
+										strOriginalPeptideInfo = String.Empty
+									End If
+
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb is not numeric on line " & intLinesRead & " in the result file: " & strSpecProb & " (parent peptide " & strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID & strOriginalPeptideInfo & ")")
+								End If
+
+								If strSpecProb.Contains("precursor mass") Then
+									intPrecursorMassErrorCount += 1
+								End If
+
+								If strOriginalPeptide <> strPeptide Then
+									strNotes = strPeptide & "; " & strSpecProb
+								Else
+									strNotes = String.Copy(strSpecProb)
+								End If
+
+								' Change the spectrum probability to 1
+								strSpecProb = "1"
+							Else
+								If strOriginalPeptide <> strPeptide Then
+									strNotes = String.Copy(strPeptide)
+								End If
+							End If
+
+							strMSGFResultData = strScan & ControlChars.Tab & _
+							  strCharge & ControlChars.Tab & _
+							  strProtein & ControlChars.Tab & _
+							  strOriginalPeptide & ControlChars.Tab & _
+							  strSpecProb & ControlChars.Tab & _
+							  strNotes
+
+							' Add this result to the cached string dictionary
+							mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData)
+
+
+							If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
+								' First-hits file
+								blnFirstHitsDataPresent = True
+
+							Else
+								' Synopsis file
+
+								' Add this entry to the MSGF synopsis results
+								' Note that strOriginalPeptide has the original peptide sequence
+								swMSGFSynFile.WriteLine(strResultID & ControlChars.Tab & strMSGFResultData)
+
+								' See if any entries were skipped when reading the synopsis file used to create the MSGF input file
+								' If they were, add them to the validated MSGF file (to aid in linking up files later)
+
+								If Integer.TryParse(strResultID, intResultID) Then
+									objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID)
+
+									For intIndex = 0 To objSkipList.Count - 1
+
+										' Split the entry on the tab character
+										' The item left of the tab is the skipped result id
+										' the item right of the tab is the protein corresponding to the skipped result id
+
+										strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
+
+										swMSGFSynFile.WriteLine(strSkipInfo(0) & ControlChars.Tab & _
+										  strScan & ControlChars.Tab & _
+										  strCharge & ControlChars.Tab & _
+										  strSkipInfo(1) & ControlChars.Tab & _
+										  strOriginalPeptide & ControlChars.Tab & _
+										  strSpecProb & ControlChars.Tab & _
+										  strNotes)
+
+									Next
+								End If
+							End If
+
+						End If
+					End If
+
+				Loop
+
+			End Using
+
+		End Using
+
+		If intErrorCount > 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb was not numeric for " & intErrorCount & " entries in the MSGF result file")
 		End If
+
+		' Check whether more than 10% of the results have a precursor mass error
+		PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead, intPrecursorMassErrorCount, blnTooManyPrecursorMassMismatches)
+
+		' If we get here, return True
+		Return True
+
 	End Function
 
 	Protected Function ProcessFileWithMSGF(ByVal eResultType As ePeptideHitResultType, _
@@ -2692,6 +2727,56 @@ Public Class clsMSGFRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
 		End Try
+
+	End Function
+
+	Protected Function SummarizeMSGFResults(ByVal eResultType As ePeptideHitResultType) As Boolean
+
+		Dim objSummarizer As clsMSGFResultsSummarizer
+		Dim strConnectionString As String
+		Dim intJobNumber As Integer = 0
+		Dim blnPostResultsToDB As Boolean
+
+		Dim blnSuccess As Boolean
+		Dim Msg As String
+
+		Try
+
+			strConnectionString = m_mgrParams.GetParam("connectionstring")
+			If Int32.TryParse(m_JobNum, intJobNumber) Then
+				blnPostResultsToDB = True
+			Else
+				blnPostResultsToDB = False
+				Msg = "Job number is not numeric: " & m_JobNum & "; will not be able to post PSM results to the database"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			End If
+
+			objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString)
+			objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
+
+			objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
+			objSummarizer.SaveResultsToTextFile = False
+
+			blnSuccess = objSummarizer.ProcessMSGFResults()
+
+			If Not blnSuccess Then
+				Msg = "Error calling ProcessMSGFResults"
+				If objSummarizer.ErrorMessage.Length > 0 Then
+					Msg &= ": " & objSummarizer.ErrorMessage
+				End If
+
+				Msg &= "; input file name: " & objSummarizer.MSGFSynopsisFileName
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception summarizing the MSGF results: " & ex.Message)
+			Return False
+		End Try
+
+		Return blnSuccess
 
 	End Function
 

@@ -73,11 +73,11 @@ Public Class clsMSGFInputCreatorXTandem
     End Function
 
 	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal strDatasetName As String) As String
-		Return strDatasetName & "_xt_syn_ResultToSeqMap.txt"
+		Return strDatasetName & "_xt_ResultToSeqMap.txt"
 	End Function
 
 	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal strDatasetName As String) As String
-		Return strDatasetName & "_xt_syn_SeqToProteinMap.txt"
+		Return strDatasetName & "_xt_SeqToProteinMap.txt"
 	End Function
 
     Protected Overrides Sub InitializeFilePaths()
