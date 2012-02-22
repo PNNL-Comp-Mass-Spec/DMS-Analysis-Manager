@@ -255,7 +255,7 @@ Public Class clsMSGFResultsSummarizer
 			blnSuccess = True
 
 		Catch ex As Exception
-			mErrorMessage = ex.Message
+			SetErrorMessage(ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -278,7 +278,7 @@ Public Class clsMSGFResultsSummarizer
 			' Call stored procedure strStoredProcedure using connection string strConnectionString
 
 			If String.IsNullOrWhiteSpace(strConnectionString) Then
-				mErrorMessage = "Connection string empty in PostJobPSMResults"
+				SetErrorMessage("Connection string empty in PostJobPSMResults")
 				Return False
 			End If
 
@@ -329,7 +329,7 @@ Public Class clsMSGFResultsSummarizer
 			If ResCode = 0 Then
 				blnSuccess = True
 			Else
-				mErrorMessage = "Error storing PSM Results in database, " & strStoredProcedure & " returned " & ResCode.ToString
+				SetErrorMessage("Error storing PSM Results in database, " & strStoredProcedure & " returned " & ResCode.ToString)
 				If Not String.IsNullOrEmpty(strErrorMessage) Then
 					mErrorMessage &= "; " & strErrorMessage
 				End If
@@ -337,7 +337,7 @@ Public Class clsMSGFResultsSummarizer
 			End If
 
 		Catch ex As System.Exception
-			mErrorMessage = "Exception storing PSM Results in database: " & ex.Message
+			SetErrorMessage("Exception storing PSM Results in database: " & ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -389,7 +389,7 @@ Public Class clsMSGFResultsSummarizer
 			strMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, mMSGFSynopsisFileName)
 
 			If Not System.IO.File.Exists(strMSGFResultsFilePath) Then
-				mErrorMessage = "File not found: " & strMSGFResultsFilePath
+				SetErrorMessage("File not found: " & strMSGFResultsFilePath)
 				Return False
 			End If
 
@@ -413,19 +413,23 @@ Public Class clsMSGFResultsSummarizer
 					blnSuccess = SummarizeResults(lstPSMs, objResultToSeqMap, objSeqToProteinMap)
 				End If
 
-				If blnSuccess AndAlso mSaveResultsToTextFile Then
-					blnSuccess = SaveResultsToFile()
-				End If
+				If blnSuccess Then
+					If mSaveResultsToTextFile Then
+						' Note: Continue processing even if this step fails
+						SaveResultsToFile()
+					End If
 
-				If blnSuccess AndAlso mPostJobPSMResultsToDB Then
-					blnSuccess = PostJobPSMResults()
+					If mPostJobPSMResultsToDB Then
+						blnSuccess = PostJobPSMResults()
+					End If
+
 				End If
 			End If
 
 			blnSuccess = True
 
 		Catch ex As Exception
-			mErrorMessage = ex.Message
+			SetErrorMessage(ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -509,7 +513,7 @@ Public Class clsMSGFResultsSummarizer
 			blnSuccess = True
 
 		Catch ex As Exception
-			mErrorMessage = ex.Message
+			SetErrorMessage(ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -553,7 +557,7 @@ Public Class clsMSGFResultsSummarizer
 			End If
 
 		Catch ex As Exception
-			mErrorMessage = "Exception loading protein results: " & ex.Message
+			SetErrorMessage("Exception loading protein results: " & ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -614,7 +618,7 @@ Public Class clsMSGFResultsSummarizer
 			srInFile.Close()
 
 		Catch ex As Exception
-			mErrorMessage = "Exception reading " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message
+			SetErrorMessage("Exception reading " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
 			Return False
 		End Try
 
@@ -717,7 +721,7 @@ Public Class clsMSGFResultsSummarizer
 			srInFile.Close()
 
 		Catch ex As Exception
-			mErrorMessage = "Exception reading " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message
+			SetErrorMessage("Exception reading " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
 			Return False
 		End Try
 
@@ -757,13 +761,18 @@ Public Class clsMSGFResultsSummarizer
 			End Using
 
 		Catch ex As Exception
-			mErrorMessage = "Exception saving results to " & strOutputFilePath & ": " & ex.Message
+			SetErrorMessage("Exception saving results to " & strOutputFilePath & ": " & ex.Message)
 			Return False
 		End Try
 
 		Return True
 
 	End Function
+
+	Private Sub SetErrorMessage(ByVal strMessage As String)
+		Console.WriteLine(strMessage)
+		mErrorMessage = strMessage
+	End Sub
 
 	''' <summary>
 	''' Summarize the results by inter-relating lstPSMs, objResultToSeqMap, and objSeqToProteinMap
@@ -831,7 +840,7 @@ Public Class clsMSGFResultsSummarizer
 
 
 		Catch ex As Exception
-			mErrorMessage = "Exception summarizing results: " & ex.Message
+			SetErrorMessage("Exception summarizing results: " & ex.Message)
 			Return False
 		End Try
 

@@ -185,9 +185,17 @@ Module modMain
 			objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
 			objSummarizer.PostJobPSMResultsToDB = True
-			objSummarizer.SaveResultsToTextFile = True
+			objSummarizer.SaveResultsToTextFile = False
 
-			objSummarizer.ProcessMSGFResults()
+			blnSuccess = objSummarizer.ProcessMSGFResults()
+
+			If Not blnSuccess Then
+				If Not String.IsNullOrWhiteSpace(objSummarizer.ErrorMessage) Then
+					ShowErrorMessage("Processing failed: " & objSummarizer.ErrorMessage)
+				Else
+					ShowErrorMessage("Processing failed (unknown reason)")
+				End If
+			End If
 
 			Console.WriteLine("MSGF Threshold: ".PadRight(18) & objSummarizer.MSGFThreshold.ToString("0.00E+00"))
 			Console.WriteLine("Spectra Searched: ".PadRight(18) & objSummarizer.SpectraSearched)
