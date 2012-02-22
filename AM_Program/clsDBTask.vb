@@ -35,11 +35,11 @@ Namespace AnalysisManagerBase
 #End Region
 
 #Region "Constants"
-        Protected Const RET_VAL_OK As Integer = 0
-        Protected Const RET_VAL_EXCESSIVE_RETRIES As Integer = -5           ' Timeout expired
-        Protected Const RET_VAL_DEADLOCK As Integer = -4                    ' Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-        Protected Const RET_VAL_TASK_NOT_AVAILABLE As Integer = 53000
-		Protected Const DEFAULT_SP_RETRY_COUNT As Integer = 3
+		Public Const RET_VAL_OK As Integer = 0
+		Public Const RET_VAL_EXCESSIVE_RETRIES As Integer = -5			 ' Timeout expired
+		Public Const RET_VAL_DEADLOCK As Integer = -4					 ' Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+		Public Const RET_VAL_TASK_NOT_AVAILABLE As Integer = 53000
+		Public Const DEFAULT_SP_RETRY_COUNT As Integer = 3
 #End Region
 
 #Region "Module variables"
@@ -270,8 +270,20 @@ Namespace AnalysisManagerBase
 			Dim RetryCount As Integer = MaxRetryCount
 			Dim blnDeadlockOccurred As Boolean
 
+			Dim intTimeoutSeconds As Integer
+
 			If RetryCount < 1 Then
 				RetryCount = 1
+			End If
+
+			If Not Int32.TryParse(m_MgrParams.GetParam("cmdtimeout"), intTimeoutSeconds) Then
+				intTimeoutSeconds = 30
+			End If
+
+			If intTimeoutSeconds = 0 Then
+				intTimeoutSeconds = 30
+			ElseIf intTimeoutSeconds < 10 Then
+				intTimeoutSeconds = 10
 			End If
 
 			m_ErrorList.Clear()
@@ -284,7 +296,7 @@ Namespace AnalysisManagerBase
 							'NOTE: The connection has to be added here because it didn't exist at the time the command object was created
 							SpCmd.Connection = Cn
 							'Change command timeout from 30 second default in attempt to reduce SP execution timeout errors
-							SpCmd.CommandTimeout = CInt(m_MgrParams.GetParam("cmdtimeout"))
+							SpCmd.CommandTimeout = intTimeoutSeconds
 							Da.SelectCommand = SpCmd
 							MyTimer.Start()
 							Da.Fill(Ds)
@@ -328,7 +340,7 @@ Namespace AnalysisManagerBase
 				If blnDeadlockOccurred Then
 					ErrMsg &= " (including deadlock)"
 				End If
-				ErrMsg = " executing SP " & SpCmd.CommandText
+				ErrMsg &= " executing SP " & SpCmd.CommandText
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 				If blnDeadlockOccurred Then
 					Return RET_VAL_DEADLOCK

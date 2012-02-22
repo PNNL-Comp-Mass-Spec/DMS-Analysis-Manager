@@ -1854,6 +1854,27 @@ AnalysisManagerProg
 	<param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsGlobal.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String,System.Int32,System.String@)">
+	<summary>
+ Method for executing a db stored procedure when a data table is not returned
+ </summary>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="ConnStr">Db connection string</param>
+	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+	<param name="sErrorMessage">Error message (output)</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
+	<remarks>No logging is performed by this procedure</remarks>
+</member><member name="M:AnalysisManagerBase.clsGlobal.ExecuteSP(System.Data.SqlClient.SqlCommand@,System.String,System.Int32,System.Int32,System.String@)">
+	<summary>
+ Method for executing a db stored procedure when a data table is not returned
+ </summary>
+	<param name="SpCmd">SQL command object containing stored procedure params</param>
+	<param name="ConnStr">Db connection string</param>
+	<param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+	<param name="TimeoutSeconds">Database timeout length (seconds)</param>
+	<param name="sErrorMessage">Error message (output)</param>
+	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
+	<remarks>No logging is performed by this procedure</remarks>
 </member><member name="M:AnalysisManagerProg.clsMainProcess.Main">
 	<summary>
  Starts program execution

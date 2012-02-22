@@ -616,11 +616,23 @@ Namespace AnalysisManagerBase
 		''' <param name="strPath"></param>
 		''' <returns>The path (updated if necessary)</returns>
 		''' <remarks></remarks>
-		Protected Function PossiblyQuotePath(ByVal strPath As String) As String
-			If strPath.Contains(" "c) Then
-				Return """" & strPath & """"
+		Public Shared Function PossiblyQuotePath(strPath As String) As String
+			If String.IsNullOrEmpty(strPath) Then
+				Return String.Empty
 			Else
+
+				If strPath.Contains(" ") Then
+					If Not strPath.StartsWith("""") Then
+						strPath = """" & strPath
+					End If
+
+					If Not strPath.EndsWith("""") Then
+						strPath &= """"
+					End If
+				End If
+
 				Return strPath
+
 			End If
 		End Function
 

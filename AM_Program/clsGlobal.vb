@@ -170,12 +170,23 @@ Namespace AnalysisManagerBase
         End Function
 
 		Public Shared Function PossiblyQuotePath(strPath As String) As String
-			If strPath.IndexOf(" "c) > 0 Then
-				Return """" & strPath & """"
+			If String.IsNullOrEmpty(strPath) Then
+				Return String.Empty
 			Else
-				Return strPath
-			End If
 
+				If strPath.Contains(" ") Then
+					If Not strPath.StartsWith("""") Then
+						strPath = """" & strPath
+					End If
+
+					If Not strPath.EndsWith("""") Then
+						strPath &= """"
+					End If
+				End If
+
+				Return strPath
+
+			End If
 		End Function
 
         ''' <summary>
@@ -1095,101 +1106,194 @@ Namespace AnalysisManagerBase
 
         End Sub
 
-        Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Boolean) As Boolean
+		''' <summary>
+		''' Method for executing a db stored procedure when a data table is not returned
+		''' </summary>
+		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
+		''' <param name="ConnStr">Db connection string</param>
+		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+		''' <param name="sErrorMessage">Error message (output)</param>
+		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
+		''' <remarks>No logging is performed by this procedure</remarks>
+		Public Shared Function ExecuteSP(ByRef SpCmd As System.Data.SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByRef sErrorMessage As String) As Integer
+			Dim TimeoutSeconds As Integer = 30
+			Return ExecuteSP(SpCmd, ConnStr, MaxRetryCount, TimeoutSeconds, sErrorMessage)
+		End Function
 
-            Dim strValue As String
+		''' <summary>
+		''' Method for executing a db stored procedure when a data table is not returned
+		''' </summary>
+		''' <param name="SpCmd">SQL command object containing stored procedure params</param>
+		''' <param name="ConnStr">Db connection string</param>
+		''' <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+		''' <param name="TimeoutSeconds">Database timeout length (seconds)</param>
+		''' <param name="sErrorMessage">Error message (output)</param>
+		''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
+		''' <remarks>No logging is performed by this procedure</remarks>
+		Public Shared Function ExecuteSP(ByRef SpCmd As System.Data.SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByVal TimeoutSeconds As Integer, ByRef sErrorMessage As String) As Integer
 
-            Try
-                strValue = objJobParams.GetParam(strParameterName)
+			Dim ResCode As Integer = -9999	'If this value is in error msg, then exception occurred before ResCode was set			
+			Dim RetryCount As Integer = MaxRetryCount
+			Dim blnDeadlockOccurred As Boolean
 
-                If strValue Is Nothing OrElse strValue.Length = 0 Then
-                    Return ValueIfMissing
-                End If
+			sErrorMessage = String.Empty
+			If RetryCount < 1 Then
+				RetryCount = 1
+			End If
 
-            Catch ex As Exception
-                Return ValueIfMissing
-            End Try
+			If TimeoutSeconds = 0 Then TimeoutSeconds = 30
+			If TimeoutSeconds < 10 Then TimeoutSeconds = 10
 
-            ' Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-            Return CBool(strValue)
+			While RetryCount > 0	'Multiple retry loop for handling SP execution failures
+				blnDeadlockOccurred = False
+				Try
+					Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnStr)
 
-        End Function
+						Cn.Open()
 
-        Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As String) As String
+						SpCmd.Connection = Cn
+						SpCmd.CommandTimeout = TimeoutSeconds
+						SpCmd.ExecuteNonQuery()
 
-            Dim strValue As String
+						ResCode = CInt(SpCmd.Parameters("@Return").Value)
 
-            Try
-                strValue = objJobParams.GetParam(strParameterName)
+					End Using
 
-                If strValue Is Nothing OrElse strValue.Length = 0 Then
-                    Return ValueIfMissing
-                End If
+					sErrorMessage = String.Empty
 
-            Catch ex As Exception
-                Return ValueIfMissing
-            End Try
+					Exit While
+				Catch ex As System.Exception
+					RetryCount -= 1
+					sErrorMessage = "clsGloba.ExecuteSP(), exception calling stored procedure " & SpCmd.CommandText & ", " & ex.Message
+					sErrorMessage &= ". ResCode = " & ResCode.ToString & ". Retry count = " & RetryCount.ToString
+					sErrorMessage &= "; " & clsGlobal.GetExceptionStackTrace(ex)
+					Console.WriteLine(sErrorMessage)
+					If ex.Message.StartsWith("Could not find stored procedure " & SpCmd.CommandText) Then
+						Exit While
+					ElseIf ex.Message.Contains("was deadlocked") Then
+						blnDeadlockOccurred = True
+					End If
+				End Try
 
-            Return strValue
-        End Function
+				If RetryCount > 0 Then
+					System.Threading.Thread.Sleep(20000)	'Wait 20 seconds before retrying
+				End If
+			End While
 
-        Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Integer) As Integer
-            Dim strValue As String
+			If RetryCount < 1 Then
+				'Too many retries, log and return error
+				sErrorMessage = "Excessive retries"
+				If blnDeadlockOccurred Then
+					sErrorMessage &= " (including deadlock)"
+				End If
+				sErrorMessage &= " executing SP " & SpCmd.CommandText
+				Console.WriteLine(sErrorMessage)
+				If blnDeadlockOccurred Then
+					Return clsDBTask.RET_VAL_DEADLOCK
+				Else
+					Return clsDBTask.RET_VAL_EXCESSIVE_RETRIES
+				End If
+			End If
 
-            Try
-                strValue = objJobParams.GetParam(strParameterName)
+			Return ResCode
 
-                If strValue Is Nothing OrElse strValue.Length = 0 Then
-                    Return ValueIfMissing
-                End If
+		End Function
 
-            Catch ex As Exception
-                Return ValueIfMissing
-            End Try
+		Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Boolean) As Boolean
 
-            ' Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-            Return CInt(strValue)
+			Dim strValue As String
 
-        End Function
+			Try
+				strValue = objJobParams.GetParam(strParameterName)
 
-        Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Short) As Short
-            Return CShort(GetJobParameter(objJobParams, strParameterName, CInt(ValueIfMissing)))
-        End Function
+				If strValue Is Nothing OrElse strValue.Length = 0 Then
+					Return ValueIfMissing
+				End If
 
-        Public Shared Function GetRecentLogFilename(ByVal m_MgrSettings As clsAnalysisMgrSettings) As String
-            Dim strAppFolderPath As String
-            Dim lastFilename As String = String.Empty
-            Dim DSFiles() As String = Nothing
-            Dim TmpFile As String = String.Empty
-            Dim x As Integer
-            Dim Files() As String
+			Catch ex As Exception
+				Return ValueIfMissing
+			End Try
 
-            Try
-                ' Obtain a list of log files
-                strAppFolderPath = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath)
+			' Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+			Return CBool(strValue)
 
-                Files = Directory.GetFiles(strAppFolderPath, m_MgrSettings.GetParam("logfilename") & "*.txt")
+		End Function
 
-                ' Change the file names to lowercase (to assure that the sorting works)
-                For x = 0 To Files.Length - 1
-                    Files(x) = Files(x).ToLower
-                Next
+		Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As String) As String
 
-                ' Sort the files by filename
-                Array.Sort(Files)
+			Dim strValue As String
 
-                ' Return the last filename in the list
-                lastFilename = Files(Files.Length - 1)
+			Try
+				strValue = objJobParams.GetParam(strParameterName)
 
-            Catch ex As Exception
-                Return String.Empty
-            End Try
+				If strValue Is Nothing OrElse strValue.Length = 0 Then
+					Return ValueIfMissing
+				End If
 
-            Return lastFilename
-        End Function
+			Catch ex As Exception
+				Return ValueIfMissing
+			End Try
+
+			Return strValue
+		End Function
+
+		Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Integer) As Integer
+			Dim strValue As String
+
+			Try
+				strValue = objJobParams.GetParam(strParameterName)
+
+				If strValue Is Nothing OrElse strValue.Length = 0 Then
+					Return ValueIfMissing
+				End If
+
+			Catch ex As Exception
+				Return ValueIfMissing
+			End Try
+
+			' Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+			Return CInt(strValue)
+
+		End Function
+
+		Public Shared Function GetJobParameter(ByRef objJobParams As IJobParams, ByVal strParameterName As String, ByVal ValueIfMissing As Short) As Short
+			Return CShort(GetJobParameter(objJobParams, strParameterName, CInt(ValueIfMissing)))
+		End Function
+
+		Public Shared Function GetRecentLogFilename(ByVal m_MgrSettings As clsAnalysisMgrSettings) As String
+			Dim strAppFolderPath As String
+			Dim lastFilename As String = String.Empty
+			Dim DSFiles() As String = Nothing
+			Dim TmpFile As String = String.Empty
+			Dim x As Integer
+			Dim Files() As String
+
+			Try
+				' Obtain a list of log files
+				strAppFolderPath = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath)
+
+				Files = Directory.GetFiles(strAppFolderPath, m_MgrSettings.GetParam("logfilename") & "*.txt")
+
+				' Change the file names to lowercase (to assure that the sorting works)
+				For x = 0 To Files.Length - 1
+					Files(x) = Files(x).ToLower
+				Next
+
+				' Sort the files by filename
+				Array.Sort(Files)
+
+				' Return the last filename in the list
+				lastFilename = Files(Files.Length - 1)
+
+			Catch ex As Exception
+				Return String.Empty
+			End Try
+
+			Return lastFilename
+		End Function
 
 #End Region
 
-    End Class
+	End Class
 
 End Namespace
