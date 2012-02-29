@@ -1,7 +1,10 @@
 Analysis Tool Manager History
 
+February 29, 2012
+	- Updated the MSGF plugin to auto-create empty ResultToSeqMap and SeqToProteinMap files if the synopsis file is empty
+
 February 21, 2012
-	- Updated MSGF Plugin to summarize the results having MSGF < 1E-10
+	- Updated the MSGF Plugin to summarize the results having MSGF < 1E-10
 	- Added MSGF_Results_Summarizer.exe program to allow for summarizing existing results and storing in DMS
 
 February 17, 2012

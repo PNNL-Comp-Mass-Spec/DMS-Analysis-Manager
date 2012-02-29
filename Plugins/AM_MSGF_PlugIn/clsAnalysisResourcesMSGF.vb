@@ -223,25 +223,44 @@ Public Class clsAnalysisResourcesMSGF
 
 
 		' Copy the PHRP files so that we can extract the protein names
-		' This information is added the MSGF files for X!Tandem
+		' This information is added to the MSGF files for X!Tandem
 		' It is used by clsMSGFResultsSummarizer for all tools
 
 		FileToGet = clsMSGFRunner.GetPHRPResultToSeqMapFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			If FindAndRetrieveMiscFiles(FileToGet, False) Then
+				clsGlobal.FilesToDelete.Add(FileToGet)
+			Else
+				If SynFileSizeBytes = 0 Then
+					' If the synopsis file is 0-bytes, then the _ResultToSeqMap.txt file won't exist
+					' That's OK; we'll create an empty file with just a header line
+					If Not CreateEmptyResultToSeqMapFile(FileToGet) Then
+						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+					End If
+				Else
+					'Errors were reported in function call, so just return
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+				End If
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+
 		End If
 
 		FileToGet = clsMSGFRunner.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			If FindAndRetrieveMiscFiles(FileToGet, False) Then
+				clsGlobal.FilesToDelete.Add(FileToGet)
+			Else
+				If SynFileSizeBytes = 0 Then
+					' If the synopsis file is 0-bytes, then the _SeqToProteinMap.txt file won't exist
+					' That's OK; we'll create an empty file with just a header line
+					If Not CreateEmptySeqToProteinMapFile(FileToGet) Then
+						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+					End If
+				Else
+					'Errors were reported in function call, so just return
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+				End If
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
 		End If
 
 		If Not blnOnlyCopyFHTandSYNfiles Then
@@ -276,6 +295,40 @@ Public Class clsAnalysisResourcesMSGF
 
 	End Function
 
+	Private Function CreateEmptyResultToSeqMapFile(ByVal FileName As String) As Boolean
+		Dim strFilePath As String
+
+		Try
+			strFilePath = System.IO.Path.Combine(m_WorkingDir, FileName)
+			Using swOutfile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+				swOutfile.WriteLine("Result_ID" & ControlChars.Tab & "Unique_Seq_ID")
+			End Using
+		Catch ex As Exception
+			Dim Msg As String = "Error creating empty ResultToSeqMap file: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return False
+		End Try
+
+		Return True
+	End Function
+
+	Private Function CreateEmptySeqToProteinMapFile(ByVal FileName As String) As Boolean
+		Dim strFilePath As String
+
+		Try
+			strFilePath = System.IO.Path.Combine(m_WorkingDir, FileName)
+			Using swOutfile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+				swOutfile.WriteLine("Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" & ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" & ControlChars.Tab & "Protein_Intensity_Log(I)")
+			End Using
+		Catch ex As Exception
+			Dim Msg As String = "Error creating empty SeqToProteinMap file: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
 #End Region
 
 End Class
