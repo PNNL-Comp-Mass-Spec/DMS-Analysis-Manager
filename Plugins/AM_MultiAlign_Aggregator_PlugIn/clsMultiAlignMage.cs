@@ -53,9 +53,23 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
 
         #endregion
 
-        #region Constructors
+		#region Properties
+		public string Message
+		{
+			get
+			{
+				if (string.IsNullOrEmpty(mMessage))
+					return string.Empty;
+				else
+					return mMessage;
+			}
+		}
+				
+		#endregion
 
-        public clsMultiAlignMage(IJobParams jobParms, IMgrParams mgrParms) {
+		#region Constructors
+
+		public clsMultiAlignMage(IJobParams jobParms, IMgrParams mgrParms) {
             Intialize(jobParms, mgrParms);
         }
 
@@ -86,7 +100,8 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
         /// <summary>
         /// Do processing
         /// </summary>
-        public void Run() {
+		/// <returns>True if success; otherwise false</returns>
+        public bool Run() {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
             GetMultiAlignParameterFile();
@@ -111,7 +126,8 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
 
             if (String.IsNullOrWhiteSpace(progLoc))
             {
-                //return false;
+				mMessage = "Manager parameter not defined: MultiAlignProgLoc";
+                return false;
             }
 
             String MultiAlignResultFilename = mJP.GetJobParam("ResultsBaseName");
@@ -135,15 +151,19 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
 
             if (!CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", true))
             {
-                //m_message = "Error running MultiAlign";
+				if (string.IsNullOrEmpty(mMessage))
+					mMessage = "Error running MultiAlign";
+
                 if (!string.IsNullOrEmpty(m_MultialignErroMessage))
                 {
                     mMessage += ": " + mMultialignErroMessage;
                 }
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ", job " + mJobNum);
 
-                //TODO:  Need to indicate that there was an issues with running MA.
+				return false;
             }
+
+			return true;
         }
 
         #endregion
@@ -516,7 +536,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                                     eProgress = lstItem.Value;
                                 }
                                 blnMatchFound = true;
-                                break; // TODO: might not be correct. Was : Exit For
+								break;
                             }
                         }
 

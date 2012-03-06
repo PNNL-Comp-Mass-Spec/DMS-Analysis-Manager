@@ -156,9 +156,17 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
        {
             // run the appropriate Mage pipeline(s) according to operations list parameter
             clsMultiAlignMage dvas = new clsMultiAlignMage(m_jobParams, m_mgrParams);
-            dvas.Run();
+            bool bSuccess = dvas.Run();
 
-            return true;
+			if (!bSuccess)
+			{
+				if (dvas.Message.Length > 0)
+					m_message = dvas.Message;
+				else
+					m_message = "Unknown error running multialign";
+			}
+
+			return bSuccess;
 
        }
 
