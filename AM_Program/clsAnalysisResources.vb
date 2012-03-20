@@ -2151,7 +2151,7 @@ Namespace AnalysisManagerBase
 		Protected Overridable Function RetrieveGeneratedParamFile(ByVal ParamFileName As String, ByVal ParamFilePath As String, _
 		  ByVal WorkDir As String) As Boolean
 
-			Dim ParFileGen As ParamFileGenerator.MakeParams.IGenerateFile
+			Dim ParFileGen As ParamFileGenerator.MakeParams.IGenerateFile = Nothing
 			Dim blnSuccess As Boolean
 
 			Try
@@ -2181,7 +2181,7 @@ Namespace AnalysisManagerBase
 				Dim Msg As String = m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 				If Not ParFileGen Is Nothing Then
-					If Not ParFileGen.LastError Is Nothing Then
+					If Not String.IsNullOrWhiteSpace(ParFileGen.LastError) Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error converting param file: " & ParFileGen.LastError)
 					End If
 				End If

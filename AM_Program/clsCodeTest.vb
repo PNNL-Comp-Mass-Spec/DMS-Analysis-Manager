@@ -924,7 +924,7 @@ Public Class clsCodeTest
 
 		Dim objParamFile As System.Xml.XmlDocument
 
-		Dim objSelectedNodes As System.Xml.XmlNodeList
+		Dim objSelectedNodes As System.Xml.XmlNodeList = Nothing
 		Dim objAttributeNode As System.Xml.XmlNode
 
 		Dim intSettingIndex As Integer

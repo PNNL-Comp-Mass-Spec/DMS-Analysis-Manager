@@ -756,7 +756,10 @@ Namespace AnalysisManagerBase
 
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)
+				Return False
 			End Try
+
+			Return True
 
 		End Function
 
@@ -897,7 +900,7 @@ Namespace AnalysisManagerBase
 				Else
 
 					Dim oAssemblyName As System.Reflection.AssemblyName
-					oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName
+					oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
 
 					Dim strNameAndVersion As String
 					strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()

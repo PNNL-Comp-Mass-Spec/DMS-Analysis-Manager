@@ -116,7 +116,7 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public Sub SetParam(ByVal Section As String, ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 
-			Dim oParams As System.Collections.Generic.Dictionary(Of String, String)
+			Dim oParams As System.Collections.Generic.Dictionary(Of String, String) = Nothing
 
 			If m_JobParams Is Nothing Then InitializeJobParams()
 
@@ -185,7 +185,7 @@ Namespace AnalysisManagerBase
 		''' <remarks></remarks>
 		Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
 
-			Dim oParams As System.Collections.Generic.Dictionary(Of String, String)
+			Dim oParams As System.Collections.Generic.Dictionary(Of String, String) = Nothing
 			ParamValue = String.Empty
 
 			If Not m_JobParams Is Nothing Then

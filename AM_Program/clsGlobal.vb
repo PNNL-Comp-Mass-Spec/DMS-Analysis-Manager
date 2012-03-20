@@ -56,16 +56,16 @@ Namespace AnalysisManagerBase
 
             'Appends a comment string to an existing comment string
 
-            If InpComment Is Nothing OrElse InpComment.Trim(" "c) = String.Empty Then
-                Return NewComment
-            Else
-                ' Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
-                If Not InpComment.TrimEnd(" "c).EndsWith(";"c) Then
-                    InpComment &= "; "
-                End If
+			If String.IsNullOrWhiteSpace(InpComment) Then
+				Return NewComment
+			Else
+				' Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
+				If Not InpComment.TrimEnd(" "c).EndsWith(";"c) Then
+					InpComment &= "; "
+				End If
 
-                Return InpComment & NewComment
-            End If
+				Return InpComment & NewComment
+			End If
 
         End Function
 

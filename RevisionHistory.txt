@@ -1,5 +1,10 @@
 Analysis Tool Manager History
 
+March 19, 2012
+	- New versions of MSFileInfoScanner.dll and ThermoRawFileReaderDLL.dll
+		- Switched from xrawfile2.dll to MSFileReader.XRawfile2.dll, which supports Xcalibur v2.2
+	- No longer deleting the _ScanType.txt file when running MSGF via the MSGFDB_PlugIn
+
 February 29, 2012
 	- Updated the MSGF plugin to auto-create empty ResultToSeqMap and SeqToProteinMap files if the synopsis file is empty
 

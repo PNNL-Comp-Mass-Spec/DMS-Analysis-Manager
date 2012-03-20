@@ -141,7 +141,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					If Not CreateScanTypeFile() Then
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					Else
-						clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
+						' Keep the _ScanType.txt file; don't delete it
+						' clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
 					End If
 				End If
 
@@ -591,6 +592,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		objScanTypeFileCreator = New clsScanTypeFileCreator(m_WorkDir, m_Dataset)
 
 		If objScanTypeFileCreator.CreateScanTypeFile() Then
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Created ScanType file: " & System.IO.Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
+			End If
 			Return True
 		Else
 			Dim strErrorMessage = "Error creating scan type file: " & objScanTypeFileCreator.ErrorMessage

@@ -99,6 +99,10 @@ Public Class clsAnalysisResourcesMSGFDB
 					If Not GenerateScanStatsFile(strDatasetName) Then
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					End If
+				Else
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
+					End If
 				End If
 			End If
 
@@ -174,6 +178,22 @@ Public Class clsAnalysisResourcesMSGFDB
 			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
 
 			blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, m_WorkingDir)
+
+			If blnSuccess Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated ScanStats file using " & strInputFilePath)
+				End If
+			Else
+				m_message = "Error generating ScanStats file using " & strInputFilePath
+				Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
+
+				If Not String.IsNullOrEmpty(strMsgAddnl) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMsgAddnl)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				End If
+
+			End If
 
 			System.Threading.Thread.Sleep(500)
 			Try
