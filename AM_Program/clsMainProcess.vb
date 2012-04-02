@@ -825,12 +825,22 @@ Namespace AnalysisManagerProg
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 				Return False
 			End If
+
 			If m_DebugLevel > 0 Then
 				strMessage = "Loaded tool runner for StepTool " & m_AnalysisTask.GetCurrentJobToolDescription()
 				If clsPluginLoader.Message.Length > 0 Then strMessage &= ": " & clsPluginLoader.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
 			End If
-			m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
+
+			Try
+				' Setup the new tool runner
+				m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
+			Catch ex As Exception
+				strMessage = "Exception calling ToolRunner.Setup(): " + ex.Message
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+				Return False
+			End Try
+
 			Return True
 
 		End Function

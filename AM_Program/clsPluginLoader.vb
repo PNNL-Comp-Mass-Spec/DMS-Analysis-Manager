@@ -270,7 +270,6 @@ Namespace AnalysisManagerBase
 		''' <returns>An object referencing the specified dll</returns>
 		''' <remarks></remarks>
 		Private Shared Function LoadObject(ByVal className As String, ByVal assyName As String) As Object
-			Dim e As Exception
 			Dim obj As Object = Nothing
 			m_msgList.Clear()
 			Try
@@ -279,9 +278,9 @@ Namespace AnalysisManagerBase
 				a = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName))
 				Dim t As Type = a.GetType(className, False, True)
 				obj = Activator.CreateInstance(t)
-			Catch e
+			Catch ex As Exception
 				''Catch any exceptions
-				m_msgList.Add("clsPluginLoader.LoadObject(), exception: " & e.Message)
+				m_msgList.Add("clsPluginLoader.LoadObject(), exception: " & ex.Message)
 			End Try
 			LoadObject = obj
 		End Function
