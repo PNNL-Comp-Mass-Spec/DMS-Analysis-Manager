@@ -125,7 +125,8 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReadW.exe or MSConvert.exe
 
         Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
-        Dim CentroidMSXML As Boolean = clsGlobal.CBoolSafe(m_jobParams.GetParam("CentroidMSXML"), False)
+		Dim CentroidMSXML As Boolean
+		Dim CentroidPeakCountToRetain As Integer
 
         Dim ProgramPath As String
         Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
@@ -143,6 +144,10 @@ Public Class clsAnalysisToolRunnerMSXMLGen
                 eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
         End Select
 
+
+		' Lookup Centroid Settings
+		CentroidMSXML = clsGlobal.CBoolSafe(m_jobParams.GetParam("CentroidMSXML"), False)
+		CentroidPeakCountToRetain = clsGlobal.CIntSafe(m_jobParams.GetParam("CentroidPeakCountToRetain"), clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 
         ' Determine the program path and Instantiate the processing class
         If msXmlGenerator.ToLower.Contains("readw") Then
@@ -163,7 +168,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
             ProgramPath = System.IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
 
-            mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, ProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, ProgramPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
 
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unsupported XmlGenerator: " & msXmlGenerator)

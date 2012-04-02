@@ -6,13 +6,7 @@ AnalysisManagerMsXmlGenPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.#ctor">
+<member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.#ctor">
 	<summary>
  Constructor
  </summary>
@@ -63,6 +57,12 @@ AnalysisManagerMsXmlGenPlugIn
 	<summary>
  Event handler for CmdRunner.LoopWaiting event
  </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>
