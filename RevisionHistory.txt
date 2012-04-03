@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+April 2, 2012
+	- Updated the MSGFDB plugin to dynamically load clsMSFileInfoScanner from within MSFileInfoScannerInterfaces.dll, which is stored at C:\DMS_Programs\MSFileInfoScanner
+
 March 19, 2012
 	- New versions of MSFileInfoScanner.dll and ThermoRawFileReaderDLL.dll
 		- Switched from xrawfile2.dll to MSFileReader.XRawfile2.dll, which supports Xcalibur v2.2

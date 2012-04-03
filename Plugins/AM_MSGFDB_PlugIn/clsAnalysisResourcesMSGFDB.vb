@@ -13,7 +13,7 @@ Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources
 
 	Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
-	Private WithEvents mMSFileInfoScanner As MSFileInfoScanner.clsMSFileInfoScanner
+	Private WithEvents mMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner
 
 	Private mMSFileInfoScannerErrorCount As Integer
 
@@ -168,7 +168,22 @@ Public Class clsAnalysisResourcesMSGFDB
 			clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(strInputFilePath))
 
 			mMSFileInfoScannerErrorCount = 0
-			mMSFileInfoScanner = New MSFileInfoScanner.clsMSFileInfoScanner()
+
+			' Initialize the MSFileScanner class
+			Dim strMSFileInfoScannerPath As String = GetMSFileInfoScannerDLLPath()
+			If String.IsNullOrEmpty(strMSFileInfoScannerPath) Then
+				m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+				Return False
+			End If
+
+			If Not System.IO.File.Exists(strMSFileInfoScannerPath) Then
+				m_message = "File Not Found: " + strMSFileInfoScannerPath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+				Return False
+			End If
+
+			mMSFileInfoScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath)
 
 			mMSFileInfoScanner.CheckFileIntegrity = False
 			mMSFileInfoScanner.CreateDatasetInfoFile = False
@@ -210,6 +225,60 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		Return blnSuccess
 
+	End Function
+
+	Private Function GetMSFileInfoScannerDLLPath() As String
+		Dim strMSFileInfoScannerFolder As String = m_mgrParams.GetParam("MSFileInfoScannerDir")
+		If String.IsNullOrEmpty(strMSFileInfoScannerFolder) Then
+			Return String.Empty
+		Else
+			Return System.IO.Path.Combine(strMSFileInfoScannerFolder, "MSFileInfoScanner.dll")
+		End If
+	End Function
+
+	Private Function LoadMSFileInfoScanner(strMSFileInfoScannerDLLPath As String) As MSFileInfoScannerInterfaces.iMSFileInfoScanner
+		Const MsDataFileReaderClass As String = "MSFileInfoScanner.clsMSFileInfoScanner"
+
+		Dim objMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner = Nothing
+		Dim msg As String
+
+		Try
+			If Not System.IO.File.Exists(strMSFileInfoScannerDLLPath) Then
+				msg = "DLL not found: " + strMSFileInfoScannerDLLPath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+			Else
+				Dim obj As Object = Nothing
+				obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
+				If obj IsNot Nothing Then
+					objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
+					msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
+					End If
+				End If
+
+			End If
+		Catch ex As Exception
+			msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+		End Try
+
+		Return objMSFileInfoScanner
+	End Function
+
+	Private Function LoadObject(className As String, strDLLFilePath As String) As Object
+		Dim obj As Object = Nothing
+		Try
+			' Dynamically load the specified class from strDLLFilePath
+			Dim assem As System.Reflection.Assembly
+			assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath)
+			Dim dllType As Type = assem.[GetType](className, False, True)
+			obj = Activator.CreateInstance(dllType)
+		Catch ex As Exception
+			Dim msg As String = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+		End Try
+		Return obj
 	End Function
 
 	Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
