@@ -8,7 +8,7 @@ using Cyclops;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
-    class clsAnalysisToolRunnerCyclops: clsAnalysisToolRunnerBase
+    public class clsAnalysisToolRunnerCyclops: clsAnalysisToolRunnerBase
     {
 
 		protected const float PROGRESS_PCT_CYCLOPS_START = 5;
@@ -39,11 +39,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}            
            
 				// Store the Cyclops version info in the database
-				if (!StoreToolVersionInfo()) {
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-					m_message = "Error determining Cyclops version";
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+                if (!StoreToolVersionInfo())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    m_message = "Error determining Cyclops version";
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
 				// Determine the path to the R DLLs
 				string RProgLoc = m_mgrParams.GetParam("RProgLoc");
@@ -60,13 +61,18 @@ namespace AnalysisManager_Cyclops_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
+                string strOrgDbDir = m_jobParams.GetParam("orgdbdir");
+                string strFastaFilePath = System.IO.Path.Combine(strOrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+
 				Dictionary<string, string> d_Params = new Dictionary<string, string>();
 				d_Params.Add("Job", m_jobParams.GetParam("Job"));
-				d_Params.Add("RDLL", RProgLoc);
+				d_Params.Add("RDLL", GetRPathFromWindowsRegistry());
 				d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
 				d_Params.Add("workDir", m_WorkDir);
 				d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
 				d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
+                d_Params.Add("RunProteinProphet", m_jobParams.GetParam("RunProteinProphet"));
 
 				//Change the name of the log file for the local log file to the plug in log filename
 				String LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
@@ -253,6 +259,25 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         }
 
-
+        private string GetRPathFromWindowsRegistry()
+        {
+            Microsoft.Win32.RegistryKey rCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\R-core");
+            if (rCore == null)
+            {
+                throw new System.ApplicationException("Registry key is not found.");
+            }
+            bool is64Bit = System.Environment.Is64BitProcess;
+            Microsoft.Win32.RegistryKey r = rCore.OpenSubKey(is64Bit ? "R64" : "R");
+            if (r == null)
+            {
+                throw new System.ApplicationException("Registry key is not found.");
+            }
+            System.Version currentVersion = new System.Version((string)r.GetValue("Current Version"));
+            string installPath = (string)r.GetValue("InstallPath");
+            string bin = System.IO.Path.Combine(installPath, "bin");
+            // Up to 2.11.x, DLLs are installed in R_HOME\bin.
+            // From 2.12.0, DLLs are installed in the one level deeper directory.
+            return currentVersion < new System.Version(2, 12) ? bin : System.IO.Path.Combine(bin, is64Bit ? "x64" : "i386");
+        }
 	}
 }
