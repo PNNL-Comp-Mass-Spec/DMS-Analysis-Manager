@@ -31,7 +31,8 @@ namespace AnalysisManager_Cyclops_PlugIn
 				string analysisType = m_jobParams.GetParam("AnalysisType");
 
 				if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir)) {
-					//Errors were reported in function call, so just return
+                    m_message = "Results.db3 file from Step2 failed to copy over to working directory";
+                    //Errors were reported in function call, so just return
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -46,6 +47,31 @@ namespace AnalysisManager_Cyclops_PlugIn
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; unable to continue");
 					return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 				}
+
+                string strProteinProphet = m_jobParams.GetParam("RunProteinProphet");
+
+                if (!string.IsNullOrEmpty(strProteinProphet))
+                {
+                    // If User requests to run ProteinProphet
+                    if (strProteinProphet.ToLower().Equals("true"))
+                    {
+                        string sProteinOptions = m_jobParams.GetParam("ProteinOptions");
+
+                        if (sProteinOptions.Length > 0 && !sProteinOptions.ToLower().Equals("na"))
+                        {
+                            // Override the Protein Options to force forward direction only
+                            m_jobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");
+                        }
+
+                        m_message = "Cyclops Resourcer attempting to retrieve Fasta file: " + m_mgrParams.GetParam("orgdbdir");
+                        // Generate the path Fasta File
+                        if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
+                        {
+                            m_message = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
+                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+                }
 
 				System.IO.DirectoryInfo diRemoteRScriptFolder;
 
