@@ -76,10 +76,7 @@ Namespace AnalysisManagerProg
 			Catch Err As System.Exception
 				'Report any exceptions not handled at a lower level to the system application log
 				ErrMsg = "Critical exception starting application: " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err)
-				Dim Ev As New EventLog("Application", ".", "DMSAnalysisManager")
-				Trace.Listeners.Add(New EventLogTraceListener("DMSAnalysisManager"))
-				Trace.WriteLine(ErrMsg)
-				Ev.Close()
+				PostToEventLog(ErrMsg)
 				Return 1
 			End Try
 
@@ -116,7 +113,15 @@ Namespace AnalysisManagerProg
 				' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
 				' Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
+				Console.WriteLine()
+				Console.WriteLine("===============================================================")
 				Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " & ex.Message)
+				Console.WriteLine("===============================================================")
+				Console.WriteLine()
+				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & CUSTOM_LOG_NAME & " application log")
+				Console.WriteLine()
+				System.Threading.Thread.Sleep(500)
+
 				Return False
 			End Try
 
@@ -938,6 +943,32 @@ Namespace AnalysisManagerProg
 			End If
 
 		End Function
+
+		Private Sub PostToEventLog(ByVal ErrMsg As String)
+			Const EVENT_LOG_NAME As String = "DMSAnalysisManager"
+
+			Try
+				Console.WriteLine()
+				Console.WriteLine("===============================================================")
+				Console.WriteLine(ErrMsg)
+				Console.WriteLine("===============================================================")
+				Console.WriteLine()
+				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & EVENT_LOG_NAME & " application log")
+				Console.WriteLine()
+
+				Dim Ev As New EventLog("Application", ".", EVENT_LOG_NAME)
+				Trace.Listeners.Add(New EventLogTraceListener(EVENT_LOG_NAME))
+				Trace.WriteLine(ErrMsg)
+				Ev.Close()
+
+			Catch ex As Exception
+				Console.WriteLine()
+				Console.WriteLine("Exception logging to the event log: " & ex.Message)
+			End Try
+
+			System.Threading.Thread.Sleep(500)
+
+		End Sub
 
 		''' <summary>
 		''' Confirms that the drive with the working directory has sufficient free space
