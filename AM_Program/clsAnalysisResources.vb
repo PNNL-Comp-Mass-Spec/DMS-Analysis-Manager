@@ -1829,7 +1829,7 @@ Namespace AnalysisManagerBase
 		Private Function FindValidFolder(ByVal DSName As String, _
 		   ByVal FileNameToFind As String) As String
 
-			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, True)
+			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
 
 		End Function
 
@@ -1837,7 +1837,7 @@ Namespace AnalysisManagerBase
 		   ByVal FileNameToFind As String, _
 		   ByVal FolderNameToFind As String) As String
 
-			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, True)
+			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
 
 		End Function
 
@@ -1846,7 +1846,7 @@ Namespace AnalysisManagerBase
 		  ByVal FolderNameToFind As String, _
 		  ByVal MaxRetryCount As Integer) As String
 
-			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, True)
+			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound:=True)
 
 		End Function
 
