@@ -6,34 +6,26 @@ AnalysisManagerMSGFPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.LoadProteinMapping(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Collections.Generic.SortedList{System.Int32,System.Int32}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.String}}@)">
+<member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.#ctor(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String,System.Int32,System.String)">
 	<summary>
- Load the proteins using the PHRP result files
- Applies to X!Tandem results and Sequest, Inspect, or MSGFDB Synopsis file results
- Does not apply to Sequest or MSGFDB First-Hits files
+ Constructor
  </summary>
-	<param name="eResultType"></param>
-	<param name="objResultToSeqMap"></param>
- ''' <param name="objSeqToProteinMap"></param>
-	<returns></returns>
+	<param name="eResultType">Peptide Hit result type</param>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="intJob">Job number</param>
+	<param name="strSourceFolderPath">Source folder path</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.LoadResultToSeqMapping(System.String,System.Collections.Generic.SortedList{System.Int32,System.Int32}@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.#ctor(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String,System.Int32,System.String,System.String)">
 	<summary>
- Load the Result to Seq mapping using the specified PHRP result file
+ Constructor
  </summary>
-	<param name="strFilePath"></param>
-	<param name="objResultToSeqMap"></param>
-	<returns></returns>
+	<param name="eResultType">Peptide Hit result type</param>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="intJob">Job number</param>
+	<param name="strSourceFolderPath">Source folder path</param>
+	<param name="strConnectionString">DMS connection string</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.LoadSeqToProteinMapping(System.String,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.String}}@)">
-	<summary>
- Load the Sequence to Protein mapping using the specified PHRP result file
- </summary>
-	<param name="strFilePath"></param>
-	<param name="objSeqToProteinMap"></param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.SummarizeResults(System.Collections.Generic.Dictionary{System.Int32,System.String}@,System.Collections.Generic.SortedList{System.Int32,System.Int32}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.String}}@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.SummarizeResults(System.Collections.Generic.Dictionary{System.Int32,System.String}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.Int32}}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.String}}@)">
 	<summary>
  Summarize the results by inter-relating lstPSMs, objResultToSeqMap, and objSeqToProteinMap
  </summary>
@@ -41,6 +33,13 @@ AnalysisManagerMSGFPlugin
 	<param name="objResultToSeqMap"></param>
 	<param name="objSeqToProteinMap"></param>
 	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorInspect.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strWorkDir">Working directory</param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.#ctor(System.String,System.String,System.String,AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.MSXMLOutputTypeConstants,System.Boolean)">
 	<summary>
@@ -71,11 +70,13 @@ AnalysisManagerMSGFPlugin
 	<param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	<returns>IJobParams.CloseOutType specifying results</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.AddDynamicAndStaticMods(System.String,System.String@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.#ctor(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
 	<summary>
- Look for dynamic mod symbols in the peptide sequence; replace with the corresponding mod masses
+ constructor
  </summary>
-	<returns>True if success, false if an error</returns>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strWorkDir">Working directory</param>
+	<param name="eResultType">PeptideHit result type</param>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.CreateMSGFFirstHitsFile">
 	<summary>
@@ -92,44 +93,13 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@)">
-	<summary>
- Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
- </summary>
-	<returns>The text in the specified column; an empty string if the specific column name is not recognized</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.String)">
-	<summary>
- Returns the string stored in the given named column (using objColumnHeaders to dereference column name with column index)
- </summary>
-	<returns>The text in the specified column; strValueIfMissing if the specific column name is not recognized</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.Int32)">
-	<summary>
- Returns the value stored in the given named column (using objColumnHeaders to dereference column name with column index)
- </summary>
-	<returns>The number in the specified column; 0 if the specific column name is not recognized or the column does not contain a number</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.LookupColumnValue(System.String[]@,System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32}@,System.Double)">
-	<summary>
- Returns the value stored in the given named column (using objColumnHeaders to dereference column name with column index)
- </summary>
-	<returns>The number in the specified column; 0 if the specific column name is not recognized or the column does not contain a number</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.ParseColumnHeaders(System.String[],System.Collections.Generic.SortedDictionary{System.String,System.Int32}@)">
-	<summary>
- Updates the column name to column index mapping in objColumnHeaders
- </summary>
-	<param name="strColumns">Column names read from the input file</param>
-	<param name="objColumnHeaders">Column mapping dictionary object to update</param>
-	<remarks>The SortedDictionary object should be instantiated using a case-insensitive comparer, i.e. (StringComparer.CurrentCultureIgnoreCase)</remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.ReadAndStorePHRPData(System.IO.StreamReader@,System.IO.StreamWriter@,System.String,System.Boolean)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreator.ReadAndStorePHRPData(PHRPReader.clsPHRPReader@,System.IO.StreamWriter@,System.String,System.Boolean)">
 	<summary>
  Read data from a synopsis file or first hits file
  Write filter-passing synopsis file data to the MSGF input file
  Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
  </summary>
-	<param name="srPHRPFile"></param>
+	<param name="objReader"></param>
 	<param name="swMSGFInputFile"></param>
 	<param name="strMzXMLFileName"></param>
 	<param name="blnParsingSynopsisFile"></param>
@@ -139,6 +109,13 @@ AnalysisManagerMSGFPlugin
  Define the MSGF input and output file paths
  </summary>
 	<remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorMSGFDB.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strWorkDir">Working directory</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorMSGFDB.CreateMSGFFileUsingMSGFDBSpecProb(System.String,System.String)">
 	<summary>
  Reads a MSGFDB FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
@@ -148,15 +125,22 @@ AnalysisManagerMSGFPlugin
 	<param name="strSourceFileDescription"></param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorXTandem.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strWorkDir">Working directory</param>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.RunTool">
 	<summary>
  Runs MSGF
  </summary>
 	<returns>IJobParams.CloseOutType representing success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabled(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.String)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CheckETDModeEnabled(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
 	<summary>
- Examines the Sequest, X!Tandem, or Inspect param file to determine if ETD mode is enabled
+ Examines the Sequest, X!Tandem, Inspect, or MSGFDB param file to determine if ETD mode is enabled
  </summary>
 	<param name="eResultType"></param>
 	<param name="strSearchToolParamFilePath"></param>
@@ -175,7 +159,7 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
 	<returns>True if success; false if an error</returns>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Boolean,System.Int32@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.CreateMSGFInputFile(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.Boolean,System.Int32@)">
 	<summary>
  Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
  Uses the ModSummary.txt file to determine the dynamic and static mods used
@@ -189,34 +173,6 @@ AnalysisManagerMSGFPlugin
  </summary>
 	<returns>True if success; false if an error</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.LoadResultProteins(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.Collections.Generic.SortedList{System.Int32,System.String}@)">
-	<summary>
- Load the proteins using the PHRP result files
- Applies to X!Tandem results and Sequest, Inspect, or MSGFDB Synopsis file results
- Does not apply to Sequest or MSGFDB First-Hits files
- </summary>
-	<param name="eResultType"></param>
-	<param name="objProteinByResultID"></param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.LoadResultToSeqMapping(System.String,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.Int32}}@)">
-	<summary>
- Load the Result to Seq mapping using the specified PHRP result file
- </summary>
-	<param name="strFilePath"></param>
-	<param name="objSeqToResultMap"></param>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.LoadSeqToProteinMapping(System.String,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.Int32}}@,System.Collections.Generic.SortedList{System.Int32,System.String}@)">
-	<summary>
- Load the Sequence to Protein mapping using the specified PHRP result file
- This function only keeps track of the first protein for each ResultID
- </summary>
-	<param name="strFilePath"></param>
-	<param name="objSeqToResultMap"></param>
-	<param name="objProteinByResultID"></param>
-	<returns></returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFCheckPrecursorMassErrorCount(System.Int32,System.Int32,System.Boolean@)">
 	<summary>
  Compare intPrecursorMassErrorCount to intLinesRead
@@ -226,7 +182,7 @@ AnalysisManagerMSGFPlugin
 	<param name="intPrecursorMassErrorCount"></param>
 	<param name="blnTooManyPrecursorMassMismatches"></param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFResults(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.String)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFResults(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
 	<summary>
  Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
  Will also look for non-numeric values in the SpecProb column
@@ -241,26 +197,17 @@ AnalysisManagerMSGFPlugin
 	<param name="strMSGFResultsFilePath">MSGF results file to examine</param>
 	<returns>True if success; false if one or more errors</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFResultsWork(AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType,System.String,System.String,System.Collections.Generic.SortedList{System.Int32,System.String}@,System.Boolean@,System.Boolean@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.PostProcessMSGFResultsWork(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String,System.String,System.Boolean@,System.Boolean@)">
 	<summary>
  Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
  </summary>
 	<param name="eResultType"></param>
 	<param name="strMSGFResultsFilePath"></param>
 	<param name="strMSGFSynopsisResults"></param>
-	<param name="objProteinByResultID"></param>
 	<param name="blnFirstHitsDataPresent"></param>
 	<param name="blnTooManyPrecursorMassMismatches"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.ReadModSummaryFile(System.String,System.Collections.Generic.SortedDictionary{System.String,System.String}@,System.Collections.Generic.SortedDictionary{System.String,System.String}@)">
-	<summary>
- Reads the data in strModSummaryFilePath.  Populates objDynamicMods and objStaticMods with the modification definitions
- </summary>
-	<param name="strModSummaryFilePath">Path to the PHRP Mod Summary file to read</param>
-	<param name="objDynamicMods">List with mod symbols as the key and the corresponding mod mass</param>
-	<param name="objStaticMods">List with amino acid names as the key and the corresponding mod mass</param>
-	<returns>True if success; false if an error</returns>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.RetrievePreGeneratedDataFile(System.String)">
 	<summary>
  Looks for file strFileNameToFind in the transfer folder for this job
@@ -306,6 +253,13 @@ AnalysisManagerMSGFPlugin
 	<summary>
  Event handler that fires while MSGF is processing
  </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorSequest.#ctor(System.String,System.String)">
+	<summary>
+ Constructor
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strWorkDir">Working directory</param>
 	<remarks></remarks>
 </member>
 </members>

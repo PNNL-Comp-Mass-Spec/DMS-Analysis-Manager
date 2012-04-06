@@ -11,12 +11,15 @@
 ' Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 ' -------------------------------------------------------------------------------
 ' 
+Imports PHRPReader
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "February 21, 2012"
+	Public Const PROGRAM_DATE As String = "April 6, 2012"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
+	Private mOutputFolderPath As String = String.Empty
+
 	Private mDatasetName As String = String.Empty
 
 	Private mJob As Integer = 0
@@ -56,7 +59,7 @@ Module modMain
 				blnSuccess = SummarizeMSGFResults()
 
 				If Not blnSuccess Then
-					intReturnCode = -1					
+					intReturnCode = -1
 				End If
 
 			End If
@@ -76,13 +79,12 @@ Module modMain
 
 	Private Function SummarizeMSGFResults() As Boolean
 
-		Dim dctFileSuffixes As System.Collections.Generic.Dictionary(Of String, AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType)
-		Dim objEnum As System.Collections.Generic.Dictionary(Of String, AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType).Enumerator
+		Dim dctFileSuffixes As System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
+		Dim objEnum As System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType).Enumerator
 
 		Dim objSummarizer As AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer
 
-		Dim eResultType As AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType
-		Dim strFileSuffix As String
+		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
 		Dim fiSourceFile As System.IO.FileInfo
 
@@ -90,15 +92,14 @@ Module modMain
 
 		Try
 			' Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-			dctFileSuffixes = New System.Collections.Generic.Dictionary(Of String, AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType)
+			dctFileSuffixes = New System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
 
-			dctFileSuffixes.Add("_xt_MSGF.txt", AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.XTandem)
-			dctFileSuffixes.Add("_msgfdb_syn_MSGF.txt", AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.MSGFDB)
-			dctFileSuffixes.Add("_inspect_syn_MSGF.txt", AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.Inspect)
-			dctFileSuffixes.Add("_syn_MSGF.txt", AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.Sequest)
+			dctFileSuffixes.Add("_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem)
+			dctFileSuffixes.Add("_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB)
+			dctFileSuffixes.Add("_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect)
+			dctFileSuffixes.Add("_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest)
 
-			eResultType = AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.Unknown
-			strFileSuffix = String.Empty
+			eResultType = clsPHRPReader.ePeptideHitResultType.Unknown
 
 			If String.IsNullOrWhiteSpace(mMSGFSynFilePath) Then
 				If String.IsNullOrWhiteSpace(mInputFolderPath) Then
@@ -113,6 +114,7 @@ Module modMain
 				End If
 
 				' Determine the input file path by looking for the expected files in mInputFolderPath
+				Dim strSuffixesSearched As String = String.Empty
 
 				objEnum = dctFileSuffixes.GetEnumerator()
 				While objEnum.MoveNext
@@ -122,29 +124,49 @@ Module modMain
 					If fiFiles.Length > 0 Then
 						' Match found
 						mMSGFSynFilePath = fiFiles(0).FullName
-						strFileSuffix = objEnum.Current.Key
 						eResultType = objEnum.Current.Value
 						Exit While
 					End If
 
+					If String.IsNullOrEmpty(strSuffixesSearched) Then
+						strSuffixesSearched = objEnum.Current.Key
+					Else
+						strSuffixesSearched &= ", " & objEnum.Current.Key
+					End If
 				End While
+
+				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+					Dim strMsg As String = _
+					  "Did not find any files in the source folder with the expected file name suffixes" & ControlChars.NewLine & _
+					  "Looked for " & strSuffixesSearched & " in " & ControlChars.NewLine & _
+					  diFolder.FullName
+
+					ShowErrorMessage(strMsg)
+					Return False
+				End If
+
 			Else
 				' Determine the result type of mMSGFSynFilePath
 
-				objEnum = dctFileSuffixes.GetEnumerator()
-				While objEnum.MoveNext
-					If mMSGFSynFilePath.ToLower().EndsWith(objEnum.Current.Key.ToLower()) Then
-						' Match found
-						strFileSuffix = objEnum.Current.Key
-						eResultType = objEnum.Current.Value
-						Exit While
-					End If
-				End While
+				eResultType = clsPHRPReader.AutoDetermineResultType(mMSGFSynFilePath)
+
+				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+					objEnum = dctFileSuffixes.GetEnumerator()
+					While objEnum.MoveNext
+						If mMSGFSynFilePath.ToLower().EndsWith(objEnum.Current.Key.ToLower()) Then
+							' Match found
+							eResultType = objEnum.Current.Value
+							Exit While
+						End If
+					End While
+				End If
+
+				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+					ShowErrorMessage("Unable to determine result type from input file name: " & mMSGFSynFilePath)
+					Return False
+				End If
 			End If
 
-			If eResultType = AnalysisManagerMSGFPlugin.clsMSGFRunner.ePeptideHitResultType.Unknown Then
-				Return False
-			End If
 
 			fiSourceFile = New System.IO.FileInfo(mMSGFSynFilePath)
 			If Not fiSourceFile.Exists Then
@@ -154,8 +176,12 @@ Module modMain
 
 			If String.IsNullOrWhiteSpace(mDatasetName) Then
 				' Auto-determine the dataset name
-				mDatasetName = fiSourceFile.Name
-				mDatasetName = mDatasetName.Substring(0, mDatasetName.Length - strFileSuffix.Length)
+				mDatasetName = clsPHRPReader.AutoDetermineDatasetName(fiSourceFile.Name, eResultType)
+
+				If String.IsNullOrEmpty(mDatasetName) Then
+					ShowErrorMessage("Unable to determine dataset name from input file name: " & mMSGFSynFilePath)
+					Return False
+				End If
 			End If
 
 
@@ -184,8 +210,10 @@ Module modMain
 			objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName)
 			objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
-			objSummarizer.PostJobPSMResultsToDB = True
-			objSummarizer.SaveResultsToTextFile = False
+			objSummarizer.OutputFolderPath = mOutputFolderPath
+			objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
+			objSummarizer.SaveResultsToTextFile = mSaveResultsAsText
+
 
 			blnSuccess = objSummarizer.ProcessMSGFResults()
 
@@ -216,10 +244,8 @@ Module modMain
 	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
 		' Returns True if no problems; otherwise, returns false
 
-		' " [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName] [/Job:JobNumber] [/NoText] [/DB]"
-
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "Folder", "Dataset", "Job", "NoText", "DB"}
+		Dim strValidParameters() As String = New String() {"I", "Folder", "Dataset", "Job", "O", "NoText", "DB"}
 
 		Try
 			' Make sure no invalid parameters are present
@@ -244,6 +270,8 @@ Module modMain
 							Return False
 						End If
 					End If
+
+					.RetrieveValueForParameter("O", mOutputFolderPath)
 
 					If .RetrieveValueForParameter("NoText", strValue) Then
 						mSaveResultsAsText = False
@@ -285,7 +313,7 @@ Module modMain
 			Console.WriteLine("It creates a text result file and optionally posts the results to the DMS database")
 			Console.WriteLine()
 			Console.WriteLine("Program syntax #1:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location))
-			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName] [/Job:JobNumber] [/NoText] [/DB]")
+			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName] [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
 			Console.WriteLine()
 			Console.WriteLine("MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt")
 			Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined")
@@ -293,6 +321,7 @@ Module modMain
 			Console.WriteLine("Folder defines the input folder to process (and also to create the text result file in)")
 			Console.WriteLine("Dataset defines the dataset name; if /Dataset is not used, then will auto-determine the dataset name")
 			Console.WriteLine("Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
+			Console.WriteLine("Use /O to define a custom output folder path")
 			Console.WriteLine()
 			Console.WriteLine("Use /NoText to specify that a text file not be created")
 			Console.WriteLine("Use /DB to post results to DMS")

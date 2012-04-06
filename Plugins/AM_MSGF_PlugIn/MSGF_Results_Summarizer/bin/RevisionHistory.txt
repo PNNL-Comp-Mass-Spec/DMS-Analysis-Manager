@@ -1,0 +1,7 @@
+MSGF Results Summarizer Change Log
+
+Version 1.1.4478; April 5, 2012
+	- Updated to use PHRPReader.dll
+
+Version 1.0.4434; February 21, 2012
+	- Initial version

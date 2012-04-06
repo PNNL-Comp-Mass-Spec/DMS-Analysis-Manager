@@ -62,6 +62,9 @@
       <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>

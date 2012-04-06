@@ -9,6 +9,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports PHRPReader
 
 Public Class clsMSGFRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -27,19 +28,6 @@ Public Class clsMSGFRunner
 	Protected Const PROGRESS_PCT_MSGF_COMPLETE As Single = 95
 	Protected Const PROGRESS_PCT_MSGF_POST_PROCESSING As Single = 97
 
-	Public Const N_TERMINAL_PEPTIDE_SYMBOL_DMS As Char = "<"c
-	Public Const C_TERMINAL_PEPTIDE_SYMBOL_DMS As Char = ">"c
-	Public Const N_TERMINAL_PROTEIN_SYMBOL_DMS As Char = "["c
-	Public Const C_TERMINAL_PROTEIN_SYMBOL_DMS As Char = "]"c
-	Public Const PROTEIN_TERMINUS_SYMBOL_PHRP As Char = "-"c
-
-	Protected Const MOD_SUMMARY_COLUMN_Modification_Symbol As String = "Modification_Symbol"
-	Protected Const MOD_SUMMARY_COLUMN_Modification_Mass As String = "Modification_Mass"
-	Protected Const MOD_SUMMARY_COLUMN_Target_Residues As String = "Target_Residues"
-	Protected Const MOD_SUMMARY_COLUMN_Modification_Type As String = "Modification_Type"
-	Protected Const MOD_SUMMARY_COLUMN_Mass_Correction_Tag As String = "Mass_Correction_Tag"
-	Protected Const MOD_SUMMARY_COLUMN_Occurence_Count As String = "Occurence_Count"
-
 	Public Const MSGF_RESULT_COLUMN_SpectrumFile As String = "#SpectrumFile"
 	Public Const MSGF_RESULT_COLUMN_Title As String = "Title"
 	Public Const MSGF_RESULT_COLUMN_ScanNumber As String = "Scan#"
@@ -54,9 +42,6 @@ Public Class clsMSGFRunner
 	Public Const MSGF_PHRP_DATA_SOURCE_SYN As String = "Syn"
 	Public Const MSGF_PHRP_DATA_SOURCE_FHT As String = "FHT"
 
-	Public Const PHRP_MOD_DEFS_SUFFIX As String = "_ModDefs.txt"
-	Public Const PHRP_MOD_SUMMARY_SUFFIX As String = "_ModSummary.txt"
-
 	Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
 	Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05			' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
 
@@ -64,19 +49,13 @@ Public Class clsMSGFRunner
 	Protected Const MSGF_JAR_NAME As String = "MSGF.jar"
 	Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
-	Public Enum ePeptideHitResultType
-		Unknown = 0
-		Sequest = 1
-		XTandem = 2
-		Inspect = 3
-		MSGFDB = 4
-	End Enum
 
 	Protected Structure udtSegmentFileInfoType
 		Public Segment As Integer		' Segment number
 		Public FilePath As String		' Full path to the file
 		Public Entries As Integer		' Number of entries in this segment
 	End Structure
+
 #End Region
 
 #Region "Module variables"
@@ -113,9 +92,6 @@ Public Class clsMSGFRunner
 
 #End Region
 
-#Region "Events"
-#End Region
-
 #Region "Properties"
 #End Region
 
@@ -127,7 +103,7 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
 
-		Dim eResultType As ePeptideHitResultType
+		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 		Dim Msg As String = String.Empty
 
 		Dim blnSuccess As Boolean
@@ -152,7 +128,7 @@ Public Class clsMSGFRunner
 		' Resolve eResultType
 		eResultType = GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
 
-		If eResultType = ePeptideHitResultType.Unknown Then
+		If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 			' Result type is not supported
 
 			Msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
@@ -205,7 +181,7 @@ Public Class clsMSGFRunner
 			blnProcessingError = False
 
 
-			If mUsingMSGFDB And eResultType = ePeptideHitResultType.MSGFDB Then
+			If mUsingMSGFDB And eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 				' Don't actually run MSGF
 				' Simply copy the values from the MSGFDB result file
 
@@ -408,12 +384,12 @@ Public Class clsMSGFRunner
 	End Function
 
 	''' <summary>
-	''' Examines the Sequest, X!Tandem, or Inspect param file to determine if ETD mode is enabled
+	''' Examines the Sequest, X!Tandem, Inspect, or MSGFDB param file to determine if ETD mode is enabled
 	''' </summary>
 	''' <param name="eResultType"></param>
 	''' <param name="strSearchToolParamFilePath"></param>
 	''' <returns>True if success; false if an error</returns>
-	Protected Function CheckETDModeEnabled(ByVal eResultType As ePeptideHitResultType, ByVal strSearchToolParamFilePath As String) As Boolean
+	Protected Function CheckETDModeEnabled(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strSearchToolParamFilePath As String) As Boolean
 
 		Dim blnSuccess As Boolean
 
@@ -428,17 +404,17 @@ Public Class clsMSGFRunner
 		m_StatusTools.CurrentOperation = "Checking whether ETD mode is enabled"
 
 		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
+			Case clsPHRPReader.ePeptideHitResultType.Sequest
 				blnSuccess = CheckETDModeEnabledSequest(strSearchToolParamFilePath)
 
-			Case ePeptideHitResultType.XTandem
+			Case clsPHRPReader.ePeptideHitResultType.XTandem
 				blnSuccess = CheckETDModeEnabledXTandem(strSearchToolParamFilePath)
 
-			Case ePeptideHitResultType.Inspect
+			Case clsPHRPReader.ePeptideHitResultType.Inspect
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inspect does not support ETD data processing; will set mETDMode to False")
 				blnSuccess = True
 
-			Case ePeptideHitResultType.MSGFDB
+			Case clsPHRPReader.ePeptideHitResultType.MSGFDB
 				blnSuccess = CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath)
 
 			Case Else
@@ -458,7 +434,6 @@ Public Class clsMSGFRunner
 
 		Const MSGFDB_FRAG_METHOD_TAG As String = "FragmentationMethodID"
 
-		Dim srParamFile As System.IO.StreamReader = Nothing
 		Dim strLineIn As String
 
 		Dim strFragMode As String
@@ -475,53 +450,55 @@ Public Class clsMSGFRunner
 			End If
 
 			' Read the data from the MSGF-DB Param file
-			srParamFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-			intLinesRead = 0
+				intLinesRead = 0
 
-			Do While srParamFile.Peek >= 0
-				strLineIn = srParamFile.ReadLine
-				intLinesRead += 1
+				Do While srParamFile.Peek >= 0
+					strLineIn = srParamFile.ReadLine
+					intLinesRead += 1
 
-				If Not String.IsNullOrEmpty(strLineIn) AndAlso _
-				   strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
+					If Not String.IsNullOrEmpty(strLineIn) AndAlso _
+					   strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
 
-					' Check whether this line is FragmentationMethodID=2
-					' Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)  
-					' This mode is not yet supported
+						' Check whether this line is FragmentationMethodID=2
+						' Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)  
+						' This mode is not yet supported
 
-					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
-					End If
-
-					' Look for the equals sign
-					intCharIndex = strLineIn.IndexOf("=")
-					If intCharIndex > 0 Then
-						strFragMode = strLineIn.Substring(intCharIndex + 1).Trim
-
-						If Integer.TryParse(strFragMode, intFragMode) Then
-							If intFragMode = 2 Then
-								mETDMode = True
-							ElseIf intFragMode = 4 Then
-								' ToDo: Figure out how to handle this mode
-								mETDMode = False
-							Else
-								mETDMode = False
-							End If
+						If m_DebugLevel >= 3 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
 						End If
 
-					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+						' Look for the equals sign
+						intCharIndex = strLineIn.IndexOf("=")
+						If intCharIndex > 0 Then
+							strFragMode = strLineIn.Substring(intCharIndex + 1).Trim
+
+							If Integer.TryParse(strFragMode, intFragMode) Then
+								If intFragMode = 2 Then
+									mETDMode = True
+								ElseIf intFragMode = 4 Then
+									' ToDo: Figure out how to handle this mode
+									mETDMode = False
+								Else
+									mETDMode = False
+								End If
+							End If
+
+						Else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+						End If
+
+						' No point in checking any further since we've parsed the ion_series line
+						Exit Do
+
 					End If
 
-					' No point in checking any further since we've parsed the ion_series line
-					Exit Do
+				Loop
 
-				End If
 
-			Loop
+			End Using
 
-			srParamFile.Close()
 
 		Catch ex As Exception
 			Dim Msg As String
@@ -530,12 +507,11 @@ Public Class clsMSGFRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
 
-			If Not srParamFile Is Nothing Then srParamFile.Close()
-
 			Return False
 		End Try
 
 		Return True
+
 
 	End Function
 
@@ -550,7 +526,6 @@ Public Class clsMSGFRunner
 
 		Const SEQUEST_ION_SERIES_TAG As String = "ion_series"
 
-		Dim srParamFile As System.IO.StreamReader
 		Dim strLineIn As String
 
 		Dim strIonWeightText As String
@@ -573,66 +548,67 @@ Public Class clsMSGFRunner
 			End If
 
 			' Read the data from the Sequest Param file
-			srParamFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-			intLinesRead = 0
+				intLinesRead = 0
 
-			Do While srParamFile.Peek >= 0
-				strLineIn = srParamFile.ReadLine
-				intLinesRead += 1
+				Do While srParamFile.Peek >= 0
+					strLineIn = srParamFile.ReadLine
+					intLinesRead += 1
 
-				If Not String.IsNullOrEmpty(strLineIn) AndAlso _
-				   strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
+					If Not String.IsNullOrEmpty(strLineIn) AndAlso _
+					   strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
 
-					' This is the ion_series line
-					' If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
-					' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
-					'
-					' The key to parsing this data is:
-					' ion_series = - - -  a   b   c  --- --- ---  x   y   z
-					' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
+						' This is the ion_series line
+						' If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
+						' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
+						'
+						' The key to parsing this data is:
+						' ion_series = - - -  a   b   c  --- --- ---  x   y   z
+						' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
 
-					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line found: " & strLineIn)
-					End If
+						If m_DebugLevel >= 3 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line found: " & strLineIn)
+						End If
 
-					' Look for the equals sign
-					intCharIndex = strLineIn.IndexOf("=")
-					If intCharIndex > 0 Then
-						strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim
+						' Look for the equals sign
+						intCharIndex = strLineIn.IndexOf("=")
+						If intCharIndex > 0 Then
+							strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim
 
-						' Split strIonWeightText on spaces
-						strIonWeights = strIonWeightText.Split(" "c)
+							' Split strIonWeightText on spaces
+							strIonWeights = strIonWeightText.Split(" "c)
 
-						If strIonWeights.Length >= 12 Then
-							dblCWeight = 0
-							dblZWeight = 0
+							If strIonWeights.Length >= 12 Then
+								dblCWeight = 0
+								dblZWeight = 0
 
-							Double.TryParse(strIonWeights(5), dblCWeight)
-							Double.TryParse(strIonWeights(11), dblZWeight)
+								Double.TryParse(strIonWeights(5), dblCWeight)
+								Double.TryParse(strIonWeights(11), dblZWeight)
 
-							If m_DebugLevel >= 3 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line has c-ion weighting = " & dblCWeight & " and z-ion weighting = " & dblZWeight)
-							End If
+								If m_DebugLevel >= 3 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line has c-ion weighting = " & dblCWeight & " and z-ion weighting = " & dblZWeight)
+								End If
 
-							If dblCWeight > 0 OrElse dblZWeight > 0 Then
-								mETDMode = True
+								If dblCWeight > 0 OrElse dblZWeight > 0 Then
+									mETDMode = True
+								End If
+							Else
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have 11 numbers; will assume not using ETD ions: " & strLineIn)
 							End If
 						Else
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have 11 numbers; will assume not using ETD ions: " & strLineIn)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
 						End If
-					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+
+						' No point in checking any further since we've parsed the ion_series line
+						Exit Do
+
 					End If
 
-					' No point in checking any further since we've parsed the ion_series line
-					Exit Do
+				Loop
 
-				End If
+			End Using
 
-			Loop
-
-			srParamFile.Close()
 
 		Catch ex As Exception
 			Dim Msg As String
@@ -640,9 +616,6 @@ Public Class clsMSGFRunner
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
-
-			If Not srParamFile Is Nothing Then srParamFile.Close()
-
 			Return False
 		End Try
 
@@ -660,7 +633,7 @@ Public Class clsMSGFRunner
 
 		Dim objParamFile As System.Xml.XmlDocument
 
-		Dim objSelectedNodes As System.Xml.XmlNodeList
+		Dim objSelectedNodes As System.Xml.XmlNodeList = Nothing
 		Dim objAttributeNode As System.Xml.XmlNode
 
 		Dim intSettingIndex As Integer
@@ -699,7 +672,7 @@ Public Class clsMSGFRunner
 						If objAttributeNode Is Nothing Then
 							' Node does not have an attribute named "type"
 						Else
-							If objAttributeNode.Value.ToLower() = "input" Then
+							If objAttributeNode.Value.ToLower = "input" Then
 								' Valid node; examine its InnerText value
 								If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
 									mETDMode = True
@@ -734,103 +707,84 @@ Public Class clsMSGFRunner
 	''' <param name="eResultType"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function CreateMSGFInputFile(ByVal eResultType As ePeptideHitResultType, _
+	Private Function CreateMSGFInputFile(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
 	 ByVal blnDoNotFilterPeptides As Boolean, _
 	 ByRef intMSGFInputFileLineCount As Integer) As Boolean
 
-		Dim strModSummaryFilePath As String
 		Dim Msg As String
 
-		Dim blnSuccess As Boolean
+		Dim blnSuccess As Boolean = True
 
-		' This list contains mod symbols as the key and the corresponding mod mass (stored as a string 
-		'  to retain the same number of Sig Figs as the _ModSummary.txt file)
-		' This dictionary object will use case-sensitive searching
-		Dim objDynamicMods As New System.Collections.Generic.SortedDictionary(Of String, String)
-
-		' This list contains amino acid names as the key and the corresponding mod mass (stored as a string 
-		'  to retain the same number of Sig Figs as the _ModSummary.txt file)
-		' This dictionary object will use case-sensitive searching
-		Dim objStaticMods As New System.Collections.Generic.SortedDictionary(Of String, String)
-
-		' Read the PHRP Mod Summary File
-		strModSummaryFilePath = System.IO.Path.Combine(m_WorkDir, GetModSummaryFileName(eResultType, m_Dataset))
-		blnSuccess = ReadModSummaryFile(strModSummaryFilePath, objDynamicMods, objStaticMods)
 		intMSGFInputFileLineCount = 0
+
+		' Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
+		Select Case eResultType
+			Case clsPHRPReader.ePeptideHitResultType.Sequest
+
+				' Convert Sequest results to input format required for MSGF
+				mMSGFInputCreator = New clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir)
+
+			Case clsPHRPReader.ePeptideHitResultType.XTandem
+
+				' Convert X!Tandem results to input format required for MSGF
+				mMSGFInputCreator = New clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir)
+
+
+			Case clsPHRPReader.ePeptideHitResultType.Inspect
+
+				' Convert Inspect results to input format required for MSGF
+				mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir)
+
+			Case clsPHRPReader.ePeptideHitResultType.MSGFDB
+
+				' Convert MSGFDB results to input format required for MSGF
+				mMSGFInputCreator = New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
+
+			Case Else
+				' Should never get here; invalid result type specified
+				Msg = "Invalid PeptideHit ResultType specified: " & eResultType
+				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
+
+				blnSuccess = False
+		End Select
 
 		If blnSuccess Then
 
-			' Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
-			Select Case eResultType
-				Case ePeptideHitResultType.Sequest
+			mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath()
+			mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
 
-					' Convert Sequest results to input format required for MSGF
-					mMSGFInputCreator = New clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+			mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
 
-				Case ePeptideHitResultType.XTandem
+			m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
 
-					' Convert X!Tandem results to input format required for MSGF
-					mMSGFInputCreator = New clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the MSGF Input file")
+			End If
 
+			blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles()
 
-				Case ePeptideHitResultType.Inspect
+			intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount
 
-					' Convert Inspect results to input format required for MSGF
-					mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
-
-				Case ePeptideHitResultType.MSGFDB
-
-					' Convert MSGFDB results to input format required for MSGF
-					mMSGFInputCreator = New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
-
-				Case Else
-					'Should never get here; invalid result type specified
-					Msg = "Invalid PeptideHit ResultType specified: " & eResultType
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
-
-					blnSuccess = False
-			End Select
-
-			If blnSuccess Then
-
-				mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath()
-				mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
-
-				mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
-
-				m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
-
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the MSGF Input file")
+			If Not blnSuccess Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mMSGFInputCreator.MSGFDataFileLineCount returned False")
+			Else
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CreateMSGFInputFileUsingPHRPResultFile complete; " & intMSGFInputFileLineCount & " lines of data")
 				End If
-
-				blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles()
-
-				intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount
-
-				If Not blnSuccess Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mMSGFInputCreator.MSGFDataFileLineCount returned False")
-				Else
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CreateMSGFInputFileUsingPHRPResultFile complete; " & intMSGFInputFileLineCount & " lines of data")
-					End If
-				End If
-
 			End If
 
 		End If
+
 
 		Return blnSuccess
 
 	End Function
 
+
 	Private Function CreateMSGFResultsFromMSGFDBResults() As Boolean
 
-		Dim objDynamicMods As New System.Collections.Generic.SortedDictionary(Of String, String)
-		Dim objStaticMods As New System.Collections.Generic.SortedDictionary(Of String, String)
-
-		Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir, objDynamicMods, objStaticMods)
+		Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
 		Dim blnSuccess As Boolean
 
 		If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
@@ -843,7 +797,7 @@ Public Class clsMSGFRunner
 
 		' Summarize the results in the _syn_MSGF.txt file
 		' Post the results to the database
-		blnSuccess = SummarizeMSGFResults(ePeptideHitResultType.MSGFDB)
+		blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB)
 
 		Return blnSuccess
 
@@ -1025,158 +979,23 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Public Shared Function GetPeptideHitResultType(ByVal strPeptideHitResultType As String) As ePeptideHitResultType
+	Public Shared Function GetPeptideHitResultType(ByVal strPeptideHitResultType As String) As clsPHRPReader.ePeptideHitResultType
 		Select Case strPeptideHitResultType.ToLower
 			Case "Peptide_Hit".ToLower
-				Return ePeptideHitResultType.Sequest
+				Return clsPHRPReader.ePeptideHitResultType.Sequest
 
 			Case "XT_Peptide_Hit".ToLower
-				Return ePeptideHitResultType.XTandem
+				Return clsPHRPReader.ePeptideHitResultType.XTandem
 
 			Case "IN_Peptide_Hit".ToLower
-				Return ePeptideHitResultType.Inspect
+				Return clsPHRPReader.ePeptideHitResultType.Inspect
 
 			Case "MSG_Peptide_Hit".ToLower
-				Return ePeptideHitResultType.MSGFDB
+				Return clsPHRPReader.ePeptideHitResultType.MSGFDB
 
 			Case Else
-				Return ePeptideHitResultType.Unknown
+				Return clsPHRPReader.ePeptideHitResultType.Unknown
 		End Select
-	End Function
-
-	Public Shared Function GetModSummaryFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
-
-		Dim strModSummaryName As String = String.Empty
-
-		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
-				' Sequest
-				strModSummaryName = strDatasetName & "_syn" & PHRP_MOD_SUMMARY_SUFFIX
-
-			Case ePeptideHitResultType.XTandem
-				' X!Tandem
-				strModSummaryName = strDatasetName & "_xt" & PHRP_MOD_SUMMARY_SUFFIX
-
-			Case ePeptideHitResultType.Inspect
-				' Inspect
-				strModSummaryName = strDatasetName & "_inspect_syn" & PHRP_MOD_SUMMARY_SUFFIX
-
-			Case ePeptideHitResultType.MSGFDB
-				' MSGFDB
-				strModSummaryName = strDatasetName & "_msgfdb_syn" & PHRP_MOD_SUMMARY_SUFFIX
-
-		End Select
-
-		Return strModSummaryName
-
-	End Function
-
-	Public Shared Function GetPHRPFirstHitsFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
-
-		Dim strPHRPResultsFileName As String = String.Empty
-
-		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
-				' Sequest: _fht.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPFirstHitsFileName(strDatasetName)
-
-			Case ePeptideHitResultType.XTandem
-				' X!Tandem does not have a first-hits file; strPHRPResultsFileName will be an empty string
-				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPFirstHitsFileName(strDatasetName)
-
-			Case ePeptideHitResultType.Inspect
-				' Inspect: _inspect_fht.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPFirstHitsFileName(strDatasetName)
-
-			Case ePeptideHitResultType.MSGFDB
-				' MSGFDB: _msgfdb_fht.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPFirstHitsFileName(strDatasetName)
-
-		End Select
-
-		Return strPHRPResultsFileName
-
-	End Function
-
-	Public Shared Function GetPHRPSynopsisFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
-
-		Dim strPHRPResultsFileName As String = String.Empty
-
-		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
-				' Sequest: _syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPSynopsisFileName(strDatasetName)
-
-			Case ePeptideHitResultType.XTandem
-				' X!Tandem: _xt.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPSynopsisFileName(strDatasetName)
-
-			Case ePeptideHitResultType.Inspect
-				' Inspect: _inspect_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPSynopsisFileName(strDatasetName)
-
-			Case ePeptideHitResultType.MSGFDB
-				' MSGFDB: _msgfdb_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPSynopsisFileName(strDatasetName)
-
-		End Select
-
-		Return strPHRPResultsFileName
-
-	End Function
-
-	Public Shared Function GetPHRPResultToSeqMapFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
-
-		Dim strPHRPResultsFileName As String = String.Empty
-
-		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
-				' Sequest: _syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPResultToSeqMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.XTandem
-				' X!Tandem: _xt.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPResultToSeqMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.Inspect
-				' Inspect: _inspect_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPResultToSeqMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.MSGFDB
-				' MSGFDB: _msgfdb_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPResultToSeqMapFileName(strDatasetName)
-
-		End Select
-
-		Return strPHRPResultsFileName
-
-	End Function
-
-	Public Shared Function GetPHRPSeqToProteinMapFileName(ByVal eResultType As ePeptideHitResultType, ByVal strDatasetName As String) As String
-
-		Dim strPHRPResultsFileName As String = String.Empty
-
-		Select Case eResultType
-			Case ePeptideHitResultType.Sequest
-				' Sequest: _syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorSequest.GetPHRPSeqToProteinMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.XTandem
-				' X!Tandem: _xt.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorXTandem.GetPHRPSeqToProteinMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.Inspect
-				' Inspect: _inspect_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorInspect.GetPHRPSeqToProteinMapFileName(strDatasetName)
-
-			Case ePeptideHitResultType.MSGFDB
-				' MSGFDB: _msgfdb_syn.txt
-				strPHRPResultsFileName = clsMSGFInputCreatorMSGFDB.GetPHRPSeqToProteinMapFileName(strDatasetName)
-
-		End Select
-
-		Return strPHRPResultsFileName
-
 	End Function
 
 	Public Shared Function IsLegacyMSGFVersion(ByVal strStepToolVersion As String) As Boolean
@@ -1191,237 +1010,6 @@ Public Class clsMSGFRunner
 				Return False
 
 		End Select
-
-	End Function
-
-	''' <summary>
-	''' Load the proteins using the PHRP result files
-	''' Applies to X!Tandem results and Sequest, Inspect, or MSGFDB Synopsis file results
-	''' Does not apply to Sequest or MSGFDB First-Hits files
-	''' </summary>
-	''' <param name="eResultType"></param>
-	''' <param name="objProteinByResultID"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function LoadResultProteins(ByVal eResultType As ePeptideHitResultType, ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
-
-		' Tracks the ResultIDs that map to each SeqID
-		Dim objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))
-
-		Dim strResultToSeqMapFilename As String = String.Empty
-		Dim strSeqToProteinMapFilename As String = String.Empty
-
-		Dim blnSuccess As Boolean
-
-		Try
-			' Initialize the tracking lists
-			objSeqToResultMap = New System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))
-
-			If objProteinByResultID Is Nothing Then
-				objProteinByResultID = New System.Collections.Generic.SortedList(Of Integer, String)
-			Else
-				objProteinByResultID.Clear()
-			End If
-
-			strResultToSeqMapFilename = GetPHRPResultToSeqMapFileName(eResultType, m_Dataset)
-			strSeqToProteinMapFilename = GetPHRPSeqToProteinMapFileName(eResultType, m_Dataset)
-
-			If String.IsNullOrEmpty(strResultToSeqMapFilename) Then
-				blnSuccess = False
-			Else
-				blnSuccess = LoadResultToSeqMapping(System.IO.Path.Combine(m_WorkDir, strResultToSeqMapFilename), objSeqToResultMap)
-			End If
-
-
-			If blnSuccess AndAlso Not String.IsNullOrEmpty(strSeqToProteinMapFilename) Then
-				blnSuccess = LoadSeqToProteinMapping(System.IO.Path.Combine(m_WorkDir, strSeqToProteinMapFilename), objSeqToResultMap, objProteinByResultID)
-			End If
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading protein results", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception loading protein results")
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Load the Result to Seq mapping using the specified PHRP result file
-	''' </summary>
-	''' <param name="strFilePath"></param>
-	''' <param name="objSeqToResultMap"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function LoadResultToSeqMapping(ByVal strFilePath As String, ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer))) As Boolean
-
-		Dim srInFile As System.IO.StreamReader
-
-		Dim objResultIDList As System.Collections.Generic.List(Of Integer)
-
-		Dim strLineIn As String
-		Dim strSplitLine() As String
-
-		Dim intLinesRead As Integer
-
-		Dim intResultID As Integer
-		Dim intSeqID As Integer
-
-		Try
-
-			' Read the data from the result to sequence map file
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
-
-			intLinesRead = 0
-
-			Do While srInFile.Peek >= 0
-				strLineIn = srInFile.ReadLine
-				intLinesRead += 1
-
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-					If strSplitLine.Length >= 2 Then
-
-						' Parse out the numbers from the first two columns 
-						' (the first line of the file is the header line, and it will get skipped)
-						If Integer.TryParse(strSplitLine(0), intResultID) Then
-							If Integer.TryParse(strSplitLine(1), intSeqID) Then
-
-								If objSeqToResultMap.TryGetValue(intSeqID, objResultIDList) Then
-									objResultIDList.Add(intResultID)
-								Else
-									objResultIDList = New System.Collections.Generic.List(Of Integer)
-									objResultIDList.Add(intResultID)
-									objSeqToResultMap.Add(intSeqID, objResultIDList)
-								End If
-							End If
-						End If
-
-					End If
-				End If
-			Loop
-
-			srInFile.Close()
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading result to seq map file", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading " & System.IO.Path.GetFileName(strFilePath))
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Load the Sequence to Protein mapping using the specified PHRP result file
-	''' This function only keeps track of the first protein for each ResultID
-	''' </summary>
-	''' <param name="strFilePath"></param>
-	''' <param name="objSeqToResultMap"></param>
-	''' <param name="objProteinByResultID"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function LoadSeqToProteinMapping(ByVal strFilePath As String, _
-	  ByRef objSeqToResultMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer)), _
-	  ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)) As Boolean
-
-		Dim srInFile As System.IO.StreamReader
-
-		Dim objResultIDList As System.Collections.Generic.List(Of Integer)
-
-		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
-
-		Dim strLineIn As String
-		Dim strSplitLine() As String
-
-		Dim strProtein As String
-		Dim intLinesRead As Integer
-
-		Dim intResultID As Integer
-		Dim intSeqID As Integer
-		Dim intSeqIDPrevious As Integer
-
-		Dim blnHeaderLineParsed As Boolean
-		Dim blnSkipLine As Boolean
-
-		Try
-
-			' Initialize the column mapping
-			' Using a case-insensitive comparer
-			objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
-			' Define the default column mapping
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Unique_Seq_ID, 0)
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Cleavage_State, 1)
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Terminus_State, 2)
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Name, 3)
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_EValue, 4)
-			objColumnHeaders.Add(clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Intensity, 5)
-
-			' Read the data from the sequence to protein map file
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
-
-			intLinesRead = 0
-			intSeqIDPrevious = 0
-
-			Do While srInFile.Peek >= 0
-				strLineIn = srInFile.ReadLine
-				intLinesRead += 1
-				blnSkipLine = False
-
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-					If Not blnHeaderLineParsed Then
-						If strSplitLine(0).ToLower() = clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Unique_Seq_ID.ToLower Then
-							' Parse the header line to confirm the column ordering
-							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
-							blnSkipLine = True
-						End If
-
-						blnHeaderLineParsed = True
-					End If
-
-					If Not blnSkipLine AndAlso strSplitLine.Length >= 3 Then
-
-						If Integer.TryParse(strSplitLine(0), intSeqID) Then
-							If intSeqID <> intSeqIDPrevious Then
-								strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, clsMSGFResultsSummarizer.SEQ_PROT_MAP_COLUMN_Protein_Name, objColumnHeaders, String.Empty)
-
-								If Not String.IsNullOrEmpty(strProtein) Then
-									' Find the ResultIDs in objResultToSeqMap() that have sequence ID intSeqID
-									If objSeqToResultMap.TryGetValue(intSeqID, objResultIDList) Then
-
-										For Each intResultID In objResultIDList
-											If Not objProteinByResultID.ContainsKey(intResultID) Then
-												objProteinByResultID.Add(intResultID, strProtein)
-											End If
-										Next
-
-									End If
-
-								End If
-
-							End If
-						End If
-
-					End If
-
-				End If
-			Loop
-
-			srInFile.Close()
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading seq to protein map file", ex)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading " & System.IO.Path.GetFileName(strFilePath))
-			Return False
-		End Try
-
-		Return True
 
 	End Function
 
@@ -1467,7 +1055,6 @@ Public Class clsMSGFRunner
 
 	End Sub
 
-
 	''' <summary>
 	''' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
 	''' Will also look for non-numeric values in the SpecProb column
@@ -1482,15 +1069,13 @@ Public Class clsMSGFRunner
 	''' <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
 	''' <returns>True if success; false if one or more errors</returns>
 	''' <remarks></remarks>
-	Protected Function PostProcessMSGFResults(ByVal eResultType As ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
+	Protected Function PostProcessMSGFResults(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
 
 		Dim fiInputFile As System.IO.FileInfo
 		Dim fiMSGFSynFile As System.IO.FileInfo
 
 		Dim strMSGFSynopsisResults As String = String.Empty
 		Dim Msg As String
-
-		Dim objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String)
 
 		Dim blnSuccess As Boolean
 		Dim blnFirstHitsDataPresent As Boolean = False
@@ -1508,17 +1093,6 @@ Public Class clsMSGFRunner
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF complete; post-processing the results")
 			End If
 
-			objProteinByResultID = New System.Collections.Generic.SortedList(Of Integer, String)
-
-			If eResultType = ePeptideHitResultType.XTandem Then
-				' Need to read the ResultToSeqMap and SeqToProteinMap files so that we can determine the first protein name for each result
-				blnSuccess = LoadResultProteins(eResultType, objProteinByResultID)
-				If Not blnSuccess Then
-					Return False
-				End If
-
-			End If
-
 			fiInputFile = New System.IO.FileInfo(strMSGFResultsFilePath)
 
 			' Define the path to write the synopsis MSGF results to
@@ -1528,7 +1102,7 @@ Public Class clsMSGFRunner
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
 			m_StatusTools.UpdateAndWrite(m_progress)
 
-			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, objProteinByResultID, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
+			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
 
 		Catch ex As Exception
 			Msg = "Error post-processing the MSGF Results file: " & _
@@ -1591,15 +1165,13 @@ Public Class clsMSGFRunner
 	''' <param name="eResultType"></param>
 	''' <param name="strMSGFResultsFilePath"></param>
 	''' <param name="strMSGFSynopsisResults"></param>
-	''' <param name="objProteinByResultID"></param>
 	''' <param name="blnFirstHitsDataPresent"></param>
 	''' <param name="blnTooManyPrecursorMassMismatches"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function PostProcessMSGFResultsWork(ByVal eResultType As ePeptideHitResultType, _
+	Protected Function PostProcessMSGFResultsWork(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
 	  ByVal strMSGFResultsFilePath As String, _
 	  ByVal strMSGFSynopsisResults As String, _
-	  ByRef objProteinByResultID As System.Collections.Generic.SortedList(Of Integer, String), _
 	  ByRef blnFirstHitsDataPresent As Boolean, _
 	  ByRef blnTooManyPrecursorMassMismatches As Boolean) As Boolean
 
@@ -1632,6 +1204,8 @@ Public Class clsMSGFRunner
 
 		Dim intResultID As Integer
 		Dim intIndex As Integer
+		Dim dblSpecProb As Double = 0
+
 		Dim objSkipList As System.Collections.Generic.List(Of String)
 		Dim strSkipInfo() As String
 
@@ -1686,7 +1260,7 @@ Public Class clsMSGFRunner
 						If Not blnHeaderLineParsed Then
 							If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
 								' Parse the header line to confirm the column ordering
-								clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
+								clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders)
 								blnSkipLine = True
 							End If
 
@@ -1695,26 +1269,25 @@ Public Class clsMSGFRunner
 
 						If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
 
-							strOriginalPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
-							strScan = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
-							strCharge = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
-							strProtein = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
-							strPeptide = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
-							strResultID = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
-							strSpecProb = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
-							strDataSource = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
+							strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
+							strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
+							strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
+							strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
+							strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
+							strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
+							strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
+							strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
 							strNotes = String.Empty
 
-							If eResultType = ePeptideHitResultType.XTandem Then
-								' Update the protein name
-								If Integer.TryParse(strResultID, intResultID) Then
-									If objProteinByResultID.TryGetValue(intResultID, strProteinNew) Then
-										strProtein = strProteinNew
-									End If
+							If Double.TryParse(strSpecProb, dblSpecProb) Then
+								If strOriginalPeptide <> strPeptide Then
+									strNotes = String.Copy(strPeptide)
 								End If
-							End If
 
-							If Not Double.TryParse(strSpecProb, 0.0) Then
+								' Update strSpecProb to reduce the number of significant figures
+								strSpecProb = dblSpecProb.ToString("0.000000E+00")
+							Else
+
 								' The specProb column does not contain a number
 								intErrorCount += 1
 
@@ -1742,10 +1315,6 @@ Public Class clsMSGFRunner
 
 								' Change the spectrum probability to 1
 								strSpecProb = "1"
-							Else
-								If strOriginalPeptide <> strPeptide Then
-									strNotes = String.Copy(strPeptide)
-								End If
 							End If
 
 							strMSGFResultData = strScan & ControlChars.Tab & _
@@ -1784,7 +1353,8 @@ Public Class clsMSGFRunner
 
 										strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
 
-										swMSGFSynFile.WriteLine(strSkipInfo(0) & ControlChars.Tab & _
+										swMSGFSynFile.WriteLine( _
+										  strSkipInfo(0) & ControlChars.Tab & _
 										  strScan & ControlChars.Tab & _
 										  strCharge & ControlChars.Tab & _
 										  strSkipInfo(1) & ControlChars.Tab & _
@@ -1817,14 +1387,14 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function ProcessFileWithMSGF(ByVal eResultType As ePeptideHitResultType, _
+	Protected Function ProcessFileWithMSGF(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
 	 ByVal intMSGFInputFileLineCount As Integer, _
 	 ByVal strMSGFInputFilePath As String, _
 	 ByVal strMSGFResultsFilePath As String) As Boolean
 
 		Dim blnSuccess As Boolean = False
 
-		If eResultType = ePeptideHitResultType.MSGFDB Then
+		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 			' Input file may contain a mix of scan types (CID, ETD, and/or HCD)
 			' If this is the case, then need to call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
 			blnSuccess = RunMSGFonMSGFDB(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath)
@@ -1835,168 +1405,6 @@ Public Class clsMSGFRunner
 		End If
 
 		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Reads the data in strModSummaryFilePath.  Populates objDynamicMods and objStaticMods with the modification definitions
-	''' </summary>
-	''' <param name="strModSummaryFilePath">Path to the PHRP Mod Summary file to read</param>
-	''' <param name="objDynamicMods">List with mod symbols as the key and the corresponding mod mass</param>
-	''' <param name="objStaticMods">List with amino acid names as the key and the corresponding mod mass</param>
-	''' <returns>True if success; false if an error</returns>
-	Protected Function ReadModSummaryFile(ByVal strModSummaryFilePath As String, _
-	  ByRef objDynamicMods As System.Collections.Generic.SortedDictionary(Of String, String), _
-	  ByRef objStaticMods As System.Collections.Generic.SortedDictionary(Of String, String)) As Boolean
-
-		Dim srModSummaryFile As System.IO.StreamReader
-		Dim strLineIn As String
-		Dim strSplitLine() As String
-
-		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
-
-		Dim intLinesRead As Integer
-		Dim intIndex As Integer
-
-		Dim strModSymbol As String
-		Dim strModMass As String
-		Dim strTargetResidues As String
-		Dim strModType As String
-
-		Dim blnSkipLine As Boolean
-		Dim blnHeaderLineParsed As Boolean
-
-		Try
-			If String.IsNullOrEmpty(strModSummaryFilePath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ModSummaryFile path is empty; unable to continue")
-				Return False
-			End If
-
-			m_StatusTools.CurrentOperation = "Reading the PHRP ModSummary file"
-
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Reading the PHRP ModSummary file: " & strModSummaryFilePath)
-			End If
-
-			' Initialize the column mapping
-			' Using a case-insensitive comparer
-			objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
-			' Define the default column mapping
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Modification_Symbol, 0)
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Modification_Mass, 1)
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Target_Residues, 2)
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Modification_Type, 3)
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Mass_Correction_Tag, 4)
-			objColumnHeaders.Add(MOD_SUMMARY_COLUMN_Occurence_Count, 5)
-
-			' Clear objDynamicMods and objStaticMods (should have been instantiated by the calling function)
-			objDynamicMods.Clear()
-			objStaticMods.Clear()
-
-
-			If Not System.IO.File.Exists(strModSummaryFilePath) Then
-				' _ModSummary.txt file not found
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP ModSummary file not found: " & strModSummaryFilePath)
-				Return False
-			End If
-
-			' Read the data from the ModSummary.txt file
-			' The first line is typically a header line:
-			' Modification_Symbol	Modification_Mass	Target_Residues	Modification_Type	Mass_Correction_Tag	Occurence_Count
-
-			srModSummaryFile = New System.IO.StreamReader(New System.IO.FileStream(strModSummaryFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
-
-			blnHeaderLineParsed = False
-			intLinesRead = 0
-
-			Do While srModSummaryFile.Peek >= 0
-				strLineIn = srModSummaryFile.ReadLine
-				intLinesRead += 1
-				blnSkipLine = False
-
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-					If Not blnHeaderLineParsed Then
-						If strSplitLine(0).ToLower() = MOD_SUMMARY_COLUMN_Modification_Symbol.ToLower Then
-							' Parse the header line to confirm the column ordering
-							clsMSGFInputCreator.ParseColumnHeaders(strSplitLine, objColumnHeaders)
-							blnSkipLine = True
-						Else
-							' Header line not present
-							' This will be the case if we copied the _ModDefs.txt file and renamed it to _ModSummary.txt (due to the _ModSummary.txt file being missing)
-						End If
-
-						blnHeaderLineParsed = True
-					End If
-
-					If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
-						strModSymbol = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MOD_SUMMARY_COLUMN_Modification_Symbol, objColumnHeaders)
-						strModMass = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MOD_SUMMARY_COLUMN_Modification_Mass, objColumnHeaders)
-						strTargetResidues = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MOD_SUMMARY_COLUMN_Target_Residues, objColumnHeaders)
-						strModType = clsMSGFInputCreator.LookupColumnValue(strSplitLine, MOD_SUMMARY_COLUMN_Modification_Type, objColumnHeaders)
-
-						Select Case strModType.ToUpper()
-							Case "S", "T", "P"
-								' Static residue mod, peptide terminus static mod, or protein terminus static mod
-								' Note that < and > mean peptide N and C terminus (N_TERMINAL_PEPTIDE_SYMBOL_DMS and C_TERMINAL_PEPTIDE_SYMBOL_DMS)
-								' Note that [ and ] mean protein N and C terminus (N_TERMINAL_PROTEIN_SYMBOL_DMS and C_TERMINAL_PROTEIN_SYMBOL_DMS)
-
-								' This mod could apply to multiple residues, so need to process each character in strTargetResidues
-								For intIndex = 0 To strTargetResidues.Length - 1
-									Try
-										If objStaticMods.ContainsKey(strTargetResidues.Chars(intIndex)) Then
-											' Residue is already present in objStaticMods; this is unexpected
-											' We'll log a warning, but continue
-											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Residue '" & strTargetResidues.Chars(intIndex) & "' has more than one static mod defined; this is not allowed (duplicate has ModMass=" & strModMass & ")")
-										Else
-											objStaticMods.Add(strTargetResidues.Chars(intIndex), strModMass)
-										End If
-
-									Catch ex As Exception
-										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding static mod for " & strTargetResidues.Chars(intIndex) & " with ModMass=" & strModMass, ex)
-									End Try
-								Next intIndex
-
-							Case Else
-								' Dynamic residue mod (Includes mod type "D")
-								' Note that < and > mean peptide N and C terminus (N_TERMINAL_PEPTIDE_SYMBOL_DMS and C_TERMINAL_PEPTIDE_SYMBOL_DMS)
-
-								Try
-									If objDynamicMods.ContainsKey(strModSymbol) Then
-										' Mod symbol already present in objDynamicMods; this is unexpected
-										' We'll log a warning, but continue
-										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Dynamic mod symbol '" & strModSymbol & "' is already defined; it cannot have more than one associated mod mass (duplicate has ModMass=" & strModMass & ")")
-									Else
-										objDynamicMods.Add(strModSymbol, strModMass)
-									End If
-
-								Catch ex As Exception
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception adding dynamic mod for " & strModSymbol & " with ModMass=" & strModMass, ex)
-								End Try
-
-						End Select
-					End If
-				End If
-
-			Loop
-
-			srModSummaryFile.Close()
-
-		Catch ex As Exception
-			Dim Msg As String
-			Msg = "Error reading the PHRP Mod Summary file: " & _
-			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading PHRP Mod Summary file")
-
-			If Not srModSummaryFile Is Nothing Then srModSummaryFile.Close()
-
-			Return False
-		End Try
-
-		Return True
 
 	End Function
 
@@ -2055,7 +1463,6 @@ Public Class clsMSGFRunner
 
 	Protected Function RunMSGFonMSGFDB(ByVal intMSGFInputFileLineCount As Integer, ByVal strMSGFInputFilePath As String, ByVal strMSGFResultsFilePath As String) As Boolean
 
-		Dim srSourceFile As System.IO.StreamReader
 		Dim strLineIn As String
 		Dim intLinesRead As Integer
 		Dim strSplitLine() As String
@@ -2068,53 +1475,53 @@ Public Class clsMSGFRunner
 			lstCIDData = New System.Collections.Generic.List(Of String)
 			lstETDData = New System.Collections.Generic.List(Of String)
 
-			srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srSourceFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srSourceFile.Peek > -1
-				strLineIn = srSourceFile.ReadLine()
+				intLinesRead = 0
+				Do While srSourceFile.Peek > -1
+					strLineIn = srSourceFile.ReadLine()
 
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					intLinesRead += 1
-					strSplitLine = strLineIn.Split(ControlChars.Tab)
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						intLinesRead += 1
+						strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-					If intLinesRead = 1 Then
-						' Cache the header line
-						lstCIDData.Add(strLineIn)
-						lstETDData.Add(strLineIn)
+						If intLinesRead = 1 Then
+							' Cache the header line
+							lstCIDData.Add(strLineIn)
+							lstETDData.Add(strLineIn)
 
-						' Confirm the column index of the Collision_Mode column
-						For intIndex As Integer = 0 To strSplitLine.Length - 1
-							If strSplitLine(intIndex).ToLower() = MSGF_RESULT_COLUMN_Collision_Mode.ToLower() Then
-								intCollisionModeColIndex = intIndex
+							' Confirm the column index of the Collision_Mode column
+							For intIndex As Integer = 0 To strSplitLine.Length - 1
+								If strSplitLine(intIndex).ToLower() = MSGF_RESULT_COLUMN_Collision_Mode.ToLower() Then
+									intCollisionModeColIndex = intIndex
+								End If
+							Next
+
+							If intCollisionModeColIndex < 0 Then
+								' Collision_Mode column not found; this is unexpected
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue")
+								srSourceFile.Close()
+								Return False
 							End If
-						Next
 
-						If intCollisionModeColIndex < 0 Then
-							' Collision_Mode column not found; this is unexpected
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue")
-							srSourceFile.Close()
-							Return False
-						End If
+						Else
+							' Read the collision mode
 
-					Else
-						' Read the collision mode
-
-						If strSplitLine.Length > intCollisionModeColIndex Then
-							If strSplitLine(intCollisionModeColIndex).ToUpper() = "ETD" Then
-								lstETDData.Add(strLineIn)
+							If strSplitLine.Length > intCollisionModeColIndex Then
+								If strSplitLine(intCollisionModeColIndex).ToUpper() = "ETD" Then
+									lstETDData.Add(strLineIn)
+								Else
+									lstCIDData.Add(strLineIn)
+								End If
 							Else
 								lstCIDData.Add(strLineIn)
 							End If
-						Else
-							lstCIDData.Add(strLineIn)
 						End If
+
 					End If
+				Loop
 
-				End If
-			Loop
-
-			srSourceFile.Close()
+			End Using
 
 			mProcessingMSGFDBCollisionModeData = False
 
@@ -2173,8 +1580,6 @@ Public Class clsMSGFRunner
 		Dim strInputFileTempPath As String
 		Dim strResultFileTempPath As String
 
-		Dim swInputFileTemp As System.IO.StreamWriter
-
 		Dim blnSuccess As Boolean
 
 		Try
@@ -2182,12 +1587,11 @@ Public Class clsMSGFRunner
 			strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode)
 			strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode)
 
-			swInputFileTemp = New System.IO.StreamWriter(New System.IO.FileStream(strInputFileTempPath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-			For Each strData As String In lstData
-				swInputFileTemp.WriteLine(strData)
-			Next
-			swInputFileTemp.Close()
+			Using swInputFileTemp As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strInputFileTempPath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				For Each strData As String In lstData
+					swInputFileTemp.WriteLine(strData)
+				Next
+			End Using
 
 			blnSuccess = RunMSGF(lstData.Count - 1, strInputFileTempPath, strResultFileTempPath)
 
@@ -2201,22 +1605,20 @@ Public Class clsMSGFRunner
 			If Not System.IO.File.Exists(strMSGFResultsFilePathFinal) Then
 				System.IO.File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal)
 			Else
-				Dim srTempResults As System.IO.StreamReader
-				Dim swFinalResults As System.IO.StreamWriter
+				Using srTempResults As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strResultFileTempPath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+					Using swFinalResults As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFResultsFilePathFinal, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
 
-				srTempResults = New System.IO.StreamReader(New System.IO.FileStream(strResultFileTempPath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-				swFinalResults = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFResultsFilePathFinal, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+						' Read and skip the first line of srTempResults (it's a header)
+						srTempResults.ReadLine()
 
-				' Read and skip the first line of srTempResults (it's a header)
-				srTempResults.ReadLine()
+						' Append the remaining lines to swFinalResults
+						While srTempResults.Peek > -1
+							swFinalResults.WriteLine(srTempResults.ReadLine)
+						End While
 
-				' Append the remaining lines to swFinalResults
-				While srTempResults.Peek > -1
-					swFinalResults.WriteLine(srTempResults.ReadLine)
-				End While
+					End Using
+				End Using
 
-				srTempResults.Close()
-				swFinalResults.Close()
 			End If
 
 			System.Threading.Thread.Sleep(500)
@@ -2471,42 +1873,37 @@ Public Class clsMSGFRunner
 
 		Try
 
-			Dim srInFile As System.IO.StreamReader
-			Dim swOutFile As System.IO.StreamWriter = Nothing
-
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 			Dim blnHeaderWritten As Boolean
 
 			' Create the output file
-			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-			' Step through the input files and append the results
-			blnHeaderWritten = False
-			For Each strResultFile As String In lstResultFiles
-				srInFile = New System.IO.StreamReader(New System.IO.FileStream(strResultFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				' Step through the input files and append the results
+				blnHeaderWritten = False
+				For Each strResultFile As String In lstResultFiles
+					Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strResultFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+						intLinesRead = 0
+						Do While srInFile.Peek >= 0
+							strLineIn = srInFile.ReadLine()
+							intLinesRead += 1
 
-				intLinesRead = 0
-				Do While srInFile.Peek >= 0
-					strLineIn = srInFile.ReadLine()
-					intLinesRead += 1
+							If Not blnHeaderWritten Then
+								blnHeaderWritten = True
+								swOutFile.WriteLine(strLineIn)
+							Else
+								If intLinesRead > 1 Then
+									swOutFile.WriteLine(strLineIn)
+								End If
+							End If
 
-					If Not blnHeaderWritten Then
-						blnHeaderWritten = True
-						swOutFile.WriteLine(strLineIn)
-					Else
-						If intLinesRead > 1 Then
-							swOutFile.WriteLine(strLineIn)
-						End If
-					End If
+						Loop
+					End Using
 
-				Loop
+				Next
 
-				srInFile.Close()
-			Next
-
-			' Close output file
-			swOutFile.Close()
+			End Using
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception combining MSGF result files", ex)
@@ -2599,62 +1996,63 @@ Public Class clsMSGFRunner
 			lstSegmentFileInfo.Clear()
 			If intMSGFEntriesPerSegment < 100 Then intMSGFEntriesPerSegment = 100
 
-			Dim srInFile As System.IO.StreamReader
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			Dim swOutFile As System.IO.StreamWriter = Nothing
+				Dim swOutFile As System.IO.StreamWriter = Nothing
 
-			udtThisSegment.FilePath = String.Empty
-			udtThisSegment.Entries = 0
-			udtThisSegment.Segment = 0
+				udtThisSegment.FilePath = String.Empty
+				udtThisSegment.Entries = 0
+				udtThisSegment.Segment = 0
 
-			Do While srInFile.Peek >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+				Do While srInFile.Peek >= 0
+					strLineIn = srInFile.ReadLine()
+					intLinesRead += 1
 
-				If intLinesRead = 1 Then
-					' This is the header line; cache it so that we can write it out to the top of each input file
-					strHeaderLine = String.Copy(strLineIn)
-				End If
-
-				If udtThisSegment.Segment = 0 OrElse udtThisSegment.Entries >= intMSGFEntriesPerSegment Then
-					' Need to create a new segment
-					' However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
-
-					Dim intLineCountRemaining As Integer
-					intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments
-
-					If udtThisSegment.Segment = 0 OrElse intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
-
-						If udtThisSegment.Segment > 0 Then
-							' Close the current segment
-							swOutFile.Close()
-							lstSegmentFileInfo.Add(udtThisSegment)
-						End If
-
-						' Initialize a new segment
-						udtThisSegment.Segment += 1
-						udtThisSegment.Entries = 0
-						udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment)
-
-						swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(udtThisSegment.FilePath, System.IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-						' Write the header line to the new segment
-						swOutFile.WriteLine(strHeaderLine)
+					If intLinesRead = 1 Then
+						' This is the header line; cache it so that we can write it out to the top of each input file
+						strHeaderLine = String.Copy(strLineIn)
 					End If
-				End If
 
-				If intLinesRead > 1 Then
-					swOutFile.WriteLine(strLineIn)
-					udtThisSegment.Entries += 1
-					intLineCountAllSegments += 1
-				End If
-			Loop
+					If udtThisSegment.Segment = 0 OrElse udtThisSegment.Entries >= intMSGFEntriesPerSegment Then
+						' Need to create a new segment
+						' However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
 
-			' Close the input and output files
-			srInFile.Close()
-			swOutFile.Close()
-			lstSegmentFileInfo.Add(udtThisSegment)
+						Dim intLineCountRemaining As Integer
+						intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments
+
+						If udtThisSegment.Segment = 0 OrElse intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
+
+							If udtThisSegment.Segment > 0 Then
+								' Close the current segment
+								swOutFile.Close()
+								lstSegmentFileInfo.Add(udtThisSegment)
+							End If
+
+							' Initialize a new segment
+							udtThisSegment.Segment += 1
+							udtThisSegment.Entries = 0
+							udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment)
+
+							swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(udtThisSegment.FilePath, System.IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+							' Write the header line to the new segment
+							swOutFile.WriteLine(strHeaderLine)
+						End If
+					End If
+
+					If intLinesRead > 1 Then
+						swOutFile.WriteLine(strLineIn)
+						udtThisSegment.Entries += 1
+						intLineCountAllSegments += 1
+					End If
+				Loop
+
+				' Close the the output files
+				swOutFile.Close()
+				lstSegmentFileInfo.Add(udtThisSegment)
+
+			End Using
+
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception splitting MSGF input file", ex)
@@ -2735,7 +2133,7 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function SummarizeMSGFResults(ByVal eResultType As ePeptideHitResultType) As Boolean
+	Protected Function SummarizeMSGFResults(ByVal eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
 		Dim objSummarizer As clsMSGFResultsSummarizer
 		Dim strConnectionString As String
@@ -2748,7 +2146,7 @@ Public Class clsMSGFRunner
 		Try
 
 			strConnectionString = m_mgrParams.GetParam("connectionstring")
-			If Int32.TryParse(m_JobNum, intJobNumber) Then
+			If Integer.TryParse(m_JobNum, intJobNumber) Then
 				blnPostResultsToDB = True
 			Else
 				blnPostResultsToDB = False
@@ -2789,7 +2187,6 @@ Public Class clsMSGFRunner
 
 		Static intErrorCount As Integer = 0
 
-		Dim srMSGFResultsFile As System.IO.StreamReader
 		Dim intLineCount As Integer
 		Dim dblFraction As Double
 
@@ -2799,16 +2196,15 @@ Public Class clsMSGFRunner
 			If Not System.IO.File.Exists(strMSGFResultsFilePath) Then Exit Sub
 
 			' Read the data from the results file
-			srMSGFResultsFile = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			Using srMSGFResultsFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+				intLineCount = 0
 
-			intLineCount = 0
+				Do While srMSGFResultsFile.Peek > -1
+					srMSGFResultsFile.ReadLine()
+					intLineCount += 1
+				Loop
 
-			Do While srMSGFResultsFile.Peek >= 0
-				srMSGFResultsFile.ReadLine()
-				intLineCount += 1
-			Loop
-
-			srMSGFResultsFile.Close()
+			End Using
 
 			' Update the overall progress
 			dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / mMSGFInputFileLineCount

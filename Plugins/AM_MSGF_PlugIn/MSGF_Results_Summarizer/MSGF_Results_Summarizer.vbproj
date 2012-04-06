@@ -54,6 +54,9 @@
     <Reference Include="AnalysisManagerProg">
       <HintPath>..\..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
     </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Xml" />
