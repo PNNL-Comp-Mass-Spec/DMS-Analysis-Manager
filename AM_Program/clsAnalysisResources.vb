@@ -1826,22 +1826,21 @@ Namespace AnalysisManagerBase
 		''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
 		''' <returns>Path to the most appropriate dataset folder</returns>
 		''' <remarks></remarks>
-		Private Function FindValidFolder(ByVal DSName As String, _
-		   ByVal FileNameToFind As String) As String
+		Protected Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String) As String
 
 			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
 
 		End Function
 
-		Private Function FindValidFolder(ByVal DSName As String, _
-		   ByVal FileNameToFind As String, _
-		   ByVal FolderNameToFind As String) As String
+		Protected Function FindValidFolder(ByVal DSName As String, _
+		  ByVal FileNameToFind As String, _
+		  ByVal FolderNameToFind As String) As String
 
 			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
 
 		End Function
 
-		Private Function FindValidFolder(ByVal DSName As String, _
+		Protected Function FindValidFolder(ByVal DSName As String, _
 		  ByVal FileNameToFind As String, _
 		  ByVal FolderNameToFind As String, _
 		  ByVal MaxRetryCount As Integer) As String
@@ -2972,9 +2971,9 @@ Namespace AnalysisManagerBase
 			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
 			Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID, ParameterFileName " & _
-		   "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
-		   "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
-		   "Order by Dataset, Tool"
+			  "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
+			  "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
+			  "Order by Dataset, Tool"
 
 			Dim Dt As DataTable = Nothing
 
