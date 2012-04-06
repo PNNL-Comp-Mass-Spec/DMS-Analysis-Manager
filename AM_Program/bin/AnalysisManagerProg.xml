@@ -564,14 +564,27 @@ AnalysisManagerProg
  Test for folder existence with a retry loop in case of temporary glitch
  </summary>
 	<param name="FolderName">Folder name to look for</param>
-	<returns></returns>
-	<remarks></remarks>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32)">
+	<summary>
+ Test for folder existence with a retry loop in case of temporary glitch
+ </summary>
+	<param name="FolderName">Folder name to look for</param>
+	<param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32,System.Int32)">
 	<summary>
  Test for folder existence with a retry loop in case of temporary glitch
  </summary>
 	<param name="FolderName">Folder name to look for</param>
 	<param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+	<param name="MaxRetryCount">Maximum number of attempts</param>
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FolderExistsWithRetry(System.String,System.Int32,System.Int32,System.Boolean)">
+	<summary>
+ Test for folder existence with a retry loop in case of temporary glitch
+ </summary>
+	<param name="FolderName">Folder name to look for</param>
+	<param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+	<param name="MaxRetryCount">Maximum number of attempts</param>
+	<param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String)">
@@ -584,7 +597,7 @@ AnalysisManagerProg
 	<param name="FileNameToFind">Optional: Name of a file that must exist in the folder</param>
 	<returns>Path to the most appropriate dataset folder</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String,System.Int32)">
+</member><member name="M:AnalysisManagerBase.clsAnalysisResources.FindValidFolder(System.String,System.String,System.String,System.Int32,System.Boolean)">
 	<summary>
  Determines the most appropriate folder to use to obtain dataset files from
  Optionally, can require that a certain file also be present in the folder for it to be deemed valid
@@ -593,6 +606,8 @@ AnalysisManagerProg
 	<param name="DSName">Name of the dataset</param>
 	<param name="FileNameToFind">Optional: Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
 	<param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder; can contain a wildcard, e.g. SEQ*</param>
+	<param name="MaxRetryCount">Maximum number of attempts</param>
+	<param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 	<returns>Path to the most appropriate dataset folder</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerBase.clsAnalysisResources.RetrieveOrgDB(System.String)">

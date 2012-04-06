@@ -892,7 +892,7 @@ Namespace AnalysisManagerBase
 
 				' Look for the MSXmlFolder
 				' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-				ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount)
+				ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount, False)
 
 				If Not String.IsNullOrEmpty(ServerPath) Then
 
@@ -919,6 +919,10 @@ Namespace AnalysisManagerBase
 				End If
 
 			Next
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MzXML file not found; will need to generate it: " & MzXMLFilename)
+			End If
 
 			Return False
 
@@ -958,7 +962,7 @@ Namespace AnalysisManagerBase
 			' Look for the MASIC Results folder
 			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
 			ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
-			ServerPath = FindValidFolder(DSName, "", "SIC*", MaxRetryCount)
+			ServerPath = FindValidFolder(DSName, "", "SIC*", MaxRetryCount, False)
 
 			If String.IsNullOrEmpty(ServerPath) Then
 				m_message = "Dataset folder path not defined"
@@ -1001,6 +1005,10 @@ Namespace AnalysisManagerBase
 				End If
 			End If
 
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "RetrieveScanAndSICStatsFiles: " & m_message)
+			End If
+
 			Return False
 
 		End Function
@@ -1022,8 +1030,7 @@ Namespace AnalysisManagerBase
 
 			Dim MaxRetryCount As Integer = 1
 
-			' Look for the MASIC Results folder
-			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+			' Copy the MASIC files from the MASIC results folder
 			ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
 
 			If String.IsNullOrEmpty(MASICResultsFolderPath) Then
@@ -1035,7 +1042,7 @@ Namespace AnalysisManagerBase
 				diFolderInfo = New System.IO.DirectoryInfo(MASICResultsFolderPath)
 
 				If Not diFolderInfo.Exists Then
-					m_message = "MASIC Resuls folder not found: " & diFolderInfo.FullName
+					m_message = "MASIC Results folder not found: " & diFolderInfo.FullName
 				Else
 
 					diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, ScanStatsFilename))
@@ -1079,9 +1086,11 @@ Namespace AnalysisManagerBase
 
 			End If
 
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveScanAndSICStatsFiles: " & m_message)
+			End If
 
 			Return False
-
 
 		End Function
 
@@ -1740,17 +1749,8 @@ Namespace AnalysisManagerBase
 		''' Test for folder existence with a retry loop in case of temporary glitch
 		''' </summary>
 		''' <param name="FolderName">Folder name to look for</param>
-		''' <returns></returns>
-		''' <remarks></remarks>
 		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String) As Boolean
-
-			Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT)
-
-		End Function
-
-		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
-		 ByVal RetryHoldoffSeconds As Integer) As Boolean
-			Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT)
+			Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
 		End Function
 
 		''' <summary>
@@ -1758,11 +1758,33 @@ Namespace AnalysisManagerBase
 		''' </summary>
 		''' <param name="FolderName">Folder name to look for</param>
 		''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
+			Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
+		End Function
+
+		''' <summary>
+		''' Test for folder existence with a retry loop in case of temporary glitch
+		''' </summary>
+		''' <param name="FolderName">Folder name to look for</param>
+		''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+		''' <param name="MaxRetryCount">Maximum number of attempts</param>
+		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer, ByVal MaxRetryCount As Integer) As Boolean
+			Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, MaxRetryCount, True)
+		End Function
+
+		''' <summary>
+		''' Test for folder existence with a retry loop in case of temporary glitch
+		''' </summary>
+		''' <param name="FolderName">Folder name to look for</param>
+		''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+		''' <param name="MaxRetryCount">Maximum number of attempts</param>
+		''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 		''' <returns></returns>
 		''' <remarks></remarks>
 		Private Overloads Function FolderExistsWithRetry(ByVal FolderName As String, _
 		 ByVal RetryHoldoffSeconds As Integer, _
-		 ByVal MaxRetryCount As Integer) As Boolean
+		 ByVal MaxRetryCount As Integer, _
+		 ByVal LogFolderNotFound As Boolean) As Boolean
 
 			Dim RetryCount As Integer
 
@@ -1777,8 +1799,12 @@ Namespace AnalysisManagerBase
 				If System.IO.Directory.Exists(FolderName) Then
 					Return True
 				Else
-					Dim ErrMsg As String = "Folder " & FolderName & " not found. Retry count = " & RetryCount.ToString
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, ErrMsg)
+					If LogFolderNotFound Then
+						If m_DebugLevel >= 2 OrElse m_DebugLevel >= 1 AndAlso RetryCount = 0 Then
+							Dim ErrMsg As String = "Folder " & FolderName & " not found. Retry count = " & RetryCount.ToString
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, ErrMsg)
+						End If
+					End If
 					RetryCount -= 1
 					System.Threading.Thread.Sleep(New System.TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
 				End If
@@ -1803,7 +1829,7 @@ Namespace AnalysisManagerBase
 		Private Function FindValidFolder(ByVal DSName As String, _
 		   ByVal FileNameToFind As String) As String
 
-			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT)
+			Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, True)
 
 		End Function
 
@@ -1811,7 +1837,16 @@ Namespace AnalysisManagerBase
 		   ByVal FileNameToFind As String, _
 		   ByVal FolderNameToFind As String) As String
 
-			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT)
+			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, True)
+
+		End Function
+
+		Private Function FindValidFolder(ByVal DSName As String, _
+		  ByVal FileNameToFind As String, _
+		  ByVal FolderNameToFind As String, _
+		  ByVal MaxRetryCount As Integer) As String
+
+			Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, True)
 
 		End Function
 
@@ -1823,12 +1858,15 @@ Namespace AnalysisManagerBase
 		''' <param name="DSName">Name of the dataset</param>
 		''' <param name="FileNameToFind">Optional: Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
 		''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the folder; can contain a wildcard, e.g. SEQ*</param>
+		''' <param name="MaxRetryCount">Maximum number of attempts</param>
+		''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 		''' <returns>Path to the most appropriate dataset folder</returns>
 		''' <remarks></remarks>
 		Protected Function FindValidFolder(ByVal DSName As String, _
 		   ByVal FileNameToFind As String, _
 		   ByVal FolderNameToFind As String, _
-		   ByVal MaxRetryCount As Integer) As String
+		   ByVal MaxRetryCount As Integer, _
+		   ByVal LogFolderNotFound As Boolean) As String
 
 			Dim strBestPath As String = String.Empty
 			Dim PathsToCheck() As String
@@ -1860,7 +1898,7 @@ Namespace AnalysisManagerBase
 
 						' First check whether this folder exists
 						' Using a 3 second holdoff between retries
-						If FolderExistsWithRetry(PathsToCheck(intIndex), 3, MaxRetryCount) Then
+						If FolderExistsWithRetry(PathsToCheck(intIndex), 3, MaxRetryCount, LogFolderNotFound) Then
 							If m_DebugLevel > 3 Then
 								Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Folder found " & PathsToCheck(intIndex)
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
@@ -1922,7 +1960,7 @@ Namespace AnalysisManagerBase
 
 									' Look for folder FolderNameToFind in this folder
 									' Note: Using a 1 second holdoff between retries
-									If Not FolderExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FolderNameToFind), 1, MaxRetryCount) Then
+									If Not FolderExistsWithRetry(System.IO.Path.Combine(PathsToCheck(intIndex), FolderNameToFind), 1, MaxRetryCount, LogFolderNotFound) Then
 										blnValidFolder = False
 									End If
 								End If
@@ -1958,8 +1996,12 @@ Namespace AnalysisManagerBase
 					If FileNameToFind.Length > 0 Then
 						m_message &= " containing file " & FileNameToFind
 					End If
-					Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("StepParameters", "Job") & ", Dataset " & DSName
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+					If LogFolderNotFound Then
+						If m_DebugLevel >= 1 Then
+							Dim Msg As String = m_message & ", Job " & m_jobParams.GetParam("StepParameters", "Job") & ", Dataset " & DSName
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+						End If
+					End If
 				End If
 
 			Catch ex As Exception
@@ -2779,7 +2821,7 @@ Namespace AnalysisManagerBase
 
 					clsGlobal.m_DatasetInfoList.Add(DbCStr(CurRow(DatasetInformation.Columns("Dataset"))) & ":" & DbCStr(CurRow(DatasetInformation.Columns("DatasetID"))))
 
-                    FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName"))) & DbCStr(CurRow(DatasetInformation.Columns("ParameterFileName")))
+					FilterValue = DbCStr(CurRow(DatasetInformation.Columns("SettingsFileName"))) & DbCStr(CurRow(DatasetInformation.Columns("ParameterFileName")))
 					Tool = DbCStr(CurRow(DatasetInformation.Columns("Tool")))
 
 					For Each FileNameExt As String In FilesToRetrieveExt
@@ -2929,10 +2971,10 @@ Namespace AnalysisManagerBase
 
 			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-            Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID, ParameterFileName " & _
-     "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
-     "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
-     "Order by Dataset, Tool"
+			Dim SqlStr As String = "SELECT Dataset, Tool, ArchiveStoragePath, ServerStoragePath, DatasetFolder, ResultsFolder, SharedResultsFolder, SettingsFileName, DatasetID, ParameterFileName " & _
+		   "FROM V_DMS_Data_Package_Aggregation_Jobs " & _
+		   "WHERE Data_Package_ID = " & m_jobParams.GetParam("DataPackageID") & _
+		   "Order by Dataset, Tool"
 
 			Dim Dt As DataTable = Nothing
 
