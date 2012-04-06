@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+April 6, 2012
+	- Updated MSGF Plugin to use PHRPReader.dll
+
 April 2, 2012
 	- Updated the MSGFDB plugin to dynamically load clsMSFileInfoScanner from within MSFileInfoScannerInterfaces.dll, which is stored at C:\DMS_Programs\MSFileInfoScanner
 
