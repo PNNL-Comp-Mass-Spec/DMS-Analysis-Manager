@@ -16,7 +16,7 @@ namespace TestAScorePlugIn {
         /// </summary>
         public void Test_RunAScore()
         {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -39,7 +39,7 @@ namespace TestAScorePlugIn {
                 { "AScoreSearchType", "sequest" }
             };
 
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "AScoreprogloc", @"C:\ToolsApplications\AScore\AScore_Console.exe" },
                 { "workdir", @"C:\DMS_WorkDir" },

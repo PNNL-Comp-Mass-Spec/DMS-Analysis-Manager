@@ -162,19 +162,23 @@ namespace TestMultiAlignPlugIn {
         }
 
         public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string MostRecentJobInfo, bool ForceLogToBrokerDB) {
-            throw new NotImplementedException();
+			// This would update a status file; instead, do nothing
+			return;
         }
 
         public void UpdateAndWrite(IStatusFile.EnumTaskStatus Status, float PercentComplete, int SpectrumCount) {
-            throw new NotImplementedException();
+			// This would update a status file; instead, do nothing
+			return;
         }
 
         public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete) {
-            //throw new NotImplementedException();
+            // This would update a status file; instead, do nothing
+			return;
         }
 
         public void UpdateAndWrite(float PercentComplete) {
-            throw new NotImplementedException();
+			// This would update a status file; instead, do nothing
+			return;
         }
 
         public void UpdateClose(string ManagerIdleMessage, ref string[] RecentErrorMessages, string MostRecentJobInfo, bool ForceLogToBrokerDB) {

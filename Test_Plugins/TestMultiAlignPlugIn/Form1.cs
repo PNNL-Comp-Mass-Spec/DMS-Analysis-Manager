@@ -17,13 +17,23 @@ namespace TestMultiAlignPlugIn {
 
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerMultiAlign ttr = new TestToolRunnerMultiAlign();
-            ttr.TestRunAScore();
+
+			AnalysisManagerBase.IJobParams.CloseOutType eResult;
+			eResult = ttr.TestRunMultiAlign();
+
+			System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
         }
 
         private void Test_GetMultiAlignResults_Click(object sender, EventArgs e)
         {
             TestAMMultiAlign tpp = new TestAMMultiAlign();
-            tpp.Test_RunMultiAlign();
+			string sErrorMessage;
+            sErrorMessage = tpp.Test_RunMultiAlign();
+
+			if (string.IsNullOrEmpty(sErrorMessage))
+				System.Windows.Forms.MessageBox.Show("Test complete");
+			else
+				System.Windows.Forms.MessageBox.Show("Test failed: " + sErrorMessage);
         }
 
 

@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+April 11, 2012
+	- Split out much of the code from AnalysisManagerProg.exe and placed in AM_Shared.dll
+	- Updated all of the plugins to use AM_Shared.dll instead of AnalysisManagerProg.exe
+
 April 6, 2012
 	- Updated MSGF Plugin to use PHRPReader.dll
 

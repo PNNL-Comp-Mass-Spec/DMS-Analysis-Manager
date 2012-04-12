@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\log4net.dll</HintPath>
@@ -120,10 +123,6 @@
     <Content Include="lib\System.Data.SQLite.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AM_Program\AnalysisManagerProg.vbproj">
-      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
-      <Name>AnalysisManagerProg</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Plugins\AM_MultiAlign_Aggregator_PlugIn\AnalysisManagerMultiAlign_Aggregator_PlugIn.csproj">
       <Project>{8101C095-C93A-4B5D-BACE-9761D50D1B73}</Project>
       <Name>AnalysisManagerMultiAlign_Aggregator_PlugIn</Name>

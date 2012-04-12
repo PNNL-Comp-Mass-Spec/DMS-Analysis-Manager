@@ -10,45 +10,57 @@ namespace TestMultiAlignPlugIn {
 
     class TestToolRunnerMultiAlign {
 
-        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "workdir", @"C:\DMS_WorkDir" },
+				{ "logfilename", "AM_AnalysisManager_Log" },
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
-                { "MgrName", "Test_harness" }
+                { "MgrName", "Test_harness" },
+				{ "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
+				{ "MgrCnfgDbConnectStr", "Data Source=ProteinSeqs;Initial Catalog=Manager_Control;Integrated Security=SSPI;" },
+				{ "MultiAlignProgLoc", @"C:\DMS_Programs\MultiAlign\" },
+				{ "StepTool_ParamFileStoragePath_MultiAlign", @"\\gigasax\DMS_Parameter_Files\MultiAlign\"}
             };
-
-        private Dictionary<string, string> mRunWorkflowJobParms = new Dictionary<string, string>() {
-                //{ "DatasetNum", "Aggregation" },
-                { "Job", "678425" },
-                { "AScoreOperations",	"GetImprovResults" },
-                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\159_MAC_Test_Data_Package_For_Improv" },
-                { "DataPackageSourceFolderName", "ImportFiles" },
+	
+		private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+		        { "Job", "520598" },
+                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\157_Johns_Test_Package_for_MultiAlign" },
                 { "ResultsBaseName", "Results" },
-                { "OutputFolderName", "IPV201110280919_Auto678425" },
-                { "StepInputFolderName", "step_1_APE" },
+                { "OutputFolderName", "MAA201005260748_Auto520598" },
+                { "StepInputFolderName", "" },
                 { "Step", "1" },
-                { "StepTool", "APE" },
-                { "StepOutputFolderName", "Step_1_APE" },
-                { "ImprovMTSServer", "Albert" },
-                { "ImprovMTSDatabase", "MT_SeaSediments_ERB_P744" },
-                { "ImprovMinPMTQuality", "1.0" },
-                { "DataPackageID", "159" }
-            };
+                { "StepTool", "MultiAlign" },
+                { "StepOutputFolderName", "Step_1_MULTIALIGN" },
+                { "DatasetNum", "Aggregation" },
+                { "DataPackageID", "157" },
+                { "AMTDB", "MT_Human_Sarcopenia_P724" },
+                { "AMTDBServer", "Elmer" },
+                { "AlignmentDataset", "" },
+                { "MultiAlignParamFilename", "cluster_16ppm0.014net0.3dt_matchamts_25ppm0.035net3msecdt-ims-stac.xml" },
+                { "MultiAlignSearchType", "_LCMSFeatures.txt" }
+		};
 
-        public void TestRunAScore() {
+		public IJobParams.CloseOutType TestRunMultiAlign()
+		{
             clsAnalysisResourcesMultiAlignAggregator multialignResourcer = new clsAnalysisResourcesMultiAlignAggregator();
             clsAnalysisToolRunnerMultiAlignAggregator multialignToolRunner = new clsAnalysisToolRunnerMultiAlignAggregator();
+			clsSummaryFile summaryFile = new clsSummaryFile();
 
-            MgrParamsStub mgrParams = new MgrParamsStub(mMgrParms);
-            JobParamsStub jobParams = new JobParamsStub(mRunWorkflowJobParms);
-            StatusFileStub statusFile = new StatusFileStub();
+            IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
+			IJobParams jobParams = new JobParamsStub(mJobParms);
+			StatusFileStub statusFile = new StatusFileStub();
+			IJobParams.CloseOutType eResult;
 
-            multialignResourcer.Setup(mgrParams, jobParams);
-            multialignResourcer.GetResources();
+            multialignResourcer.Setup(ref mgrParams, ref jobParams);
+            eResult = multialignResourcer.GetResources();
 
-            multialignToolRunner.Setup(mgrParams, jobParams, statusFile);
-            multialignToolRunner.RunTool();
+			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				return eResult;
 
+            multialignToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);
+            eResult = multialignToolRunner.RunTool();
+
+			return eResult;
         }
 
 

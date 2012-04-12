@@ -19,8 +19,8 @@ namespace TestMagePlugIn {
         /// <summary>
         /// 
         /// </summary>
-        public void Test_ImportDataPackageFiles() {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+        public bool Test_ImportDataPackageFiles() {
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"DataPackageID", "159"},
                 {"DataPackageSourceFolderName", "ImportFiles"},
                 {"ResultsBaseName", "Results"},
@@ -28,14 +28,15 @@ namespace TestMagePlugIn {
                 {"OutputFolderName", "IPV201110210922_Auto678423"},
                 {"StepInputFolderName", "step_1_APE"},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase){
                 {"workdir", mWorkDir}
             };
             MgrParamsStub m_mgrParams = new MgrParamsStub(mMgrParms);
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "ImportDataPackageFiles");
+			bool bSuccess = TestRunOperation(ops, "ImportDataPackageFiles");
+			return bSuccess;
         }
 
         //--[Spectral Counting]------------------------------ 
@@ -43,29 +44,32 @@ namespace TestMagePlugIn {
         /// <summary>
         /// 
         /// </summary>
-        public void Test_ImportFDRTables() {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+		public bool Test_ImportFDRTables()
+		{
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"MageFDRFiles", "Iteration_Table.txt,T_FDR_1percent.txt,T_FDR_0pt1percent.txt,T_FDR_5percent.txt,T_FDR_10percent.txt"},
                 {"ResultsBaseName", "Results"},
                 {"transferFolderPath", mLocalDataFolder},
                 {"OutputFolderName", "xx"},
                 {"StepInputFolderName", ""},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"workdir", mWorkDir}
             };
             MgrParamsStub m_mgrParams = new MgrParamsStub(mMgrParms);
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "GetFDRTables");
+			bool bSuccess = TestRunOperation(ops, "GetFDRTables");
+			return bSuccess;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public void Test_GetFactors() {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+		public bool Test_GetFactors()
+		{
+            Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"DataPackageID", "158"},
                 {"FactorsSource", "FactorsFromDataPackageID"},
                 {"ResultsBaseName", "Results"},
@@ -73,7 +77,7 @@ namespace TestMagePlugIn {
                 {"OutputFolderName", "xx"},
                 {"StepInputFolderName", ""},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"workdir", mWorkDir},
                 {"ConnectionString", mDMSConnectionString}
            };
@@ -81,14 +85,16 @@ namespace TestMagePlugIn {
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "GetFactors");
+			bool bSuccess = TestRunOperation(ops, "GetFactors");
+			return bSuccess;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public void Test_ExtractFromJobs() {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+		public bool Test_ExtractFromJobs()
+		{
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"DataPackageID", "158"},
                 {"ExtractionSource", "JobsFromDataPackageID"}, 
                 {"ExtractionType", "Sequest First Hits" },
@@ -100,7 +106,7 @@ namespace TestMagePlugIn {
                 {"OutputFolderName", "xx"},
                 {"StepInputFolderName", ""},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"workdir", mWorkDir},
                 {"ConnectionString", mDMSConnectionString}
            };
@@ -108,7 +114,8 @@ namespace TestMagePlugIn {
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "ExtractFromJobs");
+			bool bSuccess = TestRunOperation(ops, "ExtractFromJobs");
+			return bSuccess;
         }
 
         //--[ITRAQ]------------------------------ 
@@ -116,14 +123,15 @@ namespace TestMagePlugIn {
         /// <summary>
         /// 
         /// </summary>
-        public void Test_ImportFirstHits() {
+		public bool Test_ImportFirstHits()
+		{
 
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"DataPackageID", "161"},
                 {"FirstHitsSource", "JobsFromDataPackageIDForTool"}, 
                 {"ResultsBaseName", "Results"},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"workdir", mWorkDir},
                 {"ConnectionString", mDMSConnectionString}
             };
@@ -131,19 +139,21 @@ namespace TestMagePlugIn {
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "ImportFirstHits");
+			bool bSuccess = TestRunOperation(ops, "ImportFirstHits");
+			return bSuccess;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public void Test_ImportReporterIons() {
-            Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
+		public bool Test_ImportReporterIons()
+		{
+			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"DataPackageID", "161"},
                 {"ReporterIonSource", "JobsFromDataPackageIDForTool"}, 
                 {"ResultsBaseName", "Results"},
             };
-            Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 {"workdir", mWorkDir},
                 {"ConnectionString", mDMSConnectionString}
             };
@@ -151,15 +161,17 @@ namespace TestMagePlugIn {
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            TestRunOperation(ops, "ImportReporterIons");
+			bool bSuccess = TestRunOperation(ops, "ImportReporterIons");
+			return bSuccess;
         }
 
-        private void TestRunOperation(MageAMOperations ops, string operationName) {
+        private bool TestRunOperation(MageAMOperations ops, string operationName) {
             String LogFileName = Path.Combine(mWorkDir, "Mage_Log");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 
-            ops.RunMageOperation(operationName);
+            bool bSuccess = ops.RunMageOperation(operationName);
+			return bSuccess;
         }
 
     }

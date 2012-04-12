@@ -10,45 +10,61 @@ namespace TestAScorePlugIn {
 
     class TestToolRunnerAScore {
 
-        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>() {
+		private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "workdir", @"C:\DMS_WorkDir" },
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
-                { "MgrName", "Test_harness" }
+                { "MgrName", "Test_harness" },
+				{ "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
+				{ "MgrCnfgDbConnectStr", "Data Source=ProteinSeqs;Initial Catalog=Manager_Control;Integrated Security=SSPI;" },
+				{ "zipprogram", @"C:\PKWare\Pkzipc\Pkzipc.exe" },
+                { "StepTool_ParamFileStoragePath_AScore", @"\\gigasax\DMS_Parameter_Files\AScore"}
             };
-
-        private Dictionary<string, string> mRunWorkflowJobParms = new Dictionary<string, string>() {
-                //{ "DatasetNum", "Aggregation" },
-                { "Job", "678425" },
+	
+		private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+                { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
-                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\159_MAC_Test_Data_Package_For_Improv" },
+                { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
                 { "DataPackageSourceFolderName", "ImportFiles" },
                 { "ResultsBaseName", "Results" },
-                { "OutputFolderName", "IPV201110280919_Auto678425" },
-                { "StepInputFolderName", "step_1_APE" },
+                { "ExtractionType", "Sequest First Hits"},
+                { "OutputFolderName", "PZX201005260748_Auto520598" },
+                { "StepInputFolderName", "" },
+                { "AScoreCIDParamFile", "itraq_ascore_cid.par" },
+                { "AScoreETDParamFile", "" },
+                { "AScoreHCDParamFile", "" },
                 { "Step", "1" },
-                { "StepTool", "APE" },
-                { "StepOutputFolderName", "Step_1_APE" },
-                { "ImprovMTSServer", "Albert" },
-                { "ImprovMTSDatabase", "MT_SeaSediments_ERB_P744" },
-                { "ImprovMinPMTQuality", "1.0" },
-                { "DataPackageID", "159" }
+                { "StepTool", "ASCORE" },
+                { "StepOutputFolderName", "Step_1_ASCORE" },
+                { "DatasetNum", "Aggregation" },
+                { "TargetJobFileList", "sequest:_syn.txt:copy,sequest:_fht.txt:copy,sequest:_dta.zip:copy,masic_finnigan:_reporterions.txt:copy,masic_finnigan:_ScanStatsEx.txt:copy" },
+                { "DataPackageID", "162" },
+
+                { "AScoreParamFilename", "parameterFileForGmax.xml" },
+                { "AScoreSearchType", "sequest" }
             };
 
-        public void TestRunAScore() {
+		public IJobParams.CloseOutType TestRunAScore()
+		{
             clsAnalysisResourcesAScore ascoreResourcer = new clsAnalysisResourcesAScore();
             clsAnalysisToolRunnerAScore ascoreToolRunner = new clsAnalysisToolRunnerAScore();
+			clsSummaryFile summaryFile = new clsSummaryFile();
 
-            MgrParamsStub mgrParams = new MgrParamsStub(mMgrParms);
-            JobParamsStub jobParams = new JobParamsStub(mRunWorkflowJobParms);
+            IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
+			IJobParams jobParams = new JobParamsStub(mJobParms);
             StatusFileStub statusFile = new StatusFileStub();
+			IJobParams.CloseOutType eResult;
 
-            ascoreResourcer.Setup(mgrParams, jobParams);
-            ascoreResourcer.GetResources();
+            ascoreResourcer.Setup(ref mgrParams, ref jobParams);
+			eResult = ascoreResourcer.GetResources();
 
-            ascoreToolRunner.Setup(mgrParams, jobParams, statusFile);
-            ascoreToolRunner.RunTool();
+			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				return eResult;
 
+            ascoreToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);						
+            eResult = ascoreToolRunner.RunTool();
+
+			return eResult;
         }
 
 
