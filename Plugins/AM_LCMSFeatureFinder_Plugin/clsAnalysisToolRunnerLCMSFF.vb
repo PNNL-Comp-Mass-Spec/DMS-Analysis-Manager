@@ -8,8 +8,6 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
-'Imports PRISM.Files
-'Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerLCMSFF
     Inherits clsAnalysisToolRunnerBase
@@ -46,10 +44,6 @@ Public Class clsAnalysisToolRunnerLCMSFF
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder")
 
         CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerLCMSFF.OperateAnalysisTool(): Enter")
-        End If
 
         ' Determine the path to the LCMSFeatureFinder folder
         Dim progLoc As String

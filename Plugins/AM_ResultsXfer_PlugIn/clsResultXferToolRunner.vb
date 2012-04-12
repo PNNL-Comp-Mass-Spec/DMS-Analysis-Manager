@@ -7,8 +7,8 @@
 ' Last modified 10/31/2008
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
+
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsResultXferToolRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -35,7 +35,7 @@ Public Class clsResultXferToolRunner
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
 	''' <remarks></remarks>
-	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
 		Dim Msg As String = ""
 		Dim Result As IJobParams.CloseOutType
@@ -66,8 +66,8 @@ Public Class clsResultXferToolRunner
         ' Thus, we will log any exceptions that occur, but we won't treat them as a job failure
 
         Try
-            Dim DSFolderPath As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
-            Dim FoundFolders() As String = Directory.GetDirectories(DSFolderPath)
+			Dim DSFolderPath As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
+			Dim FoundFolders() As String = System.IO.Directory.GetDirectories(DSFolderPath)
 
             If FoundFolders.Count = 0 Then
                 ' Dataset folder in transfer folder is empty; delete it
@@ -106,7 +106,7 @@ Public Class clsResultXferToolRunner
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType indicating success or failure></returns>
 	''' <remarks></remarks>
-	Protected Overridable Function PerformResultsXfer() As AnalysisManagerBase.IJobParams.CloseOutType
+	Protected Overridable Function PerformResultsXfer() As IJobParams.CloseOutType
 
 		Dim Msg As String
 		Dim FolderToMove As String
@@ -122,7 +122,7 @@ Public Class clsResultXferToolRunner
         FolderToMove = System.IO.Path.Combine(FolderToMove, m_jobParams.GetParam("InputFolderName"))
         If Not System.IO.Directory.Exists(FolderToMove) Then
             Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
-            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "results folder not found")
+            m_message = clsGlobal.AppendToComment(m_message, "results folder not found")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         ElseIf m_DebugLevel >= 4 Then
@@ -166,20 +166,20 @@ Public Class clsResultXferToolRunner
                     If Not diDatasetFolder.Exists Then
                         ' Creation of the dataset folder failed; unable to continue
                         Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
-                        m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
+                        m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                     End If
                 Else
                     Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
-                    m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
+                    m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
-                m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
+                m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -201,7 +201,7 @@ Public Class clsResultXferToolRunner
                 Msg = String.Empty
             Else
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
-                m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
+                m_message = clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -217,7 +217,7 @@ Public Class clsResultXferToolRunner
 
         Catch ex As Exception
             Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
-            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "exception moving results folder")
+            m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try

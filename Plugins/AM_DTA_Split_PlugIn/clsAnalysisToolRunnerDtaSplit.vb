@@ -7,13 +7,8 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
-Imports AnalysisManagerBase.clsGlobal
-Imports System.io
+Imports AnalysisManagerBase
 Imports System.Text.RegularExpressions
-Imports System.Collections.Generic
 
 Public Class clsAnalysisToolRunnerDtaSplit
     Inherits clsAnalysisToolRunnerBase
@@ -49,23 +44,6 @@ Public Class clsAnalysisToolRunnerDtaSplit
     End Sub
 
     ''' <summary>
-    ''' Initializes class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDtaSplit.Setup()")
-        End If
-    End Sub
-
-    ''' <summary>
     ''' Runs InSpecT tool
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -86,15 +64,15 @@ Public Class clsAnalysisToolRunnerDtaSplit
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-            strCDTAFile = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
+			strCDTAFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             ' Make sure the _DTA.txt file is valid
-            If Not ValidateCDTAFile(strCDTAFile) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-            End If
+			If Not ValidateCDTAFile() Then
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+			End If
 
             Try
-                intSegmentCountToCreate = clsGlobal.GetJobParameter(m_jobParams, "NumberOfClonedSteps", 0)
+				intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
                 If intSegmentCountToCreate = 0 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4")
                     intSegmentCountToCreate = 4
@@ -105,7 +83,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
             End Try
 
             ' Note: blnSplitToEqualScanCounts is no longer used
-            ' blnSplitToEqualScanCounts = clsGlobal.GetJobParameter(m_jobParams, "ClonedStepsHaveEqualNumSpectra", True)
+            ' blnSplitToEqualScanCounts = m_jobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
 
             'Start the job timer
             m_StartTime = System.DateTime.UtcNow
@@ -307,12 +285,10 @@ Public Class clsAnalysisToolRunnerDtaSplit
     ''' <remarks></remarks>
     Private Function CountSpectraInCattedDtaFile(ByVal strSourceFilePath As String) As Integer
 
-        Dim srInFile As System.IO.StreamReader = Nothing
         Dim strLineIn As String
         Dim splitMatch As Match = Nothing
 
         Dim intSpectraCount As Integer
-        Dim fi As System.IO.FileInfo
 
         Try
             intSpectraCount = 0
@@ -321,32 +297,29 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Counting the number of spectra in the source _Dta.txt file: " & System.IO.Path.GetFileName(strSourceFilePath))
             End If
 
-            fi = New System.IO.FileInfo(strSourceFilePath)
-
             ' Open the input file
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-            Do While srInFile.Peek() >= 0
-                strLineIn = srInFile.ReadLine
+				Do While srInFile.Peek() > -1
+					strLineIn = srInFile.ReadLine
 
-                splitMatch = Me.r_FileSeparator.Match(strLineIn)
-                If splitMatch.Success Then
-                    intSpectraCount += 1
-                End If
-            Loop
+					splitMatch = Me.r_FileSeparator.Match(strLineIn)
+					If splitMatch.Success Then
+						intSpectraCount += 1
+					End If
+				Loop
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Spectrum count in source _Dta.txt file: " & intSpectraCount)
-            End If
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Spectrum count in source _Dta.txt file: " & intSpectraCount)
+				End If
 
-            ' Close the input file
-            srInFile.Close()
+			End Using
 
         Catch ex As Exception
-            If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of spectra in '" & strSourceFilePath & "'; " & ex.Message)
-            intSpectraCount = 0
-        End Try
+			If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of spectra in '" & strSourceFilePath & "'; " & ex.Message)
+			intSpectraCount = 0
+		End Try
 
         Return intSpectraCount
 
@@ -385,8 +358,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim strFileName As String
         Dim strFilePath As String
 
-        strFileName = m_Dataset + "_" + CStr(fileNameCounter) + "_dta.txt"
-        m_ExceptionFiles.Add(strFileName)
+		strFileName = m_Dataset + "_" + CStr(fileNameCounter) + "_dta.txt"
+		m_jobParams.AddResultFileToKeep(strFileName)
 
         strFilePath = System.IO.Path.Combine(m_WorkDir, strFileName)
 
@@ -470,49 +443,6 @@ Public Class clsAnalysisToolRunnerDtaSplit
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
-    ''' </summary>
-    ''' <returns>True if success; false if failure</returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFile(ByVal strInputFilePath As String) As Boolean
-        Dim srReader As System.IO.StreamReader
-
-        Dim blnDataFound As Boolean = False
-
-        Try
-            If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found: " & strInputFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-            Do While srReader.Peek >= 0
-                If srReader.ReadLine.Trim.Length > 0 Then
-                    blnDataFound = True
-                    Exit Do
-                End If
-            Loop
-
-            srReader.Close()
-
-            If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnDataFound
 
     End Function
 

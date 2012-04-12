@@ -16,8 +16,8 @@ Public Class clsCreateInspectIndexedDB
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function CreateIndexedDbFiles(ByRef mgrParams As AnalysisManagerBase.IMgrParams, _
-                                         ByRef jobParams As AnalysisManagerBase.IJobParams, _
+    Public Function CreateIndexedDbFiles(ByRef mgrParams As IMgrParams, _
+                                         ByRef jobParams As IJobParams, _
                                          ByVal DebugLevel As Integer, _
                                          ByVal JobNum As String) As IJobParams.CloseOutType
 

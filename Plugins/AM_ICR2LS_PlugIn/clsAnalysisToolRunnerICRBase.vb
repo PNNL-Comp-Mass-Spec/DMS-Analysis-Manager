@@ -2,7 +2,6 @@
 Option Strict On
 
 Imports System.IO
-Imports AnalysisManagerBase.clsGlobal
 
 Public MustInherit Class clsAnalysisToolRunnerICRBase
 	Inherits clsAnalysisToolRunnerBase
@@ -80,7 +79,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Protected mICR2LSStatus As udtICR2LSStatusType
 
-    Protected WithEvents mCmdRunner As AnalysisManagerBase.clsRunDosProgram
+    Protected WithEvents mCmdRunner As clsRunDosProgram
     Protected WithEvents mStatusFileWatcher As System.IO.FileSystemWatcher
 
 
@@ -88,13 +87,6 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ResetStatusLogTimes()
 
         mICR2LSStatus.Initialize()
-    End Sub
-
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-        ''m_ICR2LSObj.DebugLevel = m_DebugLevel
-
     End Sub
 
     Public Overrides Function RunTool() As IJobParams.CloseOutType
@@ -414,7 +406,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             Case ICR2LSProcessingModeConstants.SerFilePEK, ICR2LSProcessingModeConstants.SerFileTIC
                 ' Need to find the location of the apexAcquisition.method file
-                strApexAcqFilePath = AnalysisManagerBase.clsAnalysisResources.FindFileInDirectoryTree(System.IO.Path.GetDirectoryName(DSNamePath), APEX_ACQUISITION_METHOD_FILE)
+                strApexAcqFilePath = clsAnalysisResources.FindFileInDirectoryTree(System.IO.Path.GetDirectoryName(DSNamePath), APEX_ACQUISITION_METHOD_FILE)
 
                 If String.IsNullOrEmpty(strApexAcqFilePath) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not find the " & APEX_ACQUISITION_METHOD_FILE & " file in folder " & DSNamePath)

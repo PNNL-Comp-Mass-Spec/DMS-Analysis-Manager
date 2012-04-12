@@ -31,23 +31,6 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     End Sub
 
     ''' <summary>
-    ''' Initializes class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.Setup()")
-        End If
-    End Sub
-
-    ''' <summary>
     ''' Runs ReadW tool
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>

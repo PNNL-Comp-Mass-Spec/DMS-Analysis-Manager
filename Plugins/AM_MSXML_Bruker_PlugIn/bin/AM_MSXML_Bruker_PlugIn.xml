@@ -6,35 +6,11 @@ AnalysisManagerMsXmlBrukerPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.#ctor(System.String,System.String,System.String,AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.MSXMLOutputTypeConstants,System.Boolean)">
+<member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.#ctor">
 	<summary>
  Constructor
  </summary>
 	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.CreateMSXMLFile">
-	<summary>
- Generate the mzXML or mzML file
- </summary>
-	<returns>True if success; false if a failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.CmdRunner_LoopWaiting">
-	<summary>
- Event handler for CmdRunner.LoopWaiting event
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.#ctor">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object for updating status file as job progresses</param>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker.RunTool">
 	<summary>
  Runs ReadW tool
@@ -68,6 +44,22 @@ AnalysisManagerMsXmlBrukerPlugIn
  Retrieves files necessary for performance of Sequest analysis
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.#ctor(System.String,System.String,System.String,AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.MSXMLOutputTypeConstants,System.Boolean)">
+	<summary>
+ Constructor
+ </summary>
+	<remarks>Presently not used</remarks>
+</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.CreateMSXMLFile">
+	<summary>
+ Generate the mzXML or mzML file
+ </summary>
+	<returns>True if success; false if a failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMsXmlBrukerPlugIn.clsCompassXportRunner.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
 	<remarks></remarks>
 </member>
 </members>

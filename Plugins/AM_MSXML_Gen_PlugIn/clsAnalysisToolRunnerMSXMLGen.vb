@@ -6,9 +6,9 @@
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
+Option Strict On
 
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerMSXMLGen
     Inherits clsAnalysisToolRunnerBase
@@ -33,23 +33,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' <remarks>Presently not used</remarks>
     Public Sub New()
 
-    End Sub
-
-    ''' <summary>
-    ''' Initializes class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.Setup()")
-        End If
     End Sub
 
     ''' <summary>
@@ -146,8 +129,8 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 
 		' Lookup Centroid Settings
-		CentroidMSXML = clsGlobal.CBoolSafe(m_jobParams.GetParam("CentroidMSXML"), False)
-		CentroidPeakCountToRetain = clsGlobal.CIntSafe(m_jobParams.GetParam("CentroidPeakCountToRetain"), clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+		CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
+		CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 
         ' Determine the program path and Instantiate the processing class
         If msXmlGenerator.ToLower.Contains("readw") Then

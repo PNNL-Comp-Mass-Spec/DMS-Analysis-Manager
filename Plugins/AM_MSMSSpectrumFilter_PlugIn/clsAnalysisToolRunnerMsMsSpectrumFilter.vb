@@ -1,7 +1,5 @@
 ﻿Option Strict On
 
-Imports AnalysisManagerBase
-
 ' This class was converted to be loaded as a pluggable DLL into the New DMS 
 ' Analysis Tool Manager program.  The new ATM supports the mini-pipeline. It 
 ' uses class clsMsMsSpectrumFilter to filter the _DTA.txt file present in a given folder
@@ -13,6 +11,8 @@ Imports AnalysisManagerBase
 ' Converted January 23, 2009 by JDS
 ' Updated July 2009 by MEM to process a _Dta.txt file instead of a folder of .Dta files
 ' Updated August 2009 by MEM to generate _ScanStats.txt files, if required
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Inherits clsAnalysisToolRunnerBase
@@ -132,34 +132,31 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         Dim intDTACount As Integer
         Dim strLineIn As String
 
-        Dim srInFile As System.IO.StreamReader
-        Dim reFind As System.Text.RegularExpressions.Regex
+		Dim reFind As System.Text.RegularExpressions.Regex
 
         Try
             reFind = New System.Text.RegularExpressions.Regex(DTA_FILENAME_REGEX, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-            intDTACount = 0
-            Do While srInFile.Peek() >= 0
+				intDTACount = 0
+				Do While srInFile.Peek() >= 0
 
-                strLineIn = srInFile.ReadLine
+					strLineIn = srInFile.ReadLine
 
-                If Not strLineIn Is Nothing Then
-                    If reFind.Match(strLineIn).Success Then
-                        intDTACount += 1
-                    End If
-                End If
-            Loop
+					If Not strLineIn Is Nothing Then
+						If reFind.Match(strLineIn).Success Then
+							intDTACount += 1
+						End If
+					End If
+				Loop
+
+			End Using
 
         Catch ex As Exception
-            LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
-            m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
-        End Try
+			LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
+			m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+		End Try
 
         Return intDTACount
 
@@ -366,11 +363,11 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
                 ' Determine the path to the .Raw file
                 strRawFileName = m_Dataset & ".raw"
-                strFinniganRawFilePath = AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
+                strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
 
                 If strFinniganRawFilePath Is Nothing OrElse strFinniganRawFilePath.Length = 0 Then
                     ' Unable to resolve the file path
-                    m_ErrMsg = "Could not find " & strRawFileName & " or " & strRawFileName & AnalysisManagerBase.clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to generate the ScanStats files"
+                    m_ErrMsg = "Could not find " & strRawFileName & " or " & strRawFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to generate the ScanStats files"
                     LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
                     Return False
                 End If

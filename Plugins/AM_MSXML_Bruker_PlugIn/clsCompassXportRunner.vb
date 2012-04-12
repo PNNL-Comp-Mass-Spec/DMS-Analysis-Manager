@@ -9,8 +9,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-'Imports PRISM.Files
-'Imports PRISM.Files.clsFileTools
 
 Public Class clsCompassXportRunner
 
@@ -103,7 +101,7 @@ Public Class clsCompassXportRunner
 		strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
 
 		' Define the input file path
-		strSourceFolderPath = System.IO.Path.Combine(mWorkDir, mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_D_EXTENSION)
+		strSourceFolderPath = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
 		strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.baf")
 
 		If Not System.IO.File.Exists(strInputFilePath) Then
@@ -111,7 +109,7 @@ Public Class clsCompassXportRunner
 			strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.yep")
 
 			If Not System.IO.File.Exists(strInputFilePath) Then
-				mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_D_EXTENSION
+				mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & clsAnalysisResources.DOT_D_EXTENSION
 				Return False
 			End If
 		End If

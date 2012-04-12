@@ -1,7 +1,7 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
+Option Strict On
+
 Imports AnalysisManagerBase
-Imports System.IO
-Imports System
 
 Public Class clsAnalysisResourcesDtaSplit
     Inherits clsAnalysisResources
@@ -13,20 +13,17 @@ Public Class clsAnalysisResourcesDtaSplit
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
-
-        'Retrieve unzipped dta files
+		'Retrieve unzipped dta files
         If Not RetrieveDtaFiles(False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
 
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

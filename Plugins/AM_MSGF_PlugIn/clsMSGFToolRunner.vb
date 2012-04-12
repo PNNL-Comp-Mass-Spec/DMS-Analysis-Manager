@@ -101,7 +101,7 @@ Public Class clsMSGFRunner
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType representing success or failure</returns>
 	''' <remarks></remarks>
-	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 		Dim Msg As String = String.Empty
@@ -132,7 +132,7 @@ Public Class clsMSGFRunner
 			' Result type is not supported
 
 			Msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+			m_message = clsGlobal.AppendToComment(m_message, Msg)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -174,8 +174,8 @@ Public Class clsMSGFRunner
 		mMSGFVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
 
-		mKeepMSGFInputFiles = clsGlobal.GetJobParameter(m_jobParams, "KeepMSGFInputFile", False)
-		blnDoNotFilterPeptides = clsGlobal.GetJobParameter(m_jobParams, "MSGFIgnoreFilters", False)
+		mKeepMSGFInputFiles = m_JobParams.GetJobParameter("KeepMSGFInputFile", False)
+		blnDoNotFilterPeptides = m_JobParams.GetJobParameter("MSGFIgnoreFilters", False)
 
 		Try
 			blnProcessingError = False
@@ -200,7 +200,7 @@ Public Class clsMSGFRunner
 				blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath)
 				If Not blnSuccess Then
 					Msg = "Error examining param file to determine if ETD mode was enabled)"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				Else
@@ -213,7 +213,7 @@ Public Class clsMSGFRunner
 
 				If Not blnSuccess Then
 					Msg = "Error creating MSGF input file"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
 					blnProcessingError = True
 				Else
 					m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED
@@ -228,7 +228,7 @@ Public Class clsMSGFRunner
 
 					If Not blnSuccess Then
 						Msg = "Error creating .mzXML file"
-						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						m_message = clsGlobal.AppendToComment(m_message, Msg)
 						blnProcessingError = True
 					Else
 						m_progress = PROGRESS_PCT_MZXML_CREATED
@@ -238,7 +238,7 @@ Public Class clsMSGFRunner
 
 
 				If Not blnProcessingError Then
-					blnUseExistingMSGFResults = clsGlobal.GetJobParameter(m_jobParams, "UseExistingMSGFResults", False)
+					blnUseExistingMSGFResults = m_JobParams.GetJobParameter("UseExistingMSGFResults", False)
 
 					If blnUseExistingMSGFResults Then
 						' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
@@ -265,13 +265,13 @@ Public Class clsMSGFRunner
 
 					If Not blnSuccess Then
 						Msg = "Error running MSGF"
-						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						m_message = clsGlobal.AppendToComment(m_message, Msg)
 						blnProcessingError = True
 					Else
 						' MSGF successfully completed
 						If Not mKeepMSGFInputFiles Then
 							' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
-							clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(mMSGFInputFilePath))
+							m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(mMSGFInputFilePath))
 						End If
 
 						m_progress = PROGRESS_PCT_MSGF_COMPLETE
@@ -291,7 +291,7 @@ Public Class clsMSGFRunner
 
 					If Not blnSuccess Then
 						Msg = "MSGF results file post-processing error"
-						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						m_message = clsGlobal.AppendToComment(m_message, Msg)
 						blnPostProcessingError = True
 					End If
 
@@ -359,7 +359,7 @@ Public Class clsMSGFRunner
 			Msg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception running MSGF")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
@@ -505,7 +505,7 @@ Public Class clsMSGFRunner
 			Msg = "Error reading the MSGFDB param file: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
 
 			Return False
 		End Try
@@ -615,7 +615,7 @@ Public Class clsMSGFRunner
 			Msg = "Error reading the Sequest param file: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
 			Return False
 		End Try
 
@@ -692,7 +692,7 @@ Public Class clsMSGFRunner
 			Msg = "Error reading the X!Tandem param file: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file")
 
 			Return False
 		End Try
@@ -743,7 +743,7 @@ Public Class clsMSGFRunner
 			Case Else
 				' Should never get here; invalid result type specified
 				Msg = "Invalid PeptideHit ResultType specified: " & eResultType
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
 
 				blnSuccess = False
@@ -843,7 +843,7 @@ Public Class clsMSGFRunner
 
 		' mzXML filename is dataset plus .mzXML
 		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION)
+		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
 		If System.IO.File.Exists(strMzXmlFilePath) Then
 			' File already exists; nothing to do
@@ -890,12 +890,12 @@ Public Class clsMSGFRunner
 
 				dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
 
-				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION))
+				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
 				If ioFileInfo.Exists Then
 					dblFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
 				End If
 
-				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & AnalysisManagerBase.clsAnalysisResources.DOT_MZXML_EXTENSION))
+				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION))
 				If ioFileInfo.Exists Then
 					dblXMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
 				End If
@@ -1108,7 +1108,7 @@ Public Class clsMSGFRunner
 			Msg = "Error post-processing the MSGF Results file: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
 
 			Return False
 		End Try
@@ -1135,7 +1135,7 @@ Public Class clsMSGFRunner
 			Msg = "Error replacing the original MSGF Results file with the post-processed one: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
 
 			Return False
 		End Try
@@ -1648,7 +1648,7 @@ Public Class clsMSGFRunner
 		Dim blnUseSegments As Boolean = False
 		Dim strSegmentUsageMessage As String = String.Empty
 
-		intMSGFEntriesPerSegment = clsGlobal.GetJobParameter(m_jobParams, "MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
+		intMSGFEntriesPerSegment = m_JobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFInputFileLineCount = " & intMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " & intMSGFEntriesPerSegment)
 		End If
@@ -1767,7 +1767,7 @@ Public Class clsMSGFRunner
 		' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
 		' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
 		' (job 611216 succeeded with a value of 5000)
-		intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFJavaMemorySize", 2000)
+		intJavaMemorySize = m_JobParams.GetJobParameter("MSGFJavaMemorySize", 2000)
 		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 		If m_DebugLevel >= 1 Then

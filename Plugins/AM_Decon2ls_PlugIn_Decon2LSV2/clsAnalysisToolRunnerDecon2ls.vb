@@ -134,9 +134,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 			End Select
 
-			clsGlobal.m_ExceptionFiles.Add(ScansFilePath)
-			clsGlobal.m_ExceptionFiles.Add(IsosFilePath)
-			clsGlobal.m_ExceptionFiles.Add(PeaksFilePath)
+			m_jobParams.AddResultFileToKeep(ScansFilePath)
+			m_jobParams.AddResultFileToKeep(IsosFilePath)
+			m_jobParams.AddResultFileToKeep(PeaksFilePath)
 
 
 			' Make sure the Isos File exists

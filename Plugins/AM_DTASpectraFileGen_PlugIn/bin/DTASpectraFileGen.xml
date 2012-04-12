@@ -6,7 +6,59 @@ DTASpectraFileGen
 </name>
 </assembly>
 <members>
-<member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Abort">
+<member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
+	<summary>
+ Runs the analysis tool
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks>This method is used to meet the interface requirement</remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.CreateMSMSSpectra">
+	<summary>
+ Creates DTA files and filters if necessary
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.DispositionResults">
+	<summary>
+ Detailed method for running a tool
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.MakeSpectraFiles">
+	<summary>
+ Creates DTA files
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.ConcatSpectraFiles">
+	<summary>
+ Concatenates DTA files into a single test file
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.DeleteDataFile">
+	<summary>
+ Deletes .raw files from working directory
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks>Overridden for other types of input files</remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfo(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfoDeconMSn(System.String)">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.ZipConcDtaFile">
+	<summary>
+ Zips concatenated DTA file to reduce size
+ </summary>
+	<returns>CloseoutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:DTASpectraFileGen.clsDtaGenMainProcess.Abort">
 	<summary>
  Aborts processing
  </summary>
@@ -60,58 +112,6 @@ DTASpectraFileGen
 	<summary>
  Event handler for LoopWaiting event
  </summary>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
-	<summary>
- Runs the analysis tool
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks>This method is used to meet the interface requirement</remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.CreateMSMSSpectra">
-	<summary>
- Creates DTA files and filters if necessary
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.DispositionResults">
-	<summary>
- Detailed method for running a tool
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.MakeSpectraFiles">
-	<summary>
- Creates DTA files
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.ConcatSpectraFiles">
-	<summary>
- Concatenates DTA files into a single test file
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.DeleteDataFile">
-	<summary>
- Deletes .raw files from working directory
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
-	<remarks>Overridden for other types of input files</remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfo(System.String)">
-	<summary>
- Stores the tool version info in the database
- </summary>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.StoreToolVersionInfoDeconMSn(System.String)">
-	<summary>
- Stores the tool version info in the database
- </summary>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.ZipConcDtaFile">
-	<summary>
- Zips concatenated DTA file to reduce size
- </summary>
-	<returns>CloseoutType enum indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>

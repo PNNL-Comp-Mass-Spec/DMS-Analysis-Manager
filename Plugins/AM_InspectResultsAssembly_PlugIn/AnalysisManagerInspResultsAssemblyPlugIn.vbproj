@@ -91,11 +91,8 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg, Version=1.1.2946.24398, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <ExecutableExtension>.exe</ExecutableExtension>
-      <Private>False</Private>
-      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -105,8 +102,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System">

@@ -1,16 +1,11 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.Collections.Generic
-Imports System.IO
 
 Public Class clsAnalysisResourcesPRIDEMzXML
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim SplitString As String()
         Dim FileNameExt As String()
@@ -19,7 +14,7 @@ Public Class clsAnalysisResourcesPRIDEMzXML
         For Each row As String In SplitString
             FileNameExt = row.Split(":"c)
             If FileNameExt(2) = "nocopy" Then
-                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
             End If
         Next
 
@@ -30,7 +25,7 @@ Public Class clsAnalysisResourcesPRIDEMzXML
          m_mgrParams.GetParam("workdir")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        clsGlobal.FilesToDelete.Add(m_jobParams.GetParam("PRIDEMzXMLInputFile"))
+        m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"))
 
         If Not RetrieveAggregateFiles(SplitString) Then
             'Errors were reported in function call, so just return

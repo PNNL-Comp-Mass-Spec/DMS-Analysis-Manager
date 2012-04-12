@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -10,9 +8,9 @@ Option Strict On
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Option Strict On
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerIN
     Inherits clsAnalysisToolRunnerBase
@@ -69,27 +67,11 @@ Public Class clsAnalysisToolRunnerIN
 
     End Sub
 
-    ''' <summary>
-    ''' Initializes class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.Setup()")
-        End If
-    End Sub
-    ''' <summary>
-    ''' Runs InSpecT tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
+	''' <summary>
+	''' Runs InSpecT tool
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failure</returns>
+	''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
 
@@ -246,7 +228,7 @@ Public Class clsAnalysisToolRunnerIN
 			inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 
-            blnUseShuffledDB = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("InspectUsesShuffledDB"), False)
+			blnUseShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
             If blnUseShuffledDB Then
                 ' Using shuffled version of the .trie file
@@ -279,7 +261,7 @@ Public Class clsAnalysisToolRunnerIN
 			'The code below was commented out since we are only supporting dta files.
 			''Dim mzXMLFilename As String
 			''mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML")
-			''If clsGlobal.GetJobParameter(m_jobParams, "UseMzXML", False) Then
+			''If m_jobParams.GetJobParameter("UseMzXML", False) Then
 			'         '    strInputSpectra = String.Copy(mzXMLFilename)
 			''Else
 
@@ -688,50 +670,6 @@ Public Class clsAnalysisToolRunnerIN
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
-
-    End Function
-
-
-    ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
-    ''' </summary>
-    ''' <returns>True if success; false if failure</returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFile(ByVal strInputFilePath As String) As Boolean
-        Dim srReader As System.IO.StreamReader
-
-        Dim blnDataFound As Boolean = False
-
-        Try
-            If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found: " & strInputFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-            Do While srReader.Peek >= 0
-                If srReader.ReadLine.Trim.Length > 0 Then
-                    blnDataFound = True
-                    Exit Do
-                End If
-            Loop
-
-            srReader.Close()
-
-            If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnDataFound
 
     End Function
 

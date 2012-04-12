@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -91,10 +91,11 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg, Version=2.0.3260.22118, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="AnalysisManagerProg">
       <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="MsMsDataFileReader, Version=1.0.2203.32730, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
@@ -104,8 +105,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MsMsSpectrumFilter.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System">

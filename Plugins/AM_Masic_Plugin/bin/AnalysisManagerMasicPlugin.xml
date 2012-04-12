@@ -6,29 +6,16 @@ AnalysisManagerMasicPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICBase.StoreToolVersionInfo">
-	<summary>
- Stores the tool version info in the database
- </summary>
-	<remarks></remarks>
-</member><member name="P:AnalysisManagerMasicPlugin.My.Resources.Resources.ResourceManager">
-	<summary>
-  Returns the cached ResourceManager instance used by this class.
-</summary>
-</member><member name="P:AnalysisManagerMasicPlugin.My.Resources.Resources.Culture">
-	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
-</summary>
-</member><member name="T:AnalysisManagerMasicPlugin.My.Resources.Resources">
-	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
-</summary>
-</member><member name="M:AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC.GetResources">
+<member name="M:AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC.GetResources">
 	<summary>
  Retrieves files necessary for performance of Sequest analysis
  </summary>
 	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICBase.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
 	<remarks></remarks>
 </member>
 </members>

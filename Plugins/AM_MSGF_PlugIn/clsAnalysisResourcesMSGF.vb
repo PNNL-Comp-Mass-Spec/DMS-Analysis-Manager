@@ -28,12 +28,9 @@ Public Class clsAnalysisResourcesMSGF
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim eResult As IJobParams.CloseOutType
-
-		'Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
 
 		' Make sure the machine has enough free memory to run MSGF
 		If Not ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF") Then
@@ -57,7 +54,7 @@ Public Class clsAnalysisResourcesMSGF
 	''' <param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Private Function GetInputFiles(ByVal ResultType As String) As AnalysisManagerBase.IJobParams.CloseOutType
+	Private Function GetInputFiles(ByVal ResultType As String) As IJobParams.CloseOutType
 
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
@@ -131,7 +128,7 @@ Public Class clsAnalysisResourcesMSGF
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
@@ -142,7 +139,7 @@ Public Class clsAnalysisResourcesMSGF
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 
 			Dim ioSynFile As System.IO.FileInfo = New System.IO.FileInfo(FileToGet)
 			If ioSynFile.Exists Then
@@ -157,7 +154,7 @@ Public Class clsAnalysisResourcesMSGF
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _ResultToSeqMap.txt file
@@ -167,7 +164,7 @@ Public Class clsAnalysisResourcesMSGF
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _SeqToProteinMap.txt file
@@ -177,7 +174,7 @@ Public Class clsAnalysisResourcesMSGF
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
 		If Not blnOnlyCopyFHTandSYNfiles Then
@@ -211,7 +208,7 @@ Public Class clsAnalysisResourcesMSGF
 					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 				End If
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
 
@@ -222,7 +219,7 @@ Public Class clsAnalysisResourcesMSGF
 		FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
-				clsGlobal.FilesToDelete.Add(FileToGet)
+				m_jobParams.AddResultFileToSkip(FileToGet)
 			Else
 				If SynFileSizeBytes = 0 Then
 					' If the synopsis file is 0-bytes, then the _ResultToSeqMap.txt file won't exist
@@ -241,7 +238,7 @@ Public Class clsAnalysisResourcesMSGF
 		FileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
-				clsGlobal.FilesToDelete.Add(FileToGet)
+				m_jobParams.AddResultFileToSkip(FileToGet)
 			Else
 				If SynFileSizeBytes = 0 Then
 					' If the synopsis file is 0-bytes, then the _SeqToProteinMap.txt file won't exist
@@ -262,7 +259,7 @@ Public Class clsAnalysisResourcesMSGF
 			blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
 
 			' Make sure we don't move the .mzXML file into the results folder
-			clsGlobal.m_FilesToDeleteExt.Add(".mzXML")
+			m_JobParams.AddResultFileExtensionToSkip(".mzXML")
 
 			If blnSuccess Then
 				' .mzXML file found and copied locally; no need to retrieve the .Raw file
@@ -273,8 +270,8 @@ Public Class clsAnalysisResourcesMSGF
 				' .mzXML file not found
 				' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
 				If RetrieveSpectra(RawDataType, m_WorkingDir) Then
-					clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
-					clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
+					m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
+					m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED

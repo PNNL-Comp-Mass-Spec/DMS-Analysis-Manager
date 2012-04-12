@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMultiAlign_Aggregator_PlugIn", "AnalysisManagerMultiAlign_Aggregator_PlugIn.csproj", "{8101C095-C93A-4B5D-BACE-9761D50D1B73}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg", "..\..\AM_Program\AnalysisManagerProg.vbproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,16 +23,6 @@ Global
 		{8101C095-C93A-4B5D-BACE-9761D50D1B73}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{8101C095-C93A-4B5D-BACE-9761D50D1B73}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{8101C095-C93A-4B5D-BACE-9761D50D1B73}.Release|x86.ActiveCfg = Release|Any CPU
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|x86.ActiveCfg = Debug|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|x86.Build.0 = Debug|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.ActiveCfg = Release|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Mixed Platforms.Build.0 = Release|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|x86.ActiveCfg = Release|x86
-		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

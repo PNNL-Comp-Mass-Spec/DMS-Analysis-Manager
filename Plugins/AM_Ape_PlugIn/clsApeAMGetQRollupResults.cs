@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Data.SqlClient;
 using AnalysisManagerBase;
-using Ape;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -46,7 +45,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupResultsAll()
         {
             bool blnSuccess = true;
-            SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+			Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -82,8 +81,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             string dotnetConnString = "Server=" + apeQRollupMTSServerName + ";database=" + apeQRollupMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
-			SqlServerToSQLite.ProgressChanged += new SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 5, dotnetConnString, GetIDList(), apeDatabase, mHandle);
+			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 5, dotnetConnString, GetIDList(), apeDatabase, mHandle);
             
             return blnSuccess;
         }

@@ -11,10 +11,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
     Friend Const ASCORE_INPUT_FILE As String = "AScoreBatch.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim SplitString As String()
         Dim FileNameExt As String()
@@ -23,7 +20,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         For Each row As String In SplitString
             FileNameExt = row.Split(":"c)
             If FileNameExt(2) = "nocopy" Then
-                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
             End If
         Next
 
@@ -138,17 +135,13 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
     End Function
 
     Protected Function GetDatasetID(ByVal DatasetName As String) As String
-        Dim Dataset_ID As String = ""
-        Dim Dataset_DatasetID As String()
+        Dim DatasetID as Integer = 0
 
-        For Each Item As String In clsGlobal.m_DatasetInfoList
-            Dataset_DatasetID = Item.Split(":"c)
-            If Dataset_DatasetID(0) = DatasetName Then
-                Return Dataset_DatasetID(1)
-            End If
-        Next
-
-        Return Dataset_ID
+		If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
+			Return DatasetID.ToString()
+		Else
+			Return String.Empty
+		End If
 
     End Function
 

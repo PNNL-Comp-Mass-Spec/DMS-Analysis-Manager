@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using AnalysisManagerBase;
-using Ape;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -45,7 +44,7 @@ namespace AnalysisManager_Ape_PlugIn
         protected bool RunWorkflowAll()
         {
             bool blnSuccess = true;
-            SqlConversionHandler mHandle = new SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+			Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -74,8 +73,8 @@ namespace AnalysisManager_Ape_PlugIn
             //New code
             bool apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
 
-			SqlServerToSQLite.ProgressChanged += new SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, mHandle);
+			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+			Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, mHandle);
 
             return blnSuccess;
                     

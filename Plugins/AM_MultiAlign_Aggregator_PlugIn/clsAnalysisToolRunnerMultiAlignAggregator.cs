@@ -1,7 +1,6 @@
-﻿using System.IO;
-using AnalysisManagerBase;
-using System;
+﻿using AnalysisManagerBase;
 using log4net;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
@@ -31,8 +30,19 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign Aggregator");
+
+				// Determine the path to the LCMSFeatureFinder folder
+				string progLoc;
+				progLoc = base.DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
+
+				if (string.IsNullOrWhiteSpace(progLoc))
+				{
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
+				
 				// Store the MultiAlign version info in the database
-                if (!StoreToolVersionInfo())
+				if (!StoreToolVersionInfo(progLoc))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MultiAlign version";
@@ -46,7 +56,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentMultiAlignTask);
 
 				//Change the name of the log file for the local log file to the plugin log filename
-                String LogFileName = Path.Combine(m_WorkDir, "MultiAlign_Log");
+                String LogFileName = System.IO.Path.Combine(m_WorkDir, "MultiAlign_Log");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
 
@@ -54,7 +64,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 				{
                     m_progress = PROGRESS_PCT_MULTIALIGN_START;
 
-					blnSuccess = RunMultiAlign();
+					blnSuccess = RunMultiAlign(progLoc);
 
 					// Change the name of the log file back to the analysis manager log file
                     LogFileName = m_mgrParams.GetParam("logfilename");
@@ -65,7 +75,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MultiAlign: " + m_message);
 					}
 				}
-				catch (Exception ex)
+				catch (System.Exception ex)
 				{
 					// Change the name of the log file back to the analysis manager log file
                     LogFileName = m_mgrParams.GetParam("logfilename");
@@ -113,7 +123,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 					return result;
 				}
 
-			   result = MoveResultFiles();
+				result = MoveResultFiles();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
@@ -128,7 +138,17 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
                 if (diPlotsFolder.Exists)
                 {
                     string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-                    diPlotsFolder.MoveTo(strTargetFolderPath);
+					PRISM.Files.clsFileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
+
+					try
+					{
+						diPlotsFolder.Delete(true);
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine("Warning: Exception deleting " + diPlotsFolder.FullName + ": " + ex.Message);
+					}
+					
                 }
 
                 result = CopyResultsFolderToServer();
@@ -138,7 +158,9 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
                     return result;
                 }
 
-			} catch (Exception ex) {
+			}
+			catch (System.Exception ex)
+			{
                 m_message = "Error in MultiAlignPlugin->RunTool";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
 				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
@@ -152,16 +174,16 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
        /// <summary>
        /// Run the MultiAlign pipeline(s) listed in "MultiAlignOperations" parameter
        /// </summary>
-       protected bool RunMultiAlign()
+	   protected bool RunMultiAlign(string sMultiAlignConsolePath)
        {
             // run the appropriate Mage pipeline(s) according to operations list parameter
-            clsMultiAlignMage dvas = new clsMultiAlignMage(m_jobParams, m_mgrParams);
-            bool bSuccess = dvas.Run();
+		   clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
+		   bool bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
 
 			if (!bSuccess)
 			{
-				if (dvas.Message.Length > 0)
-					m_message = dvas.Message;
+				if (oMultiAlignMage.Message.Length > 0)
+					m_message = oMultiAlignMage.Message;
 				else
 					m_message = "Unknown error running multialign";
 			}
@@ -228,41 +250,66 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
-        {
+		protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+		{
 
-            string strToolVersionInfo = string.Empty;
+			string strToolVersionInfo = string.Empty;
+			System.IO.FileInfo ioMultiAlignInfo;
+			bool blnSuccess;
 
             if (m_DebugLevel >= 2) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
             }
 
+			ioMultiAlignInfo = new System.IO.FileInfo(strMultiAlignProgLoc);
+			if (!ioMultiAlignInfo.Exists)
+			{
+				try
+				{
+					strToolVersionInfo = "Unknown";
+					base.SetStepTaskToolVersion(strToolVersionInfo, new System.Collections.Generic.List<System.IO.FileInfo>());
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+					return false;
+				}
+
+				return false;
+			}
+
+			// Lookup the version of the Feature Finder
+			blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignInfo.FullName);
+			if (!blnSuccess)
+				return false;
+
+			// Lookup the version of MultiAlignEngine (in the MultiAlign folder)
+			string strMultiAlignEngineDllLoc = System.IO.Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
+			blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
+			if (!blnSuccess)
+				return false;
+
+			// Lookup the version of MultiAlignCore (in the MultiAlign folder)
+			string strMultiAlignCoreDllLoc = System.IO.Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
+			blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
+			if (!blnSuccess)
+				return false;
+
+			// Store paths to key DLLs in ioToolFiles
+			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignProgLoc));
+			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignEngineDllLoc));
+			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignCoreDllLoc));
+
 			try
 			{
-                System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("AnalysisManager_MultiAlign_Aggregator_PlugIn").GetName();
-
-				string strNameAndVersion = null;
-				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
 			}
 			catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MultiAlign: " + ex.Message);
-                return false;
-            }
-
-			// Store paths to key DLLs
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+				return false;
+			}
 
         }
 

@@ -5,13 +5,10 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesSMAQC
 	Inherits clsAnalysisResources
 
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strDatasetName As String
 		strDatasetName = m_jobParams.GetParam("DatasetNum")
-
-		'Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
 
 		' Retrieve the parameter file
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
@@ -42,9 +39,9 @@ Public Class clsAnalysisResourcesSMAQC
 		Dim strMASICResultsFolderName As String = String.Empty
 		strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name")
 
-		clsGlobal.m_FilesToDeleteExt.Add(SCAN_STATS_FILE_SUFFIX)
-		clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
-		clsGlobal.m_FilesToDeleteExt.Add("_SICstats.txt")
+		m_JobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
+		m_JobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
+		m_JobParams.AddResultFileExtensionToSkip("_SICstats.txt")
 
 		If String.IsNullOrEmpty(strMASICResultsFolderName) Then
 			If m_DebugLevel >= 2 Then
@@ -95,7 +92,7 @@ Public Class clsAnalysisResourcesSMAQC
 
 		Dim lstFileNamesToGet As New System.Collections.Generic.List(Of String)
 
-		clsGlobal.m_FilesToDeleteExt.Add("_xt.txt")
+		m_JobParams.AddResultFileExtensionToSkip("_xt.txt")
 
 		' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
 		' For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
@@ -130,7 +127,7 @@ Public Class clsAnalysisResourcesSMAQC
 				'Errors were reported in function call, so just return
 				Return False
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 
 		Next
 

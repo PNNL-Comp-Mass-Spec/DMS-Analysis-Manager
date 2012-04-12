@@ -86,14 +86,14 @@ namespace AnalysisManager_AScore_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
             }
 
-            string strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
+            string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
             string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath)) {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
             }
 
-            File.Copy(Path.Combine(strMAParameterFileStoragePath, mParamFilename), Path.Combine(mWorkingDir, mParamFilename));
+            File.Copy(Path.Combine(strMAParameterFileStoragePath, mParamFilename), Path.Combine(mWorkingDir, mParamFilename), true);
 
             //Errors were reported in function call, so just return
             return true;
@@ -362,8 +362,8 @@ namespace AnalysisManager_AScore_PlugIn {
                 clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
 
                 // Delete extracted_results file and DTA file
-                File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
-                //File.Delete(dtaFilePath);
+				if (System.IO.File.Exists(ExtractedResultsFileName))
+					File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
 
                 // optionally delete AScore results file
                 // TODO: do the deletions
@@ -416,7 +416,7 @@ namespace AnalysisManager_AScore_PlugIn {
 
                     unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
 
-                    File.Copy(files[0], zippedDTAResultsFilePath);
+                    File.Copy(files[0], zippedDTAResultsFilePath, true);
 
                     if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false)) {
                     }

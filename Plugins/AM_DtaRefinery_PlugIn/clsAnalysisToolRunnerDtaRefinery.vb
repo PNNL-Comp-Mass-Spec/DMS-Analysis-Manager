@@ -7,9 +7,7 @@ Option Strict On
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerDtaRefinery
     Inherits clsAnalysisToolRunnerBase
@@ -57,7 +55,6 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 			m_message = "Error determining DTA Refinery version"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
-
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -227,53 +224,6 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
     End Function
 
-
-    ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFile() As Boolean
-        Dim strInputFilePath As String
-        Dim srReader As System.IO.StreamReader
-
-        Dim blnDataFound As Boolean = False
-
-        Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-
-            If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found: " & strInputFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-            Do While srReader.Peek >= 0
-                If srReader.ReadLine.Trim.Length > 0 Then
-                    blnDataFound = True
-                    Exit Do
-                End If
-            Loop
-
-            srReader.Close()
-
-            If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnDataFound
-
-    End Function
-
     ''' <summary>
     ''' Parses the _DTARefineryLog.txt file to look for errors
     ''' </summary>
@@ -376,7 +326,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             If Not ioFile.Exists Then
                 Dim Msg As String = "DTARefinery output file not found"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.Name)
-                m_message = AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -386,21 +336,21 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                 If Not MyBase.ZipFile(ioFile.FullName, True) Then
                     Dim Msg As String = "Error zipping DTARefinery output file"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.FullName)
-                    m_message = AppendToComment(m_message, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
                 Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error zipping DTARefinery output file: " & ex.Message
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                m_message = AppendToComment(m_message, "Error zipping DTARefinery output file")
+				m_message = clsGlobal.AppendToComment(m_message, "Error zipping DTARefinery output file")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
 
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error renaming DTARefinery output file: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error renaming DTARefinery output file")
+			m_message = clsGlobal.AppendToComment(m_message, "Error renaming DTARefinery output file")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

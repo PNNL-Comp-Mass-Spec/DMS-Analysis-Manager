@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Mage;
 using MageExtExtractionFilters;
 using MageDisplayLib;
 using AnalysisManagerBase;
-using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn {
 
@@ -68,7 +65,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             // ouput parameters
             mDestination.Type = DestinationType.Types.SQLite_Output;
-            mDestination.ContainerPath = Path.Combine(mWorkingDir, mResultsDBFileName);
+            mDestination.ContainerPath = System.IO.Path.Combine(mWorkingDir, mResultsDBFileName);
             mDestination.Name = "t_results";
         }
 

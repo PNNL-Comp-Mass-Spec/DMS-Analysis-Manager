@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -91,9 +91,11 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg, Version=2.0.3296.19527, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="Decon2LSRemoter, Version=1.0.3350.30516, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
@@ -106,11 +108,6 @@
     <Reference Include="DMSDecon2LS, Version=1.0.2697.16978, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\DMSDecon2LS.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <Name>PRISM</Name>
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>

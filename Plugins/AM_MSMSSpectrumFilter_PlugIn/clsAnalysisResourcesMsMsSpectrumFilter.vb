@@ -1,7 +1,5 @@
 ﻿Option Strict On
 
-Imports AnalysisManagerBase
-
 ' This class was created to support being loaded as a pluggable DLL into the New DMS 
 ' Analysis Tool Manager program.  Each DLL requires a Resource class.  The new ATM 
 ' supports the mini-pipeline. It uses class clsMsMsSpectrumFilter to filter the .DTA 
@@ -10,6 +8,8 @@ Imports AnalysisManagerBase
 ' Written by John Sandoval for the Department of Energy (PNNL, Richland, WA)
 ' Copyright 2009, Battelle Memorial Institute
 ' Started January 20, 2009
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMsMsSpectrumFilter
     Inherits clsAnalysisResources
@@ -20,12 +20,9 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Retrieve the dta files (but do not unconcatenate)
         If Not RetrieveDtaFiles(False) Then
@@ -34,11 +31,11 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         End If
 
         ' Add the _dta.txt file to the list of extensions to delete after the tool finishes
-        clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & "_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(m_jobParams.GetParam("DatasetNum") & "_dta.txt") 'Unzipped, concatenated DTA
 
         ' Add the _Dta.zip file to the list of files to move to the results folder
         ' Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
-        clsGlobal.m_ExceptionFiles.Add("_dta.zip") 'Zipped DTA
+        m_jobParams.AddResultFileToKeep("_dta.zip") 'Zipped DTA
 
 
         ' Look at the job parameterse
@@ -58,13 +55,13 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         Dim strMSCollisionModeMatchType As String
         Dim blnNeedScanStatsFiles As Boolean = False
 
-        strMSLevelFilter = clsGlobal.GetJobParameter(m_jobParams, "MSLevelFilter", "0")
+        strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
 
-        strScanTypeFilter = clsGlobal.GetJobParameter(m_jobParams, "ScanTypeFilter", "")
-        strScanTypeMatchType = clsGlobal.GetJobParameter(m_jobParams, "ScanTypeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+        strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "")
+        strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
-        strMSCollisionModeFilter = clsGlobal.GetJobParameter(m_jobParams, "MSCollisionModeFilter", "")
-        strMSCollisionModeMatchType = clsGlobal.GetJobParameter(m_jobParams, "MSCollisionModeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+        strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "")
+        strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
 
         If Not strMSLevelFilter Is Nothing AndAlso strMSLevelFilter.Length > 0 AndAlso strMSLevelFilter <> "0" Then
@@ -112,17 +109,17 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             End If
 
             ' Add additional extensions to delete after the tool finishes
-            clsGlobal.m_FilesToDeleteExt.Add("_ScanStats.txt")
-            clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
-            clsGlobal.m_FilesToDeleteExt.Add("_StoragePathInfo.txt")
+            m_JobParams.AddResultFileExtensionToSkip("_ScanStats.txt")
+            m_JobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
+            m_JobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
 
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_WIFF_EXTENSION)
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MGF_EXTENSION)
-            clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_CDF_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
         End If
 
         'All finished

@@ -91,15 +91,14 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg">
-      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=1.0.2008.29786, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System">

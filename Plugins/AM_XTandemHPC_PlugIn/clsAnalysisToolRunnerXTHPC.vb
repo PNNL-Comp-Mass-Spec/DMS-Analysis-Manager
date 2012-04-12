@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -8,9 +6,9 @@ Option Strict On
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Option Strict On
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerXTHPC
     Inherits clsAnalysisToolRunnerBase
@@ -83,11 +81,6 @@ Public Class clsAnalysisToolRunnerXTHPC
         If m_HPCAccountName Is Nothing OrElse m_HPCAccountName.Length = 0 Then
             m_HPCAccountName = clsAnalysisResourcesXTHPC.HPC_ACCOUNT_NAME
         End If
-
-        ' '' Make sure the _DTA.txt file is valid
-        ' ''If Not ValidateCDTAFile() Then
-        ' ''    Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-        ' ''End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
 
@@ -550,7 +543,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim i As Integer
 
         Try
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
 
             ' Create an instance of StreamWriter to write to a file.
@@ -594,7 +587,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                 If Not String.IsNullOrEmpty(HPC_JobNum) AndAlso IsNumeric(HPC_JobNum) Then
                     Get_CmdFile = System.IO.Path.Combine(m_WorkDir, "GetResultFilesCmds_Job" & m_JobNum & "_" & i)
                     MakeGetOutputFilesCmdFile(Get_CmdFile, HPC_JobNum, CStr(i))
-                    clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Get_CmdFile))
+                    m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Get_CmdFile))
                     m_HPCJobStatus(i, 0) = HPC_JobNum
                     m_HPCJobStatus(i, 1) = "scheduled"
                 Else
@@ -1183,7 +1176,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateShowQ_Job" & m_JobNum)
 
         Try
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
@@ -1213,7 +1206,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateShowBalance_Job" & m_JobNum)
 
         Try
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
@@ -1243,7 +1236,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "GetBalance_Job" & m_JobNum)
 
         Try
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
@@ -1275,7 +1268,7 @@ Public Class clsAnalysisToolRunnerXTHPC
         Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "GetShowQResults_Job" & m_JobNum)
 
         Try
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
             ' Create an instance of StreamWriter to write to a file.
             Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
@@ -1438,52 +1431,6 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at lease one spectrum in it
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFile() As Boolean
-        Dim strInputFilePath As String
-        Dim srReader As System.IO.StreamReader
-
-        Dim blnDataFound As Boolean = False
-
-        Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-
-            If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found: " & strInputFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-            Do While srReader.Peek >= 0
-                If srReader.ReadLine.Trim.Length > 0 Then
-                    blnDataFound = True
-                    Exit Do
-                End If
-            Loop
-
-            srReader.Close()
-
-            If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnDataFound
-
-    End Function
-
-    ''' <summary>
     ''' Zips concatenated XML output file
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -1500,14 +1447,14 @@ Public Class clsAnalysisToolRunnerXTHPC
                 If Not MyBase.ZipFile(TmpFilePath, True) Then
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = AppendToComment(m_message, "Error zipping output files")
+					m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error zipping output files")
+			m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1972,7 +1919,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                 Dim InputFilename As String = System.IO.Path.Combine(m_WorkDir, "CreateCheckjob_Job" & m_JobNum & "_" & i.ToString)
 
-                clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+                m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
                 ' Create an instance of StreamWriter to write to a file.
                 Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)
@@ -1983,7 +1930,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                 swOut.Close()
 
-                clsGlobal.m_FilesToDeleteExt.Add("CheckjobStatus_" & m_HPCJobStatus(i, 0))
+                m_JobParams.AddResultFileExtensionToSkip("CheckjobStatus_" & m_HPCJobStatus(i, 0))
 
             Next
 
@@ -2014,7 +1961,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
                 InputFilename = System.IO.Path.Combine(m_WorkDir, "GetCheckjob_HPCJob" & m_HPCJobStatus(i, 0))
 
-                clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(InputFilename))
+                m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(InputFilename))
 
                 ' Create an instance of StreamWriter to write to a file.
                 Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(InputFilename)

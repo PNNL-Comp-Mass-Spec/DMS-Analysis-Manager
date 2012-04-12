@@ -8,19 +8,18 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
-Imports System.Text.RegularExpressions
+Option Strict On
+
 Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsGlobal
-'Imports AnalysisManagerMSMSBase
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerSeqBase
 	Inherits clsAnalysisToolRunnerBase
 
 	'*********************************************************************************************************
-	'Base class for Sequest analysis
+	' Base class for Sequest analysis 
+	' Note that MakeOUTFiles() in this class calls a standalone Sequest.Exe program for groups of DTA files
+	' See clsAnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
 	'*********************************************************************************************************
 
 #Region "Member variables"
@@ -37,28 +36,11 @@ Public Class clsAnalysisToolRunnerSeqBase
 	End Sub
 
 	''' <summary>
-	''' Initializes class
-	''' </summary>
-	''' <param name="mgrParams">Object containing manager parameters</param>
-	''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
-	''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.Setup()")
-        End If
-    End Sub
-
-	''' <summary>
 	''' Runs the analysis tool
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	''' <remarks></remarks>
-	Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim Result As IJobParams.CloseOutType
         Dim eReturnCode As IJobParams.CloseOutType
@@ -177,17 +159,15 @@ Public Class clsAnalysisToolRunnerSeqBase
         Dim FileArray() As String
         Dim OutFileCount As Integer
 
-        m_WorkDir = CheckTerminator(m_WorkDir)
-
         If blnUpdateDTACount Then
             'Get DTA count
-            FileArray = Directory.GetFiles(m_WorkDir, "*.dta")
-			m_DtaCount = FileArray.GetLength(0) + m_DtaCountAddon
+			FileArray = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
+			m_DtaCount = FileArray.Length + m_DtaCountAddon
         End If
 
         'Get OUT file count
-        FileArray = Directory.GetFiles(m_WorkDir, "*.out")
-        OutFileCount = FileArray.GetLength(0)
+		FileArray = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
+		OutFileCount = FileArray.Length
 
         'Calculate % complete
         If m_DtaCount > 0 Then
@@ -361,7 +341,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim DumStr As String
 		Dim DtaFiles() As String
 		Dim RunProgs() As PRISM.Processes.clsProgRunner
-		Dim Textfiles() As StreamWriter
+		Dim Textfiles() As System.IO.StreamWriter
 		Dim NumFiles As Integer
 		Dim ProcIndx As Integer
         Dim StillRunning As Boolean
@@ -371,25 +351,22 @@ Public Class clsAnalysisToolRunnerSeqBase
         '		Dim NumProcessors As Integer = CInt(m_mgrParams.GetParam("numberofprocessors"))
         Dim NumProcessors As Integer = 1
 
-		'Ensure output path doesn't have backslash
-		m_WorkDir = CheckTerminator(m_WorkDir, False)
-
 		'Get a list of .dta file names
-		DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta")
+		DtaFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
 		NumFiles = DtaFiles.GetLength(0)
 		If NumFiles = 0 Then
-            m_message = AppendToComment(m_message, "No dta files found for Sequest processing")
+			m_message = clsGlobal.AppendToComment(m_message, "No dta files found for Sequest processing")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Set up a program runner and text file for each processor
 		ReDim RunProgs(NumProcessors - 1)
 		ReDim Textfiles(NumProcessors - 1)
-		CmdStr = "-D" & Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) _
-		  & " -P" & m_jobParams.GetParam("parmFileName") & " -R"
+		CmdStr = "-D" & System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) & " -P" & m_jobParams.GetParam("parmFileName") & " -R"
+
 		For ProcIndx = 0 To NumProcessors - 1
-			DumStr = Path.Combine(m_WorkDir, "FileList" & ProcIndx.ToString & ".txt")
-            clsGlobal.FilesToDelete.Add(DumStr)
+			DumStr = System.IO.Path.Combine(m_WorkDir, "FileList" & ProcIndx.ToString & ".txt")
+            m_jobParams.AddResultFileToSkip(DumStr)
 
 			RunProgs(ProcIndx) = New PRISM.Processes.clsProgRunner
 			RunProgs(ProcIndx).Name = "Seq" & ProcIndx.ToString
@@ -397,7 +374,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 			RunProgs(ProcIndx).Program = m_mgrParams.GetParam("seqprogloc")
 			RunProgs(ProcIndx).Arguments = CmdStr & DumStr
 			RunProgs(ProcIndx).WorkDir = m_WorkDir
-			Textfiles(ProcIndx) = New StreamWriter(DumStr, False)
+			Textfiles(ProcIndx) = New System.IO.StreamWriter(DumStr, False)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_mgrParams.GetParam("seqprogloc") & CmdStr & DumStr)
         Next
 
@@ -492,18 +469,18 @@ Public Class clsAnalysisToolRunnerSeqBase
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation")
         End If
-        DtaFiles = Directory.GetFiles(m_WorkDir, "*.out")
+		DtaFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
         If DtaFiles.GetLength(0) < 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))            
-            m_message = AppendToComment(m_message, "No OUT files created")
+			m_message = clsGlobal.AppendToComment(m_message, "No OUT files created")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         Else
             'Add .out files to list of files for deletion
             For Each OutFile As String In DtaFiles
-                clsGlobal.FilesToDelete.Add(OutFile)
+                m_jobParams.AddResultFileToSkip(OutFile)
             Next
             'Add .out extension to list of file extensions to delete
-            clsGlobal.m_FilesToDeleteExt.Add(".out")
+            m_JobParams.AddResultFileExtensionToSkip(".out")
         End If
 
         'Package out files into concatenated text files 
@@ -555,7 +532,7 @@ Public Class clsAnalysisToolRunnerSeqBase
             Return True
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, ConcatTools.ErrMsg & ", job " & JobNum)
-            m_message = AppendToComment(m_message, "Error concatenating out files")
+			m_message = clsGlobal.AppendToComment(m_message, "Error concatenating out files")
             Return False
         End If
 
@@ -594,29 +571,29 @@ Public Class clsAnalysisToolRunnerSeqBase
         Try
             If Not String.IsNullOrEmpty(strOutFilePath) Then
 
-                Dim srOutFile As System.IO.StreamReader
+
                 Dim strLineIn As String
 
-                srOutFile = New System.IO.StreamReader(New System.IO.FileStream(strOutFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+				Using srOutFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strOutFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
-                Do While srOutFile.Peek >= 0
-                    strLineIn = srOutFile.ReadLine()
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        strLineIn = strLineIn.Trim()
-                        If strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()) Then
-                            strToolVersionInfo = strLineIn
+					Do While srOutFile.Peek > -1
+						strLineIn = srOutFile.ReadLine()
+						If Not String.IsNullOrEmpty(strLineIn) Then
+							strLineIn = strLineIn.Trim()
+							If strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()) Then
+								strToolVersionInfo = strLineIn
 
-                            If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest Version: " & strToolVersionInfo)
-                            End If
+								If m_DebugLevel >= 2 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest Version: " & strToolVersionInfo)
+								End If
 
-                            Exit Do
-                        End If
-                    End If
-                Loop
+								Exit Do
+							End If
+						End If
+					Loop
 
-                srOutFile.Close()
-            End If
+				End Using
+			End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception parsing .Out file in StoreToolVersionInfo: " & ex.Message)
@@ -649,15 +626,14 @@ Public Class clsAnalysisToolRunnerSeqBase
         Dim ioFiles() As System.IO.FileInfo
         Dim ioFile As System.IO.FileInfo
 
-        Dim srReader As System.IO.StreamReader
-
+		Dim strLineIn As String
         Dim blnDataFound As Boolean = False
         Dim intFilesChecked As Integer = 0
 
         Try
             ioWorkFolder = New System.IO.DirectoryInfo(m_WorkDir)
 
-            ioFiles = ioWorkFolder.GetFiles("*.dta", SearchOption.TopDirectoryOnly)
+			ioFiles = ioWorkFolder.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly)
 
             If ioFiles.Length = 0 Then
                 m_message = "No .DTA files are present"
@@ -665,20 +641,22 @@ Public Class clsAnalysisToolRunnerSeqBase
                 Return False
             Else
                 For Each ioFile In ioFiles
-                    srReader = ioFile.OpenText
+					Using srReader As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(ioFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-                    Do While srReader.Peek >= 0
-                        If srReader.ReadLine.Trim.Length > 0 Then
-                            blnDataFound = True
-                            Exit Do
-                        End If
-                    Loop
+						Do While srReader.Peek > -1
+							strLineIn = srReader.ReadLine
 
-                    srReader.Close()
-                    intFilesChecked += 1
+							If Not String.IsNullOrWhiteSpace(strLinein) Then
+								blnDataFound = True
+								Exit Do
+							End If
+						Loop
+					End Using
 
-                    If blnDataFound Then Exit For
-                Next
+					intFilesChecked += 1
+
+					If blnDataFound Then Exit For
+				Next
 
                 If Not blnDataFound Then
                     If intFilesChecked = 1 Then
@@ -774,9 +752,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         Try
 
-            m_EvalMessage = String.Empty
-            m_EvalCode = 0
-            blnShowDetailedRates = False
+			blnShowDetailedRates = False
 
             If Not System.IO.File.Exists(strLogFilePath) Then
                 strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count"
@@ -1131,11 +1107,11 @@ Public Class clsAnalysisToolRunnerSeqBase
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated output file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 
         'Verify file exists
-        If Not File.Exists(OutFilePath) Then
-            m_message = "Unable to find concatenated .out file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+		If Not System.IO.File.Exists(OutFilePath) Then
+			m_message = "Unable to find concatenated .out file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
 
         Try
             'Zip the file            
@@ -1153,7 +1129,7 @@ Public Class clsAnalysisToolRunnerSeqBase
             Return False
         End Try
 
-        clsGlobal.FilesToDelete.Add(OutFileName)
+        m_jobParams.AddResultFileToSkip(OutFileName)
 
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(), concatenated outfile zipping successful")

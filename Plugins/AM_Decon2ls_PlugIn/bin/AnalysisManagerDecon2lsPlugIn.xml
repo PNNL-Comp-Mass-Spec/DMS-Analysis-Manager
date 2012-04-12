@@ -6,13 +6,7 @@ AnalysisManagerDecon2lsPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls.GetResources">
-	<summary>
- Retrieves files necessary for performance of Decon2ls analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsBase.StoreToolVersionInfo">
+<member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsBase.StoreToolVersionInfo">
 	<summary>
  Stores the tool version info in the database
  </summary>
@@ -25,6 +19,12 @@ AnalysisManagerDecon2lsPlugIn
 	<param name="XPathForSection">XPath specifying the section that contains the desired element.  For example: "//parameters/Miscellaneous"</param>
 	<param name="ElementName">Element name to find (or add)</param>
 	<param name="NewElementValue">New value for this element</param>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Decon2ls analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>

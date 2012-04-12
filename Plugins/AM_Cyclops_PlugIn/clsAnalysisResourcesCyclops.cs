@@ -18,9 +18,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
 				}
 
-				//Clear out list of files to delete or keep when packaging the blnSuccesss
-				clsGlobal.ResetFilesToDeleteOrKeep();
-
 				System.IO.DirectoryInfo dirLocalRScriptFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkingDir, "R_Scripts"));
 
 				if (!dirLocalRScriptFolder.Exists) {

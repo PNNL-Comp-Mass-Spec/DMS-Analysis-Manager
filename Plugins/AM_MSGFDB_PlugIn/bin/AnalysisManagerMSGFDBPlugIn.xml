@@ -88,12 +88,6 @@ AnalysisManagerMSGFDBPlugIn
  Stores the tool version info in the database
  </summary>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ValidateCDTAFile">
-	<summary>
- Make sure the _DTA.txt file exists and has at least one spectrum in it
- </summary>
-	<returns>True if success; false if failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults(System.String)">
 	<summary>
  Zips MSGFDB Output File

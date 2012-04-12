@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
 using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
@@ -18,8 +15,8 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
         protected string mWorkingDir;
         protected JobParameters mJP;
         protected ManagerParameters mMP;
-        protected static string mMessage = "";
-        protected string mSearchType = "";
+        protected string mMessage = "";
+		protected string mSearchType = "";								// File extension of input data files, e.g. "_LCMSFeatures.txt"
         protected string mParamFilename = "";
         protected const string MULTIALIGN_INPUT_FILE = "Input.txt";
         protected string mJobNum = "";
@@ -87,7 +84,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
             this.mMP = new ManagerParameters(mgrParms);
             this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
-            this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");
+			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, e.g. "_LCMSFeatures.txt"
             this.mParamFilename = mJP.RequireJobParam("MultiAlignParamFilename");
             this.mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
             this.mJobNum = mJP.RequireJobParam("Job");
@@ -101,7 +98,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
         /// Do processing
         /// </summary>
 		/// <returns>True if success; otherwise false</returns>
-        public bool Run() {
+        public bool Run(string sMultiAlignConsolePath) {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
             GetMultiAlignParameterFile();
@@ -120,15 +117,17 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMultiAlignAggregator.RunTool(): Enter");
             }
 
-            // Determine the path to the MultiAlign folder
-            String progLoc;
-            progLoc = mMP.RequireMgrParam("MultiAlignProgLoc");
-
-            if (String.IsNullOrWhiteSpace(progLoc))
+			if (String.IsNullOrWhiteSpace(sMultiAlignConsolePath))
             {
-				mMessage = "Manager parameter not defined: MultiAlignProgLoc";
+				mMessage = "MultiAlignConsolePath is empty";
                 return false;
             }
+
+			if (!System.IO.File.Exists(sMultiAlignConsolePath))
+			{
+				mMessage = "MultiAlign program not found: " + sMultiAlignConsolePath;
+				return false;
+			}
 
             String MultiAlignResultFilename = mJP.GetJobParam("ResultsBaseName");
 
@@ -141,7 +140,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
             CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + System.IO.Path.Combine(mWorkingDir, mJP.RequireJobParam("MultiAlignParamFilename")) + " -path " + mWorkingDir + " -name " + MultiAlignResultFilename + " -plots";
             if (mDebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + CmdStr);
             }
 
             CmdRunner.CreateNoWindow = true;
@@ -149,7 +148,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
             CmdRunner.EchoOutputToConsole = true;
             CmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", true))
+			if (!CmdRunner.RunProgram(sMultiAlignConsolePath, CmdStr, "MultiAlign", true))
             {
 				if (string.IsNullOrEmpty(mMessage))
 					mMessage = "Error running MultiAlign";
@@ -178,14 +177,14 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
             }
 
-            string strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
+            string strParamFileStoragePathKeyName = AnalysisManagerBase.clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
             string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath)) {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
             }
 
-            File.Copy(Path.Combine(strMAParameterFileStoragePath, mParamFilename), Path.Combine(mWorkingDir, mParamFilename));
+			System.IO.File.Copy(System.IO.Path.Combine(strMAParameterFileStoragePath, mParamFilename), System.IO.Path.Combine(mWorkingDir, mParamFilename), true);
 
             //Errors were reported in function call, so just return
             return true;
@@ -333,7 +332,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                 swOutFile.Close();
 
             }
-            catch (Exception ex)
+			catch (System.Exception ex)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" + INPUT_FILENAME + "): " + ex.Message);
                 blnSuccess = false;
@@ -357,10 +356,6 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
         {
             System.DateTime dtLastStatusUpdate = System.DateTime.UtcNow;
             System.DateTime dtLastMultialignLogFileParse = System.DateTime.UtcNow;
-
-            // Synchronize the stored Debug level with the value stored in the database
-            const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-            //base.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
 
             //Update the status file (limit the updates to every 5 seconds)
             if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
@@ -453,7 +448,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                 }
 
             }
-            catch (Exception ex)
+			catch (System.Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 1)
@@ -632,7 +627,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
                 }
 
             }
-            catch (Exception ex)
+			catch (System.Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 2)

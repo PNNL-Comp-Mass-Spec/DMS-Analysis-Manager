@@ -1,8 +1,6 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
 
 Public MustInherit Class clsMSXmlGen
 
@@ -81,7 +79,7 @@ Public MustInherit Class clsMSXmlGen
 		Dim CmdStr As String
 
 		Dim msXmlFormat As String = "mzXML"
-		Dim RawFilePath As String = System.IO.Path.Combine(mWorkDir, mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION)
+		Dim RawFilePath As String = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 
 		Dim blnSuccess As Boolean
 

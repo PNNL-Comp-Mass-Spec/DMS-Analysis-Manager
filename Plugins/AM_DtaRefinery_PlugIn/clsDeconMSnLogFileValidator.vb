@@ -50,10 +50,7 @@ Public Class clsDeconMSnLogFileValidator
     ''' <returns>True if success; false if an unrecoverable error</returns>
     Public Function ValidateDeconMSnLogFile(ByVal strSourceFilePath As String) As Boolean
 
-        Dim srSourceFile As System.IO.StreamReader
-
-        Dim strTempFilePath As String
-        Dim swOutFile As System.IO.StreamWriter
+		Dim strTempFilePath As String
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -70,93 +67,94 @@ Public Class clsDeconMSnLogFileValidator
             mErrorMessage = String.Empty
             mFileUpdated = False
 
-            srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srSourceFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-            strTempFilePath = System.IO.Path.GetTempFileName()
-            System.Threading.Thread.Sleep(250)
+				strTempFilePath = System.IO.Path.GetTempFileName()
+				System.Threading.Thread.Sleep(250)
 
-            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTempFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.ReadWrite))
+				Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTempFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.ReadWrite))
 
-            Do While srSourceFile.Peek > -1
-                strLineIn = srSourceFile.ReadLine()
-                intColumnCountUpdated = 0
+					Do While srSourceFile.Peek > -1
+						strLineIn = srSourceFile.ReadLine()
+						intColumnCountUpdated = 0
 
-                If blnHeaderPassed Then
-                    strSplitLine = strLineIn.Split(ControlChars.Tab)
+						If blnHeaderPassed Then
+							strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-                    If strSplitLine.Length > 1 AndAlso strSplitLine(0) = "MSn_Scan" Then
-                        ' This is the header line
-                        ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
-                    ElseIf strSplitLine.Length > 1 Then
-                        ValidateColumnIsPositive(strSplitLine, intParentIntensityColIndex, blnColumnUpdated)
-                        If blnColumnUpdated Then intColumnCountUpdated += 1
+							If strSplitLine.Length > 1 AndAlso strSplitLine(0) = "MSn_Scan" Then
+								' This is the header line
+								ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
+							ElseIf strSplitLine.Length > 1 Then
+								ValidateColumnIsPositive(strSplitLine, intParentIntensityColIndex, blnColumnUpdated)
+								If blnColumnUpdated Then intColumnCountUpdated += 1
 
-                        ValidateColumnIsPositive(strSplitLine, intMonoIntensityColIndex, blnColumnUpdated)
-                        If blnColumnUpdated Then intColumnCountUpdated += 1
+								ValidateColumnIsPositive(strSplitLine, intMonoIntensityColIndex, blnColumnUpdated)
+								If blnColumnUpdated Then intColumnCountUpdated += 1
 
-                    End If
+							End If
 
-                Else
-                    If strLineIn.StartsWith("--------------") Then
-                        blnHeaderPassed = True
-                    ElseIf strLineIn.StartsWith("MSn_Scan") Then
-                        ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
-                        blnHeaderPassed = True
-                    End If
-                End If
+							If intColumnCountUpdated > 0 Then
+								mFileUpdated = True
+								swOutFile.WriteLine(CollapseLine(strSplitLine))
+							Else
+								swOutFile.WriteLine(strLineIn)
+							End If
 
-                If intColumnCountUpdated > 0 Then
-                    mFileUpdated = True
-                    swOutFile.WriteLine(CollapseLine(strSplitLine))
-                Else
-                    swOutFile.WriteLine(strLineIn)
-                End If
+						Else
+							If strLineIn.StartsWith("--------------") Then
+								blnHeaderPassed = True
+							ElseIf strLineIn.StartsWith("MSn_Scan") Then
+								ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
+								blnHeaderPassed = True
+							End If
+							swOutFile.WriteLine(strLineIn)
+						End If
+					Loop
 
-            Loop
+				End Using
 
-            srSourceFile.Close()
-            swOutFile.Close()
+			End Using
 
-            If mFileUpdated Then
-                ' First rename strFilePath
-                Dim ioFileInfo As System.IO.FileInfo = New System.IO.FileInfo(strSourceFilePath)
-                Dim strTargetFilePath As String = System.IO.Path.Combine(ioFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_Original.txt")
+			If mFileUpdated Then
+				' First rename strFilePath
+				Dim ioFileInfo As System.IO.FileInfo = New System.IO.FileInfo(strSourceFilePath)
+				Dim strTargetFilePath As String = System.IO.Path.Combine(ioFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_Original.txt")
 
-                If System.IO.File.Exists(strTargetFilePath) Then
-                    Try
-                        System.IO.File.Delete(strTargetFilePath)
-                    Catch ex As Exception
-                        mErrorMessage = "Error deleting old _Original.txt file: " & ex.Message
-                        Console.WriteLine(mErrorMessage)
-                    End Try
-                End If
+				If System.IO.File.Exists(strTargetFilePath) Then
+					Try
+						System.IO.File.Delete(strTargetFilePath)
+					Catch ex As Exception
+						mErrorMessage = "Error deleting old _Original.txt file: " & ex.Message
+						Console.WriteLine(mErrorMessage)
+					End Try
+				End If
 
-                Try
-                    ioFileInfo.MoveTo(strTargetFilePath)
+				Try
+					ioFileInfo.MoveTo(strTargetFilePath)
 
-                    ' Now copy the temp file to strFilePath
-                    System.IO.File.Copy(strTempFilePath, strSourceFilePath, False)
+					' Now copy the temp file to strFilePath
+					System.IO.File.Copy(strTempFilePath, strSourceFilePath, False)
 
-                Catch ex As Exception
-                    mErrorMessage = "Error replacing source file with new file: " & ex.Message
-                    Console.WriteLine(mErrorMessage)
+				Catch ex As Exception
+					mErrorMessage = "Error replacing source file with new file: " & ex.Message
+					Console.WriteLine(mErrorMessage)
 
-                    ' Copy the temp file to strFilePath
-                    System.IO.File.Copy(strTempFilePath, System.IO.Path.Combine(ioFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_New.txt"), True)
-                    System.IO.File.Delete(strTempFilePath)
+					' Copy the temp file to strFilePath
+					System.IO.File.Copy(strTempFilePath, System.IO.Path.Combine(ioFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_New.txt"), True)
+					System.IO.File.Delete(strTempFilePath)
 
-                    Return False
-                End Try
+					Return False
+				End Try
 
-            End If
+			End If
 
-            System.IO.File.Delete(strTempFilePath)
+			System.IO.File.Delete(strTempFilePath)
 
-        Catch ex As Exception
-            mErrorMessage = "Exception in clsDeconMSnLogFileValidator.ValidateFile: " & ex.Message
-            Console.WriteLine(mErrorMessage)
-            Return False
-        End Try
+		Catch ex As Exception
+			mErrorMessage = "Exception in clsDeconMSnLogFileValidator.ValidateFile: " & ex.Message
+			Console.WriteLine(mErrorMessage)
+			Return False
+		End Try
 
         Return True
 

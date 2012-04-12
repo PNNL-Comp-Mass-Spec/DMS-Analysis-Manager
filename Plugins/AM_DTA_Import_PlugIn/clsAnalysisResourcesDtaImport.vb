@@ -13,13 +13,10 @@ Public Class clsAnalysisResourcesDtaImport
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim result As IJobParams.CloseOutType
         'There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         result = ValidateDTA()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then

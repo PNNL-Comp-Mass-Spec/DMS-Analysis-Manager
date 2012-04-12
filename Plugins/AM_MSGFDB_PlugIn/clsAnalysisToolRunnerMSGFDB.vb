@@ -8,8 +8,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-'Imports PRISM.Files
-'Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
@@ -85,7 +83,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Dim objIndexedDBCreator As New clsCreateMSGFDBSuffixArrayFiles
 
-		Dim strScriptName As String
+		Dim strScriptNameLCase As String
 		Dim blnUsingMzXML As Boolean
 		Dim strAssumedScanType As String = String.Empty
 
@@ -122,9 +120,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			mMSGFDbVersion = String.Empty
 			mConsoleOutputErrorMsg = String.Empty
 
-			strScriptName = m_jobParams.GetParam("ToolName")
+			strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower()
 
-			If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfdb_bruker") Then
+			If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfdb_bruker") Then
 				blnUsingMzXML = True
 			Else
 				blnUsingMzXML = False
@@ -140,9 +138,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					' Create the ScanType file (lists scan type for each scan number)
 					If Not CreateScanTypeFile() Then
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-					Else
-						' Keep the _ScanType.txt file; don't delete it
-						' clsGlobal.m_FilesToDeleteExt.Add("_ScanType.txt")
 					End If
 				End If
 
@@ -231,7 +226,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
 			' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
 			' (job 611216 succeeded with a value of 5000)
-			intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSGFDBJavaMemorySize", 2000)
+			intJavaMemorySize = m_JobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
 			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 			'Set up and execute a program runner to run MSGFDB
@@ -292,7 +287,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running MSGFDB"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
@@ -483,7 +478,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(strFastaFilePath))
+			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strFastaFilePath))
 		End If
 
 		Try
@@ -491,7 +486,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
 			End If
 
-			blnIgnorePeptideToProteinMapperErrors = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError"))
+			blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
 			mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 
@@ -771,8 +766,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		' MS-GFDB complete (total elapsed time: 699.69 sec)
 
 		Static reExtractThreadCount As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Using (\d+) thread", _
-																										  Text.RegularExpressions.RegexOptions.Compiled Or _
-																										  Text.RegularExpressions.RegexOptions.IgnoreCase)
+				Text.RegularExpressions.RegexOptions.Compiled Or _
+				Text.RegularExpressions.RegexOptions.IgnoreCase)
 		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
 
 		Dim eThreadProgressBase() As eThreadProgressSteps
@@ -958,18 +953,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	End Sub
 
 	Protected Sub ParseConsoleOutputThreadMessage(ByVal strLineIn As String, _
-												  ByVal eThreadProgressStep As eThreadProgressSteps, _
-												  ByRef eThreadProgressBase() As eThreadProgressSteps, _
-												  ByRef sngThreadProgressAddon() As Single)
+		ByVal eThreadProgressStep As eThreadProgressSteps, _
+		ByRef eThreadProgressBase() As eThreadProgressSteps, _
+		ByRef sngThreadProgressAddon() As Single)
 
 		Dim oMatch As System.Text.RegularExpressions.Match
 
 		Static reExtractThreadNum As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("thread-(\d+)", _
-																										  Text.RegularExpressions.RegexOptions.Compiled Or _
-																										  Text.RegularExpressions.RegexOptions.IgnoreCase)
+				Text.RegularExpressions.RegexOptions.Compiled Or _
+				Text.RegularExpressions.RegexOptions.IgnoreCase)
 		Static reExtractPctComplete As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("([0-9.]+)% complete", _
-																										  Text.RegularExpressions.RegexOptions.Compiled Or _
-																										  Text.RegularExpressions.RegexOptions.IgnoreCase)
+				Text.RegularExpressions.RegexOptions.Compiled Or _
+				Text.RegularExpressions.RegexOptions.IgnoreCase)
 
 		' Extract out the thread number
 		' Line should look like one of these lines:
@@ -1022,10 +1017,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
 	Protected Function ParseMSGFDBModifications(ByVal strParameterFilePath As String, _
-												ByRef sbOptions As System.Text.StringBuilder, _
-												ByVal intNumMods As Integer, _
-												ByRef lstStaticMods As System.Collections.Generic.List(Of String), _
-												ByRef lstDynamicMods As System.Collections.Generic.List(Of String)) As Boolean
+		 ByRef sbOptions As System.Text.StringBuilder, _
+		 ByVal intNumMods As Integer, _
+		 ByRef lstStaticMods As System.Collections.Generic.List(Of String), _
+		 ByRef lstDynamicMods As System.Collections.Generic.List(Of String)) As Boolean
 
 		Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
 		Dim blnSuccess As Boolean
@@ -1290,7 +1285,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End Try
 
 		' Define the thread count
-		intDMSDefinedThreadCount = clsGlobal.GetJobParameter(m_jobParams, "MSGFDBThreads", 0)
+		intDMSDefinedThreadCount = m_JobParams.GetJobParameter("MSGFDBThreads", 0)
 
 		If intDMSDefinedThreadCount > 0 Then
 			intParamFileThreadCount = intDMSDefinedThreadCount
@@ -1367,9 +1362,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function ParseMSFDBParamLine(ByRef sbOptions As System.Text.StringBuilder, _
-										   ByVal strKeyName As String, _
-										   ByVal strValue As String, _
-										   ByVal strParameterName As String) As Boolean
+				ByVal strKeyName As String, _
+				ByVal strValue As String, _
+				ByVal strParameterName As String) As Boolean
 
 		Dim strCommandLineSwitchName As String = strParameterName
 
@@ -1378,10 +1373,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	End Function
 
 	Protected Function ParseMSFDBParamLine(ByRef sbOptions As System.Text.StringBuilder, _
-										   ByVal strKeyName As String, _
-										   ByVal strValue As String, _
-										   ByVal strParameterName As String, _
-										   ByVal strCommandLineSwitchName As String) As Boolean
+				ByVal strKeyName As String, _
+				ByVal strValue As String, _
+				ByVal strParameterName As String, _
+				ByVal strCommandLineSwitchName As String) As Boolean
 
 		If IsMatch(strKeyName, strParameterName) Then
 			sbOptions.Append(" -" & strCommandLineSwitchName & " " & strValue)
@@ -1433,52 +1428,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		m_progress = sngPercentComplete
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
-
-	''' <summary>
-	''' Make sure the _DTA.txt file exists and has at least one spectrum in it
-	''' </summary>
-	''' <returns>True if success; false if failure</returns>
-	''' <remarks></remarks>
-	Protected Function ValidateCDTAFile() As Boolean
-		Dim strInputFilePath As String
-		Dim srReader As System.IO.StreamReader
-
-		Dim blnDataFound As Boolean = False
-
-		Try
-			strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-
-			If Not System.IO.File.Exists(strInputFilePath) Then
-				m_message = "_DTA.txt file not found: " & strInputFilePath
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-			Do While srReader.Peek >= 0
-				If srReader.ReadLine.Trim.Length > 0 Then
-					blnDataFound = True
-					Exit Do
-				End If
-			Loop
-
-			srReader.Close()
-
-			If Not blnDataFound Then
-				m_message = "The _DTA.txt file is empty"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception in ValidateCDTAFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return False
-		End Try
-
-		Return blnDataFound
-
-	End Function
 
 	Private Function ValidatePeptideToProteinMapResults(ByVal strPeptideToProteinMapFilePath As String, ByVal blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
 
@@ -1589,8 +1538,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Add the _msgfdb.txt file to .FilesToDelete since we only want to keep the Zipped version
-			clsGlobal.FilesToDelete.Add(ResultsFileName)
+			' Add the _msgfdb.txt file to .ResultFilesToSkip since we only want to keep the Zipped version
+			m_jobParams.AddResultFileToSkip(ResultsFileName)
 
 		Catch ex As Exception
 			Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
@@ -1658,7 +1607,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Synchronize the stored Debug level with the value stored in the database
 			Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-			AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
+			clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
 
 			UpdateStatusRunning(sngPercentCompleteEffective)
 		End If

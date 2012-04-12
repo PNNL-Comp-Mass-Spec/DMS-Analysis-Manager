@@ -9,8 +9,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
 
 Public Class clsMSXMLGenReadW
 
@@ -78,7 +76,7 @@ Public Class clsMSXMLGenReadW
         Dim CmdStr As String
 
         Dim msXmlFormat As String = "mzXML"
-        Dim RawFilePath As String = System.IO.Path.Combine(mWorkDir, mDatasetName & AnalysisManagerBase.clsAnalysisResources.DOT_RAW_EXTENSION)
+        Dim RawFilePath As String = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 
         Dim blnSuccess As Boolean
 

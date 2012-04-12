@@ -35,14 +35,6 @@ AnalysisManagerInSpecTPlugIn
  Constructor
  </summary>
 	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object for updating status file as job progresses</param>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.RunTool">
 	<summary>
  Runs InSpecT tool
@@ -84,12 +76,6 @@ AnalysisManagerInSpecTPlugIn
 	<summary>
  Stores the tool version info in the database
  </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.ValidateCDTAFile(System.String)">
-	<summary>
- Make sure the _DTA.txt file exists and has at least one spectrum in it
- </summary>
-	<returns>True if success; false if failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN.mSearchLogFileWatcher_Changed(System.Object,System.IO.FileSystemEventArgs)">
 	<summary>

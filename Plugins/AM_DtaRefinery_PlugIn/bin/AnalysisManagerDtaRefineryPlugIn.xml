@@ -6,41 +6,7 @@ AnalysisManagerDtaRefineryPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.RunTool">
-	<summary>
- Runs DTA_Refinery tool
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.StoreToolVersionInfo">
-	<summary>
- Stores the tool version info in the database
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ValidateCDTAFile">
-	<summary>
- Make sure the _DTA.txt file exists and has at lease one spectrum in it
- </summary>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ValidateDTARefineryLogFile">
-	<summary>
- Parses the _DTARefineryLog.txt file to look for errors
- </summary>
-	<returns>True if no errors, false if a problem</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile">
-	<summary>
- Zips concatenated XML output file
- </summary>
-	<returns>CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.CmdRunner_LoopWaiting">
-	<summary>
- Event handler for CmdRunner.LoopWaiting event
- </summary>
-	<remarks></remarks>
-</member><member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ErrorMessage">
+<member name="P:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator.ErrorMessage">
 	<summary>
  Error message (if any)
  </summary>
@@ -60,6 +26,34 @@ AnalysisManagerDtaRefineryPlugIn
  This class can be used to validate the data in a _DeconMSn_log.txt file
  It makes sure that the intensity values in the last two columns are all &gt; 0
  Values that are 0 are auto-changed to 1
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.RunTool">
+	<summary>
+ Runs DTA_Refinery tool
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ValidateDTARefineryLogFile">
+	<summary>
+ Parses the _DTARefineryLog.txt file to look for errors
+ </summary>
+	<returns>True if no errors, false if a problem</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile">
+	<summary>
+ Zips concatenated XML output file
+ </summary>
+	<returns>CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
  </summary>
 	<remarks></remarks>
 </member>

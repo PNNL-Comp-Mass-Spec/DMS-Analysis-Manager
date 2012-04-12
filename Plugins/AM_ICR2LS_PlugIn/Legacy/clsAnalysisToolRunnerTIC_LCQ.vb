@@ -21,20 +21,20 @@ Public Class clsAnalysisToolRunnerTIC_LCQ
 		'Assemble the raw file name
 		RawFileName = Path.Combine(m_workdir, m_JobParams.GetParam("datasetNum") & ".raw")
 		If Not File.Exists(RawFileName) Then
-			CleanupFailedJob("Unable to find data file in working directory")
+			m_message = "Unable to find data file in working directory"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Make the TIC file
 		m_JobRunning = True
 		If Not MakeLCQTICFile(RawFileName, RawFileName & ".tic") Then
-			CleanupFailedJob("Error creating TIC file")
+			m_message = "Error creating TIC file"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Wait for the job to complete
 		If Not WaitForJobToFinish() Then
-			CleanupFailedJob("Error waiting for TIC job to finish")
+			m_message = "Error waiting for TIC job to finish"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 

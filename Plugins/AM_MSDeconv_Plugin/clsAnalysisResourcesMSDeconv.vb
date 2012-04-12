@@ -12,12 +12,9 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesMSDeconv
 	Inherits clsAnalysisResources
 
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim FileToGet As String
-
-		'Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
 
 		' Make sure the machine has enough free memory to run MSDeconv
 		If Not ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv") Then
@@ -37,10 +34,10 @@ Public Class clsAnalysisResourcesMSDeconv
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
-		clsGlobal.FilesToDelete.Add(FileToGet)
+		m_jobParams.AddResultFileToSkip(FileToGet)
 
 		' Make sure we don't move the .mzXML file into the results folder
-		clsGlobal.m_FilesToDeleteExt.Add(".mzXML")
+		m_JobParams.AddResultFileExtensionToSkip(".mzXML")
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

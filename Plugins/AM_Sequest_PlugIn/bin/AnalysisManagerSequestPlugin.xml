@@ -11,14 +11,6 @@ AnalysisManagerSequestPlugin
  Constructor
  </summary>
 	<remarks>Does nothing at present</remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Modifies base class Setup method to provide log message appropriate for this class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object providing tools for status file updates</param>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.MakeOUTFiles">
 	<summary>
  Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
@@ -63,14 +55,6 @@ AnalysisManagerSequestPlugin
  Constructor
  </summary>
 	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object for updating status file as job progresses</param>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.RunTool">
 	<summary>
  Runs the analysis tool
@@ -189,7 +173,7 @@ AnalysisManagerSequestPlugin
 	<summary>
  Reads the list of nodes from the hosts config file
  </summary>
-	<param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
+	<param name="HostFilePath">Name of hosts file on cluster head node</param>
 	<returns>returns a string collection containing IP addresses for each node</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.VerifyRemoteDatabase(System.String,System.String,System.Boolean@)">

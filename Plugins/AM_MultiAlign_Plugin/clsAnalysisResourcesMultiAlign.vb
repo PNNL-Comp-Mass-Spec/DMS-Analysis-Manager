@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -7,21 +5,20 @@ Option Strict On
 '
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMultiAlign
     Inherits clsAnalysisResources
 
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim strFileToGet As String
         Dim strMAParamFileName As String
         Dim strMAParameterFileStoragePath As String
         Dim strParamFileStoragePathKeyName As String
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
@@ -33,7 +30,7 @@ Public Class clsAnalysisResourcesMultiAlign
         For Each row As String In SplitString
             FileNameExt = row.Split(":"c)
             If FileNameExt(2) = "nocopy" Then
-                clsGlobal.m_FilesToDeleteExt.Add(FileNameExt(1))
+                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
             End If
             strInputFileExtension = FileNameExt(1)
         Next
@@ -52,7 +49,7 @@ Public Class clsAnalysisResourcesMultiAlign
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
+		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
         strMAParameterFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
         If strMAParameterFileStoragePath Is Nothing OrElse strMAParameterFileStoragePath.Length = 0 Then
             strMAParameterFileStoragePath = "\\gigasax\DMS_Parameter_Files\MultiAlign"

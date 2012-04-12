@@ -8,7 +8,6 @@
 '*********************************************************************************************************
 
 Imports System.IO
-Imports PRISM.Files
 Imports AnalysisManagerBase
 
 Public Class clsDtaGenResources
@@ -19,20 +18,17 @@ Public Class clsDtaGenResources
 	'*********************************************************************************************************
 
 #Region "Methods"
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		'Get input data file
-        If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_WorkingDir) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_WorkingDir) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-    End Function
+	End Function
 #End Region
 
 End Class

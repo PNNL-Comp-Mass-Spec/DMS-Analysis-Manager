@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -7,9 +5,9 @@ Option Strict On
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Option Strict On
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerPRIDEMzXML
     Inherits clsAnalysisToolRunnerBase
@@ -117,7 +115,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         'update list of files to be deleted after run
         DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_grouped*")
         For Each FileToSave As String In DumFiles
-            clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(FileToSave))
+            m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(FileToSave))
         Next
 
         result = MoveResultFiles()

@@ -17,13 +17,10 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	Private mMSFileInfoScannerErrorCount As Integer
 
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strDatasetName As String
 		strDatasetName = m_jobParams.GetParam("DatasetNum")
-
-		'Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
 
 		' Make sure the machine has enough free memory to run MSGFDB
 		If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
@@ -66,7 +63,7 @@ Public Class clsAnalysisResourcesMSGFDB
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
-			clsGlobal.FilesToDelete.Add(FileToGet)
+			m_jobParams.AddResultFileToSkip(FileToGet)
 
 		Else
 			' Retrieve the _DTA.txt file
@@ -116,13 +113,13 @@ Public Class clsAnalysisResourcesMSGFDB
 
 
 		'Add all the extensions of the files to delete after run
-		clsGlobal.m_FilesToDeleteExt.Add(".mzXML")
-		clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-		clsGlobal.m_FilesToDeleteExt.Add("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
+		m_jobParams.AddResultFileExtensionToSkip(".mzXML")
+		m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+		m_jobParams.AddResultFileExtensionToSkip("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
-		clsGlobal.m_FilesToDeleteExt.Add(SCAN_STATS_FILE_SUFFIX)
-		clsGlobal.m_FilesToDeleteExt.Add("_ScanStatsEx.txt")
+		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
+		m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -165,7 +162,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			End If
 
 			' Make sure the raw data file does not get copied to the results folder
-			clsGlobal.FilesToDelete.Add(System.IO.Path.GetFileName(strInputFilePath))
+			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strInputFilePath))
 
 			mMSFileInfoScannerErrorCount = 0
 

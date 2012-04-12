@@ -11,15 +11,12 @@ Public Class clsAnalysisResourcesOM
 
     Private mDataset As String = String.Empty
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim strErrorMessage As String = String.Empty
         Dim blnSuccess As Boolean
 
         mDataset = m_jobParams.GetParam("DatasetNum")
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -51,7 +48,7 @@ Public Class clsAnalysisResourcesOM
          m_jobParams.GetParam("ParmFileStoragePath"), _
          m_WorkingDir) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        clsGlobal.m_FilesToDeleteExt.Add(OMSSA_DEFAULT_INPUT_FILE)
+        m_JobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
 
         'Retrieve unzipped dta files (do not unconcatenate since we will convert the _DTA.txt file to a _DTA.xml file, which OMSSA will read)
         If Not RetrieveDtaFiles(False) Then
@@ -67,10 +64,10 @@ Public Class clsAnalysisResourcesOM
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
-        clsGlobal.m_FilesToDeleteExt.Add(mDataset & ".xml")
+        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+        m_JobParams.AddResultFileExtensionToSkip(mDataset & ".xml")
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         blnSuccess = MakeInputFile(strErrorMessage)
@@ -182,7 +179,7 @@ Public Class clsAnalysisResourcesOM
         Dim MSInfilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & ".xml")
         Dim MSOmxOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om.omx")
         Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om_large.omx")
-        clsGlobal.m_FilesToDeleteExt.Add(mDataset & "_om_large.omx")
+        m_JobParams.AddResultFileExtensionToSkip(mDataset & "_om_large.omx")
         Dim MSCsvOutFilename As String = System.IO.Path.Combine(m_WorkingDir, mDataset & "_om.csv")
 
         Dim result As Boolean = True
@@ -203,7 +200,7 @@ Public Class clsAnalysisResourcesOM
         Dim objSelectedNodes As System.Xml.XmlNodeList
         Dim intMatchCount As Integer
 
-        Dim objMostRecentComment As System.Xml.XmlNode
+		Dim objMostRecentComment As System.Xml.XmlNode = Nothing
         Dim blnCopyThisComment As Boolean
 
         Dim objFrag As System.Xml.XmlDocumentFragment

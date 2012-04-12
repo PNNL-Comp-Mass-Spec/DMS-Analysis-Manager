@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Mage;
 
 namespace AnalysisManager_Mage_PlugIn {
@@ -196,8 +195,8 @@ namespace AnalysisManager_Mage_PlugIn {
             // strip off common prefix (if there was one)
             if (width > 1) {
                 int start = width - 1;
-                string[] datasets = nameLookup.Keys.ToArray();
-                foreach (string dataset in datasets) {
+				foreach (string dataset in nameLookup.Keys)
+				{
                     string alias = nameLookup[dataset];
                     string strippedAlias = alias.Substring(start);
                     nameLookup[dataset] = strippedAlias;

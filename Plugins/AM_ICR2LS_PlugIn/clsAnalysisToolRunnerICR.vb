@@ -1,8 +1,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
-Imports PRISM.Files.clsFileTools
-Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerICR
@@ -70,13 +68,12 @@ Public Class clsAnalysisToolRunnerICR
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        'Verify a parm file has been specified
-        ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))
+        'Verify a param file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
         If Not System.IO.File.Exists(ParamFilePath) Then
             'Param file wasn't specified, but is required for ICR-2LS analysis
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ICR-2LS Param file not found: " & ParamFilePath)
-
-            CleanupFailedJob("Parm file not found")
+            m_message = "ICR-2LS Param file not found"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -86,8 +83,8 @@ Public Class clsAnalysisToolRunnerICR
         MinScan = 0
         MaxScan = 0
 
-        MinScan = GetJobParameter(m_jobParams, "scanstart", 0)
-        MaxScan = GetJobParameter(m_jobParams, "ScanStop", 0)
+		MinScan = m_jobParams.GetJobParameter("scanstart", 0)
+		MaxScan = m_jobParams.GetJobParameter("ScanStop", 0)
 
         If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
            MinScan > MaxScan OrElse _
@@ -98,7 +95,7 @@ Public Class clsAnalysisToolRunnerICR
         End If
 
         'Assemble the dataset name
-        DSNamePath = CheckTerminator(System.IO.Path.Combine(m_WorkDir, m_Dataset))
+		DSNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset)
         RawDataType = m_jobParams.GetParam("RawDataType")
 
         'Assemble the output file name and path
@@ -107,7 +104,7 @@ Public Class clsAnalysisToolRunnerICR
         ' Determine the location of the ser file
         ' It could be in a "0.ser" folder or a ser file inside a .D folder
 
-        If RawDataType.ToLower() = AnalysisManagerBase.clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+        If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
             DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
         Else
             DatasetFolderPathBase = String.Copy(m_WorkDir)
@@ -156,9 +153,8 @@ Public Class clsAnalysisToolRunnerICR
         Else
             ' Processing zipped s-folders
             If Not System.IO.Directory.Exists(DSNamePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Data file folder not found: " & DSNamePath)
-
-                CleanupFailedJob("Unable to find data files in working directory")
+	            m_message = "Data file folder not found: " & DSNamePath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -173,6 +169,7 @@ Public Class clsAnalysisToolRunnerICR
         If Not blnSuccess Then
             ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
             If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
+	            m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
 
                 PerfPostAnalysisTasks(False)
@@ -182,8 +179,9 @@ Public Class clsAnalysisToolRunnerICR
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
 
             Else
-                CleanupFailedJob("Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")")
+                m_message = "Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")"
             End If
+            
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
             ' Make sure the .pek file and .Par file are named properly
@@ -192,7 +190,7 @@ Public Class clsAnalysisToolRunnerICR
 
         'Run the cleanup routine from the base class
         If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            m_message = AppendToComment(m_message, "Error performing post analysis tasks")
+			m_message = clsGlobal.AppendToComment(m_message, "Error performing post analysis tasks")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 

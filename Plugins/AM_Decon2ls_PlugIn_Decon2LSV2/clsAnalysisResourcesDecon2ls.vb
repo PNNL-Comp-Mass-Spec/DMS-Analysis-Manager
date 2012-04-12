@@ -12,7 +12,7 @@ Public Class clsAnalysisResourcesDecon2ls
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         'Get input data file
         If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
@@ -20,10 +20,10 @@ Public Class clsAnalysisResourcesDecon2ls
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_WIFF_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
         'Retrieve param file
         If Not RetrieveFile( _

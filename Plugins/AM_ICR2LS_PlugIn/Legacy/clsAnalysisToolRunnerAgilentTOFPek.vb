@@ -9,19 +9,22 @@ Public MustInherit Class clsAnalysisToolRunnerAgilentTOFPek
     Public Sub New()
     End Sub
 
-    Public Overrides Function RunTool() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim ResCode As IJobParams.CloseOutType
         Dim PekRes As Boolean
+		Dim ParamFilePath As String
 
         'Start with base class function to get settings information
         ResCode = MyBase.RunTool()
         If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-        'Verify a parm file has been specified
-        If Not File.Exists(Path.Combine(m_workdir, m_JobParams.GetParam("parmFileName"))) Then
-            'Parm file wasn't specified, but is required for ICR2LS analysis
-            CleanupFailedJob("Parm file not found")
+        'Verify a param file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
+        If Not System.IO.File.Exists(ParamFilePath) Then
+            'Param file wasn't specified, but is required for ICR-2LS analysis
+            m_message = "ICR-2LS Param file not found"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -40,20 +43,20 @@ Public MustInherit Class clsAnalysisToolRunnerAgilentTOFPek
         m_JobRunning = True
         PekRes = m_ICR2LSObj.MakeAgilentTOFPEKFile(DSNamePath, ParmFileNamePath, OutFileNamePath, SGFilter)
         If Not PekRes Then
-            CleanupFailedJob("Error creating PEK file")
+            m_message = "Error creating PEK file"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Wait for the job to complete
         If Not WaitForJobToFinish() Then
-            CleanupFailedJob("Error waiting for PEK job to finish")
+            m_message = "Error waiting for PEK job to finish"
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'If specified, run Eric's calibration tool
         If CBool(m_mgrParams.GetParam("agilenttofpek")) Then ', "performcal"
             If Not PerformEricCal() Then
-                CleanupFailedJob("Error performing post-analysis calibration process")
+                m_message = "Error performing post-analysis calibration process"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         End If

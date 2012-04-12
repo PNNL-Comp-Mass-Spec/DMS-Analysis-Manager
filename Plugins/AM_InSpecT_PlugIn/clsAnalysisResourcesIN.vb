@@ -1,8 +1,7 @@
-' Last modified 06/15/2009 JDS - Added logging using log4net
+
+Option Strict On
+
 Imports AnalysisManagerBase
-Imports System.IO
-Imports System
-Imports ParamFileGenerator.MakeParams
 
 Public Class clsAnalysisResourcesIN
     Inherits clsAnalysisResources
@@ -25,36 +24,33 @@ Public Class clsAnalysisResourcesIN
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+		'Retrieve Fasta file
+		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'Retrieve param file
+		If Not RetrieveGeneratedParamFile( _
+		 m_jobParams.GetParam("ParmFileName"), _
+		 m_jobParams.GetParam("ParmFileStoragePath"), _
+		 m_mgrParams.GetParam("workdir")) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Retrieve param file
-        If Not RetrieveGeneratedParamFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_mgrParams.GetParam("workdir")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'Retrieve unzipped dta files
+		If Not RetrieveDtaFiles(DECONCATENATE_DTA_TXT_FILE) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        'Retrieve unzipped dta files
-        If Not RetrieveDtaFiles(DECONCATENATE_DTA_TXT_FILE) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		'Add all the extensions of the files to delete after run
+		m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+		m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
-        'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+		'All finished
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-        'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
+	End Function
 
     ''' <summary>
     ''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
@@ -116,11 +112,11 @@ Public Class clsAnalysisResourcesIN
         If Not isParallelized OrElse System.IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
             'Unzip concatenated DTA file
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-            If UnzipFileStart(Path.Combine(WorkingDir, DtaResultFileName), WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
-                End If
-            End If
+			If UnzipFileStart(System.IO.Path.Combine(WorkingDir, DtaResultFileName), WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
+				End If
+			End If
         End If
 
         'Unconcatenate DTA file if needed

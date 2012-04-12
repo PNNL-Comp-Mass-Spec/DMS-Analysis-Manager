@@ -87,7 +87,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 			ResultsFileName = m_Dataset & "_msdeconv.msalign"
 
-			blnIncludeMS1Spectra = clsGlobal.CBoolSafe(m_jobParams.GetParam("MSDeconvIncludeMS1"))
+			blnIncludeMS1Spectra = m_jobParams.GetJobParameter("MSDeconvIncludeMS1", False)
 			strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat")
 
 			If String.IsNullOrEmpty(strOutputFormat) Then
@@ -112,7 +112,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDeconv")
 
 			' Lookup the amount of memory to reserve for Java; default to 2 GB 
-			intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSDeconvJavaMemorySize", 2000)
+			intJavaMemorySize = m_jobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000)
 			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 			'Set up and execute a program runner to run MSDeconv
@@ -160,7 +160,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running MSDeconv"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
@@ -180,7 +180,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				If Not ioResultsFile.Exists() Then
 					Dim Msg As String
 					Msg = "MSDeconv results file not found"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
 
@@ -188,7 +188,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				ElseIf ioResultsFile.Length = 0 Then
 					Dim Msg As String
 					Msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra"
-					m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
 

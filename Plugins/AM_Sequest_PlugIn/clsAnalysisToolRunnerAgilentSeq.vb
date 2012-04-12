@@ -1,5 +1,6 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
-Imports System.IO
+Option Strict On
+
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerAgilentSeq
@@ -7,16 +8,6 @@ Public Class clsAnalysisToolRunnerAgilentSeq
 
 	Public Sub New()
 	End Sub
-
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-     ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeq.Setup()")
-        End If
-
-    End Sub
 
 	Protected Function DeleteDataFile() As IJobParams.CloseOutType
 
@@ -26,12 +17,12 @@ Public Class clsAnalysisToolRunnerAgilentSeq
 
 		Try
 			'Delete the .mgf file
-			FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf")
+			FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.mgf")
 			For Each MyFile In FoundFiles
 				DeleteFileWithRetries(MyFile)
 			Next
 			'Delete the .cdf file, if present
-			FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf")
+			FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.cdf")
 			For Each MyFile In FoundFiles
 				DeleteFileWithRetries(MyFile)
 			Next

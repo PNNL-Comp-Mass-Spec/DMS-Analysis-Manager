@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using AnalysisManagerBase;
 
@@ -89,7 +88,8 @@ namespace AnalysisManager_MAC {
 
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
-                m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+				if (!string.IsNullOrEmpty(m_ResFolderName))
+					m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
                 result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {

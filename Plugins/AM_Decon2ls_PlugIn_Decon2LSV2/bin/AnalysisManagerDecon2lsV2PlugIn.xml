@@ -6,7 +6,13 @@ AnalysisManagerDecon2lsV2PlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.AssembleResults">
+<member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Decon2ls analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.AssembleResults">
 	<summary>
  Validate the result files
  (legacy code would assemble result files from looping, but that code has been removed)
@@ -74,12 +80,6 @@ AnalysisManagerDecon2lsV2PlugIn
 	<summary>
  Event handler for CmdRunner.LoopWaiting event
  </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls.GetResources">
-	<summary>
- Retrieves files necessary for performance of Decon2ls analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>

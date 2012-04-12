@@ -10,13 +10,10 @@ Public Class clsAnalysisResourcesDtaRefinery
     Friend Const DTA_REFINERY_INPUT_FILE As String = "DtaRefinery_input.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim result As Boolean
         Dim strErrorMessage As String
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -34,7 +31,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         Dim strParamFileStoragePathKeyName As String
         Dim strDtaRefineryParmFileStoragePath As String
-        strParamFileStoragePathKeyName = AnalysisManagerBase.clsAnalysisMgrSettings.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "DTA_Refinery"
+		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "DTA_Refinery"
 
         strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
         If strDtaRefineryParmFileStoragePath Is Nothing OrElse strDtaRefineryParmFileStoragePath.Length = 0 Then
@@ -69,14 +66,14 @@ Public Class clsAnalysisResourcesDtaRefinery
         End If
 
         'Add all the extensions of the files to delete after run
-        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_DEFAULT_INPUT_FILE)
-        'clsGlobal.m_FilesToDeleteExt.Add(XTANDEM_TAXONOMY_LIST_FILE)
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
-        clsGlobal.m_FilesToDeleteExt.Add(m_jobParams.GetParam("DatasetNum") & ".xml")
+        'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_DEFAULT_INPUT_FILE)
+        'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_TAXONOMY_LIST_FILE)
+        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+        m_JobParams.AddResultFileExtensionToSkip(m_jobParams.GetParam("DatasetNum") & ".xml")
 
-        clsGlobal.m_ExceptionFiles.Add(m_jobParams.GetParam("DatasetNum") & "_dta.zip")
+        m_jobParams.AddResultFileToKeep(m_jobParams.GetParam("DatasetNum") & "_dta.zip")
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         strErrorMessage = String.Empty

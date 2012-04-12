@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -10,9 +8,9 @@ Option Strict On
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Option Strict On
+
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerXT
     Inherits clsAnalysisToolRunnerBase
@@ -371,53 +369,6 @@ Public Class clsAnalysisToolRunnerXT
 
     End Sub
 
-
-    ''' <summary>
-    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
-    ''' </summary>
-    ''' <returns>True if success; false if failure</returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFile() As Boolean
-        Dim strInputFilePath As String
-        Dim srReader As System.IO.StreamReader
-
-        Dim blnDataFound As Boolean = False
-
-        Try
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-
-            If Not System.IO.File.Exists(strInputFilePath) Then
-                m_message = "_DTA.txt file not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strInputFilePath)
-                Return False
-            End If
-
-            srReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
-
-            Do While srReader.Peek >= 0
-                If srReader.ReadLine.Trim.Length > 0 Then
-                    blnDataFound = True
-                    Exit Do
-                End If
-            Loop
-
-            srReader.Close()
-
-            If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnDataFound
-
-    End Function
-
     ''' <summary>
     ''' Zips concatenated XML output file
     ''' </summary>
@@ -435,14 +386,14 @@ Public Class clsAnalysisToolRunnerXT
                 If Not MyBase.ZipFile(TmpFilePath, True) Then
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = AppendToComment(m_message, "Error zipping output files")
+					m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AppendToComment(m_message, "Error zipping output files")
+			m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

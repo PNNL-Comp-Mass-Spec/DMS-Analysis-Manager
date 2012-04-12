@@ -9,7 +9,6 @@
 '*********************************************************************************************************
 
 Imports System.IO
-Imports System.Collections.Specialized
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesExtraction
@@ -39,10 +38,7 @@ Public Class clsAnalysisResourcesExtraction
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-
-		'Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		'Get analysis results files
 		If GetInputFiles(m_jobParams.GetParam("ResultType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -64,7 +60,7 @@ Public Class clsAnalysisResourcesExtraction
 	''' <param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Private Function GetInputFiles(ByVal ResultType As String) As AnalysisManagerBase.IJobParams.CloseOutType
+	Private Function GetInputFiles(ByVal ResultType As String) As IJobParams.CloseOutType
 
 		Dim ExtractionSkipsCDTAFile As Boolean
 		Dim FileToGet As String
@@ -74,7 +70,7 @@ Public Class clsAnalysisResourcesExtraction
 
 			Select Case ResultType
 				Case "Peptide_Hit"	'Sequest
-					ExtractionSkipsCDTAFile = clsGlobal.CBoolSafe(m_jobParams.GetParam("ExtractionSkipsCDTAFile"))
+					ExtractionSkipsCDTAFile = m_jobParams.GetJobParameter("ExtractionSkipsCDTAFile", False)
 
 					If ExtractionSkipsCDTAFile Then
 						' Do not grab the _Dta.txt file
@@ -100,15 +96,15 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					'Add all the extensions of the files to delete after run
-					clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-					clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-					clsGlobal.m_FilesToDeleteExt.Add("_out.zip") 'Zipped OUT
-					clsGlobal.m_FilesToDeleteExt.Add("_out.txt") 'Unzipped, concatenated OUT
-					clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
-					clsGlobal.m_FilesToDeleteExt.Add(".out")  'DTA files
+					m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+					m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+					m_jobParams.AddResultFileExtensionToSkip("_out.zip") 'Zipped OUT
+					m_jobParams.AddResultFileExtensionToSkip("_out.txt") 'Unzipped, concatenated OUT
+					m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+					m_jobParams.AddResultFileExtensionToSkip(".out")  'DTA files
 
 				Case "XT_Peptide_Hit"
 					FileToGet = strDataset & "_xt.zip"
@@ -116,10 +112,10 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
-					clsGlobal.FilesToDelete.Add(strDataset & "_xt.xml")
+					m_jobParams.AddResultFileToSkip(strDataset & "_xt.xml")
 
 					' Get the X!Tandem parameter file
 					FileToGet = m_jobParams.GetParam("ParmFileName")
@@ -127,7 +123,7 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 				Case "IN_Peptide_Hit"
 					' Get the zipped Inspect results files
@@ -138,7 +134,7 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' This file contains top hit for each scan (no filters)
 					FileToGet = strDataset & "_inspect_fht.zip"
@@ -146,7 +142,7 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' Get the peptide to protein mapping file
 					FileToGet = strDataset & "_inspect_PepToProtMap.txt"
@@ -154,13 +150,13 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call
 
 						' See if IgnorePeptideToProteinMapError=True
-						If AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError")) Then
+						If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
 						Else
 							Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
 						End If
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' Get the Inspect parameter file
 					FileToGet = m_jobParams.GetParam("ParmFileName")
@@ -168,7 +164,7 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 				Case "MSG_Peptide_Hit"
 					FileToGet = strDataset & "_msgfdb.zip"
@@ -176,10 +172,10 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
-					clsGlobal.FilesToDelete.Add(strDataset & "_msgfdb.txt")
+					m_jobParams.AddResultFileToSkip(strDataset & "_msgfdb.txt")
 
 					' Get the peptide to protein mapping file
 					FileToGet = strDataset & "_msgfdb_PepToProtMap.txt"
@@ -187,13 +183,13 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call
 
 						' See if IgnorePeptideToProteinMapError=True
-						If AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError")) Then
+						If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
 						Else
 							Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 						End If
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' Get the MSGF-DB parameter file
 					FileToGet = m_jobParams.GetParam("ParmFileName")
@@ -201,7 +197,7 @@ Public Class clsAnalysisResourcesExtraction
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
-					clsGlobal.FilesToDelete.Add(FileToGet)
+					m_jobParams.AddResultFileToSkip(FileToGet)
 
 				Case Else
 					m_message = "Invalid tool result type: " & ResultType
@@ -285,7 +281,7 @@ Public Class clsAnalysisResourcesExtraction
 			' Do not search the EMSL archive (Aurora) since we can easily re-generate it
 			blnSuccess = FindAndRetrieveMiscFiles(ModDefsFilename, False, blnSearchArchivedDatasetFolder)
 			If blnSuccess Then
-				clsGlobal.FilesToDelete.Add(ModDefsFilename)
+				m_jobParams.AddResultFileToSkip(ModDefsFilename)
 
 				' Look for the Mass correction tags file
 				' Do not search the EMSL archive (Aurora) since we can easily re-generate it
@@ -297,7 +293,7 @@ Public Class clsAnalysisResourcesExtraction
 					End If
 				End If
 
-				clsGlobal.FilesToDelete.Add(MASS_CORRECTION_TAGS_FILENAME)
+				m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
 			Else
 
 				' The ModDefs.txt file should have been created when Sequest, X!Tandem, Inspect, or MSGFDB ran

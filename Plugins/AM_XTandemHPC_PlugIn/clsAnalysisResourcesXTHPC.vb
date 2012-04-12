@@ -22,12 +22,9 @@ Public Class clsAnalysisResourcesXTHPC
 
     Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim result As Boolean
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -51,9 +48,9 @@ Public Class clsAnalysisResourcesXTHPC
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         Dim parmfilestore As String = m_jobParams.GetParam("ParmFileStoragePath")
         result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_mgrParams.GetParam("WorkDir"))
@@ -161,7 +158,7 @@ Public Class clsAnalysisResourcesXTHPC
                 Msub_Filename = System.IO.Path.Combine(WorkingDir, "X-Tandem_Job" & JobNum & "_" & i & ".msub")
                 Start_Filename = System.IO.Path.Combine(WorkingDir, "StartXT_Job" & JobNum & "_" & i)
                 Put_CmdFile = System.IO.Path.Combine(WorkingDir, "PutCmds_Job" & JobNum & "_" & i)
-                clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Put_CmdFile))
+                m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Put_CmdFile))
                 MakeInputFile(Input_Filename, CStr(i))
                 MakeMSubFile(Msub_Filename, CStr(i))
                 MakeStartFile(Start_Filename, Msub_Filename, CStr(i))
@@ -170,24 +167,24 @@ Public Class clsAnalysisResourcesXTHPC
 
             Get_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateFastaFileList.txt")
             MakeListFastaFilesCmdFile(Get_FastaFileList_CmdFile, JobNum)
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Get_FastaFileList_CmdFile))
-            clsGlobal.m_FilesToDeleteExt.Add("fastafiles.txt")
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Get_FastaFileList_CmdFile))
+            m_JobParams.AddResultFileExtensionToSkip("fastafiles.txt")
 
             Create_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "GetFastaFileList.txt")
             MakeGetFastaFilesListCmdFile(Create_FastaFileList_CmdFile, JobNum)
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Create_FastaFileList_CmdFile))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Create_FastaFileList_CmdFile))
 
             CreateDir_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateDir_Job" & JobNum)
             MakeCreateDirectorysCmdFile(CreateDir_CmdFile)
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(CreateDir_CmdFile))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(CreateDir_CmdFile))
 
             RemoveDir_CmdFile = System.IO.Path.Combine(WorkingDir, "Remove_Job" & JobNum)
             MakeRemoveDirectorysCmdFile(RemoveDir_CmdFile)
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(RemoveDir_CmdFile))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(RemoveDir_CmdFile))
 
             Put_CmdFastaFile = System.IO.Path.Combine(WorkingDir, "PutFasta_Job" & JobNum)
             MakePutFastaCmdFile(Put_CmdFastaFile)
-            clsGlobal.m_FilesToDeleteExt.Add(System.IO.Path.GetFileName(Put_CmdFastaFile))
+            m_JobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Put_CmdFastaFile))
 
             'get rid of base file
             System.IO.File.Delete(System.IO.Path.Combine(WorkingDir, "input_base.txt"))

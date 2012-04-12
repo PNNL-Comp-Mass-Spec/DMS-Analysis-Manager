@@ -30,7 +30,7 @@ Public Class clsAnalysisToolRunnerQTOFPek
 		'Assemble the dataset name
 		DSNamePath = Path.Combine(m_workdir, m_JobParams.GetParam("datasetNum") & ".wiff")
 		If Not File.Exists(DSNamePath) Then
-			CleanupFailedJob("Unable to find data file in working directory")
+			m_message = "Unable to find data file in working directory"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -43,13 +43,13 @@ Public Class clsAnalysisToolRunnerQTOFPek
 			OutFileName, UseSGFilter)
 
 		If Not PekRes Then
-			CleanupFailedJob("Error creating PEK file")
+			m_message = "Error creating PEK file"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Wait for the job to complete
 		If Not WaitForJobToFinish() Then
-			CleanupFailedJob("Error waiting for PEK job to finish")
+			m_message = "Error waiting for PEK job to finish"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -59,7 +59,7 @@ Public Class clsAnalysisToolRunnerQTOFPek
 		'If specified, run Eric's calibration tool
         If CBool(m_mgrParams.GetParam("qtof")) Then  ', "performcal"
             If Not PerformEricCal() Then
-                CleanupFailedJob("Error performing post-analysis calibration process")
+                m_message = "Error performing post-analysis calibration process"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         End If

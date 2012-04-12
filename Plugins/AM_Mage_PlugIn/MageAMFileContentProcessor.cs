@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Mage;
 using System.IO;
 
@@ -85,7 +83,7 @@ namespace AnalysisManager_Mage_PlugIn {
             switch (Operation) {
                 case "CopyAndImport":
                     string workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
-                    File.Copy(sourcePath, workingFilePath);
+                    File.Copy(sourcePath, workingFilePath, true);
                     dbFilePath = FilePipeline.GetSQLiteResultsDBFilePath();
                     FilePipeline.ImportFileToSQLite(workingFilePath, dbFilePath, DBTableName);
                     break;

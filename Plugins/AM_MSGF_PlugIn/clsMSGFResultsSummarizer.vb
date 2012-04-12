@@ -11,6 +11,7 @@
 '*********************************************************************************************************
 
 Option Strict On
+
 Imports PHRPReader
 
 Public Class clsMSGFResultsSummarizer

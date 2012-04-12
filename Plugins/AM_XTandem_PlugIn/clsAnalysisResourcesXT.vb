@@ -11,13 +11,10 @@ Public Class clsAnalysisResourcesXT
 
     Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
 
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim result As Boolean
         Dim strWorkDir As String
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -43,9 +40,9 @@ Public Class clsAnalysisResourcesXT
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
 
@@ -110,7 +107,8 @@ Public Class clsAnalysisResourcesXT
         Try
             ' Create an instance of StreamWriter to write to a file.
             Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkingDir, "taxonomy.xml"))
-            ' Create an instance of StreamReader to read from a file.
+
+			' Create an instance of StreamReader to read from a file.
             Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkingDir, "taxonomy_base.xml"))
             Dim inpLine As String
             ' Read and display the lines from the file until the end 

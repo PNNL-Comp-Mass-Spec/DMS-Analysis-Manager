@@ -2,7 +2,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsAnalysisResourcesDecon2ls
     Inherits clsAnalysisResources
@@ -18,7 +17,7 @@ Public Class clsAnalysisResourcesDecon2ls
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         'Retrieve param file
         If Not RetrieveFile( _
@@ -34,11 +33,11 @@ Public Class clsAnalysisResourcesDecon2ls
         End If
 
         If PROCESS_SER_FOLDER_OVER_NETWORK Then
-            Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
+            Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_mgrParams.GetParam("workdir"))
             'Check for "0.ser" folder
-            If Not String.IsNullOrEmpty(NewSourceFolder) Then
-                clsGlobal.FilesToDelete.Add(STORAGE_PATH_INFO_FILE_SUFFIX)
-            End If
+			If Not String.IsNullOrEmpty(NewSourceFolder) Then
+				m_jobParams.AddResultFileToSkip(STORAGE_PATH_INFO_FILE_SUFFIX)
+			End If
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

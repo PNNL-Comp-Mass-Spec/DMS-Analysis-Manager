@@ -9,6 +9,8 @@
 
 Option Strict On
 
+Imports AnalysisManagerBase
+
 Public Class clsMSXmlGenMSConvert
     Inherits clsMSXmlGen
 

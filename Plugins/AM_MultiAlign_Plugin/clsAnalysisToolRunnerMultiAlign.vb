@@ -1,5 +1,3 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by John Sandoval for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
@@ -7,8 +5,9 @@ Option Strict On
 '
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsAnalysisToolRunnerMultiAlign
     Inherits clsAnalysisToolRunnerBase
@@ -156,13 +155,13 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Dim LogNameFilter As String = m_Dataset & ".db3-log*.txt"
         Try
             'Get the log file name.  There should only be one log file
-            Files = Directory.GetFiles(m_WorkDir, LogNameFilter)
+			Files = System.IO.Directory.GetFiles(m_WorkDir, LogNameFilter)
             'go through each log file found.  Again, there should only be one log file
             For Each TmpFile In Files
                 'Check to see if the log file exists.  If so, only rename one of them
-                If Not File.Exists(NewFilename) Then
-                    My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
-                End If
+				If Not System.IO.File.Exists(NewFilename) Then
+					My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
+				End If
             Next
 
         Catch ex As Exception

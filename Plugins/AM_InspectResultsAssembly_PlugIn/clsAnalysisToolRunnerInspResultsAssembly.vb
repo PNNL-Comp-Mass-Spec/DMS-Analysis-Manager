@@ -10,8 +10,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerInspResultsAssembly
     Inherits clsAnalysisToolRunnerBase
@@ -217,10 +215,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             'If parallelized, then remove multiple Result files from server
             If isParallelized Then
-                If Not clsGlobal.RemoveNonResultServerFiles(m_DebugLevel) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+				If Not MyBase.RemoveNonResultServerFiles() Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
             End If
 
 			If blnNoDataInFilteredResults Then
@@ -232,7 +230,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " & _
                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
+			m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -247,18 +245,14 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <param name="jobParams">Object containing job parameters</param>
     ''' <param name="StatusTools">Object for updating status file as job progresses</param>
     ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-      ByVal StatusTools As IStatusFile)
+	Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
+	  ByVal StatusTools As IStatusFile, ByRef SummaryFile As clsSummaryFile)
 
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
+		MyBase.Setup(mgrParams, jobParams, StatusTools, SummaryFile)
 
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.Setup()")
-        End If
+		mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
 
-        mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
-
-    End Sub
+	End Sub
 
     Private Function AssembleResults(ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
@@ -286,7 +280,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
-            clsGlobal.m_ExceptionFiles.Add(strFileName)
+            m_jobParams.AddResultFileToKeep(strFileName)
 
 
             If m_DebugLevel >= 3 Then
@@ -298,7 +292,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
-            clsGlobal.m_ExceptionFiles.Add(strFileName)
+            m_jobParams.AddResultFileToKeep(strFileName)
 
 
             If m_DebugLevel >= 3 Then
@@ -310,7 +304,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
-            clsGlobal.m_ExceptionFiles.Add(strFileName)
+            m_jobParams.AddResultFileToKeep(strFileName)
 
 
             ' FilterInspectResultsByFirstHits will create file _inspect_fht.txt
@@ -545,7 +539,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
             End If
 
-            blnIgnorePeptideToProteinMapperErrors = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("IgnorePeptideToProteinMapError"))
+			blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
             mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 
@@ -619,8 +613,6 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <remarks></remarks>
     Private Function ExtractModInfoFromInspectParamFile(ByVal strInspectParameterFilePath As String, ByRef udtModList() As udtModInfoType) As Boolean
 
-        Dim srInFile As System.IO.StreamReader
-
         Dim strLineIn As String
         Dim strSplitLine As String()
 
@@ -636,55 +628,51 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             End If
 
             ' Read the contents of strProteinToPeptideMappingFilePath
-            srInFile = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
 
-            Do While srInFile.Peek <> -1
-                strLineIn = srInFile.ReadLine
+				Do While srInFile.Peek <> -1
+					strLineIn = srInFile.ReadLine
 
-                strLineIn = strLineIn.Trim
+					strLineIn = strLineIn.Trim
 
-                If strLineIn.Length > 0 Then
+					If strLineIn.Length > 0 Then
 
-                    If strLineIn.Chars(0) = "#"c Then
-                        ' Comment line; skip it
-                    ElseIf strLineIn.ToLower.StartsWith("mod") Then
-                        ' Modification definition line
+						If strLineIn.Chars(0) = "#"c Then
+							' Comment line; skip it
+						ElseIf strLineIn.ToLower.StartsWith("mod") Then
+							' Modification definition line
 
-                        ' Split the line on commas
-                        strSplitLine = strLineIn.Split(","c)
+							' Split the line on commas
+							strSplitLine = strLineIn.Split(","c)
 
-                        If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
-                            If udtModList.Length = 0 Then
-                                ReDim udtModList(0)
-                            ElseIf intModCount >= udtModList.Length Then
-                                ReDim Preserve udtModList(udtModList.Length * 2 - 1)
-                            End If
+							If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
+								If udtModList.Length = 0 Then
+									ReDim udtModList(0)
+								ElseIf intModCount >= udtModList.Length Then
+									ReDim Preserve udtModList(udtModList.Length * 2 - 1)
+								End If
 
-                            With udtModList(intModCount)
-                                .ModName = strSplitLine(4)
-                                .ModMass = strSplitLine(1)
-                                .Residues = strSplitLine(2)
-                            End With
+								With udtModList(intModCount)
+									.ModName = strSplitLine(4)
+									.ModMass = strSplitLine(1)
+									.Residues = strSplitLine(2)
+								End With
 
-                            intModCount += 1
-                        End If
-                    End If
-                End If
-            Loop
+								intModCount += 1
+							End If
+						End If
+					End If
+				Loop
 
-            ' Shrink udtModList to the appropriate length
-            ReDim Preserve udtModList(intModCount - 1)
+				' Shrink udtModList to the appropriate length
+				ReDim Preserve udtModList(intModCount - 1)
 
-            Console.WriteLine()
+			End Using
 
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
+            Return False       
         End Try
 
         Return True
@@ -775,7 +763,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         blnSuccess = MyBase.ZipFile(fiFileInfo.FullName, blnDeleteSourceAfterZip, strZipFilePath)
 
-        clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(strZipFilePath))
+        m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(strZipFilePath))
 
         Return blnSuccess
 
@@ -850,7 +838,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ''Dim fastaFilename As String = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         ''Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
 
-        Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
+		Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
         Dim pthresh As String = ""
 
         Dim blnShuffledDBUsed As Boolean
@@ -859,7 +847,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath)
 
         ' Lookup the p-value to filter on
-        pthresh = AnalysisManagerBase.clsGlobal.GetJobParameter(m_jobParams, "InspectPvalueThreshold", "0.1")
+		pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1")
 
         CmdRunner = New clsRunDosProgram(InspectDir)
 
@@ -1209,7 +1197,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim chSepChars() As Char = New Char() {ControlChars.Tab}
 
-        blnShuffledDBUsed = AnalysisManagerBase.clsGlobal.CBoolSafe(m_jobParams.GetParam("InspectUsesShuffledDB"))
+		blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
         If blnShuffledDBUsed Then
             ' Open the _inspect.txt file and make sure proteins exist that start with XXX
@@ -1316,7 +1304,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             End If
 
             ' Add the _inspect.txt file to .FilesToDelete since we only want to keep the Zipped version
-            clsGlobal.FilesToDelete.Add(mInspectResultsFileName)
+            m_jobParams.AddResultFileToSkip(mInspectResultsFileName)
 
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->ZipInspectResults"
@@ -1352,7 +1340,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             ' Synchronize the stored Debug level with the value stored in the database
             Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-            AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
+			clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
 
             UpdateStatusRunning(sngPercentCompleteEffective)
         End If

@@ -2,7 +2,6 @@
 Option Strict On
 
 Imports System.IO
-Imports PRISM.Files
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesIcr2ls
@@ -10,9 +9,6 @@ Public Class clsAnalysisResourcesIcr2ls
 
 #Region "Methods"
     Public Overrides Function GetResources() As IJobParams.CloseOutType
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
-
         'Retrieve param file
         If Not RetrieveFile( _
          m_jobParams.GetParam("ParmFileName"), _

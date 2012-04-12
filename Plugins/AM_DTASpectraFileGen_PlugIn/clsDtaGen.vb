@@ -6,11 +6,8 @@
 '
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
-'Imports System.Collections.Specialized
-'Imports PRISM.Processes
-'Imports PRISM.Files
+
 Imports AnalysisManagerBase
-Imports System.Text.RegularExpressions
 
 Public Class clsDtaGen
 	Implements ISpectraFileProcessor
@@ -196,7 +193,7 @@ Public Class clsDtaGen
 		Dim TestStr As String = ".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$"
 
 		For Each TestFile In WorkDir.GetFiles
-			If Not Regex.IsMatch(TestFile.Extension, TestStr, RegexOptions.IgnoreCase) Then
+			If Not System.Text.RegularExpressions.Regex.IsMatch(TestFile.Extension, TestStr, System.Text.RegularExpressions.RegexOptions.IgnoreCase) Then
 				Try
 					TestFile.Delete()
 				Catch err As Exception

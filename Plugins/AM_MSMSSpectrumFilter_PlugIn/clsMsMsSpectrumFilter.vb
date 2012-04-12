@@ -1881,7 +1881,7 @@ Public Class clsMsMsSpectrumFilter
 
         Dim blnSuccess As Boolean
 
-        Dim srSpectrumFile As System.IO.StreamWriter
+		Dim srSpectrumFile As System.IO.StreamWriter = Nothing
 
         Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
 
@@ -3949,8 +3949,7 @@ Public Class clsMsMsSpectrumFilter
     Private Function LoadScanStatsFile(ByVal strScanStatsFilePath As String) As Boolean
         Dim blnSuccess As Boolean
 
-        Dim srInFile As System.IO.StreamReader
-        Dim strLineIn As String
+		Dim strLineIn As String
         Dim strSplitLine() As String
 
         Dim blnHeadersDefined As Boolean
@@ -3985,114 +3984,113 @@ Public Class clsMsMsSpectrumFilter
             End If
 
 
-            If System.IO.File.Exists(strScanStatsFilePath) Then
-                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			If System.IO.File.Exists(strScanStatsFilePath) Then
 
-                Do While srInFile.Peek() >= 0
-                    strLineIn = srInFile.ReadLine
-                    If Not strLineIn Is Nothing AndAlso strLineIn.Trim.Length > 0 Then
-                        strLineIn = strLineIn.Trim
+				Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-                        Try
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
+					Do While srInFile.Peek() >= 0
+						strLineIn = srInFile.ReadLine
+						If Not strLineIn Is Nothing AndAlso strLineIn.Trim.Length > 0 Then
+							strLineIn = strLineIn.Trim
 
-                            If Not blnHeadersDefined Then
-                                ' Parse the header line to define the column mapping
-                                For intIndex = 0 To strSplitLine.Length - 1
+							Try
+								strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-                                    Select Case strSplitLine(intIndex).ToLower
-                                        Case SCANSTATS_COL_SCAN_NUM.ToLower
-                                            intColumnMap(eScanStatsColumns.ScanNumber) = intIndex
+								If Not blnHeadersDefined Then
+									' Parse the header line to define the column mapping
+									For intIndex = 0 To strSplitLine.Length - 1
 
-                                        Case SCANSTATS_COL_SCAN_TYPE.ToLower
-                                            intColumnMap(eScanStatsColumns.ScanType) = intIndex
+										Select Case strSplitLine(intIndex).ToLower
+											Case SCANSTATS_COL_SCAN_NUM.ToLower
+												intColumnMap(eScanStatsColumns.ScanNumber) = intIndex
 
-                                        Case SCANSTATS_COL_SCAN_TYPE_NAME.ToLower
-                                            intColumnMap(eScanStatsColumns.ScanTypeName) = intIndex
+											Case SCANSTATS_COL_SCAN_TYPE.ToLower
+												intColumnMap(eScanStatsColumns.ScanType) = intIndex
 
-                                        Case Else
-                                            ' Ignore this column
-                                    End Select
-                                Next intIndex
+											Case SCANSTATS_COL_SCAN_TYPE_NAME.ToLower
+												intColumnMap(eScanStatsColumns.ScanTypeName) = intIndex
 
-                                If intColumnMap(eScanStatsColumns.ScanNumber) < 0 Then
-                                    ' Scan Number column was not found; this is a fatal error
-                                    strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsFilePath & "; unable to continue"
-                                    TraceLog(strMessage)
-                                    ShowErrorMessage(strMessage)
-                                    blnSuccess = False
-                                    Exit Try
-                                End If
+											Case Else
+												' Ignore this column
+										End Select
+									Next intIndex
 
-                                If mScanTypeFilter.Length > 0 AndAlso intColumnMap(eScanStatsColumns.ScanTypeName) < 0 Then
-                                    ' Scan Type Name column was not found; this is a fatal error
-                                    strMessage = "'" & SCANSTATS_COL_SCAN_TYPE_NAME & "' column not found in " & strScanStatsFilePath & "; unable to continue"
-                                    TraceLog(strMessage)
-                                    ShowErrorMessage(strMessage)
-                                    blnSuccess = False
-                                    Exit Try
-                                End If
-                                blnHeadersDefined = True
-                            Else
+									If intColumnMap(eScanStatsColumns.ScanNumber) < 0 Then
+										' Scan Number column was not found; this is a fatal error
+										strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsFilePath & "; unable to continue"
+										TraceLog(strMessage)
+										ShowErrorMessage(strMessage)
+										blnSuccess = False
+										Exit Try
+									End If
 
-                                If intScanStatsInfoCount >= mScanStatsInfo.Length Then
-                                    ' Reserve more space in mScanStatsInfo
-                                    ReDim Preserve mScanStatsInfo(mScanStatsInfo.Length * 2 - 1)
-                                End If
+									If mScanTypeFilter.Length > 0 AndAlso intColumnMap(eScanStatsColumns.ScanTypeName) < 0 Then
+										' Scan Type Name column was not found; this is a fatal error
+										strMessage = "'" & SCANSTATS_COL_SCAN_TYPE_NAME & "' column not found in " & strScanStatsFilePath & "; unable to continue"
+										TraceLog(strMessage)
+										ShowErrorMessage(strMessage)
+										blnSuccess = False
+										Exit Try
+									End If
+									blnHeadersDefined = True
+								Else
 
-                                strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanNumber)
-                                If Integer.TryParse(strValue, intValue) Then
-                                    intScanNumber = intValue
+									If intScanStatsInfoCount >= mScanStatsInfo.Length Then
+										' Reserve more space in mScanStatsInfo
+										ReDim Preserve mScanStatsInfo(mScanStatsInfo.Length * 2 - 1)
+									End If
 
-                                    If mScanStatsPointer.Contains(intScanNumber) Then
-                                        ' The same scan is present multiple times in the ScanStatsEx file; this is unexpected
-                                        ' We will skip this duplicate entry
-                                    Else
-                                        ' Make a new entry in mScanStatsInfo
-                                        With mScanStatsInfo(intScanStatsInfoCount)
+									strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanNumber)
+									If Integer.TryParse(strValue, intValue) Then
+										intScanNumber = intValue
 
-                                            .ScanNumber = intScanNumber
+										If mScanStatsPointer.Contains(intScanNumber) Then
+											' The same scan is present multiple times in the ScanStatsEx file; this is unexpected
+											' We will skip this duplicate entry
+										Else
+											' Make a new entry in mScanStatsInfo
+											With mScanStatsInfo(intScanStatsInfoCount)
 
-                                            strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanType)
-                                            If Not Int32.TryParse(strValue, .MSLevel) Then
-                                                ShowErrorMessage("Error: ScanType column is not an integer in line " & strLineIn)
-                                                .MSLevel = 0
-                                            End If
+												.ScanNumber = intScanNumber
 
-                                            .ScanTypeName = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanTypeName)
-                                        End With
+												strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanType)
+												If Not Int32.TryParse(strValue, .MSLevel) Then
+													ShowErrorMessage("Error: ScanType column is not an integer in line " & strLineIn)
+													.MSLevel = 0
+												End If
 
-                                        ' Store a mapping between intScanNumber and intScanStatsInfoCount
-                                        mScanStatsPointer.Add(intScanNumber, intScanStatsInfoCount)
+												.ScanTypeName = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsColumns.ScanTypeName)
+											End With
 
-                                        intScanStatsInfoCount += 1
-                                    End If
-                                End If
+											' Store a mapping between intScanNumber and intScanStatsInfoCount
+											mScanStatsPointer.Add(intScanNumber, intScanStatsInfoCount)
 
-                            End If
+											intScanStatsInfoCount += 1
+										End If
+									End If
 
-                        Catch ex As Exception
-                            ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
-                        End Try
-                    End If
+								End If
 
-                Loop
+							Catch ex As Exception
+								ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
+							End Try
+						End If
 
-                ' Shrink mScanStatsInfo
-                ReDim Preserve mScanStatsInfo(intScanStatsInfoCount - 1)
+					Loop
 
-                blnSuccess = True
-            Else
-                blnSuccess = False
-            End If
+				End Using
+
+				' Shrink mScanStatsInfo
+				ReDim Preserve mScanStatsInfo(intScanStatsInfoCount - 1)
+
+				blnSuccess = True
+			Else
+				blnSuccess = False
+			End If
 
         Catch ex As Exception
             ShowErrorMessage("Error reading the ScanStats file (" & strScanStatsFilePath & "); " & ex.Message)
-            blnSuccess = False
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
+            blnSuccess = False      
         End Try
 
         Return blnSuccess
@@ -4102,8 +4100,7 @@ Public Class clsMsMsSpectrumFilter
     Private Function LoadScanStatsExFile(ByVal strScanStatsExFilePath As String) As Boolean
         Dim blnSuccess As Boolean
 
-        Dim srInFile As System.IO.StreamReader
-        Dim strLineIn As String
+		Dim strLineIn As String
         Dim strSplitLine() As String
 
         Dim blnHeadersDefined As Boolean
@@ -4139,130 +4136,128 @@ Public Class clsMsMsSpectrumFilter
 
 
             If System.IO.File.Exists(strScanStatsExFilePath) Then
-                srInFile = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsExFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsExFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-                Do While srInFile.Peek() >= 0
-                    strLineIn = srInFile.ReadLine
-                    If Not strLineIn Is Nothing AndAlso strLineIn.Trim.Length > 0 Then
-                        strLineIn = strLineIn.Trim
+					Do While srInFile.Peek() >= 0
+						strLineIn = srInFile.ReadLine
+						If Not strLineIn Is Nothing AndAlso strLineIn.Trim.Length > 0 Then
+							strLineIn = strLineIn.Trim
 
-                        Try
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
+							Try
+								strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-                            If Not blnHeadersDefined Then
-                                ' Parse the header line to define the column mapping
-                                For intIndex = 0 To strSplitLine.Length - 1
+								If Not blnHeadersDefined Then
+									' Parse the header line to define the column mapping
+									For intIndex = 0 To strSplitLine.Length - 1
 
-                                    Select Case strSplitLine(intIndex).ToLower
-                                        Case SCANSTATS_COL_SCAN_NUM.ToLower
-                                            intColumnMap(eScanStatsExColumns.ScanNumber) = intIndex
+										Select Case strSplitLine(intIndex).ToLower
+											Case SCANSTATS_COL_SCAN_NUM.ToLower
+												intColumnMap(eScanStatsExColumns.ScanNumber) = intIndex
 
-                                        Case SCANSTATS_COL_ION_INJECTION_TIME.ToLower
-                                            intColumnMap(eScanStatsExColumns.IonInjectionTime) = intIndex
+											Case SCANSTATS_COL_ION_INJECTION_TIME.ToLower
+												intColumnMap(eScanStatsExColumns.IonInjectionTime) = intIndex
 
-                                        Case SCANSTATS_COL_SCAN_SEGMENT.ToLower
-                                            intColumnMap(eScanStatsExColumns.ScanSegment) = intIndex
+											Case SCANSTATS_COL_SCAN_SEGMENT.ToLower
+												intColumnMap(eScanStatsExColumns.ScanSegment) = intIndex
 
-                                        Case SCANSTATS_COL_SCAN_EVENT.ToLower
-                                            intColumnMap(eScanStatsExColumns.ScanEvent) = intIndex
+											Case SCANSTATS_COL_SCAN_EVENT.ToLower
+												intColumnMap(eScanStatsExColumns.ScanEvent) = intIndex
 
-                                        Case SCANSTATS_COL_CHARGE_STATE.ToLower
-                                            intColumnMap(eScanStatsExColumns.ChargeState) = intIndex
+											Case SCANSTATS_COL_CHARGE_STATE.ToLower
+												intColumnMap(eScanStatsExColumns.ChargeState) = intIndex
 
-                                        Case SCANSTATS_COL_MONOISOTOPIC_MZ.ToLower
-                                            intColumnMap(eScanStatsExColumns.MonoisotopicMZ) = intIndex
+											Case SCANSTATS_COL_MONOISOTOPIC_MZ.ToLower
+												intColumnMap(eScanStatsExColumns.MonoisotopicMZ) = intIndex
 
-                                        Case SCANSTATS_COL_COLLISION_MODE.ToLower
-                                            intColumnMap(eScanStatsExColumns.CollisionMode) = intIndex
+											Case SCANSTATS_COL_COLLISION_MODE.ToLower
+												intColumnMap(eScanStatsExColumns.CollisionMode) = intIndex
 
-                                        Case SCANSTATS_COL_SCAN_FILTER_TEXT.ToLower
-                                            intColumnMap(eScanStatsExColumns.ScanFilterText) = intIndex
+											Case SCANSTATS_COL_SCAN_FILTER_TEXT.ToLower
+												intColumnMap(eScanStatsExColumns.ScanFilterText) = intIndex
 
-                                        Case Else
-                                            ' Ignore this column
+											Case Else
+												' Ignore this column
 
-                                    End Select
-                                Next intIndex
+										End Select
+									Next intIndex
 
-                                If intColumnMap(eScanStatsExColumns.ScanNumber) < 0 Then
-                                    ' Scan Number column was not found; this is a fatal error
-                                    strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
-                                    TraceLog(strMessage)
-                                    ShowErrorMessage(strMessage)
-                                    blnSuccess = False
-                                    Exit Try
-                                End If
+									If intColumnMap(eScanStatsExColumns.ScanNumber) < 0 Then
+										' Scan Number column was not found; this is a fatal error
+										strMessage = "'" & SCANSTATS_COL_SCAN_NUM & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
+										TraceLog(strMessage)
+										ShowErrorMessage(strMessage)
+										blnSuccess = False
+										Exit Try
+									End If
 
-                                If mMSCollisionModeFilter.Length > 0 AndAlso intColumnMap(eScanStatsExColumns.CollisionMode) < 0 Then
-                                    ' Collision mode column was not found; this is a fatal error
-                                    strMessage = "'" & SCANSTATS_COL_COLLISION_MODE & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
-                                    TraceLog(strMessage)
-                                    ShowErrorMessage(strMessage)
-                                    blnSuccess = False
-                                    Exit Try
-                                End If
+									If mMSCollisionModeFilter.Length > 0 AndAlso intColumnMap(eScanStatsExColumns.CollisionMode) < 0 Then
+										' Collision mode column was not found; this is a fatal error
+										strMessage = "'" & SCANSTATS_COL_COLLISION_MODE & "' column not found in " & strScanStatsExFilePath & "; unable to continue"
+										TraceLog(strMessage)
+										ShowErrorMessage(strMessage)
+										blnSuccess = False
+										Exit Try
+									End If
 
-                                blnHeadersDefined = True
-                            Else
+									blnHeadersDefined = True
+								Else
 
-                                If intExtendedStatsInfoCount >= mExtendedStatsInfo.Length Then
-                                    ' Reserve more space in mExtendedStatsInfo
-                                    ReDim Preserve mExtendedStatsInfo(mExtendedStatsInfo.Length * 2 - 1)
-                                End If
+									If intExtendedStatsInfoCount >= mExtendedStatsInfo.Length Then
+										' Reserve more space in mExtendedStatsInfo
+										ReDim Preserve mExtendedStatsInfo(mExtendedStatsInfo.Length * 2 - 1)
+									End If
 
-                                strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanNumber)
-                                If Integer.TryParse(strValue, intValue) Then
-                                    intScanNumber = intValue
+									strValue = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanNumber)
+									If Integer.TryParse(strValue, intValue) Then
+										intScanNumber = intValue
 
-                                    If mExtendedStatsPointer.Contains(intScanNumber) Then
-                                        ' The same scan is present multiple times in the ScanStatsEx file; this is unexpected
-                                        ' We will skip this duplicate entry
-                                    Else
-                                        ' Make a new entry in mExtendedStatsInfo
-                                        With mExtendedStatsInfo(intExtendedStatsInfoCount)
+										If mExtendedStatsPointer.Contains(intScanNumber) Then
+											' The same scan is present multiple times in the ScanStatsEx file; this is unexpected
+											' We will skip this duplicate entry
+										Else
+											' Make a new entry in mExtendedStatsInfo
+											With mExtendedStatsInfo(intExtendedStatsInfoCount)
 
-                                            .ScanNumber = intScanNumber
-                                            .IonInjectionTime = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.IonInjectionTime)
-                                            .ScanSegment = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanSegment)
-                                            .ScanEvent = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanEvent)
-                                            .ChargeState = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ChargeState)
-                                            .MonoisotopicMZ = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.MonoisotopicMZ)
-                                            .CollisionMode = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.CollisionMode)
-                                            .ScanFilterText = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanFilterText)
+												.ScanNumber = intScanNumber
+												.IonInjectionTime = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.IonInjectionTime)
+												.ScanSegment = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanSegment)
+												.ScanEvent = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanEvent)
+												.ChargeState = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ChargeState)
+												.MonoisotopicMZ = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.MonoisotopicMZ)
+												.CollisionMode = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.CollisionMode)
+												.ScanFilterText = LookupSplitLineValue(strSplitLine, intColumnMap, eScanStatsExColumns.ScanFilterText)
 
-                                        End With
+											End With
 
-                                        ' Store a mapping between intScanNumber and intExtendedStatsInfoCount
-                                        mExtendedStatsPointer.Add(intScanNumber, intExtendedStatsInfoCount)
+											' Store a mapping between intScanNumber and intExtendedStatsInfoCount
+											mExtendedStatsPointer.Add(intScanNumber, intExtendedStatsInfoCount)
 
-                                        intExtendedStatsInfoCount += 1
-                                    End If
-                                End If
+											intExtendedStatsInfoCount += 1
+										End If
+									End If
 
-                            End If
+								End If
 
-                        Catch ex As Exception
-                            ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
-                        End Try
-                    End If
+							Catch ex As Exception
+								ShowErrorMessage("Error parsing line " & strLineIn & "; " & ex.Message)
+							End Try
+						End If
 
-                Loop
+					Loop
 
-                ' Shrink mExtendedStatsInfo
-                ReDim Preserve mExtendedStatsInfo(intExtendedStatsInfoCount - 1)
+				End Using
 
-                blnSuccess = True
-            Else
-                blnSuccess = False
-            End If
+				' Shrink mExtendedStatsInfo
+				ReDim Preserve mExtendedStatsInfo(intExtendedStatsInfoCount - 1)
+
+				blnSuccess = True
+			Else
+				blnSuccess = False
+			End If
 
         Catch ex As Exception
             ShowErrorMessage("Error reading the ScanStatsEx file (" & strScanStatsExFilePath & "); " & ex.Message)
-            blnSuccess = False
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
+            blnSuccess = False     
         End Try
 
         Return blnSuccess
@@ -4899,7 +4894,7 @@ Public Class clsMsMsSpectrumFilter
                                          ByVal strInputFilePath As String, _
                                          ByVal strOutputFolderPath As String) As Boolean
 
-        Dim srOutFile As System.IO.StreamWriter
+		Dim srOutFile As System.IO.StreamWriter = Nothing
 
         Dim strMSMSDataList() As String
         Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
@@ -5684,24 +5679,20 @@ Public Class clsMsMsSpectrumFilter
     End Function
 
     Private Sub TraceLog(ByVal strMessage As String)
-        Dim swOutFile As System.IO.StreamWriter
-        Dim strTraceFilePath As String
+		Dim strTraceFilePath As String
 
         If Not TRACE_LOG_ENABLED Then Exit Sub
 
         Try
             strTraceFilePath = "MSMSSpectrumFilter_Trace_" & System.DateTime.Now.ToString("yyyy-MM-dd") & ".txt"
 
-            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTraceFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
-            swOutFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & ControlChars.Tab & strMessage)
+			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTraceFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+				swOutFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & ControlChars.Tab & strMessage)
+			End Using
 
         Catch ex As Exception
             ShowErrorMessage("Error in TraceLog: " & ex.Message)
-        Finally
-            If Not swOutFile Is Nothing Then
-                swOutFile.Close()
-            End If
-        End Try
+		End Try
 
     End Sub
 

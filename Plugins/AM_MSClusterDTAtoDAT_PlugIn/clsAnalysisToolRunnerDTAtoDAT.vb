@@ -11,7 +11,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerDTAtoDAT
     Inherits clsAnalysisToolRunnerBase

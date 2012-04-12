@@ -7,9 +7,7 @@ Option Strict On
 '
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports PRISM.Files
-Imports AnalysisManagerBase.clsGlobal
+Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Inherits clsAnalysisToolRunnerBase
@@ -144,7 +142,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         'update list of files to be deleted after run
         DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_outputAScore*")
         For Each FileToSave As String In DumFiles
-            clsGlobal.m_ExceptionFiles.Add(System.IO.Path.GetFileName(FileToSave))
+            m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(FileToSave))
         Next
 
         result = MoveResultFiles()
@@ -166,38 +164,44 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Protected Function ConcatenateResultFiles(ByVal FilterExtension As String) As IJobParams.CloseOutType
         Dim result As Boolean = True
         Dim ConcatenateAScoreFiles() As String
-        Dim FileToConcatenate As String
-        Dim bSkipFirstLine As Boolean = False
+		Dim FileToConcatenate As String = String.Empty
+		Dim bSkipFirstLine As Boolean = False
+
         Try
 
             ConcatenateAScoreFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & FilterExtension)
-            ' Create an instance of StreamWriter to write to a file.
-            Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_WorkDir, "Concatenated" & FilterExtension))
 
-            For Each FullFileToConcatenate As String In ConcatenateAScoreFiles
-                FileToConcatenate = System.IO.Path.GetFileName(FullFileToConcatenate)
+			' Create an instance of StreamWriter to write to a file.
+			Using swConcatenatedFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_WorkDir, "Concatenated" & FilterExtension))
 
-                ' Create an instance of StreamReader to read from a file.
-                Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, FileToConcatenate))
+				For Each FullFileToConcatenate As String In ConcatenateAScoreFiles
+					FileToConcatenate = System.IO.Path.GetFileName(FullFileToConcatenate)
 
-                Dim inpLine As String
-                If bSkipFirstLine Then
-                    inputBase.ReadLine()
-                Else
-                    ' Skip the first line (the header line) on subsequent files
-                    bSkipFirstLine = True
-                End If
+					' Create an instance of StreamReader to read from a file.
+					Using srInputFile As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, FileToConcatenate))
 
-                Do
-                    inpLine = inputBase.ReadLine()
-                    If Not inpLine Is Nothing Then
-                        inputFile.WriteLine(inpLine)
-                    End If
-                Loop Until inpLine Is Nothing
-                inputBase.Close()
+						Dim inpLine As String
+						If bSkipFirstLine Then
+							If srInputFile.Peek > -1 Then
+								srInputFile.ReadLine()
+							End If
+						Else
+							' Skip the first line (the header line) on subsequent files
+							bSkipFirstLine = True
+						End If
 
-            Next
-            inputFile.Close()
+						Do While srInputFile.Peek > -1
+							inpLine = srInputFile.ReadLine()
+							If Not inpLine Is Nothing Then
+								swConcatenatedFile.WriteLine(inpLine)
+							End If
+						Loop
+
+					End Using
+
+				Next
+
+			End Using
 
         Catch E As Exception
             ' Let the user know what went wrong.

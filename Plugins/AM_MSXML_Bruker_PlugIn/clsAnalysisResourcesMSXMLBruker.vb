@@ -19,10 +19,7 @@ Public Class clsAnalysisResourcesMSXMLBruker
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         'Get input data file
         Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")

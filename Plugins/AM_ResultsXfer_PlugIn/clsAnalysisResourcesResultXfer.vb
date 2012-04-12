@@ -7,8 +7,8 @@
 ' Last modified 10/30/2008
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
+
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsAnalysisResourcesResultXfer
 	Inherits clsAnalysisResources
@@ -35,7 +35,7 @@ Public Class clsAnalysisResourcesResultXfer
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
 	''' <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

@@ -14,12 +14,9 @@ Public Class clsAnalysisResourcesMSAlign
 
 	Public Const MSDECONV_MSALIGN_FILE_SUFFIX As String = "_msdeconv.msalign"
 
-	Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim FileToGet As String
-
-		' Clear out list of files to delete or keep when packaging the results
-		clsGlobal.ResetFilesToDeleteOrKeep()
 
 		' Make sure the machine has enough free memory to run MSAlign
 		If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
@@ -44,7 +41,7 @@ Public Class clsAnalysisResourcesMSAlign
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
-		clsGlobal.FilesToDelete.Add(FileToGet)
+		m_jobParams.AddResultFileToSkip(FileToGet)
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

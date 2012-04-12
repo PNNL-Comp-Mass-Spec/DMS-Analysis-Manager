@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Mage;
 using MageExtExtractionFilters;
 using MageDisplayLib;
@@ -131,7 +129,7 @@ namespace AnalysisManager_Mage_PlugIn {
                 string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, mResultsDBFileName);
                 if (File.Exists(priorResultsDBFilePath)) {
                     string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-                    File.Copy(priorResultsDBFilePath, workingFilePath);
+                    File.Copy(priorResultsDBFilePath, workingFilePath, true);
                 }
             }
         }

@@ -295,20 +295,20 @@ Public Class clsDtaGenMainProcess
 
         'Note: Defaults are used if certain parameters are not present in m_JobParams
 
-        ScanStart = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "ScanStart", CInt(1))
-        ScanStop = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "ScanStop", CInt(999999))
+		ScanStart = m_JobParams.GetJobParameter("ScanStart", CInt(1))
+		ScanStop = m_JobParams.GetJobParameter("ScanStop", CInt(999999))
 
 		' Note: Set MaxIntermediateScansWhenGrouping to 0 to disable grouping
-        MaxIntermediateScansWhenGrouping = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "MaxIntermediateScansWhenGrouping", CInt(1))
+		MaxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", CInt(1))
 
-        MWLower = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "MWStart", "200")
-        MWUpper = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "MWStop", "5000")
-        IonCount = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "IonCount", "35")
-        MassTol = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "MassTol", "3")
+		MWLower = m_JobParams.GetJobParameter("MWStart", "200")
+		MWUpper = m_JobParams.GetJobParameter("MWStop", "5000")
+		IonCount = m_JobParams.GetJobParameter("IonCount", "35")
+		MassTol = m_JobParams.GetJobParameter("MassTol", "3")
 
-        CreateDefaultCharges = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "CreateDefaultCharges", True)
-        ExplicitChargeStart = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "ExplicitChargeStart", CShort(0))
-        ExplicitChargeEnd = AnalysisManagerBase.clsGlobal.GetJobParameter(m_JobParams, "ExplicitChargeEnd", CShort(0))
+		CreateDefaultCharges = m_JobParams.GetJobParameter("CreateDefaultCharges", True)
+		ExplicitChargeStart = m_JobParams.GetJobParameter("ExplicitChargeStart", CShort(0))
+		ExplicitChargeEnd = m_JobParams.GetJobParameter("ExplicitChargeEnd", CShort(0))
 
 		'Get the maximum number of scans in the file
         m_MaxScanInFile = GetMaxScan(RawFile)
@@ -379,15 +379,15 @@ Public Class clsDtaGenMainProcess
 
                 LocScanStart = ScanStart
 
-                If m_RunningExtractMSn AndAlso clsGlobal.CBoolSafe(m_MgrParams.GetParam("UseDTALooping")) Then
-                    If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
-                        LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
-                    Else
-                        LocScanStop = ScanStop
-                    End If
-                Else
-                    LocScanStop = ScanStop
-                End If
+				If m_RunningExtractMSn AndAlso m_MgrParams.GetParam("UseDTALooping", False) Then
+					If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
+						LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
+					Else
+						LocScanStop = ScanStop
+					End If
+				Else
+					LocScanStop = ScanStop
+				End If
 
                 'Loop until no more .dta files are created or ScanStop is reached
                 Do While (LocScanStart <= ScanStop)
@@ -553,7 +553,7 @@ Public Class clsDtaGenMainProcess
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        AnalysisManagerBase.clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_MgrParams, m_DebugLevel)
+		clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_MgrParams, m_DebugLevel)
 
         ' Count the number of .Dta files (only count the files every 10 seconds)
         If System.DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 10 Then

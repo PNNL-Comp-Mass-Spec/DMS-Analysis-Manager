@@ -79,7 +79,7 @@ Public Class clsRemotingTools
 		'Start the remoting service via a ProgRunner
 		Try
 			m_Decon2LSRunner = New clsProgRunner
-            strOutputFolderPath = System.IO.Path.GetDirectoryName(clsGlobal.AppFilePath)
+			strOutputFolderPath = clsGlobal.GetAppFolderPath()
             If strOutputFolderPath.IndexOf(" ") >= 0 Then
                 strOutputFolderPath = """" & strOutputFolderPath & """"
             End If
@@ -88,12 +88,12 @@ Public Class clsRemotingTools
                 .Arguments = "-o" & strOutputFolderPath & " -p" & m_TcpPort.ToString
                 .CreateNoWindow = False
                 .MonitoringInterval = 100                'Milliseconds
-                .Program = Path.Combine(Path.GetDirectoryName(clsGlobal.AppFilePath), SVR_FILE_NAME)
+				.Program = Path.Combine(clsGlobal.GetAppFolderPath(), SVR_FILE_NAME)
                 '				.RegisterEventLogger(m_Logger)
                 'Research                .RegisterExceptionLogger()
                 .Repeat = False
                 .RepeatHoldOffTime = 0
-                .WorkDir = Path.GetDirectoryName(clsGlobal.AppFilePath)
+				.WorkDir = clsGlobal.GetAppFolderPath()
                 .NotifyOnException = True
             End With
 			m_Decon2LSRunner.StartAndMonitorProgram()
@@ -118,7 +118,7 @@ Public Class clsRemotingTools
 		'Stop the remoting server process, which releases file lock on raw data file
 		'Stopping server is accomplished by deleting the flag file that was created by the server process
 		Try
-			File.Delete(Path.Combine(Path.GetDirectoryName(clsGlobal.AppFilePath), FLAG_FILE_NAME))
+			File.Delete(Path.Combine(clsGlobal.GetAppFolderPath(), FLAG_FILE_NAME))
 		Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRemotingTools.StopSvr(), Problem deleting remoting server flag file: " & ex.Message)
             Return False

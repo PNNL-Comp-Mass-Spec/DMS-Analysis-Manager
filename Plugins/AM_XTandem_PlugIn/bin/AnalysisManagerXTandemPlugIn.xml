@@ -23,12 +23,6 @@ AnalysisManagerXTandemPlugIn
  </summary>
 	<param name="strConsoleOutputFilePath"></param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ValidateCDTAFile">
-	<summary>
- Make sure the _DTA.txt file exists and has at least one spectrum in it
- </summary>
-	<returns>True if success; false if failure</returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT.ZipMainOutputFile">
 	<summary>
  Zips concatenated XML output file

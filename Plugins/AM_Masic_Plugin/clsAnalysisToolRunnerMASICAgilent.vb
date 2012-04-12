@@ -11,7 +11,6 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerMASICAgilent
 	Inherits clsAnalysisToolRunnerMASICBase
@@ -41,11 +40,11 @@ Public Class clsAnalysisToolRunnerMASICAgilent
 
         ' Determine the path to the .Raw file
         strMgfFileName = m_Dataset & ".mgf"
-        strInputFilePath = AnalysisManagerBase.clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName)
+        strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName)
 
         If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
             ' Unable to resolve the file path
-            m_ErrorMessage = "Could not find " & strMgfFileName & " or " & strMgfFileName & AnalysisManagerBase.clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
+            m_ErrorMessage = "Could not find " & strMgfFileName & " or " & strMgfFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

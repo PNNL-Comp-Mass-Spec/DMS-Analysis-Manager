@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.IO;
 using AnalysisManagerBase;
@@ -14,9 +13,6 @@ namespace AnalysisManager_AScore_PlugIn
 
         public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
         {
-            //Clear out list of files to delete or keep when packaging the blnSuccesss
-            clsGlobal.ResetFilesToDeleteOrKeep();
-
             bool blnSuccess = true;
             blnSuccess = RunAScoreGetResources();
 
@@ -98,7 +94,7 @@ namespace AnalysisManager_AScore_PlugIn
                 FileNameExt = row.Split(':');
                 if (FileNameExt[2] == "nocopy")
                 {
-                    clsGlobal.m_FilesToDeleteExt.Add(FileNameExt[1]);
+					m_jobParams.AddResultFileExtensionToSkip(FileNameExt[1]);                    
                 }
             }
 
@@ -226,19 +222,12 @@ namespace AnalysisManager_AScore_PlugIn
 
         protected string GetDatasetID(string DatasetName)
         {
-            string Dataset_ID = "";
-            string[] Dataset_DatasetID = null;
-
-            foreach (string Item in clsGlobal.m_DatasetInfoList)
-            {
-                Dataset_DatasetID = Item.Split(':');
-                if (Dataset_DatasetID[0] == DatasetName)
-                {
-                    return Dataset_DatasetID[1];
-                }
-            }
-
-            return Dataset_ID;
+			int DatasetID = 0;
+				
+			if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
+				return DatasetID.ToString();
+			else
+				return string.Empty;
 
         }
 

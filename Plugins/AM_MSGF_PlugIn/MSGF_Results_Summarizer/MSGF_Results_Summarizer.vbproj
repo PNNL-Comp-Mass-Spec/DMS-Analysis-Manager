@@ -51,8 +51,8 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnalysisManagerProg">
-      <HintPath>..\..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    <Reference Include="PRISM">
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\..\AM_Common\PHRPReader.dll</HintPath>

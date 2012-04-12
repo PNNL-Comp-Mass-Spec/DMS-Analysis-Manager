@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <HintPath>lib\log4net.dll</HintPath>
     </Reference>
@@ -39,6 +42,10 @@
     </Reference>
     <Reference Include="MageExtExtractionFilters">
       <HintPath>lib\MageExtExtractionFilters.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM, Version=2.0.4416.29345, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -57,12 +64,6 @@
     <Compile Include="clsAnalysisToolRunnerMultiAlignAggregator.cs" />
     <Compile Include="clsMultiAlignMage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\AM_Program\AnalysisManagerProg.vbproj">
-      <Project>{A939D260-136F-4400-8750-1B3E9E57F2F8}</Project>
-      <Name>AnalysisManagerProg</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

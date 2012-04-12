@@ -21,9 +21,6 @@ namespace AM_IDM_Plugin
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
 
-                    //Clear out list of files to delete or keep when packaging the blnSuccesss
-                    clsGlobal.ResetFilesToDeleteOrKeep();
-
                     string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
                     string analysisType = m_jobParams.GetParam("AnalysisType");
 

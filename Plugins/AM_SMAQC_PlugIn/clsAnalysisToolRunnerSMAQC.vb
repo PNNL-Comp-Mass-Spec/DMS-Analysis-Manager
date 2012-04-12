@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+
 Public Class clsAnalysisToolRunnerSMAQC
 	Inherits clsAnalysisToolRunnerBase
 
@@ -123,7 +124,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End With
 
 			' We will delete the console output file later since it has the same content as the log file
-			clsGlobal.FilesToDelete.Add(SMAQC_CONSOLE_OUTPUT)
+			m_jobParams.AddResultFileToSkip(SMAQC_CONSOLE_OUTPUT)
 
 			m_progress = PROGRESS_PCT_SMAQC_STARTING
 
@@ -149,7 +150,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running SMAQC"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
@@ -183,10 +184,10 @@ Public Class clsAnalysisToolRunnerSMAQC
 			RenameSMAQCLogFile()
 
 			' Don't move the AnalysisSummary.txt file to the results folder; it doesn't have any useful information
-			clsGlobal.FilesToDelete.Add("SMAQC_AnalysisSummary.txt")
+			m_jobParams.AddResultFileToSkip("SMAQC_AnalysisSummary.txt")
 
 			' Don't move the parameter file to the results folder, since it's not very informative
-			clsGlobal.FilesToDelete.Add(strParameterFileName)
+			m_jobParams.AddResultFileToSkip(strParameterFileName)
 
 			m_progress = PROGRESS_PCT_COMPLETE
 
@@ -255,7 +256,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 	''			strSourcePath = System.IO.Path.Combine(strSourceFolder, strSourceFileName)
 	''			System.IO.File.Copy(strSourcePath, System.IO.Path.Combine(m_WorkDir, strSourceFileName), True)
 
-	''			clsGlobal.FilesToDelete.Add(strSourceFileName)
+	''			m_jobParams.AddResultFileToSkip(strSourceFileName)
 	''		Next
 
 	''	Catch ex As Exception
@@ -355,9 +356,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' Bump up the debug level if less than 2
 		If m_DebugLevel < 2 Then m_DebugLevel = 2
 
-		If clsGlobal.FilesToDelete.Contains(SMAQC_CONSOLE_OUTPUT) Then
-			clsGlobal.FilesToDelete.Remove(SMAQC_CONSOLE_OUTPUT)
-		End If
+		m_jobParams.RemoveResultFileToSkip(SMAQC_CONSOLE_OUTPUT)
 
 		' Try to save whatever files are in the work directory
 		Dim strFolderPathToArchive As String
@@ -913,7 +912,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End If
 
 			' Add the _SMAQC.txt file to .FilesToDelete since we only want to keep the Zipped version
-			clsGlobal.FilesToDelete.Add(ResultsFileName)
+			m_jobParams.AddResultFileToSkip(ResultsFileName)
 
 		Catch ex As Exception
 			Dim Msg As String = "clsAnalysisToolRunnerSMAQC.ZipSMAQCResults, Exception zipping output files, job " & m_JobNum & ": " & ex.Message

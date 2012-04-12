@@ -11,14 +11,6 @@ AnalysisManagerMsXmlGenPlugIn
  Constructor
  </summary>
 	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
-	<summary>
- Initializes class
- </summary>
-	<param name="mgrParams">Object containing manager parameters</param>
-	<param name="jobParams">Object containing job parameters</param>
-	<param name="StatusTools">Object for updating status file as job progresses</param>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.RunTool">
 	<summary>
  Runs ReadW tool

@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using AnalysisManagerBase;
 using System;
-using Ape;
 using log4net;
 using System.Collections.Generic;
 using System.Data.SqlClient;

@@ -8,8 +8,8 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
-Imports System.Collections.Specialized
+Option Strict On
+
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesSeq
@@ -398,13 +398,10 @@ Public Class clsAnalysisResourcesSeq
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim LocOrgDBFolder As String
 		Dim blnExistingOutFiles As Boolean = False
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         ' Look for existing .Out files in the Failed Results Folder; 
         ' if any are found, we'll post an entry to the log
@@ -445,9 +442,9 @@ Public Class clsAnalysisResourcesSeq
 		End If
 
 		'Add all the extensions of the files to delete after run
-		clsGlobal.m_FilesToDeleteExt.Add("_dta.zip") 'Zipped DTA
-		clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-		clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+		m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+		m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+		m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
 		'All finished
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -463,8 +460,8 @@ Public Class clsAnalysisResourcesSeq
     ''' <remarks></remarks>
     Private Function VerifyDatabase(ByVal OrgDBName As String, ByVal OrgDBPath As String) As Boolean
 
-        Dim HostFile As String = m_mgrParams.GetParam("hostsfilelocation")
-        Dim Nodes As StringCollection
+		Dim HostFilePath As String = m_mgrParams.GetParam("hostsfilelocation")
+		Dim Nodes As System.Collections.Generic.List(Of String)
         Dim NodeDbLoc As String = m_mgrParams.GetParam("nodedblocation")
 
         Dim strLogMessage As String
@@ -477,20 +474,19 @@ Public Class clsAnalysisResourcesSeq
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & System.IO.Path.GetFileName(OrgDBName))
 
         'Get the list of nodes from the hosts file
-        Nodes = GetHostList(HostFile)
-        If Nodes Is Nothing Then
-            If HostFile Is Nothing Then HostFile = ""
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine node names from host file: " & HostFile)
-            Return False
-        End If
+		Nodes = GetHostList(HostFilePath)
+		If Nodes Is Nothing OrElse Nodes.Count = 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine node names from host file: " & HostFilePath)
+			Return False
+		End If
 
 
         ' Define the path to the database on the head node
         Dim OrgDBFilePath As String = System.IO.Path.Combine(OrgDBPath, OrgDBName)
-        If Not File.Exists(OrgDBFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Database file can't be found on master")
-            Return False
-        End If
+		If Not System.IO.File.Exists(OrgDBFilePath) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Database file can't be found on master")
+			Return False
+		End If
 
         ' For each node, verify specified database file is present and matches file on host
         ' Allow up to 25% of the nodes to fail (they should just get skipped when the Sequest search occurs)
@@ -559,47 +555,48 @@ Public Class clsAnalysisResourcesSeq
     ''' <summary>
     ''' Reads the list of nodes from the hosts config file
     ''' </summary>
-    ''' <param name="HostFileNameLoc">Name of hosts file on cluster head node</param>
-    ''' <returns>returns a string collection containing IP addresses for each node</returns>
-    ''' <remarks></remarks>
-    Private Function GetHostList(ByVal HostFileNameLoc As String) As StringCollection
+	''' <param name="HostFilePath">Name of hosts file on cluster head node</param>
+	''' <returns>returns a string collection containing IP addresses for each node</returns>
+	''' <remarks></remarks>
+	Private Function GetHostList(ByVal HostFilePath As String) As System.Collections.Generic.List(Of String)
 
-        Dim NodeColl As New StringCollection
-        Dim InpLine As String
-        Dim LineFields() As String
-        Dim Separators() As String = {" "}
+		Dim lstNodes As New System.Collections.Generic.List(Of String)
+		Dim InpLine As String
+		Dim LineFields() As String
+		Dim Separators() As String = {" "}
 
-        Try
-            Dim HostFile As StreamReader = File.OpenText(HostFileNameLoc)
-            InpLine = HostFile.ReadLine
-            While Not InpLine Is Nothing
+		Try
+			Using srHostFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(HostFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-                'Read the line from the file and check to see if it contains a node IP address. If it does, add
-                '	the IP address to the collection of addresses
-                If InpLine.IndexOf("#") < 0 Then        'Verify the line isn't a comment line
-                    'Parse the node name and add it to the collection
-                    LineFields = InpLine.Split(Separators, StringSplitOptions.RemoveEmptyEntries)
-                    If LineFields.GetLength(0) >= 1 Then
-                        If NodeColl Is Nothing Then NodeColl = New StringCollection
-                        NodeColl.Add(LineFields(0))
-                    End If
-                End If
-                InpLine = HostFile.ReadLine
-            End While
-            HostFile.Close()
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading cluster config file '" & HostFileNameLoc & "': " & Err.Message)
-            Return Nothing
-        End Try
+				Do While srHostFile.Peek > -1
+					'Read the line from the file and check to see if it contains a node IP address. 
+					' If it does, add the IP address to the collection of addresses
+					InpLine = srHostFile.ReadLine
 
-        'Return the list of nodes, if any
-        If NodeColl.Count < 1 Then
-            Return Nothing
-        Else
-            Return NodeColl
-        End If
+					'Verify the line isn't a comment line
+					If Not String.IsNullOrWhiteSpace(InpLine) AndAlso Not InpLine.Contains("#") Then
+						'Parse the node name and add it to the collection
+						LineFields = InpLine.Split(Separators, StringSplitOptions.RemoveEmptyEntries)
+						If LineFields.Length >= 1 Then
+							If Not lstNodes.Contains(LineFields(0)) Then
+								lstNodes.Add(LineFields(0))
+							End If
+						End If
+					End If
 
-    End Function
+				Loop
+
+			End Using
+
+		Catch Err As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading cluster config file '" & HostFilePath & "': " & Err.Message)
+			Return Nothing
+		End Try
+
+		'Return the list of nodes, if any
+		Return lstNodes
+
+	End Function
 
     Private Function VerifyFilesMatchSizeAndDate(ByVal FileA As String, ByVal FileB As String) As Boolean
 
@@ -687,20 +684,20 @@ Public Class clsAnalysisResourcesSeq
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " & DestPath)
         End If
 
-        Dim DestFile As String = Path.Combine(DestPath, System.IO.Path.GetFileName(OrgDBFilePath))
+		Dim DestFile As String = System.IO.Path.Combine(DestPath, System.IO.Path.GetFileName(OrgDBFilePath))
         Try
-            If File.Exists(DestFile) Then
-                'File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
-                If VerifyFilesMatchSizeAndDate(OrgDBFilePath, DestFile) Then
-                    blnFileAlreadyExists = True
-                    CopyNeeded = False
-                Else
-                    CopyNeeded = True
-                End If
-            Else
-                'File wasn't on node, we'll have to copy it
-                CopyNeeded = True
-            End If
+			If System.IO.File.Exists(DestFile) Then
+				'File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
+				If VerifyFilesMatchSizeAndDate(OrgDBFilePath, DestFile) Then
+					blnFileAlreadyExists = True
+					CopyNeeded = False
+				Else
+					CopyNeeded = True
+				End If
+			Else
+				'File wasn't on node, we'll have to copy it
+				CopyNeeded = True
+			End If
 
             'Does the file need to be copied to the node?
             If CopyNeeded Then
@@ -708,7 +705,7 @@ Public Class clsAnalysisResourcesSeq
                 If m_DebugLevel > 3 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database file " & DestFile)
                 End If
-                File.Copy(OrgDBFilePath, DestFile, True)
+				System.IO.File.Copy(OrgDBFilePath, DestFile, True)
                 'Now everything is in its proper place, so return
                 Return True
             Else

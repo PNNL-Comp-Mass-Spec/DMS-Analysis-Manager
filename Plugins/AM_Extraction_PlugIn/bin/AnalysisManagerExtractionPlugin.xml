@@ -6,18 +6,35 @@ AnalysisManagerExtractionPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile@)">
+<member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams)">
 	<summary>
  Constructor
  </summary>
 	<param name="MgrParams">IMgrParams object containing manager settings</param>
 	<param name="JobParams">IJobParams object containing job parameters</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.PerformExtraction">
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String)">
 	<summary>
- Performs peptide extraction by calling extractor DLL
+ Converts Sequest, X!Tandem, or Inspect output file to a flat file
  </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Converts Sequest, X!Tandem, or Inspect output file to a flat file
+ </summary>
+	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.MakeTextOutputFiles(System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Makes flat text file from PeptideSearchResultsFileName
+ </summary>
+	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction.GetResources">
 	<summary>
@@ -43,6 +60,11 @@ AnalysisManagerExtractionPlugin
  Retrieves misc files (ie, ModDefs) needed for extraction
  </summary>
 	<returns>IJobParams.CloseOutType specifying results</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideProphetWrapper.CmdRunner_LoopWaiting">
+	<summary>
+ Event handler for CmdRunner.LoopWaiting event
+ </summary>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerExtractionPlugin.clsExtractToolRunner.RunTool">
 	<summary>
@@ -96,53 +118,18 @@ AnalysisManagerExtractionPlugin
  Stores the tool version info in the database
  </summary>
 	<remarks></remarks>
-</member><member name="P:AnalysisManagerExtractionPlugin.My.Resources.Resources.ResourceManager">
-	<summary>
-  Returns the cached ResourceManager instance used by this class.
-</summary>
-</member><member name="P:AnalysisManagerExtractionPlugin.My.Resources.Resources.Culture">
-	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
-</summary>
-</member><member name="T:AnalysisManagerExtractionPlugin.My.Resources.Resources">
-	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
-</summary>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams)">
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.#ctor(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile@)">
 	<summary>
  Constructor
  </summary>
 	<param name="MgrParams">IMgrParams object containing manager settings</param>
 	<param name="JobParams">IJobParams object containing job parameters</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String)">
+</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideExtractWrapper.PerformExtraction">
 	<summary>
- Converts Sequest, X!Tandem, or Inspect output file to a flat file
+ Performs peptide extraction by calling extractor DLL
  </summary>
-	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String,System.Boolean,System.Boolean)">
-	<summary>
- Converts Sequest, X!Tandem, or Inspect output file to a flat file
- </summary>
-	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.MakeTextOutputFiles(System.String,System.Boolean,System.Boolean)">
-	<summary>
- Makes flat text file from PeptideSearchResultsFileName
- </summary>
-	<returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.CmdRunner_LoopWaiting">
-	<summary>
- Event handler for CmdRunner.LoopWaiting event
- </summary>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerExtractionPlugin.clsPeptideProphetWrapper.CmdRunner_LoopWaiting">
-	<summary>
- Event handler for CmdRunner.LoopWaiting event
- </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
 	<remarks></remarks>
 </member>
 </members>

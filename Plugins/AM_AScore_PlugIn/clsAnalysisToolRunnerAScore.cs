@@ -216,7 +216,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 			try
 			{
-				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("AScore").GetName();
+				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("AScore_DLL").GetName();
 
 				string strNameAndVersion = null;
 				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();

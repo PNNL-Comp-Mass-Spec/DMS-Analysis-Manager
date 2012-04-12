@@ -10,9 +10,7 @@ Option Strict On
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports PRISM.Files
 Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsGlobal
 
 Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Inherits clsAnalysisToolRunnerBase
@@ -372,14 +370,14 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
             If Not MyBase.ZipFile(FoundFiles(0), True, System.IO.Path.Combine(m_WorkDir, ZipFileName)) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping " & System.IO.Path.GetFileName(FoundFiles(0)) & ", job " & m_JobNum)
-                m_message = AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
+				m_message = clsGlobal.AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
 
         'Add the current job data to the summary file
         Try

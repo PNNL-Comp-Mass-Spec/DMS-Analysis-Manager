@@ -111,12 +111,6 @@ AnalysisManagerXTandemHPCPlugIn
 	</summary>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ValidateCDTAFile">
-	<summary>
- Make sure the _DTA.txt file exists and has at lease one spectrum in it
- </summary>
-	<returns></returns>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerXTandemHPCPlugIn.clsAnalysisToolRunnerXTHPC.ZipMainOutputFile">
 	<summary>
  Zips concatenated XML output file

@@ -2,7 +2,6 @@ Option Strict On
 
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 Imports AnalysisManagerBase
-Imports PRISM.Files.clsFileTools
 
 Public Class clsAnalysisResourcesInspResultsAssembly
     Inherits clsAnalysisResources
@@ -14,79 +13,76 @@ Public Class clsAnalysisResourcesInspResultsAssembly
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
-        Dim numClonedSteps As String
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
+		Dim numClonedSteps As String
 
-        Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
-        Dim transferFolderName As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
-        Dim zippedResultName As String = DatasetName & "_inspect.zip"
-        Dim searchLogResultName As String = "InspectSearchLog.txt"
+		Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
+		Dim transferFolderName As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
+		Dim zippedResultName As String = DatasetName & "_inspect.zip"
+		Dim searchLogResultName As String = "InspectSearchLog.txt"
 
-        transferFolderName = System.IO.Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))
+		transferFolderName = System.IO.Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))
 
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
+		'Retrieve Fasta file (used by the PeptideToProteinMapper)
+		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Retrieve Fasta file (used by the PeptideToProteinMapper)
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'Retrieve param file
+		If Not RetrieveGeneratedParamFile( _
+		 m_jobParams.GetParam("ParmFileName"), _
+		 m_jobParams.GetParam("ParmFileStoragePath"), _
+		 m_WorkingDir) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Retrieve param file
-        If Not RetrieveGeneratedParamFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_WorkingDir) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		' Retrieve the Inspect Input Params file
+		If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName, m_WorkingDir) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        ' Retrieve the Inspect Input Params file
-        If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName, m_WorkingDir) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
+		If [String].IsNullOrEmpty(numClonedSteps) Then
+			' This is not a parallelized job
+			' Retrieve the zipped Inspect result file
+			If Not RetrieveFile(zippedResultName, transferFolderName, m_WorkingDir) Then
+				If m_DebugLevel >= 3 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-        numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
-        If [String].IsNullOrEmpty(numClonedSteps) Then
-            ' This is not a parallelized job
-            ' Retrieve the zipped Inspect result file
-            If Not RetrieveFile(zippedResultName, transferFolderName, m_WorkingDir) Then
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
-                End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			'Unzip Inspect result file
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file")
+			End If
+			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, zippedResultName), m_WorkingDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", False) Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Inspect result file unzipped")
+				End If
+			End If
 
-            'Unzip Inspect result file
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file")
-            End If
-            If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, zippedResultName), m_WorkingDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", False) Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Inspect result file unzipped")
-                End If
-            End If
+			' Rtrieve the Inspect search log file
+			If Not RetrieveFile(searchLogResultName, transferFolderName, m_WorkingDir) Then
+				If m_DebugLevel >= 3 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-            ' Rtrieve the Inspect search log file
-            If Not RetrieveFile(searchLogResultName, transferFolderName, m_WorkingDir) Then
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
-                End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			m_jobParams.AddResultFileExtensionToSkip(searchLogResultName)
 
-            clsGlobal.m_FilesToDeleteExt.Add(searchLogResultName)
+		Else
+			' This is a parallelized job
+			' Retrieve multi inspect result files
+			If Not RetrieveMultiInspectResultFiles() Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		End If
 
-        Else
-            ' This is a parallelized job
-            ' Retrieve multi inspect result files
-            If Not RetrieveMultiInspectResultFiles() Then
-                'Errors were reported in function call, so just return
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        End If
+		'All finished
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-        'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
+	End Function
 
     ''' <summary>
     ''' Retrieves inspect and inspect log and error files
@@ -135,12 +131,12 @@ Public Class clsAnalysisResourcesInspResultsAssembly
                 End If
                 intFileCopyCount += 1
 
-                ' Update the list of files to delete from the server
-                clsGlobal.m_ServerFilesToDelete.Add(System.IO.Path.Combine(transferFolderName, InspectResultsFile))
-                clsGlobal.m_ServerFilesToDelete.Add(System.IO.Path.Combine(transferFolderName, dtaFilename))
+				' Update the list of files to delete from the server
+				m_jobParams.AddServerFileToDelete(System.IO.Path.Combine(transferFolderName, InspectResultsFile))
+				m_jobParams.AddServerFileToDelete(System.IO.Path.Combine(transferFolderName, dtaFilename))
 
                 ' Update the list of local files to delete
-                clsGlobal.FilesToDelete.Add(InspectResultsFile)
+                m_jobParams.AddResultFileToSkip(InspectResultsFile)
             End If
 
             ' Copy the various log files
@@ -168,10 +164,10 @@ Public Class clsAnalysisResourcesInspResultsAssembly
                     intFileCopyCount += 1
 
                     ' Update the list of files to delete from the server
-                    clsGlobal.m_ServerFilesToDelete.Add(System.IO.Path.Combine(transferFolderName, strFileName))
+					m_jobParams.AddServerFileToDelete(System.IO.Path.Combine(transferFolderName, strFileName))
 
                     ' Update the list of local files to delete
-                    clsGlobal.FilesToDelete.Add(strFileName)
+                    m_jobParams.AddResultFileToSkip(strFileName)
                 End If
 
             Next intLogFileIndex

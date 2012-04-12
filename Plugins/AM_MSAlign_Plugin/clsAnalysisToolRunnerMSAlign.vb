@@ -152,7 +152,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign")
 
 			' Lookup the amount of memory to reserve for Java; default to 2 GB 
-			intJavaMemorySize = clsGlobal.GetJobParameter(m_jobParams, "MSAlignJavaMemorySize", 2000)
+			intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000)
 			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 			'Set up and execute a program runner to run MSAlign
@@ -199,7 +199,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running MSAlign"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
@@ -1017,7 +1017,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 					If Not blnProcessingError Then
 						' This is the first missing file; update the base-class comment
-						m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+						m_message = clsGlobal.AppendToComment(m_message, Msg)
 					End If
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & strResultFilePath & ")" & ", job " & m_JobNum)
@@ -1110,7 +1110,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 			If Not blnValidFile Then
 				Dim Msg As String
 				Msg = "MSAlign_ResultTable.txt file is empty"
-				m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 				Return False

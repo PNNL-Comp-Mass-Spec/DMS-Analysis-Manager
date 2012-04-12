@@ -9,8 +9,6 @@
 
 Imports AnalysisManagerBase
 Imports Decon2LS.Readers
-Imports System.Threading
-Imports System.Exception
 Imports Decon2LSRemoter
 
 Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
@@ -86,12 +84,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Select Case resFileType
                     Case Decon2LSResultFileType.DECON2LS_ISOS
                         ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
-                        clsGlobal.FilesToDelete.Add(ResultsFile)
+                        m_jobParams.AddResultFileToSkip(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Decon2LSResultFileType.DECON2LS_SCANS
                         ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
-                        clsGlobal.FilesToDelete.Add(ResultsFile)
+                        m_jobParams.AddResultFileToSkip(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Else
@@ -105,7 +103,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                     If resFileType = Decon2LSResultFileType.DECON2LS_SCANS Then
                         ' Be sure to delete the _#_peaks.dat file (which Decon2LS likely created, but it doesn't contain any useful information)
                         ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
-                        clsGlobal.FilesToDelete.Add(ResultsFile)
+                        m_jobParams.AddResultFileToSkip(ResultsFile)
                     End If
                 Else
                     intLinesRead = 0
@@ -170,9 +168,9 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             IsosFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
             PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
-            clsGlobal.m_ExceptionFiles.Add(ScansFilePath)
-            clsGlobal.m_ExceptionFiles.Add(IsosFilePath)
-            clsGlobal.m_ExceptionFiles.Add(PeaksFilePath)
+            m_jobParams.AddResultFileToKeep(ScansFilePath)
+            m_jobParams.AddResultFileToKeep(IsosFilePath)
+            m_jobParams.AddResultFileToKeep(PeaksFilePath)
 
             If blnLoopingEnabled Then
                 If m_DebugLevel >= 3 Then
@@ -339,42 +337,42 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim intLoopNum As Integer
         Dim blnDecon2LSError As Boolean
 
-        clsGlobal.FilesToDelete.Add(PARAM_FILE_NAME_TEMP)
+        m_jobParams.AddResultFileToSkip(PARAM_FILE_NAME_TEMP)
 
-        If clsGlobal.CBoolSafe(m_jobParams.GetParam("UseDecon2LSLooping"), False) Then
-            blnLoopingEnabled = True
+		If m_jobParams.GetJobParameter("UseDecon2LSLooping", False) Then
+			blnLoopingEnabled = True
 
-            intLoopChunkSize = clsGlobal.CIntSafe(m_jobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
-            If intLoopChunkSize < 100 Then intLoopChunkSize = 100
+			intLoopChunkSize = clsGlobal.CIntSafe(m_jobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
+			If intLoopChunkSize < 100 Then intLoopChunkSize = 100
 
-            ' Read the ScanStart and ScanStop values from the parameter file
-            If Not GetScanValues(strParamFile, ScanStart, ScanStop) Then
-                ScanStart = 0
-                ScanStop = MAX_SCAN_STOP
-            End If
+			' Read the ScanStart and ScanStop values from the parameter file
+			If Not GetScanValues(strParamFile, ScanStart, ScanStop) Then
+				ScanStart = 0
+				ScanStop = MAX_SCAN_STOP
+			End If
 
-            If ScanStart < 0 Then ScanStart = 0
-            If ScanStop > MAX_SCAN_STOP Then
-                ScanStop = MAX_SCAN_STOP
-            End If
+			If ScanStart < 0 Then ScanStart = 0
+			If ScanStop > MAX_SCAN_STOP Then
+				ScanStop = MAX_SCAN_STOP
+			End If
 
-            'Set up parameters to loop through scan ranges
-            LocScanStart = ScanStart
+			'Set up parameters to loop through scan ranges
+			LocScanStart = ScanStart
 
-            If ScanStop > (LocScanStart + intLoopChunkSize - 1) Then
-                LocScanStop = LocScanStart + intLoopChunkSize - 1
-            Else
-                LocScanStop = ScanStop
-            End If
+			If ScanStop > (LocScanStart + intLoopChunkSize - 1) Then
+				LocScanStop = LocScanStart + intLoopChunkSize - 1
+			Else
+				LocScanStop = ScanStop
+			End If
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
-            End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
+			End If
 
-        Else
-            LocScanStart = 0
-            LocScanStop = MAX_SCAN_STOP
-        End If
+		Else
+			LocScanStart = 0
+			LocScanStop = MAX_SCAN_STOP
+		End If
 
         ' Get file type of the raw data file
         Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType) 'Decon2LS.Readers.FileType.BRUKER 
@@ -455,7 +453,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             End Try
 
             'Start Decon2LS via the subclass in a separate thread
-            Dim Decon2LSThread As New Thread(AddressOf StartDecon2LS)
+			Dim Decon2LSThread As New System.Threading.Thread(AddressOf StartDecon2LS)
             Decon2LSThread.Start()
 
             'Wait for Decon2LS to finish
@@ -554,7 +552,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Return FileType.MICROMASSRAWDATA
             Case "zipped_s_folders"
                 If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
-                    Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                    Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
                     'Check for "0.ser" folder
                     If Not String.IsNullOrEmpty(NewSourceFolder) Then
                         ' _StoragePathInfo.txt file is present
@@ -660,7 +658,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Case "dot_raw_folder"
                 Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & ".raw/_FUNC001.DAT"
             Case "zipped_s_folders"
-                Dim NewSourceFolder As String = AnalysisManagerBase.clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
                 'Check for "0.ser" folder
                 If Not String.IsNullOrEmpty(NewSourceFolder) Then
                     Return NewSourceFolder

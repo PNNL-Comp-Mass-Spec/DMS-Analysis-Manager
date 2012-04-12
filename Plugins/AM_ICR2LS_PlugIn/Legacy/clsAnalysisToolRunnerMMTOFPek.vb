@@ -13,17 +13,20 @@ Public Class clsAnalysisToolRunnerMMTOFPek
 
 		Dim ResCode As IJobParams.CloseOutType
 		Dim PekRes As Boolean
-
+		Dim ParamFilePath As String
+	
 		'Start with base class function to get settings information
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-		'Verify a parm file has been specified
-		If Not File.Exists(Path.Combine(m_workdir, m_JobParams.GetParam("parmFileName"))) Then
-			'Parm file wasn't specified, but is required for ICR2LS analysis
-			CleanupFailedJob("Parm file not found")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Verify a param file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
+        If Not System.IO.File.Exists(ParamFilePath) Then
+            'Param file wasn't specified, but is required for ICR-2LS analysis
+            m_message = "ICR-2LS Param file not found"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		'Add handling of settings file info here if it becomes necessary in the future
 		'(Settings file is handled by base class)
@@ -31,7 +34,7 @@ Public Class clsAnalysisToolRunnerMMTOFPek
 		'Assemble the dataset folder name for input to ICR2LS
 		Dim FoundFolders() As String = Directory.GetDirectories(m_WorkDir, "*.raw")
 		If FoundFolders.GetLength(0) <> 1 Then
-			CleanupFailedJob("Unable to find data files in working directory")
+			m_message = "Unable to find data files in working directory"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 		Dim DSNamePath As String = Path.Combine(m_workdir, FoundFolders(0))
@@ -46,13 +49,13 @@ Public Class clsAnalysisToolRunnerMMTOFPek
 		m_JobRunning = True
 		PekRes = m_ICR2LSObj.MakeMMTOFPEKFile(DSNamePath, ParmFileNamePath, OutFileNamePath, FilterNum, SGFilter)
 		If Not PekRes Then
-			CleanupFailedJob("Error creating PEK file")
+			m_message = "Error creating PEK file"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Wait for the job to complete
 		If Not WaitForJobToFinish() Then
-			CleanupFailedJob("Error waiting for PEK job to finish")
+			m_message = "Error waiting for PEK job to finish"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 

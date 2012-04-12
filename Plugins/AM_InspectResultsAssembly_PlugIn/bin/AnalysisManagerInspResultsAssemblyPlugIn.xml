@@ -6,7 +6,19 @@ AnalysisManagerInspResultsAssemblyPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.#ctor">
+<member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
+	<summary>
+ Retrieves files necessary for performance of Sequest analysis
+ </summary>
+	<returns>IJobParams.CloseOutType indicating success or failure</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.RetrieveMultiInspectResultFiles">
+	<summary>
+ Retrieves inspect and inspect log and error files
+ </summary>
+	<returns>TRUE for success, FALSE for error</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.#ctor">
 	<summary>
  Constructor
  </summary>
@@ -17,7 +29,7 @@ AnalysisManagerInspResultsAssemblyPlugIn
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile)">
+</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly.Setup(AnalysisManagerBase.IMgrParams,AnalysisManagerBase.IJobParams,AnalysisManagerBase.IStatusFile,AnalysisManagerBase.clsSummaryFile@)">
 	<summary>
  Initializes class
  </summary>
@@ -78,18 +90,6 @@ AnalysisManagerInspResultsAssemblyPlugIn
  Stores the _inspect_filtered.txt file in _inspect.zip (but renames it to _inspect.txt before storing)
  </summary>
 	<returns></returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.GetResources">
-	<summary>
- Retrieves files necessary for performance of Sequest analysis
- </summary>
-	<returns>IJobParams.CloseOutType indicating success or failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly.RetrieveMultiInspectResultFiles">
-	<summary>
- Retrieves inspect and inspect log and error files
- </summary>
-	<returns>TRUE for success, FALSE for error</returns>
 	<remarks></remarks>
 </member>
 </members>

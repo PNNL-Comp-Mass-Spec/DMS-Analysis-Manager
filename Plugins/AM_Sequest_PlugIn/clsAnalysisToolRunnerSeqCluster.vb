@@ -8,6 +8,8 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
+Option Strict On
+
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerSeqCluster
@@ -43,23 +45,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' </summary>
     ''' <remarks>Does nothing at present</remarks>
     Public Sub New()
-    End Sub
-
-    ''' <summary>
-    ''' Modifies base class Setup method to provide log message appropriate for this class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object providing tools for status file updates</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal StatusTools As IStatusFile)
-
-        MyBase.Setup(mgrParams, jobParams, StatusTools)
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqCluster.Setup()")
-        End If
-
     End Sub
 
     ''' <summary>
@@ -137,7 +122,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         If OutFiles.Length < 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            m_message = AnalysisManagerBase.clsGlobal.AppendToComment(m_message, "No OUT files created")
+            m_message = clsGlobal.AppendToComment(m_message, "No OUT files created")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         End If
 
@@ -152,7 +137,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End If
 
         'Add .out extension to list of file extensions to delete
-        clsGlobal.m_FilesToDeleteExt.Add(".out")
+        m_JobParams.AddResultFileExtensionToSkip(".out")
 
         'Add cluster statistics to summary file
         AddClusterStatsToSummaryFile()
@@ -280,11 +265,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
         'End If
 
         'Write the statistics to the summary file
-        clsSummaryFile.Add(vbCrLf & "Cluster node machine count: " & NumNodeMachines.ToString)
-        clsSummaryFile.Add("Sequest process count: " & NumSlaveProcesses.ToString)
-        clsSummaryFile.Add("Searched file count: " & SearchedFileCount.ToString)
-        clsSummaryFile.Add("Total search time: " & TotalSearchTime.ToString & " secs")
-        clsSummaryFile.Add("Ave search time: " & AvgSearchTime.ToString("##0.000") & " secs" & vbCrLf)
+		m_SummaryFile.Add(vbCrLf & "Cluster node machine count: " & NumNodeMachines.ToString)
+		m_SummaryFile.Add("Sequest process count: " & NumSlaveProcesses.ToString)
+		m_SummaryFile.Add("Searched file count: " & SearchedFileCount.ToString)
+		m_SummaryFile.Add("Total search time: " & TotalSearchTime.ToString & " secs")
+		m_SummaryFile.Add("Ave search time: " & AvgSearchTime.ToString("##0.000") & " secs" & vbCrLf)
 
     End Sub
 

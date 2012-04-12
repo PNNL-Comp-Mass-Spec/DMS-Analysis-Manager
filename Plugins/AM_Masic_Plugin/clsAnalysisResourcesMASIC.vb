@@ -1,4 +1,6 @@
 ﻿' Last modified 06/15/2009 JDS - Added logging using log4net
+Option Strict On
+
 Imports AnalysisManagerBase
 Imports ParamFileGenerator.MakeParams
 
@@ -11,12 +13,9 @@ Public Class clsAnalysisResourcesMASIC
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
-
-        'Clear out list of files to delete or keep when packaging the results
-        clsGlobal.ResetFilesToDeleteOrKeep()
 
         ' Get input data file
         Dim CreateStoragePathInfoOnly As Boolean = False
@@ -47,17 +46,17 @@ Public Class clsAnalysisResourcesMASIC
         End If
 
         ' Add additional extensions to delete after the tool finishes
-        clsGlobal.m_FilesToDeleteExt.Add("_StoragePathInfo.txt")
+        m_JobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
 
         ' We'll add the following extensions to m_FilesToDeleteExt
         ' Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_WIFF_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_RAW_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_UIMF_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MZXML_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_MGF_EXTENSION)
-        clsGlobal.m_FilesToDeleteExt.Add(clsAnalysisResources.DOT_CDF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
 
         'Retrieve param file
         If Not RetrieveFile( _

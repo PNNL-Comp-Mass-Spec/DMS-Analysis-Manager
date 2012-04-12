@@ -1,8 +1,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
-Imports PRISM.Files.clsFileTools
-Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerLTQ_FTPek
@@ -30,13 +28,12 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-        'Verify a parm file has been specified
-        ParamFilePath = System.IO.Path.Combine(m_WorkDir, GetJobParameter(m_jobParams, "parmFileName", ""))
+        'Verify a param file has been specified
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
         If Not System.IO.File.Exists(ParamFilePath) Then
             'Param file wasn't specified, but is required for ICR-2LS analysis
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ICR-2LS Param file not found: " & ParamFilePath)
-
-            CleanupFailedJob("Parm file not found")
+            m_message = "ICR-2LS Param file not found"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -46,8 +43,8 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         MinScan = 0
         MaxScan = 0
 
-        MinScan = GetJobParameter(m_jobParams, "scanstart", 0)
-        MaxScan = GetJobParameter(m_jobParams, "ScanStop", 0)
+		MinScan = m_jobParams.GetJobParameter("scanstart", 0)
+		MaxScan = m_jobParams.GetJobParameter("ScanStop", 0)
 
         If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
            MinScan > MaxScan OrElse _
@@ -60,9 +57,8 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         'Assemble the data file name and path
         DSNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
         If Not System.IO.File.Exists(DSNamePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Raw file not found: " & DSNamePath)
-
-            CleanupFailedJob("Unable to find data file in working directory")
+            m_message = "Raw file not found: " & DSNamePath
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -76,6 +72,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 
             ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
             If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
+                m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
 
                 PerfPostAnalysisTasks(False)
@@ -85,7 +82,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
 
             Else
-                CleanupFailedJob("Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")")
+                m_message = "Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")"
             End If
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -93,7 +90,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 
         'Run the cleanup routine from the base class
         If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            m_message = AppendToComment(m_message, "Error performing post analysis tasks")
+			m_message = clsGlobal.AppendToComment(m_message, "Error performing post analysis tasks")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -113,7 +110,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
             FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.raw")
             For Each MyFile In FoundFiles
                 ' Add the file to .FilesToDelete just in case the deletion fails
-                clsGlobal.FilesToDelete.Add(MyFile)
+                m_jobParams.AddResultFileToSkip(MyFile)
                 DeleteFileWithRetries(MyFile)
             Next
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

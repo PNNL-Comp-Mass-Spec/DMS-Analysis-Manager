@@ -7,9 +7,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports PRISM.Files
-Imports PRISM.Files.clsFileTools
-Imports AnalysisManagerBase.clsGlobal
 Imports AnalysisManagerBase
 
 Public Class clsDtaGenToolRunner
@@ -61,11 +58,11 @@ Public Class clsDtaGenToolRunner
         End If
 
         'Add all the extensions of the files to delete after run
-        clsGlobal.m_FilesToDeleteExt.Add("_dta.txt") 'Unzipped, concatenated DTA
-        clsGlobal.m_FilesToDeleteExt.Add(".dta")  'DTA files
+        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         'Add any files that are an exception to the captured files to delete list
-        clsGlobal.m_ExceptionFiles.add("lcq_dta.txt")
+        m_jobParams.AddResultFileToKeep("lcq_dta.txt")
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -161,20 +158,20 @@ Public Class clsDtaGenToolRunner
 			Next
 		Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting .dta files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & "; " & Err.Message)
-            m_message = AppendToComment(m_message, "Error deleting .dta files")
+			m_message = clsGlobal.AppendToComment(m_message, "Error deleting .dta files")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		'Delete unzipped concatenated dta files
-        FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
+		FileList = System.IO.Directory.GetFiles(m_WorkDir, "*_dta.txt")
 		For Each TmpFile In FileList
 			Try
-                If System.IO.Path.GetFileName(TmpFile.ToLower) <> "lcq_dta.txt" Then
-                    DeleteFileWithRetries(TmpFile)
-                End If
+				If System.IO.Path.GetFileName(TmpFile.ToLower) <> "lcq_dta.txt" Then
+					DeleteFileWithRetries(TmpFile)
+				End If
 			Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error: " & ex.Message & " deleting concatenated dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & "; " & ex.Message)
-                m_message = AppendToComment(m_message, "Error packaging results")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error: " & ex.Message & " deleting concatenated dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & "; " & ex.Message)
+				m_message = clsGlobal.AppendToComment(m_message, "Error packaging results")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 		Next
@@ -186,8 +183,8 @@ Public Class clsDtaGenToolRunner
 				Return StepResult
 			End If
 		Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults(), Exception making results folder, " & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults(), Exception making results folder, " & Err.Message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		'Copy results folder to storage server
@@ -197,8 +194,8 @@ Public Class clsDtaGenToolRunner
 				Return StepResult
 			End If
 		Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults(), Exception moving results folder, " & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.DispositionResults(), Exception moving results folder, " & Err.Message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 	End Function
@@ -210,40 +207,42 @@ Public Class clsDtaGenToolRunner
 	''' <remarks></remarks>
 	Public Overridable Function MakeSpectraFiles() As IJobParams.CloseOutType
 
-        'Make individual spectra files from input raw data file, using plugin
+		'Make individual spectra files from input raw data file, using plugin
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 
 		'Load the appropriate plugin
-		Dim SpectraGen As ISpectraFileProcessor = clsPluginLoader.GetSpectraGenerator(m_jobParams.GetParam("rawdatatype"))
+		Dim objPluginLoader As clsPluginLoader = New clsPluginLoader(m_SummaryFile, clsGlobal.GetAppFolderPath())
+
+		Dim SpectraGen As ISpectraFileProcessor = objPluginLoader.GetSpectraGenerator(m_jobParams.GetParam("rawdatatype"))
 		If SpectraGen Is Nothing Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error loading spectra processor: " & clsPluginLoader.Message)
-            m_message = AppendToComment(m_message, "Error loading spectra processor")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error loading spectra processor: " & objPluginLoader.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error loading spectra processor")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Loaded spectra generator " & clsPluginLoader.Message)
-        End If
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Loaded spectra generator " & objPluginLoader.Message)
+		End If
 
 		'Initialize the plugin
 		Dim SetupParams As ISpectraFileProcessor.InitializationParams
 		With SetupParams
 			.DebugLevel = m_DebugLevel
 			.JobParams = m_jobParams
-            .MgrParams = m_mgrParams
-            .StatusTools = m_StatusTools
-        End With
+			.MgrParams = m_mgrParams
+			.StatusTools = m_StatusTools
+		End With
 
 		SpectraGen.Setup(SetupParams)
 
 		' Store the DeconTools version info in the database
 		Dim blnSuccess As Boolean
-        If SpectraGen.DtaToolNameLoc.ToLower().Contains("deconmsn.exe") Then
+		If SpectraGen.DtaToolNameLoc.ToLower().Contains("deconmsn.exe") Then
 			blnSuccess = StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
-        Else
+		Else
 			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
-        End If
+		End If
 
 		If Not blnSuccess Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
@@ -254,56 +253,56 @@ Public Class clsDtaGenToolRunner
 		'Start the spectra generation process
 		Try
 			Dim RetVal As ISpectraFileProcessor.ProcessStatus = SpectraGen.Start
-            If RetVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error starting spectra processor: " & SpectraGen.ErrMsg)
-                m_message = AppendToComment(m_message, "Error starting spectra processor")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			If RetVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error starting spectra processor: " & SpectraGen.ErrMsg)
+				m_message = clsGlobal.AppendToComment(m_message, "Error starting spectra processor")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
 			If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Spectra generation started")
-            End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Spectra generation started")
+			End If
 
 			'Loop until the spectra generator finishes
-            While (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or _
-                  (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING)
+			While (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or _
+				  (SpectraGen.Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING)
 
-                m_progress = SpectraGen.Progress
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, SpectraGen.SpectraFileCount, "", "", "", False)
-                System.Threading.Thread.Sleep(5000)              'Delay for 5 seconds
+				m_progress = SpectraGen.Progress
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, SpectraGen.SpectraFileCount, "", "", "", False)
+				System.Threading.Thread.Sleep(5000)				 'Delay for 5 seconds
 
-            End While
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files: " & ex.Message)
-            m_message = AppendToComment(m_message, "Exception while generating dta files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End While
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files: " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Exception while generating dta files")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		'Set internal spectra file count to that returned by the spectra generator
 		m_DtaCount = SpectraGen.SpectraFileCount
-        m_progress = SpectraGen.Progress
+		m_progress = SpectraGen.Progress
 
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
 		'Check for reason spectra generator exited
-        If SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error making DTA files: " & SpectraGen.ErrMsg)
-            m_message = AppendToComment(m_message, "Error making DTA files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        ElseIf SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: DTA generation aborted")
-            m_message = AppendToComment(m_message, "DTA generation aborted")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Error making DTA files: " & SpectraGen.ErrMsg)
+			m_message = clsGlobal.AppendToComment(m_message, "Error making DTA files")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		ElseIf SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: DTA generation aborted")
+			m_message = clsGlobal.AppendToComment(m_message, "DTA generation aborted")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		'Return results
 		If SpectraGen.Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED Then
-			m_message = AppendToComment(m_message, "No spectra files created")
+			m_message = clsGlobal.AppendToComment(m_message, "No spectra files created")
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 		Else
 			If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Spectra generation completed")
-            End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.MakeSpectraFiles: Spectra generation completed")
+			End If
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
@@ -318,16 +317,16 @@ Public Class clsDtaGenToolRunner
 
 		'Packages dta files into concatenated text files
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 
 		Dim ConcatTools As New clsConcatToolWrapper(m_WorkDir)
-        If Not ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error packaging results: " & ConcatTools.ErrMsg & ", job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            m_message = AppendToComment(m_message, "Error packaging results")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        End If
+		If Not ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error packaging results: " & ConcatTools.ErrMsg & ", job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			m_message = clsGlobal.AppendToComment(m_message, "Error packaging results")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
 
 	End Function
 
