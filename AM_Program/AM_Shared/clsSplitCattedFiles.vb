@@ -248,10 +248,9 @@ Public Class clsSplitCattedFiles
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(filePath)
 		Dim tr As System.IO.TextReader
 		Dim s As String
-		Dim outFileCount As Integer
+		Dim outFileCount As Integer = 0
 		Dim currPos As Long
 		Dim lineCount As Long
-		'        Dim state As PeptideFileExtractor.clsUserProgressState
 
 		Dim lineEndCharCount As Integer = LineEndCharacterCount(fi)
 
@@ -273,9 +272,9 @@ Public Class clsSplitCattedFiles
 			fi = Nothing
 
 			Me.m_ResultsFileCount = outFileCount
-			Return outFileCount
-
 		End If
+
+		Return outFileCount
 
 	End Function
 

@@ -101,7 +101,7 @@ Public Class clsConcatToolWrapper
             'Concatenation must have finished successfully, so exit
             Return True
         Catch ex As Exception
-            m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex)
+			m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             Return False
         End Try
 

@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>
+    </SchemaVersion>
+    <ProjectGuid>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>AnalysisManagerBase</RootNamespace>
+    <AssemblyName>AM_Shared</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <MyType>Windows</MyType>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionExplicit>On</OptionExplicit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionCompare>Binary</OptionCompare>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionStrict>On</OptionStrict>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionInfer>On</OptionInfer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile>AM_Shared.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Release\</OutputPath>
+    <DocumentationFile>AM_Shared.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Apache.NMS">
+      <HintPath>..\..\AM_Common\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.ActiveMQ">
+      <HintPath>..\..\AM_Common\Apache.NMS.ActiveMQ.dll</HintPath>
+    </Reference>
+    <Reference Include="FileConcatenator">
+      <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\..\AM_Common\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\..\AM_Common\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="ParamFileGenerator">
+      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="Protein_Exporter">
+      <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Collections.Generic" />
+    <Import Include="System.Data" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Linq" />
+    <Import Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="clsAnalysisJob.vb" />
+    <Compile Include="clsAnalysisResources.vb" />
+    <Compile Include="clsAnalysisResults.vb" />
+    <Compile Include="clsAnalysisToolRunnerBase.vb" />
+    <Compile Include="clsAssemblyTools.vb" />
+    <Compile Include="clsConcatToolWrapper.vb" />
+    <Compile Include="clsDBStatusLogger.vb" />
+    <Compile Include="clsDBTask.vb" />
+    <Compile Include="clsFormattedXMLWriter.vb" />
+    <Compile Include="clsGlobal.vb" />
+    <Compile Include="clsIonicZipTools.vb" />
+    <Compile Include="clsLogTools.vb" />
+    <Compile Include="clsMemoryUsageLogger.vb" />
+    <Compile Include="clsMessageQueueLogger.vb" />
+    <Compile Include="clsMessageSender.vb" />
+    <Compile Include="clsRunDosProgram.vb" />
+    <Compile Include="clsSplitCattedFiles.vb" />
+    <Compile Include="clsStatusFile.vb" />
+    <Compile Include="clsSummaryFile.vb" />
+    <Compile Include="ExceptionClasses.vb" />
+    <Compile Include="IAnalysisResources.vb" />
+    <Compile Include="IJobParams.vb" />
+    <Compile Include="IMgrParams.vb" />
+    <Compile Include="ISpectraFileProcessor.vb" />
+    <Compile Include="ISpectraFilter.vb" />
+    <Compile Include="IStatusFile.vb" />
+    <Compile Include="IToolRunner.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+copy "AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common"</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -11,7 +11,6 @@ Option Strict On
 
 Imports System.IO
 Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsGlobal
 
 Namespace AnalysisManagerProg
 
@@ -33,16 +32,32 @@ Namespace AnalysisManagerProg
 
 #Region "Module variables"
 		Private m_MainProcess As clsMainProcess
-		Private m_MgrSettings As clsAnalysisMgrSettings
-		Private m_AnalysisTask As clsAnalysisJob
+		Private m_MgrSettings As IMgrParams				' clsAnalysisMgrSettings
+		Private m_MgrErrorCleanup As clsCleanupMgrErrors
+
+		Private m_MgrFolderPath As String
+		Private m_WorkDirPath As String
+		Private m_MgrName As String = "??"
+
+		Private m_AnalysisTask As IJobParams			' clsAnalysisJob
+		Private m_PluginLoader As clsPluginLoader
+		Private m_SummaryFile As clsSummaryFile
+
 		Private WithEvents m_FileWatcher As FileSystemWatcher
-		Private m_ConfigChanged As Boolean = False
-		Private m_DebugLevel As Integer = 0
+		Private m_ConfigChanged As Boolean
+		Private m_DebugLevel As Integer
 		Private m_Resource As IAnalysisResources
 		Private m_ToolRunner As IToolRunner
 		Private m_StatusTools As clsStatusFile
-		Private m_NeedToAbortProcessing As Boolean = False
-		Private m_MostRecentJobInfo As String = String.Empty
+		Private m_NeedToAbortProcessing As Boolean
+		Private m_MostRecentJobInfo As String
+
+		Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
+		   ByVal lpRootPathName As String, _
+		   ByRef lpFreeBytesAvailable As Long, _
+		   ByRef lpTotalNumberOfBytes As Long, _
+		   ByRef lpTotalNumberOfFreeBytes As Long) As Integer
+
 #End Region
 
 #Region "Properties"
@@ -64,10 +79,6 @@ Namespace AnalysisManagerProg
 					m_MainProcess = New clsMainProcess
 					If Not m_MainProcess.InitMgr Then Exit Function
 				End If
-				clsGlobal.AppFilePath = Application.ExecutablePath
-
-				Dim fiExecutable As New FileInfo(AppFilePath)
-				clsGlobal.AppFolderPath = fiExecutable.DirectoryName
 
 				m_MainProcess.DoAnalysis()
 
@@ -87,9 +98,15 @@ Namespace AnalysisManagerProg
 
 		''' <summary>
 		''' Constructor
-		''' </summary>
-		''' <remarks>Doesn't do anything at present</remarks>
+		''' </summary>	
 		Public Sub New()
+			m_ConfigChanged = False
+			m_DebugLevel = 0
+			m_NeedToAbortProcessing = False
+			m_MostRecentJobInfo = String.Empty
+
+			Dim fiMgr As FileInfo = New FileInfo(Application.ExecutablePath)
+			m_MgrFolderPath = fiMgr.DirectoryName
 
 		End Sub
 
@@ -100,48 +117,66 @@ Namespace AnalysisManagerProg
 		''' <remarks></remarks>
 		Private Function InitMgr() As Boolean
 
-			' Get the manager settings
-			' If you get an exception here while debugging in Visual Studio, then be sure 
-			'   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
-			Try
-				m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
-			Catch ex As System.Exception
-				' Failures are logged by clsMgrSettings to application event logs;
-				'  this includes MgrActive_Local = False
-				'  
-				' If the DMS_AnalysisMgr application log does not exist yet, the SysLogger will create it
-				' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-				' Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+			' Get settings from config file
+			Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
 
+			Try
+				lstMgrSettings = LoadMgrSettingsFromFile()
+
+				' Get the manager settings
+				' If you get an exception here while debugging in Visual Studio, then be sure 
+				'   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
+				Try
+					m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath)
+				Catch ex As System.Exception
+					' Failures are logged by clsMgrSettings to application event logs;
+					'  this includes MgrActive_Local = False
+					'  
+					' If the DMS_AnalysisMgr application log does not exist yet, the SysLogger will create it
+					' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
+					' Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+
+					Console.WriteLine()
+					Console.WriteLine("===============================================================")
+					Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " & ex.Message)
+					Console.WriteLine("===============================================================")
+					Console.WriteLine()
+					Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & CUSTOM_LOG_NAME & " application log")
+					Console.WriteLine()
+					System.Threading.Thread.Sleep(500)
+
+					Return False
+				End Try
+
+
+			Catch ex As Exception
 				Console.WriteLine()
 				Console.WriteLine("===============================================================")
-				Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " & ex.Message)
+				Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " & ex.Message)
 				Console.WriteLine("===============================================================")
-				Console.WriteLine()
-				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & CUSTOM_LOG_NAME & " application log")
 				Console.WriteLine()
 				System.Threading.Thread.Sleep(500)
-
 				Return False
 			End Try
+
+			m_MgrName = m_MgrSettings.GetParam("MgrName")
 
 			' Delete any temporary files that may be left in the app directory
 			RemoveTempFiles()
 
-			'Setup the logger
-			Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
-			Dim LogFileName As String = Path.Combine(FInfo.DirectoryName, m_MgrSettings.GetParam("logfilename"))
+			' Setup the logger
+			Dim LogFileName As String = m_MgrSettings.GetParam("logfilename")
 
-			'Make the initial log entry
-			clsLogTools.ChangeLogFileName(m_MgrSettings.GetParam("logfilename"))
+			' Make the initial log entry
+			clsLogTools.ChangeLogFileName(LogFileName)
 			Dim MyMsg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, MyMsg)
 
-			'Setup a file watcher for the config file
+			' Setup a file watcher for the config file
 			m_FileWatcher = New FileSystemWatcher
 			With m_FileWatcher
 				.BeginInit()
-				.Path = FInfo.DirectoryName
+				.Path = m_MgrFolderPath
 				.IncludeSubdirectories = False
 				.Filter = m_MgrSettings.GetParam("configfilename")
 				.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
@@ -149,11 +184,25 @@ Namespace AnalysisManagerProg
 				.EnableRaisingEvents = True
 			End With
 
-			'Get the debug level
+			' Get the debug level
 			m_DebugLevel = CInt(m_MgrSettings.GetParam("debuglevel"))
 
-			'Setup the tool for getting tasks
+			' Setup the tool for getting tasks
 			m_AnalysisTask = New clsAnalysisJob(m_MgrSettings, m_DebugLevel)
+
+			m_WorkDirPath = m_MgrSettings.GetParam("workdir")
+
+			' Setup the manager cleanup class
+			m_MgrErrorCleanup = New clsCleanupMgrErrors( _
+			   m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
+			   m_MgrName, _
+			   m_MgrFolderPath, _
+			   m_WorkDirPath)
+
+			m_SummaryFile = New clsSummaryFile()
+			m_SummaryFile.Clear()
+
+			m_PluginLoader = New clsPluginLoader(m_SummaryFile, m_MgrFolderPath)
 
 			'Everything worked
 			Return True
@@ -171,7 +220,6 @@ Namespace AnalysisManagerProg
 			Dim TasksStartedCount As Integer = 0
 			Dim blnErrorDeletingFilesFlagFile As Boolean
 
-			Dim strWorkingDir As String = m_MgrSettings.GetParam("workdir")
 			Dim strMessage As String
 			Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.UtcNow
 
@@ -199,16 +247,8 @@ Namespace AnalysisManagerProg
 					If m_ConfigChanged Then
 						'Local config file has changed
 						m_ConfigChanged = False
-						If Not m_MgrSettings.LoadSettings() Then
-							If m_MgrSettings.ErrMsg <> "" Then
-								'Manager has been deactivated, so report this
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrSettings.ErrMsg)
-								UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally")
-							Else
-								'Unknown problem reading config file
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Error re-reading config file")
-							End If
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
+
+						If Not ReloadManagerSettings() Then
 							Exit Sub
 						End If
 						m_FileWatcher.EnableRaisingEvents = True
@@ -225,8 +265,8 @@ Namespace AnalysisManagerProg
 					End If
 
 					'Check to see if manager is still active
-					Dim MgrActive As Boolean = CBoolSafe(m_MgrSettings.GetParam("mgractive"))
-					Dim MgrActiveLocal As Boolean = CBoolSafe(m_MgrSettings.GetParam("mgractive_local"))
+					Dim MgrActive As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("mgractive"))
+					Dim MgrActiveLocal As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("mgractive_local"))
 					Dim strManagerDisableReason As String
 					If Not (MgrActive And MgrActiveLocal) Then
 						If Not MgrActiveLocal Then
@@ -242,7 +282,7 @@ Namespace AnalysisManagerProg
 						Exit Sub
 					End If
 
-					Dim MgrUpdateRequired As Boolean = CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired"))
+					Dim MgrUpdateRequired As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired"))
 					If MgrUpdateRequired Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager update is required")
 						m_MgrSettings.AckManagerUpdateRequired()
@@ -251,28 +291,28 @@ Namespace AnalysisManagerProg
 						Exit Sub
 					End If
 
-					If DetectErrorDeletingFilesFlagFile() Then
+					If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
 						'Delete the Error Deleting status flag file first, so next time through this step is skipped
-						DeleteErrorDeletingFilesFlagFile()
+						m_MgrErrorCleanup.DeleteErrorDeletingFilesFlagFile()
 
 						'There was a problem deleting non result files with the last job.  Attempt to delete files again
-						If Not CleanWorkDir(strWorkingDir) Then
+						If Not m_MgrErrorCleanup.CleanWorkDir() Then
 							If blnOneTaskStarted Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & strWorkingDir)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & m_WorkDirPath)
 								m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
 							Else
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & strWorkingDir)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory; see folder " & m_WorkDirPath)
 							End If
-							CreateStatusFlagFile()
+							m_MgrErrorCleanup.CreateStatusFlagFile()
 							UpdateStatusFlagFileExists()
 							Exit Sub
 						End If
 						'successful delete of files in working directory, so delete the status flag file
-						DeleteStatusFlagFile(m_DebugLevel)
+						m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 					End If
 
 					'Verify that an error hasn't left the the system in an odd state
-					If StatusFlagFileError(strWorkingDir) Then
+					If StatusFlagFileError(m_WorkDirPath) Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
 						UpdateStatusFlagFileExists()
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
@@ -287,7 +327,7 @@ Namespace AnalysisManagerProg
 						' We now create a flag file instead
 						' This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
 
-						CreateStatusFlagFile()
+						m_MgrErrorCleanup.CreateStatusFlagFile()
 						UpdateStatusFlagFileExists()
 
 						Exit While
@@ -298,20 +338,21 @@ Namespace AnalysisManagerProg
 						If blnOneTaskStarted Then
 							' Working directory problem due to the most recently processed job
 							' Create ErrorDeletingFiles file and exit the program
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, creating " & ERROR_DELETING_FILES_FILENAME & "; see folder " & strWorkingDir)
-							CreateErrorDeletingFilesFlagFile()
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, creating " & clsCleanupMgrErrors.ERROR_DELETING_FILES_FILENAME & "; see folder " & m_WorkDirPath)
+							m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
 							UpdateStatusIdle("Working directory not empty")
 						Else
 							' Working directory problem, so create flag file and exit
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & strWorkingDir)
-							CreateStatusFlagFile()
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Working directory problem, disabling manager via flag file; see folder " & m_WorkDirPath)
+							m_MgrErrorCleanup.CreateStatusFlagFile()
 							UpdateStatusFlagFileExists()
 						End If
 						Exit While
 					End If
 
 					'Get an analysis job, if any are available
-					Dim TaskReturn As clsAnalysisJob.RequestTaskResult = m_AnalysisTask.RequestTask
+					Dim TaskReturn As clsAnalysisJob.RequestTaskResult
+					TaskReturn = m_AnalysisTask.RequestTask()
 					Select Case TaskReturn
 						Case clsDBTask.RequestTaskResult.NoTaskFound
 							'No tasks found
@@ -345,7 +386,7 @@ Namespace AnalysisManagerProg
 								' Something went wrong; errors likely were not logged by DoAnalysisJob
 
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " & _
-									ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+								 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 								m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
 
 								' Set the job state to failed
@@ -383,7 +424,7 @@ Namespace AnalysisManagerProg
 					LoopCount += 1
 
 					'if the only problem was deleting non result files, we want to stop the manager
-					If DetectErrorDeletingFilesFlagFile() Then
+					If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
 						blnErrorDeletingFilesFlagFile = True
 						LoopCount = MaxLoopCount
 					End If
@@ -425,58 +466,24 @@ Namespace AnalysisManagerProg
 
 		End Sub
 
-		''' <summary>
-		''' Sets the local mgr_active flag to False for serious problems
-		''' </summary>
-		''' <remarks></remarks>
-		Private Sub DisableManagerLocally()
-
-			If Not m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False") Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error while disabling manager: " & m_MgrSettings.ErrMsg)
-			End If
-
-		End Sub
-
-		''' <summary>
-		''' Event handler for file watcher
-		''' </summary>
-		''' <param name="sender"></param>
-		''' <param name="e"></param>
-		''' <remarks></remarks>
-		Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles m_FileWatcher.Changed
-
-			m_FileWatcher.EnableRaisingEvents = False
-			m_ConfigChanged = True
-
-			If m_DebugLevel > 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Config file changed")
-			End If
-
-		End Sub
-
 		Private Function DoAnalysisJob() As Boolean
 
 			Dim eToolRunnerResult As IJobParams.CloseOutType
-			Dim MgrName As String = m_MgrSettings.GetParam("MgrName")
 			Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("StepParameters", "Job"))
-			Dim StepNum As Integer = CIntSafe(m_AnalysisTask.GetParam("StepParameters", "Step"), 0)
+			Dim StepNum As Integer = clsGlobal.CIntSafe(m_AnalysisTask.GetParam("StepParameters", "Step"), 0)
 			Dim Dataset As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
-			Dim WorkDirPath As String = m_MgrSettings.GetParam("workdir")
 			Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
 			Dim ErrorMessage As String = String.Empty
 
 			Dim blnRunToolError As Boolean = False
 
 			'Initialize summary and status files
-			InitSummary()
+			m_SummaryFile.Clear()
+
 			If m_StatusTools Is Nothing Then
 				InitStatusTools()
 			End If
 
-			' Reset the completion message, the evaluation code, and the evaluation message
-			clsGlobal.m_Completions_Msg = String.Empty
-			clsGlobal.m_EvalCode = 0
-			clsGlobal.m_EvalMessage = String.Empty
 
 			' Update the cached most recent job info
 			m_MostRecentJobInfo = ConstructMostRecentJobInfoText(System.DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
@@ -487,14 +494,14 @@ Namespace AnalysisManagerProg
 				.JobNumber = JobNum
 				.JobStep = StepNum
 				.Tool = JobToolDescription
-				.MgrName = m_MgrSettings.GetParam("MgrName")
+				.MgrName = m_MgrName
 				.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, True)
 			End With
 
 			' Note: The format of the following text is important; be careful about changing it
 			' In particular, function DetermineRecentErrorMessages in clsGlobal looks for log entries
 			'   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, MgrName & ": Started analysis job " & JobNum & ", Dataset " & Dataset & ", Tool " & JobToolDescription)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & JobNum & ", Dataset " & Dataset & ", Tool " & JobToolDescription)
 
 			If m_DebugLevel >= 2 Then
 				' Log the debug level value whenever the debug level is 2 or higher
@@ -503,25 +510,25 @@ Namespace AnalysisManagerProg
 
 			'Create an object to manage the job resources
 			If Not SetResourceObject() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": Unable to SetResourceObject, job " & JobNum & ", Dataset " & Dataset)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to SetResourceObject, job " & JobNum & ", Dataset " & Dataset)
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object")
-				CleanWorkDir(WorkDirPath)
+				m_MgrErrorCleanup.CleanWorkDir()
 				UpdateStatusIdle("Error encountered: Unable to set resource object")
 				Return False
 			End If
 
 			'Create an object to run the analysis tool
 			If Not SetToolRunnerObject() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": Unable to SetToolRunnerObject, job " & JobNum & ", Dataset " & Dataset)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to SetToolRunnerObject, job " & JobNum & ", Dataset " & Dataset)
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object")
-				CleanWorkDir(WorkDirPath)
+				m_MgrErrorCleanup.CleanWorkDir()
 				UpdateStatusIdle("Error encountered: Unable to set tool runner object")
 				Return False
 			End If
 
 			If NeedToAbortProcessing() Then
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Processing aborted")
-				CleanWorkDir(WorkDirPath)
+				m_MgrErrorCleanup.CleanWorkDir()
 				UpdateStatusIdle("Processing aborted")
 				Return False
 			End If
@@ -532,7 +539,7 @@ Namespace AnalysisManagerProg
 					ErrorMessage = "Insufficient free space (location undefined)"
 				End If
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, ErrorMessage)
-				CleanWorkDir(WorkDirPath)
+				m_MgrErrorCleanup.CleanWorkDir()
 				UpdateStatusIdle("Processing aborted")
 				Return False
 			End If
@@ -541,7 +548,7 @@ Namespace AnalysisManagerProg
 			Dim myResults As New clsAnalysisResults(m_MgrSettings, m_AnalysisTask)
 
 			'Retrieve files required for the job
-			CreateStatusFlagFile()
+			m_MgrErrorCleanup.CreateStatusFlagFile()
 			Try
 				eToolRunnerResult = m_Resource.GetResources()
 				If Not eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -550,12 +557,12 @@ Namespace AnalysisManagerProg
 						ErrorMessage &= "; " & m_Resource.Message
 					End If
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
 					m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_Resource.Message)
 
-					clsGlobal.CleanWorkDir(WorkDirPath)
+					m_MgrErrorCleanup.CleanWorkDir()
 					UpdateStatusIdle("Error encountered: " & ErrorMessage)
-					clsGlobal.DeleteStatusFlagFile(m_DebugLevel)
+					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 					Return False
 				End If
 			Catch Err As Exception
@@ -564,10 +571,10 @@ Namespace AnalysisManagerProg
 
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources")
 
-				If CleanWorkDir(WorkDirPath) Then
-					DeleteStatusFlagFile(m_DebugLevel)
+				If m_MgrErrorCleanup.CleanWorkDir() Then
+					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 				Else
-					CreateErrorDeletingFilesFlagFile()
+					m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
 				End If
 
 				m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
@@ -582,15 +589,11 @@ Namespace AnalysisManagerProg
 					ErrorMessage = m_ToolRunner.Message
 
 					If String.IsNullOrEmpty(ErrorMessage) Then
-						If Not String.IsNullOrEmpty(m_Completions_Msg) Then
-							ErrorMessage = String.Copy(m_Completions_Msg)
-						Else
-							ErrorMessage = "Unknown ToolRunner Error"
-						End If
+						ErrorMessage = "Unknown ToolRunner Error"
 					End If
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
-					m_AnalysisTask.CloseTask(eToolRunnerResult, ErrorMessage)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+					m_AnalysisTask.CloseTask(eToolRunnerResult, ErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
 					Try
 						If ErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) OrElse _
@@ -620,7 +623,7 @@ Namespace AnalysisManagerProg
 					m_NeedToAbortProcessing = True
 				End If
 
-				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception running tool")
+				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
 				blnRunToolError = True
 			End Try
@@ -629,10 +632,10 @@ Namespace AnalysisManagerProg
 				' Note: the above code should have already called m_AnalysisTask.CloseTask()
 
 				Try
-					If CleanWorkDir(WorkDirPath) Then
-						DeleteStatusFlagFile(m_DebugLevel)
+					If m_MgrErrorCleanup.CleanWorkDir() Then
+						m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 					Else
-						CreateErrorDeletingFilesFlagFile()
+						m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
 					End If
 
 					If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES AndAlso _
@@ -657,8 +660,8 @@ Namespace AnalysisManagerProg
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 100)
 			Try
 				'Close out the job as a success
-				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, m_Completions_Msg, m_EvalCode, m_EvalMessage)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, MgrName & ": Completed job " & JobNum)
+				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, String.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & JobNum)
 
 				UpdateStatusIdle("Completed job " & JobNum & ", step " & StepNum)
 
@@ -671,7 +674,7 @@ Namespace AnalysisManagerProg
 
 			Try
 				'If success was reported check to see if there was an error deleting non result files
-				If DetectErrorDeletingFilesFlagFile() Then
+				If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
 					'If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
 					' However, wait another 5 seconds before continuing
 					GC.Collect()
@@ -682,21 +685,21 @@ Namespace AnalysisManagerProg
 				Else
 					'Clean the working directory
 					Try
-						If Not CleanWorkDir(WorkDirPath) Then
+						If Not m_MgrErrorCleanup.CleanWorkDir() Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
 							m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
-							CreateErrorDeletingFilesFlagFile()
+							m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
 							Return False
 						End If
 					Catch Err As Exception
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & _
-																		   Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
+						   Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
 						m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
 						Return False
 					End Try
 
 					'Delete the status flag file
-					DeleteStatusFlagFile(m_DebugLevel)
+					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 
 					' Note that we do not need to call m_StatusTools.UpdateIdle() here since 
 					' we called UpdateStatusIdle() just after m_AnalysisTask.CloseTask above
@@ -706,11 +709,456 @@ Namespace AnalysisManagerProg
 
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), " & _
-								 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+				  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 				m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
 				Return False
 			End Try
 
+		End Function
+
+		''' <summary>
+		''' Constructs a description of the given job using the job number, step tool name, and dataset name
+		''' </summary>
+		''' <param name="JobStartTimeStamp">Time job started</param>
+		''' <param name="Job">Job name</param>
+		''' <param name="Dataset">Dataset name</param>
+		''' <param name="ToolName">Tool name (or step tool name)</param>
+		''' <returns>Info string, similar to: Job 375797; DataExtractor (XTandem), Step 4; QC_Shew_09_01_b_pt5_25Mar09_Griffin_09-02-03; 3/26/2009 3:17:57 AM</returns>
+		''' <remarks></remarks>
+		Protected Function ConstructMostRecentJobInfoText(ByVal JobStartTimeStamp As String, ByVal Job As Integer, ByVal Dataset As String, ByVal ToolName As String) As String
+
+			Try
+				If JobStartTimeStamp Is Nothing Then JobStartTimeStamp = String.Empty
+				If ToolName Is Nothing Then ToolName = "??"
+				If Dataset Is Nothing Then Dataset = "??"
+
+				Return "Job " & Job.ToString & "; " & ToolName & "; " & Dataset & "; " & JobStartTimeStamp
+			Catch ex As Exception
+				' Error combining the terms; return an empty string
+				Return String.Empty
+			End Try
+
+		End Function
+
+		''' <summary>
+		''' Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
+		''' </summary>
+		''' <param name="strLogFilePath"></param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Protected Function DecrementLogFilePath(ByVal strLogFilePath As String) As String
+
+			Dim reLogFileName As System.Text.RegularExpressions.Regex
+			Dim objMatch As System.Text.RegularExpressions.Match
+
+			Dim intYear As Integer
+			Dim intMonth As Integer
+			Dim intDay As Integer
+			Dim strPreviousLogFilePath As String = String.Empty
+
+			Try
+				reLogFileName = New System.Text.RegularExpressions.Regex("(.+_)(\d+)-(\d+)-(\d+).\S+", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+				objMatch = reLogFileName.Match(strLogFilePath)
+
+				If objMatch.Success AndAlso objMatch.Groups.Count >= 4 Then
+					intMonth = CInt(objMatch.Groups(2).Value)
+					intDay = CInt(objMatch.Groups(3).Value)
+					intYear = CInt(objMatch.Groups(4).Value)
+
+					Dim dtCurrentDate As System.DateTime
+					Dim dtNewDate As System.DateTime
+
+					dtCurrentDate = System.DateTime.Parse(intYear & "-" & intMonth & "-" & intDay)
+					dtNewDate = dtCurrentDate.Subtract(New System.TimeSpan(1, 0, 0, 0))
+
+					strPreviousLogFilePath = objMatch.Groups(1).Value & dtNewDate.ToString("MM-dd-yyyy") & System.IO.Path.GetExtension(strLogFilePath)
+				End If
+
+			Catch ex As Exception
+				Console.WriteLine("Error in DecrementLogFilePath: " & ex.Message)
+			End Try
+
+			Return strPreviousLogFilePath
+
+		End Function
+
+		''' <summary>
+		''' Parses the log files for this manager to determine the recent error messages, returning up to intErrorMessageCountToReturn of them
+		''' Will use objLogger to determine the most recent log file
+		''' Also examines the message info stored in objLogger
+		''' Lastly, if strMostRecentJobInfo is empty, then will update it with info on the most recent job started
+		''' </summary>
+		''' <param name="intErrorMessageCountToReturn">Maximum number of error messages to return</param>
+		''' <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
+		''' <returns></returns>
+		''' <remarks></remarks>
+		Public Function DetermineRecentErrorMessages(ByVal intErrorMessageCountToReturn As Integer, ByRef strMostRecentJobInfo As String) As String()
+
+			' This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
+			Const ERROR_MATCH_REGEX As String = "^([^,]+),(.+), Error, *$"
+
+			' This regex looks for information on a job starting
+			Const JOB_START_REGEX As String = "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
+
+			' The following effectively defines the number of days in the past to search when finding recent errors
+			Const MAX_LOG_FILES_TO_SEARCH As Integer = 5
+
+			Dim blnLoggerReportsError As Boolean
+			Dim strLogFilePath As String
+			Dim intLogFileCountProcessed As Integer
+
+			Dim srInFile As System.IO.StreamReader
+
+			Dim reErrorLine As System.Text.RegularExpressions.Regex
+			Dim reJobStartLine As System.Text.RegularExpressions.Regex
+
+			Dim objMatch As System.Text.RegularExpressions.Match
+
+			Dim qErrorMsgQueue As System.Collections.Queue
+			Dim htUniqueErrorMessages As System.Collections.Hashtable
+
+			' Note that strRecentErrorMessages() and dtRecentErrorMessageDates() are parallel arrays
+			Dim intRecentErrorMessageCount As Integer
+			Dim strRecentErrorMessages() As String = New String() {}
+			Dim dtRecentErrorMessageDates() As DateTime
+
+			Dim strLineIn As String
+
+			Dim blnCheckForMostRecentJob As Boolean
+			Dim strMostRecentJobInfoFromLogs As String
+
+			Dim strTimestamp As String
+			Dim strErrorMessageClean As String
+
+			Try
+				If strMostRecentJobInfo Is Nothing Then strMostRecentJobInfo = String.Empty
+				strMostRecentJobInfoFromLogs = String.Empty
+
+				'If objLogger Is Nothing Then
+				'    intRecentErrorMessageCount = 0
+				'    ReDim strRecentErrorMessages(-1)
+				'Else
+				If intErrorMessageCountToReturn < 1 Then intErrorMessageCountToReturn = 1
+
+				intRecentErrorMessageCount = 0
+				ReDim strRecentErrorMessages(intErrorMessageCountToReturn - 1)
+				ReDim dtRecentErrorMessageDates(strRecentErrorMessages.Length - 1)
+
+				' Initialize the RegEx that splits out the timestamp from the error message
+				reErrorLine = New System.Text.RegularExpressions.Regex(ERROR_MATCH_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+				reJobStartLine = New System.Text.RegularExpressions.Regex(JOB_START_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+				' Initialize the queue that holds recent error messages
+				qErrorMsgQueue = New System.Collections.Queue(intErrorMessageCountToReturn)
+
+				' Initialize the hashtable to hold the error messages, but without date stamps
+				htUniqueErrorMessages = New System.Collections.Hashtable
+
+				' Examine the most recent error reported by objLogger
+				strLineIn = clsLogTools.MostRecentErrorMessage
+				If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+					blnLoggerReportsError = True
+				Else
+					blnLoggerReportsError = False
+				End If
+
+
+				strLogFilePath = GetRecentLogFilename()
+				If intErrorMessageCountToReturn > 1 OrElse Not blnLoggerReportsError Then
+
+					' Recent error message reported by objLogger is empty or intErrorMessageCountToReturn is greater than one
+					' Open log file strLogFilePath to find the most recent error messages
+					' If not enough error messages are found, we will look through previous log files
+
+					intLogFileCountProcessed = 0
+					blnCheckForMostRecentJob = True
+
+					Do While qErrorMsgQueue.Count < intErrorMessageCountToReturn AndAlso intLogFileCountProcessed < MAX_LOG_FILES_TO_SEARCH
+
+						If System.IO.File.Exists(strLogFilePath) Then
+							srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+							If intErrorMessageCountToReturn < 1 Then intErrorMessageCountToReturn = 1
+
+							Do While srInFile.Peek >= 0
+								strLineIn = srInFile.ReadLine
+
+								If Not strLineIn Is Nothing Then
+									objMatch = reErrorLine.Match(strLineIn)
+
+									If objMatch.Success Then
+										DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn)
+									End If
+
+									If blnCheckForMostRecentJob Then
+										objMatch = reJobStartLine.Match(strLineIn)
+										If objMatch.Success Then
+											Try
+												strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(objMatch.Groups(1).Value, _
+												  CInt(objMatch.Groups(2).Value), _
+												  objMatch.Groups(3).Value, _
+												  objMatch.Groups(4).Value)
+											Catch ex As Exception
+												' Ignore errors here
+											End Try
+										End If
+									End If
+								End If
+							Loop
+
+							srInFile.Close()
+
+							If blnCheckForMostRecentJob AndAlso strMostRecentJobInfoFromLogs.Length > 0 Then
+								' We determine the most recent job; no need to check other log files
+								blnCheckForMostRecentJob = False
+							End If
+
+						Else
+							' Log file not found; that's OK, we'll decrement the name by one day and keep checking
+						End If
+
+						' Increment the log file counter, regardless of whether or not the log file was found
+						intLogFileCountProcessed += 1
+
+						If qErrorMsgQueue.Count < intErrorMessageCountToReturn Then
+							' We still haven't found intErrorMessageCountToReturn error messages
+							' Keep checking older log files as long as qErrorMsgQueue.Count < intErrorMessageCountToReturn
+
+							' Decrement the log file path by one day
+							strLogFilePath = DecrementLogFilePath(strLogFilePath)
+							If strLogFilePath Is Nothing OrElse strLogFilePath = String.Empty Then
+								Exit Do
+							End If
+						End If
+					Loop
+
+				End If
+
+				If blnLoggerReportsError Then
+					' Append the error message reported by the Logger to the error message queue (treating it as the newest error)
+					strLineIn = clsLogTools.MostRecentErrorMessage
+					objMatch = reErrorLine.Match(strLineIn)
+
+					If objMatch.Success Then
+						DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn)
+					End If
+				End If
+
+
+				' Populate strRecentErrorMessages and dtRecentErrorMessageDates using the messages stored in qErrorMsgQueue
+				Do While qErrorMsgQueue.Count > 0
+					strErrorMessageClean = CStr(qErrorMsgQueue.Dequeue())
+
+					' Find the newest timestamp for this message
+					If htUniqueErrorMessages.ContainsKey(strErrorMessageClean) Then
+						strTimestamp = CStr(htUniqueErrorMessages(strErrorMessageClean))
+					Else
+						' This code should not be reached
+						strTimestamp = ""
+					End If
+
+					If intRecentErrorMessageCount >= strRecentErrorMessages.Length Then
+						' Need to reserve more memory; this is unexpected
+						ReDim Preserve strRecentErrorMessages(strRecentErrorMessages.Length * 2 - 1)
+						ReDim Preserve dtRecentErrorMessageDates(strRecentErrorMessages.Length - 1)
+					End If
+
+					strRecentErrorMessages(intRecentErrorMessageCount) = strTimestamp & ", " & strErrorMessageClean.TrimStart(" "c)
+
+					Try
+						dtRecentErrorMessageDates(intRecentErrorMessageCount) = CDate(strTimestamp)
+					Catch ex As Exception
+						' Error converting date;
+						dtRecentErrorMessageDates(intRecentErrorMessageCount) = System.DateTime.MinValue
+					End Try
+
+					intRecentErrorMessageCount += 1
+				Loop
+
+				If intRecentErrorMessageCount < strRecentErrorMessages.Length Then
+					' Shrink the arrays
+					ReDim Preserve strRecentErrorMessages(intRecentErrorMessageCount - 1)
+					ReDim Preserve dtRecentErrorMessageDates(intRecentErrorMessageCount - 1)
+				End If
+
+				If intRecentErrorMessageCount > 1 Then
+					' Sort the arrays by descending date
+					Array.Sort(dtRecentErrorMessageDates, strRecentErrorMessages)
+					Array.Reverse(dtRecentErrorMessageDates)
+					Array.Reverse(strRecentErrorMessages)
+				End If
+
+				If strMostRecentJobInfo.Length = 0 Then
+					If Not strMostRecentJobInfoFromLogs Is Nothing AndAlso strMostRecentJobInfoFromLogs.Length > 0 Then
+						' Update strMostRecentJobInfo
+						strMostRecentJobInfo = strMostRecentJobInfoFromLogs
+					End If
+				End If
+
+			Catch ex As Exception
+				' Ignore errors here
+				Try
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in DetermineRecentErrorMessages", ex)
+				Catch ex2 As Exception
+					' Ignore errors logging the error
+				End Try
+			End Try
+
+			Return strRecentErrorMessages
+
+		End Function
+
+		Protected Sub DetermineRecentErrorCacheError(ByRef objMatch As System.Text.RegularExpressions.Match, _
+		 ByVal strErrorMessage As String, _
+		 ByRef htUniqueErrorMessages As System.Collections.Hashtable, _
+		 ByRef qErrorMsgQueue As System.Collections.Queue, _
+		 ByVal intMaxErrorMessageCountToReturn As Integer)
+
+			Dim strTimestamp As String
+			Dim strErrorMessageClean As String
+			Dim strQueuedError As String
+
+			Dim blnAddItemToQueue As Boolean
+			Dim objItem As Object
+
+			' See if this error is present in htUniqueErrorMessages yet
+			' If it is present, update the timestamp in htUniqueErrorMessages
+			' If not present, queue it
+
+			If objMatch.Groups.Count >= 2 Then
+				strTimestamp = objMatch.Groups(1).Value
+				strErrorMessageClean = objMatch.Groups(2).Value
+			Else
+				' Regex didn't match; this is unexpected
+				strTimestamp = System.DateTime.MinValue.ToString()
+				strErrorMessageClean = strErrorMessage
+			End If
+
+			' Check whether strErrorMessageClean is in the hash table
+			objItem = htUniqueErrorMessages.Item(strErrorMessageClean)
+			If Not objItem Is Nothing Then
+				' The error message is present
+				' Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
+				Try
+					If System.DateTime.Parse(strTimestamp) > System.DateTime.Parse(CStr(objItem)) Then
+						htUniqueErrorMessages(strErrorMessageClean) = strTimestamp
+					End If
+				Catch ex As Exception
+					' Date comparison failed; leave the existing timestamp unchanged
+				End Try
+
+			Else
+				' The error message is not present
+				htUniqueErrorMessages.Add(strErrorMessageClean, strTimestamp)
+			End If
+
+			If Not qErrorMsgQueue.Contains(strErrorMessageClean) Then
+				' Queue this message
+				' However, if we already have intErrorMessageCountToReturn messages queued, then dequeue the oldest one
+
+				If qErrorMsgQueue.Count < intMaxErrorMessageCountToReturn Then
+					qErrorMsgQueue.Enqueue(strErrorMessageClean)
+				Else
+					' Too many queued messages, so remove oldest one
+					' However, only do this if the new error message has a timestamp newer than the oldest queued message
+					'  (this is a consideration when processing multiple log files)
+
+					blnAddItemToQueue = True
+
+					strQueuedError = CStr(qErrorMsgQueue.Peek())
+
+					' Get the timestamp associated with strQueuedError, as tracked by the hashtable
+					objItem = htUniqueErrorMessages.Item(strQueuedError)
+					If objItem Is Nothing Then
+						' The error message is not in the hashtable; this is unexpected
+					Else
+						' Compare the queued error's timestamp with the timestamp of the new error message
+						Try
+							If System.DateTime.Parse(CStr(objItem)) >= System.DateTime.Parse(strTimestamp) Then
+								' The queued error message's timestamp is equal to or newer than the new message's timestamp
+								' Do not add the new item to the queue
+								blnAddItemToQueue = False
+							End If
+						Catch ex As Exception
+							' Date comparison failed; Do not add the new item to the queue
+							blnAddItemToQueue = False
+						End Try
+					End If
+
+					If blnAddItemToQueue Then
+						qErrorMsgQueue.Dequeue()
+						qErrorMsgQueue.Enqueue(strErrorMessageClean)
+					End If
+
+				End If
+			End If
+
+		End Sub
+
+
+		''' <summary>
+		''' Sets the local mgr_active flag to False for serious problems
+		''' </summary>
+		''' <remarks></remarks>
+		Private Sub DisableManagerLocally()
+
+			If Not m_MgrSettings.DisableManagerLocally() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error while disabling manager: " & m_MgrSettings.ErrMsg)
+			End If
+
+		End Sub
+
+		''' <summary>
+		''' Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
+		''' </summary>
+		''' <param name="strDirectoryPath"></param>
+		''' <param name="lngFreeBytesAvailableToUser"></param>
+		''' <param name="lngTotalDriveCapacityBytes"></param>
+		''' <param name="lngTotalNumberOfFreeBytes"></param>
+		''' <returns>True if success, false if a problem</returns>
+		''' <remarks></remarks>
+		Private Function GetDiskFreeSpace(ByVal strDirectoryPath As String, ByRef lngFreeBytesAvailableToUser As Long, ByRef lngTotalDriveCapacityBytes As Long, ByRef lngTotalNumberOfFreeBytes As Long) As Boolean
+
+			Dim intResult As Integer
+
+			intResult = GetDiskFreeSpaceEx(strDirectoryPath, lngFreeBytesAvailableToUser, lngTotalDriveCapacityBytes, lngTotalNumberOfFreeBytes)
+
+			If intResult = 0 Then
+				Return False
+			Else
+				Return True
+			End If
+
+		End Function
+
+		Protected Function GetRecentLogFilename() As String
+			Dim lastFilename As String = String.Empty
+			Dim DSFiles() As String = Nothing
+			Dim TmpFile As String = String.Empty
+			Dim x As Integer
+			Dim Files() As String
+
+			Try
+				' Obtain a list of log files
+				Files = Directory.GetFiles(m_MgrFolderPath, m_MgrSettings.GetParam("logfilename") & "*.txt")
+
+				' Change the file names to lowercase (to assure that the sorting works)
+				For x = 0 To Files.Length - 1
+					Files(x) = Files(x).ToLower
+				Next
+
+				' Sort the files by filename
+				Array.Sort(Files)
+
+				' Return the last filename in the list
+				lastFilename = Files(Files.Length - 1)
+
+			Catch ex As Exception
+				Return String.Empty
+			End Try
+
+			Return lastFilename
 		End Function
 
 		Protected Function GetManagerErrorCleanupMode() As clsCleanupMgrErrors.eCleanupModeConstants
@@ -734,9 +1182,69 @@ Namespace AnalysisManagerProg
 
 		End Function
 
-		Private Sub InitSummary()
-			clsSummaryFile.Clear()
+		''' <summary>
+		''' Initializes the status file writing tool
+		''' </summary>
+		''' <remarks></remarks>
+		Private Sub InitStatusTools()
+
+			If m_StatusTools Is Nothing Then
+				Dim StatusFileLoc As String = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"))
+
+				m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
+
+				With m_StatusTools
+					.TaskStartTime = System.DateTime.UtcNow
+					.Dataset = ""
+					.JobNumber = 0
+					.JobStep = 0
+					.Tool = ""
+					.MgrName = m_MgrName
+					.MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
+					.TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+					.TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+				End With
+
+				UpdateStatusToolLoggingSettings(m_StatusTools)
+
+			End If
+
 		End Sub
+
+		''' <summary>
+		''' Loads the initial settings from application config file
+		''' </summary>
+		''' <returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
+		''' <remarks></remarks>
+		Friend Shared Function LoadMgrSettingsFromFile() As System.Collections.Generic.Dictionary(Of String, String)
+
+			'Load initial settings into string dictionary for return
+			Dim lstMgrSettings As New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+
+			' Note: When you are editing this project using the Visual Studio IDE, if you edit the values
+			'  ->My Project>Settings.settings, then when you run the program (from within the IDE), then it
+			'  will update file AnalysisManagerProg.exe.config with your settings
+			' The manager will exit if the "UsingDefaults" value is "True", thus you need to have 
+			'  "UsingDefaults" be "False" to run (and/or debug) the application
+
+			My.Settings.Reload()
+
+			'Manager config db connection string
+			lstMgrSettings.Add("MgrCnfgDbConnectStr", My.Settings.MgrCnfgDbConnectStr)
+
+			'Manager active flag
+			lstMgrSettings.Add("MgrActive_Local", My.Settings.MgrActive_Local.ToString)
+
+			'Manager name
+			lstMgrSettings.Add("MgrName", My.Settings.MgrName)
+
+			'Default settings in use flag
+			lstMgrSettings.Add("UsingDefaults", My.Settings.UsingDefaults.ToString)
+
+			Return lstMgrSettings
+
+		End Function
+
 
 		Private Function NeedToAbortProcessing() As Boolean
 
@@ -757,22 +1265,127 @@ Namespace AnalysisManagerProg
 			Return False
 		End Function
 
+		Private Sub PostToEventLog(ByVal ErrMsg As String)
+			Const EVENT_LOG_NAME As String = "DMSAnalysisManager"
+
+			Try
+				Console.WriteLine()
+				Console.WriteLine("===============================================================")
+				Console.WriteLine(ErrMsg)
+				Console.WriteLine("===============================================================")
+				Console.WriteLine()
+				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & EVENT_LOG_NAME & " application log")
+				Console.WriteLine()
+
+				Dim Ev As New EventLog("Application", ".", EVENT_LOG_NAME)
+				Trace.Listeners.Add(New EventLogTraceListener(EVENT_LOG_NAME))
+				Trace.WriteLine(ErrMsg)
+				Ev.Close()
+
+			Catch ex As Exception
+				Console.WriteLine()
+				Console.WriteLine("Exception logging to the event log: " & ex.Message)
+			End Try
+
+			System.Threading.Thread.Sleep(500)
+
+		End Sub
+
+
+		Private Function ReloadManagerSettings() As Boolean
+
+			Try
+				'Get settings from config file
+				Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
+				lstMgrSettings = LoadMgrSettingsFromFile()
+
+				If Not m_MgrSettings.LoadSettings(lstMgrSettings) Then
+					If m_MgrSettings.ErrMsg <> "" Then
+						'Manager has been deactivated, so report this
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrSettings.ErrMsg)
+						UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally")
+					Else
+						'Unknown problem reading config file
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Error re-reading config file")
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
+					Return False
+				End If
+
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error re-loading manager settings: " & ex.Message)
+				Return False
+			End Try
+
+			Return True
+
+
+		End Function
+
+		Private Sub RemoveTempFiles()
+			Dim lstFilesToDelete As New System.Collections.Generic.List(Of System.IO.FileInfo)
+
+			Dim diMgrFolder As DirectoryInfo = New DirectoryInfo(m_MgrFolderPath)
+			Dim msg As String
+
+			' Files starting with the name IgnoreMe are created by log4NET when it is first instantiated 
+			' This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
+			' <file value="IgnoreMe" />
+
+			For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("IgnoreMe*.txt")
+				Try
+					fiFile.Delete()
+				Catch ex As Exception
+					msg = "Error deleting IgnoreMe file: " & fiFile.Name
+					Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+				End Try
+			Next
+
+			' Files named tmp.iso.#### and tmp.peak.#### (where #### are integers) are files created by Decon2LS
+			' These files indicate a previous, failed Decon2LS task and can be safely deleted
+			' For safety, we will not delete files less than 24 hours old
+
+			For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("tmp.iso.*")
+				lstFilesToDelete.Add(fiFile)
+			Next
+
+			For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("tmp.peak.*")
+				lstFilesToDelete.Add(fiFile)
+			Next
+
+			For Each fiFile As System.IO.FileInfo In lstFilesToDelete
+				Try
+					If System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
+						fiFile.Delete()
+					End If
+				Catch ex As Exception
+					msg = "Error deleting file: " & fiFile.Name
+					Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+				End Try
+			Next
+
+
+		End Sub
+
 		Private Function SetResourceObject() As Boolean
 
 			Dim strMessage As String
 			Dim StepToolName As String = m_AnalysisTask.GetParam("StepTool")
 
-			m_Resource = clsPluginLoader.GetAnalysisResources(StepToolName.ToLower)
+			m_PluginLoader.ClearMessageList()
+			m_Resource = m_PluginLoader.GetAnalysisResources(StepToolName.ToLower)
 			If m_Resource Is Nothing Then
-				Dim Msg As String = clsPluginLoader.Message
+				Dim Msg As String = m_PluginLoader.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to load resource object, " & Msg)
 				Return False
 			End If
+
 			If m_DebugLevel > 0 Then
 				strMessage = "Loaded resourcer for StepTool " & StepToolName
-				If clsPluginLoader.Message.Length > 0 Then strMessage &= ": " & clsPluginLoader.Message
+				If m_PluginLoader.Message.Length > 0 Then strMessage &= ": " & m_PluginLoader.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
 			End If
+
 			m_Resource.Setup(m_MgrSettings, m_AnalysisTask)
 			Return True
 
@@ -782,16 +1395,10 @@ Namespace AnalysisManagerProg
 
 			Dim blnMgrCleanupSuccess As Boolean = False
 
-			If DetectStatusFlagFile() Then
+			If m_MgrErrorCleanup.DetectStatusFlagFile() Then
 
 				Try
-					Dim objCleanupMgrErrors As New clsCleanupMgrErrors( _
-										m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
-										m_MgrSettings.GetParam("MgrName"), _
-										clsGlobal.AppFolderPath, _
-										strWorkingDir)
-
-					blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel)
+					blnMgrCleanupSuccess = m_MgrErrorCleanup.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel)
 
 				Catch ex As Exception
 
@@ -821,25 +1428,23 @@ Namespace AnalysisManagerProg
 			Dim strMessage As String
 			Dim StepToolName As String = m_AnalysisTask.GetParam("StepTool")
 
-			'TODO: May be able to get rid of cluster parameter
-			Dim clustered As Boolean = CBoolSafe(m_MgrSettings.GetParam("cluster"))
-
-			m_ToolRunner = clsPluginLoader.GetToolRunner(StepToolName.ToLower, clustered)
+			m_PluginLoader.ClearMessageList()
+			m_ToolRunner = m_PluginLoader.GetToolRunner(StepToolName.ToLower)
 			If m_ToolRunner Is Nothing Then
-				strMessage = "Unable to load tool runner for StepTool " & StepToolName & ": " & clsPluginLoader.Message
+				strMessage = "Unable to load tool runner for StepTool " & StepToolName & ": " & m_PluginLoader.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 				Return False
 			End If
 
 			If m_DebugLevel > 0 Then
 				strMessage = "Loaded tool runner for StepTool " & m_AnalysisTask.GetCurrentJobToolDescription()
-				If clsPluginLoader.Message.Length > 0 Then strMessage &= ": " & clsPluginLoader.Message
+				If m_PluginLoader.Message.Length > 0 Then strMessage &= ": " & m_PluginLoader.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
 			End If
 
 			Try
 				' Setup the new tool runner
-				m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
+				m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile)
 			Catch ex As Exception
 				strMessage = "Exception calling ToolRunner.Setup(): " + ex.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
@@ -849,6 +1454,13 @@ Namespace AnalysisManagerProg
 			Return True
 
 		End Function
+
+		Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)
+			Dim strErrorMessages() As String
+			strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
+
+			m_StatusTools.UpdateClose(ManagerCloseMessage, strErrorMessages, m_MostRecentJobInfo, True)
+		End Sub
 
 		''' <summary>
 		''' Reloads the manager settings from the manager control database 
@@ -891,82 +1503,43 @@ Namespace AnalysisManagerProg
 
 		Protected Sub UpdateStatusDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String)
 			Dim strErrorMessages() As String
-			strErrorMessages = clsGlobal.DetermineRecentErrorMessages(m_MgrSettings, 5, m_MostRecentJobInfo)
+			strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 			m_StatusTools.UpdateDisabled(ManagerStatus, ManagerDisableMessage, strErrorMessages, m_MostRecentJobInfo)
 		End Sub
 
 		Protected Sub UpdateStatusFlagFileExists()
 			Dim strErrorMessages() As String
-			strErrorMessages = clsGlobal.DetermineRecentErrorMessages(m_MgrSettings, 5, m_MostRecentJobInfo)
+			strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 			m_StatusTools.UpdateFlagFileExists(strErrorMessages, m_MostRecentJobInfo)
 		End Sub
 
 		Protected Sub UpdateStatusIdle(ByVal ManagerIdleMessage As String)
 			Dim strErrorMessages() As String
-			strErrorMessages = clsGlobal.DetermineRecentErrorMessages(m_MgrSettings, 5, m_MostRecentJobInfo)
+			strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 
 			m_StatusTools.UpdateIdle(ManagerIdleMessage, strErrorMessages, m_MostRecentJobInfo, True)
 		End Sub
 
-		Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)
-			Dim strErrorMessages() As String
-			strErrorMessages = clsGlobal.DetermineRecentErrorMessages(m_MgrSettings, 5, m_MostRecentJobInfo)
 
-			m_StatusTools.UpdateClose(ManagerCloseMessage, strErrorMessages, m_MostRecentJobInfo, True)
-		End Sub
+		Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
 
-		Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
-		   ByVal lpRootPathName As String, _
-		   ByRef lpFreeBytesAvailable As Long, _
-		   ByRef lpTotalNumberOfBytes As Long, _
-		   ByRef lpTotalNumberOfFreeBytes As Long) As Integer
 
-		''' <summary>
-		''' Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
-		''' </summary>
-		''' <param name="strDirectoryPath"></param>
-		''' <param name="lngFreeBytesAvailableToUser"></param>
-		''' <param name="lngTotalDriveCapacityBytes"></param>
-		''' <param name="lngTotalNumberOfFreeBytes"></param>
-		''' <returns>True if success, false if a problem</returns>
-		''' <remarks></remarks>
-		Private Function GetDiskFreeSpace(ByVal strDirectoryPath As String, ByRef lngFreeBytesAvailableToUser As Long, ByRef lngTotalDriveCapacityBytes As Long, ByRef lngTotalNumberOfFreeBytes As Long) As Boolean
+			Dim LogMemoryUsage As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogMemoryUsage"))
+			Dim MinimumMemoryUsageLogInterval As Single = clsGlobal.CSngSafe(m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval"), 1)
 
-			Dim intResult As Integer
+			Dim LogStatusToBrokerDB As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogStatusToBrokerDB"))
+			Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")
+			Dim BrokerDBStatusUpdateIntervalMinutes As Single = clsGlobal.CSngSafe(m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes"), 60)
 
-			intResult = GetDiskFreeSpaceEx(strDirectoryPath, lngFreeBytesAvailableToUser, lngTotalDriveCapacityBytes, lngTotalNumberOfFreeBytes)
+			Dim LogStatusToMessageQueue As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"))
+			Dim MessageQueueURI As String = m_MgrSettings.GetParam("MessageQueueURI")
+			Dim MessageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
 
-			If intResult = 0 Then
-				Return False
-			Else
-				Return True
-			End If
-
-		End Function
-
-		Private Sub PostToEventLog(ByVal ErrMsg As String)
-			Const EVENT_LOG_NAME As String = "DMSAnalysisManager"
-
-			Try
-				Console.WriteLine()
-				Console.WriteLine("===============================================================")
-				Console.WriteLine(ErrMsg)
-				Console.WriteLine("===============================================================")
-				Console.WriteLine()
-				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & EVENT_LOG_NAME & " application log")
-				Console.WriteLine()
-
-				Dim Ev As New EventLog("Application", ".", EVENT_LOG_NAME)
-				Trace.Listeners.Add(New EventLogTraceListener(EVENT_LOG_NAME))
-				Trace.WriteLine(ErrMsg)
-				Ev.Close()
-
-			Catch ex As Exception
-				Console.WriteLine()
-				Console.WriteLine("Exception logging to the event log: " & ex.Message)
-			End Try
-
-			System.Threading.Thread.Sleep(500)
+			With objStatusFile
+				.ConfigureMemoryLogging(LogMemoryUsage, MinimumMemoryUsageLogInterval, m_MgrFolderPath)
+				.ConfigureBrokerDBLogging(LogStatusToBrokerDB, BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
+				.ConfigureMessageQueueLogging(LogStatusToMessageQueue, MessageQueueURI, MessageQueueTopicMgrStatus, m_MgrName)
+			End With
 
 		End Sub
 
@@ -989,7 +1562,6 @@ Namespace AnalysisManagerProg
 			Dim DatasetStorageMinFreeSpaceGB As Integer
 			Dim ioDatasetStoragePath As System.IO.DirectoryInfo
 
-			Dim WorkingDir As String
 			Dim WorkingDirMinFreeSpaceMB As Integer
 
 			Dim TransferDir As String
@@ -1008,7 +1580,7 @@ Namespace AnalysisManagerProg
 					' We only need to evaluate the dataset storage folder for free space
 
 					DatasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
-					DatasetStorageMinFreeSpaceGB = CIntSafe(m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB"), DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
+					DatasetStorageMinFreeSpaceGB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB"), DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 
 					If String.IsNullOrEmpty(DatasetStoragePath) Then
 						ErrorMessage = "DatasetStoragePath job parameter is empty"
@@ -1034,17 +1606,16 @@ Namespace AnalysisManagerProg
 					End If
 				End If
 
-				WorkingDir = m_MgrSettings.GetParam("WorkDir")
-				WorkingDirMinFreeSpaceMB = CIntSafe(m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB"), DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
+				WorkingDirMinFreeSpaceMB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB"), DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
 
 				TransferDir = m_AnalysisTask.GetParam("JobParameters", "transferFolderPath")
-				TransferDirMinFreeSpaceGB = CIntSafe(m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB"), DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
+				TransferDirMinFreeSpaceGB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB"), DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
 
 				OrgDbDir = m_MgrSettings.GetParam("orgdbdir")
-				OrgDbDirMinFreeSpaceMB = CIntSafe(m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB"), DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
+				OrgDbDirMinFreeSpaceMB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB"), DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
 
 				' Verify that the working directory exists and that its drive has sufficient free space
-				If Not ValidateFreeDiskSpaceWork("Working directory", WorkingDir, WorkingDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogDb) Then
+				If Not ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, WorkingDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogDb) Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Disabling manager since working directory problem")
 					DisableManagerLocally()
 					Return False
@@ -1125,19 +1696,18 @@ Namespace AnalysisManagerProg
 		Private Function ValidateWorkingDir() As Boolean
 
 			'Verifies working directory is properly specified and is empty
-			Dim WorkingDir As String = m_MgrSettings.GetParam("WorkDir")
 			Dim MsgStr As String
 
 			'Verify working directory is valid
-			If Not Directory.Exists(WorkingDir) Then
-				MsgStr = "Invalid working directory: " & WorkingDir
+			If Not Directory.Exists(m_WorkDirPath) Then
+				MsgStr = "Invalid working directory: " & m_WorkDirPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MsgStr)
 				Return False
 			End If
 
 			'Verify the working directory is empty
-			Dim TmpFilArray() As String = Directory.GetFiles(WorkingDir)
-			Dim TmpDirArray() As String = Directory.GetDirectories(WorkingDir)
+			Dim TmpFilArray() As String = Directory.GetFiles(m_WorkDirPath)
+			Dim TmpDirArray() As String = Directory.GetDirectories(m_WorkDirPath)
 
 			If (TmpDirArray.Length = 0) And (TmpFilArray.Length = 1) Then
 				' If the only file in the working directory is a JobParameters xml file,
@@ -1156,7 +1726,7 @@ Namespace AnalysisManagerProg
 						System.Threading.Thread.Sleep(500)
 
 						' Now obtain a new listing of files
-						TmpFilArray = Directory.GetFiles(WorkingDir)
+						TmpFilArray = Directory.GetFiles(m_WorkDirPath)
 					Catch ex As Exception
 						' Deletion failed
 					End Try
@@ -1164,7 +1734,7 @@ Namespace AnalysisManagerProg
 			End If
 
 			If (TmpDirArray.Length > 0) Or (TmpFilArray.Length > 0) Then
-				MsgStr = "Working directory not empty: " & WorkingDir
+				MsgStr = "Working directory not empty: " & m_WorkDirPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MsgStr)
 				Return False
 			End If
@@ -1174,116 +1744,24 @@ Namespace AnalysisManagerProg
 
 		End Function
 
-		''' <summary>
-		''' Initializes the status file writing tool
-		''' </summary>
-		''' <remarks></remarks>
-		Private Sub InitStatusTools()
-
-			If m_StatusTools Is Nothing Then
-				Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
-
-				Dim StatusFileLoc As String = Path.Combine(FInfo.DirectoryName, m_MgrSettings.GetParam("statusfilelocation"))
-
-				m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
-
-				With m_StatusTools
-					.TaskStartTime = System.DateTime.UtcNow
-					.Dataset = ""
-					.JobNumber = 0
-					.JobStep = 0
-					.Tool = ""
-					.MgrName = m_MgrSettings.GetParam("MgrName")
-					.MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
-					.TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-					.TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-				End With
-
-				UpdateStatusToolLoggingSettings(m_StatusTools)
-
-			End If
-
-		End Sub
-
-		Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
-
-			Dim FInfo As FileInfo = New FileInfo(Application.ExecutablePath)
-
-			Dim LogMemoryUsage As Boolean = CBoolSafe(m_MgrSettings.GetParam("LogMemoryUsage"))
-			Dim MinimumMemoryUsageLogInterval As Single = CSngSafe(m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval"), 1)
-
-			Dim LogStatusToBrokerDB As Boolean = CBoolSafe(m_MgrSettings.GetParam("LogStatusToBrokerDB"))
-			Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")
-			Dim BrokerDBStatusUpdateIntervalMinutes As Single = CSngSafe(m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes"), 60)
-
-			Dim LogStatusToMessageQueue As Boolean = CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"))
-			Dim MessageQueueURI As String = m_MgrSettings.GetParam("MessageQueueURI")
-			Dim MessageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
-
-			Dim MgrName As String = m_MgrSettings.GetParam("MgrName")
-
-			With objStatusFile
-				.ConfigureMemoryLogging(LogMemoryUsage, MinimumMemoryUsageLogInterval, FInfo.DirectoryName)
-				.ConfigureBrokerDBLogging(LogStatusToBrokerDB, BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
-				.ConfigureMessageQueueLogging(LogStatusToMessageQueue, MessageQueueURI, MessageQueueTopicMgrStatus, MgrName)
-			End With
-
-		End Sub
-
-		Private Sub RemoveTempFiles()
-			Dim fiFilesToDelete() As System.IO.FileInfo
-			Dim fiFilesToDeleteAddnl() As System.IO.FileInfo
-			Dim intTargetIndex As Integer
-
-			Dim fiFileInfo As System.IO.FileInfo
-
-			Dim fiExeFilePath As FileInfo = New FileInfo(Application.ExecutablePath)
-			Dim msg As String
-
-			' Files starting with the name IgnoreMe are created by log4NET when it is first instantiated 
-			' This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
-			' <file value="IgnoreMe" />
-
-			fiFilesToDelete = fiExeFilePath.Directory.GetFiles("IgnoreMe*.txt")
-			If fiFilesToDelete.Length > 0 Then
-				For Each fiFileInfo In fiFilesToDelete
-					Try
-						fiFileInfo.Delete()
-					Catch ex As Exception
-						msg = "Error deleting IgnoreMe file: " & fiFileInfo.Name
-						Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-					End Try
-				Next
-			End If
-
-			' Files named tmp.iso.#### and tmp.peak.#### (where #### are integers) are files created by Decon2LS
-			' These files indicate a previous, failed Decon2LS task and can be safely deleted
-			' For safety, we will not delete files less than 24 hours old
-
-			fiFilesToDelete = fiExeFilePath.Directory.GetFiles("tmp.iso.*")
-			fiFilesToDeleteAddnl = fiExeFilePath.Directory.GetFiles("tmp.peak.*")
-
-			If fiFilesToDeleteAddnl.Length > 0 Then
-				intTargetIndex = fiFilesToDelete.Length
-				ReDim Preserve fiFilesToDelete(fiFilesToDelete.Length + fiFilesToDeleteAddnl.Length - 1)
-				fiFilesToDeleteAddnl.CopyTo(fiFilesToDelete, intTargetIndex)
-			End If
-
-			If fiFilesToDelete.Length > 0 Then
-				For Each fiFileInfo In fiFilesToDelete
-					Try
-						If System.DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalHours > 24 Then
-							fiFileInfo.Delete()
-						End If
-					Catch ex As Exception
-						msg = "Error deleting file: " & fiFileInfo.Name
-						Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-					End Try
-				Next
-			End If
-
-		End Sub
 #End Region
+
+		''' <summary>
+		''' Event handler for file watcher
+		''' </summary>
+		''' <param name="sender"></param>
+		''' <param name="e"></param>
+		''' <remarks></remarks>
+		Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles m_FileWatcher.Changed
+
+			m_FileWatcher.EnableRaisingEvents = False
+			m_ConfigChanged = True
+
+			If m_DebugLevel > 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Config file changed")
+			End If
+
+		End Sub
 
 	End Class
 

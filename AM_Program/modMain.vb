@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "May 16, 2011"
+	Public Const PROGRAM_DATE As String = "April 10, 2012"
 
 	Private mInputFilePath As String
 
@@ -97,8 +97,9 @@ Module modMain
 						'objTest.TestProteinDBExport("C:\DMS_Temp_Org")
 
 						'objTest.TestFindFile()
+						objTest.TestDeleteFiles()
 
-						objTest.TestZipAndUnzip()
+						'objTest.TestZipAndUnzip()
 						'objTest.TestMALDIDataUnzip("")
 
 						'objTest.TestMSGFResultsSummarizer()

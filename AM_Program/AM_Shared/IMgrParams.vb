@@ -12,15 +12,23 @@
 
 Option Strict On
 
-Namespace AnalysisManagerBase
+Public Interface IMgrParams
 
-	Public Interface IMgrParams
+	ReadOnly Property ErrMsg As String
 
 #Region "Methods"
-		Function GetParam(ByVal ItemKey As String) As String
-		Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String)
+	Sub AckManagerUpdateRequired()
+	Function DisableManagerLocally() As Boolean
+
+	Function GetParam(ByVal ItemKey As String) As String
+	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String
+	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean
+
+	Function LoadDBSettings() As Boolean
+	Function LoadSettings(ByVal ConfigFileSettings As System.Collections.Generic.Dictionary(Of String, String)) As Boolean
+	Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String)
 #End Region
 
-	End Interface
+End Interface
 
-End Namespace
+

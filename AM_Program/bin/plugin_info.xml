@@ -8,22 +8,12 @@
 		AssemblyFile="DTASpectraFileGen.dll" 
 	/>
 	<ToolRunner 
-		Tool="dta_gen-cluster" 
-		Class="DTASpectraFileGen.clsDtaGenToolRunner" 
-		AssemblyFile="DTASpectraFileGen.dll" 
-	/>
-	<ToolRunner 
 		Tool="xtandem" 
 		Class="AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT" 
 		AssemblyFile="AnalysisManagerXTandemPlugIn.dll" 
 	/>
 	<ToolRunner 
 		Tool="sequest" 
-		Class="AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase" 
-		AssemblyFile="AnalysisManagerSequestPlugin.dll" 
-	/>
-	<ToolRunner 
-		Tool="sequest-cluster" 
 		Class="AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster" 
 		AssemblyFile="AnalysisManagerSequestPlugin.dll"
 	/>

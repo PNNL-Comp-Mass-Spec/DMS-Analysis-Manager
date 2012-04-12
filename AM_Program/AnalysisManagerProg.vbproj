@@ -58,38 +58,12 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Apache.NMS, Version=1.1.0.0, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
-      <HintPath>..\AM_Common\Apache.NMS.dll</HintPath>
-    </Reference>
-    <Reference Include="Apache.NMS.ActiveMQ, Version=1.1.0.0, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
-      <HintPath>..\AM_Common\Apache.NMS.ActiveMQ.dll</HintPath>
-    </Reference>
-    <Reference Include="FileConcatenator, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\FileConcatenator.dll</HintPath>
-    </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.85.5.452, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
-    <Reference Include="Ionic.Zip, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\Ionic.Zip.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="ParamFileGenerator, Version=1.0.2931.28118, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="PRISM, Version=2.0.3834.22819, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\PRISM_Class_Library\bin\PRISM.dll</HintPath>
     </Reference>
-    <Reference Include="Protein_Exporter, Version=1.2.5.0, Culture=neutral">
+    <Reference Include="Protein_Exporter, Version=1.2.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -110,43 +84,13 @@
     <Import Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisJob.vb" />
     <Compile Include="clsAnalysisMgrSettings.vb" />
-    <Compile Include="clsAnalysisResources.vb" />
-    <Compile Include="clsAnalysisResults.vb" />
-    <Compile Include="clsAnalysisToolRunnerBase.vb" />
-    <Compile Include="clsAssemblyTools.vb" />
     <Compile Include="clsCleanupMgrErrors.vb" />
     <Compile Include="clsCodeTest.vb" />
     <Compile Include="clsCodeTestAM.vb" />
-    <Compile Include="clsConcatToolWrapper.vb" />
-    <Compile Include="clsDBStatusLogger.cls" />
-    <Compile Include="clsDBTask.vb" />
-    <Compile Include="clsEmergencyLog.vb" />
-    <Compile Include="clsFormattedXMLWriter.vb" />
-    <Compile Include="clsGlobal.vb" />
-    <Compile Include="clsIonicZipTools.vb" />
-    <Compile Include="clsLogTools.vb" />
     <Compile Include="clsMainProcess.vb" />
-    <Compile Include="clsMemoryUsageLogger.vb" />
-    <Compile Include="clsMessageQueueLogger.vb" />
-    <Compile Include="clsMessageSender.vb" />
     <Compile Include="clsParseCommandLine.vb" />
     <Compile Include="clsPluginLoader.vb" />
-    <Compile Include="clsRunDosProgram.vb" />
-    <Compile Include="clsSplitCattedFiles.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsStatusFile.vb" />
-    <Compile Include="clsSummaryFile.vb" />
-    <Compile Include="ExceptionClasses.vb" />
-    <Compile Include="IAnalysisResources.vb" />
-    <Compile Include="IJobParams.vb" />
-    <Compile Include="IMgrParams.vb" />
-    <Compile Include="ISpectraFileProcessor.vb" />
-    <Compile Include="ISpectraFilter.vb" />
-    <Compile Include="IStatusFile.vb" />
-    <Compile Include="IToolRunner.vb" />
     <Compile Include="modMain.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -206,6 +150,12 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
+      <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

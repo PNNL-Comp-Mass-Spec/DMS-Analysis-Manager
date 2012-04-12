@@ -8,17 +8,17 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("AnalysisManagerProg")> 
+<Assembly: AssemblyTitle("AM_Shared")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("PNNL")> 
-<Assembly: AssemblyProduct("AnalysisManagerProg")> 
+<Assembly: AssemblyProduct("AM_Shared")> 
 <Assembly: AssemblyCopyright("Copyright © PNNL 2012")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("c0ba8094-c759-4cb1-a402-dc190a69342b")> 
+<Assembly: Guid("63ee831d-9f92-416d-8588-2539a819c6a4")> 
 
 ' Version information for an assembly consists of the following four values:
 '
@@ -29,6 +29,6 @@ Imports System.Runtime.InteropServices
 '
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
-
+' <Assembly: AssemblyVersion("1.0.*")> 
 <Assembly: AssemblyVersion("2.3.*")> 
-'<Assembly: AssemblyFileVersion("1.0.0.0")> 
+

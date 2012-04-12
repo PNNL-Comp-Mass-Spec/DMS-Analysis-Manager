@@ -31,13 +31,28 @@ Public Class clsCodeTest
 		Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
 		Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 
-		m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+		' Get settings from config file
+		Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
 
-		m_DebugLevel = 2
+		Try
+			lstMgrSettings = AnalysisManagerProg.clsMainProcess.LoadMgrSettingsFromFile()
 
-		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-		m_mgrParams.SetParam("MgrName", "Monroe_Test")
-		m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString)
+			m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath())
+
+			m_DebugLevel = 2
+
+			m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+			m_mgrParams.SetParam("MgrName", "Monroe_Test")
+			m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString)
+
+		Catch ex As Exception
+			Console.WriteLine()
+			Console.WriteLine("===============================================================")
+			Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " & ex.Message)
+			Console.WriteLine("===============================================================")
+			Console.WriteLine()
+			System.Threading.Thread.Sleep(500)
+		End Try
 
 
 	End Sub
@@ -195,8 +210,8 @@ Public Class clsCodeTest
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-								  ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-								  ByVal blnIgnoreWhitespace As Boolean) As Boolean
+	   ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
+	   ByVal blnIgnoreWhitespace As Boolean) As Boolean
 
 		Return TextFilesMatch(strFile1, strFile2, intComparisonStartLine, intComparisonEndLine, blnIgnoreWhitespace, Nothing)
 
@@ -214,9 +229,9 @@ Public Class clsCodeTest
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-									  ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-									  ByVal blnIgnoreWhitespace As Boolean, _
-									  ByRef strLineIgnoreRegExList() As String) As Boolean
+	 ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
+	 ByVal blnIgnoreWhitespace As Boolean, _
+	 ByRef strLineIgnoreRegExList() As String) As Boolean
 
 		Dim srFile1 As System.IO.StreamReader
 		Dim srFile2 As System.IO.StreamReader
@@ -450,9 +465,9 @@ Public Class clsCodeTest
 	End Function
 
 	Public Function TestProteinDBExport(ByVal DestFolder As String, _
-										ByVal strLegacyFasta As String, _
-										ByVal strProteinCollectionList As String, _
-										ByVal strProteinOptions As String) As Boolean
+	   ByVal strLegacyFasta As String, _
+	   ByVal strProteinCollectionList As String, _
+	   ByVal strProteinOptions As String) As Boolean
 
 		Dim HashString As String = String.Empty
 
@@ -508,6 +523,7 @@ Public Class clsCodeTest
 		Dim objToolRunner As clsCodeTestAM
 		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
 		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+		Dim objSummaryFile As New clsSummaryFile()
 
 		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
 		m_mgrParams.SetParam("MgrName", "Monroe_Test")
@@ -520,9 +536,9 @@ Public Class clsCodeTest
 		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
 
 		objToolRunner = New clsCodeTestAM
-		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
+		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
-		AnalysisManagerBase.clsGlobal.FilesToDelete.Add(OutFileName)
+		objJobParams.AddResultFileToSkip(OutFileName)
 
 		objToolRunner.RunTool()
 
@@ -536,6 +552,7 @@ Public Class clsCodeTest
 		Dim objToolRunner As clsCodeTestAM
 		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
 		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+		Dim objSummaryFile As New clsSummaryFile()
 
 		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
 		m_mgrParams.SetParam("MgrName", "Monroe_Test")
@@ -551,7 +568,7 @@ Public Class clsCodeTest
 		objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset")
 
 		objToolRunner = New clsCodeTestAM
-		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
+		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
 		objToolRunner.RunTool()
 
@@ -583,7 +600,9 @@ Public Class clsCodeTest
 
 		Dim objResources As New clsResourceTestClass
 
-		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+		Dim objJobParams As IJobParams
+		objJobParams = New clsAnalysisJob(m_mgrParams, 0)
+
 		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 		Dim blnSuccess As Boolean
 
@@ -612,7 +631,9 @@ Public Class clsCodeTest
 
 		Dim objResources As New clsResourceTestClass
 
-		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+		Dim objJobParams As IJobParams
+		objJobParams = New clsAnalysisJob(m_mgrParams, 0)
+
 		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 		Dim blnSuccess As Boolean
 
@@ -736,8 +757,8 @@ Public Class clsCodeTest
 			If True Then
 				' Make sure the Peptide Prophet output file was actually created
 				strPepProphetOutputFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strFileList(intFileIndex)), _
-																System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
-																PEPPROPHET_RESULT_FILE_SUFFIX)
+				   System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
+				   PEPPROPHET_RESULT_FILE_SUFFIX)
 
 				If Not System.IO.File.Exists(strPepProphetOutputFilePath) Then
 
@@ -753,7 +774,7 @@ Public Class clsCodeTest
 				End If
 			Else
 				Msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize & _
-					  ": "
+				   ": "
 				''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 
 				If blnIgnorePeptideProphetErrors Then
@@ -800,8 +821,8 @@ Public Class clsCodeTest
 	End Function
 
 	Protected Function InterleaveFiles(ByRef strFileList() As String, _
-									   ByVal strCombinedFilePath As String, _
-									   ByVal blnLookForHeaderLine As Boolean) As Boolean
+	  ByVal strCombinedFilePath As String, _
+	  ByVal blnLookForHeaderLine As Boolean) As Boolean
 
 		Dim Msg As String
 		Dim intIndex As Integer
@@ -995,9 +1016,9 @@ Public Class clsCodeTest
 	''' <returns>True if success, False if failure</returns>
 	''' <remarks></remarks>
 	Private Function SplitFileRoundRobin(ByVal strSrcFilePath As String, _
-										 ByVal lngMaxSizeBytes As Int64, _
-										 ByVal blnLookForHeaderLine As Boolean, _
-										 ByRef strSplitFileList() As String) As Boolean
+	 ByVal lngMaxSizeBytes As Int64, _
+	 ByVal blnLookForHeaderLine As Boolean, _
+	 ByRef strSplitFileList() As String) As Boolean
 
 		Dim fiFileInfo As System.IO.FileInfo
 		Dim strBaseName As String
@@ -1116,9 +1137,9 @@ Public Class clsCodeTest
 	End Sub
 
 	Protected Overridable Function PerformResultsXfer(ByVal strTransferFolderPath As String, _
-													  ByVal strDatasetFolderPath As String, _
-													  ByVal strDatasetName As String, _
-													  ByVal strInputFolderName As String) As AnalysisManagerBase.IJobParams.CloseOutType
+	  ByVal strDatasetFolderPath As String, _
+	  ByVal strDatasetName As String, _
+	  ByVal strInputFolderName As String) As IJobParams.CloseOutType
 
 		Const m_DebugLevel As Integer = 3
 
@@ -1192,6 +1213,7 @@ Public Class clsCodeTest
 			If m_DebugLevel >= 3 Then
 				'' m_logger.PostEntry("Moving '" & FolderToMove & "' to '" & TargetDir & "'", ILogger.logMsgType.logDebug, True)
 			End If
+
 
 			My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, False)
 
@@ -1343,8 +1365,8 @@ Public Class clsCodeTest
 		End With
 
 		blnSuccess = objProgRunner.RunProgram( _
-								 strAppPath, _
-								 "input.xml", "X!Tandem", False)
+		 strAppPath, _
+		 "input.xml", "X!Tandem", False)
 
 
 		If objProgRunner.CacheStandardOutput And Not objProgRunner.EchoOutputToConsole Then
@@ -1872,8 +1894,8 @@ Public Class clsCodeTest
 								intNodeCountThisHost = CInt(htHostNodeCount(strHostNames(intIndex)))
 
 								strProcessingMsg = "Host " & strHostNames(intIndex) & " processed " & intDTAProcessingStats(intHostIndex) & " DTA" & CheckForPlurality(intDTAProcessingStats(intHostIndex)) & _
-												   " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
-												   " (" & sngHostProcessingRate(intIndex).ToString("0.0") & " DTAs/node)"
+								 " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
+								 " (" & sngHostProcessingRate(intIndex).ToString("0.0") & " DTAs/node)"
 								If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
 							End If
@@ -1924,7 +1946,7 @@ Public Class clsCodeTest
 	Protected Class clsResourceTestClass
 		Inherits clsAnalysisResources
 
-		Public Overrides Function GetResources() As AnalysisManagerBase.IJobParams.CloseOutType
+		Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		End Function
 	End Class
