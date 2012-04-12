@@ -58,6 +58,13 @@ AnalysisManagerProg
 	<param name="ItemKey">Key name for item</param>
 	<param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	<returns>Value for specified parameter; ValueIfMissing if not found</returns>
+</member><member name="M:clsAnalysisMgrSettings.GetParam(System.String,System.Int32)">
+	<summary>
+ Gets a parameter from the manager parameters dictionary
+ </summary>
+	<param name="ItemKey">Key name for item</param>
+	<param name="ValueIfMissing">Value to return if the parameter is not found</param>
+	<returns>Value for specified parameter; ValueIfMissing if not found</returns>
 </member><member name="M:clsAnalysisMgrSettings.GetParam(System.String,System.String)">
 	<summary>
  Gets a parameter from the manager parameters dictionary

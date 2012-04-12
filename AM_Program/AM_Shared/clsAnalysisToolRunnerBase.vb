@@ -162,11 +162,10 @@ Public Class clsAnalysisToolRunnerBase
 		m_MachName = m_mgrParams.GetParam("MgrName")
 		m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
 		m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
-		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
+		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 		m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
-		m_SummaryFile = SummaryFile
-		m_SummaryFile.Clear()
+		m_SummaryFile = SummaryFile		
 
 		m_ResFolderName = m_jobParams.GetParam("OutputFolderName")
 
@@ -449,9 +448,11 @@ Public Class clsAnalysisToolRunnerBase
 		Dim strLogMessage As String
 
 		Dim strExtension As String
-		Dim htRejectStats As System.Collections.Hashtable
-		Dim htAcceptStats As System.Collections.Hashtable
-		Dim objExtension As System.Collections.IDictionaryEnumerator
+		Dim dctRejectStats As System.Collections.Generic.Dictionary(Of String, Integer)
+		Dim dctAcceptStats As System.Collections.Generic.Dictionary(Of String, Integer)
+		Dim intCount As Integer
+
+		Dim objExtension As System.Collections.Generic.Dictionary(Of String, Integer).Enumerator
 
 		Dim blnErrorEncountered As Boolean = False
 
@@ -459,8 +460,8 @@ Public Class clsAnalysisToolRunnerBase
 		Try
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 			ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
-			htRejectStats = New System.Collections.Hashtable
-			htAcceptStats = New System.Collections.Hashtable
+			dctRejectStats = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			dctAcceptStats = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 			'Log status
 			If m_DebugLevel >= 2 Then
@@ -523,15 +524,15 @@ Public Class clsAnalysisToolRunnerBase
 				Else
 					If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
 						strExtension = System.IO.Path.GetExtension(TmpFile)
-						If htRejectStats.Contains(strExtension) Then
-							htRejectStats(strExtension) = CInt(htRejectStats(strExtension)) + 1
+						If dctRejectStats.TryGetValue(strExtension, intCount) Then
+							dctRejectStats(strExtension) = intCount + 1
 						Else
-							htRejectStats.Add(strExtension, 1)
+							dctRejectStats.Add(strExtension, 1)
 						End If
 
 						' Only log the first 10 times files of a given extension are rejected
-						'  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with htRejectStats
-						If CInt(htRejectStats(strExtension)) <= REJECT_LOGGING_THRESHOLD Then
+						'  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with dctRejectStats
+						If dctRejectStats(strExtension) <= REJECT_LOGGING_THRESHOLD Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " & TmpFile)
 						End If
 					End If
@@ -541,14 +542,14 @@ Public Class clsAnalysisToolRunnerBase
 				If OkToMove Then
 					If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
 						strExtension = System.IO.Path.GetExtension(TmpFile).ToLower
-						If htAcceptStats.Contains(strExtension) Then
-							htAcceptStats(strExtension) = CInt(htAcceptStats(strExtension)) + 1
+						If dctAcceptStats.TryGetValue(strExtension, intCount) Then
+							dctAcceptStats(strExtension) = intCount + 1
 						Else
-							htAcceptStats.Add(strExtension, 1)
+							dctAcceptStats.Add(strExtension, 1)
 						End If
 
 						' Only log the first 50 times files of a given extension are accepted
-						If CInt(htAcceptStats(strExtension)) <= ACCEPT_LOGGING_THRESHOLD Then
+						If dctAcceptStats(strExtension) <= ACCEPT_LOGGING_THRESHOLD Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
 						End If
 					End If
@@ -574,19 +575,19 @@ Public Class clsAnalysisToolRunnerBase
 			Next
 
 			If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-				' Look for any extensions in htAcceptStats that had over 50 accepted files
-				objExtension = htAcceptStats.GetEnumerator
+				' Look for any extensions in dctAcceptStats that had over 50 accepted files
+				objExtension = dctAcceptStats.GetEnumerator
 				Do While objExtension.MoveNext
-					If CInt(objExtension.Value) > ACCEPT_LOGGING_THRESHOLD Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
+					If objExtension.Current.Value > ACCEPT_LOGGING_THRESHOLD Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
 					End If
 				Loop
 
-				' Look for any extensions in htRejectStats that had over 10 rejected files
-				objExtension = htRejectStats.GetEnumerator
+				' Look for any extensions in dctRejectStats that had over 10 rejected files
+				objExtension = dctRejectStats.GetEnumerator
 				Do While objExtension.MoveNext
-					If CInt(objExtension.Value) > REJECT_LOGGING_THRESHOLD Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected a total of " & CInt(objExtension.Value) & " files with extension " & CStr(objExtension.Key))
+					If objExtension.Current.Value > REJECT_LOGGING_THRESHOLD Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
 					End If
 				Loop
 			End If

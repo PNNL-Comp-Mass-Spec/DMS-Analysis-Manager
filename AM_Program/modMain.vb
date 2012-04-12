@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "April 10, 2012"
+	Public Const PROGRAM_DATE As String = "April 12, 2012"
 
 	Private mInputFilePath As String
 

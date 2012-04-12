@@ -569,7 +569,7 @@ Public Class clsAnalysisJob
 							Me.SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
 						Next
 
-						SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, CStr(MyCmd.Parameters("@jobNumber").Value))
+						SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
 						Outcome = clsDBTask.RequestTaskResult.TaskFound
 					Else
 						'There was an error
@@ -631,7 +631,7 @@ Public Class clsAnalysisJob
 	''' <param name="WorkDir">Full path to work directory</param>
 	''' <param name="paramXml">Contains the xml for all the job parameters</param>
 	''' <param name="jobNum">Contains the job number</param>
-	Private Function SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As String) As Boolean
+	Private Function SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer) As Boolean
 
 		Dim xmlWriter As New clsFormattedXMLWriter
 		Dim xmlParameterFilename As String = String.Empty

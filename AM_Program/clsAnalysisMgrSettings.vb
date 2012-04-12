@@ -418,6 +418,16 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for item</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer Implements AnalysisManagerBase.IMgrParams.GetParam
+		Return clsGlobal.CIntSafe(GetParam(ItemKey), ValueIfMissing)
+	End Function
+
+	''' <summary>
+	''' Gets a parameter from the manager parameters dictionary
+	''' </summary>
+	''' <param name="ItemKey">Key name for item</param>
+	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String Implements AnalysisManagerBase.IMgrParams.GetParam
 		Dim strValue As String
 		strValue = GetParam(ItemKey)
@@ -584,5 +594,5 @@ Public Class clsAnalysisMgrSettings
 	End Function
 
 #End Region
-
+	
 End Class

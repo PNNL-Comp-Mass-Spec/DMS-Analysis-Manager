@@ -23,6 +23,7 @@ Public Interface IMgrParams
 	Function GetParam(ByVal ItemKey As String) As String
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean
+	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer
 
 	Function LoadDBSettings() As Boolean
 	Function LoadSettings(ByVal ConfigFileSettings As System.Collections.Generic.Dictionary(Of String, String)) As Boolean

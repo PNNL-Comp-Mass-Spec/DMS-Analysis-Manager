@@ -67,6 +67,11 @@ namespace TestApePlugIn {
 			return clsGlobal.CBoolSafe(GetParam(ItemKey), ValueIfMissing);
 		}
 
+		public int GetParam(string ItemKey, int ValueIfMissing)
+		{
+			return clsGlobal.CIntSafe(GetParam(ItemKey), ValueIfMissing);
+		}
+
 		public string GetParam(string ItemKey, string ValueIfMissing)
 		{
 			string strValue = GetParam(ItemKey);

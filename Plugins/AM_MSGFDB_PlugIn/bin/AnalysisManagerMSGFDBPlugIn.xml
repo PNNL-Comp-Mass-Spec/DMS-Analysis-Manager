@@ -24,7 +24,8 @@ AnalysisManagerMSGFDBPlugIn
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB.GenerateDecoyFastaFile(System.String,System.String)">
-	<summary>
+ Read the original fasta file to create a decoy fasta file
+ <summary>
  Creates a decoy version of the fasta file specified by strInputFilePath
  This new file will include the original proteins plus reversed versions of the original proteins
  Protein names will be prepended with REV_

@@ -186,7 +186,7 @@ Public MustInherit Class clsAnalysisResources
 		m_mgrParams = mgrParams
 		m_jobParams = jobParams
 
-		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel"))
+		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 		m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
 
 		m_WorkingDir = m_mgrParams.GetParam("workdir")
@@ -2036,7 +2036,7 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		'Fasta file was successfully generated. Put the private name of the generated fastafile in the
+		'Fasta file was successfully generated. Put the name of the generated fastafile in the
 		'	job data class for other methods to use
 		If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error adding parameter 'generatedFastaName' to m_jobParams")
@@ -2211,7 +2211,7 @@ Public MustInherit Class clsAnalysisResources
 			' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 			blnSuccess = ParFileGen.MakeFile(ParamFileName, SetBioworksVersion(m_jobParams.GetParam("ToolName")), _
 			 System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")), _
-			 WorkDir, m_mgrParams.GetParam("connectionstring"), CInt(m_jobParams.GetParam("JobParameters", "DatasetID")))
+			 WorkDir, m_mgrParams.GetParam("connectionstring"), m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0))
 
 			If blnSuccess Then
 				If m_DebugLevel >= 3 Then

@@ -434,21 +434,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Try
 			' Validate that the input file has at least one entry; if not, then no point in continuing
-			Dim srInFile As System.IO.StreamReader
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			intLinesRead = 0
-			Do While srInFile.Peek >= 0 AndAlso intLinesRead < 10
-				strLineIn = srInFile.ReadLine()
-				If Not String.IsNullOrEmpty(strLineIn) Then
-					intLinesRead += 1
-				End If
-			Loop
+				intLinesRead = 0
+				Do While srInFile.Peek > -1 AndAlso intLinesRead < 10
+					strLineIn = srInFile.ReadLine()
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						intLinesRead += 1
+					End If
+				Loop
 
-			srInFile.Close()
+			End Using
+
 
 			If intLinesRead <= 1 Then
 				' File is empty or only contains a header line
@@ -605,7 +605,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	' Read the original fasta file to create a decoy fasta file
+	''' Read the original fasta file to create a decoy fasta file
 	''' <summary>
 	''' Creates a decoy version of the fasta file specified by strInputFilePath
 	''' This new file will include the original proteins plus reversed versions of the original proteins
@@ -624,7 +624,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim ioSourceFile As System.IO.FileInfo
 
 		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
-		Dim swProteinOutputFile As System.IO.StreamWriter
 
 		Dim blnInputProteinFound As Boolean
 
@@ -653,24 +652,25 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return String.Empty
 			End If
 
-			swProteinOutputFile = New System.IO.StreamWriter(New System.IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swProteinOutputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-			Do
-				blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
+				Do
+					blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
 
-				If blnInputProteinFound Then
-					' Write the forward protein
-					swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
-					WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
+					If blnInputProteinFound Then
+						' Write the forward protein
+						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+						WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
 
-					' Write the decoy protein
-					swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & "REV_" & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
-					WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
-				End If
+						' Write the decoy protein
+						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & "REV_" & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+						WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
+					End If
 
-			Loop While blnInputProteinFound
+				Loop While blnInputProteinFound
 
-			swProteinOutputFile.Close()
+			End Using
+
 			objFastaFileReader.CloseFile()
 
 		Catch ex As Exception
@@ -792,7 +792,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
@@ -802,100 +801,101 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim sngEffectiveProgress As Single
 			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+				intLinesRead = 0
+				Do While srInFile.Peek() >= 0
+					strLineIn = srInFile.ReadLine()
+					intLinesRead += 1
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					If intLinesRead = 1 Then
-						' The first line is the MSGFDB version
-						If strLineIn.ToLower.Contains("gfdb") Then
-							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB version: " & strLineIn)
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+						If intLinesRead = 1 Then
+							' The first line is the MSGFDB version
+							If strLineIn.ToLower.Contains("gfdb") Then
+								If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB version: " & strLineIn)
+								End If
+
+								mMSGFDbVersion = String.Copy(strLineIn)
+							Else
+								If strLineIn.ToLower.Contains("error") Then
+									If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+										mConsoleOutputErrorMsg = "Error running MSGFDB:"
+									End If
+									mConsoleOutputErrorMsg &= "; " & strLineIn
+								End If
+							End If
+						End If
+
+						' Update progress if the line starts with one of the expected phrases
+						If strLineIn.StartsWith("Loading database files") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
+								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
 							End If
 
-							mMSGFDbVersion = String.Copy(strLineIn)
-						Else
+						ElseIf strLineIn.StartsWith("Reading spectra") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
+								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
+							End If
+						ElseIf strLineIn.StartsWith("Using") Then
+
+							' Extract out the thread count
+							oMatch = reExtractThreadCount.Match(strLineIn)
+
+							If oMatch.Success Then
+								Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
+							End If
+
+							' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
+							If eThreadProgressBase.Length < intThreadCount Then
+								ReDim eThreadProgressBase(intThreadCount)
+								ReDim sngThreadProgressAddon(intThreadCount)
+							End If
+
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
+								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+							End If
+
+						ElseIf strLineIn.StartsWith("Computing EFDRs") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
+							End If
+
+						ElseIf strLineIn.StartsWith("MS-GFDB complete") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
+								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
+							End If
+
+						ElseIf strLineIn.Contains("Preprocessing spectra") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
+							End If
+
+						ElseIf strLineIn.Contains("Database search") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
+							End If
+
+						ElseIf strLineIn.Contains("Computing spectral probabilities finished") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
+							End If
+
+						ElseIf strLineIn.Contains("Computing spectral probabilities") Then
+							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
+							End If
+
+						ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 							If strLineIn.ToLower.Contains("error") Then
-								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-									mConsoleOutputErrorMsg = "Error running MSGFDB:"
-								End If
 								mConsoleOutputErrorMsg &= "; " & strLineIn
 							End If
 						End If
 					End If
+				Loop
 
-					' Update progress if the line starts with one of the expected phrases
-					If strLineIn.StartsWith("Loading database files") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
-							sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
-						End If
+			End Using
 
-					ElseIf strLineIn.StartsWith("Reading spectra") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
-							sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
-						End If
-					ElseIf strLineIn.StartsWith("Using") Then
-
-						' Extract out the thread count
-						oMatch = reExtractThreadCount.Match(strLineIn)
-
-						If oMatch.Success Then
-							Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
-						End If
-
-						' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
-						If eThreadProgressBase.Length < intThreadCount Then
-							ReDim eThreadProgressBase(intThreadCount)
-							ReDim sngThreadProgressAddon(intThreadCount)
-						End If
-
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
-							sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
-						End If
-
-					ElseIf strLineIn.StartsWith("Computing EFDRs") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-							sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
-						End If
-
-					ElseIf strLineIn.StartsWith("MS-GFDB complete") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
-							sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
-						End If
-
-					ElseIf strLineIn.Contains("Preprocessing spectra") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-							ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
-						End If
-
-					ElseIf strLineIn.Contains("Database search") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-							ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
-						End If
-
-					ElseIf strLineIn.Contains("Computing spectral probabilities finished") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-							ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
-						End If
-
-					ElseIf strLineIn.Contains("Computing spectral probabilities") Then
-						If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-							ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
-						End If
-
-					ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-						If strLineIn.ToLower.Contains("error") Then
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-						End If
-					End If
-				End If
-			Loop
-
-			srInFile.Close()
 
 			If sngEffectiveProgress >= PROGRESS_PCT_MSGFDB_THREADS_SPAWNED AndAlso sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 
@@ -1025,7 +1025,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
 		Dim blnSuccess As Boolean
 		Dim strModFilePath As String
-		Dim swModFile As System.IO.StreamWriter = Nothing
 
 		Try
 			Dim fiParameterFile As System.IO.FileInfo
@@ -1035,69 +1034,67 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			sbOptions.Append(" -mod " & MOD_FILE_NAME)
 
-			swModFile = New System.IO.StreamWriter(New System.IO.FileStream(strModFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swModFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strModFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-			swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
-			swModFile.WriteLine("")
-			swModFile.WriteLine("# Max Number of Modifications per peptide")
-			swModFile.WriteLine("# If this value is large, the search will be slow")
-			swModFile.WriteLine("NumMods=" & intNumMods)
+				swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
+				swModFile.WriteLine("")
+				swModFile.WriteLine("# Max Number of Modifications per peptide")
+				swModFile.WriteLine("# If this value is large, the search will be slow")
+				swModFile.WriteLine("NumMods=" & intNumMods)
 
-			swModFile.WriteLine("")
-			swModFile.WriteLine("# Static mods")
-			If lstStaticMods.Count = 0 Then
-				swModFile.WriteLine("# None")
-			Else
-				For Each strStaticMod As String In lstStaticMods
-					Dim strModClean As String = String.Empty
+				swModFile.WriteLine("")
+				swModFile.WriteLine("# Static mods")
+				If lstStaticMods.Count = 0 Then
+					swModFile.WriteLine("# None")
+				Else
+					For Each strStaticMod As String In lstStaticMods
+						Dim strModClean As String = String.Empty
 
-					If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
-						If strModClean.Contains(",opt,") Then
-							' Static (fixed) mod is listed as dynamic
-							' Abort the analysis since the parameter file is misleading and needs to be fixed							
-							m_message = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strStaticMod)
+						If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
+							If strModClean.Contains(",opt,") Then
+								' Static (fixed) mod is listed as dynamic
+								' Abort the analysis since the parameter file is misleading and needs to be fixed							
+								m_message = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strStaticMod)
+								Return False
+							End If
+							swModFile.WriteLine(strModClean)
+						Else
 							Return False
 						End If
-						swModFile.WriteLine(strModClean)
-					Else
-						Return False
-					End If
-				Next
-			End If
+					Next
+				End If
 
-			swModFile.WriteLine("")
-			swModFile.WriteLine("# Dynamic mods")
-			If lstDynamicMods.Count = 0 Then
-				swModFile.WriteLine("# None")
-			Else
-				For Each strDynamicMod As String In lstDynamicMods
-					Dim strModClean As String = String.Empty
+				swModFile.WriteLine("")
+				swModFile.WriteLine("# Dynamic mods")
+				If lstDynamicMods.Count = 0 Then
+					swModFile.WriteLine("# None")
+				Else
+					For Each strDynamicMod As String In lstDynamicMods
+						Dim strModClean As String = String.Empty
 
-					If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
-						If strModClean.Contains(",fix,") Then
-							' Dynamic (optional) mod is listed as static
-							' Abort the analysis since the parameter file is misleading and needs to be fixed							
-							m_message = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strDynamicMod)
+						If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
+							If strModClean.Contains(",fix,") Then
+								' Dynamic (optional) mod is listed as static
+								' Abort the analysis since the parameter file is misleading and needs to be fixed							
+								m_message = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & strDynamicMod)
+								Return False
+							End If
+							swModFile.WriteLine(strModClean)
+						Else
 							Return False
 						End If
-						swModFile.WriteLine(strModClean)
-					Else
-						Return False
-					End If
-				Next
-			End If
+					Next
+				End If
+
+			End Using
 
 			blnSuccess = True
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MSGFDB Mods file: " & ex.Message)
-			blnSuccess = False
-		Finally
-			If Not swModFile Is Nothing Then
-				swModFile.Close()
-			End If
+			blnSuccess = False		
 		End Try
 
 		Return blnSuccess
@@ -1116,7 +1113,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
 		Dim sbOptions As System.Text.StringBuilder
-		Dim srParamFile As System.IO.StreamReader
 		Dim strLineIn As String
 
 		Dim strKey As String
@@ -1146,128 +1142,129 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Initialize the Param Name dictionary
 			dctParamNames = GetMSFGDBParameterNames()
 
-			srParamFile = New System.IO.StreamReader(New System.IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			Do While srParamFile.Peek >= 0
-				strLineIn = srParamFile.ReadLine()
-				strKey = String.Empty
-				strValue = String.Empty
+				Do While srParamFile.Peek > -1
+					strLineIn = srParamFile.ReadLine()
+					strKey = String.Empty
+					strValue = String.Empty
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					strLineIn = strLineIn.Trim()
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+						strLineIn = strLineIn.Trim()
 
-					If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+						If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
 
-						Dim intCharIndex As Integer
-						intCharIndex = strLineIn.IndexOf("=")
-						If intCharIndex > 0 Then
-							strKey = strLineIn.Substring(0, intCharIndex).Trim()
-							If intCharIndex < strLineIn.Length - 1 Then
-								strValue = strLineIn.Substring(intCharIndex + 1).Trim()
-							Else
-								strValue = String.Empty
+							Dim intCharIndex As Integer
+							intCharIndex = strLineIn.IndexOf("=")
+							If intCharIndex > 0 Then
+								strKey = strLineIn.Substring(0, intCharIndex).Trim()
+								If intCharIndex < strLineIn.Length - 1 Then
+									strValue = strLineIn.Substring(intCharIndex + 1).Trim()
+								Else
+									strValue = String.Empty
+								End If
 							End If
 						End If
+
 					End If
 
-				End If
+					If Not String.IsNullOrWhiteSpace(strKey) Then
 
-				If Not String.IsNullOrWhiteSpace(strKey) Then
+						Dim strArgumentSwitch As String = String.Empty
 
-					Dim strArgumentSwitch As String = String.Empty
+						' Check whether strKey is one of the standard keys defined in dctParamNames
+						If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
 
-					' Check whether strKey is one of the standard keys defined in dctParamNames
-					If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
+							If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+								' Override FragmentationMethodID using strAssumedScanType
+								Select Case strAssumedScanType.ToUpper()
+									Case "CID"
+										strValue = "1"
+									Case "ETD"
+										strValue = "2"
+									Case "HCD"
+										strValue = "3"
+									Case Else
+										' Invalid string
+										m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+										Return String.Empty
+								End Select
+							End If
 
-						If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
-							' Override FragmentationMethodID using strAssumedScanType
-							Select Case strAssumedScanType.ToUpper()
-								Case "CID"
-									strValue = "1"
-								Case "ETD"
-									strValue = "2"
-								Case "HCD"
-									strValue = "3"
-								Case Else
-									' Invalid string
-									m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+
+							If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
+								blnShowDecoyParamPresent = True
+								If Integer.TryParse(strValue, intValue) Then
+									If intValue > 0 Then
+										blnShowDecoy = True
+									End If
+								End If
+							ElseIf IsMatch(strKey, MSGFDB_OPTION_TDA) Then
+								If Integer.TryParse(strValue, intValue) Then
+									If intValue > 0 Then
+										blnTDA = True
+									End If
+								End If
+							End If
+
+						ElseIf IsMatch(strKey, "uniformAAProb") Then
+							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
+								If FastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
+									sbOptions.Append(" -uniformAAProb 1")
+								Else
+									sbOptions.Append(" -uniformAAProb 0")
+								End If
+							Else
+								If Integer.TryParse(strValue, intValue) Then
+									sbOptions.Append(" -uniformAAProb " & intValue)
+								Else
+									m_message = "Invalid value for uniformAAProb in MSGFDB parameter file"
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strLineIn)
+									srParamFile.Close()
 									Return String.Empty
-							End Select
-						End If
-
-						sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-
-						If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
-							blnShowDecoyParamPresent = True
-							If Integer.TryParse(strValue, intValue) Then
-								If intValue > 0 Then
-									blnShowDecoy = True
 								End If
 							End If
-						ElseIf IsMatch(strKey, MSGFDB_OPTION_TDA) Then
-							If Integer.TryParse(strValue, intValue) Then
-								If intValue > 0 Then
-									blnTDA = True
+
+						ElseIf DEFINE_MAX_THREADS AndAlso IsMatch(strKey, "NumThreads") Then
+							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "all") Then
+								' Do not append -thread to the command line; MSGFDB will use all available cores by default
+							Else
+								If Integer.TryParse(strValue, intParamFileThreadCount) Then
+									' intParamFileThreadCount now has the thread count
+								Else
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid value for NumThreads in MSGFDB parameter file: " & strLineIn)
 								End If
 							End If
-						End If
 
-					ElseIf IsMatch(strKey, "uniformAAProb") Then
-						If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
-							If FastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
-								sbOptions.Append(" -uniformAAProb 1")
-							Else
-								sbOptions.Append(" -uniformAAProb 0")
-							End If
-						Else
+
+						ElseIf IsMatch(strKey, "NumMods") Then
 							If Integer.TryParse(strValue, intValue) Then
-								sbOptions.Append(" -uniformAAProb " & intValue)
+								intNumMods = intValue
 							Else
-								m_message = "Invalid value for uniformAAProb in MSGFDB parameter file"
+								m_message = "Invalid value for NumMods in MSGFDB parameter file"
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strLineIn)
 								srParamFile.Close()
 								Return String.Empty
 							End If
-						End If
 
-					ElseIf DEFINE_MAX_THREADS AndAlso IsMatch(strKey, "NumThreads") Then
-						If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "all") Then
-							' Do not append -thread to the command line; MSGFDB will use all available cores by default
-						Else
-							If Integer.TryParse(strValue, intParamFileThreadCount) Then
-								' intParamFileThreadCount now has the thread count
-							Else
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid value for NumThreads in MSGFDB parameter file: " & strLineIn)
+						ElseIf IsMatch(strKey, "StaticMod") Then
+							If Not IsMatch(strValue, "none") Then
+								lstStaticMods.Add(strValue)
+							End If
+
+						ElseIf IsMatch(strKey, "DynamicMod") Then
+							If Not IsMatch(strValue, "none") Then
+								lstDynamicMods.Add(strValue)
 							End If
 						End If
 
-
-					ElseIf IsMatch(strKey, "NumMods") Then
-						If Integer.TryParse(strValue, intValue) Then
-							intNumMods = intValue
-						Else
-							m_message = "Invalid value for NumMods in MSGFDB parameter file"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strLineIn)
-							srParamFile.Close()
-							Return String.Empty
-						End If
-
-					ElseIf IsMatch(strKey, "StaticMod") Then
-						If Not IsMatch(strValue, "none") Then
-							lstStaticMods.Add(strValue)
-						End If
-
-					ElseIf IsMatch(strKey, "DynamicMod") Then
-						If Not IsMatch(strValue, "none") Then
-							lstDynamicMods.Add(strValue)
-						End If
 					End If
+				Loop
 
-				End If
-			Loop
+			End Using
 
-			srParamFile.Close()
 
 			If blnShowDecoy And blnTDA Then
 				' Parameter file contains both TDA=1 and showDecoy=1
@@ -1442,28 +1439,28 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Try
 			' Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
 
-			Dim srInFile As System.IO.StreamReader
 			Dim strLineIn As String
 
 			If m_DebugLevel >= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Validating peptide to protein mapping, file " & System.IO.Path.GetFileName(strPeptideToProteinMapFilePath))
 			End If
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strPeptideToProteinMapFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strPeptideToProteinMapFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			Do While srInFile.Peek > -1
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+				Do While srInFile.Peek > -1
+					strLineIn = srInFile.ReadLine()
+					intLinesRead += 1
 
-				If intLinesRead > 1 AndAlso Not String.IsNullOrEmpty(strLineIn) Then
-					intPeptideCount += 1
-					If strLineIn.Contains(PROTEIN_NAME_NO_MATCH) Then
-						intPeptideCountNoMatch += 1
+					If intLinesRead > 1 AndAlso Not String.IsNullOrEmpty(strLineIn) Then
+						intPeptideCount += 1
+						If strLineIn.Contains(PROTEIN_NAME_NO_MATCH) Then
+							intPeptideCountNoMatch += 1
+						End If
 					End If
-				End If
-			Loop
+				Loop
 
-			srInFile.Close()
+			End Using
+
 
 			If intPeptideCount = 0 Then
 				m_message = "Peptide to protein mapping file is empty"

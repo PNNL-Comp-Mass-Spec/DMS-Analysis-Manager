@@ -265,8 +265,8 @@ Namespace AnalysisManagerProg
 					End If
 
 					'Check to see if manager is still active
-					Dim MgrActive As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("mgractive"))
-					Dim MgrActiveLocal As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("mgractive_local"))
+					Dim MgrActive As Boolean = m_MgrSettings.GetParam("mgractive", False)
+					Dim MgrActiveLocal As Boolean = m_MgrSettings.GetParam("mgractive_local", False)
 					Dim strManagerDisableReason As String
 					If Not (MgrActive And MgrActiveLocal) Then
 						If Not MgrActiveLocal Then
@@ -282,7 +282,7 @@ Namespace AnalysisManagerProg
 						Exit Sub
 					End If
 
-					Dim MgrUpdateRequired As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired"))
+					Dim MgrUpdateRequired As Boolean = m_MgrSettings.GetParam("ManagerUpdateRequired", False)
 					If MgrUpdateRequired Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager update is required")
 						m_MgrSettings.AckManagerUpdateRequired()
@@ -469,8 +469,8 @@ Namespace AnalysisManagerProg
 		Private Function DoAnalysisJob() As Boolean
 
 			Dim eToolRunnerResult As IJobParams.CloseOutType
-			Dim JobNum As Integer = CInt(m_AnalysisTask.GetParam("StepParameters", "Job"))
-			Dim StepNum As Integer = clsGlobal.CIntSafe(m_AnalysisTask.GetParam("StepParameters", "Step"), 0)
+			Dim JobNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0)
+			Dim StepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
 			Dim Dataset As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
 			Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
 			Dim ErrorMessage As String = String.Empty
@@ -499,7 +499,7 @@ Namespace AnalysisManagerProg
 			End With
 
 			' Note: The format of the following text is important; be careful about changing it
-			' In particular, function DetermineRecentErrorMessages in clsGlobal looks for log entries
+			' In particular, function DetermineRecentErrorMessages in clsMainProcess looks for log entries
 			'   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & JobNum & ", Dataset " & Dataset & ", Tool " & JobToolDescription)
 
@@ -1524,14 +1524,14 @@ Namespace AnalysisManagerProg
 		Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
 
 
-			Dim LogMemoryUsage As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogMemoryUsage"))
-			Dim MinimumMemoryUsageLogInterval As Single = clsGlobal.CSngSafe(m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval"), 1)
+			Dim LogMemoryUsage As Boolean = m_MgrSettings.GetParam("LogMemoryUsage", False)
+			Dim MinimumMemoryUsageLogInterval As Single = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1)
 
-			Dim LogStatusToBrokerDB As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogStatusToBrokerDB"))
+			Dim LogStatusToBrokerDB As Boolean = m_MgrSettings.GetParam("LogStatusToBrokerDB", False)
 			Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")
-			Dim BrokerDBStatusUpdateIntervalMinutes As Single = clsGlobal.CSngSafe(m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes"), 60)
+			Dim BrokerDBStatusUpdateIntervalMinutes As Single = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60)
 
-			Dim LogStatusToMessageQueue As Boolean = clsGlobal.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"))
+			Dim LogStatusToMessageQueue As Boolean = m_MgrSettings.GetParam("LogStatusToMessageQueue", False)
 			Dim MessageQueueURI As String = m_MgrSettings.GetParam("MessageQueueURI")
 			Dim MessageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
 
@@ -1580,7 +1580,7 @@ Namespace AnalysisManagerProg
 					' We only need to evaluate the dataset storage folder for free space
 
 					DatasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
-					DatasetStorageMinFreeSpaceGB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB"), DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
+					DatasetStorageMinFreeSpaceGB = m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 
 					If String.IsNullOrEmpty(DatasetStoragePath) Then
 						ErrorMessage = "DatasetStoragePath job parameter is empty"
@@ -1606,13 +1606,13 @@ Namespace AnalysisManagerProg
 					End If
 				End If
 
-				WorkingDirMinFreeSpaceMB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB"), DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
+				WorkingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
 
 				TransferDir = m_AnalysisTask.GetParam("JobParameters", "transferFolderPath")
-				TransferDirMinFreeSpaceGB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB"), DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
+				TransferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
 
 				OrgDbDir = m_MgrSettings.GetParam("orgdbdir")
-				OrgDbDirMinFreeSpaceMB = clsGlobal.CIntSafe(m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB"), DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
+				OrgDbDirMinFreeSpaceMB = m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
 
 				' Verify that the working directory exists and that its drive has sufficient free space
 				If Not ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, WorkingDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogDb) Then
