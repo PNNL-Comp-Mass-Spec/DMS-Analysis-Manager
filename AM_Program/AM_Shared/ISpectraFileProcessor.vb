@@ -41,6 +41,8 @@ Public Interface ISpectraFileProcessor
 		Dim MgrParams As IMgrParams
 		Dim JobParams As IJobParams
 		Dim StatusTools As IStatusFile
+		Dim WorkDir As String
+		Dim DatasetName As String
 	End Structure
 #End Region
 

@@ -944,8 +944,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <remarks></remarks>
     Protected Function StoreToolVersionInfo() As Boolean
 
-        Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
+		Dim strToolVersionInfo As String = String.Empty
+		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
 		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
@@ -967,25 +967,25 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         End Try
 
         ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
 		If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
 		If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
 		If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll"))
+		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
 		If Not blnSuccess Then Return False
 
-        ' Store the path to important DLLs in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "PeptideToProteinMapEngine.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinFileReader.dll")))
-        ' Skip System.Data.SQLite.dll; we don't need to track the file date
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "ProteinCoverageSummarizer.dll")))
+		' Store the path to important DLLs in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
+		' Skip System.Data.SQLite.dll; we don't need to track the file date
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

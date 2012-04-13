@@ -20,7 +20,7 @@ Public Class clsAnalysisToolRunnerMMTOFPek
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
         'Verify a param file has been specified
-        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
+        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName"))
         If Not System.IO.File.Exists(ParamFilePath) Then
             'Param file wasn't specified, but is required for ICR-2LS analysis
             m_message = "ICR-2LS Param file not found"

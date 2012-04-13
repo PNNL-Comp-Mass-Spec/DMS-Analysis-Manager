@@ -479,7 +479,7 @@
 
 </Resourcers>
 
-<DTAGenerators>
+<DTAGenerators Note="This section is obsolete">
 	<DTAGenerator 
 		DataType="dot_d_folders" 
 		Class="DTASpectraFileGen.clsMGFtoDtaGenMainProcess" 
@@ -490,21 +490,6 @@
 		DataType="dot_raw_files" 
 		Class="DTASpectraFileGen.clsDtaGenMainProcess" 
 		AssemblyFile="DTASpectraFileGen.dll" 
-	/>
-	<DTAGenerator 
-		DataType="dot_raw_folder" 
-		Class="YYY.clsXXX" 
-		AssemblyFile="ZZZ.dll" 
-	/>
-	<DTAGenerator 
-		DataType="dot_wiff_files" 
-		Class="YYY.clsXXX" 
-		AssemblyFile="ZZZ.dll" 
-	/>
-	<DTAGenerator 
-		DataType="zipped_s_folders" 
-		Class="YYY.clsXXX" 
-		AssemblyFile="ZZZ.dll" 
 	/>
 </DTAGenerators>
 

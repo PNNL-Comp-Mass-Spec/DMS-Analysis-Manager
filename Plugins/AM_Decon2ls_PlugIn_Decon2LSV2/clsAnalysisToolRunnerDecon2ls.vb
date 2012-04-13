@@ -841,7 +841,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	Protected Function StoreToolVersionInfo(ByVal strDeconToolsProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
-		Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 		Dim ioDeconToolsInfo As System.IO.FileInfo
 		Dim blnSuccess As Boolean
 

@@ -9,28 +9,30 @@
 
 Imports AnalysisManagerBase
 
-Public Class clsDtaGen
+Public MustInherit Class clsDtaGen
 	Implements ISpectraFileProcessor
 
 	'*********************************************************************************************************
 	'This is the base class that implements a specific spectra file generator.
 	'*********************************************************************************************************
 
-#Region "Module variables"	
-    Protected m_ErrMsg As String = ""
-    Protected m_WorkDir As String = ""  'Working directory on analysis machine
-    Protected m_Dataset As String = ""
-    Protected m_DtaToolNameLoc As String = ""       ' Path to the program used to create DTA files
-    Protected m_Status As ISpectraFileProcessor.ProcessStatus
-    Protected m_Results As ISpectraFileProcessor.ProcessResults
-    Protected m_MgrParams As IMgrParams
-    Protected m_JobParams As IJobParams
-    Protected m_DebugLevel As Short = 0
-    Protected m_SpectraFileCount As Integer
-    Protected m_StatusTools As IStatusFile
+#Region "Module variables"
+	Protected m_ErrMsg As String = ""
+	Protected m_WorkDir As String = ""	'Working directory on analysis machine
+	Protected m_Dataset As String = ""
+	Protected m_DtaToolNameLoc As String = ""		' Path to the program used to create DTA files
+	Protected m_Status As ISpectraFileProcessor.ProcessStatus
+	Protected m_Results As ISpectraFileProcessor.ProcessResults
+	Protected m_MgrParams As IMgrParams
+	Protected m_JobParams As IJobParams
+	Protected m_DebugLevel As Short = 0
+	Protected m_SpectraFileCount As Integer
+	Protected m_StatusTools As IStatusFile
 
-    ' The following is a value between 0 and 100
-    Protected m_Progress As Single = 0
+	Protected m_AbortRequested As Boolean = False
+
+	' The following is a value between 0 and 100
+	Protected m_Progress As Single = 0
 #End Region
 
 #Region "Properties"
@@ -40,23 +42,23 @@ Public Class clsDtaGen
 		End Set
 	End Property
 
-    Public ReadOnly Property DtaToolNameLoc() As String Implements ISpectraFileProcessor.DtaToolNameLoc
-        Get
-            Return m_DtaToolNameLoc
-        End Get
-    End Property
+	Public ReadOnly Property DtaToolNameLoc() As String Implements ISpectraFileProcessor.DtaToolNameLoc
+		Get
+			Return m_DtaToolNameLoc
+		End Get
+	End Property
 
-    Public ReadOnly Property ErrMsg() As String Implements ISpectraFileProcessor.ErrMsg
-        Get
-            Return m_ErrMsg
-        End Get
-    End Property
+	Public ReadOnly Property ErrMsg() As String Implements ISpectraFileProcessor.ErrMsg
+		Get
+			Return m_ErrMsg
+		End Get
+	End Property
 
-    Public WriteOnly Property MgrParams() As IMgrParams Implements ISpectraFileProcessor.MgrParams
-        Set(ByVal Value As IMgrParams)
-            m_MgrParams = Value
-        End Set
-    End Property
+	Public WriteOnly Property MgrParams() As IMgrParams Implements ISpectraFileProcessor.MgrParams
+		Set(ByVal Value As IMgrParams)
+			m_MgrParams = Value
+		End Set
+	End Property
 
 	Public WriteOnly Property JobParams() As IJobParams Implements ISpectraFileProcessor.JobParams
 		Set(ByVal Value As IJobParams)
@@ -64,11 +66,11 @@ Public Class clsDtaGen
 		End Set
 	End Property
 
-    Public ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Status
-        Get
-            Return m_Status
-        End Get
-    End Property
+	Public ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Status
+		Get
+			Return m_Status
+		End Get
+	End Property
 
 	Public ReadOnly Property Results() As ISpectraFileProcessor.ProcessResults Implements ISpectraFileProcessor.Results
 		Get
@@ -81,7 +83,7 @@ Public Class clsDtaGen
 			Return m_DebugLevel
 		End Get
 		Set(ByVal Value As Integer)
-            m_DebugLevel = CShort(Value)
+			m_DebugLevel = CShort(Value)
 		End Set
 	End Property
 
@@ -89,62 +91,65 @@ Public Class clsDtaGen
 		Get
 			Return m_SpectraFileCount
 		End Get
-    End Property
+	End Property
 
-    Public ReadOnly Property Progress() As Single Implements ISpectraFileProcessor.Progress
-        Get
-            Return m_Progress
-        End Get
-    End Property
+	Public ReadOnly Property Progress() As Single Implements ISpectraFileProcessor.Progress
+		Get
+			Return m_Progress
+		End Get
+	End Property
 #End Region
 
 #Region "Methods"
-	Public Overridable Function Abort() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Abort
-
+	''' <summary>
+	''' Aborts processing
+	''' </summary>
+	''' <returns>ProcessStatus value indicating process was aborted</returns>
+	''' <remarks></remarks>
+	Public Function Abort() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Abort
+		m_AbortRequested = True
 	End Function
 
-    Public Overridable Function Start() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Start
-
-    End Function
+	Public MustOverride Function Start() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Start
 
 	Public Overridable Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) Implements ISpectraFileProcessor.Setup
 
 		'Copies all input data required for plugin operation to appropriate memory variables
 		With InitParams
-            m_DebugLevel = CShort(.DebugLevel)
+			m_DebugLevel = CShort(.DebugLevel)
 			m_JobParams = .JobParams
-            m_MgrParams = .MgrParams
-            m_StatusTools = .StatusTools
+			m_MgrParams = .MgrParams
+			m_StatusTools = .StatusTools
+			m_WorkDir = .WorkDir
+			m_Dataset = .DatasetName
 		End With
-
-        m_WorkDir = m_MgrParams.GetParam("workdir")
-        m_Dataset = m_JobParams.GetParam("DatasetNum")
-        m_Progress = 0
+	
+		m_Progress = 0
 
 	End Sub
 
-    Protected Overridable Function VerifyDirExists(ByVal TestDir As String) As Boolean
+	Protected Function VerifyDirExists(ByVal TestDir As String) As Boolean
 
-        'Verifies that the specified directory exists
-        If System.IO.Directory.Exists(TestDir) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "Directory " & TestDir & " not found"
-            Return False
-        End If
+		'Verifies that the specified directory exists
+		If System.IO.Directory.Exists(TestDir) Then
+			m_ErrMsg = ""
+			Return True
+		Else
+			m_ErrMsg = "Directory " & TestDir & " not found"
+			Return False
+		End If
 
-    End Function
+	End Function
 
-	Protected Overridable Function VerifyFileExists(ByVal TestFile As String) As Boolean
+	Protected Function VerifyFileExists(ByVal TestFile As String) As Boolean
 		'Verifies specified file exists
-        If System.IO.File.Exists(TestFile) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "File " & TestFile & " not found"
-            Return False
-        End If
+		If System.IO.File.Exists(TestFile) Then
+			m_ErrMsg = ""
+			Return True
+		Else
+			m_ErrMsg = "File " & TestFile & " not found"
+			Return False
+		End If
 
 	End Function
 
@@ -164,32 +169,32 @@ Public Class clsDtaGen
 			Return False
 		End If
 
-        'Status tools
+		'Status tools
 		If m_StatusTools Is Nothing Then
 			m_ErrMsg = "Status tools object not set"
 			Return False
 		End If
 
-        'If we got here, everything's OK
+		'If we got here, everything's OK
 		Return True
 
 	End Function
 
-	Protected Overridable Function CountDtaFiles() As Integer
+	Protected Function CountDtaFiles() As Integer
 
 		'Returns the number of dta files in the working directory
-        Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
+		Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
 		Return FileList.GetLength(0)
 
 	End Function
 
-	Protected Overridable Function DeleteNonDosFiles() As Boolean
+	Protected Function DeleteNonDosFiles() As Boolean
 
 		'extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This
 		'	function removes those files
 
-        Dim WorkDir As New System.IO.DirectoryInfo(m_WorkDir)
-        Dim TestFile As System.IO.FileInfo
+		Dim WorkDir As New System.IO.DirectoryInfo(m_WorkDir)
+		Dim TestFile As System.IO.FileInfo
 		Dim TestStr As String = ".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$"
 
 		For Each TestFile In WorkDir.GetFiles
@@ -232,7 +237,7 @@ Public Class clsDtaGen
 			strErrorMessage = "Unknown error"
 		End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage)
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage)
 
 		' Now count the number of .Dta files in the working folder
 
@@ -282,26 +287,26 @@ Public Class clsDtaGen
 			End If
 
 			' Log the number of .Dta files that were found
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
 
 			If intDTACount > 0 Then
 				' Log the name of the most recently created .Dta file
 				If intMostRecentValidDTAIndex >= 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes")
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", No valid (non zero length) .Dta files were created")
-                End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes")
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", No valid (non zero length) .Dta files were created")
+				End If
 
 				If intMostRecentBlankDTAIndex >= 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
-                End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
+				End If
 			End If
 
 		Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error finding the most recently created .Dta file: " & ex.Message)
-        End Try
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error finding the most recently created .Dta file: " & ex.Message)
+		End Try
 
-    End Sub
+	End Sub
 
 #End Region
 

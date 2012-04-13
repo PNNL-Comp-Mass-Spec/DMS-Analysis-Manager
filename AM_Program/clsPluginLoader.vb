@@ -142,6 +142,10 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
 
+			'Case "DTASpectraFileGen.clsDtaGenToolRunner".ToLower
+			'	myToolRunner = DirectCast(New DTASpectraFileGen.clsDtaGenToolRunner, IToolRunner)
+
+
 		End Select
 
 		Return myToolRunner
@@ -215,6 +219,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower
 			'	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)
+
+			'Case "DTASpectraFileGen.clsDtaGenResources".ToLower
+			'	myModule = DirectCast(New DTASpectraFileGen.clsDtaGenResources, IAnalysisResources)
 
 
 		End Select
@@ -326,33 +333,6 @@ Public Class clsPluginLoader
 		End If
 		m_SummaryFile.Add("Loaded ToolRunner: " & className & " from " & assyName)
 		Return myToolRunner
-	End Function
-
-	''' <summary>
-	''' Loads a tool spectra file generator object
-	''' </summary>
-	''' <param name="SpectraDataType">A spectra data type</param>
-	''' <returns>Object meeting the ISpectraFileProcessor interface</returns>
-	''' <remarks></remarks>
-	Public Function GetSpectraGenerator(ByVal SpectraDataType As String) As AnalysisManagerBase.ISpectraFileProcessor
-		Dim xpath As String = "//DTAGenerators/DTAGenerator[@DataType='" & SpectraDataType & "']"
-		Dim className As String = ""
-		Dim assyName As String = ""
-		Dim myModule As AnalysisManagerBase.ISpectraFileProcessor = Nothing
-		Dim e As Exception
-		If GetPluginInfo(xpath, className, assyName) Then
-			Dim obj As Object = LoadObject(className, assyName)
-			If Not obj Is Nothing Then
-				Try
-					myModule = DirectCast(obj, AnalysisManagerBase.ISpectraFileProcessor)
-				Catch e
-					''Catch any exceptions
-					m_msgList.Add(e.Message)
-				End Try
-			End If
-		End If
-		m_SummaryFile.Add("Loaded DTAGenerator: " & className & " from " & assyName)
-		GetSpectraGenerator = myModule
 	End Function
 
 	''' <summary>

@@ -146,13 +146,6 @@ AnalysisManagerProg
 	<param name="ToolName">Name of tool</param>
 	<returns>An object meeting the IToolRunner interface</returns>
 	<remarks></remarks>
-</member><member name="M:clsPluginLoader.GetSpectraGenerator(System.String)">
-	<summary>
- Loads a tool spectra file generator object
- </summary>
-	<param name="SpectraDataType">A spectra data type</param>
-	<returns>Object meeting the ISpectraFileProcessor interface</returns>
-	<remarks></remarks>
 </member><member name="M:clsPluginLoader.GetAnalysisResources(System.String)">
 	<summary>
  Loads a resourcer object

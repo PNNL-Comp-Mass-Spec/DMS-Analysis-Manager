@@ -195,8 +195,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
     Protected Function StoreToolVersionInfo(ByVal strFeatureFinderProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-        Dim ioFeatureFinderInfo As System.IO.FileInfo
+		Dim ioFeatureFinderInfo As System.IO.FileInfo
 		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then

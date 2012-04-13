@@ -8,9 +8,6 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 
     'Performs PEK analysis using ICR-2LS on LTQ-FT MS data
 
-	Public Sub New()
-	End Sub
-
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim ResCode As IJobParams.CloseOutType
@@ -28,8 +25,15 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		ResCode = MyBase.RunTool()
 		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
+		' Store the ICR2LS version info in the database
+		If Not StoreToolVersionInfo() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+			m_message = "Error determining ICR2LS version"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
         'Verify a param file has been specified
-        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
+		ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         If Not System.IO.File.Exists(ParamFilePath) Then
             'Param file wasn't specified, but is required for ICR-2LS analysis
             m_message = "ICR-2LS Param file not found"

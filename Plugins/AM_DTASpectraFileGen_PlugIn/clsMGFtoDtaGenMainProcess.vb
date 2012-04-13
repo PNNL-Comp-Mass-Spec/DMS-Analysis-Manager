@@ -1,21 +1,16 @@
-' Last modified 06/11/2009 JDS - Added logging using log4net
+' This class creates DTA files using MGF/CDF files generated from Agilent Ion Trap MS/MS data
+' It uses 
+' 
+' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
+' Started November 2005
+
+
 Option Strict On
 
 Imports AnalysisManagerBase
 
 Public Class clsMGFtoDtaGenMainProcess
 	Inherits clsDtaGen
-
-	' This class implements the ISpectraFileProcessor interface and can be 
-	' loaded as a pluggable DLL into the DMS Analysis Manager program.  It uses class
-	' clsMsMsSpectrumFilter to filter the .DTA files present in a given folder
-
-	' Main processing class for simple DTA generation using using MGF/CDF files
-	' generated from Agilent Ion Trap MS/MS data
-	' 
-	' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-	' Started November 2005
-
 
 #Region "Structures"
 
@@ -43,7 +38,6 @@ Public Class clsMGFtoDtaGenMainProcess
 #End Region
 
 #Region "Module variables"
-	Private m_AbortRequested As Boolean = False
 	Private m_thThread As System.Threading.Thread
 
 	' DTA generation options
@@ -58,15 +52,10 @@ Public Class clsMGFtoDtaGenMainProcess
 
 #End Region
 
-	Public Overrides Function Abort() As ISpectraFileProcessor.ProcessStatus
-		m_AbortRequested = True
-	End Function
-
     Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) 
         MyBase.Setup(InitParams)
 
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-        m_DtaToolNameLoc = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MsMsSpectrumFilter.dll")
+		m_DtaToolNameLoc = System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "MsMsSpectrumFilter.dll")
 
     End Sub
 
@@ -123,7 +112,7 @@ Public Class clsMGFtoDtaGenMainProcess
 
 	End Function
 
-	Protected Overridable Sub MakeDTAFilesThreaded()
+	Protected Sub MakeDTAFilesThreaded()
 
 		m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
 		If Not MakeDTAFilesFromMGF() Then

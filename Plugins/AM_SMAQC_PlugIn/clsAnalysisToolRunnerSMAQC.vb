@@ -850,7 +850,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 	Protected Function StoreToolVersionInfo(ByVal strSMAQCProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
-		Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 		Dim ioSMAQC As System.IO.FileInfo
 		Dim blnSuccess As Boolean
 

@@ -27,13 +27,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 #End Region
 
 #Region "Methods"
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks>Presently not used</remarks>
-    Public Sub New()
-
-    End Sub
 
     ''' <summary>
     ''' Runs ReadW tool
@@ -190,7 +183,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")

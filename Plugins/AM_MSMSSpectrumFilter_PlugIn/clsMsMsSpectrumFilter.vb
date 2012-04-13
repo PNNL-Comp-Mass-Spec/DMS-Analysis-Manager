@@ -3793,7 +3793,7 @@ Public Class clsMsMsSpectrumFilter
 
             If Not System.IO.File.Exists(strParameterFilePath) Then
                 ' See if strParameterFilePath points to a file in the same directory as the application
-                strParameterFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), System.IO.Path.GetFileName(strParameterFilePath))
+				strParameterFilePath = System.IO.Path.Combine(GetAppFolderPath(), System.IO.Path.GetFileName(strParameterFilePath))
                 If Not System.IO.File.Exists(strParameterFilePath) Then
                     MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.ParameterFileNotFound)
                     mErrorMessage = MyBase.GetBaseClassErrorMessage()
@@ -5751,16 +5751,16 @@ Public Class clsMsMsSpectrumFilter
 
         ' Make sure the required DLLs are present
 
-        For intIndex = 0 To strRequiredDLLs.Length - 1
-            strCurrentFolderPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-            strFilePath = System.IO.Path.Combine(strCurrentFolderPath, strRequiredDLLs(intIndex))
-            If Not System.IO.File.Exists(strFilePath) Then
-                mErrorMessage = "DLL not found: " & strFilePath
-                SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.MissingRequiredDLL)
-                ShowErrorMessage(mErrorMessage)
-                Return False
-            End If
-        Next intIndex
+		For intIndex = 0 To strRequiredDLLs.Length - 1			                       
+			strCurrentFolderPath = GetAppFolderPath()
+			strFilePath = System.IO.Path.Combine(strCurrentFolderPath, strRequiredDLLs(intIndex))
+			If Not System.IO.File.Exists(strFilePath) Then
+				mErrorMessage = "DLL not found: " & strFilePath
+				SetLocalErrorCode(eFilterMsMsSpectraErrorCodes.MissingRequiredDLL)
+				ShowErrorMessage(mErrorMessage)
+				Return False
+			End If
+		Next intIndex
 
         blnDllsValidated = True
         Return True

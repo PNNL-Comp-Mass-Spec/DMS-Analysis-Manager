@@ -82,12 +82,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     Protected WithEvents mCmdRunner As clsRunDosProgram
     Protected WithEvents mStatusFileWatcher As System.IO.FileSystemWatcher
 
+	Public Sub New()
 
-    Public Sub New()
-        ResetStatusLogTimes()
+		ResetStatusLogTimes()
 
-        mICR2LSStatus.Initialize()
-    End Sub
+		mICR2LSStatus.Initialize()
+	End Sub
 
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
@@ -522,6 +522,31 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Return blnSuccess
 
     End Function
+
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo() As Boolean
+
+		Dim strToolVersionInfo As String = String.Empty
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
+
+		' Store paths to key files in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("ICR2LSprogloc")))
+
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
+
+	End Function
 
     Protected Function ValidateICR2LSStatus(ByVal strProcessingState As String) As Boolean
         Dim blnValid As Boolean

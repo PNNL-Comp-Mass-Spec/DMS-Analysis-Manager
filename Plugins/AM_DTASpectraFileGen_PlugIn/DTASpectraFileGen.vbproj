@@ -94,8 +94,8 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="AnalysisManagerProg">
-      <HintPath>..\..\AM_Program\bin\AnalysisManagerProg.exe</HintPath>
+    <Reference Include="MascotGenericFileToDTA">
+      <HintPath>..\..\AM_Common\MascotGenericFileToDTA.dll</HintPath>
     </Reference>
     <Reference Include="MsMsDataFileReader, Version=1.0.2203.32730, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
@@ -135,21 +135,12 @@
     <Compile Include="clsDtaGenMainProcess.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsDtaGenMSConvert.vb" />
     <Compile Include="clsDtaGenResources.vb" />
     <Compile Include="clsDtaGenToolRunner.vb" />
     <Compile Include="clsMGFtoDtaGenMainProcess.vb">
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="XRAWFILE2Lib">
-      <Guid>{5FE970A2-29C3-11D3-811D-00104B304896}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />
@@ -170,6 +161,17 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="MSFileReaderLib">
+      <Guid>{F0C5F3E3-4F2A-443E-A74D-0AABE3237494}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

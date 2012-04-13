@@ -34,169 +34,167 @@ Public Class clsAnalysisToolRunnerICR
     ' etc.
     ' 
     ' 
-	Public Sub New()
-	End Sub
 
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-        Dim ResCode As IJobParams.CloseOutType
-        Dim DSNamePath As String
+		Dim ResCode As IJobParams.CloseOutType
+		Dim DSNamePath As String
 
-        Dim MinScan As Integer = 0
-        Dim MaxScan As Integer = 0
-        Dim UseAllScans As Boolean = True
+		Dim MinScan As Integer = 0
+		Dim MaxScan As Integer = 0
+		Dim UseAllScans As Boolean = True
 
-        Dim SerFileOrFolderPath As String
-        Dim eICR2LSMode As ICR2LSProcessingModeConstants
-        Dim strSerTypeName As String
+		Dim SerFileOrFolderPath As String
+		Dim eICR2LSMode As ICR2LSProcessingModeConstants
+		Dim strSerTypeName As String
 
-        Dim OutFileNamePath As String
-        Dim ParamFilePath As String
-        Dim RawDataType As String
-        Dim DatasetFolderPathBase As String
+		Dim OutFileNamePath As String
+		Dim ParamFilePath As String
+		Dim RawDataType As String
+		Dim DatasetFolderPathBase As String
 
-        Dim blnSuccess As Boolean
+		Dim blnSuccess As Boolean
 
-        'Start with base class function to get settings information
-        ResCode = MyBase.RunTool()
-        If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
+		'Start with base class function to get settings information
+		ResCode = MyBase.RunTool()
+		If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
-        ' Store the ICR2LS version info in the database
+		' Store the ICR2LS version info in the database
 		If Not StoreToolVersionInfo() Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 			m_message = "Error determining ICR2LS version"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        'Verify a param file has been specified
-        ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_JobParams.GetParam("parmFileName", ""))
-        If Not System.IO.File.Exists(ParamFilePath) Then
-            'Param file wasn't specified, but is required for ICR-2LS analysis
-            m_message = "ICR-2LS Param file not found"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		'Verify a param file has been specified
+		ParamFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+		If Not System.IO.File.Exists(ParamFilePath) Then
+			'Param file wasn't specified, but is required for ICR-2LS analysis
+			m_message = "ICR-2LS Param file not found"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        'Add handling of settings file info here if it becomes necessary in the future
+		'Add handling of settings file info here if it becomes necessary in the future
 
-        'Get scan settings from settings file
-        MinScan = 0
-        MaxScan = 0
+		'Get scan settings from settings file
+		MinScan = 0
+		MaxScan = 0
 
 		MinScan = m_jobParams.GetJobParameter("scanstart", 0)
 		MaxScan = m_jobParams.GetJobParameter("ScanStop", 0)
 
-        If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
-           MinScan > MaxScan OrElse _
-           MaxScan > 500000 Then
-            UseAllScans = True
-        Else
-            UseAllScans = False
-        End If
+		If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
+		   MinScan > MaxScan OrElse _
+		   MaxScan > 500000 Then
+			UseAllScans = True
+		Else
+			UseAllScans = False
+		End If
 
-        'Assemble the dataset name
+		'Assemble the dataset name
 		DSNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset)
-        RawDataType = m_jobParams.GetParam("RawDataType")
+		RawDataType = m_jobParams.GetParam("RawDataType")
 
-        'Assemble the output file name and path
-        OutFileNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".pek")
+		'Assemble the output file name and path
+		OutFileNamePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".pek")
 
-        ' Determine the location of the ser file
-        ' It could be in a "0.ser" folder or a ser file inside a .D folder
+		' Determine the location of the ser file
+		' It could be in a "0.ser" folder or a ser file inside a .D folder
 
-        If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-            DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
-        Else
-            DatasetFolderPathBase = String.Copy(m_WorkDir)
-        End If
+		If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+			DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
+		Else
+			DatasetFolderPathBase = String.Copy(m_WorkDir)
+		End If
 
-        ' Look for a ser file in the working directory
-        SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
+		' Look for a ser file in the working directory
+		SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
 
-        If System.IO.File.Exists(SerFileOrFolderPath) Then
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
-            End If
-        Else
+		If System.IO.File.Exists(SerFileOrFolderPath) Then
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
+			End If
+		Else
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
-            End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
+			End If
 
-            ' Look for the "0.ser" folder in the working directory
-            SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
-            If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
-                ' Folder does not exist
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
-                End If
+			' Look for the "0.ser" folder in the working directory
+			SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
+			If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
+				' Folder does not exist
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
+				End If
 
-                ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-                '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-                SerFileOrFolderPath = String.Empty
-            End If
-        End If
+				' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+				'  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+				SerFileOrFolderPath = String.Empty
+			End If
+		End If
 
-        If Not String.IsNullOrEmpty(SerFileOrFolderPath) Then
-            If System.IO.Path.GetFileName(SerFileOrFolderPath).ToLower = clsAnalysisResources.BRUKER_SER_FILE.ToLower() Then
-                eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK
-                strSerTypeName = "file"
-            Else
-                eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK
-                strSerTypeName = "folder"
-            End If
+		If Not String.IsNullOrEmpty(SerFileOrFolderPath) Then
+			If System.IO.Path.GetFileName(SerFileOrFolderPath).ToLower = clsAnalysisResources.BRUKER_SER_FILE.ToLower() Then
+				eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK
+				strSerTypeName = "file"
+			Else
+				eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK
+				strSerTypeName = "folder"
+			End If
 
-            blnSuccess = MyBase.StartICR2LS(SerFileOrFolderPath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
-            If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on " & strSerTypeName & " " & SerFileOrFolderPath)
-            End If
-        Else
-            ' Processing zipped s-folders
-            If Not System.IO.Directory.Exists(DSNamePath) Then
-	            m_message = "Data file folder not found: " & DSNamePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			blnSuccess = MyBase.StartICR2LS(SerFileOrFolderPath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
+			If Not blnSuccess Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on " & strSerTypeName & " " & SerFileOrFolderPath)
+			End If
+		Else
+			' Processing zipped s-folders
+			If Not System.IO.Directory.Exists(DSNamePath) Then
+				m_message = "Data file folder not found: " & DSNamePath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-            eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK
-            blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
+			eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK
+			blnSuccess = MyBase.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, MinScan, MaxScan)
 
-            If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on zipped s-files in " & DSNamePath)
-            End If
-        End If
+			If Not blnSuccess Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on zipped s-files in " & DSNamePath)
+			End If
+		End If
 
-        If Not blnSuccess Then
-            ' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
-            If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
-	            m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
+		If Not blnSuccess Then
+			' If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
+			If VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
+				m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ".Pek file was found, so will save results to the failed results archive folder")
 
-                PerfPostAnalysisTasks(False)
+				PerfPostAnalysisTasks(False)
 
-                ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+				' Try to save whatever files were moved into the results folder
+				Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
 
-            Else
-                m_message = "Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")"
-            End If
-            
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        Else
-            ' Make sure the .pek file and .Par file are named properly
-            FixICR2LSResultFileNames(m_WorkDir, m_Dataset)
-        End If
+			Else
+				m_message = "Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")"
+			End If
 
-        'Run the cleanup routine from the base class
-        If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			' Make sure the .pek file and .Par file are named properly
+			FixICR2LSResultFileNames(m_WorkDir, m_Dataset)
+		End If
+
+		'Run the cleanup routine from the base class
+		If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			m_message = clsGlobal.AppendToComment(m_message, "Error performing post analysis tasks")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-    End Function
+	End Function
 
 	Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
 
@@ -297,31 +295,5 @@ Public Class clsAnalysisToolRunnerICR
         End Try
 
     End Sub
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("ICR2LSprogloc")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
 
 End Class

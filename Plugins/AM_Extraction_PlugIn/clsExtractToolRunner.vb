@@ -965,7 +965,6 @@ Public Class clsExtractToolRunner
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim ioAppFileInfo As System.IO.FileInfo = New System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
 		Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
