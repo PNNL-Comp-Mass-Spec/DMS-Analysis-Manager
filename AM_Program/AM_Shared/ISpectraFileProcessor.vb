@@ -9,8 +9,6 @@
 
 Option Strict On
 
-
-
 Public Interface ISpectraFileProcessor
 	'*********************************************************************************************************
 	'Defines minimum required functionality for classes that will generate spectra files

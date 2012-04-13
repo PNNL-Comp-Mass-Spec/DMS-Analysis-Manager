@@ -293,7 +293,13 @@ Public Class clsDtaGenToolRunner
 			.DatasetName = m_Dataset
 		End With
 
-		SpectraGen.Setup(InitParams)
+		Try
+			SpectraGen.Setup(InitParams)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception configuring DTAGenerator: " & ex.Message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
 
 		' Store the Version info in the database
 		Dim blnSuccess As Boolean

@@ -9,8 +9,6 @@
 
 Option Strict On
 
-
-
 Public Class AMFileNotFoundException
 	Inherits ApplicationException
 

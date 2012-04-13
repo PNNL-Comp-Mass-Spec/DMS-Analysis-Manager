@@ -6,21 +6,7 @@ DTASpectraFileGen
 </name>
 </assembly>
 <members>
-<member name="M:DTASpectraFileGen.clsDtaGenMSConvert.ConvertMGFtoDTA">
-	<summary>
- Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
- This functon is called by MakeDTAFilesThreaded
- </summary>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenMSConvert.ConvertRawToMGF">
-	<summary>
- Create .mgf file using MSConvert
- This functon is called by MakeDTAFilesThreaded
- </summary>
-	<returns>TRUE for success; FALSE for failure</returns>
-	<remarks></remarks>
-</member><member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
+<member name="M:DTASpectraFileGen.clsDtaGenToolRunner.RunTool">
 	<summary>
  Runs the analysis tool
  </summary>

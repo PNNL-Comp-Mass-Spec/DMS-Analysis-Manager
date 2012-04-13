@@ -18,6 +18,22 @@ Public Class clsDtaGenMSConvert
 
 	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
+	Public Overrides Sub Setup(InitParams As AnalysisManagerBase.ISpectraFileProcessor.InitializationParams)
+		MyBase.Setup(InitParams)
+
+		' Tool setup for MSConvert involves creating a
+		'  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
+		'  to indicate that we agree to the Thermo license
+
+		Dim objProteowizardTools As clsProteowizardTools
+		objProteowizardTools = New clsProteowizardTools(m_DebugLevel)
+
+		If Not objProteowizardTools.RegisterProteoWizard() Then
+			Throw New Exception("Unable to register ProteoWizard")
+		End If
+
+	End Sub
+
 	Protected Overrides Function ConstructDTAToolPath() As String
 
 		Dim strDTAToolPath As String

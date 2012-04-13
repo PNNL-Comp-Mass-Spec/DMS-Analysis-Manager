@@ -1,13 +1,6 @@
 ﻿Option Strict On
 
-Imports System
-Imports System.Collections.Generic
-Imports System.Text
-Imports Apache.NMS.ActiveMQ
-Imports Apache.NMS.ActiveMQ.Commands
 Imports Apache.NMS
-Imports System.Threading
-
 
 ' sends messages to ActiveMQ message broker using NMS client library
 Class clsMessageSender
@@ -62,13 +55,13 @@ Class clsMessageSender
             Exit Sub
         End If
         Try
-            Dim connectionFactory As IConnectionFactory = New ConnectionFactory(Me.brokerUri)
+			Dim connectionFactory As IConnectionFactory = New ActiveMQ.ConnectionFactory(Me.brokerUri)
             Me.connection = connectionFactory.CreateConnection()
             Me.connection.Start()
 
             Me.session = connection.CreateSession()
 
-            Me.producer = Me.session.CreateProducer(New ActiveMQTopic(Me.topicName))
+			Me.producer = Me.session.CreateProducer(New ActiveMQ.Commands.ActiveMQTopic(Me.topicName))
             Me.producer.Persistent = False
             Me.hasConnection = True
             ' temp debug

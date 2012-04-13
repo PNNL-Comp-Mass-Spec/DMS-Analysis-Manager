@@ -8,8 +8,6 @@
 
 Option Strict On
 
-
-
 Public Class clsMemoryUsageLogger
 
 #Region "Module variables"

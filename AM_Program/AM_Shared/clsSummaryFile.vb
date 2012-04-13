@@ -11,8 +11,6 @@ Option Strict On
 
 Imports System.IO
 
-
-
 Public Class clsSummaryFile
 
 	'*********************************************************************************************************

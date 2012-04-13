@@ -6,12 +6,7 @@ AnalysisManagerMsXmlGenPlugIn
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.#ctor">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.RunTool">
+<member name="M:AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen.RunTool">
 	<summary>
  Runs ReadW tool
  </summary>

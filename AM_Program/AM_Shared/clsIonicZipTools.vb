@@ -1,5 +1,4 @@
-﻿
-Option Strict On
+﻿Option Strict On
 
 Public Class clsIonicZipTools
 

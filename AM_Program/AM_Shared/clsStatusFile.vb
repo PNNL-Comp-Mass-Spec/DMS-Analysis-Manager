@@ -12,8 +12,6 @@ Option Strict On
 Imports System.IO
 Imports System.Xml
 
-
-
 Public Class clsStatusFile
 	Implements IStatusFile
 

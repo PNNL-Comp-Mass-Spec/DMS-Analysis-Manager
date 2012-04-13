@@ -108,6 +108,7 @@
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />
+    <Compile Include="clsProteowizardTools.vb" />
     <Compile Include="clsRunDosProgram.vb" />
     <Compile Include="clsSplitCattedFiles.vb" />
     <Compile Include="clsStatusFile.vb" />

@@ -12,8 +12,6 @@ Option Strict On
 Imports System.IO
 Imports System.Reflection
 
-
-
 Public Class clsAssemblyTools
 
 	'*********************************************************************************************************

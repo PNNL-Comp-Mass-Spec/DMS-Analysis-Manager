@@ -9,8 +9,6 @@
 
 Option Strict On
 
-
-
 Public MustInherit Class clsAnalysisResources
 	Implements IAnalysisResources
 
