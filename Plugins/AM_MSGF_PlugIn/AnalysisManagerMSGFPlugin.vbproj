@@ -60,6 +60,9 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="AnalysisManagerMsXmlGenPlugIn">
+      <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
@@ -87,7 +90,6 @@
     <Compile Include="clsMSGFInputCreatorXTandem.vb" />
     <Compile Include="clsMSGFResultsSummarizer.vb" />
     <Compile Include="clsMSGFToolRunner.vb" />
-    <Compile Include="clsMSXMLGenReadW.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>

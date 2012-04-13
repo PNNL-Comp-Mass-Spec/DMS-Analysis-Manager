@@ -9,6 +9,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports AnalysisManagerMsXmlGenPlugIn
 Imports PHRPReader
 
 Public Class clsMSGFRunner
@@ -77,6 +78,9 @@ Public Class clsMSGFRunner
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
 
+	Protected mMSXmlGeneratorExe As String = String.Empty			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
+	Protected mMSXmlGeneratorAppPath As String = String.Empty
+
 	Protected mUsingMSGFDB As Boolean = True
 	Protected mMSGFDBVersion As String = "Unknown"
 
@@ -84,9 +88,7 @@ Public Class clsMSGFRunner
 
 	Protected mConsoleOutputErrorMsg As String
 
-	Protected mReadWProgramPath As String = String.Empty
-
-	Protected WithEvents mMSXmlGenReadW As clsMSXMLGenReadW
+	Protected WithEvents mMSXmlGen As clsMSXmlGen
 	Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
 	Protected WithEvents mMSGFRunner As clsRunDosProgram
 
@@ -138,34 +140,7 @@ Public Class clsMSGFRunner
 		End If
 
 		' Verify that program files exist
-
-		' mJavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
-		' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-		mJavaProgLoc = m_mgrParams.GetParam("JavaLoc")
-		If Not System.IO.File.Exists(mJavaProgLoc) Then
-			If mJavaProgLoc.Length = 0 Then mJavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & mJavaProgLoc)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
-		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)
-
-		If String.IsNullOrEmpty(mMSGFProgLoc) Then
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error determining MSGF program location"
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		' Determine the path to ReadW
-		Dim msXmlGenerator As String = "ReadW.exe"
-		mReadWProgramPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
-
-		If String.IsNullOrWhiteSpace(mReadWProgramPath) Then
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error determining ReadW program location"
-			End If
+		If Not DefineProgramPaths() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -835,7 +810,7 @@ Public Class clsMSGFRunner
 		' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
 		Dim CentroidMSXML As Boolean = True
 
-		Dim eOutputType As clsMSXMLGenReadW.MSXMLOutputTypeConstants
+		Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
 
 		Dim blnSuccess As Boolean
 
@@ -854,23 +829,44 @@ Public Class clsMSGFRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset)
 		End If
 
-		eOutputType = clsMSXMLGenReadW.MSXMLOutputTypeConstants.mzXML
+		eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
 
 		' Instantiate the processing class
-		' Note that mReadWProgramPath should have been populated by StoreToolVersionInfo()
-		mMSXmlGenReadW = New clsMSXMLGenReadW(strInputFolderPath, mReadWProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+		' Note that mMSXmlGeneratorExe and mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo()
+		' mMSXmlGeneratorExe comes from m_jobParams.GetParam("MSXMLGenerator")
+
+		If mMSXmlGeneratorExe.ToLower().Contains("readw") Then
+			' ReadW
+			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
+
+			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML)
+
+		ElseIf mMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
+			' MSConvert
+
+			' Lookup Centroid Settings
+			CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", True)
+			Dim CentroidPeakCountToRetain As Integer = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+
+			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unsupported XmlGenerator: " & mMSXmlGeneratorExe)
+			Return False
+		End If
+
 
 		dtStartTime = System.DateTime.UtcNow
 
 		' Create the file
-		blnSuccess = mMSXmlGenReadW.CreateMSXMLFile
+		blnSuccess = mMSXmlGen.CreateMSXMLFile()
 
 		If Not blnSuccess Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
 			Return False
 
-		ElseIf mMSXmlGenReadW.ErrorMessage.Length > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGenReadW.ErrorMessage)
+		ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
 		End If
 
 		' Validate that the .mzXML file was actually created
@@ -917,6 +913,58 @@ Public Class clsMSGFRunner
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats", ex)
 			End Try
+		End If
+
+		Return True
+
+	End Function
+
+	Protected Function DefineProgramPaths() As Boolean
+
+		' mJavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+		' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
+		mJavaProgLoc = m_mgrParams.GetParam("JavaLoc")
+		If Not System.IO.File.Exists(mJavaProgLoc) Then
+			If mJavaProgLoc.Length = 0 Then mJavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
+			m_message = "Cannot find Java: " & mJavaProgLoc
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
+
+		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
+		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)
+
+		If String.IsNullOrEmpty(mMSGFProgLoc) Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error determining MSGF program location"
+			End If
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
+
+		' Determine the path to the XML Generator
+		mMSXmlGeneratorExe = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
+
+		If String.IsNullOrEmpty(mMSXmlGeneratorExe) Then
+			' Assume we're using ReadW
+			mMSXmlGeneratorExe = "ReadW.exe"
+		End If
+
+		mMSXmlGeneratorAppPath = String.Empty
+		If mMSXmlGeneratorExe.ToLower().Contains("readw") Then
+			' ReadW
+			' Note that msXmlGenerator will likely be ReAdW.exe
+			mMSXmlGeneratorAppPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", mMSXmlGeneratorExe)
+
+		ElseIf mMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
+			' MSConvert
+			Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
+			mMSXmlGeneratorAppPath = System.IO.Path.Combine(ProteoWizardDir, mMSXmlGeneratorExe)
+
+		Else
+			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
 		End If
 
 		Return True
@@ -2081,7 +2129,7 @@ Public Class clsMSGFRunner
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
 		ioToolFiles.Add(New System.IO.FileInfo(mMSGFProgLoc))
 
-		ioToolFiles.Add(New System.IO.FileInfo(mReadWProgramPath))
+		ioToolFiles.Add(New System.IO.FileInfo(mMSXmlGeneratorAppPath))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -2237,7 +2285,7 @@ Public Class clsMSGFRunner
 	''' Event handler for MSXmlGenReadW.LoopWaiting event
 	''' </summary>
 	''' <remarks></remarks>
-	Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGenReadW.LoopWaiting
+	Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
 		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
 		' Synchronize the stored Debug level with the value stored in the database
@@ -2253,11 +2301,11 @@ Public Class clsMSGFRunner
 	End Sub
 
 	''' <summary>
-	''' Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+	''' Event handler for mMSXmlGen.ProgRunnerStarting event
 	''' </summary>
 	''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
 	''' <remarks></remarks>
-	Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGenReadW.ProgRunnerStarting
+	Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
 	End Sub
 

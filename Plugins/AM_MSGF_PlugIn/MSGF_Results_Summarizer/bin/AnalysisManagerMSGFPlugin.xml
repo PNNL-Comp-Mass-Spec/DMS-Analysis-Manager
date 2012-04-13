@@ -41,22 +41,6 @@ AnalysisManagerMSGFPlugin
 	<param name="strDatasetName">Dataset name</param>
 	<param name="strWorkDir">Working directory</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.#ctor(System.String,System.String,System.String,AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.MSXMLOutputTypeConstants,System.Boolean)">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.CreateMSXMLFile">
-	<summary>
- Generate the mzXML or mzML file
- </summary>
-	<returns>True if success; false if a failure</returns>
-	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSXMLGenReadW.CmdRunner_LoopWaiting">
-	<summary>
- Event handler for CmdRunner.LoopWaiting event
- </summary>
-	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF.GetResources">
 	<summary>
  Gets all files needed by MSGF
@@ -239,7 +223,7 @@ AnalysisManagerMSGFPlugin
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFRunner.mMSXmlGenReadW_ProgRunnerStarting(System.String)">
 	<summary>
- Event handler for mMSXmlGenReadW.ProgRunnerStarting event
+ Event handler for mMSXmlGen.ProgRunnerStarting event
  </summary>
 	<param name="CommandLine">The command being executed (program path plus command line arguments)</param>
 	<remarks></remarks>

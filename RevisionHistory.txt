@@ -1,5 +1,11 @@
 Analysis Tool Manager History
 
+April 13, 2012
+	- Updated the MSGF Plugin to support creating .mzXML files using MSConvert
+		- Uses AnalysisManagerMsXmlGenPlugIn.dll
+	- New version of MsMsDataFileReader.dll
+		- Supports MGF files created by ProteoWizard, where the title line contains file name, start scan, end scan, and charge (if known)
+
 April 11, 2012
 	- Split out much of the code from AnalysisManagerProg.exe and placed in AM_Shared.dll
 	- Updated all of the plugins to use AM_Shared.dll instead of AnalysisManagerProg.exe
