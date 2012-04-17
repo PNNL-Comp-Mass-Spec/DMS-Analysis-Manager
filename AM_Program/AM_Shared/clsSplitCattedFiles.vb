@@ -32,71 +32,100 @@ Imports System.Collections.Generic
 
 Public Class clsSplitCattedFiles
 
+#Region "Constants"
+	Public Const REGEX_FILE_SEPARATOR As String = "^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$"
+	Public Const REGEX_FILE_NAME_PARTS As String = "^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)"
+	Public Const REGEX_DTA_FIRST_LINE As String = "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$"
+
+#End Region
 	Private r_FileSeparator As Regex
 	Private r_FileNameParts As Regex
 	Private r_DTAFirstLine As Regex
-	Private m_ResultsFileCount As Integer = Nothing
+	Private m_ResultsFileCount As Integer = 0
 
 	Sub New()
 
-		Me.r_FileSeparator = New Regex("^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$", _
-		 RegexOptions.CultureInvariant _
-		 Or RegexOptions.Compiled)
+		Me.r_FileSeparator = New Regex(REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
-		Me.r_FileNameParts = New Regex("^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)", _
-		 RegexOptions.CultureInvariant _
-		 Or RegexOptions.Compiled)
+		Me.r_FileNameParts = New Regex(REGEX_FILE_NAME_PARTS, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
-		Me.r_DTAFirstLine = New Regex( _
-		   "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$", _
-		 RegexOptions.CultureInvariant _
-		 Or RegexOptions.Compiled)
+		Me.r_DTAFirstLine = New Regex(REGEX_DTA_FIRST_LINE, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
 	End Sub
 
-	Public Sub SplitCattedDTAsAndOuts(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-		Me.SplitCattedDTAsOnly(rootFileName, resultsFolderPath)
-		Me.SplitCattedOutsOnly(rootFileName, resultsFolderPath)
-	End Sub
+	Public Function SplitCattedDTAsAndOuts(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
+		Dim blnSuccess1 As Boolean
+		Dim blnSuccess2 As Boolean
+		blnSuccess1 = Me.SplitCattedDTAsOnly(datasetName, resultsFolderPath)
+		blnSuccess2 = Me.SplitCattedOutsOnly(datasetName, resultsFolderPath)
 
-	Public Sub SplitCattedDTAsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-		SplitCattedDTAsOnly(rootFileName, resultsFolderPath, New System.Collections.Generic.List(Of String))
-	End Sub
+		Return blnSuccess1 And blnSuccess2
+	End Function
 
-	Public Sub SplitCattedDTAsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
-		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_dta.txt")
+	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
+		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, New System.Collections.Generic.SortedSet(Of String))
+	End Function
+
+	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String)) As Boolean
+
+		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+		For Each strEntry In lstFilesToSkip
+			lstFilesToSkipSortedSet.Add(strEntry)
+		Next
+
+		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
+	End Function
+
+	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
+		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, datasetName + "_dta.txt")
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
 		If fi.Exists Then
-			If Not Me.m_ResultsFileCount > 0 Then
+			If Me.m_ResultsFileCount <= 0 Then
 				Me.CountOutFiles(fullPath)
 			End If
-			Me.SplitCattedFile(fullPath, lstFilesToSkip)
+			Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
+		Else
+			Return False
 		End If
-	End Sub
+	End Function
 
-	Public Sub SplitCattedOutsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String)
-		SplitCattedOutsOnly(rootFileName, resultsFolderPath, New System.Collections.Generic.List(Of String))
-	End Sub
+	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
+		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, New System.Collections.Generic.SortedSet(Of String))
+	End Function
 
-	Public Sub SplitCattedOutsOnly(ByVal rootFileName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
-		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, rootFileName + "_out.txt")
+	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String)) As Boolean
+
+		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+		For Each strEntry In lstFilesToSkip
+			lstFilesToSkipSortedSet.Add(strEntry)
+		Next
+
+		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
+	End Function
+
+	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
+		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, datasetName + "_out.txt")
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
 		If fi.Exists Then
-			If Not Me.m_ResultsFileCount > 0 Then
+			If Me.m_ResultsFileCount <= 0 Then
 				Me.CountOutFiles(fullPath)
 			End If
-			Me.SplitCattedFile(fullPath, lstFilesToSkip)
+			Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
+		Else
+			Return False
 		End If
-	End Sub
+	End Function
 
 	''' <summary>
 	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
 	''' </summary>
 	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
 	''' <remarks></remarks>
-	Private Sub SplitCattedFile(ByVal filePath As String)
-		SplitCattedFile(filePath, New System.Collections.Generic.List(Of String))
-	End Sub
+	Private Function SplitCattedFile(ByVal filePath As String) As Boolean
+		Return SplitCattedFile(filePath, New System.Collections.Generic.SortedSet(Of String))
+	End Function
 
 	''' <summary>
 	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
@@ -104,8 +133,7 @@ Public Class clsSplitCattedFiles
 	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
 	''' <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
 	''' <remarks></remarks>
-	Private Sub SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String))
-		Dim tr As System.IO.StreamReader = Nothing
+	Private Function SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
 		Dim s As String
 		Dim fileText As Queue(Of String) = New Queue(Of String)
 		Dim objFileSepMatch As Match = Nothing
@@ -117,159 +145,140 @@ Public Class clsSplitCattedFiles
 		Dim strFileType As String = String.Empty
 		Dim resultsFolder As String = System.IO.Path.GetDirectoryName(filePath)
 
-		Dim dctFilesToSkip As System.Collections.Generic.Dictionary(Of String, Integer) = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
 		Try
-			If lstFilesToSkip.Count > 0 Then
-				' Copy data from lstFilesToSkip into dctFilesToSkip
-				' We're using dctFilesToSkip to speed up lookups of entries and to allow for case-insensitive matching (at the expense of increased memory usage)
-				For Each strItem As String In lstFilesToSkip
-					dctFilesToSkip.Add(strItem, 0)
-				Next
-			End If
 
-			tr = New System.IO.StreamReader(filePath)
-			s = tr.ReadLine
-			If s.Length = 0 Then
-				s = tr.ReadLine
-			End If
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(filePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			While s IsNot Nothing
-				objFileSepMatch = Me.r_FileSeparator.Match(s)
+				While srInFile.Peek > -1
+					s = srInFile.ReadLine()
 
-				If objFileSepMatch.Success Then
-					objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
-					If objFileNameParts.Success Then
-						strFileType = objFileNameParts.Groups("filetype").Value
-					Else
-						strFileType = String.Empty
+					objFileSepMatch = Me.r_FileSeparator.Match(s)
+
+					If objFileSepMatch.Success Then
+						objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
+						If objFileNameParts.Success Then
+							strFileType = objFileNameParts.Groups("filetype").Value
+						Else
+							strFileType = String.Empty
+						End If
+
+						If fileCounter > 0 Then
+							' Process the data stored in queue fileText, saving to file fileName
+							ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
+						End If
+
+						If objFileNameParts.Success Then
+							With objFileNameParts
+								fileName = _
+								  .Groups("rootname").Value + "." + _
+								  .Groups("startscan").Value.ToString + "." + _
+								  .Groups("endscan").Value.ToString + "." + _
+								  .Groups("chargestate").Value + "." + _
+								  .Groups("filetype").Value
+							End With
+						Else
+							fileName = objFileSepMatch.Groups("filename").Value
+						End If
+
+						fileCounter += 1
+						fileText.Clear()
+
+						If srInFile.Peek > -1 Then
+							s = srInFile.ReadLine()
+						Else
+							s = String.Empty
+						End If
+
 					End If
 
 					If fileCounter > 0 Then
-						' Process the data stored in queue fileText, saving to file fileName
-						ProcessSplitFile(fileText, fileName, resultsFolder, dctFilesToSkip)
+						fileText.Enqueue(s)
 					End If
 
-					If objFileNameParts.Success Then
-						With objFileNameParts
-							fileName = _
-							  .Groups("rootname").Value + "." + _
-							  .Groups("startscan").Value.ToString + "." + _
-							  .Groups("endscan").Value.ToString + "." + _
-							  .Groups("chargestate").Value + "." + _
-							  .Groups("filetype").Value
-						End With
-					Else
-						fileName = objFileSepMatch.Groups("filename").Value
-					End If
+				End While
 
-					fileCounter += 1
-					s = tr.ReadLine
-				End If
-
-				fileText.Enqueue(s)
-
-				s = tr.ReadLine
-			End While
+			End Using
 
 			' Process the data stored in queue fileText, saving to file fileName
-			ProcessSplitFile(fileText, fileName, resultsFolder, dctFilesToSkip)
-
-			tr.Close()
+			ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
 
 		Catch ex As Exception
-			Exit Sub
+			Throw New Exception("Error splitting " & filePath & ": " & ex.Message, ex)
 		End Try
 
+		If fileCounter > 0 Then
+			Return True
+		Else
+			Return False
+		End If
 
-	End Sub
+	End Function
 
 	Private Sub ProcessSplitFile( _
 	 ByRef fileText As Queue(Of String), _
 	 ByVal exportFileName As String, _
 	 ByVal resultsFolder As String, _
-	 ByRef dctDTAsToSkip As System.Collections.Generic.Dictionary(Of String, Integer))
+	 ByRef lstFilesToSkip As System.Collections.Generic.SortedSet(Of String))
 
 		Dim filetype As String = System.IO.Path.GetExtension(exportFileName).TrimStart("."c)
 
 		Dim lineCounter As Integer = 0
-		Dim tw As System.IO.StreamWriter
 
-		If dctDTAsToSkip.ContainsKey(exportFileName) Then
+		If lstFilesToSkip.Contains(exportFileName) Then
 			' Empty the queue and skip this file
 			fileText.Clear()
 			Return
 		End If
 
-		tw = New System.IO.StreamWriter(System.IO.Path.Combine(resultsFolder, exportFileName), False)
-		Dim dtaLineMatch As Match = Nothing
-		Dim outputLine As String
+		Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(System.IO.Path.Combine(resultsFolder, exportFileName), IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-		If Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
-			outputLine = fileText.Dequeue
+			Dim dtaLineMatch As Match = Nothing
+			Dim outputLine As String
 
-			' See if this line contains the extra information of the form: scan=1000 cs=1
-			dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
-			If dtaLineMatch.Success Then
-				' Yes, it has the extra information
-				' Only write out the parent mass and charge state for the line
-				outputLine = dtaLineMatch.Groups("parentmass").Value + " " + _
-				 dtaLineMatch.Groups("chargestate").Value
-			Else
-				' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
+			If fileText.Count > 0 AndAlso Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
+				outputLine = fileText.Dequeue
+
+				' See if this line contains the extra information of the form: scan=1000 cs=1
+				dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
+				If dtaLineMatch.Success Then
+					' Yes, it has the extra information
+					' Only write out the parent mass and charge state for the line
+					outputLine = dtaLineMatch.Groups("parentmass").Value + " " + _
+					 dtaLineMatch.Groups("chargestate").Value
+				Else
+					' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
+				End If
+				swOutFile.WriteLine(outputLine)
 			End If
-			tw.WriteLine(outputLine)
-		End If
 
-		While fileText.Count > 0
-			outputLine = fileText.Dequeue
-			If outputLine.Length > 0 And filetype = "dta" Then
-				' Writing out a dta file line
-				tw.WriteLine(outputLine)
+			While fileText.Count > 0
+				outputLine = fileText.Dequeue
+				swOutFile.WriteLine(outputLine)
 				lineCounter += 1
-			ElseIf fileText.Count > 0 And filetype = "out" Then
-				' Writing out an out file line
-				tw.WriteLine(outputLine)
-				lineCounter += 1
-			Else
-				' Writing out a line for another, non-specific file type
-				tw.WriteLine(outputLine)
-				lineCounter += 1
-			End If
-		End While
+			End While
 
-		tw.Close()
-		tw = Nothing
+		End Using
+
 
 	End Sub
 
 	Private Function CountOutFiles(ByVal filePath As String) As Integer
 
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(filePath)
-		Dim tr As System.IO.TextReader
 		Dim s As String
 		Dim outFileCount As Integer = 0
-		Dim currPos As Long
-		Dim lineCount As Long
 
 		Dim lineEndCharCount As Integer = LineEndCharacterCount(fi)
 
 		Dim r As New Regex("^===*", RegexOptions.Compiled)
 		If fi.Exists Then
 
-			tr = fi.OpenText
-			s = tr.ReadLine
-
-			Do While Not s Is Nothing
-				lineCount += 1
-				currPos += s.Length + lineEndCharCount
-				If r.IsMatch(s) Then outFileCount += 1
-				s = tr.ReadLine
-			Loop
-
-			tr.Close()
-			tr = Nothing
-			fi = Nothing
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(filePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				While srInFile.Peek > -1
+					s = srInFile.ReadLine()
+					If r.IsMatch(s) Then outFileCount += 1
+				End While
+			End Using
 
 			Me.m_ResultsFileCount = outFileCount
 		End If

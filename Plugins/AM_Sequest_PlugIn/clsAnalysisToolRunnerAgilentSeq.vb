@@ -6,9 +6,6 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisToolRunnerAgilentSeq
 	Inherits clsAnalysisToolRunnerSeqBase
 
-	Public Sub New()
-	End Sub
-
 	Protected Function DeleteDataFile() As IJobParams.CloseOutType
 
 		'Deletes the data files (.mgf and .cdf) from the working directory

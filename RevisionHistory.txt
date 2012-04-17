@@ -1,5 +1,10 @@
 Analysis Tool Manager History
 
+April 17, 2012
+	- Updated Sequest plugin to create a temporary _out.txt file as .out files are created
+		- File is copied up to the transfer folder every 5 minutes
+	- Updated Sequest plugin to allow resuming analysis using the _out.txt.tmp file
+
 April 13, 2012
 	- Updated the MSGF Plugin to support creating .mzXML files using MSConvert
 		- Uses AnalysisManagerMsXmlGenPlugIn.dll

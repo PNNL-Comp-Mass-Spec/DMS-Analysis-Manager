@@ -66,7 +66,7 @@ Module modMain
 						'objTest.TestFileDateConversion()
 						'objTest.TestArchiveFileStart()
 						'objTest.TestDTASplit()
-						'objTest.TestUncat("ShewCarbF_2_3_04Jan07_Phoenix_06-11-18_trimmed", "D:\DMS_WorkDir")
+						objTest.TestUncat("Cyano_Nitrogenase_BU_1_12Apr12_Earth_12-03-24", "F:\Temp\Deconcat")
 						'objTest.TestFileSplitThenCombine()
 						'objTest.TestResultsTransfer()
 						'objTest.TestDeliverResults()
@@ -97,7 +97,7 @@ Module modMain
 						'objTest.TestProteinDBExport("C:\DMS_Temp_Org")
 
 						'objTest.TestFindFile()
-						objTest.TestDeleteFiles()
+						'objTest.TestDeleteFiles()
 
 						'objTest.TestZipAndUnzip()
 						'objTest.TestMALDIDataUnzip("")

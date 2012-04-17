@@ -78,7 +78,7 @@ Public Class clsPluginLoader
 
 		Dim myToolRunner As AnalysisManagerBase.IToolRunner = Nothing
 
-		Select Case className.ToLower
+		Select Case className.ToLower()
 			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT".ToLower
 			'    myToolRunner = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT, IToolRunner)
 
@@ -145,6 +145,8 @@ Public Class clsPluginLoader
 			'Case "DTASpectraFileGen.clsDtaGenToolRunner".ToLower
 			'	myToolRunner = DirectCast(New DTASpectraFileGen.clsDtaGenToolRunner, IToolRunner)
 
+			'Case "AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster, IToolRunner)
 
 		End Select
 
@@ -155,7 +157,7 @@ Public Class clsPluginLoader
 
 		Dim myModule As AnalysisManagerBase.IAnalysisResources = Nothing
 
-		Select Case className.ToLower
+		Select Case className.ToLower()
 			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower
 			'    myModule = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT, IAnalysisResources)
 
@@ -222,6 +224,9 @@ Public Class clsPluginLoader
 
 			'Case "DTASpectraFileGen.clsDtaGenResources".ToLower
 			'	myModule = DirectCast(New DTASpectraFileGen.clsDtaGenResources, IAnalysisResources)
+
+			'Case "AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq".ToLower()
+			'	myModule = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq, IAnalysisResources)
 
 
 		End Select

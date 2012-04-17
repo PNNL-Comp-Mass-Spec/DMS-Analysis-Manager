@@ -35,7 +35,7 @@ Public Class clsAnalysisJob
 	Protected m_ResultFilesToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)				' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
 	Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)		' List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip: If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
 	Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)				' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-	Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)			' List of file names to remove from the Results Transfer folder on the server
+	Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)			' List of file path to delete from the storage server (must be full file paths)
 
 	Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)		   ' List of dataset names and dataset IDs
 
@@ -92,7 +92,7 @@ Public Class clsAnalysisJob
 	End Property
 
 	''' <summary>
-	''' List of file names to remove from the Results Transfer folder on the server
+	''' List of file paths to remove from the storage server (full file paths)
 	''' </summary>
 	''' <value></value>
 	''' <returns></returns>
@@ -189,13 +189,13 @@ Public Class clsAnalysisJob
 	End Sub
 
 	''' <summary>
-	''' Add a filename to be deleted from the Results Transfer folder on the server
+	''' Add a file to be deleted from the storage server (requires full file path)
 	''' </summary>
-	''' <param name="FileName"></param>
+	''' <param name="FilePath">Full path to the file</param>
 	''' <remarks></remarks>
-	Public Sub AddServerFileToDelete(ByVal FileName As String) Implements IJobParams.AddServerFileToDelete
-		If Not m_ServerFilesToDelete.Contains(FileName) Then
-			m_ServerFilesToDelete.Add(FileName)
+	Public Sub AddServerFileToDelete(ByVal FilePath As String) Implements IJobParams.AddServerFileToDelete
+		If Not m_ServerFilesToDelete.Contains(FilePath) Then
+			m_ServerFilesToDelete.Add(FilePath)
 		End If
 	End Sub
 

@@ -6,12 +6,7 @@ AnalysisManagerSequestPlugin
 </name>
 </assembly>
 <members>
-<member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.#ctor">
-	<summary>
- Constructor
- </summary>
-	<remarks>Does nothing at present</remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.MakeOUTFiles">
+<member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.MakeOUTFiles">
 	<summary>
  Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
  </summary>
@@ -45,16 +40,10 @@ AnalysisManagerSequestPlugin
 	<remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.HandleOutFileChange(System.String)">
 	<summary>
- Adds newly created .Out file to Queue mOutFileCandidates
- This queue is used to delete corresponding .DTA files as the .Out files are created
+ Adds newly created .Out file to mOutFileCandidates and mOutFileCandidateInfo
  </summary>
 	<param name="OutFileName"></param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.#ctor">
-	<summary>
- Constructor
- </summary>
-	<remarks>Presently not used</remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.RunTool">
 	<summary>
  Runs the analysis tool
@@ -73,12 +62,14 @@ AnalysisManagerSequestPlugin
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.MakeOUTFiles">
 	<summary>
  Runs Sequest to make .out files
+ This function uses the standalone Sequest.exe program; it is not used by the Sequest clusters
  </summary>
 	<returns>CloseOutType enum indicating success or failure</returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.ConcatOutFiles(System.String,System.String,System.String)">
 	<summary>
- Concatenates the .out files in the working directory to a single _out.txt file
+ Concatenates any .out files that still remain in the the working directory
+ If running on the Sequest Cluster, then the majority of the files should have already been appended to _out.txt.tmp
  </summary>
 	<param name="WorkDir">Working directory</param>
 	<param name="DSName">Dataset name</param>
@@ -126,12 +117,12 @@ AnalysisManagerSequestPlugin
 	<param name="JobNum">Job number</param>
 	<returns>TRUE for success; FALSE for failure</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.CheckForExistingOutFiles">
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.CheckForExistingConcatenatedOutFile">
 	<summary>
- Look for existing .Out files
+ Look for file _out.txt.tmp in the transfer folder
+ If present, also looks for the JobParameters.xml file and the sequest param file
  </summary>
-	<returns>True if existing .Out files are present</returns>
-	<remarks>Note that this sub is similar to CheckForExistingOutFiles() in clsAnalysisToolRunnerSeqBase but this sub only looks for the .out files; it doesn't move them.</remarks>
+	<returns>True if file is found and the folder also has a parameter file and settings file that corresponds to the ones in the local DMS_Work folder</returns>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq.TextFilesMatch(System.String,System.String,System.Int32,System.Int32,System.Boolean)">
 	<summary>
  Compares two files line-by-line.  If intComparisonStartLine is &gt; 0, then ignores differences up until the given line number.  If 

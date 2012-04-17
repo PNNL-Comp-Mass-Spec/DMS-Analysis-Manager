@@ -2037,7 +2037,8 @@ Public MustInherit Class clsAnalysisResources
 		'Fasta file was successfully generated. Put the name of the generated fastafile in the
 		'	job data class for other methods to use
 		If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error adding parameter 'generatedFastaName' to m_jobParams")
+			m_message = "Error adding parameter 'generatedFastaName' to m_jobParams"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 
@@ -2224,8 +2225,13 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 		Catch ex As Exception
+			If String.IsNullOrWhiteSpace(m_message) Then
+				m_message = "Error retrieving parameter file"
+			End If
+
 			Dim Msg As String = m_message & ": " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+
 			If Not ParFileGen Is Nothing Then
 				If Not String.IsNullOrWhiteSpace(ParFileGen.LastError) Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error converting param file: " & ParFileGen.LastError)
@@ -2329,6 +2335,7 @@ Public MustInherit Class clsAnalysisResources
 			If SourceFolderPath = "" Then
 				' No folder found containing the zipped DTA files; return False
 				' (the FindDataFile procedure should have already logged an error)
+				m_message = "Could not find " & SourceFileName
 				Return False
 			Else
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: could not find the _dta.zip file, but was able to find " & SourceFileName & " in folder " & SourceFolderPath)
@@ -2338,6 +2345,7 @@ Public MustInherit Class clsAnalysisResources
 					If m_DebugLevel >= 2 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
 					End If
+					m_message = "Error copying " & SourceFileName
 					Return False
 				End If
 
@@ -2350,6 +2358,7 @@ Public MustInherit Class clsAnalysisResources
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & SourceFileName & " using folder " & SourceFolderPath)
 				End If
+				m_message = "Error copying " & SourceFileName
 				Return False
 			Else
 				If m_DebugLevel >= 1 Then
@@ -2542,8 +2551,7 @@ Public MustInherit Class clsAnalysisResources
 			Else
 				' Data file not found
 				' Log this as an error if SearchArchivedDatasetFolder=True
-				' Log this as a warnign if SearchArchivedDatasetFolder=False
-
+				' Log this as a warning if SearchArchivedDatasetFolder=False
 
 				If SearchArchivedDatasetFolder Then
 					m_message = "Data file not found: " & FileToFind

@@ -753,13 +753,14 @@ Public Class clsAnalysisToolRunnerBase
 		Try
 			'Log status
 			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Files from Transfer folder on server; m_ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Files from the storage server; ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries")
 			End If
 
 			For Each FileToDelete In m_jobParams.ServerFilesToDelete
 				If m_DebugLevel >= 4 Then	 'Log file to be deleted
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
 				End If
+
 				If File.Exists(FileToDelete) Then
 					'Verify file is not set to readonly, then delete it
 					File.SetAttributes(FileToDelete, File.GetAttributes(FileToDelete) And (Not FileAttributes.ReadOnly))
