@@ -90,7 +90,6 @@ Public Class clsAnalysisMgrSettings
 
 	Public Function DisableManagerLocally() As Boolean Implements AnalysisManagerBase.IMgrParams.DisableManagerLocally
 		Return WriteConfigSetting("MgrActive_Local", "False")
-
 	End Function
 
 	''' <summary>

@@ -609,11 +609,16 @@ Namespace AnalysisManagerProg
 						m_NeedToAbortProcessing = True
 					End If
 
+					If m_NeedToAbortProcessing AndAlso ErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE) Then
+						DisableManagerLocally()
+					End If
+
 					blnRunToolError = True
 				End If
 
 				If m_ToolRunner.NeedToAbortProcessing Then
 					m_NeedToAbortProcessing = True
+					m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, ErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 				End If
 
 			Catch Err As Exception

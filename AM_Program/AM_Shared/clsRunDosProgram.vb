@@ -29,6 +29,7 @@ Public Class clsRunDosProgram
 	Private m_ConsoleOutputFilePath As String = String.Empty
 
 	Private m_AbortProgramNow As Boolean
+	Private m_AbortProgramPostLogEntry As Boolean
 
 	'Runs specified program
 	Private WithEvents m_ProgRunner As PRISM.Processes.clsProgRunner = New PRISM.Processes.clsProgRunner
@@ -36,8 +37,24 @@ Public Class clsRunDosProgram
 #End Region
 
 #Region "Events"
-	Public Event LoopWaiting()	 'Class is waiting until next time it's due to check status of called program (good time for external processing)
+	''' <summary>
+	''' Class is waiting until next time it's due to check status of called program (good time for external processing)
+	''' </summary>
+	''' <remarks></remarks>
+	Public Event LoopWaiting()
+
+	''' <summary>
+	''' Text was written to the console
+	''' </summary>
+	''' <param name="NewText"></param>
+	''' <remarks></remarks>
 	Public Event ConsoleOutputEvent(ByVal NewText As String)
+
+	''' <summary>
+	''' Error message was written to the console
+	''' </summary>
+	''' <param name="NewText"></param>
+	''' <remarks></remarks>
 	Public Event ConsoleErrorEvent(ByVal NewText As String)
 #End Region
 
@@ -106,6 +123,9 @@ Public Class clsRunDosProgram
 		End Set
 	End Property
 
+	''' <summary>
+	''' Debug level for logging
+	''' </summary>
 	Public Property DebugLevel() As Integer
 		Get
 			Return m_DebugLevel
@@ -139,20 +159,37 @@ Public Class clsRunDosProgram
 
 	''' <summary>
 	''' How often (milliseconds) internal monitoring thread checks status of external program
-	''' Minimum allowed value is 50 milliseconds
+	''' Minimum allowed value is 250 milliseconds
 	''' </summary>
 	Public Property MonitorInterval() As Integer	 'msec
 		Get
 			Return m_MonitorInterval
 		End Get
 		Set(ByVal Value As Integer)
+			If Value < 250 Then Value = 250
 			m_MonitorInterval = Value
 		End Set
 	End Property
 
+	''' <summary>
+	''' Returns true if program was aborted via call to AbortProgramNow()
+	''' </summary>
 	Public ReadOnly Property ProgramAborted() As Boolean
 		Get
 			Return m_AbortProgramNow
+		End Get
+	End Property
+
+	''' <summary>
+	''' Current monitoring state
+	''' </summary>
+	Public ReadOnly Property State() As PRISM.Processes.clsProgRunner.States
+		Get
+			If m_ProgRunner Is Nothing Then
+				Return PRISM.Processes.clsProgRunner.States.NotMonitoring
+			Else
+				Return m_ProgRunner.State
+			End If
 		End Get
 	End Property
 
@@ -197,13 +234,39 @@ Public Class clsRunDosProgram
 
 	End Sub
 
+	''' <summary>
+	''' Call this function to instruct this class to terminate the running program
+	''' Will post an entry to the log
+	''' </summary>
 	Public Sub AbortProgramNow()
-		m_AbortProgramNow = True
+		AbortProgramNow(blnPostLogEntry:=True)
 	End Sub
 
+	''' <summary>
+	''' Call this function to instruct this class to terminate the running program
+	''' </summary>
+	''' <param name="blnPostLogEntry">True if an entry should be posted to the log</param>
+	''' <remarks></remarks>
+	Public Sub AbortProgramNow(ByVal blnPostLogEntry As Boolean)
+		m_AbortProgramNow = True
+		m_AbortProgramPostLogEntry = blnPostLogEntry
+	End Sub
 
 	''' <summary>
-	''' 
+	''' Runs a program and waits for it to exit
+	''' </summary>
+	''' <param name="ProgNameLoc">The path to the program to run</param>
+	''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
+	''' <param name="ProgName">The name of the program to use for the Window title</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Ignores the result code reported by the program</remarks>
+	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String) As Boolean
+		Dim UseResCode As Boolean = False
+		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode)
+	End Function
+
+	''' <summary>
+	''' Runs a program and waits for it to exit
 	''' </summary>
 	''' <param name="ProgNameLoc">The path to the program to run</param>
 	''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
@@ -211,11 +274,7 @@ Public Class clsRunDosProgram
 	''' <param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
-	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, _
-	 Optional ByVal UseResCode As Boolean = False) As Boolean
-
-		'DAC debugging
-		'		System.Threading.Thread.CurrentThread.Name = "RunProg"
+	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean) As Boolean
 
 		' Require a minimum monitoring interval of 250 mseconds
 		If m_MonitorInterval < 250 Then m_MonitorInterval = 250
@@ -236,12 +295,13 @@ Public Class clsRunDosProgram
 			.ConsoleOutputFilePath = m_ConsoleOutputFilePath
 		End With
 
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsRunDosProgram.RunProgram(), ProgRunner.Arguments = " & m_ProgRunner.Arguments)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsRunDosProgram.RunProgram(), ProgRunner.Program = " & m_ProgRunner.Program)
+		If m_DebugLevel >= 4 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " & m_ProgRunner.Arguments)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " & m_ProgRunner.Program)
 		End If
 
 		m_AbortProgramNow = False
+		m_AbortProgramPostLogEntry = True
 
 		'DAC debugging
 		Debug.WriteLine("clsRunDOSProg.RunProgram, starting program, thread " & System.Threading.Thread.CurrentThread.Name)
@@ -254,7 +314,9 @@ Public Class clsRunDosProgram
 				System.Threading.Thread.Sleep(m_MonitorInterval)
 
 				If m_AbortProgramNow Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Aborting program since AbortProgramNow() was called")
+					If m_AbortProgramPostLogEntry Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting clsRunDosProgram since AbortProgramNow() was called")
+					End If
 					m_ProgRunner.StopMonitoringProgram(True)
 				End If
 			End While
@@ -267,7 +329,9 @@ Public Class clsRunDosProgram
 		m_ExitCode = m_ProgRunner.ExitCode
 
 		If (UseResCode And m_ProgRunner.ExitCode <> 0) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRunDosProgram.RunProgram(), Error: ProgRunner.ExitCode = " & m_ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
+			If (m_AbortProgramNow AndAlso m_AbortProgramPostLogEntry) OrElse Not m_AbortProgramNow Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ProgRunner.ExitCode = " & m_ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
+			End If
 			Return False
 		Else
 			If m_AbortProgramNow Then

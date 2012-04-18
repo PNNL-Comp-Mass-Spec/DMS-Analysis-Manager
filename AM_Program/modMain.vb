@@ -66,24 +66,20 @@ Module modMain
 						'objTest.TestFileDateConversion()
 						'objTest.TestArchiveFileStart()
 						'objTest.TestDTASplit()
-						objTest.TestUncat("Cyano_Nitrogenase_BU_1_12Apr12_Earth_12-03-24", "F:\Temp\Deconcat")
+						'objTest.TestUncat("Cyano_Nitrogenase_BU_1_12Apr12_Earth_12-03-24", "F:\Temp\Deconcat")
 						'objTest.TestFileSplitThenCombine()
 						'objTest.TestResultsTransfer()
 						'objTest.TestDeliverResults()
 						'objTest.TestGetFileContents()
 
-						'If Not mInputFilePath Is Nothing AndAlso mInputFilePath.Length > 0 Then
-						'    blnSuccess = objTest.ValidateSequestNodeCount(mInputFilePath, True)
-						'Else
-						'    blnSuccess = objTest.ValidateSequestNodeCount("\\proto-3\LTQ_Orb2_DMS3\LeafCutterAnt_02_orbiC_7Oct08_Falcon_08-09-03\Seq200911191643_Auto548423\sequest.log", True)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-3\LTQ_Orb2_DMS3\LeafCutterAnt_02_orbiC_7Oct08_Falcon_08-09-03\Seq200911191643_Auto548423\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-3\LTQ_Orb2_DMS3\NR_merc_15_3_5Mar09_Falcon_09-01-33\Seq200911051158_Auto544857\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-3\LTQ_Orb3_DMS3\QC_Shew_09_05-pt5-1_8Dec09_Doc_09-09-19\Seq200912081348_Auto552271\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-7\LTQ_1_DMS2\GLBRC_Sc_19_01_23Nov09_Earth_09-10-06\Seq200911291827_Auto550446\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-7\LTQ_1_DMS2\QC_Shew_09_05_pt5_3_9Dec09_Earth_09-10-08\Seq200912091733_Auto552621\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-7\LTQ_4_DMS2\QC_Shew_09_05-pt5-4_27Nov09_Owl_09-08-18\Seq200911271932_Auto550213\sequest.log", true)
-						'    'blnSuccess = objTest.ValidateSequestNodeCount("\\proto-9\VOrbiETD01_DMS1\QC_Shew_08_05_pt5_c_2Dec09_Griffin_09-11-17\Seq200912031043_Auto551470\sequest.log", true)
-						'End If
+						Dim blnSuccess As Boolean
+						If Not mInputFilePath Is Nothing AndAlso mInputFilePath.Length > 0 Then
+							blnSuccess = objTest.ValidateSequestNodeCount(mInputFilePath, True)
+						Else
+							blnSuccess = objTest.ValidateSequestNodeCount("f:\temp\sequest.log", True)
+							blnSuccess = objTest.ValidateSequestNodeCount("\\proto-9\DMS3_XFER\HMEC_AA_extraction_7pt2ug_031312_r2\Seq201204161109_Auto826662\sequest.log", True)
+							blnSuccess = objTest.ValidateSequestNodeCount("\\proto-7\VOrbiETD04\2012_2\HuPlasma_top15_01_Thresh_13Apr12_Cougar_12-03-21\Seq201204161143_Auto826701\sequest.log", True)
+						End If
 
 						'objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
 						'objTest.TestFindAndReplace()
