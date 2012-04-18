@@ -25,7 +25,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 #Region "Constants"
 	Public Const CONCATENATED_OUT_TEMP_FILE As String = "_out.txt.tmp"
-	Protected Const MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK As Integer = 250
+	Protected Const MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK As Integer = 500
 #End Region
 
 #Region "Member variables"

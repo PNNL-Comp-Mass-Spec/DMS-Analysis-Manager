@@ -51,7 +51,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected mLastActiveNodeQueryTime As System.DateTime = System.DateTime.UtcNow
 
 	Protected mLastActiveNodeLogTime As System.DateTime
-	Protected mMedianOutFileProcessingTime As Single = 0
 
 	Protected mResetPVM As Boolean
 
@@ -581,10 +580,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	End Function
 
-	Protected Function GetStaleNodeTimeThreshold(ByVal intStaleNodeThresholdMinimum As Integer) As Integer
-		Dim intStaleNodeTimeMinutes As Integer
+	Protected Function ComputeMedianProcessingTime() As Single
+
 		Dim sngOutFileProcessingTimes() As Single
 		Dim intMidPoint As Integer
+
+		If mRecentOutFileSearchTimes.Count < 1 Then Return 0
 
 		' Determine the median out file processing time
 		' Note that search times in mRecentOutFileSearchTimes are in seconds 
@@ -599,17 +600,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			intMidPoint = CInt(Math.Floor(sngOutFileProcessingTimes.Length / 2))
 		End If
 
-		' Multiply the median value by 5 to establish the initial value for intStaleNodeTimeMinutes
-		mMedianOutFileProcessingTime = sngOutFileProcessingTimes(intMidPoint)
-		intStaleNodeTimeMinutes = CInt(Math.Round(mMedianOutFileProcessingTime * 5 / 60.0))
-
-		' Bump up the time if less than intStaleNodeThresholdMinimum
-		' Most of the time we'll end up bumping up the time; only for really, really slow Sequest searches will the time be > intStaleNodeThresholdMinimum
-		If intStaleNodeTimeMinutes < intStaleNodeThresholdMinimum Then
-			intStaleNodeTimeMinutes = intStaleNodeThresholdMinimum
-		End If
-
-		Return intStaleNodeTimeMinutes
+		Return sngOutFileProcessingTimes(intMidPoint)
 
 	End Function
 
@@ -1142,7 +1133,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 			' Log the number of active nodes every 10 minutes
 			If m_DebugLevel >= 4 OrElse System.DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intNodeCountCurrent & " / " & mSequestNodesSpawned & " Sequest nodes are active; median processing time = " & mMedianOutFileProcessingTime.ToString("0.0") & " seconds/spectrum")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intNodeCountCurrent & " / " & mSequestNodesSpawned & " Sequest nodes are active; median processing time = " & ComputeMedianProcessingTime().ToString("0.0") & " seconds/spectrum")
 				mLastActiveNodeLogTime = System.DateTime.UtcNow
 			End If
 
