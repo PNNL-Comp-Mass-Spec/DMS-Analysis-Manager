@@ -44,21 +44,27 @@ AnalysisManagerSequestPlugin
  </summary>
 	<param name="OutFileName"></param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster.ValidateProcessorsAreActive">
+	<summary>
+ Uses PVM command ps -a to determine the number of active nodes
+ Sets mResetPVM to True if fewer than 50% of the nodes are creating .Out files
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.RunTool">
 	<summary>
  Runs the analysis tool
  </summary>
 	<returns>IJobParams.CloseOutType value indicating success or failure</returns>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.CalculateNewStatus">
+	<summary>
+ Calculates status information for progress file by counting the number of .out files
+ </summary>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.CalculateNewStatus(System.Boolean)">
 	<summary>
- Calculates status information for progress file
+ Calculates status information for progress file by counting the number of .out files
  </summary>
 	<param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
-	<remarks>
- Calculation in this class is based on Sequest processing. For other processing types,
-	override this function in derived class
-</remarks>
 </member><member name="M:AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqBase.MakeOUTFiles">
 	<summary>
  Runs Sequest to make .out files

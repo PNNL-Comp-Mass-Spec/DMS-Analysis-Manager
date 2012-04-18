@@ -12,6 +12,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.Text.RegularExpressions
+Imports System.Collections.Generic
 
 Public Class clsAnalysisToolRunnerSeqBase
 	Inherits clsAnalysisToolRunnerBase
@@ -24,7 +25,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 #Region "Constants"
 	Public Const CONCATENATED_OUT_TEMP_FILE As String = "_out.txt.tmp"
-
+	Protected Const MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK As Integer = 250
 #End Region
 
 #Region "Member variables"
@@ -32,10 +33,17 @@ Public Class clsAnalysisToolRunnerSeqBase
 	Protected mTotalOutFileCount As Integer = 0
 
 	Protected mTempConcatenatedOutFilePath As String = String.Empty
-	Protected mOutFileNamesAppended As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+	Protected mOutFileNamesAppended As SortedSet(Of String) = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+	' Out file search times (in seconds) for recently created .out files
+	Protected mRecentOutFileSearchTimes As Queue(Of Single) = New Queue(Of Single)(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK)
 
 	Protected m_OutFileNameRegEx As System.Text.RegularExpressions.Regex = _
 	  New System.Text.RegularExpressions.Regex("^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})", _
+	  RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant Or RegexOptions.Compiled)
+
+	Protected m_OutFileSearchTimeRegEx As System.Text.RegularExpressions.Regex = _
+	  New System.Text.RegularExpressions.Regex("\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec", _
 	  RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
 #End Region
@@ -52,7 +60,6 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim Result As IJobParams.CloseOutType
 		Dim eReturnCode As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
-		Dim blnErrorZippingOutFile As Boolean = False
 
 		' Do the base class stuff
 		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -61,6 +68,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		' Check whether or not we are resuming a job that stopped prematurely
 		' Look for a file named Dataset_out.txt.tmp in m_WorkDir
+		' This procedure will also de-concatenate the _dta.txt file
 		If Not CheckForExistingConcatenatedOutFile() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -71,7 +79,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		' Count the number of .Dta files and cache in m_DtaCount
-		CalculateNewStatus(True)
+		CalculateNewStatus(blnUpdateDTACount:=True)
 
 		'Run Sequest
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
@@ -82,9 +90,6 @@ Public Class clsAnalysisToolRunnerSeqBase
 			Result = MakeOUTFiles()
 			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				blnProcessingError = True
-				If Result = IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE Then
-					blnErrorZippingOutFile = True
-				End If
 			End If
 		Catch Err As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files, " & _
@@ -118,10 +123,15 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim strSequestLogFilePath As String
 		Dim blnSuccess As Boolean
 
-		strSequestLogFilePath = System.IO.Path.Combine(m_WorkDir, "sequest.log")
-		blnSuccess = ValidateSequestNodeCount(strSequestLogFilePath)
+		If m_mgrParams.GetParam("cluster", False) Then
+			' Running on a Sequest cluster
+			strSequestLogFilePath = System.IO.Path.Combine(m_WorkDir, "sequest.log")
+			blnSuccess = ValidateSequestNodeCount(strSequestLogFilePath)
+		Else
+			blnSuccess = True
+		End If
 
-		If blnProcessingError And Not blnErrorZippingOutFile Then
+		If blnProcessingError Then
 			' Move the source files and any results to the Failed Job folder
 			' Useful for debugging Sequest problems
 			CopyFailedResultsToArchiveFolder()
@@ -161,47 +171,79 @@ Public Class clsAnalysisToolRunnerSeqBase
 	End Function
 
 	Protected Sub AppendOutFile(ByVal fiSourceOutFile As System.IO.FileInfo, ByRef swTargetFile As System.IO.StreamWriter)
-		' Note: do not put a Try/Catch block in this sub
 
 		Const hdrLeft As String = "=================================== " & """"
 		Const hdrRight As String = """" & " =================================="
 
 		Dim cleanedFileName As String
+		Dim strLineIn As String
 
 		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim sngOutFileSearchTimeSeconds As Single
 
 		If Not fiSourceOutFile.Exists Then
 			Console.WriteLine("Warning, out file not: " & fiSourceOutFile.FullName)
 			Exit Sub
 		End If
 
-		Using srSrcFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiSourceOutFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+		If Not mOutFileNamesAppended.Contains(fiSourceOutFile.Name) Then
 
-			reMatch = Me.m_OutFileNameRegEx.Match(fiSourceOutFile.Name)
+			' Note: do not put a Try/Catch block here
+			' Let the calling function catch any errors
 
-			If reMatch.Success Then
-				cleanedFileName = reMatch.Groups("rootname").Value + "." + CType(reMatch.Groups("startscan").Value, Integer).ToString + "." + _
-				   CType(reMatch.Groups("endscan").Value, Integer).ToString + "." + _
-				   CType(reMatch.Groups("cs").Value, Integer).ToString + "." + reMatch.Groups("extension").Value
-			Else
-				cleanedFileName = fiSourceOutFile.Name
+			'blnNodeNameFound = False
+			Using srSrcFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiSourceOutFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				reMatch = m_OutFileNameRegEx.Match(fiSourceOutFile.Name)
+
+				If reMatch.Success Then
+					cleanedFileName = reMatch.Groups("rootname").Value + "." + CType(reMatch.Groups("startscan").Value, Integer).ToString + "." + _
+					   CType(reMatch.Groups("endscan").Value, Integer).ToString + "." + _
+					   CType(reMatch.Groups("cs").Value, Integer).ToString + "." + reMatch.Groups("extension").Value
+				Else
+					cleanedFileName = fiSourceOutFile.Name
+				End If
+
+				swTargetFile.WriteLine()
+				swTargetFile.WriteLine(hdrLeft & cleanedFileName & hdrRight)
+
+				While srSrcFile.Peek > -1
+					strLineIn = srSrcFile.ReadLine()
+					swTargetFile.WriteLine(strLineIn)
+
+					reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn)
+					If reMatch.Success Then
+						If Single.TryParse(reMatch.Groups("time").Value, sngOutFileSearchTimeSeconds) Then
+
+							If mRecentOutFileSearchTimes.Count >= MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK Then
+								mRecentOutFileSearchTimes.Dequeue()
+							End If
+
+							mRecentOutFileSearchTimes.Enqueue(sngOutFileSearchTimeSeconds)
+						End If
+
+						' Append the remainder of the out file (no need to continue reading line-by-line)
+						If srSrcFile.Peek > -1 Then
+							swTargetFile.Write(srSrcFile.ReadToEnd())
+						End If
+					End If
+				End While
+			End Using
+
+			If Not mOutFileNamesAppended.Contains(fiSourceOutFile.Name) Then
+				mOutFileNamesAppended.Add(fiSourceOutFile.Name)
 			End If
 
-			swTargetFile.WriteLine()
-			swTargetFile.WriteLine(hdrLeft & cleanedFileName & hdrRight)
-			swTargetFile.Write(srSrcFile.ReadToEnd())
-
-		End Using
-
-		If Not mOutFileNamesAppended.Contains(fiSourceOutFile.Name) Then
-			mOutFileNamesAppended.Add(fiSourceOutFile.Name)
+			mTotalOutFileCount += 1
 		End If
 
 		Dim strDtaFilePath As String
 		strDtaFilePath = System.IO.Path.ChangeExtension(fiSourceOutFile.FullName, "dta")
 
 		Try
-			fiSourceOutFile.Delete()
+			If fiSourceOutFile.Exists Then
+				fiSourceOutFile.Delete()
+			End If
 
 			If System.IO.File.Exists(strDtaFilePath) Then
 				System.IO.File.Delete(strDtaFilePath)
@@ -215,27 +257,27 @@ Public Class clsAnalysisToolRunnerSeqBase
 	End Sub
 
 	''' <summary>
-	''' Calculates status information for progress file
+	''' Calculates status information for progress file by counting the number of .out files
+	''' </summary>
+	Protected Sub CalculateNewStatus()
+		CalculateNewStatus(blnUpdateDTACount:=False)
+	End Sub
+
+	''' <summary>
+	''' Calculates status information for progress file by counting the number of .out files
 	''' </summary>
 	''' <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
-	''' <remarks>
-	''' Calculation in this class is based on Sequest processing. For other processing types,
-	'''	override this function in derived class
-	'''</remarks>
-	Protected Overridable Sub CalculateNewStatus(ByVal blnUpdateDTACount As Boolean)
+	Protected Sub CalculateNewStatus(ByVal blnUpdateDTACount As Boolean)
 
-		Dim FileArray() As String
 		Dim OutFileCount As Integer
 
 		If blnUpdateDTACount Then
 			'Get DTA count
-			FileArray = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
-			m_DtaCount = FileArray.Length + mDtaCountAddon
+			m_DtaCount = System.IO.Directory.GetFiles(m_WorkDir, "*.dta").Length + mDtaCountAddon
 		End If
 
 		'Get OUT file count
-		FileArray = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
-		OutFileCount = FileArray.Length + mTotalOutFileCount
+		OutFileCount = System.IO.Directory.GetFiles(m_WorkDir, "*.out").Length + mTotalOutFileCount
 
 		'Calculate % complete
 		If m_DtaCount > 0 Then
@@ -249,7 +291,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	Protected Function CheckForExistingConcatenatedOutFile() As Boolean
 
 		Dim strConcatenatedTempFilePath As String
-		Dim lstDTAsToSkip As System.Collections.Generic.SortedSet(Of String)
+		Dim lstDTAsToSkip As SortedSet(Of String)
 
 		Try
 
@@ -266,7 +308,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 				lstDTAsToSkip = ConstructDTASkipList(strConcatenatedTempFilePath)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file (skipping " & lstDTAsToSkip.Count & " existing DTAs with existing .Out files)")
 			Else
-				lstDTAsToSkip = New System.Collections.Generic.SortedSet(Of String)
+				lstDTAsToSkip = New SortedSet(Of String)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
 			End If
 
@@ -297,15 +339,15 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
-	Protected Function ConstructDTASkipList(ByVal strConcatenatedTempFilePath As String) As System.Collections.Generic.SortedSet(Of String)
+	Protected Function ConstructDTASkipList(ByVal strConcatenatedTempFilePath As String) As SortedSet(Of String)
 
 		Dim reFileSeparator As Regex
 		Dim objFileSepMatch As Match
 
-		Dim lstDTAsToSkip As System.Collections.Generic.SortedSet(Of String)
+		Dim lstDTAsToSkip As SortedSet(Of String)
 		Dim strLineIn As String
 
-		lstDTAsToSkip = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+		lstDTAsToSkip = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
 		Try
 
@@ -435,7 +477,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		'Close all the file lists
 		For ProcIndx = 0 To Textfiles.GetUpperBound(0)
-			If m_DebugLevel > 0 Then
+			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" & ProcIndx)
 			End If
 			Try
@@ -443,7 +485,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 				Textfiles(ProcIndx) = Nothing
 			Catch Err As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerSeqBase.MakeOutFiles: " & Err.Message & "; " & _
-					clsGlobal.GetExceptionStackTrace(Err))
+				 clsGlobal.GetExceptionStackTrace(Err))
 			End Try
 		Next
 
@@ -465,7 +507,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 			Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
 			MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-			CalculateNewStatus(False)
+			CalculateNewStatus()
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 
 			For ProcIndx = 0 To RunProgs.GetUpperBound(0)
@@ -486,7 +528,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 						StillRunning = True
 						Exit For
 					Else
-						If m_DebugLevel > 0 Then
+						If m_DebugLevel >= 1 Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" & ProcIndx.ToString & ").State = " & _
 							 RunProgs(ProcIndx).State.ToString)
 						End If
@@ -497,12 +539,12 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Loop While StillRunning
 
 		'Clean up our object references
-		If m_DebugLevel > 0 Then
+		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references")
 		End If
 		For ProcIndx = 0 To RunProgs.GetUpperBound(0)
 			RunProgs(ProcIndx) = Nothing
-			If m_DebugLevel > 0 Then
+			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Set RunProgs(" & ProcIndx.ToString & ") to Nothing")
 			End If
 		Next
@@ -513,7 +555,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		GC.WaitForPendingFinalizers()
 
 		'Verify out file creation
-		If m_DebugLevel > 0 Then
+		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation")
 		End If
 
@@ -562,7 +604,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
-		If m_DebugLevel > 0 Then
+		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ConcatOutFiles(), concatenating .out files")
 		End If
 
@@ -581,10 +623,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 			Using swTargetFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mTempConcatenatedOutFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
 				For Each fiOutFile As System.IO.FileInfo In diWorkDir.GetFileSystemInfos("*.out")
-					If Not mOutFileNamesAppended.Contains(fiOutFile.Name) Then
-						AppendOutFile(fiOutFile, swTargetFile)
-						mTotalOutFileCount += 1
-					End If
+					AppendOutFile(fiOutFile, swTargetFile)
 				Next
 			End Using
 
@@ -634,7 +673,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfo(ByVal strOutFilePath As String) As Boolean
 
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		Dim ioToolFiles As New List(Of System.IO.FileInfo)
 		Dim strToolVersionInfo As String = String.Empty
 
 		If m_DebugLevel >= 2 Then
@@ -709,7 +748,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function ValidateDTAFiles() As Boolean
-		Dim ioWorkFolder As System.IO.DirectoryInfo
+		Dim diWorkDir As System.IO.DirectoryInfo
 		Dim ioFiles() As System.IO.FileInfo
 		Dim ioFile As System.IO.FileInfo
 
@@ -718,9 +757,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim intFilesChecked As Integer = 0
 
 		Try
-			ioWorkFolder = New System.IO.DirectoryInfo(m_WorkDir)
+			diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
 
-			ioFiles = ioWorkFolder.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly)
+			ioFiles = diWorkDir.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly)
 
 			If ioFiles.Length = 0 Then
 				m_message = "No .DTA files are present"
@@ -775,7 +814,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	''' <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
 	Protected Function ValidateSequestNodeCount(ByVal strLogFilePath As String) As Boolean
-		Return ValidateSequestNodeCount(strLogFilePath, False)
+		Return ValidateSequestNodeCount(strLogFilePath, blnLogToConsole:=False)
 	End Function
 
 	''' <summary>
@@ -799,31 +838,23 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim reReceivedReadyMsg As System.Text.RegularExpressions.Regex
 		Dim reSpawnedSlaveProcesses As System.Text.RegularExpressions.Regex
 		Dim reSearchedDTAFile As System.Text.RegularExpressions.Regex
-		Dim objMatch As System.Text.RegularExpressions.Match
+		Dim reMatch As System.Text.RegularExpressions.Match
 
-		Dim srLogFile As System.IO.StreamReader
-
-		Dim strParam As String
 		Dim strLineIn As String
 		Dim strHostName As String
 
-		' This hash table is a map from host name to an entry in intDTACounts()
-		Dim htHosts As System.Collections.Hashtable
-		Dim htHostNodeCount As System.Collections.Hashtable
+		' This dictionary tracks the number of DTAs processed by each node
+		Dim dctHostCounts As Dictionary(Of String, Integer)
 
-		Dim objHostIndex As Object
-		Dim objEnum As System.Collections.IDictionaryEnumerator
+		' This dictionary tracks the number of distinct nodes on each host
+		Dim dctHostNodeCount As Dictionary(Of String, Integer)
 
-		Dim intIndex As Integer
-		Dim intHostIndex As Integer
-		Dim intNodeCountThisHost As Integer
+		Dim intValue As Integer
 
-		' The following array tracks the number of DTAs processed by each host (sum of stats for all nodes on that host)
-		Dim intDTAProcessingStats() As Integer
-		Dim intDTAProcessingStatCount As Integer
+		' This dictionary tracks the number of DTAs processed per node on each host
+		Dim dctHostProcessingRate As Dictionary(Of String, Single)
 
-		' This array tracks the number of DTAs processed per node on each host
-		Dim sngHostProcessingRate() As Single
+		' This array is used to compute a median
 		Dim sngHostProcessingRateSorted() As Single
 
 		Dim blnShowDetailedRates As Boolean
@@ -866,111 +897,90 @@ Public Class clsAnalysisToolRunnerSeqBase
 			'  FROM T_ParamValue AS PV INNER JOIN T_Mgrs AS M ON PV.MgrID = M.M_ID
 			'  WHERE (PV.TypeID = 122)
 
-			strParam = m_mgrParams.GetParam("SequestNodeCountExpected")
-			If Integer.TryParse(strParam, intNodeCountExpected) Then
-			Else
-				intNodeCountExpected = 0
-			End If
+			intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0)
 
-			' Initialize the hash table that will track the number of spectra processed by each host
-			htHosts = New System.Collections.Hashtable
+			' Initialize the dictionary that will track the number of spectra processed by each host
+			dctHostCounts = New Dictionary(Of String, Integer)
 
-			' Initialze the hash table that will track the number of distinct nodes on each host
-			htHostNodeCount = New System.Collections.Hashtable
+			' Initialize the dictionary that will track the number of distinct nodes on each host
+			dctHostNodeCount = New Dictionary(Of String, Integer)
 
-			' Initially reserve space for 50 hosts
-			intDTAProcessingStatCount = 0
-			ReDim intDTAProcessingStats(49)
+			' Initialize the dictionary that will track processing rates
+			dctHostProcessingRate = New Dictionary(Of String, Single)
 
-			srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-			' Read each line from the input file
-			Do While srLogFile.Peek >= 0
-				strLineIn = srLogFile.ReadLine
+				' Read each line from the input file
+				Do While srLogFile.Peek > -1
+					strLineIn = srLogFile.ReadLine
 
-				If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-					' See if the line matches one of the expected RegEx values
-					objMatch = reStartingTask.Match(strLineIn)
-					If Not objMatch Is Nothing AndAlso objMatch.Success Then
-						If Not Integer.TryParse(objMatch.Groups(1).Value, intHostCount) Then
-							strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
-							If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-						End If
-
-					Else
-						objMatch = reWaitingForReadyMsg.Match(strLineIn)
-						If Not objMatch Is Nothing AndAlso objMatch.Success Then
-							If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountStarted) Then
-								strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
+						' See if the line matches one of the expected RegEx values
+						reMatch = reStartingTask.Match(strLineIn)
+						If Not reMatch Is Nothing AndAlso reMatch.Success Then
+							If Not Integer.TryParse(reMatch.Groups(1).Value, intHostCount) Then
+								strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
 								If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
 							End If
 
 						Else
-							objMatch = reReceivedReadyMsg.Match(strLineIn)
-							If Not objMatch Is Nothing AndAlso objMatch.Success Then
-								strHostName = objMatch.Groups(1).Value
-
-								If htHostNodeCount.ContainsKey(strHostName) Then
-									htHostNodeCount(strHostName) = CInt(htHostNodeCount(strHostName)) + 1
-								Else
-									htHostNodeCount.Add(strHostName, 1)
+							reMatch = reWaitingForReadyMsg.Match(strLineIn)
+							If Not reMatch Is Nothing AndAlso reMatch.Success Then
+								If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountStarted) Then
+									strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
+									If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
 								End If
 
 							Else
-								objMatch = reSpawnedSlaveProcesses.Match(strLineIn)
-								If Not objMatch Is Nothing AndAlso objMatch.Success Then
-									If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountActive) Then
-										strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
-										If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+								reMatch = reReceivedReadyMsg.Match(strLineIn)
+								If Not reMatch Is Nothing AndAlso reMatch.Success Then
+									strHostName = reMatch.Groups(1).Value
+
+									If dctHostNodeCount.TryGetValue(strHostName, intValue) Then
+										dctHostNodeCount(strHostName) = intValue + 1
+									Else
+										dctHostNodeCount.Add(strHostName, 1)
 									End If
 
 								Else
-									objMatch = reSearchedDTAFile.Match(strLineIn)
-									If Not objMatch Is Nothing AndAlso objMatch.Success Then
-										strHostName = objMatch.Groups(1).Value
+									reMatch = reSpawnedSlaveProcesses.Match(strLineIn)
+									If Not reMatch Is Nothing AndAlso reMatch.Success Then
+										If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountActive) Then
+											strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
+											If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+										End If
 
-										If Not strHostName Is Nothing Then
-											objHostIndex = htHosts(strHostName)
+									Else
+										reMatch = reSearchedDTAFile.Match(strLineIn)
+										If Not reMatch Is Nothing AndAlso reMatch.Success Then
+											strHostName = reMatch.Groups(1).Value
 
-											If objHostIndex Is Nothing Then
-												' Host not present in htHosts; add it
-												intHostIndex = intDTAProcessingStatCount
-												htHosts.Add(strHostName, intHostIndex)
-
-												If intDTAProcessingStatCount >= intDTAProcessingStats.Length Then
-													' Reserve more space
-													ReDim Preserve intDTAProcessingStats(intDTAProcessingStats.Length * 2 - 1)
+											If Not strHostName Is Nothing Then
+												If dctHostCounts.TryGetValue(strHostName, intValue) Then
+													dctHostCounts(strHostName) = intValue + 1
+												Else
+													dctHostCounts.Add(strHostName, 1)
 												End If
 
-												intDTAProcessingStats(intHostIndex) = 0
-
-												' Increment the track of the number of entries in intDTAProcessingStats
-												intDTAProcessingStatCount += 1
-
-											Else
-												intHostIndex = CInt(objHostIndex)
+												intDTACount += 1
 											End If
-
-											intDTAProcessingStats(intHostIndex) += 1
-
-											intDTACount += 1
+										Else
+											' Ignore this line
 										End If
-									Else
-										' Ignore this line
 									End If
 								End If
 							End If
 						End If
+
 					End If
+				Loop
 
-				End If
-			Loop
+			End Using
 
-			srLogFile.Close()
 
 			Try
 				' Validate the stats
@@ -983,7 +993,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 				m_EvalMessage = String.Copy(strProcessingMsg)
 
 				If intNodeCountActive < intNodeCountExpected OrElse intNodeCountExpected = 0 Then
-					strProcessingMsg = "Error: NodeCountActive less than expected value (" & intNodeCountExpected & ")"
+					strProcessingMsg = "Error: NodeCountActive less than expected value (" & intNodeCountActive & " vs. " & intNodeCountExpected & ")"
 					If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
 
@@ -1012,10 +1022,10 @@ Public Class clsAnalysisToolRunnerSeqBase
 					End If
 				End If
 
-				If intDTAProcessingStatCount < intHostCount Then
+				If dctHostCounts.Count < intHostCount Then
 					' Only record an error here if the number of DTAs processed was at least 2x the number of nodes
 					If intDTACount >= 2 * intNodeCountActive Then
-						strProcessingMsg = "Error: only " & intDTAProcessingStatCount & " host" & CheckForPlurality(intDTAProcessingStatCount) & " processed DTAs"
+						strProcessingMsg = "Error: only " & dctHostCounts.Count & " host" & CheckForPlurality(dctHostCounts.Count) & " processed DTAs"
 						If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
 						m_EvalMessage &= "; " & strProcessingMsg
@@ -1030,33 +1040,35 @@ Public Class clsAnalysisToolRunnerSeqBase
 				Const LOW_THRESHOLD_MULTIPLIER As Single = 0.33
 				Const HIGH_THRESHOLD_MULTIPLIER As Single = 2
 
+				Dim intNodeCountThisHost As Integer
+				Dim intIndex As Integer
+
+				Dim sngProcessingRate As Single
 				Dim sngProcessingRateMedian As Single
+
 				Dim intMidpoint As Integer
 				Dim sngThresholdRate As Single
 				Dim intWarningCount As Integer
 
-				ReDim sngHostProcessingRate(intDTAProcessingStatCount - 1)
+				For Each objItem As KeyValuePair(Of String, Integer) In dctHostCounts
+					intNodeCountThisHost = 0
+					dctHostNodeCount.TryGetValue(objItem.Key, intNodeCountThisHost)
+					If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
 
-				objEnum = htHosts.GetEnumerator
-				Do While objEnum.MoveNext
-					objHostIndex = objEnum.Value
+					sngProcessingRate = CSng(objItem.Value / intNodeCountThisHost)
+					dctHostProcessingRate.Add(objItem.Key, sngProcessingRate)
+				Next
 
-					If Not objHostIndex Is Nothing Then
-						intHostIndex = CInt(objHostIndex)
-
-						intNodeCountThisHost = CInt(htHostNodeCount(objEnum.Key))
-						If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
-
-						sngHostProcessingRate(intHostIndex) = CSng(intDTAProcessingStats(intHostIndex) / intNodeCountThisHost)
-					End If
-				Loop
 
 				' Determine the median number of spectra processed
-				' First duplicate sngHostProcessingRate so that we can sort it
 
-				ReDim sngHostProcessingRateSorted(sngHostProcessingRate.Length - 1)
+				ReDim sngHostProcessingRateSorted(dctHostProcessingRate.Count - 1)
 
-				Array.Copy(sngHostProcessingRate, sngHostProcessingRateSorted, sngHostProcessingRate.Length)
+				intIndex = 0
+				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
+					sngHostProcessingRateSorted(intIndex) = objItem.Value
+					intIndex += 1
+				Next
 
 				' Now sort sngHostProcessingRateSorted
 				Array.Sort(sngHostProcessingRateSorted, 0, sngHostProcessingRateSorted.Length)
@@ -1073,9 +1085,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 				intWarningCount = 0
 				sngThresholdRate = CSng(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-				For intIndex = 0 To sngHostProcessingRate.Length - 1
-					If sngHostProcessingRate(intIndex) < sngThresholdRate Then
-						intWarningCount += 1
+				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
+					If objItem.Value < sngThresholdRate Then
+						intWarningCount = +1
 					End If
 				Next
 
@@ -1094,9 +1106,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 				intWarningCount = 0
 				sngThresholdRate = CSng(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-				For intIndex = 0 To sngHostProcessingRate.Length - 1
-					If sngHostProcessingRate(intIndex) > sngThresholdRate Then
-						intWarningCount += 1
+				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
+					If objItem.Value > sngThresholdRate Then
+						intWarningCount = +1
 					End If
 				Next
 
@@ -1112,31 +1124,24 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 				If m_DebugLevel >= 2 OrElse blnShowDetailedRates Then
 					' Log the number of DTAs processed by each host
-					Dim strHostNames() As String
 
-					If htHosts.Count > 0 Then
-						' Copy the key names into a string array so that we can sort them alphabetically
+					For Each objItem As KeyValuePair(Of String, Integer) In dctHostCounts
 
-						ReDim strHostNames(htHosts.Count - 1)
-						htHosts.Keys.CopyTo(strHostNames, 0)
+						intNodeCountThisHost = 0
+						dctHostNodeCount.TryGetValue(objItem.Key, intNodeCountThisHost)
+						If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
 
-						Array.Sort(strHostNames, 0, htHosts.Count)
+						sngProcessingRate = 0
+						dctHostProcessingRate.TryGetValue(objItem.Key, sngProcessingRate)
 
-						For intIndex = 0 To strHostNames.Length - 1
-							objHostIndex = htHosts(strHostNames(intIndex))
+						strProcessingMsg = "Host " & objItem.Key & " processed " & objItem.Value & " DTA" & CheckForPlurality(objItem.Value) & _
+						  " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
+						  " (" & sngProcessingRate.ToString("0.0") & " DTAs/node)"
 
-							If Not objHostIndex Is Nothing Then
-								intHostIndex = CInt(objHostIndex)
-								intNodeCountThisHost = CInt(htHostNodeCount(strHostNames(intIndex)))
+						If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
+					Next
 
-								strProcessingMsg = "Host " & strHostNames(intIndex) & " processed " & intDTAProcessingStats(intHostIndex) & " DTA" & CheckForPlurality(intDTAProcessingStats(intHostIndex)) & _
-									   " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
-									   " (" & sngHostProcessingRate(intIndex).ToString("0.0") & " DTAs/node)"
-								If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
-							End If
-						Next
-					End If
 				End If
 
 			Catch ex As Exception
@@ -1218,7 +1223,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		m_jobParams.AddResultFileToSkip(OutFileName)
 
-		If m_DebugLevel > 0 Then
+		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(), concatenated outfile zipping successful")
 		End If
 

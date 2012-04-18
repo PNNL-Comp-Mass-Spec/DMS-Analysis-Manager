@@ -378,7 +378,7 @@ Public Class clsAnalysisResourcesSeq
 				Using srFile2 As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strFile2, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 
-					Do While srFile1.Peek >= 0
+					Do While srFile1.Peek > -1
 						strLineIn1 = srFile1.ReadLine
 						intLineNumber += 1
 
@@ -387,7 +387,7 @@ Public Class clsAnalysisResourcesSeq
 							Exit Do
 						End If
 
-						If srFile2.Peek >= 0 Then
+						If srFile2.Peek > -1 Then
 							strLineIn2 = srFile2.ReadLine
 
 							If intLineNumber >= intComparisonStartLine Then
@@ -422,7 +422,7 @@ Public Class clsAnalysisResourcesSeq
 										End If
 									End If
 
-									If srFile1.Peek >= 0 Then
+									If srFile1.Peek > -1 Then
 										strLineIn1 = srFile1.ReadLine
 										strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
 									Else
@@ -439,7 +439,7 @@ Public Class clsAnalysisResourcesSeq
 						End If
 					Loop
 
-					If srFile2.Peek >= 0 Then
+					If srFile2.Peek > -1 Then
 						' File2 has more lines than file1
 						If blnIgnoreWhitespace Then
 							' Ignoring whitespace
@@ -455,7 +455,7 @@ Public Class clsAnalysisResourcesSeq
 										Exit Do
 									End If
 								End If
-							Loop While srFile2.Peek >= 0
+							Loop While srFile2.Peek > -1
 
 						Else
 							' Not ignoring whitespace; files don't match
@@ -531,14 +531,11 @@ Public Class clsAnalysisResourcesSeq
 
 		If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		ElseIf eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			blnDeconcatenate = False
-		Else
-			blnDeconcatenate = True
 		End If
 
-		' Retrieve unzipped dta files
-		' Skip deconcatenation if eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		' Retrieve unzipped _dta.txt file
+		' Always skip deconcatenation since clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile will do that
+		blnDeconcatenate = False
 		If Not RetrieveDtaFiles(blnDeconcatenate) Then
 			' Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED

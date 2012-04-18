@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+April 18, 2012
+	- Updated Sequest plugin to auto-restart PVM if too many nodes stop responding
+
 April 17, 2012
 	- Updated Sequest plugin to create a temporary _out.txt file as .out files are created
 		- File is copied up to the transfer folder every 5 minutes
