@@ -164,7 +164,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				End If
 
 				' Check whether any .DTA files remain for this dataset
-				intDTACountRemaining = diWorkDir.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly).Length
+				intDTACountRemaining = GetDTAFileCountRemaining()
 
 				If intDTACountRemaining > 0 Then
 
@@ -200,12 +200,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				Else
 					' No .DTAs remain; if we have as many .out files as the original source .dta files, then treat this as success, otherwise as a failure
 					Dim intOutFileCount As Integer
-					intOutFileCount = System.IO.Directory.GetFiles(m_WorkDir, "*.out").Length + mTotalOutFileCount
+					intOutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount
 
 					If intOutFileCount = m_DtaCount Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is equivalent to the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
 					ElseIf intOutFileCount > m_DtaCount Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is less than the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is greater than the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
 					Else
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No DTA files remain and the number of OUT files (" & intOutFileCount & ") is less than the original DTA count (" & m_DtaCount & ")")
 						blnProcessingError = True
@@ -300,6 +300,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			' Verify that nodes are still analyzing .dta files
 			' This procedure will set mResetPVM to True if less than 50% of the nodes are creating .Out files
 			ValidateProcessorsAreActive()
+
+			' Look for .Out files that aren't yet tracked by mOutFileCandidateInfo
+			CacheNewOutFiles()
 		End If
 
 		' Update the status file (limit the updates to every 5 seconds)
@@ -400,6 +403,21 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		m_SummaryFile.Add("Total search time: " & TotalSearchTime.ToString & " secs")
 		m_SummaryFile.Add("Ave search time: " & AvgSearchTime.ToString("##0.000") & " secs" & Environment.NewLine)
 
+	End Sub
+
+	Protected Sub CacheNewOutFiles()
+		Dim diWorkDir As System.IO.DirectoryInfo
+
+		Try
+			diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+
+			For Each fiFile As System.IO.FileInfo In diWorkDir.GetFiles("*.out", IO.SearchOption.TopDirectoryOnly)
+				HandleOutFileChange(fiFile.Name)
+			Next
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error in CacheNewOutFiles: " & ex.Message)
+		End Try
 	End Sub
 
 	Protected Function CopyFileToTransferFolder(ByVal strSourceFileName As String, ByVal strTargetFileName As String) As Boolean
@@ -534,11 +552,19 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				intNodeCountMinimum = CInt(Math.Floor(0.85 * intNodeCountExpected))
 
 				If mSequestNodesSpawned < intNodeCountMinimum Then
-					Dim strMessage As String
-					strMessage = "Not enough nodes were spawned (Threshold = " & intNodeCountMinimum & " nodes): " & mSequestNodesSpawned & " spawned vs. " & intNodeCountExpected & " expected"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 
-					mResetPVM = True
+					' If fewer than intNodeCountMinimum .DTA files are present in the work directory, then the node count spawned will be small
+					' Thus, need to count the number of DTAs					
+					Dim intDTACountRemaining As Integer = GetDTAFileCountRemaining()
+
+					If intDTACountRemaining > mSequestNodesSpawned Then
+						Dim strMessage As String
+						strMessage = "Not enough nodes were spawned (Threshold = " & intNodeCountMinimum & " nodes): " & mSequestNodesSpawned & " spawned vs. " & intNodeCountExpected & " expected"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+
+						mResetPVM = True
+					End If
+
 				End If
 
 				Return True

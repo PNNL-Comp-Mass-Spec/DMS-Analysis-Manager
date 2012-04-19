@@ -2060,14 +2060,14 @@ Public MustInherit Class clsAnalysisResources
 		Dim OrgDBDescription As String = String.Empty
 
 		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResources.CreateFastaFile(), Creating fasta file")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file")
 		End If
 
 		'Instantiate fasta tool if not already done
 		If m_FastaTools Is Nothing Then
 			If m_FastaToolsCnStr = "" Then
 				m_message = "Protein database connection string not specified"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResources.CreateFastaFile(), " & m_message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error in CreateFastaFile: " & m_message)
 				Return False
 			End If
 			m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
@@ -2088,7 +2088,7 @@ Public MustInherit Class clsAnalysisResources
 			OrgDBDescription = "Legacy DB: " & LegacyFasta
 		Else
 			m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), " & m_message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateFastaFile: " & m_message)
 			Return False
 		End If
 
@@ -2110,8 +2110,8 @@ Public MustInherit Class clsAnalysisResources
 			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
 		Catch Ex As Exception
 			m_message = "Exception generating OrgDb file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file; " & OrgDBDescription & "; " & _
-			 "; " & clsGlobal.GetExceptionStackTrace(Ex))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " & OrgDBDescription & "; " & _
+	"; " & clsGlobal.GetExceptionStackTrace(Ex))
 			Return False
 		End Try
 
@@ -2124,14 +2124,14 @@ Public MustInherit Class clsAnalysisResources
 		If m_FastaGenTimeOut Then
 			'Fasta generator hung - report error and exit
 			m_message = "Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_MINUTES.ToString & " minutes have elapsed); " & OrgDBDescription
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), " & m_message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 
 		If String.IsNullOrEmpty(HashString) Then
 			' Fasta generator returned empty hash string
 			m_message = "m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " & OrgDBDescription
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.CreateFastaFile(), " & m_message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 

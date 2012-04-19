@@ -34,7 +34,7 @@ Public Class clsRunDosProgram
 	Private m_AbortProgramPostLogEntry As Boolean
 
 	'Runs specified program
-	Private WithEvents m_ProgRunner As PRISM.Processes.clsProgRunner = New PRISM.Processes.clsProgRunner
+	Private WithEvents m_ProgRunner As PRISM.Processes.clsProgRunner
 
 #End Region
 
@@ -74,7 +74,11 @@ Public Class clsRunDosProgram
 	''' </summary>
 	Public ReadOnly Property CachedConsoleOutput() As String
 		Get
-			Return m_ProgRunner.CachedConsoleOutput
+			If m_ProgRunner Is Nothing Then
+				Return String.Empty
+			Else
+				Return m_ProgRunner.CachedConsoleOutput
+			End If
 		End Get
 	End Property
 
@@ -83,7 +87,11 @@ Public Class clsRunDosProgram
 	''' </summary>
 	Public ReadOnly Property CachedConsoleError() As String
 		Get
-			Return m_ProgRunner.CachedConsoleError
+			If m_ProgRunner Is Nothing Then
+				Return String.Empty
+			Else
+				Return m_ProgRunner.CachedConsoleError
+			End If
 		End Get
 	End Property
 
@@ -313,6 +321,9 @@ Public Class clsRunDosProgram
 		End If
 		m_MaxRuntimeSeconds = MaxRuntimeSeconds
 
+		' Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
+		' Also necessary to avoid problems caching the console output
+		m_ProgRunner = New PRISM.Processes.clsProgRunner
 		With m_ProgRunner
 			.Arguments = CmdLine
 			.CreateNoWindow = m_CreateNoWindow
@@ -372,26 +383,26 @@ Public Class clsRunDosProgram
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception running DOS program " & ProgNameLoc & "; " & clsGlobal.GetExceptionStackTrace(ex))
+			m_ProgRunner = Nothing
 			Return False
 		End Try
 
 		' Cache the exit code in m_ExitCode
 		m_ExitCode = m_ProgRunner.ExitCode
+		m_ProgRunner = Nothing
 
-		If (UseResCode And m_ProgRunner.ExitCode <> 0) Then
+		If (UseResCode And m_ExitCode <> 0) Then
 			If (m_AbortProgramNow AndAlso m_AbortProgramPostLogEntry) OrElse Not m_AbortProgramNow Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ProgRunner.ExitCode = " & m_ProgRunner.ExitCode.ToString & " for Program = " & ProgNameLoc)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & ProgNameLoc)
 			End If
 			Return False
-		Else
-			If m_AbortProgramNow Then
-				Return False
-			Else
-				Return True
-			End If
 		End If
 
-		m_ProgRunner = Nothing
+		If m_AbortProgramNow Then
+			Return False
+		Else
+			Return True
+		End If
 
 	End Function
 #End Region

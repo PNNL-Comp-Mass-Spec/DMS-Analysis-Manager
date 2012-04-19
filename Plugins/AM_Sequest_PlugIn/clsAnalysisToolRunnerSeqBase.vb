@@ -182,7 +182,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim sngOutFileSearchTimeSeconds As Single
 
 		If Not fiSourceOutFile.Exists Then
-			Console.WriteLine("Warning, out file not: " & fiSourceOutFile.FullName)
+			Console.WriteLine("Warning, out file not found: " & fiSourceOutFile.FullName)
 			Exit Sub
 		End If
 
@@ -274,11 +274,11 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		If blnUpdateDTACount Then
 			' Get DTA count
-			m_DtaCount = System.IO.Directory.GetFiles(m_WorkDir, "*.dta").Length + mDtaCountAddon
+			m_DtaCount = GetDTAFileCountRemaining() + mDtaCountAddon
 		End If
 
 		' Get OUT file count
-		OutFileCount = System.IO.Directory.GetFiles(m_WorkDir, "*.out").Length + mTotalOutFileCount
+		OutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount
 
 		' Calculate % complete (value between 0 and 100)
 		If m_DtaCount > 0 Then
@@ -417,6 +417,18 @@ Public Class clsAnalysisToolRunnerSeqBase
 		objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
 	End Sub
+
+	Protected Function GetDTAFileCountRemaining() As Integer
+		Dim diWorkDir As System.IO.DirectoryInfo
+		diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+		Return diWorkDir.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly).Length()
+	End Function
+
+	Protected Function GetOUTFileCountRemaining() As Integer
+		Dim diWorkDir As System.IO.DirectoryInfo
+		diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+		Return diWorkDir.GetFiles("*.out", System.IO.SearchOption.TopDirectoryOnly).Length()
+	End Function
 
 	''' <summary>
 	''' Runs Sequest to make .out files
@@ -560,16 +572,11 @@ Public Class clsAnalysisToolRunnerSeqBase
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation")
 		End If
 
-		DtaFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
-		If DtaFiles.GetLength(0) < 1 Then
+		If GetOUTFileCountRemaining() < 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 			m_message = clsGlobal.AppendToComment(m_message, "No OUT files created")
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 		Else
-			'Add .out files to list of files for deletion
-			For Each OutFile As String In DtaFiles
-				m_jobParams.AddResultFileToSkip(OutFile)
-			Next
 			'Add .out extension to list of file extensions to delete
 			m_jobParams.AddResultFileExtensionToSkip(".out")
 		End If
@@ -605,8 +612,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ConcatOutFiles(), concatenating .out files")
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenating .out files")
 		End If
 
 		'Make sure objects are released
@@ -1225,7 +1232,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		m_jobParams.AddResultFileToSkip(OutFileName)
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.ZipConcatOutFile(), concatenated outfile zipping successful")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... successfully zipped")
 		End If
 
 		Return True

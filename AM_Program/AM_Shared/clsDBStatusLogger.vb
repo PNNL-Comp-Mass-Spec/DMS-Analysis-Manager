@@ -130,8 +130,8 @@ Public Class clsDBStatusLogger
 				AddSPParameter(.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
 				AddSPParameter(.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
 
-				AddSPParameter(.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate)
-				AddSPParameter(.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime)
+				AddSPParameter(.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
+				AddSPParameter(.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
 				AddSPParameter(.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
 				AddSPParameter(.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
 				AddSPParameter(.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)

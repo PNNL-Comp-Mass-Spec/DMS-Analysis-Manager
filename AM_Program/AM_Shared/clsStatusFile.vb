@@ -781,8 +781,8 @@ Public Class clsStatusFile
 			XWriter.WriteStartElement("Manager")  ' Manager
 			XWriter.WriteElementString("MgrName", m_MgrName)
 			XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
-			XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToString())
-			XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToString())
+			XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
+			XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
 			XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
 			XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
 			XWriter.WriteStartElement("RecentErrorMessages")

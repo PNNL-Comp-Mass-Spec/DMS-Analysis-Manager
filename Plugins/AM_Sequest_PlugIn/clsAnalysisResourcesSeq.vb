@@ -146,6 +146,7 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim ioSourceFolder As System.IO.DirectoryInfo
 		Dim ioFileList() As System.IO.FileInfo
+		Dim ioTempOutFile As System.IO.FileInfo
 
 		Dim blnExistingOutfileFound As Boolean
 
@@ -180,7 +181,8 @@ Public Class clsAnalysisResourcesSeq
 
 			strConcatenatedTempFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, strDataset & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
 
-			If Not System.IO.File.Exists(strConcatenatedTempFilePath) Then
+			ioTempOutFile = New System.IO.FileInfo(strConcatenatedTempFilePath)
+			If Not ioTempOutFile.Exists Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file not found")
 				End If
@@ -188,7 +190,7 @@ Public Class clsAnalysisResourcesSeq
 			End If
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & "; comparing JobParameters.xml file and Sequest parameter file to local copies")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & " (file size = " & (ioTempOutFile.Length / 1024.0).ToString("0") & " KB); comparing JobParameters.xml file and Sequest parameter file to local copies")
 			End If
 
 			' Compare the remote and local copies of the JobParameters file
@@ -213,22 +215,22 @@ Public Class clsAnalysisResourcesSeq
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 
-			' Everything matches up; copy strConcatenatedTempFilePath locally
+			' Everything matches up; copy ioTempOutFile locally
 			Try
-				System.IO.File.Copy(strConcatenatedTempFilePath, System.IO.Path.Combine(m_WorkingDir, System.IO.Path.GetFileName(strConcatenatedTempFilePath)))
+				ioTempOutFile.CopyTo(System.IO.Path.Combine(m_WorkingDir, ioTempOutFile.Name), True)
 
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & System.IO.Path.GetFileName(strConcatenatedTempFilePath) & " locally; will resume Sequest analysis")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & ioTempOutFile.Name & " locally; will resume Sequest analysis")
 				End If
 
 				' If the job succeeds, we should delete the _out.txt.tmp file from the transfer folder
 				' Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-				m_jobParams.AddServerFileToDelete(strConcatenatedTempFilePath)
+				m_jobParams.AddServerFileToDelete(ioTempOutFile.FullName)
 
 			Catch ex As Exception
 				' Error copying the file; treat this as a failed job
 				m_message = " Exception copying " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file locally"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & strConcatenatedTempFilePath & " locally; unable to resume")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & ioTempOutFile.FullName & " locally; unable to resume")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 
