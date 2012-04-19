@@ -57,8 +57,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected WithEvents m_CmdRunner As clsRunDosProgram
 	Protected WithEvents m_UtilityRunner As clsRunDosProgram
 
-	Protected mUtilityRunnerMaxRunTimeSeconds As Single
-	Protected mUtilityRunnerStartTime As System.DateTime
 	Protected mUtilityRunnerTaskName As String = String.Empty
 
 	Protected m_ErrMsg As String = ""
@@ -178,17 +176,25 @@ Public Class clsAnalysisToolRunnerSeqCluster
 						Exit Do
 					End If
 
-					blnSuccess = ResetPVM()
-					If Not blnSuccess Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try one more time")
+					Dim intPVMRetriesRemaining As Integer = 4
+					Do While intPVMRetriesRemaining > 0
 						blnSuccess = ResetPVM()
-						If Not blnSuccess Then
-							m_message = PVM_RESET_ERROR_MESSAGE
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, PVM_RESET_ERROR_MESSAGE & "; disabling manager locally")
-							m_NeedToAbortProcessing = True
-							blnProcessingError = True
+						If blnSuccess Then
 							Exit Do
+						Else
+							intPVMRetriesRemaining -= 1
+							If intPVMRetriesRemaining > 0 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try " & intPVMRetriesRemaining & " more time" & CheckForPlurality(intPVMRetriesRemaining))
+							End If
 						End If
+					Loop
+
+					If Not blnSuccess Then
+						m_message = PVM_RESET_ERROR_MESSAGE
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, PVM_RESET_ERROR_MESSAGE & "; disabling manager locally")
+						m_NeedToAbortProcessing = True
+						blnProcessingError = True
+						Exit Do
 					End If
 
 				Else
@@ -641,29 +647,25 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	End Sub
 
-	Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String, ByVal intMaxRuntimeSeconds As Integer) As Boolean
-		Return InitializeUtilityRunner(strTaskName, strWorkDir, intMaxRuntimeSeconds, intMonitoringIntervalMsec:=1000)
+	Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String) As Boolean
+		Return InitializeUtilityRunner(strTaskName, strWorkDir, intMonitoringIntervalMsec:=1000)
 	End Function
 
-	Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String, ByVal intMaxRuntimeSeconds As Integer, ByVal intMonitoringIntervalMsec As Integer) As Boolean
+	Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String, ByVal intMonitoringIntervalMsec As Integer) As Boolean
 
 		Try
-			If Not m_UtilityRunner Is Nothing Then
+			If m_UtilityRunner Is Nothing Then
+				m_UtilityRunner = New clsRunDosProgram(strWorkDir)
+			Else
 				If m_UtilityRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot re-initialize the UtilityRunner to perform task " & strTaskName & " since already running task " & mUtilityRunnerTaskName)
 					Return False
 				End If
 			End If
 
-			m_UtilityRunner = New clsRunDosProgram(strWorkDir)
-
 			If intMonitoringIntervalMsec < 250 Then intMonitoringIntervalMsec = 250
 			m_UtilityRunner.MonitorInterval = intMonitoringIntervalMsec
 
-			If intMaxRuntimeSeconds < 10 Then intMaxRuntimeSeconds = 10
-			mUtilityRunnerMaxRunTimeSeconds = intMaxRuntimeSeconds
-
-			mUtilityRunnerStartTime = System.DateTime.UtcNow
 			mUtilityRunnerTaskName = strTaskName
 
 		Catch ex As Exception
@@ -866,13 +868,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
 			End If
 
-			Dim intMaxRuntimeSeconds As Integer = 60
 			Dim strTaskName As String = "HaltPVM"
-			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder, intMaxRuntimeSeconds) Then
+			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
 				Return False
 			End If
 
-			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, False)
+			Dim intMaxRuntimeSeconds As Integer = 90
+			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, False, intMaxRuntimeSeconds)
 
 			If Not blnSuccess Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
@@ -909,13 +911,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
 			End If
 
-			Dim intMaxRuntimeSeconds As Integer = 90
 			Dim strTaskName As String = "WipeTemp"
-			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder, intMaxRuntimeSeconds) Then
+			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
 				Return False
 			End If
 
-			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True)
+			Dim intMaxRuntimeSeconds As Integer = 120
+			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
 			If Not blnSuccess Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
@@ -960,13 +962,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
 			End If
 
-			Dim intMaxRuntimeSeconds As Integer = 120
 			Dim strTaskName As String = "StartPVM"
-			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder, intMaxRuntimeSeconds) Then
+			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
 				Return False
 			End If
 
-			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True)
+			Dim intMaxRuntimeSeconds As Integer = 120
+			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
 			If Not blnSuccess Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
@@ -1003,13 +1005,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
 			End If
 
-			Dim intMaxRuntimeSeconds As Integer = 120
 			Dim strTaskName As String = "AddHosts"
-			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder, intMaxRuntimeSeconds) Then
+			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
 				Return False
 			End If
 
-			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True)
+			Dim intMaxRuntimeSeconds As Integer = 120
+			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
 			If Not blnSuccess Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
@@ -1085,13 +1087,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
 			End If
 
-			Dim intMaxRuntimeSeconds As Integer = 60
 			Dim strTaskName As String = "CheckActiveNodes"
-			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder, intMaxRuntimeSeconds) Then
+			If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
 				Exit Sub
 			End If
 
-			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True)
+			Dim intMaxRuntimeSeconds As Integer = 60
+			blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
 			If Not blnSuccess Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
@@ -1133,7 +1135,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 			' Log the number of active nodes every 10 minutes
 			If m_DebugLevel >= 4 OrElse System.DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intNodeCountCurrent & " / " & mSequestNodesSpawned & " Sequest nodes are active; median processing time = " & ComputeMedianProcessingTime().ToString("0.0") & " seconds/spectrum")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intNodeCountCurrent & " / " & mSequestNodesSpawned & " Sequest nodes are active; median processing time = " & ComputeMedianProcessingTime().ToString("0.0") & " seconds/spectrum; " & m_progress.ToString("0.0") & "% complete")
 				mLastActiveNodeLogTime = System.DateTime.UtcNow
 			End If
 
@@ -1153,7 +1155,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			If intNodeCountActive < intActiveNodeCountMinimum Then
 				Dim strMessage As String
 				strMessage = "Too many nodes are inactive (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
 				mResetPVM = True
 			End If
 
@@ -1175,14 +1177,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		ProcessCandidateOutFiles()
 	End Sub
 
-	Private Sub m_UtilityRunner_LoopWaiting() Handles m_UtilityRunner.LoopWaiting
+	Private Sub m_UtilityRunner_Timeout() Handles m_UtilityRunner.Timeout
 
-		If System.DateTime.UtcNow.Subtract(mUtilityRunnerStartTime).TotalSeconds > mUtilityRunnerMaxRunTimeSeconds Then
-			If Not m_UtilityRunner.ProgramAborted Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting UtilityRunner task " & mUtilityRunnerTaskName & " since " & mUtilityRunnerMaxRunTimeSeconds & " seconds has elapsed")
-				m_UtilityRunner.AbortProgramNow(False)
-			End If
-		End If
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner task " & mUtilityRunnerTaskName & " has timed out; " & m_UtilityRunner.MaxRuntimeSeconds & " seconds has elapsed")
 
 	End Sub
 #End Region

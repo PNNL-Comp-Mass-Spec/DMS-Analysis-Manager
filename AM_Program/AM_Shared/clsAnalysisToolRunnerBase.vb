@@ -335,7 +335,7 @@ Public Class clsAnalysisToolRunnerBase
 
 		Dim intNewDebugLevel As Short
 
-		Static dtLastUpdateTime As System.DateTime
+		Static dtLastUpdateTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 
 		Try
 
@@ -388,7 +388,7 @@ Public Class clsAnalysisToolRunnerBase
 			drSqlReader.Close()
 
 		Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB" & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB: " & ex.Message)
 		End Try
 
 		If intValueCountRead > 0 Then

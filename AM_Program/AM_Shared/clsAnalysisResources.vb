@@ -132,7 +132,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
 		Const MINIMUM_LOG_INTERVAL_SEC As Integer = 10
-		Static dtLastLogTime As DateTime
+		Static dtLastLogTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 		Static dblFractionDoneSaved As Double = -1
 
 		Dim blnForcelog As Boolean = False

@@ -579,7 +579,7 @@ Public Class clsStatusFile
 	Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
 
 		Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
-		Static dtLastFailureTime As DateTime = System.DateTime.MinValue
+		Static dtLastFailureTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 
 		Try
 			If m_MessageSender Is Nothing Then
@@ -624,7 +624,7 @@ Public Class clsStatusFile
 		With udtStatusInfo
 			.MgrName = m_MgrName
 			.MgrStatus = m_MgrStatus
-			.LastUpdate = System.DateTime.Now()
+			.LastUpdate = System.DateTime.UtcNow()
 			.LastStartTime = m_TaskStartTime
 			.CPUUtilization = m_CpuUtilization
 			.FreeMemoryMB = m_FreeMemoryMB
@@ -751,7 +751,7 @@ Public Class clsStatusFile
 		Dim sngRunTimeHours As Single
 
 		Try
-			dtLastUpdate = System.DateTime.Now()
+			dtLastUpdate = System.DateTime.UtcNow()
 			sngRunTimeHours = GetRunTime()
 
 			m_CpuUtilization = CInt(GetCPUUtilization())

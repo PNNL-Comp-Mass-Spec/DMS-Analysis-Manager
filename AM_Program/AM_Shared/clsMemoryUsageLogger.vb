@@ -172,7 +172,7 @@ Public Class clsMemoryUsageLogger
 	''' </summary>
 	''' <remarks></remarks>
 	Public Sub WriteMemoryUsageLogEntry()
-		Static dtLastWriteTime As System.DateTime = System.DateTime.MinValue
+		Static dtLastWriteTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 
 		Dim strLogFileName As String
 		Dim strLogFilePath As String

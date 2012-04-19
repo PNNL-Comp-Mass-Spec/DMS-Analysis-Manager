@@ -92,7 +92,7 @@ Public Class clsDBStatusLogger
 
 	Public Sub LogStatus(ByVal udtStatusInfo As udtStatusInfoType, ByVal blnForceLogToDB As Boolean)
 
-		Static dtLastWriteTime As System.DateTime = System.DateTime.MinValue
+		Static dtLastWriteTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 
 		Dim MyConnection As System.Data.SqlClient.SqlConnection
 		Dim MyCmd As New System.Data.SqlClient.SqlCommand
@@ -105,11 +105,11 @@ Public Class clsDBStatusLogger
 			End If
 
 			If Not blnForceLogToDB AndAlso _
-			   System.DateTime.Now.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
+			   System.DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
 				' Not enough time has elapsed since the last write; exit sub
 				Exit Sub
 			End If
-			dtLastWriteTime = System.DateTime.Now()
+			dtLastWriteTime = System.DateTime.UtcNow
 
 
 			MyConnection = New System.Data.SqlClient.SqlConnection(m_DBConnectionString)

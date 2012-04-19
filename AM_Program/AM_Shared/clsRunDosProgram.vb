@@ -18,6 +18,8 @@ Public Class clsRunDosProgram
 #Region "Module variables"
 	Private m_CreateNoWindow As Boolean = True
 	Private m_MonitorInterval As Integer = 2000	 'msec
+	Private m_MaxRuntimeSeconds As Integer = 0
+
 	Private m_WorkDir As String
 	Private m_DebugLevel As Integer = 0
 	Private m_ExitCode As Integer = 0
@@ -56,6 +58,13 @@ Public Class clsRunDosProgram
 	''' <param name="NewText"></param>
 	''' <remarks></remarks>
 	Public Event ConsoleErrorEvent(ByVal NewText As String)
+
+	''' <summary>
+	''' Program execution exceeded MaxRuntimeSeconds
+	''' </summary>
+	''' <remarks></remarks>
+	Public Event Timeout()
+
 #End Region
 
 #Region "Properties"
@@ -154,6 +163,16 @@ Public Class clsRunDosProgram
 	Public ReadOnly Property ExitCode() As Integer
 		Get
 			Return m_ExitCode
+		End Get
+	End Property
+
+	''' <summary>
+	''' Maximum amount of time (seconds) that the program will be allowed to run; 0 if allowed to run indefinitely
+	''' </summary>
+	''' <value></value>
+	Public ReadOnly Property MaxRuntimeSeconds As Integer
+		Get
+			Return m_MaxRuntimeSeconds
 		End Get
 	End Property
 
@@ -265,6 +284,11 @@ Public Class clsRunDosProgram
 		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode)
 	End Function
 
+	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean) As Boolean
+		Dim MaxRuntimeSeconds As Integer = 0
+		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode, MaxRuntimeSeconds)
+	End Function
+
 	''' <summary>
 	''' Runs a program and waits for it to exit
 	''' </summary>
@@ -272,12 +296,22 @@ Public Class clsRunDosProgram
 	''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
 	''' <param name="ProgName">The name of the program to use for the Window title</param>
 	''' <param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
+	''' <param name="MaxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxRuntimeSeconds</param>
 	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean) As Boolean
+	''' <remarks>MaxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
+	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean, ByVal MaxRuntimeSeconds As Integer) As Boolean
+
+		Dim dtStartTime As System.DateTime
+		Dim blnRuntimeExceeded As Boolean
+		Dim blnAbortLogged As Boolean
 
 		' Require a minimum monitoring interval of 250 mseconds
 		If m_MonitorInterval < 250 Then m_MonitorInterval = 250
+
+		If MaxRuntimeSeconds > 0 AndAlso MaxRuntimeSeconds < 15 Then
+			MaxRuntimeSeconds = 15
+		End If
+		m_MaxRuntimeSeconds = MaxRuntimeSeconds
 
 		With m_ProgRunner
 			.Arguments = CmdLine
@@ -302,24 +336,40 @@ Public Class clsRunDosProgram
 
 		m_AbortProgramNow = False
 		m_AbortProgramPostLogEntry = True
+		blnRuntimeExceeded = False
+		blnAbortLogged = False
+		dtStartTime = System.DateTime.UtcNow
 
-		'DAC debugging
-		Debug.WriteLine("clsRunDOSProg.RunProgram, starting program, thread " & System.Threading.Thread.CurrentThread.Name)
 		Try
-			'Start the program executing
+			' Start the program executing
 			m_ProgRunner.StartAndMonitorProgram()
-			'loop until program is complete
+
+			' Loop until program is complete, or until m_MaxRuntimeSeconds seconds elapses
 			While (m_ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)  ' And (ProgRunner.State <> 10)
 				RaiseEvent LoopWaiting()
 				System.Threading.Thread.Sleep(m_MonitorInterval)
 
-				If m_AbortProgramNow Then
-					If m_AbortProgramPostLogEntry Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting clsRunDosProgram since AbortProgramNow() was called")
+				If m_MaxRuntimeSeconds > 0 Then
+					If System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds AndAlso Not m_AbortProgramNow Then
+						m_AbortProgramNow = True
+						blnRuntimeExceeded = True
+						RaiseEvent Timeout()
 					End If
-					m_ProgRunner.StopMonitoringProgram(True)
+				End If
+
+				If m_AbortProgramNow Then
+					If m_AbortProgramPostLogEntry AndAlso Not blnAbortLogged Then
+						blnAbortLogged = True
+						If blnRuntimeExceeded Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting ProgRunner since " & m_MaxRuntimeSeconds & " seconds has elapsed")
+						Else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting ProgRunner since AbortProgramNow() was called")
+						End If
+					End If
+					m_ProgRunner.StopMonitoringProgram(Kill:=True)
 				End If
 			End While
+
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception running DOS program " & ProgNameLoc & "; " & clsGlobal.GetExceptionStackTrace(ex))
 			Return False

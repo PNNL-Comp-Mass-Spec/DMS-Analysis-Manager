@@ -191,7 +191,6 @@ Public Class clsAnalysisToolRunnerSeqBase
 			' Note: do not put a Try/Catch block here
 			' Let the calling function catch any errors
 
-			'blnNodeNameFound = False
 			Using srSrcFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiSourceOutFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				reMatch = m_OutFileNameRegEx.Match(fiSourceOutFile.Name)
@@ -226,8 +225,10 @@ Public Class clsAnalysisToolRunnerSeqBase
 						If srSrcFile.Peek > -1 Then
 							swTargetFile.Write(srSrcFile.ReadToEnd())
 						End If
+
 					End If
 				End While
+
 			End Using
 
 			If Not mOutFileNamesAppended.Contains(fiSourceOutFile.Name) Then
@@ -272,14 +273,14 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim OutFileCount As Integer
 
 		If blnUpdateDTACount Then
-			'Get DTA count
+			' Get DTA count
 			m_DtaCount = System.IO.Directory.GetFiles(m_WorkDir, "*.dta").Length + mDtaCountAddon
 		End If
 
-		'Get OUT file count
+		' Get OUT file count
 		OutFileCount = System.IO.Directory.GetFiles(m_WorkDir, "*.out").Length + mTotalOutFileCount
 
-		'Calculate % complete
+		' Calculate % complete (value between 0 and 100)
 		If m_DtaCount > 0 Then
 			m_progress = 100.0! * CSng(OutFileCount / m_DtaCount)
 		Else
@@ -1176,9 +1177,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
-	Private Function CheckForPlurality(ByVal intValue As Integer) As String
+	Protected Function CheckForPlurality(ByVal intValue As Integer) As String
 		If intValue = 1 Then
-			Return ""
+			Return String.Empty
 		Else
 			Return "s"
 		End If
