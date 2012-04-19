@@ -1152,7 +1152,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 			If intNodeCountActive < intActiveNodeCountMinimum Then
 				Dim strMessage As String
-				strMessage = "Too many nodes are no longer active (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start"
+				strMessage = "Too many nodes are inactive (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 				mResetPVM = True
 			End If
