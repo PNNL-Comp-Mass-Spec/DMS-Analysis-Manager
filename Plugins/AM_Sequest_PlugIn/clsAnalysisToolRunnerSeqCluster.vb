@@ -119,6 +119,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		mOutFileNamesAppended.Clear()
 		mOutFileHandlerInUse = 0
 
+		mSequestNodeProcessingStats.Clear()
+
 		mSequestVersionInfoStored = False
 		mTempJobParamsCopied = False
 		mLastTempFileCopyTime = System.DateTime.UtcNow
@@ -152,8 +154,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
 
-		' ToDo: change this to true when ready to do so
-		Const ALLOW_PVM_RESET As Boolean = True
+		If diWorkDir.GetFiles("sequest*.log*").Length > 0 Then
+			' Parse any sequest.log files present in the work directory to determine the number of spectra already processed
+			UpdateSequestNodeProcessingStats(True)
+		End If
 
 		Do
 			' Reset several pieces of information on each iteration of this Do Loop
@@ -163,8 +167,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			mResetPVM = False
 			mSequestSearchStartTime = System.DateTime.UtcNow
 			mSequestSearchEndTime = System.DateTime.UtcNow
-
-			mSequestNodeProcessingStats.Clear()
 
 			mLastOutFileCountTime = System.DateTime.UtcNow
 			mLastActiveNodeQueryTime = System.DateTime.UtcNow
@@ -195,14 +197,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 				If intDTACountRemaining > 0 Then
 
-					If Not ALLOW_PVM_RESET Then
-						m_message = PVM_RESET_ERROR_MESSAGE & "; auto PVM reset is disabled"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, PVM_RESET_ERROR_MESSAGE & "; disabling manager locally")
-						m_NeedToAbortProcessing = True
-						blnProcessingError = True
-						Exit Do
-					End If
-
 					Dim intPVMRetriesRemaining As Integer = 4
 					Do While intPVMRetriesRemaining > 0
 						blnSuccess = ResetPVM()
@@ -223,7 +217,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 						blnProcessingError = True
 						Exit Do
 					Else
-						UpdateSequestNodeProcessingStats()
+						UpdateSequestNodeProcessingStats(False)
 						RenameSequestLogFile()
 					End If
 
@@ -257,7 +251,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		GC.Collect()
 		GC.WaitForPendingFinalizers()
 
-		UpdateSequestNodeProcessingStats()
+		UpdateSequestNodeProcessingStats(False)
 
 		' Verify out file creation
 		If m_DebugLevel >= 2 And Not blnProcessingError Then
@@ -266,7 +260,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		OutFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Outfile count: " & (OutFiles.Length + mTotalOutFileCount))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Outfile count: " & (OutFiles.Length + mTotalOutFileCount).ToString("#,##0") & " files")
 		End If
 
 		If Not mSequestVersionInfoStored Then
@@ -285,9 +279,20 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			blnProcessingError = True
 		End If
 
+		Dim intIterationsRemaining As Integer = 3
+		Do
+			' Process the remaining .Out files in mOutFileCandidates
+			If Not ProcessCandidateOutFiles(True) Then
+				' Wait 1.5 seconds, then try again (up to 3 times)
+				System.Threading.Thread.Sleep(1500)
+			End If
+
+			intIterationsRemaining -= 1
+		Loop While mOutFileCandidates.Count > 0 AndAlso intIterationsRemaining >= 0
+
 		' Append any remaining .out files to the _out.txt.tmp file, then rename it to _out.txt
 		If ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum) Then
-			'Add .out extension to list of file extensions to delete
+			' Add .out extension to list of file extensions to delete
 			m_jobParams.AddResultFileExtensionToSkip(".out")
 		Else
 			blnProcessingError = True
@@ -666,12 +671,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	End Function
 
-	Protected Sub ProcessCandidateOutFiles()
+	Protected Function ProcessCandidateOutFiles(ByVal blnProcessAllRemainingFiles As Boolean) As Boolean
 
 		Dim strDtaFilePath As String = String.Empty
 		Dim strSourceFileName As String
 		Dim blnSuccess As Boolean
-		Dim blnContinue As Boolean
+		Dim blnAppendSuccess As Boolean
 
 		Dim objEntry As KeyValuePair(Of String, System.DateTime)
 
@@ -679,7 +684,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		' Examine mOutFileHandlerInUse; if greater then zero, then exit the sub
 		If System.Threading.Interlocked.Read(mOutFileHandlerInUse) > 0 Then
-			Exit Sub
+			Return False
 		End If
 
 		Try
@@ -688,6 +693,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			If m_DebugLevel >= 4 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Examining out file creation dates (Candidate Count = " & mOutFileCandidates.Count & ")")
 			End If
+
+			blnAppendSuccess = True
 
 			If mOutFileCandidates.Count > 0 And Not mSequestVersionInfoStored Then
 				' Determine tool version
@@ -706,46 +713,44 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			If mOutFileCandidates.Count > 0 Then
 				' Examine the time associated with the next item that would be dequeued
 				objEntry = mOutFileCandidates.Peek()
-				If System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS Then
+				If blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS Then
 
 					' Open the _out.txt.tmp file
 					Using swTargetFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mTempConcatenatedOutFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
 
-						blnContinue = True
 						intItemsProcessed = 0
-						Do While mOutFileCandidates.Count > 0 AndAlso blnContinue AndAlso System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS
+						Do While mOutFileCandidates.Count > 0 AndAlso blnAppendSuccess AndAlso (blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
 
-							' Entry is old enough; pop it off the queue
+							' Entry is old enough (or blnProcessAllRemainingFiles=True); pop it off the queue
 							objEntry = mOutFileCandidates.Dequeue()
 							intItemsProcessed += 1
 
 							Try
 								Dim fiOutFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, objEntry.Key))
 								AppendOutFile(fiOutFile, swTargetFile)
-
-								If mOutFileCandidates.Count > 0 Then
-									objEntry = mOutFileCandidates.Peek()
-								End If
-
 							Catch ex As Exception
 								Console.WriteLine("Warning, exception appending out file: " & ex.Message)
-								blnContinue = False
+								blnAppendSuccess = False
 							End Try
+
+							If mOutFileCandidates.Count > 0 Then
+								objEntry = mOutFileCandidates.Peek()
+							End If
 
 						Loop
 
-
 					End Using
+
 				End If
 			End If
 
-			If intItemsProcessed > 0 Then
+			If intItemsProcessed > 0 OrElse blnProcessAllRemainingFiles Then
 
 				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Appended " & intItemsProcessed & " .out files to the _out.txt.tmp file; " & mOutFileCandidates.Count & " out files remain in the queue")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Appended " & intItemsProcessed & " .out file" & CheckForPlurality(intItemsProcessed) & " to the _out.txt.tmp file; " & mOutFileCandidates.Count & " out file" & CheckForPlurality(mOutFileCandidates.Count) & " remain in the queue")
 				End If
 
-				If System.DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS Then
+				If blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS Then
 					If Not mTempJobParamsCopied Then
 						strSourceFileName = "JobParameters_" & m_JobNum & ".xml"
 						blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
@@ -761,13 +766,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 					End If
 
-					' Copy the _out.txt.tmp file
-					strSourceFileName = System.IO.Path.GetFileName(mTempConcatenatedOutFilePath)
-					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, True)
+					If intItemsProcessed > 0 Then
+						' Copy the _out.txt.tmp file
+						strSourceFileName = System.IO.Path.GetFileName(mTempConcatenatedOutFilePath)
+						blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, True)
+					End If
 
-					' Copy the sequest.log file
+					' Copy the sequest.log file (rename to sequest.log.tmp when copying)
 					strSourceFileName = "sequest.log"
-					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, False)
+					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
 
 					mLastTempFileCopyTime = System.DateTime.UtcNow
 
@@ -778,13 +785,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Catch ex As Exception
 			Console.WriteLine("Warning, error in ProcessCandidateOutFiles: " & ex.Message)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessCandidateOutFiles: " & ex.Message)
+			blnAppendSuccess = False
 		Finally
 			' Make sure mOutFileHandlerInUse is now zero
 			Dim lngZero As Long = 0
 			System.Threading.Interlocked.Exchange(mOutFileHandlerInUse, lngZero)
 		End Try
 
-	End Sub
+		Return blnAppendSuccess
+
+	End Function
 
 	Protected Sub RenameSequestLogFile()
 		Dim fiFileInfo As System.IO.FileInfo
@@ -796,6 +806,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			If fiFileInfo.Exists Then
 				strNewName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name) & "_" & fiFileInfo.LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
 				fiFileInfo.MoveTo(System.IO.Path.Combine(m_WorkDir, strNewName))
+
+				' Copy the renamed sequest.log file to the transfer directory
+				CopyFileToTransferFolder(strNewName, strNewName, False)
 			End If
 
 		Catch ex As Exception
@@ -1037,9 +1050,24 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	End Function
 
-	Protected Sub UpdateSequestNodeProcessingStats()
+	Protected Sub UpdateSequestNodeProcessingStats(ByVal blnProcessAllSequestLogFiles As Boolean)
 
-		Dim SeqLogFilePath As String = System.IO.Path.Combine(m_WorkDir, "sequest.log")
+		If blnProcessAllSequestLogFiles Then
+			Dim diWorkDir As System.IO.DirectoryInfo
+			diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+
+			For Each fiFile As System.IO.FileInfo In diWorkDir.GetFiles("sequest*.log*")
+				UpdateSequestNodeProcessingStatsOneFile(fiFile.FullName)
+			Next
+
+		Else
+			UpdateSequestNodeProcessingStatsOneFile(System.IO.Path.Combine(m_WorkDir, "sequest.log"))
+		End If
+	End Sub
+
+	Protected Sub UpdateSequestNodeProcessingStatsOneFile(ByVal SeqLogFilePath As String)
+
+
 		Dim NumNodeMachines As Integer
 		Dim NumSlaveProcesses As Integer
 		Dim TotalSearchTimeSeconds As Double
@@ -1134,7 +1162,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			' Compute average search time
 			mSequestNodeProcessingStats.AvgSearchTime = CSng(mSequestNodeProcessingStats.TotalSearchTimeSeconds) / CSng(mSequestNodeProcessingStats.SearchedFileCount)
 		End If
-
 
 	End Sub
 
@@ -1282,7 +1309,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	End Sub
 
 	Protected Sub mOutFileAppenderTime_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
-		ProcessCandidateOutFiles()
+		ProcessCandidateOutFiles(False)
 	End Sub
 
 	Private Sub m_UtilityRunner_Timeout() Handles m_UtilityRunner.Timeout

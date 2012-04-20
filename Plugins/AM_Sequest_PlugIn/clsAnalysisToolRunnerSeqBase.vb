@@ -74,7 +74,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		' Make sure at least one .DTA file exists
-		If Not ValidateDTAFiles Then
+		If Not ValidateDTAFiles() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 		End If
 
@@ -307,7 +307,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 			If System.IO.File.Exists(strConcatenatedTempFilePath) Then
 				' Parse the _out.txt.tmp to determine the .out files that it contains
 				lstDTAsToSkip = ConstructDTASkipList(strConcatenatedTempFilePath)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file (skipping " & lstDTAsToSkip.Count & " existing DTAs with existing .Out files)")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file (skipping " & lstDTAsToSkip.Count.ToString("#,##0") & " existing DTAs with existing .Out files)")
 			Else
 				lstDTAsToSkip = New SortedSet(Of String)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
@@ -328,7 +328,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 			mTotalOutFileCount = mDtaCountAddon
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file, created " & GetDTAFileCountRemaining().ToString("#,##0") & " DTAs")
 			End If
 
 		Catch ex As Exception
@@ -612,34 +612,50 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
+		Dim MAX_RETRY_ATTEMPTS As Integer = 3
+		Dim intRetriesRemaining As Integer
+		Dim blnSuccess As Boolean
+
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenating .out files")
 		End If
 
-		'Make sure objects are released
-		System.Threading.Thread.Sleep(1000)		   ' 1 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		intRetriesRemaining = MAX_RETRY_ATTEMPTS
+		Do
 
-		Try
-			If String.IsNullOrEmpty(mTempConcatenatedOutFilePath) Then
-				mTempConcatenatedOutFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_out.txt.tmp")
-			End If
+			'Make sure objects are released
+			System.Threading.Thread.Sleep(1000)		   ' 1 second delay
+			GC.Collect()
+			GC.WaitForPendingFinalizers()
 
-			Dim diWorkDir As System.IO.DirectoryInfo
-			diWorkDir = New System.IO.DirectoryInfo(WorkDir)
+			Try
+				If String.IsNullOrEmpty(mTempConcatenatedOutFilePath) Then
+					mTempConcatenatedOutFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_out.txt.tmp")
+				End If
 
-			Using swTargetFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mTempConcatenatedOutFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
-				For Each fiOutFile As System.IO.FileInfo In diWorkDir.GetFileSystemInfos("*.out")
-					AppendOutFile(fiOutFile, swTargetFile)
-				Next
-			End Using
+				Dim diWorkDir As System.IO.DirectoryInfo
+				diWorkDir = New System.IO.DirectoryInfo(WorkDir)
 
-		Catch ex As Exception
+				Using swTargetFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mTempConcatenatedOutFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+					For Each fiOutFile As System.IO.FileInfo In diWorkDir.GetFileSystemInfos("*.out")
+						AppendOutFile(fiOutFile, swTargetFile)
+					Next
+				End Using
+				blnSuccess = True
+
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending .out files to the _out.txt.tmp file" & ": " & ex.Message)
+				blnSuccess = False
+			End Try
+
+			intRetriesRemaining -= 1
+		Loop While Not blnSuccess AndAlso intRetriesRemaining > 0
+
+		If Not blnSuccess Then
 			m_message = "Error appending .out files to the _out.txt.tmp file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; aborting after " & MAX_RETRY_ATTEMPTS & " attempts")
 			Return False
-		End Try
+		End If
 
 		Try
 			If String.IsNullOrEmpty(mTempConcatenatedOutFilePath) Then

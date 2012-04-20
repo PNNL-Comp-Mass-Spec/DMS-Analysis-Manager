@@ -190,7 +190,7 @@ Public Class clsAnalysisResourcesSeq
 			End If
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & " (file size = " & (ioTempOutFile.Length / 1024.0).ToString("0") & " KB); comparing JobParameters.xml file and Sequest parameter file to local copies")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & " (file size = " & (ioTempOutFile.Length / 1024.0).ToString("#,##0") & " KB); comparing JobParameters.xml file and Sequest parameter file to local copies")
 			End If
 
 			' Compare the remote and local copies of the JobParameters file
