@@ -379,7 +379,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		End Try
 	End Sub
 
-	Protected Function CopyFileToTransferFolder(ByVal strSourceFileName As String, ByVal strTargetFileName As String) As Boolean
+	Protected Function CopyFileToTransferFolder(ByVal strSourceFileName As String, ByVal strTargetFileName As String, ByVal blnAddToListOfServerFilesToDelete As Boolean) As Boolean
 
 		Dim strSourceFilePath As String
 		Dim strTargetFilePath As String
@@ -395,6 +395,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				End If
 
 				System.IO.File.Copy(strSourceFilePath, strTargetFilePath, True)
+
+				If blnAddToListOfServerFilesToDelete Then
+					m_jobParams.AddServerFileToDelete(strTargetFilePath)
+				End If
 			End If
 
 		Catch ex As Exception
@@ -744,11 +748,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				If System.DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS Then
 					If Not mTempJobParamsCopied Then
 						strSourceFileName = "JobParameters_" & m_JobNum & ".xml"
-						blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp")
+						blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
 
 						If blnSuccess Then
 							strSourceFileName = m_jobParams.GetParam("ParmFileName")
-							blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp")
+							blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
 						End If
 
 						If blnSuccess Then
@@ -759,11 +763,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 					' Copy the _out.txt.tmp file
 					strSourceFileName = System.IO.Path.GetFileName(mTempConcatenatedOutFilePath)
-					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName)
+					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, True)
 
 					' Copy the sequest.log file
 					strSourceFileName = "sequest.log"
-					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName)
+					blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, False)
 
 					mLastTempFileCopyTime = System.DateTime.UtcNow
 
