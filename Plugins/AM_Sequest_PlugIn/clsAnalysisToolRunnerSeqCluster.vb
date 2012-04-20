@@ -21,13 +21,29 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	' Overrides Sequest tool runner to provide cluster-specific methods
 	'*********************************************************************************************************
 
-#Region "constants"
+#Region "Constants"
 	Protected Const TEMP_FILE_COPY_INTERVAL_SECONDS As Integer = 300
 	Protected Const OUT_FILE_APPEND_INTERVAL_SECONDS As Integer = 30
 	Protected Const OUT_FILE_APPEND_HOLDOFF_SECONDS As Integer = 30
 	Protected Const STALE_NODE_THRESHOLD_MINUTES As Integer = 5
 #End Region
 
+#Region "Structures"
+	Protected Structure udtSequestNodeProcessingStats
+		Public NumNodeMachines As Integer
+		Public NumSlaveProcesses As Integer
+		Public TotalSearchTimeSeconds As Double
+		Public SearchedFileCount As Integer
+		Public AvgSearchTime As Single
+		Public Sub Clear()
+			NumNodeMachines = 0
+			NumSlaveProcesses = 0
+			TotalSearchTimeSeconds = 0
+			SearchedFileCount = 0
+			AvgSearchTime = 0
+		End Sub
+	End Structure
+#End Region
 #Region "Module Variables"
 
 	Protected WithEvents mOutFileWatcher As New System.IO.FileSystemWatcher
@@ -66,6 +82,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	Protected mSequestLogNodesFound As Boolean
 	Protected mSequestNodesSpawned As Integer
+
+	Protected mSequestNodeProcessingStats As udtSequestNodeProcessingStats
+
+	Protected mSequestSearchStartTime As System.DateTime
+	Protected mSequestSearchEndTime As System.DateTime
 
 	Protected m_ActiveNodeRegEx As System.Text.RegularExpressions.Regex = _
 	  New System.Text.RegularExpressions.Regex("\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*", _
@@ -135,11 +156,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Const ALLOW_PVM_RESET As Boolean = True
 
 		Do
-			' Clear the sequest nodes on each iteration of this Do Loop
+			' Reset several pieces of information on each iteration of this Do Loop
 			mSequestNodes.Clear()
 			mSequestLogNodesFound = False
 			mSequestNodesSpawned = 0
 			mResetPVM = False
+			mSequestSearchStartTime = System.DateTime.UtcNow
+			mSequestSearchEndTime = System.DateTime.UtcNow
+
+			mSequestNodeProcessingStats.Clear()
 
 			mLastOutFileCountTime = System.DateTime.UtcNow
 			mLastActiveNodeQueryTime = System.DateTime.UtcNow
@@ -154,6 +179,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 			' Run Sequest to generate OUT files
 			blnSuccess = m_CmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", True)
+
+			mSequestSearchEndTime = System.DateTime.UtcNow
 
 			If blnSuccess And Not mResetPVM Then
 				intDTACountRemaining = 0
@@ -195,6 +222,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
 						m_NeedToAbortProcessing = True
 						blnProcessingError = True
 						Exit Do
+					Else
+						UpdateSequestNodeProcessingStats()
+						RenameSequestLogFile()
 					End If
 
 				Else
@@ -206,8 +236,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is equivalent to the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
 					ElseIf intOutFileCount > m_DtaCount Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is greater than the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
+					ElseIf intOutFileCount >= CInt(m_DtaCount * 0.999) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... The number of OUT files (" & intOutFileCount & ") is within 0.1% of the original DTA count (" & m_DtaCount & "); we'll consider this a successful job despite the Sequest CmdRunner error")
 					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No DTA files remain and the number of OUT files (" & intOutFileCount & ") is less than the original DTA count (" & m_DtaCount & ")")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No DTA files remain and the number of OUT files (" & intOutFileCount & ") is less than the original DTA count (" & m_DtaCount & "); treating this as a job failure")
 						blnProcessingError = True
 					End If
 
@@ -224,6 +256,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		System.Threading.Thread.Sleep(5000)		 ' 5 second delay
 		GC.Collect()
 		GC.WaitForPendingFinalizers()
+
+		UpdateSequestNodeProcessingStats()
 
 		' Verify out file creation
 		If m_DebugLevel >= 2 And Not blnProcessingError Then
@@ -321,87 +355,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	''' <remarks></remarks>
 	Protected Sub AddClusterStatsToSummaryFile()
 
-		Dim SeqLogFilePath As String = System.IO.Path.Combine(m_WorkDir, "sequest.log")
-		Dim NumNodeMachines As Integer
-		Dim NumSlaveProcesses As Integer
-		Dim TotalSearchTime As Integer
-		Dim SearchedFileCount As Integer
-		Dim AvgSearchTime As Single
-
-		'Verify sequest.log file exists
-		If Not System.IO.File.Exists(SeqLogFilePath) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Sequest log file not found for job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-			Exit Sub
-		End If
-
-		'Read the sequest.log file
-		Dim fileContents As String
-		Try
-			fileContents = My.Computer.FileSystem.ReadAllText(SeqLogFilePath)
-		Catch ex As Exception
-			Dim Msg As String = "AddClusterStatsToSummaryFile: Exception reading sequest log file: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		End Try
-
-		'Node machine count
-		NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the sequest task on\s+\d+\s+node")
-		If NumNodeMachines = 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: node machine count line not found"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		ElseIf NumNodeMachines < 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: Exception retrieving node machine count: " & m_ErrMsg
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		End If
-
-		'Sequest process count
-		NumSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\s+\d+\s+slave processes")
-		If NumSlaveProcesses = 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: slave process count line not found"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		ElseIf NumSlaveProcesses < 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: Exception retrieving slave process count: " & m_ErrMsg
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		End If
-
-		'Total search time
-		TotalSearchTime = GetIntegerFromSeqLogFileString(fileContents, "Total search time:\s+\d+")
-		If TotalSearchTime = 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: total search time line not found"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		ElseIf TotalSearchTime < 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: Exception retrieving total search time: " & m_ErrMsg
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		End If
-
-		'Searched file count
-		SearchedFileCount = GetIntegerFromSeqLogFileString(fileContents, "secs for\s+\d+\s+files")
-		If SearchedFileCount = 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: searched file count line not found"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		ElseIf SearchedFileCount < 0 Then
-			Dim Msg As String = "AddClusterStatsToSummaryFile: Exception retrieving searched file count: " & m_ErrMsg
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, Msg)
-			Exit Sub
-		End If
-
-		'Average search time
-		AvgSearchTime = CSng(TotalSearchTime) / CSng(SearchedFileCount)
-
-
-		'Write the statistics to the summary file
-		m_SummaryFile.Add(Environment.NewLine & "Cluster node machine count: " & NumNodeMachines.ToString)
-		m_SummaryFile.Add("Sequest process count: " & NumSlaveProcesses.ToString)
-		m_SummaryFile.Add("Searched file count: " & SearchedFileCount.ToString)
-		m_SummaryFile.Add("Total search time: " & TotalSearchTime.ToString & " secs")
-		m_SummaryFile.Add("Ave search time: " & AvgSearchTime.ToString("##0.000") & " secs" & Environment.NewLine)
+		' Write the statistics to the summary file
+		m_SummaryFile.Add(Environment.NewLine & "Cluster node count: ".PadRight(24) & mSequestNodeProcessingStats.NumNodeMachines.ToString)
+		m_SummaryFile.Add("Sequest process count: ".PadRight(24) & mSequestNodeProcessingStats.NumSlaveProcesses.ToString)
+		m_SummaryFile.Add("Searched file count: ".PadRight(24) & mSequestNodeProcessingStats.SearchedFileCount.ToString)
+		m_SummaryFile.Add("Total search time: ".PadRight(24) & mSequestNodeProcessingStats.TotalSearchTimeSeconds.ToString & " secs")
+		m_SummaryFile.Add("Average search time: ".PadRight(24) & mSequestNodeProcessingStats.AvgSearchTime.ToString("##0.000") & " secs/spectrum")
 
 	End Sub
 
@@ -823,6 +782,24 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	End Sub
 
+	Protected Sub RenameSequestLogFile()
+		Dim fiFileInfo As System.IO.FileInfo
+		Dim strNewName As String = "??"
+
+		Try
+			fiFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "sequest.log"))
+
+			If fiFileInfo.Exists Then
+				strNewName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name) & "_" & fiFileInfo.LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
+				fiFileInfo.MoveTo(System.IO.Path.Combine(m_WorkDir, strNewName))
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming sequest.log file to " & strNewName & ": " & ex.Message)
+		End Try
+
+	End Sub
+
 	Protected Function ResetPVM() As Boolean
 
 		Dim PVMProgFolder As String		' Folder with PVM
@@ -1055,6 +1032,107 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Return True
 
 	End Function
+
+	Protected Sub UpdateSequestNodeProcessingStats()
+
+		Dim SeqLogFilePath As String = System.IO.Path.Combine(m_WorkDir, "sequest.log")
+		Dim NumNodeMachines As Integer
+		Dim NumSlaveProcesses As Integer
+		Dim TotalSearchTimeSeconds As Double
+		Dim SearchedFileCount As Integer
+
+		Dim intDTAsSearched As Integer
+
+		' Verify sequest.log file exists
+		If Not System.IO.File.Exists(SeqLogFilePath) Then
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest log file not found, cannot update Node Processing Stats")
+				Exit Sub
+			End If
+		End If
+
+		' Read the sequest.log file
+		Dim sbContents As System.Text.StringBuilder = New System.Text.StringBuilder
+		Dim strLineIn As String
+		intDTAsSearched = 0
+
+		Try
+
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(SeqLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+				While srInFile.Peek > -1
+					strLineIn = srInFile.ReadLine()
+
+					If strLineIn.StartsWith("Searched dta file") Then
+						intDTAsSearched += 1
+					End If
+
+					sbContents.AppendLine(strLineIn)
+				End While
+			End Using
+
+		Catch ex As Exception
+			Dim Msg As String = "UpdateNodeStats: Exception reading sequest log file: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+			Exit Sub
+		End Try
+
+		Dim strFileContents As String = sbContents.ToString()
+
+		' Node machine count
+		NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\s+\d+\s+node")
+		If NumNodeMachines = 0 Then
+			Dim Msg As String = "UpdateNodeStats: node machine count line not found"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		ElseIf NumNodeMachines < 0 Then
+			Dim Msg As String = "UpdateNodeStats: Exception retrieving node machine count: " & m_ErrMsg
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		End If
+
+		If NumNodeMachines > mSequestNodeProcessingStats.NumNodeMachines Then
+			mSequestNodeProcessingStats.NumNodeMachines = NumNodeMachines
+		End If
+
+		' Sequest process count
+		NumSlaveProcesses = GetIntegerFromSeqLogFileString(strFileContents, "Spawned\s+\d+\s+slave processes")
+		If NumSlaveProcesses = 0 Then
+			Dim Msg As String = "UpdateNodeStats: slave process count line not found"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		ElseIf NumSlaveProcesses < 0 Then
+			Dim Msg As String = "UpdateNodeStats: Exception retrieving slave process count: " & m_ErrMsg
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		End If
+
+		If NumSlaveProcesses > mSequestNodeProcessingStats.NumSlaveProcesses Then
+			mSequestNodeProcessingStats.NumSlaveProcesses = NumSlaveProcesses
+		End If
+
+		' Total search time
+		TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(strFileContents, "Total search time:\s+\d+")
+		If TotalSearchTimeSeconds <= 0 Then
+			' Total search time line not found (or error)
+			' Use internal tracking variables instead
+			TotalSearchTimeSeconds = mSequestSearchEndTime.Subtract(mSequestSearchStartTime).TotalSeconds
+		End If
+
+		mSequestNodeProcessingStats.TotalSearchTimeSeconds += TotalSearchTimeSeconds
+
+		' Searched file count
+		SearchedFileCount = GetIntegerFromSeqLogFileString(strFileContents, "secs for\s+\d+\s+files")
+		If SearchedFileCount <= 0 Then
+			' Searched file count line not found (or error)
+			' Use intDTAsSearched instead
+			SearchedFileCount = intDTAsSearched
+		End If
+
+		mSequestNodeProcessingStats.SearchedFileCount += intDTAsSearched
+
+		If mSequestNodeProcessingStats.SearchedFileCount > 0 Then
+			' Compute average search time
+			mSequestNodeProcessingStats.AvgSearchTime = CSng(mSequestNodeProcessingStats.TotalSearchTimeSeconds) / CSng(mSequestNodeProcessingStats.SearchedFileCount)
+		End If
+
+
+	End Sub
 
 	''' <summary>
 	''' Uses PVM command ps -a to determine the number of active nodes
