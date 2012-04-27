@@ -56,6 +56,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Events"
 	Public Event ErrorEvent(ByVal strErrorMessage As String)
+	Public Event WarningEvent(ByVal strWarningMessage As String)
 #End Region
 
 #Region "Properties"
@@ -223,7 +224,7 @@ Public MustInherit Class clsMSGFInputCreator
 			End If
 
 			' Open the first-hits file
-			mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, blnLoadModDefs:=True, blnLoadMSGFResults:=False)
+			mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False)
 			mPHRPReader.EchoMessagesToConsole = True
 
 			If Not mPHRPReader.CanRead Then
@@ -261,7 +262,7 @@ Public MustInherit Class clsMSGFInputCreator
 								If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
 									strWarningMessage &= "; additional invalid entries will not be reported"
 								End If
-								ReportError(strWarningMessage)
+								ReportWarning(strWarningMessage)
 							Else
 								LogError(strWarningMessage)
 							End If
@@ -281,7 +282,7 @@ Public MustInherit Class clsMSGFInputCreator
 							If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
 								strWarningMessage &= "; additional missing entries will not be reported"
 							End If
-							ReportError(strWarningMessage)
+							ReportWarning(strWarningMessage)
 						Else
 							LogError(strWarningMessage)
 						End If
@@ -356,8 +357,22 @@ Public MustInherit Class clsMSGFInputCreator
 
 				If Not String.IsNullOrEmpty(mPHRPSynopsisFilePath) AndAlso System.IO.File.Exists(mPHRPSynopsisFilePath) Then
 					' Read the synopsis file data
-					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, blnLoadModDefs:=True, blnLoadMSGFResults:=False)
+					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False)
 					mPHRPReader.EchoMessagesToConsole = True
+
+					' Report any errors cached during instantiation of mPHRPReader
+					For Each strMessage As String In mPHRPReader.ErrorMessages
+						ReportError(strMessage)
+					Next
+					mErrorMessage = String.Empty
+
+					' Report any warnings cached during instantiation of mPHRPReader
+					For Each strMessage As String In mPHRPReader.WarningMessages
+						ReportWarning(strMessage)
+					Next
+
+					mPHRPReader.ClearErrors()
+					mPHRPReader.ClearWarnings()
 
 					If Not mPHRPReader.CanRead Then
 						ReportError(AppendText("Aborting since PHRPReader is not ready", mPHRPReader.ErrorMessage))
@@ -373,7 +388,7 @@ Public MustInherit Class clsMSGFInputCreator
 				If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) AndAlso System.IO.File.Exists(mPHRPFirstHitsFilePath) Then
 					' Now read the first-hits file data
 
-					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, blnLoadModDefs:=True, blnLoadMSGFResults:=False)
+					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False)
 					mPHRPReader.EchoMessagesToConsole = True
 
 					If Not mPHRPReader.CanRead Then
@@ -580,6 +595,12 @@ Public MustInherit Class clsMSGFInputCreator
 		RaiseEvent ErrorEvent(mErrorMessage)
 	End Sub
 
+	Protected Sub ReportWarning(ByVal strWarningMessage As String)
+		LogError(strWarningMessage)
+		RaiseEvent WarningEvent(strWarningMessage)
+	End Sub
+
+
 	''' <summary>
 	''' Define the MSGF input and output file paths
 	''' </summary>
@@ -609,6 +630,6 @@ Public MustInherit Class clsMSGFInputCreator
 	End Sub
 
 	Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-		Console.WriteLine("Warning: " & strWarningMessage)
+		ReportWarning(strWarningMessage)
 	End Sub
 End Class

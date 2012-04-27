@@ -178,7 +178,7 @@ Public Class clsMSGFResultsSummarizer
 			' Initialize the list that will be used to track the number of spectra searched
 			lstUniqueSpectra = New System.Collections.Generic.Dictionary(Of String, Integer)
 
-			Using objReader As clsPHRPReader = New clsPHRPReader(strFirstHitsFilePath, blnLoadModDefs:=False, blnLoadMSGFResults:=False)
+			Using objReader As clsPHRPReader = New clsPHRPReader(strFirstHitsFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=False)
 				While objReader.MoveNext()
 
 					Dim objPSM As PHRPReader.clsPSM
@@ -353,16 +353,17 @@ Public Class clsMSGFResultsSummarizer
 
 			If blnSuccess Then
 				Dim objReader As PHRPReader.clsPHRPSeqMapReader
-				Dim objResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer)) = Nothing
-				Dim objSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of String)) = Nothing
+				Dim lstResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, Integer) = Nothing
+				Dim lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo)) = Nothing
+				Dim lstSeqInfo As System.Collections.Generic.SortedList(Of Integer, PHRPReader.clsSeqInfo) = Nothing
 
 				' Load the protein information
 				objReader = New PHRPReader.clsPHRPSeqMapReader(mDatasetName, mWorkDir, mResultType)
-				blnSuccess = objReader.GetProteinMapping(objResultToSeqMap, objSeqToProteinMap)
+				blnSuccess = objReader.GetProteinMapping(lstResultToSeqMap, lstSeqToProteinMap, lstSeqInfo)
 
 				If blnSuccess Then
 					' Summarize the results, counting the number of peptides, unique peptides, and proteins
-					blnSuccess = SummarizeResults(lstPSMs, objResultToSeqMap, objSeqToProteinMap)
+					blnSuccess = SummarizeResults(lstPSMs, lstResultToSeqMap, lstSeqToProteinMap)
 				End If
 
 				If blnSuccess Then
@@ -396,7 +397,7 @@ Public Class clsMSGFResultsSummarizer
 
 		Try
 
-			Using objPHRPReader As New PHRPReader.clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModDefs:=False, blnLoadMSGFResults:=True)
+			Using objPHRPReader As New PHRPReader.clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=True)
 
 				Do While objPHRPReader.MoveNext()
 
@@ -415,7 +416,7 @@ Public Class clsMSGFResultsSummarizer
 						End If
 
 					End If
-				Loop			
+				Loop
 
 			End Using
 
@@ -481,21 +482,21 @@ Public Class clsMSGFResultsSummarizer
 	End Sub
 
 	''' <summary>
-	''' Summarize the results by inter-relating lstPSMs, objResultToSeqMap, and objSeqToProteinMap
+	''' Summarize the results by inter-relating lstPSMs, lstResultToSeqMap, and lstSeqToProteinMap
 	''' </summary>
 	''' <param name="lstPSMs"></param>
-	''' <param name="objResultToSeqMap"></param>
-	''' <param name="objSeqToProteinMap"></param>
+	''' <param name="lstResultToSeqMap"></param>
+	''' <param name="lstSeqToProteinMap"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function SummarizeResults( _
-	 ByRef lstPSMs As System.Collections.Generic.Dictionary(Of Integer, String), _
-	 ByRef objResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of Integer)), _
-	 ByRef objSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of String))) As Boolean
+	  ByRef lstPSMs As System.Collections.Generic.Dictionary(Of Integer, String), _
+	  ByRef lstResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, Integer), _
+	  ByRef lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo))) As Boolean
 
 		' lstPSMs only contains the filter-passing results (keys are ResultID, values are the first protein for each ResultID)
-		' Link up with objResultToSeqMap to determine the unique number of filter-passing peptides
-		' Link up with objSeqToProteinMap to determine the unique number of proteins
+		' Link up with lstResultToSeqMap to determine the unique number of filter-passing peptides
+		' Link up with lstSeqToProteinMap to determine the unique number of proteins
 
 		' The Keys in this dictionary are SeqID values; the values are observation count
 		Dim lstUniqueSequences As System.Collections.Generic.Dictionary(Of Integer, Integer)
@@ -504,8 +505,7 @@ Public Class clsMSGFResultsSummarizer
 		Dim lstUniqueProteins As System.Collections.Generic.Dictionary(Of String, Integer)
 
 		Dim intObsCount As Integer
-		Dim lstSeqIDs As System.Collections.Generic.List(Of Integer) = Nothing
-		Dim lstProteins As System.Collections.Generic.List(Of String) = Nothing
+		Dim lstProteins As System.Collections.Generic.List(Of PHRPReader.clsProteinInfo) = Nothing
 
 		Try
 			lstUniqueSequences = New System.Collections.Generic.Dictionary(Of Integer, Integer)
@@ -513,34 +513,31 @@ Public Class clsMSGFResultsSummarizer
 
 			For Each objResultID As System.Collections.Generic.KeyValuePair(Of Integer, String) In lstPSMs
 
-				If objResultToSeqMap.TryGetValue(objResultID.Key, lstSeqIDs) Then
+				Dim intSeqID As Integer
+				If lstResultToSeqMap.TryGetValue(objResultID.Key, intSeqID) Then
 					' Result found in _ResultToSeqMap.txt file
 
-					For Each intSeqID As Integer In lstSeqIDs
+					If lstUniqueSequences.TryGetValue(intSeqID, intObsCount) Then
+						lstUniqueSequences(intSeqID) = intObsCount + 1
+					Else
+						lstUniqueSequences.Add(intSeqID, 1)
+					End If
 
-						If lstUniqueSequences.TryGetValue(intSeqID, intObsCount) Then
-							lstUniqueSequences(intSeqID) = intObsCount + 1
-						Else
-							lstUniqueSequences.Add(intSeqID, 1)
-						End If
+					' Lookup the proteins for this peptide
+					If lstSeqToProteinMap.TryGetValue(intSeqID, lstProteins) Then
+						' Update the observation count for each protein
 
-						' Lookup the proteins for this peptide
-						If objSeqToProteinMap.TryGetValue(intSeqID, lstProteins) Then
-							' Update the observation count for each protein
+						For Each objProtein As PHRPReader.clsProteinInfo In lstProteins
 
-							For Each strProtein As String In lstProteins
+							If lstUniqueProteins.TryGetValue(objProtein.ProteinName, intObsCount) Then
+								lstUniqueProteins(objProtein.ProteinName) = intObsCount + 1
+							Else
+								lstUniqueProteins.Add(objProtein.ProteinName, 1)
+							End If
 
-								If lstUniqueProteins.TryGetValue(strProtein, intObsCount) Then
-									lstUniqueProteins(strProtein) = intObsCount + 1
-								Else
-									lstUniqueProteins.Add(strProtein, 1)
-								End If
+						Next
 
-							Next
-
-						End If
-
-					Next
+					End If
 
 				End If
 			Next

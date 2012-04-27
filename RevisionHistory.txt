@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+April 26, 2012
+	- Updated the MSGF Plugin to use a new version of PHRPReader.dll
+
 April 18, 2012
 	- Updated Sequest plugin to auto-restart PVM if too many nodes stop responding
 

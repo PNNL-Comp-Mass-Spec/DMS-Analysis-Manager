@@ -25,13 +25,13 @@ AnalysisManagerMSGFPlugin
 	<param name="strSourceFolderPath">Source folder path</param>
 	<param name="strConnectionString">DMS connection string</param>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.SummarizeResults(System.Collections.Generic.Dictionary{System.Int32,System.String}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.Int32}}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{System.String}}@)">
+</member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.SummarizeResults(System.Collections.Generic.Dictionary{System.Int32,System.String}@,System.Collections.Generic.SortedList{System.Int32,System.Int32}@,System.Collections.Generic.SortedList{System.Int32,System.Collections.Generic.List{PHRPReader.clsProteinInfo}}@)">
 	<summary>
- Summarize the results by inter-relating lstPSMs, objResultToSeqMap, and objSeqToProteinMap
+ Summarize the results by inter-relating lstPSMs, lstResultToSeqMap, and lstSeqToProteinMap
  </summary>
 	<param name="lstPSMs"></param>
-	<param name="objResultToSeqMap"></param>
-	<param name="objSeqToProteinMap"></param>
+	<param name="lstResultToSeqMap"></param>
+	<param name="lstSeqToProteinMap"></param>
 	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:AnalysisManagerMSGFPlugin.clsMSGFInputCreatorInspect.#ctor(System.String,System.String)">

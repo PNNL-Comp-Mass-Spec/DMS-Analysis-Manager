@@ -1812,6 +1812,11 @@ Public Class clsMSGFRunner
 
 		mMSGFRunner = New clsRunDosProgram(m_WorkDir)
 
+		' Delete the output file if it already exists (MSGFDB will not overwrite it)
+		If System.IO.File.Exists(strResultsFilePath) Then
+			System.IO.File.Delete(strResultsFilePath)
+		End If
+
 		' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
 		' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
 		' (job 611216 succeeded with a value of 5000)

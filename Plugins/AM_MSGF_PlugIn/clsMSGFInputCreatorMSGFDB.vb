@@ -55,8 +55,8 @@ Public Class clsMSGFInputCreatorMSGFDB
 			End If
 
 
-			' Open the file
-			Using objReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSourceFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, blnLoadModDefs:=False, blnLoadMSGFResults:=False)
+			' Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
+			Using objReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSourceFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=False)
 				objReader.SkipDuplicatePSMs = False
 
 				' Define the path to write the first-hits MSGF results to

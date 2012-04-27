@@ -11,7 +11,7 @@
 Option Strict On
 
 Public Class clsMSGFInputCreatorSequest
-	Inherits clsMSGFInputCreator
+    Inherits clsMSGFInputCreator
 
 	''' <summary>
 	''' Constructor
@@ -25,22 +25,22 @@ Public Class clsMSGFInputCreatorSequest
 
 	End Sub
 
-	Protected Overrides Sub InitializeFilePaths()
+    Protected Overrides Sub InitializeFilePaths()
 
-		' Customize mPHRPResultFilePath for Sequest synopsis files
+        ' Customize mPHRPResultFilePath for Sequest synopsis files
 		mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName))
 		mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName))
 
-	End Sub
+    End Sub
 
-	Protected Overrides Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
-		Dim dblXCorr As Double
-		Dim dblDeltaCN As Double
+   Protected Overrides Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
+        Dim dblXCorr As Double
+        Dim dblDeltaCN As Double
 
 		Dim intCleavageState As Integer
 		Dim intCleavageStateAlt As Short
 
-		Dim blnIsProteinTerminus As Boolean
+        Dim blnIsProteinTerminus As Boolean
 		Dim blnPassesFilters As Boolean
 
 		' Examine the score values and possibly filter out this line

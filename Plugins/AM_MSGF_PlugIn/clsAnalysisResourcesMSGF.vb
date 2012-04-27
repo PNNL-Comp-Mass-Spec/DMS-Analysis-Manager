@@ -179,7 +179,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		If Not blnOnlyCopyFHTandSYNfiles Then
 			' Get the ModSummary.txt file        
-			FileToGet = clsPHRPReader.GetModSummaryFileName(eResultType, DatasetName)
+			FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, DatasetName)
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				' _ModSummary.txt file not found
 				' This will happen if the synopsis file is empty
@@ -211,10 +211,8 @@ Public Class clsAnalysisResourcesMSGF
 			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
-
-		' Copy the PHRP files so that we can extract the protein names
-		' This information is added to the MSGF files for X!Tandem
-		' It is used by clsMSGFResultsSummarizer for all tools
+		' Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
+		' clsMSGFResultsSummarizer also uses these files
 
 		FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
@@ -253,13 +251,22 @@ Public Class clsAnalysisResourcesMSGF
 			End If
 		End If
 
+		FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
+			If FindAndRetrieveMiscFiles(FileToGet, False) Then
+				m_jobParams.AddResultFileToSkip(FileToGet)
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SeqInfo file not found (" & FileToGet & "); modifications will be inferred using the ModSummary.txt file")
+			End If
+		End If
+
 		If Not blnOnlyCopyFHTandSYNfiles Then
 
 			' See if a .mzXML file already exists for this dataset
 			blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_JobParams.AddResultFileExtensionToSkip(".mzXML")
+			m_jobParams.AddResultFileExtensionToSkip(".mzXML")
 
 			If blnSuccess Then
 				' .mzXML file found and copied locally; no need to retrieve the .Raw file
@@ -270,8 +277,8 @@ Public Class clsAnalysisResourcesMSGF
 				' .mzXML file not found
 				' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
 				If RetrieveSpectra(RawDataType, m_WorkingDir) Then
-					m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
-					m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
+					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
+					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
