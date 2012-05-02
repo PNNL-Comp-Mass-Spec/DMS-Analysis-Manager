@@ -104,10 +104,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 			CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					' Path to folder containing input files
 			CmdStr &= " -m " & PossiblyQuotePath(strParameterFilePath)		' Path to XML file specifying measurements to run	
 			CmdStr &= " -o " & PossiblyQuotePath(ResultsFilePath)			' Text file to write the results to
+			CmdStr &= " -db " & PossiblyQuotePath(m_WorkDir)				' Folder where SQLite DB will be created
 
+			m_jobParams.AddResultFileToSkip("SMAQC.s3db")				' Don't keep the SQLite DB
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
 			End If
 
 			CmdRunner = New clsRunDosProgram(m_WorkDir)

@@ -92,6 +92,8 @@ Public Class clsMSGFRunner
 	Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
 	Protected WithEvents mMSGFRunner As clsRunDosProgram
 
+	Protected mMSGFInputCreatorErrorCount As Integer
+
 #End Region
 
 #Region "Properties"
@@ -691,6 +693,7 @@ Public Class clsMSGFRunner
 		Dim blnSuccess As Boolean = True
 
 		intMSGFInputFileLineCount = 0
+		mMSGFInputCreatorErrorCount = 0
 
 		' Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
 		Select Case eResultType
@@ -2320,7 +2323,10 @@ Public Class clsMSGFRunner
 	''' <param name="strErrorMessage"></param>
 	''' <remarks></remarks>
 	Private Sub mMSGFInputCreator_ErrorEvent(ByVal strErrorMessage As String) Handles mMSGFInputCreator.ErrorEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by MSGFInputCreator; " & strErrorMessage)
+		mMSGFInputCreatorErrorCount += 1
+		If mMSGFInputCreatorErrorCount < 10 OrElse mMSGFInputCreatorErrorCount Mod 1000 = 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" & mMSGFInputCreatorErrorCount)
+		End If
 	End Sub
 
 	''' <summary>

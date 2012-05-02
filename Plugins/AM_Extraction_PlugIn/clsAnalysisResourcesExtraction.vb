@@ -90,13 +90,7 @@ Public Class clsAnalysisResourcesExtraction
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 					End If
 
-					' Get the Sequest parameter file
-					FileToGet = m_jobParams.GetParam("ParmFileName")
-					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-					m_jobParams.AddResultFileToSkip(FileToGet)
+					' Note that we'll obtain the Sequest parameter file in RetrieveMiscFiles
 
 					'Add all the extensions of the files to delete after run
 					m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
@@ -117,13 +111,21 @@ Public Class clsAnalysisResourcesExtraction
 					'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
 					m_jobParams.AddResultFileToSkip(strDataset & "_xt.xml")
 
-					' Get the X!Tandem parameter file
-					FileToGet = m_jobParams.GetParam("ParmFileName")
+					' Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
+
+					' However, we need to obtain the "input.xml" file and "default_input.xml" files now
+					FileToGet = "input.xml"
 					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
 					m_jobParams.AddResultFileToSkip(FileToGet)
+
+					If Not CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir) Then
+						Dim Msg As String = "Failed retrieving default_input.xml file."
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+					End If
 
 				Case "IN_Peptide_Hit"
 					' Get the zipped Inspect results files
@@ -158,13 +160,7 @@ Public Class clsAnalysisResourcesExtraction
 					End If
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
-					' Get the Inspect parameter file
-					FileToGet = m_jobParams.GetParam("ParmFileName")
-					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-					m_jobParams.AddResultFileToSkip(FileToGet)
+					' Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
 				Case "MSG_Peptide_Hit"
 					FileToGet = strDataset & "_msgfdb.zip"
@@ -191,13 +187,7 @@ Public Class clsAnalysisResourcesExtraction
 					End If
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
-					' Get the MSGF-DB parameter file
-					FileToGet = m_jobParams.GetParam("ParmFileName")
-					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-					m_jobParams.AddResultFileToSkip(FileToGet)
+					' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
 
 				Case Else
 					m_message = "Invalid tool result type: " & ResultType
@@ -215,55 +205,57 @@ Public Class clsAnalysisResourcesExtraction
 
 	End Function
 
+	' Deprecated function
+	'
+	' <summary>
+	' Copies the default Mass Correction Tags file to the working directory
+	' </summary>
+	' <returns>True if success, otherwise false</returns>
+	' <remarks></remarks>
+	'Protected Function RetrieveDefaultMassCorrectionTagsFile() As Boolean
+
+	'	Dim strParamFileStoragePath As String
+	'	Dim ioFolderInfo As System.IO.DirectoryInfo
+	'	Dim ioSubfolders() As System.IO.DirectoryInfo
+	'	Dim ioFiles() As System.IO.FileInfo
+
+	'	Try
+	'		strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
+	'		ioFolderInfo = New System.IO.DirectoryInfo(strParamFileStoragePath).Parent
+
+	'		ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags")
+
+	'		If ioSubfolders.Length = 0 Then
+	'			m_message = "MassCorrectionTags folder not found at " & ioFolderInfo.FullName
+	'			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+	'			Return False
+	'		End If
+
+	'		ioFiles = ioSubfolders(0).GetFiles(MASS_CORRECTION_TAGS_FILENAME)
+	'		If ioFiles.Length = 0 Then
+	'			m_message = MASS_CORRECTION_TAGS_FILENAME & " file not found at " & ioSubfolders(0).FullName
+	'			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+	'			Return False
+	'		End If
+
+	'		If m_DebugLevel >= 1 Then
+	'			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Retrieving default Mass Correction Tags file from " & ioFiles(0).FullName)
+	'		End If
+
+	'		ioFiles(0).CopyTo(System.IO.Path.Combine(m_WorkingDir, ioFiles(0).Name))
+
+	'	Catch ex As Exception
+	'		m_message = "Error retrieving " & MASS_CORRECTION_TAGS_FILENAME
+	'		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+	'		Return False
+	'	End Try
+
+	'	Return True
+
+	'End Function
+
 	''' <summary>
-	''' Copies the default Mass Correction Tags file to the working directory
-	''' </summary>
-	''' <returns>True if success, otherwise false</returns>
-	''' <remarks></remarks>
-	Protected Function RetrieveDefaultMassCorrectionTagsFile() As Boolean
-
-		Dim strParamFileStoragePath As String
-		Dim ioFolderInfo As System.IO.DirectoryInfo
-		Dim ioSubfolders() As System.IO.DirectoryInfo
-		Dim ioFiles() As System.IO.FileInfo
-
-		Try
-			strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
-			ioFolderInfo = New System.IO.DirectoryInfo(strParamFileStoragePath).Parent
-
-			ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags")
-
-			If ioSubfolders.Length = 0 Then
-				m_message = "MassCorrectionTags folder not found at " & ioFolderInfo.FullName
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			ioFiles = ioSubfolders(0).GetFiles(MASS_CORRECTION_TAGS_FILENAME)
-			If ioFiles.Length = 0 Then
-				m_message = MASS_CORRECTION_TAGS_FILENAME & " file not found at " & ioSubfolders(0).FullName
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Retrieving default Mass Correction Tags file from " & ioFiles(0).FullName)
-			End If
-
-			ioFiles(0).CopyTo(System.IO.Path.Combine(m_WorkingDir, ioFiles(0).Name))
-
-		Catch ex As Exception
-			m_message = "Error retrieving " & MASS_CORRECTION_TAGS_FILENAME
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Retrieves misc files (ie, ModDefs) needed for extraction
+	''' Retrieves misc files (i.e., ModDefs) needed for extraction
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
@@ -277,55 +269,37 @@ Public Class clsAnalysisResourcesExtraction
 
 		Try
 
-			' Look for the Mod Defs file
-			' Do not search the EMSL archive (Aurora) since we can easily re-generate it
-			blnSuccess = FindAndRetrieveMiscFiles(ModDefsFilename, False, blnSearchArchivedDatasetFolder)
-			If blnSuccess Then
-				m_jobParams.AddResultFileToSkip(ModDefsFilename)
+			' Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file, and retrieve the MassCorrectionTags.txt file
+			' Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, or MSGFDB ran, we re-generate it here just in case T_Param_File_Mass_Mods had missing information
+			' Furthermore, we need the search engine parameter file for the PHRPReader
 
-				' Look for the Mass correction tags file
-				' Do not search the EMSL archive (Aurora) since we can easily re-generate it
-				If Not FindAndRetrieveMiscFiles(MASS_CORRECTION_TAGS_FILENAME, False, blnSearchArchivedDatasetFolder) Then
-					' Retrieve the standard Mass_Correction_Tags file
-					If Not RetrieveDefaultMassCorrectionTagsFile() Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-					End If
-				End If
+			' Note that the _ModDefs.txt file is obtained using this query:
+			'  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+			'  FROM V_Param_File_Mass_Mod_Info 
+			'  WHERE Param_File_Name = 'ParamFileName'
 
-				m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
-			Else
+			blnSuccess = RetrieveGeneratedParamFile( _
+			 strParamFileName, _
+			 m_jobParams.GetParam("ParmFileStoragePath"), _
+			 m_WorkingDir)
 
-				' The ModDefs.txt file should have been created when Sequest, X!Tandem, Inspect, or MSGFDB ran
-				' However, if the mods were not defined in T_Param_File_Mass_Mods then the file will not have been created
-				' Alternatively, if the ModDefs file only resides in the Aurora archive, then the file may only exist on tape and is not worth retrieving since we can easily re-generate it
-				'
-				' Call RetrieveGeneratedParamFile() now to re-create the parameter file and take a second shot at creating the _ModDefs.txt file
-				' The file is obtained using this query:
-				'  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
-				'  FROM V_Param_File_Mass_Mod_Info 
-				'  WHERE Param_File_Name = 'ParamFileName'
-
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ModDefs.txt file not found; will try to generate it using the ParamFileGenerator")
-				End If
-
-				blnSuccess = RetrieveGeneratedParamFile(strParamFileName, _
-				 m_jobParams.GetParam("ParmFileStoragePath"), _
-				 m_WorkingDir)
-
-				If blnSuccess Then
-					' Confirm that the file was actually created
-					blnSuccess = System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, ModDefsFilename))
-				End If
-
-				If Not blnSuccess Then
-					m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " & strParamFileName)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-
+			If Not blnSuccess Then
+				m_message = "Error retrieving parameter file and ModDefs.txt file"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			' Confirm that the file was actually created
+			blnSuccess = System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, ModDefsFilename))
+
+			If Not blnSuccess Then
+				m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " & strParamFileName)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			m_jobParams.AddResultFileToSkip(strParamFileName)
+			m_jobParams.AddResultFileToSkip(ModDefsFilename)
+			m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
 
 		Catch ex As Exception
 			m_message = "Error retrieving miscellaneous files"

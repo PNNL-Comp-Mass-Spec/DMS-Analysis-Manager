@@ -1,5 +1,11 @@
 Analysis Tool Manager History
 
+May 1, 2012
+	- Updated the Analysis Manager Extraction Pluginto validate that computed mass errors are reasonable
+		- Large mass errors likely indicate a problem with the ModDefs.txt file
+		- Uses PHRPReader to read the _syn.txt files
+	- Updated the SMAQC plugin to use switch -db to specify the location of the SQLite database
+
 April 26, 2012
 	- Updated the MSGF Plugin to use a new version of PHRPReader.dll
 

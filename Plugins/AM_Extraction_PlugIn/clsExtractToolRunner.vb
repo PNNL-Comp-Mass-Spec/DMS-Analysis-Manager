@@ -27,7 +27,7 @@ Public Class clsExtractToolRunner
 
 #Region "Module variables"
     Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
-    Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
+	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 #End Region
 
 #Region "Properties"
@@ -257,6 +257,7 @@ Public Class clsExtractToolRunner
 
 		Dim Msg As String = ""
 		Dim Result As IJobParams.CloseOutType
+		Dim strSynFilePath As String = String.Empty
 
 		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
 
@@ -267,7 +268,10 @@ Public Class clsExtractToolRunner
 		End If
 		Try
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
+			strSynFilePath = String.Copy(strTargetFilePath)
+
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
+
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
@@ -283,7 +287,14 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		' Validate that the mass errors are within tolerance
+		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
+
 
 	End Function
 
@@ -291,6 +302,7 @@ Public Class clsExtractToolRunner
 
 		Dim Msg As String = ""
 		Dim Result As IJobParams.CloseOutType
+		Dim strSynFilePath As String = String.Empty
 
 		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
 
@@ -301,7 +313,10 @@ Public Class clsExtractToolRunner
 		End If
 		Try
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.txt")
+
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
+
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
@@ -317,7 +332,13 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		' Validate that the mass errors are within tolerance		
+		' Use input.xml for the X!Tandem parameter file
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml") Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
 
 	End Function
 
@@ -329,8 +350,8 @@ Public Class clsExtractToolRunner
 		Dim CreateMSGFDBSynopsisFile As Boolean
 
 		Dim strTargetFilePath As String
+		Dim strSynFilePath As String = String.Empty
 
-		Dim blnSuccess As Boolean
 		Dim Result As IJobParams.CloseOutType
 
 		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
@@ -343,20 +364,14 @@ Public Class clsExtractToolRunner
 
 		Try
 			' The goal:
-			'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file in the _msgfdb.zip file
+			'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file  (which should already have been unzipped from the _msgfdb.zip file)
 
-			' Extract _msgfdb.txt from the _msgfdb.zip file
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.zip")
-			blnSuccess = MyBase.UnzipFile(strTargetFilePath)
-
-			If Not blnSuccess Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Create the First Hits files using the _msgfdb.txt file
+			' Create the Synopsis and First Hits files using the _msgfdb.txt file
 			CreateMSGFDBFirstHitsFile = True
 			CreateMSGFDBSynopsisFile = True
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
+
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
@@ -381,7 +396,14 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		' Validate that the mass errors are within tolerance
+		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
+
 
 	End Function
 
@@ -393,6 +415,7 @@ Public Class clsExtractToolRunner
 		Dim CreateInspectSynopsisFile As Boolean
 
 		Dim strTargetFilePath As String
+		Dim strSynFilePath As String
 
 		Dim blnSuccess As Boolean
 		Dim Result As IJobParams.CloseOutType
@@ -449,6 +472,8 @@ Public Class clsExtractToolRunner
 			CreateInspectFirstHitsFile = False
 			CreateInspectSynopsisFile = True
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_syn.txt")
+
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
@@ -473,7 +498,13 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		' Validate that the mass errors are within tolerance
+		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
 
 	End Function
 
@@ -957,7 +988,6 @@ Public Class clsExtractToolRunner
 
 	End Function
 
-
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
@@ -1035,6 +1065,29 @@ Public Class clsExtractToolRunner
 
     End Function
 
+	Protected Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
+
+		Dim blnSuccess As Boolean
+
+		Try
+			Dim oValidator As clsPHRPMassErrorValidator
+
+			oValidator = New clsPHRPMassErrorValidator(m_Dataset, m_WorkDir, m_DebugLevel)
+
+			blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, strSearchEngineParamFileName)
+			If Not blnSuccess Then
+				m_message = oValidator.ErrorMessage
+			End If
+
+		Catch ex As Exception
+			m_message = "Exception calling ValidatePHRPResultMassErrors"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
 #End Region
 
 #Region "Event handlers"
@@ -1072,5 +1125,4 @@ Public Class clsExtractToolRunner
     End Sub
 #End Region
 
-   
 End Class
