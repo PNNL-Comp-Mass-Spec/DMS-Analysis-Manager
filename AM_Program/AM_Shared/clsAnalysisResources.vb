@@ -40,15 +40,16 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
 
-	' Note: These constants need to be all lowercase
+	' Note: All of the RAW_DATA_TYPE constants need to be all lowercase
+	'
 	Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"				'Agilent ion trap data, Agilent TOF data
 	Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"			'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
 	Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"				'Micromass QTOF data
-
 	Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"				'Finnigan ion trap/LTQ-FT data
 	Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"				'Agilent/QSTAR TOF data
 	Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"				'IMS_UIMF (IMS_Agilent_TOF in DMS)
 	Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"			'mzXML
+	Public Const RAW_DATA_TYPE_DOT_MZML_FILES As String = "dot_mzml_files"				'mzML
 
 	' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
 	' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
@@ -76,6 +77,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const DOT_RAW_EXTENSION As String = ".raw"
 	Public Const DOT_UIMF_EXTENSION As String = ".uimf"
 	Public Const DOT_MZXML_EXTENSION As String = ".mzxml"
+	Public Const DOT_MZML_EXTENSION As String = ".mzml"
 
 	Public Const DOT_MGF_EXTENSION As String = ".mgf"
 	Public Const DOT_CDF_EXTENSION As String = ".cdf"
@@ -86,6 +88,23 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 	Public Const BRUKER_SER_FILE As String = "ser"
+
+	Public Enum eRawDataTypeConstants
+		Unknown = 0
+		ThermoRawFile = 1
+		UIMF = 2
+		mzXML = 3
+		mzML = 4
+		AgilentDFolder = 5				' Agilent ion trap data, Agilent TOF data
+		AgilentQStarWiffFile = 6
+		MicromassRawFolder = 7			' Micromass QTOF data
+		ZippedSFolders = 8				' FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+		BrukerFTFolder = 9				' .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+		BrukerMALDISpot = 10			' has a .EMF file and a single sub-folder that has an acqu file and fid file
+		BrukerMALDIImaging = 11			' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+		BrukerTOFBaf = 12				' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+	End Enum
+
 #End Region
 
 #Region "Module variables"
@@ -576,6 +595,43 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Public Shared Function GetRawDataType(ByVal strRawDataType As String) As eRawDataTypeConstants
+
+		If String.IsNullOrEmpty(strRawDataType) Then
+			Return eRawDataTypeConstants.Unknown
+		End If
+
+		Select Case strRawDataType.ToLower()
+			Case RAW_DATA_TYPE_DOT_D_FOLDERS
+				Return eRawDataTypeConstants.AgilentDFolder
+			Case RAW_DATA_TYPE_ZIPPED_S_FOLDERS
+				Return eRawDataTypeConstants.ZippedSFolders
+			Case RAW_DATA_TYPE_DOT_RAW_FOLDER
+				Return eRawDataTypeConstants.MicromassRawFolder
+			Case RAW_DATA_TYPE_DOT_RAW_FILES
+				Return eRawDataTypeConstants.ThermoRawFile
+			Case RAW_DATA_TYPE_DOT_WIFF_FILES
+				Return eRawDataTypeConstants.AgilentQStarWiffFile
+			Case RAW_DATA_TYPE_DOT_UIMF_FILES
+				Return eRawDataTypeConstants.UIMF
+			Case RAW_DATA_TYPE_DOT_MZXML_FILES
+				Return eRawDataTypeConstants.mzXML
+			Case RAW_DATA_TYPE_DOT_MZML_FILES
+				Return eRawDataTypeConstants.mzML
+			Case RAW_DATA_TYPE_BRUKER_FT_FOLDER
+				Return eRawDataTypeConstants.BrukerFTFolder
+			Case RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+				Return eRawDataTypeConstants.BrukerMALDISpot
+			Case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+				Return eRawDataTypeConstants.BrukerMALDIImaging
+			Case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER
+				Return eRawDataTypeConstants.BrukerTOFBaf
+			Case Else
+				Return eRawDataTypeConstants.Unknown
+		End Select
+
+	End Function
+
 	''' <summary>
 	''' Looks for the specified file in the given folder
 	''' If present, returns the full path to the file
@@ -703,11 +759,13 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim blnSuccess As Boolean = False
 		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
+		Dim eRawDataType As eRawDataTypeConstants
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving spectra file(s)")
 
-		Select Case RawDataType.ToLower
-			Case RAW_DATA_TYPE_DOT_D_FOLDERS			'Agilent ion trap data
+		eRawDataType = GetRawDataType(RawDataType)
+		Select Case eRawDataType
+			Case eRawDataTypeConstants.AgilentDFolder			'Agilent ion trap data
 
 				If StoragePath.ToLower.Contains("Agilent_SL1".ToLower) OrElse _
 				   StoragePath.ToLower.Contains("Agilent_XCT1".ToLower) Then
@@ -721,25 +779,28 @@ Public MustInherit Class clsAnalysisResources
 					blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
 				End If
 
-			Case RAW_DATA_TYPE_DOT_WIFF_FILES			'Agilent/QSTAR TOF data
+			Case eRawDataTypeConstants.AgilentQStarWiffFile			'Agilent/QSTAR TOF data
 				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_ZIPPED_S_FOLDERS			'FTICR data
+			Case eRawDataTypeConstants.ZippedSFolders			'FTICR data
 				blnSuccess = RetrieveSFolders(WorkDir, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_DOT_RAW_FILES			'Finnigan ion trap/LTQ-FT data
+			Case eRawDataTypeConstants.ThermoRawFile			'Finnigan ion trap/LTQ-FT data
 				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_DOT_RAW_FOLDER			'Micromass QTOF data
+			Case eRawDataTypeConstants.MicromassRawFolder			'Micromass QTOF data
 				blnSuccess = RetrieveDotRawFolder(WorkDir, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_DOT_UIMF_FILES			'IMS UIMF data
+			Case eRawDataTypeConstants.UIMF			'IMS UIMF data
 				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_DOT_MZXML_FILES
+			Case eRawDataTypeConstants.mzXML
 				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly)
 
-			Case RAW_DATA_TYPE_BRUKER_FT_FOLDER
+			Case eRawDataTypeConstants.mzML
+				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_MZML_EXTENSION, CreateStoragePathInfoOnly)
+
+			Case eRawDataTypeConstants.BrukerFTFolder
 				' Call RetrieveDotDFolder() to copy the folder and all subfolders
 
 				' Only the MSXml step tool requires the .Baf file; we can skip it for other tools
@@ -753,12 +814,16 @@ Public MustInherit Class clsAnalysisResources
 
 				blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles)
 
-			Case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+			Case eRawDataTypeConstants.BrukerMALDIImaging
 				blnSuccess = RetrieveBrukerMALDIImagingFolders(WorkDir, UnzipOverNetwork:=True)
 
 			Case Else
-				' RawDataType is not recognized
-				m_message = "Invalid data type specified: " & RawDataType
+				' RawDataType is not recognized or not supported by this function
+				If eRawDataType = eRawDataTypeConstants.Unknown Then
+					m_message = "Invalid data type specified: " & RawDataType
+				Else
+					m_message = "Data type " & RawDataType & " is not supported by the RetrieveSpectra function"
+				End If
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 		End Select
 

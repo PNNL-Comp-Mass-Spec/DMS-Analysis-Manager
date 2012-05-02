@@ -1190,6 +1190,10 @@ Public Class clsAnalysisToolRunnerBase
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 				IsFile = True
 
+			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+				IsFile = True
+
 			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False

@@ -3,7 +3,7 @@
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 04/12/2012
 '
-' Uses MSConvert to create a .MGF file from a .Raw file
+' Uses MSConvert to create a .MGF file from a .Raw file or .mzXML file or .mzML file
 ' Next, converts the .MGF file to a _DTA.txt file
 '*********************************************************************************************************
 
@@ -52,7 +52,10 @@ Public Class clsDtaGenMSConvert
 
 		m_Progress = 10
 
-		If Not ConvertRawToMGF() Then
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		eRawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetParam("RawDataType"))
+
+		If Not ConvertRawToMGF(eRawDataType) Then
 			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
 				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
@@ -121,10 +124,11 @@ Public Class clsDtaGenMSConvert
 	''' Create .mgf file using MSConvert
 	''' This functon is called by MakeDTAFilesThreaded
 	''' </summary>
+	''' <param name="eRawDataType">Raw data file type</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Private Function ConvertRawToMGF() As Boolean
-		'Makes DTA files using extract_msn.exe or DeconMSn.exe
+	Private Function ConvertRawToMGF(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
+
 		Dim CmdStr As String
 		Dim RawFilePath As String
 
@@ -139,13 +143,27 @@ Public Class clsDtaGenMSConvert
 		End If
 
 		' Construct the path to the .raw file
-		RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+			Case Else
+				m_ErrMsg = "Raw data file type not supported: " & eRawDataType.ToString()
+				Return False
+		End Select
 
 		ScanStart = 1
 		ScanStop = 999999
 
-		'Get the maximum number of scans in the file
-		m_MaxScanInFile = GetMaxScan(RawFilePath)
+		If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
+			'Get the maximum number of scans in the file
+			m_MaxScanInFile = GetMaxScan(RawFilePath)
+		Else
+			m_MaxScanInFile = ScanStop
+		End If
 
 		Select Case m_MaxScanInFile
 			Case -1
