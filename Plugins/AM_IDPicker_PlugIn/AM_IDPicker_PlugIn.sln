@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{E9BEC2A6-8F33-4D5C-8C75-E27742B09355}") = "AnalysisManagerIDPickerPlugIn", "AnalysisManagerIDPickerPlugIn.vbproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DD269705-9BF2-413C-9984-198ECFB300DF}.Debug|x86.ActiveCfg = Debug|x86
+		{DD269705-9BF2-413C-9984-198ECFB300DF}.Debug|x86.Build.0 = Debug|x86
+		{DD269705-9BF2-413C-9984-198ECFB300DF}.Release|x86.ActiveCfg = Release|x86
+		{DD269705-9BF2-413C-9984-198ECFB300DF}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

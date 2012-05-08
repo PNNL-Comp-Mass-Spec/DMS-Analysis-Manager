@@ -1,5 +1,12 @@
 Analysis Tool Manager History
 
+May 7, 2012
+	- Added clsScanStatsGenerator to AM_Shared
+	- Updated MSGFDB plugin to check for phosphorylation search of HCD data and using -protocol 1
+	- Updated MSGFDB plugin to use GenerateScanStatsFile in the Analysis Resources base class
+	- Updated MSGF plugin to use PHRPReader
+	- Added IDPicker plugin (also creates .pepXML file)
+
 May 1, 2012
 	- Updated the Analysis Manager Extraction Pluginto validate that computed mass errors are reasonable
 		- Large mass errors likely indicate a problem with the ModDefs.txt file
