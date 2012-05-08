@@ -77,7 +77,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			' Store the SMAQC version info in the database
 			If Not StoreToolVersionInfo(progLoc) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining DeconTools version"
+				m_message = "Error determining SMAQC version"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 			End If
@@ -878,7 +878,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		' Store paths to key DLLs in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(strSMAQCProgLoc))
+		ioToolFiles.Add(ioSMAQC)
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

@@ -20,8 +20,6 @@ Public Class clsAnalysisResourcesXT
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         ' XTandem just copies its parameter file from the central repository
-        '	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
-
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         strWorkDir = m_mgrParams.GetParam("workdir")

@@ -12,7 +12,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("PNNL")> 
 <Assembly: AssemblyProduct("AnalysisManagerSMAQCPlugIn")> 
-<Assembly: AssemblyCopyright("Copyright © PNNL 2011")> 
+<Assembly: AssemblyCopyright("")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>

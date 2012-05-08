@@ -931,11 +931,11 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Determines the version info for a DLL using reflection
+	''' Determines the version info for a .NET DLL using reflection
 	''' </summary>
-	''' <param name="strToolVersionInfo">Version info string to append the veresion info to</param>
+	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
 	''' <param name="strDLLFilePath">Path to the DLL</param>
-	''' 	  ''' <returns>True if success; false if an error</returns>
+	''' <returns>True if success; false if an error</returns>
 	''' <remarks></remarks>
 	Protected Overridable Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 

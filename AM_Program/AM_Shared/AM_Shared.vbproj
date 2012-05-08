@@ -66,6 +66,9 @@
     <Reference Include="log4net">
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
     <Reference Include="ParamFileGenerator">
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
@@ -110,6 +113,7 @@
     <Compile Include="clsMessageSender.vb" />
     <Compile Include="clsProteowizardTools.vb" />
     <Compile Include="clsRunDosProgram.vb" />
+    <Compile Include="clsScanStatsGenerator.vb" />
     <Compile Include="clsSplitCattedFiles.vb" />
     <Compile Include="clsStatusFile.vb" />
     <Compile Include="clsSummaryFile.vb" />

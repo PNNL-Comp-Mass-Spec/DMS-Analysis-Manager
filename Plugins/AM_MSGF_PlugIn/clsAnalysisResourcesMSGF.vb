@@ -72,7 +72,7 @@ Public Class clsAnalysisResourcesMSGF
 		DatasetName = m_jobParams.GetParam("DatasetNum")
 
 		' Make sure the ResultType is valid
-		eResultType = clsMSGFRunner.GetPeptideHitResultType(ResultType)
+		eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse _
 		   eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse _

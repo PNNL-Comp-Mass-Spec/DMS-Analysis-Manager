@@ -130,7 +130,7 @@ Public Class clsMSGFRunner
 		End If
 
 		' Resolve eResultType
-		eResultType = GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
+		eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 			' Result type is not supported
@@ -1028,25 +1028,6 @@ Public Class clsMSGFRunner
 
 		Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion)
 
-	End Function
-
-	Public Shared Function GetPeptideHitResultType(ByVal strPeptideHitResultType As String) As clsPHRPReader.ePeptideHitResultType
-		Select Case strPeptideHitResultType.ToLower
-			Case "Peptide_Hit".ToLower
-				Return clsPHRPReader.ePeptideHitResultType.Sequest
-
-			Case "XT_Peptide_Hit".ToLower
-				Return clsPHRPReader.ePeptideHitResultType.XTandem
-
-			Case "IN_Peptide_Hit".ToLower
-				Return clsPHRPReader.ePeptideHitResultType.Inspect
-
-			Case "MSG_Peptide_Hit".ToLower
-				Return clsPHRPReader.ePeptideHitResultType.MSGFDB
-
-			Case Else
-				Return clsPHRPReader.ePeptideHitResultType.Unknown
-		End Select
 	End Function
 
 	Public Shared Function IsLegacyMSGFVersion(ByVal strStepToolVersion As String) As Boolean

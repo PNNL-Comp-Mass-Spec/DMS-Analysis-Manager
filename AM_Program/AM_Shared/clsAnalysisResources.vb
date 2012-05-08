@@ -85,6 +85,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
 	Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
+	Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
 
 	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 	Public Const BRUKER_SER_FILE As String = "ser"
@@ -124,6 +125,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
 	Protected WithEvents m_FastaTimer As System.Timers.Timer
 	Protected m_IonicZipTools As clsIonicZipTools
+
 #End Region
 
 #Region "Properties"
@@ -507,6 +509,91 @@ Public MustInherit Class clsAnalysisResources
 
 		Return strFilePathMatch
 	End Function
+
+	Protected Function GenerateScanStatsFile() As Boolean
+
+		Dim strDatasetName As String
+		Dim strRawDataType As String
+		Dim strInputFilePath As String
+
+		Dim strMSFileInfoScannerDir As String
+		Dim strMSFileInfoScannerDLLPath As String
+
+		Dim objScanStatsGenerator As clsScanStatsGenerator
+		Dim blnSuccess As Boolean
+
+		strDatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
+		strRawDataType = m_jobParams.GetParam("RawDataType")
+
+		strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
+		If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
+			m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+			Return False
+		End If
+
+		strMSFileInfoScannerDLLPath = System.IO.Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+		If Not System.IO.File.Exists(strMSFileInfoScannerDLLPath) Then
+			m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+			Return False
+		End If
+
+		' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
+		Select Case clsAnalysisResources.GetRawDataType(strRawDataType)
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+				strInputFilePath = strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION
+			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
+				strInputFilePath = strDatasetName & clsAnalysisResources.DOT_UIMF_EXTENSION
+			Case Else
+				m_message = "Invalid dataset type for auto-generating ScanStats.txt file: " & strRawDataType
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
+				Return False
+		End Select
+
+		strInputFilePath = System.IO.Path.Combine(m_WorkingDir, strInputFilePath)
+
+		If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+			Dim strExtraMsg As String = m_message
+			m_message = "Error retrieving spectra file"
+			If Not String.IsNullOrWhiteSpace(strExtraMsg) Then
+				m_message &= "; " & strExtraMsg
+			End If
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
+			Return False
+		End If
+
+		' Make sure the raw data file does not get copied to the results folder
+		m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strInputFilePath))
+
+		objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
+
+		' Create the _ScanStats.txt and _ScanStatsEx.txt files
+		blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir)
+
+		If blnSuccess Then
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated ScanStats file using " & strInputFilePath)
+			End If
+
+			System.Threading.Thread.Sleep(500)
+			Try
+				System.IO.File.Delete(strInputFilePath)
+			Catch ex As Exception
+				' Ignore errors here
+			End Try
+		Else
+			m_message = "Error generating ScanStats files with clsScanStatsGenerator"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, objScanStatsGenerator.ErrorMessage)
+			If objScanStatsGenerator.MSFileInfoScannerErrorCount > 0 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner encountered " & objScanStatsGenerator.MSFileInfoScannerErrorCount & " errors")
+			End If
+		End If
+
+		Return blnSuccess
+
+	End Function
+
 
 	''' <summary>
 	''' Split apart coordinates that look like "R00X438Y093" into R, X, and Y
@@ -1002,7 +1089,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Overridable Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Return RetrieveScanAndSICStatsFiles(WorkDir, False, CreateStoragePathInfoOnly)
+		Dim RetrieveSICStatsFile As Boolean = False
+		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly)
 
 	End Function
 
@@ -1122,7 +1210,7 @@ Public MustInherit Class clsAnalysisResources
 					' ScanStats File successfully copied
 					' Also look for and copy the _ScanStatsEx.txt file
 
-					If Not CopyFileToWorkDir(DSName & "_ScanStatsEx.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+					If Not CopyFileToWorkDir(DSName & SCAN_STATS_EX_FILE_SUFFIX, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 						m_message = "_ScanStatsEx.txt file not found at " & diSourceFile.Directory.FullName
 					Else
 
@@ -2176,7 +2264,7 @@ Public MustInherit Class clsAnalysisResources
 		Catch Ex As Exception
 			m_message = "Exception generating OrgDb file"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " & OrgDBDescription & "; " & _
-	"; " & clsGlobal.GetExceptionStackTrace(Ex))
+			 "; " & clsGlobal.GetExceptionStackTrace(Ex))
 			Return False
 		End Try
 
@@ -3133,6 +3221,88 @@ Public MustInherit Class clsAnalysisResources
 		End Try
 
 		Return sngFreeMemory
+
+	End Function
+
+	''' <summary>
+	''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column
+	''' </summary>
+	''' <param name="strFilePath">Path to the file</param>
+	''' <param name="strFileDescription">File description, e.g. Synopsis</param>
+	''' <returns>True if the file has data; otherwise false</returns>
+	''' <remarks></remarks>
+	Protected Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String) As Boolean
+		Dim intNumericDataColIndex As Integer = 0
+		Return ValidateFileHasData(strFilePath, strFileDescription, intNumericDataColIndex)
+	End Function
+
+	''' <summary>
+	''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value
+	''' </summary>
+	''' <param name="strFilePath">Path to the file</param>
+	''' <param name="strFileDescription">File description, e.g. Synopsis</param>
+	''' <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
+	''' <returns>True if the file has data; otherwise false</returns>
+	''' <remarks></remarks>
+	Protected Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByVal intNumericDataColIndex As Integer) As Boolean
+
+		Dim fiFileInfo As System.IO.FileInfo
+
+		Dim strLineIn As String
+		Dim strSplitLine() As String
+
+		Dim dblValue As Double
+		Dim blnDataFound As Boolean
+
+		Try
+			fiFileInfo = New System.IO.FileInfo(strFilePath)
+
+			If Not fiFileInfo.Exists Then
+				m_message = strFileDescription & " file not found: " & fiFileInfo.Name
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			If fiFileInfo.Length = 0 Then
+				m_message = strFileDescription & " is empty (zero-bytes)"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			' Open the file and confirm it has data rows
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiFileInfo.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+				While srInFile.Peek > -1 And Not blnDataFound
+					strLineIn = srInFile.ReadLine()
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						If intNumericDataColIndex < 0 Then
+							blnDataFound = True
+						Else
+							' Split on the tab character and check if the first column is numeric
+							strSplitLine = strLineIn.Split(ControlChars.Tab)
+
+							If Not strSplitLine Is Nothing AndAlso strSplitLine.Length > intNumericDataColIndex Then
+								If Double.TryParse(strSplitLine(intNumericDataColIndex), dblValue) Then
+									blnDataFound = True
+								End If
+							End If
+
+						End If
+					End If
+				End While
+			End Using
+
+			If Not blnDataFound Then
+				m_message = strFileDescription & " is empty (no data)"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			End If
+
+		Catch ex As Exception
+			m_message = "Exception validating " & strFileDescription & " file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return blnDataFound
 
 	End Function
 

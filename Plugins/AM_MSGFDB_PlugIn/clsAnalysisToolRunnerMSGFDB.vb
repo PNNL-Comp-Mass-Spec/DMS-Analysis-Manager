@@ -32,6 +32,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected Const MSGFDB_OPTION_TDA As String = "TDA"
 	Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
 	Protected Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
+	Protected Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
 
 	Protected Enum eThreadProgressSteps
 		PreprocessingSpectra = 0
@@ -51,6 +52,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected mConsoleOutputErrorMsg As String
 
 	Protected mResultsIncludeDecoyPeptides As Boolean = False
+	Protected mPhosphorylationSearch As Boolean = False
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -152,6 +154,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If Not fiFastaFile.Exists Then
 				' Fasta file not found
+				m_message = "Fasta file not found: " & fiFastaFile.Name
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
@@ -691,8 +694,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		dctParamNames.Add("PMTolerance", "t")
 		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
 		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
-		dctParamNames.Add("FragmentationMethodID", "m")
-		dctParamNames.Add("InstrumentID", "inst")
+		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")
+		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
 		dctParamNames.Add("EnzymeID", "e")
 		dctParamNames.Add("C13", "c13")
 		dctParamNames.Add("NNET", "nnet")
@@ -1032,6 +1035,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			strModFilePath = System.IO.Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
 
+			' Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation 
+			mPhosphorylationSearch = False
+
 			sbOptions.Append(" -mod " & MOD_FILE_NAME)
 
 			Using swModFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strModFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
@@ -1131,6 +1137,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim blnShowDecoyParamPresent As Boolean = False
 		Dim blnShowDecoy As Boolean = False
 		Dim blnTDA As Boolean = False
+
+		Dim strDatasetType As String
+		Dim blnHCD As Boolean = False
+		Dim blnHighResMSn As Boolean = False
+
+		strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
+		If strDatasetType.ToUpper().Contains("HCD") Then
+			blnHCD = True
+		End If
 
 		sbOptions = New System.Text.StringBuilder(500)
 
@@ -1260,11 +1275,26 @@ Public Class clsAnalysisToolRunnerMSGFDB
 							End If
 						End If
 
+						If strKey.ToLower() = MSGFDB_OPTION_INSTRUMENT_ID.ToLower() Then
+							If Integer.TryParse(strValue, intValue) Then
+								If intValue = 2 Then
+									blnHighResMSn = True
+								End If
+							End If
+						End If
+
+						If strKey.ToLower() = MSGFDB_OPTION_FRAGMENTATION_METHOD.ToLower() Then
+							If Integer.TryParse(strValue, intValue) Then
+								If intValue = 3 Then
+									blnHCD = True
+								End If
+							End If
+						End If
+
 					End If
 				Loop
 
 			End Using
-
 
 			If blnShowDecoy And blnTDA Then
 				' Parameter file contains both TDA=1 and showDecoy=1
@@ -1293,11 +1323,20 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End If
 
 		' Create the modification file and append the -mod switch
-		If ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
-			Return sbOptions.ToString()
-		Else
+		' We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation 
+		If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
 			Return String.Empty
 		End If
+
+
+		' Check whether we are performing an HCD-based phosphorylation search
+		If mPhosphorylationSearch AndAlso blnHCD Then
+			' Specifiy that "Protocol 1" is being used
+			' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
+			sbOptions.Append(" -protocol 1")
+		End If
+
+		Return sbOptions.ToString()
 
 
 	End Function
@@ -1343,6 +1382,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
 			strComment = strComment.Replace(",", ";")
 			strModClean &= "     " & strComment
+		End If
+
+		' Check whether this is a phosphorylation mod
+		If strSplitMod(4).Trim().ToUpper().StartsWith("PHOSPH") OrElse strSplitMod(0).ToUpper() = "HO3P" Then
+			If strSplitMod(1).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
+				mPhosphorylationSearch = True
+			End If
 		End If
 
 		Return True

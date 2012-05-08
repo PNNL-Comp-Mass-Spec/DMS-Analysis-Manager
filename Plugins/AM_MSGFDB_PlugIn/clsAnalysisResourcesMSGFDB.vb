@@ -13,10 +13,7 @@ Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources
 
 	Private WithEvents mCDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
-	Private WithEvents mMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-
-	Private mMSFileInfoScannerErrorCount As Integer
-
+	
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strDatasetName As String
@@ -93,7 +90,8 @@ Public Class clsAnalysisResourcesMSGFDB
 				If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
 					' _ScanStats.txt file not found
 					' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
-					If Not GenerateScanStatsFile(strDatasetName) Then
+					If Not GenerateScanStatsFile() Then
+						' Error message should already have been logged and stored in m_message
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					End If
 				Else
@@ -123,159 +121,6 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
-
-	Protected Function GenerateScanStatsFile(strDatasetName As String) As Boolean
-
-		Dim strRawDataType As String
-		Dim strInputFilePath As String = String.Empty
-
-		Dim blnSuccess As Boolean
-
-		Try
-			' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
-
-			strRawDataType = m_jobParams.GetParam("RawDataType")
-
-			Select Case strRawDataType.ToLower
-				Case RAW_DATA_TYPE_DOT_RAW_FILES
-					strInputFilePath = strDatasetName & DOT_RAW_EXTENSION
-				Case RAW_DATA_TYPE_DOT_UIMF_FILES
-					strInputFilePath = strDatasetName & DOT_UIMF_EXTENSION
-				Case Else
-					m_message = "Invalid dataset type for auto-generating ScanStats.txt file: " & strRawDataType
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
-					Return False
-
-			End Select
-
-			strInputFilePath = System.IO.Path.Combine(m_WorkingDir, strInputFilePath)
-
-			If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
-				Dim strExtraMsg As String = m_message
-				m_message = "Error retrieving spectra file"
-				If Not String.isnullorwhitespace(strExtraMsg) Then
-					m_message &= "; " & strExtraMsg
-				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
-				Return False
-			End If
-
-			' Make sure the raw data file does not get copied to the results folder
-			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strInputFilePath))
-
-			mMSFileInfoScannerErrorCount = 0
-
-			' Initialize the MSFileScanner class
-			Dim strMSFileInfoScannerPath As String = GetMSFileInfoScannerDLLPath()
-			If String.IsNullOrEmpty(strMSFileInfoScannerPath) Then
-				m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
-				Return False
-			End If
-
-			If Not System.IO.File.Exists(strMSFileInfoScannerPath) Then
-				m_message = "File Not Found: " + strMSFileInfoScannerPath
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
-				Return False
-			End If
-
-			mMSFileInfoScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath)
-
-			mMSFileInfoScanner.CheckFileIntegrity = False
-			mMSFileInfoScanner.CreateDatasetInfoFile = False
-			mMSFileInfoScanner.CreateScanStatsFile = True
-			mMSFileInfoScanner.SaveLCMS2DPlots = False
-			mMSFileInfoScanner.SaveTICAndBPIPlots = False
-			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
-
-			blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, m_WorkingDir)
-
-			If blnSuccess Then
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated ScanStats file using " & strInputFilePath)
-				End If
-			Else
-				m_message = "Error generating ScanStats file using " & strInputFilePath
-				Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
-
-				If Not String.IsNullOrEmpty(strMsgAddnl) Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMsgAddnl)
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				End If
-
-			End If
-
-			System.Threading.Thread.Sleep(500)
-			Try
-				System.IO.File.Delete(strInputFilePath)
-			Catch ex As Exception
-				' Ignore errors here
-			End Try
-
-		Catch ex As Exception
-			m_message = "Exception in GenerateScanStatsFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	Private Function GetMSFileInfoScannerDLLPath() As String
-		Dim strMSFileInfoScannerFolder As String = m_mgrParams.GetParam("MSFileInfoScannerDir")
-		If String.IsNullOrEmpty(strMSFileInfoScannerFolder) Then
-			Return String.Empty
-		Else
-			Return System.IO.Path.Combine(strMSFileInfoScannerFolder, "MSFileInfoScanner.dll")
-		End If
-	End Function
-
-	Private Function LoadMSFileInfoScanner(strMSFileInfoScannerDLLPath As String) As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-		Const MsDataFileReaderClass As String = "MSFileInfoScanner.clsMSFileInfoScanner"
-
-		Dim objMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner = Nothing
-		Dim msg As String
-
-		Try
-			If Not System.IO.File.Exists(strMSFileInfoScannerDLLPath) Then
-				msg = "DLL not found: " + strMSFileInfoScannerDLLPath
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-			Else
-				Dim obj As Object = Nothing
-				obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
-				If obj IsNot Nothing Then
-					objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
-					msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-					End If
-				End If
-
-			End If
-		Catch ex As Exception
-			msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-		End Try
-
-		Return objMSFileInfoScanner
-	End Function
-
-	Private Function LoadObject(className As String, strDLLFilePath As String) As Object
-		Dim obj As Object = Nothing
-		Try
-			' Dynamically load the specified class from strDLLFilePath
-			Dim assem As System.Reflection.Assembly
-			assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath)
-			Dim dllType As Type = assem.[GetType](className, False, True)
-			obj = Activator.CreateInstance(dllType)
-		Catch ex As Exception
-			Dim msg As String = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-		End Try
-		Return obj
 	End Function
 
 	Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
@@ -373,14 +218,4 @@ Public Class clsAnalysisResourcesMSGFDB
 		End If
 	End Sub
 
-	Private Sub mMSFileInfoScanner_ErrorEvent(Message As String) Handles mMSFileInfoScanner.ErrorEvent
-		mMSFileInfoScannerErrorCount += 1
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " & Message)
-	End Sub
-
-	Private Sub mMSFileInfoScanner_MessageEvent(Message As String) Handles mMSFileInfoScanner.MessageEvent
-		If m_DebugLevel >= 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & Message)
-		End If
-	End Sub
 End Class
