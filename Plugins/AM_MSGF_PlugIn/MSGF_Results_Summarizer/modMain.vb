@@ -14,7 +14,7 @@
 Imports PHRPReader
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "April 11, 2012"
+	Public Const PROGRAM_DATE As String = "May 8, 2012"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
@@ -88,6 +88,7 @@ Module modMain
 
 		Dim fiSourceFile As System.IO.FileInfo
 
+		Dim blnAppendToResultsFile As Boolean
 		Dim blnSuccess As Boolean = False
 
 		Try
@@ -209,12 +210,13 @@ Module modMain
 
 			objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName)
 			objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
+			objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
 
 			objSummarizer.OutputFolderPath = mOutputFolderPath
 			objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
 			objSummarizer.SaveResultsToTextFile = mSaveResultsAsText
 
-
+			blnAppendToResultsFile = False
 			blnSuccess = objSummarizer.ProcessMSGFResults()
 
 			If Not blnSuccess Then
@@ -225,16 +227,22 @@ Module modMain
 				End If
 			End If
 
-			Console.WriteLine("MSGF Threshold: ".PadRight(18) & objSummarizer.MSGFThreshold.ToString("0.00E+00"))
-			Console.WriteLine("Spectra Searched: ".PadRight(18) & objSummarizer.SpectraSearched)
-			Console.WriteLine("Total PSMs: ".PadRight(18) & objSummarizer.TotalPSMs)
-			Console.WriteLine("Unique Peptides: ".PadRight(18) & objSummarizer.UniquePeptideCount)
-			Console.WriteLine("Unique Proteins: ".PadRight(18) & objSummarizer.UniqueProteinCount)
+			Console.WriteLine("MSGF Threshold: ".PadRight(25) & objSummarizer.MSGFThreshold.ToString("0.00E+00"))
+			Console.WriteLine("FDR Threshold: ".PadRight(25) & objSummarizer.FDRThreshold.ToString("0.000"))
+			Console.WriteLine("Spectra Searched: ".PadRight(25) & objSummarizer.SpectraSearched.ToString("#,##0"))
+			Console.WriteLine()
+			Console.WriteLine("Total PSMs (MSGF Filter): ".PadRight(32) & objSummarizer.TotalPSMsMSGF)
+			Console.WriteLine("Unique Peptides (MSGF Filter): ".PadRight(32) & objSummarizer.UniquePeptideCountMSGF)
+			Console.WriteLine("Unique Proteins (MSGF Filter): ".PadRight(32) & objSummarizer.UniqueProteinCountMSGF)
+
+			Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(32) & objSummarizer.TotalPSMsFDR)
+			Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(32) & objSummarizer.UniquePeptideCountFDR)
+			Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(32) & objSummarizer.UniqueProteinCountFDR)
 
 			Console.WriteLine()
 
 		Catch ex As Exception
-			Console.WriteLine("Exception in SummarizeMSGFResuls: " & ex.Message)
+			Console.WriteLine("Exception in SummarizeMSGFResults: " & ex.Message)
 		End Try
 
 		Return blnSuccess
@@ -311,6 +319,8 @@ Module modMain
 
 			Console.WriteLine("This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins")
 			Console.WriteLine("It creates a text result file and optionally posts the results to the DMS database")
+			Console.WriteLine("Peptides are first filtered on MSGF_SpecProb < 1E-10")
+			Console.WriteLine("They are next filtered on FDR < 1%")
 			Console.WriteLine()
 			Console.WriteLine("Program syntax #1:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location))
 			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName] [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
