@@ -29,8 +29,8 @@ Public Class clsPepHitResultsProcWrapper
     Private m_ErrMsg As String = String.Empty
     Private m_PHRPConsoleOutputFilePath As String
 
-    '' Old/unused
-    '' Private WithEvents mPeptideHitResultsProcessor As PeptideHitResultsProcessor.IPeptideHitResultsProcessor
+	' This list tracks the error messages reported by CmdRunner
+	Protected mCmdRunnerErrors As System.Collections.Generic.List(Of String)
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -61,10 +61,11 @@ Public Class clsPepHitResultsProcWrapper
     ''' <remarks></remarks>
     Public Sub New(ByVal MgrParams As IMgrParams, ByVal JobParams As IJobParams)
 
-        m_MgrParams = MgrParams
+		m_MgrParams = MgrParams
         m_JobParams = JobParams
-        m_DebugLevel = CInt(m_MgrParams.GetParam("debuglevel"))
+		m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1)
 
+		mCmdRunnerErrors = New System.Collections.Generic.List(Of String)
     End Sub
 
     ''' <summary>
@@ -113,6 +114,7 @@ Public Class clsPepHitResultsProcWrapper
         Dim ioInputFile As System.IO.FileInfo
 
         Dim CmdStr As String
+		Dim blnSuccess As Boolean
 
         Try
             m_Progress = 0
@@ -169,83 +171,97 @@ Public Class clsPepHitResultsProcWrapper
                 .ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
             End With
 
-            If Not CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True) Then
-                m_ErrMsg = "Error running PHRP"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True)
 
+			If mCmdRunnerErrors.Count > 0 Then
+				' Append the error messages to the console output file
+				System.Threading.Thread.Sleep(250)
+				Using swConsoleOutputAppend As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
 
-            If CmdRunner.ExitCode <> 0 Then
-                m_ErrMsg = "PHRP runner returned a non-zero error code: " & CmdRunner.ExitCode.ToString
+					swConsoleOutputAppend.WriteLine()
+					swConsoleOutputAppend.WriteLine(" ----- Error details ---- ")
+					For Each strError As String In mCmdRunnerErrors
+						swConsoleOutputAppend.WriteLine(strError)
+					Next
 
-                ' Parse the console output file for any lines that contain "Error"
-                ' Append them to m_ErrMsg
+				End Using
+			End If
 
-                Dim ioConsoleOutputFile As System.IO.FileInfo = New System.IO.FileInfo(m_PHRPConsoleOutputFilePath)
-                Dim blnErrorMessageFound As Boolean = False
+			If Not blnsuccess Then
+				m_ErrMsg = "Error running PHRP"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-                If ioConsoleOutputFile.Exists Then
-                    Dim srInFile As System.IO.StreamReader
-                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			If CmdRunner.ExitCode <> 0 Then
+				m_ErrMsg = "PHRP runner returned a non-zero error code: " & CmdRunner.ExitCode.ToString
 
-                    Do While srInFile.Peek() >= 0
-                        Dim strLineIn As String
-                        strLineIn = srInFile.ReadLine()
-                        If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                            If strLineIn.ToLower.Contains("error") Then
-                                m_ErrMsg &= "; " & m_ErrMsg
-                                blnErrorMessageFound = True
-                            End If
-                        End If
-                    Loop
-                    srInFile.Close()
-                End If
+				' Parse the console output file for any lines that contain "Error"
+				' Append them to m_ErrMsg
 
-                If Not blnErrorMessageFound Then
-                    m_ErrMsg &= "; Unknown error message"
-                End If
+				Dim ioConsoleOutputFile As System.IO.FileInfo = New System.IO.FileInfo(m_PHRPConsoleOutputFilePath)
+				Dim blnErrorMessageFound As Boolean = False
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            Else
-                ' Make sure the key PHRP result files were created
-                Dim lstFilesToCheck As System.Collections.Generic.List(Of String)
-                lstFilesToCheck = New System.Collections.Generic.List(Of String)
+				If ioConsoleOutputFile.Exists Then
+					Dim srInFile As System.IO.StreamReader
+					srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-                If CreateInspectFirstHitsFile And Not CreateInspectSynopsisFile Then
-                    ' We're processing Inspect data, and PHRP simply created the _fht.txt file
-                    ' Thus, only look for the first-hits file
-                    lstFilesToCheck.Add("_fht.txt")
-                Else
-                    lstFilesToCheck.Add("_ResultToSeqMap.txt")
-                    lstFilesToCheck.Add("_SeqInfo.txt")
-                    lstFilesToCheck.Add("_SeqToProteinMap.txt")
-                    lstFilesToCheck.Add("_ModSummary.txt")
-                    lstFilesToCheck.Add("_ModDetails.txt")
-                End If
+					Do While srInFile.Peek() >= 0
+						Dim strLineIn As String
+						strLineIn = srInFile.ReadLine()
+						If Not String.IsNullOrWhiteSpace(strLineIn) Then
+							If strLineIn.ToLower.Contains("error") Then
+								m_ErrMsg &= "; " & m_ErrMsg
+								blnErrorMessageFound = True
+							End If
+						End If
+					Loop
+					srInFile.Close()
+				End If
 
-                For Each strFileName As String In lstFilesToCheck
-                    If ioInputFile.Directory.GetFiles("*" & strFileName).Length = 0 Then
-                        m_ErrMsg = "PHRP results file not found: " & strFileName
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    End If
-                Next
-            End If
+				If Not blnErrorMessageFound Then
+					m_ErrMsg &= "; Unknown error message"
+				End If
 
-            ' Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
-            Try
-                System.IO.File.Delete(m_PHRPConsoleOutputFilePath)
-            Catch ex As Exception
-                ' Ignore errors here
-            End Try
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				' Make sure the key PHRP result files were created
+				Dim lstFilesToCheck As System.Collections.Generic.List(Of String)
+				lstFilesToCheck = New System.Collections.Generic.List(Of String)
 
-        Catch ex As System.Exception
-            Dim Msg As String
-            Msg = "Exception while running the peptide hit results processor: " & _
-             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+				If CreateInspectFirstHitsFile And Not CreateInspectSynopsisFile Then
+					' We're processing Inspect data, and PHRP simply created the _fht.txt file
+					' Thus, only look for the first-hits file
+					lstFilesToCheck.Add("_fht.txt")
+				Else
+					lstFilesToCheck.Add("_ResultToSeqMap.txt")
+					lstFilesToCheck.Add("_SeqInfo.txt")
+					lstFilesToCheck.Add("_SeqToProteinMap.txt")
+					lstFilesToCheck.Add("_ModSummary.txt")
+					lstFilesToCheck.Add("_ModDetails.txt")
+				End If
+
+				For Each strFileName As String In lstFilesToCheck
+					If ioInputFile.Directory.GetFiles("*" & strFileName).Length = 0 Then
+						m_ErrMsg = "PHRP results file not found: " & strFileName
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
+				Next
+			End If
+
+			' Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
+			Try
+				System.IO.File.Delete(m_PHRPConsoleOutputFilePath)
+			Catch ex As Exception
+				' Ignore errors here
+			End Try
+
+		Catch ex As System.Exception
+			Dim Msg As String
+			Msg = "Exception while running the peptide hit results processor: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
         If m_DebugLevel >= 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete")
@@ -296,22 +312,45 @@ Public Class clsPepHitResultsProcWrapper
 
 #Region "Event Handlers"
 
+	Private Sub CmdRunner_ConsoleErrorEvent(NewText As String) Handles CmdRunner.ConsoleErrorEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP, " & NewText)
 
+		If Not mCmdRunnerErrors Is Nothing Then
+			' Split NewText on newline characters
+			Dim strSplitLine() As String
+			Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+			strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
 
-        'Update the status by parsing the PHRP Console Output file every 20 seconds
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-            ParsePHRPConsoleOutputFile()
-        End If
+			If Not strSplitLine Is Nothing Then
+				For Each strItem As String In strSplitLine
+					strItem = strItem.Trim(chNewLineChars)
+					If Not String.IsNullOrEmpty(strItem) Then
 
-    End Sub
+						mCmdRunnerErrors.Add(strItem)
+
+					End If
+				Next
+			End If
+
+		End If
+
+	End Sub
+
+	''' <summary>
+	''' Event handler for CmdRunner.LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
+	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
+		'Update the status by parsing the PHRP Console Output file every 20 seconds
+		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
+			dtLastStatusUpdate = System.DateTime.UtcNow
+			ParsePHRPConsoleOutputFile()
+		End If
+
+	End Sub
 
 #End Region
 End Class

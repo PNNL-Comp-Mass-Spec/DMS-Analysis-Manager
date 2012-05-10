@@ -357,6 +357,10 @@ Public Class clsAnalysisJob
 
 	End Function
 
+	Public Shared Function JobParametersFilename(jobNum As String) As String
+		Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
+	End Function
+
 	''' <summary>
 	''' Add/updates the value for the given parameter
 	''' </summary>
@@ -638,7 +642,7 @@ Public Class clsAnalysisJob
 		Dim xmlParameterFilePath As String = String.Empty
 
 		Try
-			xmlParameterFilename = clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
+			xmlParameterFilename = clsAnalysisJob.JobParametersFilename(jobNum.ToString())
 			xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
 
 			xmlWriter.WriteXMLToFile(paramXml, xmlParameterFilePath)

@@ -237,6 +237,11 @@
 		Class="AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC"
 		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="idpicker" 
+		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker"
+		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -475,6 +480,11 @@
 		Tool="smaqc" 
 		Class="AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC"
 		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="idpicker" 
+		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker"
+		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" 
 	/>
 
 </Resourcers>

@@ -6,17 +6,23 @@ Imports PHRPReader
 Public Class clsAnalysisResourcesIDPicker
 	Inherits clsAnalysisResources
 
+	Public Const IDPICKER_PARAM_FILENAME_LOCAL As String = "IDPickerParamFileLocal"
+
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim strDatasetName As String
-		strDatasetName = m_jobParams.GetParam("DatasetNum")
+		Dim strDatasetName As String = m_jobParams.GetParam("DatasetNum")
 
-		' Retrieve the parameter file associated peptide search tool (Sequest, XTandem, MSGFDB, etc.)
+		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGFDB, etc.)
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
-		If Not RetrieveFile(strParamFileName, strParamFileStoragePath, m_WorkingDir) Then
+		If Not FindAndRetrieveMiscFiles(strParamFileName, False) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+		End If
+		m_jobParams.AddResultFileToSkip(strParamFileName)
+
+		' Retrieve the IDPicker parameter file specified for this job
+		If Not RetrieveIDPickerParamFile() Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
 		' Retrieve the PSM result files, PHRP files, and MSGF file
@@ -29,13 +35,12 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-        'Retrieve the Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        
+		'Retrieve the Fasta file
+		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
-
 
 	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String) As Boolean
 		' This tracks the filenames to find and whether or not they are required
@@ -45,7 +50,6 @@ Public Class clsAnalysisResourcesIDPicker
 		Dim strResultType As String
 
 		Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
-		Dim blnSuccess As Boolean
 
 		strResultType = m_jobParams.GetParam("ResultType")
 
@@ -56,14 +60,9 @@ Public Class clsAnalysisResourcesIDPicker
 		   eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse _
 		   eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse _
 		   eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-			blnSuccess = True
 		Else
 			m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			blnSuccess = False
-		End If
-
-		If Not blnSuccess Then
 			Return False
 		End If
 
@@ -113,6 +112,38 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
+	Protected Function RetrieveIDPickerParamFile() As Boolean
+
+		Const DEFAULT_IDPICKER_PARAM_FILE_NAME As String = "IDPicker_Defaults.txt"
+
+		Dim strIDPickerParamFileName As String = m_jobParams.GetParam("IDPickerParamFile")
+		Dim strIDPickerParamFilePath As String
+		Dim strParamFileStoragePathKeyName As String
+
+		If String.IsNullOrEmpty(strIDPickerParamFileName) Then
+			strIDPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME
+		End If
+
+		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "IDPicker"
+		strIDPickerParamFilePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
+		If String.IsNullOrEmpty(strIDPickerParamFilePath) Then
+			strIDPickerParamFilePath = "\\gigasax\dms_parameter_Files\IDPicker"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strIDPickerParamFilePath)
+		End If
+
+		If Not CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, m_WorkingDir) Then
+			'Errors were reported in function call, so just return
+			Return False
+		End If
+
+		' Store the param file name so that we can load later
+		m_jobParams.AddAdditionalParameter("JobParameters", IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName)
+
+		Return True
+
+	End Function
+
+
 	Protected Function RetrieveMASICFiles(ByVal strDatasetName As String) As Boolean
 
 		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
@@ -129,6 +160,8 @@ Public Class clsAnalysisResourcesIDPicker
 			End If
 		End If
 
+		m_jobParams.AddResultFileToSkip(strDatasetName & SCAN_STATS_FILE_SUFFIX)
+		m_jobParams.AddResultFileToSkip(strDatasetName & SCAN_STATS_EX_FILE_SUFFIX)
 		Return True
 
 	End Function

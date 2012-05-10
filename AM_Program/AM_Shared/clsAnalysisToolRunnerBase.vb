@@ -932,6 +932,7 @@ Public Class clsAnalysisToolRunnerBase
 
 	''' <summary>
 	''' Determines the version info for a .NET DLL using reflection
+	''' If reflection fails, then uses System.Diagnostics.FileVersionInfo
 	''' </summary>
 	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
 	''' <param name="strDLLFilePath">Path to the DLL</param>
@@ -940,6 +941,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Overridable Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 
 		Dim ioFileInfo As System.IO.FileInfo
+		Dim blnSuccess As Boolean
 
 		Try
 			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
@@ -956,7 +958,7 @@ Public Class clsAnalysisToolRunnerBase
 				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
 				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
-				Return True
+				blnSuccess = True
 			End If
 
 		Catch ex As Exception
@@ -965,9 +967,70 @@ Public Class clsAnalysisToolRunnerBase
 			'    <supportedRuntime version="v4.0" />
 			'  </startup>
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+			blnSuccess = False
 		End Try
 
-		Return False
+		If Not blnSuccess Then
+			blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLFilePath)
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	Protected Overridable Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+		Dim ioFileInfo As System.IO.FileInfo
+		Dim blnSuccess As Boolean
+
+		Try
+			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
+
+			If Not ioFileInfo.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoViaSystemDiagnostics: " & strDLLFilePath)
+				Return False
+			Else
+
+				Dim oFileVersionInfo As System.Diagnostics.FileVersionInfo
+				oFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(strDLLFilePath)
+
+				Dim strName As String
+				Dim strVersion As String
+
+				strName = oFileVersionInfo.FileDescription
+				If String.IsNullOrEmpty(strName) Then
+					strName = oFileVersionInfo.InternalName
+				End If
+
+				If String.IsNullOrEmpty(strName) Then
+					strName = oFileVersionInfo.FileName
+				End If
+
+				If String.IsNullOrEmpty(strName) Then
+					strName = ioFileInfo.Name
+				End If
+
+				strVersion = oFileVersionInfo.FileVersion
+				If String.IsNullOrEmpty(strVersion) Then
+					strVersion = oFileVersionInfo.ProductVersion
+				End If
+
+				If String.IsNullOrEmpty(strVersion) Then
+					strVersion = "??"
+				End If
+
+				Dim strNameAndVersion As String
+				strNameAndVersion = strName & ", Version=" & strVersion
+				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+				blnSuccess = True
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining File Version for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
 
 	End Function
 
@@ -1565,7 +1628,11 @@ Public Class clsAnalysisToolRunnerBase
 
 						If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
 							strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+
+							If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+							End If
+
 
 							htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
 						End If

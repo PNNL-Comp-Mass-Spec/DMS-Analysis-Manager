@@ -148,6 +148,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster, IToolRunner)
 
+			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker".ToLower
+			'	myToolRunner = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -228,6 +231,8 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq, IAnalysisResources)
 
+			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker".ToLower
+			'	myModule = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker, IAnalysisResources)
 
 		End Select
 
