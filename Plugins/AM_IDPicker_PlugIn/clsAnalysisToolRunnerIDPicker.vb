@@ -980,8 +980,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 			For Each strError As String In mCmdRunnerErrors
 				If strError.Contains("no spectra in workspace") Then
 					' All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
-					m_EvalMessage = "IDPicker Report filtered out all of the proteins"
 					m_message = String.Empty
+					m_EvalMessage = "IDPicker Report filtered out all of the proteins"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage & "; this indicates there are not enough filter-passing peptides.")
 					blnSuccess = True
 					Exit For
 				End If
