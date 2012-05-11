@@ -56,6 +56,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 	' This list tracks error message text that we look for when considering whether or not to ignore an error message
 	Protected mCmdRunnerErrorsToIgnore As System.Collections.Generic.List(Of String)
 
+	' This list tracks files that we want to include in the zipped up IDPicker report folder
+	Protected mFilenamesToAddToReportFolder As System.Collections.Generic.List(Of String)
+	Protected mBatchFilesMoved As Boolean
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 #End Region
@@ -86,6 +89,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		mIDPickerOptions = New System.Collections.Generic.Dictionary(Of String, String)(System.StringComparer.CurrentCultureIgnoreCase)
 		mCmdRunnerErrors = New System.Collections.Generic.List(Of String)
 		mCmdRunnerErrorsToIgnore = New System.Collections.Generic.List(Of String)
+		mFilenamesToAddToReportFolder = New System.Collections.Generic.List(Of String)
 
 		Try
 			'Call base class for initial setup
@@ -376,14 +380,20 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	End Function
 
-	Protected Sub CopyConsoleOutputFileToReportFolder(ByVal strFileName As String, strReportFolderPath As String)
+	''' <summary>
+	''' Copies a file into folder strReportFolderPath then adds it to m_jobParams.AddResultFileToSkip
+	''' </summary>
+	''' <param name="strFileName"></param>
+	''' <param name="strReportFolderPath"></param>
+	''' <remarks></remarks>
+	Protected Sub CopyFileIntoReportFolder(ByVal strFileName As String, strReportFolderPath As String)
 		Dim ioSourceFile As System.IO.FileInfo
 
 		Try
 			ioSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, strFileName))
 
 			If ioSourceFile.Exists Then
-				ioSourceFile.CopyTo(System.IO.Path.Combine(strReportFolderPath, strFileName))
+				ioSourceFile.CopyTo(System.IO.Path.Combine(strReportFolderPath, strFileName), True)
 				m_jobParams.AddResultFileToSkip(strFileName)
 			End If
 
@@ -431,9 +441,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 			mCmdRunnerErrorsToIgnore.Clear()
 			m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE
 
-			blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, intMaxRuntimeMinutes)
+			blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, False, intMaxRuntimeMinutes)
 
-			If blnSuccess Then			
+			If blnSuccess Then
 				' Make sure a .pepXML file was created
 				If Not System.IO.File.Exists(mPepXMLFilePath) Then
 					m_message = "Error creating PepXML file"
@@ -541,8 +551,21 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	End Function
 
+	Protected Function IgnoreError(ByVal strErrorMessage As String) As Boolean
+		Dim blnIgnore As Boolean = False
+
+		For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
+			If strErrorMessage.Contains(strIgnoreText) Then
+				blnIgnore = True
+				Exit For
+			End If
+		Next
+
+		Return blnIgnore
+	End Function
+
 	Protected Function LoadIDPickerOptions() As Boolean
-	
+
 		Dim strParameterFilePath As String
 
 		Dim strLineIn As String
@@ -636,6 +659,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 			lstFileSpecs.Add("Tool_Version_Info_IDPicker.txt")
 			lstFileSpecs.Add(mIDPickerParamFileNameLocal)
 
+			If Not mBatchFilesMoved Then
+				lstFileSpecs.Add("Run*.bat")
+			End If
+
 			For Each strFileSpec As String In lstFileSpecs
 				For Each fiFile As System.IO.FileInfo In diSourceFolder.GetFiles(strFileSpec)
 					fiFilesToMove.Add(fiFile)
@@ -681,6 +708,50 @@ Public Class clsAnalysisToolRunnerIDPicker
 		End If
 
 	End Function
+
+	Protected Sub ParseConsoleOutputFileForErrors(ByVal strConsoleOutputFilePath As String)
+
+		Dim strLineIn As String
+		Dim blnUnhandledException As Boolean
+		Dim strExceptionText As String = String.Empty
+
+		Try
+			If System.IO.File.Exists(strConsoleOutputFilePath) Then
+				Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+					While srInFile.Peek > -1
+						strLineIn = srInFile.ReadLine
+
+						If Not String.IsNullOrEmpty(strLineIn) Then
+							If blnUnhandledException Then
+								If String.IsNullOrEmpty(strExceptionText) Then
+									strExceptionText = String.Copy(strLineIn)
+								Else
+									strExceptionText = ";" & strLineIn
+								End If
+
+							ElseIf strLineIn.StartsWith("Error:") Then
+								If Not IgnoreError(strLineIn) Then
+									mCmdRunnerErrors.Add(strLineIn)
+								End If
+							ElseIf strLineIn.StartsWith("Unhandled Exception") Then
+								mCmdRunnerErrors.Add(strLineIn)
+								blnUnhandledException = True
+							End If
+						End If
+					End While
+				End Using
+
+				If Not String.IsNullOrEmpty(strExceptionText) Then
+					mCmdRunnerErrors.Add(strExceptionText)
+				End If
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileForErrors: " & ex.Message)
+		End Try
+
+	End Sub
 
 	''' <summary>
 	''' Run idpAssemble to organizes the search results into a hierarchy
@@ -729,7 +800,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble
 
-		blnSuccess = RunProgramWork("IDPAssemble", progLoc, CmdStr, "", intMaxRuntimeMinutes)
+		blnSuccess = RunProgramWork("IDPAssemble", progLoc, CmdStr, IPD_Assemble_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
 
 		mIdpAssembleFilePath = System.IO.Path.Combine(m_WorkDir, ASSEMBLE_OUTPUT_FILENAME)
 
@@ -790,7 +861,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert
 
-		blnSuccess = RunProgramWork("IDPQonvert", progLoc, CmdStr, "", intMaxRuntimeMinutes)
+		blnSuccess = RunProgramWork("IDPQonvert", progLoc, CmdStr, IPD_Qonvert_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
 
 		mIdpXMLFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".idpXML")
 
@@ -847,13 +918,14 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPReport
 
-		blnSuccess = RunProgramWork("IDPReport", progLoc, CmdStr, "", intMaxRuntimeMinutes)
+		blnSuccess = RunProgramWork("IDPReport", progLoc, CmdStr, IPD_Report_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
 
 		If blnSuccess Then
 
-			' Make sure the output folder was created
 			Dim diReportFolder As System.IO.DirectoryInfo
 			diReportFolder = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, strOutputFolderName))
+
+			' Make sure the output folder was created
 			If Not diReportFolder.Exists Then
 				m_message = "IDPicker report folder file not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & diReportFolder.FullName)
@@ -879,10 +951,18 @@ Public Class clsAnalysisToolRunnerIDPicker
 			End If
 
 			If blnSuccess Then
-				' Copy the ConsoleOutput files into the Report folder (and add them to the files to Skip)
-				CopyConsoleOutputFileToReportFolder(IPD_Qonvert_CONSOLE_OUTPUT, diReportFolder.FullName)
-				CopyConsoleOutputFileToReportFolder(IPD_Assemble_CONSOLE_OUTPUT, diReportFolder.FullName)
-				CopyConsoleOutputFileToReportFolder(IPD_Report_CONSOLE_OUTPUT, diReportFolder.FullName)
+				' Copy the ConsoleOutput and RunProgram batch files into the Report folder (and add them to the files to Skip)
+				' mFilenamesToAddToReportFolder will already contain the batch file names
+
+				mFilenamesToAddToReportFolder.Add(IPD_Qonvert_CONSOLE_OUTPUT)
+				mFilenamesToAddToReportFolder.Add(IPD_Assemble_CONSOLE_OUTPUT)
+				mFilenamesToAddToReportFolder.Add(IPD_Report_CONSOLE_OUTPUT)
+
+				For Each strFileName As String In mFilenamesToAddToReportFolder
+					CopyFileIntoReportFolder(strFileName, diReportFolder.FullName)
+				Next
+
+				mBatchFilesMoved = True
 
 				' Zip the report folder
 				Dim strZippedResultsFilePath As String
@@ -893,7 +973,19 @@ Public Class clsAnalysisToolRunnerIDPicker
 				If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
 					m_NeedToAbortProcessing = True
 				End If
+
 			End If
+		Else
+			' Check whether mCmdRunnerErrors contains a known error message
+			For Each strError As String In mCmdRunnerErrors
+				If strError.Contains("no spectra in workspace") Then
+					' All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
+					m_EvalMessage = "IDPicker Report filtered out all of the proteins"
+					m_message = String.Empty
+					blnSuccess = True
+					Exit For
+				End If
+			Next
 
 		End If
 
@@ -910,7 +1002,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 	''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
 	''' <returns></returns>
 	''' <remarks>IDPicker tools cause clsRunDosProgram to hang when they post errors and warnings to the error stream; thus, strConsoleOutputFileName should be empty for IDPicker tools</remarks>
-	Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal intMaxRuntimeMinutes As Integer) As Boolean
+	Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal blnCaptureConsoleOutputViaDosRedirection As Boolean, ByVal intMaxRuntimeMinutes As Integer) As Boolean
 
 		Dim blnSuccess As Boolean
 
@@ -923,8 +1015,37 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		CmdRunner = New clsRunDosProgram(m_WorkDir)
 
-		With CmdRunner
+		If blnCaptureConsoleOutputViaDosRedirection Then
+			' Create a batch file to run the command
+			' Capture the console output (including output to the error stream) via redirection symbols: 
+			'    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
+
+			Dim strExePathOriginal As String = String.Copy(strExePath)
+			Dim CmdStrOriginal As String = String.Copy(CmdStr)
+
+			strProgramDescription = strProgramDescription.Replace(" ", "_")
+
+			Dim strBatchFileName As String = "Run_" & strProgramDescription & ".bat"
+			mFilenamesToAddToReportFolder.Add(strBatchFileName)
+
+			' Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
+			strExePath = System.IO.Path.Combine(m_WorkDir, strBatchFileName)
+			CmdStr = String.Empty
+
 			If String.IsNullOrEmpty(strConsoleOutputFileName) Then
+				strConsoleOutputFileName = strProgramDescription & "_Console_Output.txt"
+			End If
+
+			' Create the batch file
+			Using swBatchFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strExePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				swBatchFile.WriteLine(strExePathOriginal & " " & CmdStrOriginal & " > " & strConsoleOutputFileName & " 2>&1")
+			End Using
+
+			System.Threading.Thread.Sleep(100)
+		End If
+
+		With CmdRunner
+			If blnCaptureConsoleOutputViaDosRedirection OrElse String.IsNullOrEmpty(strConsoleOutputFileName) Then
 				.CreateNoWindow = False
 				.EchoOutputToConsole = False
 				.CacheStandardOutput = False
@@ -947,7 +1068,11 @@ Public Class clsAnalysisToolRunnerIDPicker
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
 		End If
 
-		If mCmdRunnerErrors.Count > 0 Then
+		If blnCaptureConsoleOutputViaDosRedirection Then
+			ParseConsoleOutputFileForErrors(System.IO.Path.Combine(m_WorkDir, strConsoleOutputFileName))
+
+		ElseIf mCmdRunnerErrors.Count > 0 AndAlso Not String.IsNullOrEmpty(strConsoleOutputFileName) Then
+
 			' Append the error messages to the console output file
 			System.Threading.Thread.Sleep(250)
 			Using swConsoleOutputAppend As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
@@ -961,7 +1086,6 @@ Public Class clsAnalysisToolRunnerIDPicker
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
 					End If
 				Next
-
 			End Using
 
 		End If
@@ -986,6 +1110,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProgramDescription & " Complete")
 			End If
+
 		End If
 
 		Return blnSuccess
@@ -1107,7 +1232,6 @@ Public Class clsAnalysisToolRunnerIDPicker
 			' Split NewText on newline characters
 			Dim strSplitLine() As String
 			Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
-			Dim blnIgnore As Boolean
 
 			strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
 
@@ -1116,17 +1240,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 					strItem = strItem.Trim(chNewLineChars)
 					If Not String.IsNullOrEmpty(strItem) Then
 
-						blnIgnore = False
-
 						' Confirm that strItem does not contain any text in mCmdRunnerErrorsToIgnore
-						For Each strIgnoreText In mCmdRunnerErrorsToIgnore
-							If strItem.Contains(strIgnoreText) Then
-								blnIgnore = True
-								Exit For
-							End If
-						Next
-
-						If Not blnIgnore Then
+						If Not IgnoreError(strItem) Then
 							mCmdRunnerErrors.Add(strItem)
 						End If
 

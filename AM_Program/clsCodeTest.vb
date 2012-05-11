@@ -1383,6 +1383,39 @@ Public Class clsCodeTest
 
 	End Sub
 
+	Sub TestProgRunnerIDPicker()
+
+		Dim m_WorkDir As String = "E:\dms_workdir"
+		Dim strConsoleOutputFileName As String = ""
+		Dim blnWriteConsoleOutputFileRealtime As Boolean = False
+		Dim blnSuccess As Boolean
+
+		Dim strExePath As String = "C:\DMS_Programs\IDPicker\idpQonvert.exe"
+		Dim CmdStr As String = "-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta -SearchScoreWeights ""msgfspecprob -1"" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump E:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML"
+		Dim strProgramDescription As String = "IDPQonvert"
+
+		Dim CmdRunner As clsRunDosProgram
+
+		CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+		With CmdRunner
+			.CreateNoWindow = False
+			.EchoOutputToConsole = False
+			If String.IsNullOrEmpty(strConsoleOutputFileName) OrElse Not blnWriteConsoleOutputFileRealtime Then
+				.CacheStandardOutput = False
+				.WriteConsoleOutputToFile = False
+			Else
+				.CacheStandardOutput = False
+				.WriteConsoleOutputToFile = True
+				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, strConsoleOutputFileName)
+			End If
+		End With
+
+		blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True)
+
+		Console.WriteLine(blnSuccess)
+
+	End Sub
 
 	''' <summary>
 	''' Look for the .PEK and .PAR files in the specified folder

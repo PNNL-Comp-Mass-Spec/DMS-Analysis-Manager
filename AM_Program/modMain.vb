@@ -72,15 +72,6 @@ Module modMain
 						'objTest.TestDeliverResults()
 						'objTest.TestGetFileContents()
 
-						Dim blnSuccess As Boolean
-						If Not mInputFilePath Is Nothing AndAlso mInputFilePath.Length > 0 Then
-							blnSuccess = objTest.ValidateSequestNodeCount(mInputFilePath, True)
-						Else
-							blnSuccess = objTest.ValidateSequestNodeCount("f:\temp\sequest.log", True)
-							blnSuccess = objTest.ValidateSequestNodeCount("\\proto-9\DMS3_XFER\HMEC_AA_extraction_7pt2ug_031312_r2\Seq201204161109_Auto826662\sequest.log", True)
-							blnSuccess = objTest.ValidateSequestNodeCount("\\proto-7\VOrbiETD04\2012_2\HuPlasma_top15_01_Thresh_13Apr12_Cougar_12-03-21\Seq201204161143_Auto826701\sequest.log", True)
-						End If
-
 						'objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
 						'objTest.TestFindAndReplace()
 
@@ -99,6 +90,8 @@ Module modMain
 						'objTest.TestMALDIDataUnzip("")
 
 						'objTest.TestMSGFResultsSummarizer()
+
+						objTest.TestProgRunnerIDPicker()
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
