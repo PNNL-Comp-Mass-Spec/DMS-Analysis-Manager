@@ -70,21 +70,38 @@ namespace AnalysisManager_Ape_PlugIn
 
             });
 
-            string apeImprovMTSServerName = GetJobParam("ImprovMTSServer");
-            string apeImprovMTSDatabaseName = GetJobParam("ImprovMTSDatabase");
+            string apeMTSServerName = GetJobParam("ApeMTSServer");
+            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            //Need these for backward compatibility
+            if (string.IsNullOrEmpty(apeMTSServerName))
+            {
+                apeMTSServerName = GetJobParam("ImprovMTSServer");
+            }
+            if (string.IsNullOrEmpty(apeMTSDatabaseName))
+            {
+                apeMTSDatabaseName = GetJobParam("ImprovMTSDatabase");
+            }
             string apeImprovMinPMTQuality = GetJobParam("ImprovMinPMTQuality");
+            string apeMSGFThreshold = GetJobParam("ImprovMSGFThreshold");
             string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
             List<string> paramList = new List<string>();
-            paramList.Add(apeImprovMTSDatabaseName + ";@MTDBName;" + apeImprovMTSDatabaseName + ";False;sqldbtype.varchar;;");
-            paramList.Add(apeImprovMinPMTQuality + ";@minimumPMTQualityScore;0;False;sqldbtype.real;;");
-            paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeImprovMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
+//            paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
+            paramList.Add(apeImprovMinPMTQuality + ";@MinimumPMTQualityScore;0;False;sqldbtype.real;;");
+            paramList.Add("0.1;@MSGFThreshold;0.1;False;sqldbtype.real;;");
 
-            string dotnetConnString = "Server=" + apeImprovMTSServerName + ";database=PRISM_IFC;uid=mtuser;Password=mt4fun";
+            
+            paramList.Add("1;@ReturnJobInfoTable;1;True;sqldbtype.tinyint;T_Analysis_Description;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnPeptideTable;1;True;sqldbtype.tinyint;T_Peptides;sqldbtype.tinyint");
 
+
+            string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
+            //mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
 			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 4, dotnetConnString, GetExperimentList(), apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 3, dotnetConnString, GetJobIDList(), apeDatabase, mHandle);
 
             return blnSuccess;
         }
@@ -103,13 +120,44 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     while (reader.Read())
                     {
+                        if (!string.IsNullOrEmpty(reader[0].ToString()))
+                        {
                         expList += reader[0].ToString() + ", ";
+                        }
                     }
                 }
             }
 
             return expList;
         }
+
+        private string GetJobIDList()
+        {
+            string constr = RequireMgrParam("connectionstring");
+            string sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
+                             "WHERE Data_Package_ID = " + GetJobParam("DataPackageID") + " and Tool = 'Sequest'";
+
+            string expList = string.Empty;
+            using (SqlConnection conn = new SqlConnection(constr))
+            {
+                conn.Open();
+                // Get the experiments from the Data Package
+                SqlCommand query = new SqlCommand(sqlText, conn);
+                using (SqlDataReader reader = query.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (!string.IsNullOrEmpty(reader[0].ToString()))
+                        {
+                            expList += reader[0].ToString() + ", ";
+                        }
+                    }
+                }
+            }
+
+            return expList;
+        }
+
 
     }
 	

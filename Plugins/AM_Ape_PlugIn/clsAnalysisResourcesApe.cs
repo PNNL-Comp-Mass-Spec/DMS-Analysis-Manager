@@ -144,6 +144,26 @@ namespace AnalysisManager_Ape_PlugIn
         {
             bool blnSuccess = true;
 
+            string analysisType = m_jobParams.GetParam("AnalysisType");
+
+            //// Retrieve the Ape Workflow file specified for this job
+            string strApeWorkflowFileName = m_jobParams.GetParam("ApeWorkflowName");
+            // Retrieve the Workflow file name specified for this job
+            if (strApeWorkflowFileName == null || strApeWorkflowFileName.Length == 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Ape Workflow not defined in the job parameters for this job; unable to continue");
+                return false;
+            }
+
+            string strApeWorkflowFileStoragePath = "\\\\gigasax\\DMS_Workflows\\Ape\\" + analysisType;
+
+            //Now copy the Ape workflow file to the working directory
+            if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowFileStoragePath, m_WorkingDir))
+            {
+                //Errors were reported in function call, so just return
+                return false;
+            }
+
             return blnSuccess;
         }
 

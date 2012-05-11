@@ -6,7 +6,7 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMGetQRollupResults : clsApeAMBase
+    class clsApeAMGetViperResults : clsApeAMBase
     {
 
         #region Member Variables
@@ -18,7 +18,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-            #region Constructors 
+        #region Constructors 
 
         /// <summary>
         /// Constructor
@@ -26,11 +26,12 @@ namespace AnalysisManager_Ape_PlugIn
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
         /// <param name="monitor"></param>
-        public clsApeAMGetQRollupResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        public clsApeAMGetViperResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
         {           
         }
 
         #endregion
+
 
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
@@ -38,14 +39,14 @@ namespace AnalysisManager_Ape_PlugIn
         public bool GetQRollupResults(String dataPackageID)
         {
             bool blnSuccess = true;
-            blnSuccess = GetQRollupResultsAll();
+            blnSuccess = GetViperResultsAll();
             return blnSuccess;
         }
 
-        private bool GetQRollupResultsAll()
+        private bool GetViperResultsAll()
         {
             bool blnSuccess = true;
-			Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -72,42 +73,32 @@ namespace AnalysisManager_Ape_PlugIn
 
             string apeMTSServerName = GetJobParam("ApeMTSServer");
             string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            //Need these for backward compatibility
-            if (string.IsNullOrEmpty(apeMTSServerName))
-            {
-                apeMTSServerName = GetJobParam("QRollupMTSServer");
-            }
-            if (string.IsNullOrEmpty(apeMTSDatabaseName))
-            {
-                apeMTSDatabaseName = GetJobParam("QRollupMTSDatabase");
-            }
-
             string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
             List<string> paramList = new List<string>();
-            paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
-            paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint");
+            paramList.Add("1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint");
 
             string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
-			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 5, dotnetConnString, GetIDList(), apeDatabase, mHandle);
-            
+            Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 0, dotnetConnString, GetIDList(), apeDatabase, mHandle);
+
             return blnSuccess;
         }
 
         private string GetIDList()
         {
             string constr = RequireMgrParam("connectionstring");
-            string sqlText = "SELECT vmts.QID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
-                             "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " + 
-                             "WHERE Data_Package_ID = " + GetJobParam("DataPackageID") + " and Tool = 'Decon2LS_V2'";
+            string sqlText = "SELECT vmts.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
+                             "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
+                             "WHERE Data_Package_ID = " + GetJobParam("DataPackageID") + " and Tool like 'Decon2LS%'";
 
             //Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
-                sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
+            sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
             };
 
             //Add ini filename if defined
@@ -128,7 +119,7 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                        expList += reader[0].ToString() + ", ";
+                            expList += reader[0].ToString() + ", ";
                         }
                     }
                 }
@@ -137,6 +128,6 @@ namespace AnalysisManager_Ape_PlugIn
             return expList;
         }
 
+
     }
-	
 }

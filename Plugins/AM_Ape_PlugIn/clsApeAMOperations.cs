@@ -81,6 +81,16 @@ namespace AnalysisManager_Ape_PlugIn
 
                     break;
 
+                case "getviperresults":
+                    clsApeAMGetViperResults apeVImpObj = new clsApeAMGetViperResults(m_jobParams, m_mgrParams);
+
+                    // Attach the progress event handler
+                    apeVImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+
+                    blnSuccess = apeVImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
+
+                    break;
+
                 default:
                     blnSuccess = false;
                     //m_message = "Ape Operation: " + apeOperation + "not recognized.";
