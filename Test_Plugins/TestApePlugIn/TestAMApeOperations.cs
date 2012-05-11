@@ -29,10 +29,12 @@ namespace TestApePlugIn {
                 { "Step", "1" },
                 { "StepTool", "APE" },
                 { "StepOutputFolderName", "Step_1_APE" },
-                { "ImprovMTSServer", "Albert" },
-                { "ImprovMTSDatabase", "MT_SeaSediments_ERB_P744" },
+                { "ApeMTSServer", "Albert" },
+                { "ApeMTSDatabase", "MT_Sea_Sediments_SBI_P590" },
+//                { "ApeMTSDatabase", "MT_SeaSediments_ERB_P744" },
                 { "ImprovMinPMTQuality", "1.0" },
-                { "DataPackageID", "159" }
+                { "ImprovMSGFThreshold", "1" },
+                { "DataPackageID", "167" }
             };
 			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
