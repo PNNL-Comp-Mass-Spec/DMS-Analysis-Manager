@@ -23,6 +23,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 	Protected Const IDPicker_Report As String = "idpReport.exe"
 	Protected Const IDPicker_GUI As String = "IdPickerGui.exe"
 
+	Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
+
 	Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
 
 	Protected Const PROGRESS_PCT_IDPicker_STARTING As Single = 1
@@ -78,6 +80,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		Dim OrgDbDir As String
 		Dim strFASTAFilePath As String
+		Dim strResultType As String
+		Dim strSynFilePath As String
+
+		Dim ePHRPResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
 
 		Dim result As IJobParams.CloseOutType
 
@@ -125,20 +131,47 @@ Public Class clsAnalysisToolRunnerIDPicker
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 
-			' Determine the prefix used by decoy proteins in the Fasta file
-			Dim strDecoyPrefix As String = String.Empty
-			blnSuccess = DetermineDecoyProteinPrefix(fiFastaFile.FullName, strDecoyPrefix)
-			If Not blnSuccess Then
-				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Error determining decoy protein prefix"
-				End If
+			' Determine the result type
+			strResultType = m_jobParams.GetParam("ResultType")
+
+			ePHRPResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType)
+			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown Then
+				m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			If String.IsNullOrEmpty(strDecoyPrefix) Then
-				If String.IsNullOrEmpty(m_EvalMessage) Then
-					m_EvalMessage = "IDPicker processing skipped since no decoy proteins"
+			' Define the path to the synopsis file
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
+
+			' Determine the prefix used by decoy proteins
+			Dim strDecoyPrefix As String = String.Empty
+
+			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+				' If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_
+				' Check for this
+				blnSuccess = LookForDecoyProteinsInMSGFDBResults(strSynFilePath, ePHRPResultType, strDecoyPrefix)
+				If Not blnSuccess Then
+					If String.IsNullOrEmpty(m_message) Then
+						m_message = "Error looking for decoy proteins in the MSGFDB synopsis file"
+					End If
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
+			End If
+
+			If String.IsNullOrEmpty(strDecoyPrefix) Then
+				' Look for decoy proteins in the Fasta file
+				blnSuccess = DetermineDecoyProteinPrefix(fiFastaFile.FullName, strDecoyPrefix)
+				If Not blnSuccess Then
+					If String.IsNullOrEmpty(m_message) Then
+						m_message = "Error looking for decoy proteins in the Fasta file"
+					End If
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+			End If
+
+			If String.IsNullOrEmpty(strDecoyPrefix) Then
+				m_EvalMessage = "No decoy proteins; skipping IDPicker"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
 				blnSkipIDPicker = True
 			End If
 
@@ -153,7 +186,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			End If
 
 			' Create the PepXML file
-			blnSuccess = CreatePepXMLFile(fiFastaFile.FullName)
+			blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath)
 			If Not blnSuccess Then
 				If String.IsNullOrEmpty(m_message) Then
 					m_message = "Error creating PepXML file"
@@ -162,7 +195,17 @@ Public Class clsAnalysisToolRunnerIDPicker
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			If Not blnSkipIDPicker Then
+			If blnSkipIDPicker Then
+				' Don't keep either of these IDPicker text files since we're skipping IDPicker
+				m_jobParams.AddResultFileToSkip("IDPicker_AnalysisSummary.txt")
+				Dim strParamFileNameLocal As String = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
+				If String.IsNullOrEmpty(strParamFileNameLocal) Then
+					m_jobParams.AddResultFileToSkip(clsAnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME)
+				Else
+					m_jobParams.AddResultFileToSkip(strParamFileNameLocal)
+				End If
+
+			Else
 
 				' Load the IDPicker options
 				blnSuccess = LoadIDPickerOptions()
@@ -403,13 +446,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	End Sub
 
-	Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String) As Boolean
-
-		Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+	Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String) As Boolean
 
 		Dim strParamFileName As String
-		Dim strResultType As String
-		Dim strSynFilePath As String
 
 		Dim iHitsPerSpectrum As Integer
 
@@ -421,17 +460,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Try
 
 			'Set up and execute a program runner to run PeptideListToXML
-
-			strResultType = m_jobParams.GetParam("ResultType")
-
-			eResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType)
-			If eResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown Then
-				m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
-				Return False
-			End If
 			strParamFileName = m_jobParams.GetParam("ParmFileName")
-
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_Dataset))
 
 			mPepXMLFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".pepXML")
 			iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3)
@@ -485,12 +514,17 @@ Public Class clsAnalysisToolRunnerIDPicker
 		strDecoyPrefix = String.Empty
 
 		Try
+
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the fasta file")
+			End If
+
 			lstReversedProteinPrefixes = New System.Collections.Generic.SortedSet(Of String)
 
-			lstReversedProteinPrefixes.Add("reversed_")	   ' MTS reversed proteins                 'reversed[_]%'
-			lstReversedProteinPrefixes.Add("scrambled_")   ' MTS scrambled proteins                'scrambled[_]%'
-			lstReversedProteinPrefixes.Add("xxx.")		   ' Inspect reversed/scrambled proteins   'xxx.%'
-			lstReversedProteinPrefixes.Add("rev_")		   ' MSGFDB reversed proteins              'rev[_]%'
+			lstReversedProteinPrefixes.Add("reversed_")								' MTS reversed proteins                 'reversed[_]%'
+			lstReversedProteinPrefixes.Add("scrambled_")							' MTS scrambled proteins                'scrambled[_]%'
+			lstReversedProteinPrefixes.Add("xxx.")									' Inspect reversed/scrambled proteins   'xxx.%'
+			lstReversedProteinPrefixes.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToLower())	' MSGFDB reversed proteins              'rev[_]%'
 
 			' Note that X!Tandem decoy proteins end with ":reversed"
 			' IDPicker doesn't support decoy protein name suffixes, only prefixes
@@ -523,14 +557,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			objFastaFileReader.CloseFile()
 
-			If lstPrefixStats.Count = 0 Then
-				m_EvalMessage = "No decoy proteins; skipping IDPicker"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
-
-			ElseIf lstPrefixStats.Count = 1 Then
+			If lstPrefixStats.Count = 1 Then
 				strDecoyPrefix = lstPrefixStats.First.Key
 
-			Else
+			ElseIf lstPrefixStats.Count > 1 Then
 				' Find the prefix (key) in lstPrefixStats with the highest occurrence count
 				Dim intMaxCount As Integer = -1
 				For Each kvEntry In lstPrefixStats
@@ -626,6 +656,40 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		Catch ex As Exception
 			m_message = "Exception in IDPickerPlugin->LoadIDPickerOptions"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
+
+		strDecoyPrefix = String.Empty
+
+		Try
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the MSGFDB synopsis file")
+			End If
+
+			Using oReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSynFilePath, eResultType, False, False, False)
+
+				Do While oReader.MoveNext
+					If oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper()) Then
+						strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, MSGFDB_DECOY_PROTEIN_PREFIX.Length)
+
+						If m_DebugLevel >= 4 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decoy protein prefix found: " & strDecoyPrefix)
+						End If
+
+						Exit Do
+					End If
+				Loop
+			End Using
+
+		Catch ex As Exception
+			m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFDBResults"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
 			Return False
 		End Try

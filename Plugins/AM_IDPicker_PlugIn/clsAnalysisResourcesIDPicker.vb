@@ -7,6 +7,8 @@ Public Class clsAnalysisResourcesIDPicker
 	Inherits clsAnalysisResources
 
 	Public Const IDPICKER_PARAM_FILENAME_LOCAL As String = "IDPickerParamFileLocal"
+	Public Const DEFAULT_IDPICKER_PARAM_FILE_NAME As String = "IDPicker_Defaults.txt"
+
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -114,8 +116,6 @@ Public Class clsAnalysisResourcesIDPicker
 
 	Protected Function RetrieveIDPickerParamFile() As Boolean
 
-		Const DEFAULT_IDPICKER_PARAM_FILE_NAME As String = "IDPicker_Defaults.txt"
-
 		Dim strIDPickerParamFileName As String = m_jobParams.GetParam("IDPickerParamFile")
 		Dim strIDPickerParamFilePath As String
 		Dim strParamFileStoragePathKeyName As String
@@ -177,7 +177,7 @@ Public Class clsAnalysisResourcesIDPicker
 		lstFileNamesToGet.Add(synFileName, True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(eResultType, strDatasetName), False)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, strDatasetName), True)
-		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, strDatasetName), True)		
+		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, strDatasetName), True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
