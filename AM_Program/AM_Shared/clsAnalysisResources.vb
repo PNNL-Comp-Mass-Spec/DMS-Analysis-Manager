@@ -3270,7 +3270,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			If fiFileInfo.Length = 0 Then
-				m_message = strFileDescription & " is empty (zero-bytes)"
+				m_message = strFileDescription & " file is empty (zero-bytes)"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
 			End If
