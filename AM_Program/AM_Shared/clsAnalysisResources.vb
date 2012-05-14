@@ -1124,7 +1124,7 @@ Public MustInherit Class clsAnalysisResources
 			diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
 
 			If Not diFolderInfo.Exists Then
-				m_message = "Dataset folder not found: " & diFolderInfo.FullName
+				m_message = "Dataset folder with MASIC files not found: " & diFolderInfo.FullName
 			Else
 
 				'See if the ServerPath folder actually contains a subfolder that starts with "SIC"
@@ -2038,6 +2038,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Try
 			If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
+			If FolderNameToFind Is Nothing Then FolderNameToFind = String.Empty
 
 			PathsToCheck(0) = System.IO.Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName)
 			PathsToCheck(1) = System.IO.Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName)
@@ -2133,6 +2134,9 @@ Public MustInherit Class clsAnalysisResources
 								If FileNameToFind.Length > 0 Then
 									Msg &= " (matched file " & FileNameToFind & ")"
 								End If
+								If FolderNameToFind.Length > 0 Then
+									Msg &= " (matched folder " & FolderNameToFind & ")"
+								End If
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 							End If
 
@@ -2179,7 +2183,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Overridable Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String) As Boolean
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Obtaining org db file")
+		If m_DebugLevel >= 3 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Obtaining org db file")
+		End If
 
 		'Make a new fasta file from scratch
 		If Not CreateFastaFile(LocalOrgDBFolder) Then
@@ -2212,7 +2218,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim HashString As String
 		Dim OrgDBDescription As String = String.Empty
 
-		If m_DebugLevel > 0 Then
+		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file")
 		End If
 
