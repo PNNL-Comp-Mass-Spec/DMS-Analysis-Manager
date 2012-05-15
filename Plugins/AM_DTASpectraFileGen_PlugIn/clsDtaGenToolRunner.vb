@@ -420,7 +420,7 @@ Public Class clsDtaGenToolRunner
 	Protected Function DeleteDataFile() As IJobParams.CloseOutType
 
 		'Deletes the .raw file from the working directory
-		Dim FoundFiles() As String
+		Dim lstFilesToDelete As System.Collections.Generic.List(Of String)
 		Dim MyFile As String
 
 		If m_DebugLevel >= 2 Then
@@ -429,8 +429,12 @@ Public Class clsDtaGenToolRunner
 
 		'Delete the .raw file
 		Try
-			FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.raw")
-			For Each MyFile In FoundFiles
+			lstFilesToDelete = New System.Collections.Generic.List(Of String)
+			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_RAW_EXTENSION))
+			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZXML_EXTENSION))
+			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZML_EXTENSION))
+
+			For Each MyFile In lstFilesToDelete
 				If m_DebugLevel >= 2 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.DeleteDataFile, deleting file " & MyFile)
 				End If

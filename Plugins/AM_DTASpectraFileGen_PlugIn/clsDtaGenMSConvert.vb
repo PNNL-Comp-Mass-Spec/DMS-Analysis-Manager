@@ -152,6 +152,8 @@ Public Class clsDtaGenMSConvert
 				Return False
 		End Select
 
+		m_JobParams.AddResultFileToSkip(System.IO.Path.GetFileName(RawFilePath))
+
 		ScanStart = 1
 		ScanStop = 999999
 

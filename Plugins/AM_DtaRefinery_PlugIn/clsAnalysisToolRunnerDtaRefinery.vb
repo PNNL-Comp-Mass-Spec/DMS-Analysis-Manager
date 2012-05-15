@@ -83,7 +83,9 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         CmdStr &= " " & System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
         CmdStr &= " " & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)
 
-
+		If m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+		End If
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "DTARefinery", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
 

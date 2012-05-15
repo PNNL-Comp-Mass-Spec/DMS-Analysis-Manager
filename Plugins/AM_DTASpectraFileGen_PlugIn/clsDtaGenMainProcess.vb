@@ -129,12 +129,16 @@ Public Class clsDtaGenThermoRaw
 		Select Case m_RawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				strExtension = clsAnalysisResources.DOT_RAW_EXTENSION
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+				strExtension = clsAnalysisResources.DOT_MZXML_EXTENSION
 			Case clsAnalysisResources.eRawDataTypeConstants.mzML
 				strExtension = clsAnalysisResources.DOT_MZML_EXTENSION
 			Case Else
 				m_ErrMsg = "Unsupported data type: " & m_RawDataType.ToString()
 				Return False
 		End Select
+
+		m_JobParams.AddResultFileToSkip(DSName & strExtension)
 
 		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
 			m_ErrMsg = String.Empty

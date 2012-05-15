@@ -615,6 +615,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim MAX_RETRY_ATTEMPTS As Integer = 3
 		Dim intRetriesRemaining As Integer
 		Dim blnSuccess As Boolean
+		Dim oRandom As System.Random = New System.Random()
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenating .out files")
@@ -645,6 +646,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending .out files to the _out.txt.tmp file" & ": " & ex.Message)
+				System.Threading.Thread.Sleep(oRandom.Next(5, 15) * 1000)			' Delay for a random length between 5 and 15 seconds
 				blnSuccess = False
 			End Try
 
