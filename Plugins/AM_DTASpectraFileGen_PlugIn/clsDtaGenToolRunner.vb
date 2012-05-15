@@ -133,9 +133,12 @@ Public Class clsDtaGenToolRunner
 
 		Dim strDTAGenerator As String = m_jobParams.GetParam("DtaGenerator")
 		Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 
-		Select Case strRawDataType
-			Case "dot_raw_files"
+		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
 					mConcatenateDTAs = False
 					SpectraGen = New clsDtaGenMSConvert()
@@ -161,7 +164,19 @@ Public Class clsDtaGenToolRunner
 
 				End If
 
-			Case "dot_d_folders"
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
+					mConcatenateDTAs = False
+					SpectraGen = New clsDtaGenMSConvert()
+					Return eDTAGeneratorConstants.MSConvert
+
+				Else
+					m_message = "Unknown DTAGenerator for mzML files: " & strDTAGenerator
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return eDTAGeneratorConstants.Unknown
+				End If
+
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
 				mConcatenateDTAs = True
 				SpectraGen = New clsMGFtoDtaGenMainProcess()
 				Return eDTAGeneratorConstants.MGFtoDTA

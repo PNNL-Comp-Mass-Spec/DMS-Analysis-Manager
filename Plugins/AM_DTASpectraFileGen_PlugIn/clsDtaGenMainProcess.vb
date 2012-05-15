@@ -123,12 +123,24 @@ Public Class clsDtaGenThermoRaw
 	''' <remarks></remarks>
 	Protected Function VerifyRawFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
-		'Verifies a .raw file exists in specfied directory
-		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & ".raw")) Then
-			m_ErrMsg = ""
+		Dim strExtension As String = ".xyz"
+
+		'Verifies a the data file exists in specfied directory
+		Select Case m_RawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+				strExtension = clsAnalysisResources.DOT_RAW_EXTENSION
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				strExtension = clsAnalysisResources.DOT_MZML_EXTENSION
+			Case Else
+				m_ErrMsg = "Unsupported data type: " & m_RawDataType.ToString()
+				Return False
+		End Select
+
+		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
+			m_ErrMsg = String.Empty
 			Return True
 		Else
-			m_ErrMsg = "Data file " & DSName & ".raw not found in working directory"
+			m_ErrMsg = "Data file " & DSName & strExtension & " not found in working directory"
 			Return False
 		End If
 

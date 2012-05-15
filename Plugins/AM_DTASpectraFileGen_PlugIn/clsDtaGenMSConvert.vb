@@ -52,10 +52,7 @@ Public Class clsDtaGenMSConvert
 
 		m_Progress = 10
 
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		eRawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetParam("RawDataType"))
-
-		If Not ConvertRawToMGF(eRawDataType) Then
+		If Not ConvertRawToMGF(m_RawDataType) Then
 			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
 				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
 				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR

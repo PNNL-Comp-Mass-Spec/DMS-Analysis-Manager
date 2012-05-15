@@ -17,9 +17,10 @@ Public MustInherit Class clsDtaGen
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Protected m_ErrMsg As String = ""
-	Protected m_WorkDir As String = ""	'Working directory on analysis machine
-	Protected m_Dataset As String = ""
+	Protected m_ErrMsg As String = String.Empty
+	Protected m_WorkDir As String = String.Empty	'Working directory on analysis machine
+	Protected m_Dataset As String = String.Empty
+	Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
 	Protected m_DtaToolNameLoc As String = ""		' Path to the program used to create DTA files
 	Protected m_Status As ISpectraFileProcessor.ProcessStatus
 	Protected m_Results As ISpectraFileProcessor.ProcessResults
@@ -123,7 +124,9 @@ Public MustInherit Class clsDtaGen
 			m_WorkDir = .WorkDir
 			m_Dataset = .DatasetName
 		End With
-	
+
+		m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetParam("RawDataType"))
+
 		m_Progress = 0
 
 	End Sub
