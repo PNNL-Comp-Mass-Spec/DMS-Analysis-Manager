@@ -242,6 +242,16 @@
 		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker"
 		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="ascore" 
+		Class="AnalysisManager_AScore_PlugIn.clsAnalysisToolRunnerAScore"
+		AssemblyFile="AnalysisManager_AScore_PlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="idm" 
+		Class="AnalysisManager_IDM_Plugin.clsAnalysisToolRunnerIDM"
+		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
+	/>
 
 </ToolRunners>
 
@@ -485,6 +495,16 @@
 		Tool="idpicker" 
 		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker"
 		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="ascore" 
+		Class="AnalysisManager_AScore_PlugIn.clsAnalysisResourcesAScore"
+		AssemblyFile="AnalysisManager_AScore_PlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="idm" 
+		Class="AnalysisManager_IDM_Plugin.clsAnalysisResourcesIDM"
+		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
 	/>
 
 </Resourcers>
