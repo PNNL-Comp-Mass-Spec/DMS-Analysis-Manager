@@ -13,6 +13,7 @@ Public Class clsAnalysisResourcesIDPicker
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strDatasetName As String = m_jobParams.GetParam("DatasetNum")
+		Dim eReturnCode As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGFDB, etc.)
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
@@ -28,8 +29,9 @@ Public Class clsAnalysisResourcesIDPicker
 		End If
 
 		' Retrieve the PSM result files, PHRP files, and MSGF file
-		If Not GetInputFiles(strDatasetName, strParamFileName) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		If Not GetInputFiles(strDatasetName, strParamFileName, eReturnCode) Then
+			If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Return eReturnCode
 		End If
 
 		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
@@ -44,7 +46,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
-	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String) As Boolean
+	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
 		' This tracks the filenames to find and whether or not they are required
 		Dim lstFileNamesToGet As System.Collections.Generic.SortedList(Of String, Boolean)
 		Dim lstExtraFilesToGet As System.Collections.Generic.List(Of String)
@@ -52,6 +54,7 @@ Public Class clsAnalysisResourcesIDPicker
 		Dim strResultType As String
 
 		Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		strResultType = m_jobParams.GetParam("ResultType")
 
@@ -65,6 +68,7 @@ Public Class clsAnalysisResourcesIDPicker
 		Else
 			m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Return False
 		End If
 
@@ -80,6 +84,7 @@ Public Class clsAnalysisResourcesIDPicker
 				' File not found; is it required?
 				If kvEntry.Value Then
 					'Errors were reported in function call, so just return
+					eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 					Return False
 				End If
 			End If
@@ -93,6 +98,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 		If Not ValidateFileHasData(strSynFilePath, "Synopsis") Then
 			' Errors were already logged (including file not found)
+			eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
 			Return False
 		End If
 
@@ -103,6 +109,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 				If Not FindAndRetrieveMiscFiles(strFileName, False) Then
 					' File not found
+					eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 					Return False
 				End If
 
