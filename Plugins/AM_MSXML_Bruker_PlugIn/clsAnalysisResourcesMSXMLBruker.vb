@@ -23,11 +23,17 @@ Public Class clsAnalysisResourcesMSXMLBruker
 
         'Get input data file
         Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
 
-        If strRawDataType.ToLower <> RAW_DATA_TYPE_BRUKER_FT_FOLDER.ToLower Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Dataset type " & strRawDataType & " is not supported; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		Select Case eRawDataType
+			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
+				' This dataset type is acceptable
+			Case Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Dataset type " & strRawDataType & " is not supported; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+		End Select
 
         If Not RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")

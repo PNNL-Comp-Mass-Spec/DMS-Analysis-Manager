@@ -82,6 +82,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim strFASTAFilePath As String
 		Dim strResultType As String
 		Dim strSynFilePath As String
+		Dim strErrorMessage As String = String.Empty
 
 		Dim ePHRPResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
 
@@ -117,6 +118,24 @@ Public Class clsAnalysisToolRunnerIDPicker
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
+			' Determine the result type
+			strResultType = m_jobParams.GetParam("ResultType")
+
+			ePHRPResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType)
+			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown Then
+				m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Define the path to the synopsis file
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
+
+			If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
+				' The synopsis file is empty
+				m_message = strErrorMessage
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+			End If
+
 			' Define the path to the fasta file
 			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
 			strFASTAFilePath = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
@@ -130,18 +149,6 @@ Public Class clsAnalysisToolRunnerIDPicker
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
-
-			' Determine the result type
-			strResultType = m_jobParams.GetParam("ResultType")
-
-			ePHRPResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType)
-			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown Then
-				m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Define the path to the synopsis file
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
 
 			' Determine the prefix used by decoy proteins
 			Dim strDecoyPrefix As String = String.Empty

@@ -107,6 +107,7 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 		Dim Msg As String = String.Empty
 
@@ -128,6 +129,9 @@ Public Class clsMSGFRunner
 		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
+
+		' Determine the raw data type
+		eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"))
 
 		' Resolve eResultType
 		eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
@@ -199,9 +203,15 @@ Public Class clsMSGFRunner
 
 
 				If Not blnProcessingError Then
-					' Create the .mzXML file
-					' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
-					blnSuccess = CreateMZXMLFile(m_WorkDir)
+					If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
+						blnSuccess = True
+					ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
+						blnSuccess = ConvertMzMLToMzXML()
+					Else
+						' Create the .mzXML file
+						' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
+						blnSuccess = CreateMZXMLFile()
+					End If
 
 					If Not blnSuccess Then
 						Msg = "Error creating .mzXML file"
@@ -492,7 +502,6 @@ Public Class clsMSGFRunner
 
 	End Function
 
-
 	''' <summary>
 	''' Examines the Sequest param file to determine if ETD mode is enabled
 	''' If it is, then sets mETDMode to True
@@ -677,6 +686,127 @@ Public Class clsMSGFRunner
 		Return True
 	End Function
 
+	Protected Function ConvertMzMLToMzXML() As Boolean
+
+		Dim oProgRunner As clsRunDosProgram
+		Dim ProgLoc As String
+		Dim CmdStr As String
+
+		Dim dtStartTime As System.DateTime
+		Dim strSourceFilePath As String
+
+		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
+
+		' mzXML filename is dataset plus .mzXML
+		Dim strMzXmlFilePath As String
+		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+
+		If System.IO.File.Exists(strMzXmlFilePath) Then
+			' File already exists; nothing to do
+			Return True
+		End If
+
+		strSourceFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+		m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strSourceFilePath))
+
+		Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
+		ProgLoc = System.IO.Path.Combine(ProteoWizardDir, "msconvert.exe")
+		If Not System.IO.File.Exists(ProgLoc) Then
+			m_message = "MSConvert not found; unable to convert .mzML file to .mzXML"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ProgLoc)
+			Return False
+		End If
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset & " using " & System.IO.Path.GetFileName(strSourceFilePath))
+		End If
+
+		'Setup a program runner tool to call MSConvert
+		oProgRunner = New clsRunDosProgram(m_WorkDir)
+
+		'Set up command
+		CmdStr = " " & PossiblyQuotePath(strSourceFilePath) & " --mzXML -o " & m_WorkDir
+
+		If m_DebugLevel > 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ProgLoc & " " & CmdStr)
+		End If
+
+		With oProgRunner
+			.CreateNoWindow = True
+			.CacheStandardOutput = True
+			.EchoOutputToConsole = True
+
+			.WriteConsoleOutputToFile = False
+			.ConsoleOutputFilePath = String.Empty	   ' Allow the console output filename to be auto-generated
+		End With
+
+
+		dtStartTime = System.DateTime.UtcNow
+
+		If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
+			' .RunProgram returned False
+			m_message = "Error running " & System.IO.Path.GetFileNameWithoutExtension(ProgLoc) & " to convert the .mzML file to a .mzXML file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... mzXML file created")
+		End If
+
+		' Validate that the .mzXML file was actually created
+		If Not System.IO.File.Exists(strMzXmlFilePath) Then
+			m_message = ".mzXML file was not created by MSConvert"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMzXmlFilePath)
+			Return False
+		Else
+			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strMzXmlFilePath))
+		End If
+
+		If m_DebugLevel >= 1 Then
+			Try
+				' Save some stats to the log
+
+				Dim strMessage As String
+				Dim ioFileInfo As System.IO.FileInfo
+				Dim dblMzMLSizeMB As Double, dblMzXMLSizeMB As Double
+				Dim dblTotalMinutes As Double
+
+				dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
+
+				ioFileInfo = New System.IO.FileInfo(strSourceFilePath)
+				If ioFileInfo.Exists Then
+					dblMzMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
+				End If
+
+				ioFileInfo = New System.IO.FileInfo(strMzXmlFilePath)
+				If ioFileInfo.Exists Then
+					dblMzXMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
+				End If
+
+				strMessage = "mzXML creation time = " & dblTotalMinutes.ToString("0.00") & " minutes"
+
+				If dblTotalMinutes > 0 Then
+					strMessage &= "; Processing rate = " & (dblMzMLSizeMB / dblTotalMinutes / 60).ToString("0.0") & " MB/second"
+				End If
+
+				strMessage &= "; .mzML file size = " & dblMzMLSizeMB.ToString("0.0") & " MB"
+				strMessage &= "; .mzXML file size = " & dblMzXMLSizeMB.ToString("0.0") & " MB"
+
+				If dblMzXMLSizeMB > 0 Then
+					strMessage &= "; Filesize Ratio = " & (dblMzXMLSizeMB / dblMzMLSizeMB).ToString("0.00")
+				End If
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats", ex)
+			End Try
+		End If
+
+		Return True
+
+	End Function
+
 	''' <summary>
 	''' Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
 	''' Uses the ModSummary.txt file to determine the dynamic and static mods used
@@ -806,7 +936,7 @@ Public Class clsMSGFRunner
 	''' </summary>
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks></remarks>
-	Private Function CreateMZXMLFile(ByVal strInputFolderPath As String) As Boolean
+	Private Function CreateMZXMLFile() As Boolean
 
 		Dim dtStartTime As System.DateTime
 
@@ -854,7 +984,8 @@ Public Class clsMSGFRunner
 			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
 
 		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unsupported XmlGenerator: " & mMSXmlGeneratorExe)
+			m_message = "Unsupported XmlGenerator: " & mMSXmlGeneratorExe
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 
@@ -865,6 +996,7 @@ Public Class clsMSGFRunner
 		blnSuccess = mMSXmlGen.CreateMSXMLFile()
 
 		If Not blnSuccess Then
+			m_message = mMSXmlGen.ErrorMessage
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
 			Return False
 
@@ -874,7 +1006,8 @@ Public Class clsMSGFRunner
 
 		' Validate that the .mzXML file was actually created
 		If Not System.IO.File.Exists(strMzXmlFilePath) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ".mzXML file was not created by ReadW: " & strMzXmlFilePath)
+			m_message = ".mzXML file was not created by " & mMSXmlGeneratorExe
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMzXmlFilePath)
 			Return False
 		End If
 
@@ -1825,7 +1958,7 @@ Public Class clsMSGFRunner
 		End If
 
 		CmdStr &= " -i " & PossiblyQuotePath(strInputFilePath)			 ' Input file
-		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML file
+		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML or .mzML file
 		CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)		 ' Output file
 
 		' MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD

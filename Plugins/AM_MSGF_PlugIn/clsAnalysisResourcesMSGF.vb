@@ -60,6 +60,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		Dim DatasetName As String
 		Dim RawDataType As String
+		Dim eRawDataType As eRawDataTypeConstants
 
 		Dim FileToGet As String
 		Dim SynFileSizeBytes As Int64
@@ -90,6 +91,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		' Make sure the dataset type is valid
 		RawDataType = m_jobParams.GetParam("RawDataType")
+		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 			' We do not need the mzXML file, the parameter file, or various other files if we are running MSGFDB and running MSGF v6432 or later
@@ -114,10 +116,14 @@ Public Class clsAnalysisResourcesMSGF
 			' Not running MSGFDB or running MSFDB but using legacy msgf
 			blnOnlyCopyFHTandSYNfiles = False
 
-			If RawDataType.ToLower <> RAW_DATA_TYPE_DOT_RAW_FILES Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Dataset type " & RawDataType & " is not supported; must be " & RAW_DATA_TYPE_DOT_RAW_FILES)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+			Select Case eRawDataType
+				Case eRawDataTypeConstants.ThermoRawFile, eRawDataTypeConstants.mzML, eRawDataTypeConstants.mzXML
+					' This is a valid data type
+				Case Else
+					m_message = "Dataset type " & RawDataType & " is not supported by MSGF"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & "; must be one of the following: " & RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_MZML_FILES & ", " & RAW_DATA_TYPE_DOT_MZXML_FILES)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Select
 
 		End If
 

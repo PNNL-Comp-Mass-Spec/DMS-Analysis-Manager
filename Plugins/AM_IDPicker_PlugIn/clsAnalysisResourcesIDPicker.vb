@@ -9,6 +9,7 @@ Public Class clsAnalysisResourcesIDPicker
 	Public Const IDPICKER_PARAM_FILENAME_LOCAL As String = "IDPickerParamFileLocal"
 	Public Const DEFAULT_IDPICKER_PARAM_FILE_NAME As String = "IDPicker_Defaults.txt"
 
+	Protected mSynopsisFileIsEmpty As Boolean
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -32,6 +33,11 @@ Public Class clsAnalysisResourcesIDPicker
 		If Not GetInputFiles(strDatasetName, strParamFileName, eReturnCode) Then
 			If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Return eReturnCode
+		End If
+
+		If mSynopsisFileIsEmpty Then
+			' Don't retrieve anymore files
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
 		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
@@ -73,10 +79,14 @@ Public Class clsAnalysisResourcesIDPicker
 		End If
 
 		lstFileNamesToGet = GetPHRPFileNames(eResultType, strDatasetName)
+		mSynopsisFileIsEmpty = False
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the " & eResultType.ToString & " files")
 		End If
+
+		Dim synFileName As String
+		synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
 
 		For Each kvEntry As System.Collections.Generic.KeyValuePair(Of String, Boolean) In lstFileNamesToGet
 
@@ -86,21 +96,29 @@ Public Class clsAnalysisResourcesIDPicker
 					'Errors were reported in function call, so just return
 					eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 					Return False
-				End If
+				End If		
 			End If
 
 			m_jobParams.AddResultFileToSkip(kvEntry.Key)
+
+			If kvEntry.Key = synFileName Then
+				' Check whether the synopsis file is empty
+				Dim strSynFilePath As String
+				strSynFilePath = System.IO.Path.Combine(m_WorkingDir, synFileName)
+
+				Dim strErrorMessage As String = String.Empty
+				If Not ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
+					' The synopsis file is empty
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+
+					' We don't want to fail the job out yet; instead, we'll exit now, then let the ToolRunner exit with a Completion message of "Synopsis file is empty"
+					mSynopsisFileIsEmpty = True
+					Return True
+				End If
+			End If
+
 		Next
 
-		' Verify that the synopsis file was copied, is not 0-bytes, and contains more than just a header row
-		Dim strSynFilePath As String
-		strSynFilePath = System.IO.Path.Combine(m_WorkingDir, clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName))
-
-		If Not ValidateFileHasData(strSynFilePath, "Synopsis") Then
-			' Errors were already logged (including file not found)
-			eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-			Return False
-		End If
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.XTandem Then
 			' X!Tandem requires a few additional parameter files

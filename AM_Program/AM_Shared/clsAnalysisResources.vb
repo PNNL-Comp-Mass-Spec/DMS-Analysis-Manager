@@ -887,7 +887,7 @@ Public MustInherit Class clsAnalysisResources
 			Case eRawDataTypeConstants.mzML
 				blnSuccess = RetrieveDatasetFile(WorkDir, DOT_MZML_EXTENSION, CreateStoragePathInfoOnly)
 
-			Case eRawDataTypeConstants.BrukerFTFolder
+			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' Call RetrieveDotDFolder() to copy the folder and all subfolders
 
 				' Only the MSXml step tool requires the .Baf file; we can skip it for other tools
@@ -3237,9 +3237,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="strFileDescription">File description, e.g. Synopsis</param>
 	''' <returns>True if the file has data; otherwise false</returns>
 	''' <remarks></remarks>
-	Protected Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String) As Boolean
+	Public Shared Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByRef strErrorMessage As String) As Boolean
 		Dim intNumericDataColIndex As Integer = 0
-		Return ValidateFileHasData(strFilePath, strFileDescription, intNumericDataColIndex)
+		Return ValidateFileHasData(strFilePath, strFileDescription, strErrorMessage, intNumericDataColIndex)
 	End Function
 
 	''' <summary>
@@ -3250,7 +3250,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
 	''' <returns>True if the file has data; otherwise false</returns>
 	''' <remarks></remarks>
-	Protected Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByVal intNumericDataColIndex As Integer) As Boolean
+	Public Shared Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByRef strErrorMessage As String, ByVal intNumericDataColIndex As Integer) As Boolean
 
 		Dim fiFileInfo As System.IO.FileInfo
 
@@ -3260,18 +3260,18 @@ Public MustInherit Class clsAnalysisResources
 		Dim dblValue As Double
 		Dim blnDataFound As Boolean
 
+		strErrorMessage = String.Empty
+
 		Try
 			fiFileInfo = New System.IO.FileInfo(strFilePath)
 
 			If Not fiFileInfo.Exists Then
-				m_message = strFileDescription & " file not found: " & fiFileInfo.Name
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				strErrorMessage = strFileDescription & " file not found: " & fiFileInfo.Name
 				Return False
 			End If
 
 			If fiFileInfo.Length = 0 Then
-				m_message = strFileDescription & " file is empty (zero-bytes)"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				strErrorMessage = strFileDescription & " file is empty (zero-bytes)"
 				Return False
 			End If
 
@@ -3298,13 +3298,11 @@ Public MustInherit Class clsAnalysisResources
 			End Using
 
 			If Not blnDataFound Then
-				m_message = strFileDescription & " is empty (no data)"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				strErrorMessage = strFileDescription & " is empty (no data)"
 			End If
 
 		Catch ex As Exception
-			m_message = "Exception validating " & strFileDescription & " file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			strErrorMessage = "Exception validating " & strFileDescription & " file"
 			Return False
 		End Try
 
