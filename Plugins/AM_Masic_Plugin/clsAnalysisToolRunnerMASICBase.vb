@@ -237,7 +237,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             .WorkDir = m_WorkDir
         End With
 
-        objMasicProgRunner.StartAndMonitorProgram()
+		objMasicProgRunner.StartAndMonitorProgram()
 
         'Wait for the job to complete
         blnSuccess = WaitForJobToFinish(objMasicProgRunner)
@@ -425,11 +425,15 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
     End Function
 
     Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
-        Const MINIMUM_LOG_INTERVAL_SEC As Integer = 120
+		Const MINIMUM_LOG_INTERVAL_SEC As Integer = 120
+		Const MAX_RUNTIME_HOURS As Integer = 12
+
         Static dtLastLogTime As DateTime
         Static sngProgressSaved As Single = -1
 
         Dim blnSICsXMLFileExists As Boolean
+		Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
+		Dim blnAbortedProgram As Boolean = False
 
         'Wait for completion
         m_JobRunning = True
@@ -459,40 +463,49 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
                 End If
             End If
 
+			If System.DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then
+				' Abort processing
+				objMasicProgRunner.StopMonitoringProgram(Kill:=True)
+				blnAbortedProgram = True
+			End If
         End While
 
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
         End If
 
-        If objMasicProgRunner.State = 10 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10")
-            Return False
-        ElseIf objMasicProgRunner.ExitCode <> 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
+		If blnAbortedProgram Then
+			m_ErrorMessage = "Aborted MASIC processing since over " & MAX_RUNTIME_HOURS & " hours have elapsed"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & m_ErrorMessage)
+			Return False
+		ElseIf objMasicProgRunner.State = 10 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10")
+			Return False
+		ElseIf objMasicProgRunner.ExitCode <> 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
 
-            ' See if a _SICs.XML file was created
-            If System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
-                blnSICsXMLFileExists = True
-            End If
+			' See if a _SICs.XML file was created
+			If System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
+				blnSICsXMLFileExists = True
+			End If
 
-            If objMasicProgRunner.ExitCode = 32 Then
-                ' FindSICPeaksError
-                ' As long as the _SICs.xml file was created, we can safely ignore this error
-                If blnSICsXMLFileExists Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file found, so ignoring non-zero exit code")
-                    Return True
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file not found")
-                    Return False
-                End If
-            Else
-                ' Return False for any other exit codes
-                Return False
-            End If
-        Else
-            Return True
-        End If
+			If objMasicProgRunner.ExitCode = 32 Then
+				' FindSICPeaksError
+				' As long as the _SICs.xml file was created, we can safely ignore this error
+				If blnSICsXMLFileExists Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file found, so ignoring non-zero exit code")
+					Return True
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file not found")
+					Return False
+				End If
+			Else
+				' Return False for any other exit codes
+				Return False
+			End If
+		Else
+			Return True
+		End If
 
     End Function
 
