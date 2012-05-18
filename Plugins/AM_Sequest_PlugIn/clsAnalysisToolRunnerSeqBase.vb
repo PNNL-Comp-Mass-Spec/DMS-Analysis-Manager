@@ -46,6 +46,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 	  New System.Text.RegularExpressions.Regex("\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec", _
 	  RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
+	Protected mOutFileHandlerInUse As Long
+
 #End Region
 
 #Region "Methods"
@@ -116,8 +118,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		'Make sure objects are released
 		System.Threading.Thread.Sleep(2000)		   ' 2 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
 		Dim strSequestLogFilePath As String
@@ -564,8 +565,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		'Make sure objects are released
 		System.Threading.Thread.Sleep(5000)		' 5 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		'Verify out file creation
 		If m_DebugLevel >= 1 Then
@@ -588,8 +588,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 		'Try to ensure there are no open objects with file handles
 		System.Threading.Thread.Sleep(2000)		   '2 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		'Zip concatenated .out files
 		If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
@@ -612,7 +611,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 	''' <remarks></remarks>
 	Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
 
-		Dim MAX_RETRY_ATTEMPTS As Integer = 3
+		Dim MAX_RETRY_ATTEMPTS As Integer = 5
+		Dim MAX_INTERLOCK_WAIT_TIME_MINUTES As Integer = 30
 		Dim intRetriesRemaining As Integer
 		Dim blnSuccess As Boolean
 		Dim oRandom As System.Random = New System.Random()
@@ -624,10 +624,28 @@ Public Class clsAnalysisToolRunnerSeqBase
 		intRetriesRemaining = MAX_RETRY_ATTEMPTS
 		Do
 
+			Dim dtInterlockWaitStartTime As System.DateTime = System.DateTime.UtcNow
+			Dim dtInterlockWaitLastLogtime As System.DateTime = System.DateTime.UtcNow
+
+			Do While System.Threading.Interlocked.Read(mOutFileHandlerInUse) > 0
+				' Need to wait for ProcessCandidateOutFiles to exit
+				System.Threading.Thread.Sleep(3000)
+
+				If System.DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalMinutes >= MAX_INTERLOCK_WAIT_TIME_MINUTES Then
+					m_message = "Unable to verify that all .out files have been appended to the _out.txt.tmp file"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & ": ConcatOutFiles has waited over " & MAX_INTERLOCK_WAIT_TIME_MINUTES & " minutes for mOutFileHandlerInUse to be zero; aborting")
+					Return False
+				ElseIf System.DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalSeconds >= 30 Then
+					dtInterlockWaitStartTime = System.DateTime.UtcNow
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero")
+					End If
+				End If
+			Loop
+
 			'Make sure objects are released
 			System.Threading.Thread.Sleep(1000)		   ' 1 second delay
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			Try
 				If String.IsNullOrEmpty(mTempConcatenatedOutFilePath) Then
@@ -646,7 +664,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending .out files to the _out.txt.tmp file" & ": " & ex.Message)
-				System.Threading.Thread.Sleep(oRandom.Next(5, 15) * 1000)			' Delay for a random length between 5 and 15 seconds
+				System.Threading.Thread.Sleep(oRandom.Next(15, 30) * 1000)			' Delay for a random length between 15 and 30 seconds
 				blnSuccess = False
 			End Try
 

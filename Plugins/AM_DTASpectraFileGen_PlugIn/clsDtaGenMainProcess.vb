@@ -219,8 +219,7 @@ Public Class clsDtaGenThermoRaw
 		XRawFile = Nothing
 		'Pause and garbage collect to allow release of file lock on .raw file
 		System.Threading.Thread.Sleep(3000)		' 3 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		Return NumScans
 

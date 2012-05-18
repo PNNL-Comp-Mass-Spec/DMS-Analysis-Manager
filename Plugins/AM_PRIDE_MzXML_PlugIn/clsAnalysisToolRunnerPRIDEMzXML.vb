@@ -98,8 +98,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
+        PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Override the dataset name and transfer folder path so that the results get copied to the correct location
 		MyBase.RedefineAggregationJobDatasetAndTransferFolder()

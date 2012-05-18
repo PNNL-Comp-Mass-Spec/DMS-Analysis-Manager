@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8101C095-C93A-4B5D-BACE-9761D50D1B73}</ProjectGuid>
+    <ProjectGuid>{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManager_AScore_PlugIn</RootNamespace>

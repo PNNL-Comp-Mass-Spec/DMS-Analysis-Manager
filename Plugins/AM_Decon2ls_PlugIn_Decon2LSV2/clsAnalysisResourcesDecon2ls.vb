@@ -14,16 +14,21 @@ Public Class clsAnalysisResourcesDecon2ls
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+		Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+
         'Get input data file
-        If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_mgrParams.GetParam("workdir")) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
         m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
         m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
 
         'Retrieve param file
         If Not RetrieveFile( _

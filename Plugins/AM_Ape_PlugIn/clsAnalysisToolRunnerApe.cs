@@ -88,9 +88,8 @@ namespace AnalysisManager_Ape_PlugIn
 
 				//Make sure objects are released
 				//2 second delay
-				System.Threading.Thread.Sleep(2000);            
-				GC.Collect();
-				GC.WaitForPendingFinalizers();
+				System.Threading.Thread.Sleep(2000);
+				PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 				if (!blnSuccess)
 				{

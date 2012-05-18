@@ -182,8 +182,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             'Make sure objects are released
             System.Threading.Thread.Sleep(2000)        '2 second delay
-            GC.Collect()
-            GC.WaitForPendingFinalizers()
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             Result = MakeResultsFolder()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then

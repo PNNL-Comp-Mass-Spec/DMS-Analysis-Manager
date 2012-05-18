@@ -1751,7 +1751,7 @@ Public Class clsMsMsSpectrumFilter
                                                  ByRef udtIonMatchStats As udtIonMatchStatsType) As udtSpectrumQualityScoreType
 
         Dim strSpectrumID As String
-        Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
+		Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType = New udtSpectrumQualityScoreType
         Dim blnPassesFilter As Boolean
 
         With udtSpectrumHeaderInfo
@@ -1808,7 +1808,7 @@ Public Class clsMsMsSpectrumFilter
         Const chTab As Char = ControlChars.Tab
 
         Dim dblTIC As Double
-        Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
+		Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType = New udtSpectrumQualityScoreType
         Dim udtMode2ScoreDetails As udtMode2ScoreDetailsType
 
         Dim srSpectrumFile As System.IO.StreamWriter
@@ -1883,7 +1883,7 @@ Public Class clsMsMsSpectrumFilter
 
 		Dim srSpectrumFile As System.IO.StreamWriter = Nothing
 
-        Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
+		Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType = New udtSpectrumQualityScoreType
 
         Dim intIndex As Integer
         Dim intIndexMatch As Integer
@@ -4670,7 +4670,7 @@ Public Class clsMsMsSpectrumFilter
         Dim blnIncludeReporterIonStats As Boolean
 
         Dim strNewFilePath As String
-        Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
+		Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType = New udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
 
         Dim blnIonFilteringEnabled As Boolean
@@ -4926,7 +4926,7 @@ Public Class clsMsMsSpectrumFilter
         Dim blnIncludeReporterIonStats As Boolean
 
         Dim blnSpectrumFound As Boolean
-        Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType
+		Dim udtSpectrumQualityScore As udtSpectrumQualityScoreType = New udtSpectrumQualityScoreType
         Dim blnKeepSpectrum As Boolean
 
         Dim blnIonFilteringEnabled As Boolean

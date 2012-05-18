@@ -107,7 +107,7 @@ Public Class clsCleanupMgrErrors
 	End Function
 
 	''' <summary>
-	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect)
+	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
@@ -118,7 +118,7 @@ Public Class clsCleanupMgrErrors
 	''' <summary>
 	''' Deletes all files in working directory
 	''' </summary>
-	''' <param name="HoldoffSeconds">Number of seconds to wait after calling GC.Collect() and GC.WaitForPendingFinalizers()</param>
+	''' <param name="HoldoffSeconds">Number of seconds to wait after calling PRISM.Processes.clsProgRunner.GarbageCollectNow()</param>
 	''' <param name="strFailureMessage">Error message (output)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
@@ -128,7 +128,7 @@ Public Class clsCleanupMgrErrors
 
 
 	''' <summary>
-	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect)
+	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
 	''' </summary>
 	''' <param name="WorkDir">Full path to working directory</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
@@ -141,7 +141,7 @@ Public Class clsCleanupMgrErrors
 	''' Deletes all files in working directory
 	''' </summary>
 	''' <param name="WorkDir">Full path to working directory</param>
-	''' <param name="HoldoffSeconds">Number of seconds to wait after calling GC.Collect() and GC.WaitForPendingFinalizers()</param>
+	''' <param name="HoldoffSeconds">Number of seconds to wait after calling PRISM.Processes.clsProgRunner.GarbageCollectNow()</param>
 	''' <param name="strFailureMessage">Error message (output)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
@@ -164,8 +164,7 @@ Public Class clsCleanupMgrErrors
 		End Try
 
 		'Try to ensure there are no open objects with file handles
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		System.Threading.Thread.Sleep(HoldoffMilliseconds)
 
 		diWorkFolder = New System.IO.DirectoryInfo(WorkDir)

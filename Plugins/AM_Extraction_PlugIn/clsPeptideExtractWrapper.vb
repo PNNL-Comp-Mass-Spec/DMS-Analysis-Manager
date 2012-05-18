@@ -157,8 +157,7 @@ Public Class clsPeptideExtractWrapper
 			'Make sure no stray objects are hanging around
 			m_ExtractTools = Nothing
 			System.Threading.Thread.Sleep(2000)	'Delay 2 seconds, then clean up processes
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		End Try
 
 	End Function

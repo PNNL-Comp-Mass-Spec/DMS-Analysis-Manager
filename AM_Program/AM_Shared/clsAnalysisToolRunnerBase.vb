@@ -1230,42 +1230,49 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	Protected Function DeleteRawDataFiles(ByVal RawDataType As String) As IJobParams.CloseOutType
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+
+		Return DeleteRawDataFiles(eRawDataType)
+	End Function
+
+	Protected Function DeleteRawDataFiles(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As IJobParams.CloseOutType
 
 		'Deletes the raw data files/folders from the working directory
 		Dim IsFile As Boolean = True
 		Dim IsNetworkDir As Boolean = False
 		Dim FileOrFolderName As String = String.Empty
 
-		Select Case RawDataType.ToLower
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 				IsFile = True
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
 				IsFile = True
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
 				IsFile = True
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 				IsFile = True
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 				IsFile = True
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 				IsFile = False
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
 
 				Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
 				'Check for "0.ser" folder
@@ -1278,12 +1285,12 @@ Public Class clsAnalysisToolRunnerBase
 
 				IsFile = False
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
 				' Bruker_FT folders are actually .D folders
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
 				''''''''''''''''''''''''''''''''''''
 				' TODO: Finalize this code
 				'       DMS doesn't yet have a BrukerTOF dataset 
@@ -1293,7 +1300,7 @@ Public Class clsAnalysisToolRunnerBase
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
 				IsFile = False
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
 
 				''''''''''''''''''''''''''''''''''''
 				' TODO: Finalize this code
@@ -1302,13 +1309,20 @@ Public Class clsAnalysisToolRunnerBase
 				''''''''''''''''''''''''''''''''''''
 
 				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
+
+				' BrukerTOFBaf folders are actually .D folders
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
 			Case Else
 				'Should never get this value
-				m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & RawDataType
+				m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & eRawDataType.ToString()
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Select
+
 
 		If IsFile Then
 			'Data is a file, so use file deletion tools
@@ -1431,8 +1445,7 @@ Public Class clsAnalysisToolRunnerBase
 				'Delay 5 seconds
 				System.Threading.Thread.Sleep(5000)
 				'Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
-				GC.Collect()
-				GC.WaitForPendingFinalizers()
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 				RetryCount += 1
 
 			Catch Err3 As Exception

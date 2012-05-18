@@ -721,8 +721,7 @@ Public Class clsExtractToolRunner
 		Dim intFileIndex As Integer
 
 		System.Threading.Thread.Sleep(2000)					   'Delay for 2 seconds
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Delete each file in strFileList
 		For intFileIndex = 0 To strFileList.Length - 1

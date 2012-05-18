@@ -216,8 +216,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 			'Make sure objects are released
 			System.Threading.Thread.Sleep(2000)		'2 second delay
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Trim the console output file to remove the majority of the % finished messages
 			TrimConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))

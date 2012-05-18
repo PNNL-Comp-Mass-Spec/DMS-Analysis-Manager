@@ -55,8 +55,6 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected mOutFileCandidates As Queue(Of KeyValuePair(Of String, System.DateTime)) = New Queue(Of KeyValuePair(Of String, System.DateTime))
 	Protected mOutFileCandidateInfo As Dictionary(Of String, System.DateTime) = New Dictionary(Of String, System.DateTime)
 
-	Protected mOutFileHandlerInUse As Long
-
 	Protected mSequestVersionInfoStored As Boolean
 
 	Protected mTempJobParamsCopied As Boolean
@@ -248,8 +246,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		' Make sure objects are released
 		System.Threading.Thread.Sleep(5000)		 ' 5 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		UpdateSequestNodeProcessingStats(False)
 
@@ -283,8 +280,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Do
 			' Process the remaining .Out files in mOutFileCandidates
 			If Not ProcessCandidateOutFiles(True) Then
-				' Wait 1.5 seconds, then try again (up to 3 times)
-				System.Threading.Thread.Sleep(1500)
+				' Wait 5 seconds, then try again (up to 3 times)
+				System.Threading.Thread.Sleep(5000)
 			End If
 
 			intIterationsRemaining -= 1

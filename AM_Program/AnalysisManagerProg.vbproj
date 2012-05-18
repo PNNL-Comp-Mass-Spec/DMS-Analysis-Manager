@@ -58,9 +58,9 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PRISM, Version=2.0.3834.22819, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="PRISM, Version=2.1.4520.23090, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\PRISM_Class_Library\bin\PRISM.dll</HintPath>
+      <HintPath>..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="Protein_Exporter, Version=1.2.5.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

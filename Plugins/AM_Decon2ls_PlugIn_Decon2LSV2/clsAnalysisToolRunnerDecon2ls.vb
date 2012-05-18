@@ -23,7 +23,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 #Region "Module variables"
 
-	Protected mRawDataType As String = String.Empty
+	Protected mRawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
+	Protected mRawDataTypeName As String = String.Empty
 
 	Protected mInputFilePath As String = String.Empty
 
@@ -50,6 +51,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		Running = 1
 		Complete = 2
 		ErrorCode = 3
+		BadErrorLogFile = 4
 	End Enum
 
 	Enum DeconToolsFileTypeConstants
@@ -104,7 +106,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
 			Select Case mRawDataType
-				Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
 					' As of 11/19/2010, the Decon2LS output files are created inside the .D folder
 					If Not System.IO.File.Exists(IsosFilePath) And Not System.IO.File.Exists(ScansFilePath) Then
 						' Copy the files from the .D folder to the work directory
@@ -245,15 +247,19 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	End Function
 
+	''' <summary>
+	''' Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
-
-		'Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
 
 		Dim eResult As IJobParams.CloseOutType
 		'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
 		Dim eReturnCode As IJobParams.CloseOutType
 
-		mRawDataType = m_jobParams.GetParam("RawDataType")
+		mRawDataTypeName = m_jobParams.GetParam("RawDataType")
+		mRawDataType = clsAnalysisResources.GetRawDataType(mRawDataTypeName)
 
 		' Set this to success for now
 		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -409,9 +415,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		'Make sure objects are released
 		System.Threading.Thread.Sleep(2000)		   '2 second delay
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
-
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
+		
 		If m_DebugLevel > 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished")
 		End If
@@ -430,6 +435,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 				Case DeconToolsStateType.ErrorCode
 					m_message = "Decon2LS error"
+					blnDecon2LSError = True
+
+				Case DeconToolsStateType.BadErrorLogFile
 					blnDecon2LSError = True
 
 				Case DeconToolsStateType.Idle
@@ -470,9 +478,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 
 	Protected Function StartDeconTools(ByVal ProgLoc As String, _
-			 ByVal strInputFilePath As String, _
-			 ByVal strParamFilePath As String, _
-			 ByVal eFileType As DeconToolsFileTypeConstants) As DeconToolsStateType
+	   ByVal strInputFilePath As String, _
+	   ByVal strParamFilePath As String, _
+	   ByVal eFileType As DeconToolsFileTypeConstants) As DeconToolsStateType
 
 		Dim blnSuccess As Boolean
 		Dim eDeconToolsStatus As DeconToolsStateType = DeconToolsStateType.Idle
@@ -545,6 +553,17 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				eDeconToolsStatus = DeconToolsStateType.ErrorCode
 			End If
 
+			' Look for file Dataset*BAD_ERROR_log.txt
+			' If it exists, an exception occurred
+			Dim diWorkdir As System.IO.DirectoryInfo
+			diWorkdir = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir))
+
+			For Each fiFile As System.IO.FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
+				m_message = "Error running DeconTools; Bad_Error_log file exists"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiFile.Name)
+				eDeconToolsStatus = DeconToolsStateType.BadErrorLogFile
+				Exit For
+			Next
 
 		Catch ex As System.Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconConsole: " & ex.Message)
@@ -568,6 +587,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			Case DeconToolsFileTypeConstants.ICR2LS_Rawdata : Return "ICR2LS_Rawdata"
 			Case DeconToolsFileTypeConstants.Micromass_Rawdata : Return "Micromass_Rawdata"
 			Case DeconToolsFileTypeConstants.MZXML_Rawdata : Return "MZXML_Rawdata"
+				' Future: Case DeconToolsFileTypeConstants.MZML_Rawdata : Return "MZML_Rawdata"
 			Case DeconToolsFileTypeConstants.PNNL_IMS : Return "PNNL_IMS"
 			Case DeconToolsFileTypeConstants.PNNL_UIMF : Return "PNNL_UIMF"
 			Case DeconToolsFileTypeConstants.SUNEXTREL : Return "SUNEXTREL"
@@ -577,31 +597,31 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	End Function
 
-	Protected Function GetInputFileType(ByVal RawDataType As String) As DeconToolsFileTypeConstants
+	Protected Function GetInputFileType(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As DeconToolsFileTypeConstants
 
 		Dim InstrumentClass As String = m_jobParams.GetParam("instClass")
 
 
 		'Gets the Decon2LS file type based on the input data type
-		Select Case RawDataType.ToLower
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				Return DeconToolsFileTypeConstants.Finnigan
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
 				Return DeconToolsFileTypeConstants.Agilent_WIFF
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
 				Return DeconToolsFileTypeConstants.PNNL_UIMF
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
 				Return DeconToolsFileTypeConstants.Agilent_D
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
 				Return DeconToolsFileTypeConstants.Micromass_Rawdata
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
 				If InstrumentClass.ToLower = "brukerftms" Then
-					'Data off of Bruker FTICR
+					'Data from Bruker FTICR
 					Return DeconToolsFileTypeConstants.Bruker
 
 				ElseIf InstrumentClass.ToLower = "finnigan_fticr" Then
@@ -612,28 +632,35 @@ Public Class clsAnalysisToolRunnerDecon2ls
 					Return DeconToolsFileTypeConstants.Undefined
 				End If
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 				Return DeconToolsFileTypeConstants.Bruker
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
 
 				' TODO: Add support for this after Decon2LS is updated
 				'Return DeconToolsFileTypeConstants.Bruker_15T
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & RawDataType & ")")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & eRawDataType.ToString() & ")")
 				Return DeconToolsFileTypeConstants.Undefined
 
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
 
 				' TODO: Add support for this after Decon2LS is updated
 				'Return DeconToolsFileTypeConstants.Bruker_15T
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & RawDataType & ")")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support Bruker MALDI data (" & eRawDataType.ToString() & ")")
 				Return DeconToolsFileTypeConstants.Undefined
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
 				Return DeconToolsFileTypeConstants.MZXML_Rawdata
+
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				' TODO: Add support for this after Decon2LS is updated
+				'Return DeconToolsFileTypeConstants.MZML_Rawdata
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS_V2 does not yet support mzML data")
+				Return DeconToolsFileTypeConstants.Undefined
 
 			Case Else
 				'Should never get this value
@@ -659,7 +686,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Try
 			Select Case mRawDataType
-				Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS, clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 					' As of 11/19/2010, the _Log.txt file is created inside the .D folder
 					strLogFilePath = System.IO.Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
 				Case Else
@@ -775,7 +802,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		If intCharIndex > 0 Then
 			Try
 				Return New System.Collections.Generic.KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
-								   strData.Substring(intCharIndex + 1).Trim())
+				 strData.Substring(intCharIndex + 1).Trim())
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
@@ -785,33 +812,38 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	End Function
 
-	Protected Function SpecifyInputFilePath(ByVal RawDataType As String) As String
+	Protected Function SpecifyInputFilePath(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
 
 		'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
-		Select Case RawDataType.ToLower
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
+
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_WIFF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
+			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_RAW_EXTENSION & "/_FUNC001.DAT"
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_ZIPPED_S_FOLDERS
+			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
 				' Bruker_FT folders are actually .D folders
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_SPOT
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
+				' Bruker_TOFBaf folders are actually .D folders
+				Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
 				''''''''''''''''''''''''''''''''''''
 				' TODO: Finalize this code
 				'       DMS doesn't yet have a BrukerTOF dataset 
@@ -819,13 +851,19 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				''''''''''''''''''''''''''''''''''''
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
 
-			Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
 				''''''''''''''''''''''''''''''''''''
 				' TODO: Finalize this code
 				'       DMS doesn't yet have a BrukerTOF dataset 
 				'        so we don't know the official folder structure
 				''''''''''''''''''''''''''''''''''''
 				Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
+
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+				Return System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				Return System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 
 			Case Else
 				'Should never get this value

@@ -13,7 +13,10 @@ Public Class clsAnalysisResourcesIDPicker
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim strDatasetName As String = m_jobParams.GetParam("DatasetNum")
+		Dim strDatasetName As String
+		Dim RawDataType As String
+		Dim eRawDataType As eRawDataTypeConstants
+
 		Dim eReturnCode As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGFDB, etc.)
@@ -29,6 +32,10 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
+		strDatasetName = m_jobParams.GetParam("DatasetNum")
+		RawDataType = m_jobParams.GetParam("RawDataType")
+		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+
 		' Retrieve the PSM result files, PHRP files, and MSGF file
 		If Not GetInputFiles(strDatasetName, strParamFileName, eReturnCode) Then
 			If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -41,8 +48,12 @@ Public Class clsAnalysisResourcesIDPicker
 		End If
 
 		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
-		If Not RetrieveMASICFiles(strDatasetName) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		If eRawDataType = eRawDataTypeConstants.ThermoRawFile Or eRawDataType = eRawDataTypeConstants.UIMF Then
+			If Not RetrieveMASICFiles(strDatasetName) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Not retrieving MASIC files since unsupported data type: " & RawDataType)
 		End If
 
 		'Retrieve the Fasta file
@@ -167,7 +178,6 @@ Public Class clsAnalysisResourcesIDPicker
 		Return True
 
 	End Function
-
 
 	Protected Function RetrieveMASICFiles(ByVal strDatasetName As String) As Boolean
 

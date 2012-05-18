@@ -256,8 +256,7 @@ Public Class clsAnalysisResults
 
 				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
-				GC.Collect()
-				GC.WaitForPendingFinalizers()
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
 
 			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
@@ -400,8 +399,7 @@ Public Class clsAnalysisResults
 
 				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
-				GC.Collect()
-				GC.WaitForPendingFinalizers()
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
 
 			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
@@ -495,8 +493,7 @@ Public Class clsAnalysisResults
 
 				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
-				GC.Collect()
-				GC.WaitForPendingFinalizers()
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
 
 			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then

@@ -100,8 +100,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
+        PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         If Not blnSuccess Then
             ' Move the source files and any results to the Failed Job folder

@@ -215,16 +215,14 @@ Public Class clsAnalysisResourcesLCMSFF
 
 			' Wait 250 millseconds, then replace the original .Ini file with the new one
 			System.Threading.Thread.Sleep(250)
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Delete the input file
 			System.IO.File.Delete(SrcFilePath)
 
 			' Wait another 250 milliseconds before renaming the output file
 			System.Threading.Thread.Sleep(50)
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Rename the newly created output file to have the name of the input file
 			System.IO.File.Move(TargetFilePath, SrcFilePath)

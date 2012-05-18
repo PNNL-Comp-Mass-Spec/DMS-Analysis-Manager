@@ -682,8 +682,7 @@ Namespace AnalysisManagerProg
 				If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
 					'If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
 					' However, wait another 5 seconds before continuing
-					GC.Collect()
-					GC.WaitForPendingFinalizers()
+					PRISM.Processes.clsProgRunner.GarbageCollectNow()
 					System.Threading.Thread.Sleep(5000)
 
 					Return True

@@ -235,8 +235,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             Loop
 
             System.Threading.Thread.Sleep(5000)                    'Delay for 5 seconds
-            GC.Collect()
-            GC.WaitForPendingFinalizers()
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             'Removes the MsMsSpectra Filter object
             If Not IsNothing(m_thThread) Then

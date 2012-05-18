@@ -258,8 +258,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			'Make sure objects are released
 			System.Threading.Thread.Sleep(2000)		'2 second delay
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
 				' Trim the console output file to remove the majority of the % finished messages

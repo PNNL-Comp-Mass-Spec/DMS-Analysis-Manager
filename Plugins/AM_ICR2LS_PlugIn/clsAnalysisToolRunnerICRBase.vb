@@ -671,8 +671,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''    ''m_ICR2LSObj.CloseICR2LS()
     ''    ''m_ICR2LSObj = Nothing
     ''    ' ''Fire off the garbage collector to make sure ICR-2LS dies
-    ''    ''GC.Collect()
-    ''    ''GC.WaitForPendingFinalizers()
+    ''    ''PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
     ''    ''Delay to allow ICR2LS to close everything
     ''    System.Threading.Thread.Sleep(3000)

@@ -80,8 +80,7 @@ namespace AM_IDM_Plugin
                 //Make sure objects are released
                 //2 second delay
                 System.Threading.Thread.Sleep(2000);
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+				PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

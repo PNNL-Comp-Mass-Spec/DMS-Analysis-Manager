@@ -338,8 +338,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			'Make sure objects are released
 			System.Threading.Thread.Sleep(2000)		   '2 second delay
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Something went wrong
@@ -1126,6 +1125,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim intValue As Integer
 
 		Dim intParamFileThreadCount As Integer = 0
+		Dim strDMSDefinedThreadCount As String
 		Dim intDMSDefinedThreadCount As Integer = 0
 
 		Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
@@ -1311,11 +1311,27 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Return String.Empty
 		End Try
 
-		' Define the thread count
-		intDMSDefinedThreadCount = m_JobParams.GetJobParameter("MSGFDBThreads", 0)
+		' Define the thread count; note that MSGFDBThreads could be "all"
+		strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", String.Empty)
+		If Not Integer.TryParse(strDMSDefinedThreadCount, intDMSDefinedThreadCount) Then
+			intDMSDefinedThreadCount = 0
+		End If
 
 		If intDMSDefinedThreadCount > 0 Then
 			intParamFileThreadCount = intDMSDefinedThreadCount
+		End If
+
+		If intParamFileThreadCount <= 0 Then
+			' Set intParamFileThreadCount to the number of cores on this computer, minus 1
+			' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
+			' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
+
+			Dim coreCount As Integer = 0
+			For Each item As System.Management.ManagementBaseObject In New System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
+				coreCount += Integer.Parse(item("NumberOfCores").ToString())
+			Next
+
+			intParamFileThreadCount = coreCount - 1
 		End If
 
 		If intParamFileThreadCount > 0 Then

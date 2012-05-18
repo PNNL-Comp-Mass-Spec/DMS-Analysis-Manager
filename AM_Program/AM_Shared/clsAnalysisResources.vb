@@ -443,12 +443,11 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
 	''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
 	''' <remarks></remarks>
-	Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As System.Collections.Generic.Queue(Of String), _
-	  ByVal strFileToQueueForDeletion As String)
+	Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As System.Collections.Generic.Queue(Of String), ByVal strFileToQueueForDeletion As String)
 
 		If strFilesToDelete.Count > 0 Then
 			' Call the garbage collector, then try to delete the first queued file
-
+			' Note, do not call WaitForPendingFinalizers since that could block this thread
 			GC.Collect()
 
 			Try
@@ -3095,8 +3094,7 @@ Public MustInherit Class clsAnalysisResources
 								If intRetryCount = 1 Then
 									strExceptionMsg = String.Copy(ex.Message)
 									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " & fi.Name & " in folder " & workDir & "; will retry after garbage collection")
-									GC.Collect()
-									GC.WaitForPendingFinalizers()
+									PRISM.Processes.clsProgRunner.GarbageCollectNow()
 									System.Threading.Thread.Sleep(1000)
 								End If
 							End Try

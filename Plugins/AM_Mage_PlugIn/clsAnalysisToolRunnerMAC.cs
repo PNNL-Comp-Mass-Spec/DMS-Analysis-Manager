@@ -76,8 +76,7 @@ namespace AnalysisManager_MAC {
                 //Make sure objects are released
                 //2 second delay
                 System.Threading.Thread.Sleep(2000);
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+				PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess) {
                     // Move the source files and any results to the Failed Job folder

@@ -201,8 +201,7 @@ Public Class clsDtaGenToolRunner
 		Dim StepResult As IJobParams.CloseOutType
 
 		'Make sure all files have released locks
-		GC.Collect()
-		GC.WaitForPendingFinalizers()
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		System.Threading.Thread.Sleep(1000)
 
 		'Get rid of raw data file

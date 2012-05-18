@@ -108,8 +108,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
+        PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         If Not ValidateDTARefineryLogFile() Then
             result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA

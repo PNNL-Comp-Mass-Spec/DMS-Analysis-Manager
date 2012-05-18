@@ -218,8 +218,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 			mLogFile.Close()
 			mLogFile = Nothing
 
-			GC.Collect()
-			GC.WaitForPendingFinalizers()
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			System.Threading.Thread.Sleep(100)
 		End If
 	End Sub
