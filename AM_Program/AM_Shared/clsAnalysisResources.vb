@@ -889,14 +889,10 @@ Public MustInherit Class clsAnalysisResources
 			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' Call RetrieveDotDFolder() to copy the folder and all subfolders
 
-				' Only the MSXml step tool requires the .Baf file; we can skip it for other tools
+				' Both the MSXml step tool and DeconTools require the .Baf file
+				' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
 				Dim blnSkipBAFFiles As Boolean
-
-				If Me.GetType.FullName.ToLower.Contains("msxmlbruker") Then
-					blnSkipBAFFiles = False
-				Else
-					blnSkipBAFFiles = True
-				End If
+				blnSkipBAFFiles = False
 
 				blnSuccess = RetrieveDotDFolder(WorkDir, CreateStoragePathInfoOnly, blnSkipBAFFiles)
 
