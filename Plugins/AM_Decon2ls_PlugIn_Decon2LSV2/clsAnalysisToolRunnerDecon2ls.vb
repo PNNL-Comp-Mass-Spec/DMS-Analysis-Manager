@@ -98,6 +98,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		Dim ScansFilePath As String
 		Dim IsosFilePath As String
 		Dim PeaksFilePath As String
+		Dim blnDotDFolder As Boolean = False
 
 		Try
 
@@ -106,35 +107,43 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
 			Select Case mRawDataType
-				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
+				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 					' As of 11/19/2010, the Decon2LS output files are created inside the .D folder
+					' Still true as of 5/18/2012
+					blnDotDFolder = True
+				Case Else
 					If Not System.IO.File.Exists(IsosFilePath) And Not System.IO.File.Exists(ScansFilePath) Then
-						' Copy the files from the .D folder to the work directory
-
-						Dim fiSrcFilePath As System.IO.FileInfo
-
-						If m_DebugLevel >= 1 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying Decon2LS result files from the .D folder to the working directory")
+						If mInputFilePath.ToLower().EndsWith(".d") Then
+							blnDotDFolder = True
 						End If
-
-						fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX))
-						If fiSrcFilePath.Exists Then
-							fiSrcFilePath.CopyTo(ScansFilePath)
-						End If
-
-						fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX))
-						If fiSrcFilePath.Exists Then
-							fiSrcFilePath.CopyTo(IsosFilePath)
-						End If
-
-						fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX))
-						If fiSrcFilePath.Exists Then
-							fiSrcFilePath.CopyTo(PeaksFilePath)
-						End If
-
 					End If
-
 			End Select
+
+			If blnDotDFolder AndAlso Not System.IO.File.Exists(IsosFilePath) AndAlso Not System.IO.File.Exists(ScansFilePath) Then
+				' Copy the files from the .D folder to the work directory
+
+				Dim fiSrcFilePath As System.IO.FileInfo
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying Decon2LS result files from the .D folder to the working directory")
+				End If
+
+				fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX))
+				If fiSrcFilePath.Exists Then
+					fiSrcFilePath.CopyTo(ScansFilePath)
+				End If
+
+				fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX))
+				If fiSrcFilePath.Exists Then
+					fiSrcFilePath.CopyTo(IsosFilePath)
+				End If
+
+				fiSrcFilePath = New System.IO.FileInfo(System.IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX))
+				If fiSrcFilePath.Exists Then
+					fiSrcFilePath.CopyTo(PeaksFilePath)
+				End If
+
+			End If
 
 			m_jobParams.AddResultFileToKeep(ScansFilePath)
 			m_jobParams.AddResultFileToKeep(IsosFilePath)
@@ -439,6 +448,10 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 				Case DeconToolsStateType.BadErrorLogFile
 					blnDecon2LSError = True
+
+					' Sleep for 1 minute
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sleeping for 1 minute")
+					System.Threading.Thread.Sleep(60 * 1000)
 
 				Case DeconToolsStateType.Idle
 					' DeconTools never actually started

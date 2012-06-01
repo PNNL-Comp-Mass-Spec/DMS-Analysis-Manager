@@ -23,11 +23,12 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "April 12, 2012"
+	Public Const PROGRAM_DATE As String = "May 31, 2012"
 
 	Private mInputFilePath As String
 
 	Private mCodeTestMode As Boolean
+	Private mTraceMode As Boolean
 
 	Private mQuietMode As Boolean
 
@@ -43,6 +44,7 @@ Module modMain
 		intReturnCode = 0
 		mInputFilePath = String.Empty
 		mCodeTestMode = False
+		mTraceMode = False
 
 		Try
 			blnProceed = False
@@ -57,9 +59,12 @@ Module modMain
 				ShowProgramHelp()
 				intReturnCode = -1
 			Else
+				If mTraceMode Then ShowTraceMessage("Command line arguments parsed")
 
 				' Note: CodeTestMode is enabled using command line switch /T
 				If mCodeTestMode Then
+
+					If mTraceMode Then ShowTraceMessage("Code test mode enabled")
 
 					Dim objTest As New clsCodeTest
 					Try
@@ -99,8 +104,8 @@ Module modMain
 
 				Else
 					' Initiate automated analysis
-					objDMSMain = New AnalysisManagerProg.clsMainProcess
-
+					If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
+					objDMSMain = New AnalysisManagerProg.clsMainProcess(mTraceMode)
 					objDMSMain.Main()
 					intReturnCode = 0
 
@@ -126,7 +131,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "T", "Test", "Q"}
+		Dim strValidParameters() As String = New String() {"I", "T", "Test", "Trace", "Q"}
 
 		Try
 			' Make sure no invalid parameters are present
@@ -143,6 +148,8 @@ Module modMain
 
 					If .RetrieveValueForParameter("T", strValue) Then mCodeTestMode = True
 					If .RetrieveValueForParameter("Test", strValue) Then mCodeTestMode = True
+
+					If .RetrieveValueForParameter("Trace", strValue) Then mTraceMode = True
 
 					If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
 				End With
@@ -170,6 +177,7 @@ Module modMain
 			Console.WriteLine()
 
 			Console.WriteLine("Use /T to start the program in code test mode.")
+			Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")
 			Console.WriteLine()
 
 			Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)")
@@ -204,6 +212,9 @@ Module modMain
 
 	End Sub
 
+	Public Sub ShowTraceMessage(ByVal strMessage As String)
+		AnalysisManagerProg.clsMainProcess.ShowTraceMessage(strMessage)
+	End Sub
 End Module
 
 

@@ -1277,7 +1277,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 						If strKey.ToLower() = MSGFDB_OPTION_INSTRUMENT_ID.ToLower() Then
 							If Integer.TryParse(strValue, intValue) Then
-								If intValue = 2 Then
+								' 0 means Low-res LCQ/LTQ
+								' 1 means High-res LTQ
+								' 2 means TOF
+								If intValue = 1 Then
 									blnHighResMSn = True
 								End If
 							End If

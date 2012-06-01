@@ -52,6 +52,8 @@ Namespace AnalysisManagerProg
 		Private m_NeedToAbortProcessing As Boolean
 		Private m_MostRecentJobInfo As String
 
+		Private m_TraceMode As Boolean
+
 		Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
 		   ByVal lpRootPathName As String, _
 		   ByRef lpFreeBytesAvailable As Long, _
@@ -61,6 +63,15 @@ Namespace AnalysisManagerProg
 #End Region
 
 #Region "Properties"
+		Public Property TraceMode As Boolean
+			Get
+				Return m_TraceMode
+			End Get
+			Set(value As Boolean)
+				m_TraceMode = value
+			End Set
+		End Property
+
 #End Region
 
 #Region "Methods"
@@ -76,18 +87,28 @@ Namespace AnalysisManagerProg
 			Try
 
 				If IsNothing(m_MainProcess) Then
-					m_MainProcess = New clsMainProcess
-					If Not m_MainProcess.InitMgr Then Exit Function
+					If Me.TraceMode Then ShowTraceMessage("Instantiating m_MainProcess in clsMainProcess")
+
+					m_MainProcess = New clsMainProcess(Me.TraceMode)
+					If Not m_MainProcess.InitMgr Then
+						If Me.TraceMode Then ShowTraceMessage("m_MainProcess.InitMgr returned false; aborting")
+						Exit Function
+					End If
+
 				End If
 
+				If Me.TraceMode Then ShowTraceMessage("Call m_MainProcess.DoAnalysis")
 				m_MainProcess.DoAnalysis()
 
+				If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 0")
 				Return 0
 
 			Catch Err As System.Exception
 				'Report any exceptions not handled at a lower level to the system application log
 				ErrMsg = "Critical exception starting application: " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err)
+				If Me.TraceMode Then ShowTraceMessage(ErrMsg)
 				PostToEventLog(ErrMsg)
+				If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1")
 				Return 1
 			End Try
 
@@ -95,11 +116,11 @@ Namespace AnalysisManagerProg
 
 		End Function
 
-
 		''' <summary>
 		''' Constructor
 		''' </summary>	
-		Public Sub New()
+		Public Sub New(blnTraceModeEnabled As Boolean)
+			Me.TraceMode = blnTraceModeEnabled
 			m_ConfigChanged = False
 			m_DebugLevel = 0
 			m_NeedToAbortProcessing = False
@@ -121,12 +142,14 @@ Namespace AnalysisManagerProg
 			Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
 
 			Try
+				If Me.TraceMode Then ShowTraceMessage("Reading application config file")
 				lstMgrSettings = LoadMgrSettingsFromFile()
 
 				' Get the manager settings
 				' If you get an exception here while debugging in Visual Studio, then be sure 
 				'   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
 				Try
+					If Me.TraceMode Then ShowTraceMessage("Instantiating clsAnalysisMgrSettings")
 					m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath)
 				Catch ex As System.Exception
 					' Failures are logged by clsMgrSettings to application event logs;
@@ -160,6 +183,7 @@ Namespace AnalysisManagerProg
 			End Try
 
 			m_MgrName = m_MgrSettings.GetParam("MgrName")
+			If Me.TraceMode Then ShowTraceMessage("Manager name is " & m_MgrName)
 
 			' Delete any temporary files that may be left in the app directory
 			RemoveTempFiles()
@@ -168,7 +192,9 @@ Namespace AnalysisManagerProg
 			Dim LogFileName As String = m_MgrSettings.GetParam("logfilename")
 
 			' Make the initial log entry
+			If Me.TraceMode Then ShowTraceMessage("Initializing log file " & LogFileName)
 			clsLogTools.ChangeLogFileName(LogFileName)
+
 			Dim MyMsg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, MyMsg)
 
@@ -188,20 +214,24 @@ Namespace AnalysisManagerProg
 			m_DebugLevel = CInt(m_MgrSettings.GetParam("debuglevel"))
 
 			' Setup the tool for getting tasks
+			If Me.TraceMode Then ShowTraceMessage("Instantiate m_AnalysisTask as new clsAnalysisJob")
 			m_AnalysisTask = New clsAnalysisJob(m_MgrSettings, m_DebugLevel)
 
 			m_WorkDirPath = m_MgrSettings.GetParam("workdir")
 
 			' Setup the manager cleanup class
+			If Me.TraceMode Then ShowTraceMessage("Setup the manager cleanup class")
 			m_MgrErrorCleanup = New clsCleanupMgrErrors( _
 			   m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
 			   m_MgrName, _
 			   m_MgrFolderPath, _
 			   m_WorkDirPath)
 
+			If Me.TraceMode Then ShowTraceMessage("Initialize the Summary file")
 			m_SummaryFile = New clsSummaryFile()
 			m_SummaryFile.Clear()
 
+			If Me.TraceMode Then ShowTraceMessage("Initialize the Plugin Loader")
 			m_PluginLoader = New clsPluginLoader(m_SummaryFile, m_MgrFolderPath)
 
 			'Everything worked
@@ -214,9 +244,10 @@ Namespace AnalysisManagerProg
 		''' </summary>
 		''' <remarks></remarks>
 		Public Sub DoAnalysis()
+			If Me.TraceMode Then ShowTraceMessage("Entering clsMainProcess.DoAnalysis")
 
 			Dim LoopCount As Integer = 0
-			Dim MaxLoopCount As Integer = CInt(m_MgrSettings.GetParam("maxrepetitions"))
+			Dim MaxLoopCount As Integer
 			Dim TasksStartedCount As Integer = 0
 			Dim blnErrorDeletingFilesFlagFile As Boolean
 
@@ -231,7 +262,9 @@ Namespace AnalysisManagerProg
 			Dim intSuccessiveDeadLockCount As Integer = 0
 
 			Try
+				If Me.TraceMode Then ShowTraceMessage("Entering clsMainProcess.DoAnalysis Try/Catch block")
 
+				MaxLoopCount = CInt(m_MgrSettings.GetParam("maxrepetitions"))
 				blnRequestJobs = True
 				blnOneTaskStarted = False
 				blnOneTaskPerformed = False
@@ -247,6 +280,8 @@ Namespace AnalysisManagerProg
 					If m_ConfigChanged Then
 						'Local config file has changed
 						m_ConfigChanged = False
+
+						If Me.TraceMode Then ShowTraceMessage("Reloading manager settings since config file has changed")
 
 						If Not ReloadManagerSettings() Then
 							Exit Sub
@@ -277,6 +312,7 @@ Namespace AnalysisManagerProg
 							UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_MC, strManagerDisableReason)
 						End If
 
+						If Me.TraceMode Then ShowTraceMessage("Manager inactive: " & strManagerDisableReason)
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager inactive: " & strManagerDisableReason)
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 						Exit Sub
@@ -284,6 +320,7 @@ Namespace AnalysisManagerProg
 
 					Dim MgrUpdateRequired As Boolean = m_MgrSettings.GetParam("ManagerUpdateRequired", False)
 					If MgrUpdateRequired Then
+						If Me.TraceMode Then ShowTraceMessage("Manager update is required, closing manager")
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager update is required")
 						m_MgrSettings.AckManagerUpdateRequired()
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
@@ -460,6 +497,7 @@ Namespace AnalysisManagerProg
 
 			Finally
 				If Not m_StatusTools Is Nothing Then
+					If Me.TraceMode Then ShowTraceMessage("Disposing message queue via m_StatusTools.DisposeMessageQueue")
 					m_StatusTools.DisposeMessageQueue()
 				End If
 			End Try
@@ -1195,6 +1233,7 @@ Namespace AnalysisManagerProg
 			If m_StatusTools Is Nothing Then
 				Dim StatusFileLoc As String = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"))
 
+				If Me.TraceMode Then ShowTraceMessage("Initialize m_StatusTools using " & StatusFileLoc)
 				m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
 
 				With m_StatusTools
@@ -1299,10 +1338,13 @@ Namespace AnalysisManagerProg
 		Private Function ReloadManagerSettings() As Boolean
 
 			Try
+				If Me.TraceMode Then ShowTraceMessage("Reading application config file")
+
 				'Get settings from config file
 				Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
 				lstMgrSettings = LoadMgrSettingsFromFile()
 
+				If Me.TraceMode Then ShowTraceMessage("Storing manager settings in m_MgrSettings")
 				If Not m_MgrSettings.LoadSettings(lstMgrSettings) Then
 					If m_MgrSettings.ErrMsg <> "" Then
 						'Manager has been deactivated, so report this
@@ -1360,6 +1402,7 @@ Namespace AnalysisManagerProg
 			For Each fiFile As System.IO.FileInfo In lstFilesToDelete
 				Try
 					If System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
+						If Me.TraceMode Then ShowTraceMessage("Deleting temp file " & fiFile.FullName)
 						fiFile.Delete()
 					End If
 				Catch ex As Exception
@@ -1459,6 +1502,10 @@ Namespace AnalysisManagerProg
 
 		End Function
 
+		Public Shared Sub ShowTraceMessage(ByVal strMessage As String)
+			Console.WriteLine(System.DateTime.Now.ToString("hh:mm:ss tt") & ": " & strMessage)
+		End Sub
+
 		Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)
 			Dim strErrorMessages() As String
 			strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
@@ -1482,6 +1529,8 @@ Namespace AnalysisManagerProg
 
 				dtLastConfigDBUpdate = System.DateTime.UtcNow
 
+				If Me.TraceMode Then ShowTraceMessage("Loading manager settings from the manager control DB")
+
 				If Not m_MgrSettings.LoadDBSettings() Then
 					Dim msg As String
 
@@ -1491,6 +1540,7 @@ Namespace AnalysisManagerProg
 						msg = m_MgrSettings.ErrMsg
 					End If
 
+					If Me.TraceMode Then ShowTraceMessage(msg)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
 
 					blnSuccess = False
@@ -1523,7 +1573,6 @@ Namespace AnalysisManagerProg
 
 			m_StatusTools.UpdateIdle(ManagerIdleMessage, strErrorMessages, m_MostRecentJobInfo, True)
 		End Sub
-
 
 		Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
 
