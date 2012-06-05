@@ -39,12 +39,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}            
            
 				// Store the Cyclops version info in the database
-                if (!StoreToolVersionInfo())
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Cyclops version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-                }
+                //if (!StoreToolVersionInfo())
+                //{
+                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                //    m_message = "Error determining Cyclops version";
+                //    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                //}
 
 				// Determine the path to the R DLLs
 				string RProgLoc = m_mgrParams.GetParam("RProgLoc");
@@ -73,6 +73,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
 				d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
                 d_Params.Add("RunProteinProphet", m_jobParams.GetParam("RunProteinProphet"));
+                d_Params.Add("orgdbdir", m_mgrParams.GetParam("orgdbdir"));
 
 				//Change the name of the log file for the local log file to the plug in log filename
 				String LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");

@@ -60,9 +60,9 @@ namespace AnalysisManager_Cyclops_PlugIn
                             m_jobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");
                         }
 
-                        m_message = "Cyclops Resourcer attempting to retrieve Fasta file: " + m_mgrParams.GetParam("orgdbdir");
                         // Generate the path Fasta File
-                        if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
+                        string s_FastaDir = m_mgrParams.GetParam("orgdbdir"); 
+                        if (!RetrieveOrgDB(s_FastaDir))
                         {
                             m_message = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
                             return IJobParams.CloseOutType.CLOSEOUT_FAILED;
