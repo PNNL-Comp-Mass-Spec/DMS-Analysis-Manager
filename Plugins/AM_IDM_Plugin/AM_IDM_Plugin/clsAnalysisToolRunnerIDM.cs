@@ -6,7 +6,7 @@ using AnalysisManagerBase;
 using log4net;
 using InterDetect;
 
-namespace AM_IDM_Plugin
+namespace AnalysisManager_IDM_Plugin
 {
     class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
     {
@@ -47,8 +47,8 @@ namespace AM_IDM_Plugin
                 try
                 {
                     // TODO : Create in instance of IDM and run the tool!
-                    InterferenceDetector interDetector = new InterferenceDetector();
-                    interDetector.DatabaseCheck();
+                    InterferenceDetector idm = new InterferenceDetector();
+                    blnSuccess = idm.Run(m_WorkDir); 
 
                     //Change the name of the log file for the local log file to the plug in log filename
                     LogFileName = m_mgrParams.GetParam("logfilename");

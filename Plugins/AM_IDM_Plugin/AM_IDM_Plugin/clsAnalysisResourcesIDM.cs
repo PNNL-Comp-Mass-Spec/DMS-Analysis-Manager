@@ -3,7 +3,7 @@ using System.IO;
 
 using AnalysisManagerBase;
 
-namespace AM_IDM_Plugin
+namespace AnalysisManager_IDM_Plugin
 {
     public class clsAnalysisResourcesIDM : clsAnalysisResources
     {
