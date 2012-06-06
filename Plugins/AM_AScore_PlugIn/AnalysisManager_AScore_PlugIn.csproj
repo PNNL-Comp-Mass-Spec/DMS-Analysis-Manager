@@ -34,9 +34,6 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="AScore_DLL">
-      <HintPath>lib\AScore_DLL.dll</HintPath>
-    </Reference>
     <Reference Include="Ionic.Zip, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Ionic.Zip.dll</HintPath>
@@ -70,6 +67,12 @@
     <Compile Include="clsAnalysisToolRunnerAScore.cs" />
     <Compile Include="clsAScoreMage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AScore_Trunk\AScore_DLL\AScore_DLL.csproj">
+      <Project>{B319DBEA-1C29-407F-857F-6BBEF2949EEB}</Project>
+      <Name>AScore_DLL</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

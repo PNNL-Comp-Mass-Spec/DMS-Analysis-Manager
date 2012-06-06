@@ -81,6 +81,7 @@ namespace AnalysisManager_AScore_PlugIn {
 
         private bool GetAScoreParameterFile() {
 
+            string[] fragtypes = new string[] { "_cid.xml", "_etd.xml", "_hcd.xml" };
             //' Retrieve the AScore Parameter .xml file specified for this job
             if (string.IsNullOrEmpty(mParamFilename)) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
@@ -93,7 +94,17 @@ namespace AnalysisManager_AScore_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
             }
 
-            File.Copy(Path.Combine(strMAParameterFileStoragePath, mParamFilename), Path.Combine(mWorkingDir, mParamFilename), true);
+            //Copy all frag types for given parameter set
+            foreach (string frag in fragtypes)
+            {
+                string tempfrag = Path.Combine(strMAParameterFileStoragePath, Path.GetFileNameWithoutExtension(mParamFilename) + frag);
+                if (File.Exists(tempfrag))
+                {
+                    File.Copy(
+                        tempfrag,
+                        Path.Combine(mWorkingDir, Path.GetFileName(tempfrag)));
+                }
+            }
 
             //Errors were reported in function call, so just return
             return true;
@@ -272,6 +283,7 @@ namespace AnalysisManager_AScore_PlugIn {
             protected int toolIdx;
             protected int paramFileIdx;
             protected int resultsFldrIdx;
+            protected int settingsFileIdx;
 
             #endregion
 
@@ -311,12 +323,14 @@ namespace AnalysisManager_AScore_PlugIn {
                 toolIdx = InputColumnPos["Tool"];
                 paramFileIdx = InputColumnPos["Parameter_File"];
                 resultsFldrIdx = InputColumnPos["Folder"];
+                settingsFileIdx = InputColumnPos["Settings_File"];
 
             }
 
             // process the job described by the fields in the input vals object
             protected override bool CheckFilter(ref object[] vals) {
 
+                string fragtype = "";
                 // extract contents of results file for current job to local file in working directory
                 BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
                 ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
@@ -325,6 +339,22 @@ namespace AnalysisManager_AScore_PlugIn {
                 string resultsFolderPath = vals[resultsFldrIdx].ToString();
                 string paramFileName = vals[paramFileIdx].ToString();
                 string dtaFilePath = CopyDTAResults(resultsFolderPath);
+                string settingsFileName = vals[settingsFileIdx].ToString();
+                string findFragmentation = (paramFileName + settingsFileName).ToLower();
+
+
+                if (findFragmentation.Contains("hcd"))
+                {
+                    fragtype = "hcd";
+                }
+                else if (findFragmentation.Contains("etd"))
+                {
+                    fragtype = "etd";
+                }
+                else
+                {
+                    fragtype = "cid";
+                }
 
                 // process extracted results file and DTA file with AScore
                 string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
@@ -333,7 +363,13 @@ namespace AnalysisManager_AScore_PlugIn {
                 // TODO: make the call to AScore
                 string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
                 string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                string paramFile = Path.Combine(WorkingDir, paramFilename); //paramFileName);
+                string paramFile = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(paramFilename) + "_" + fragtype + ".xml"); //paramFileName);
+
+                if (!File.Exists(paramFile))
+                {
+                    Console.WriteLine("This type of parameter file does not exist");
+                    return false;
+                }
 
                 ParameterFileManager paramManager = new ParameterFileManager(paramFile);
                 DtaManager dtaManager = new DtaManager(dtaFile);
@@ -349,6 +385,9 @@ namespace AnalysisManager_AScore_PlugIn {
                     case "inspect":
                         datasetManager = new InspectFHT(fhtFile);
                         break;
+                    case "msgfdb":
+                        datasetManager = new MsgfdbFHT(fhtFile);
+                        break;
                     default:
                         Console.WriteLine("Incorrect search type check again");
                         return false;
@@ -360,11 +399,14 @@ namespace AnalysisManager_AScore_PlugIn {
                 string tableName = "T_AScoreResults"; // TODO: how do we name table
                 string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                 clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
-
+                dtaManager.Abort();
                 // Delete extracted_results file and DTA file
 				if (System.IO.File.Exists(ExtractedResultsFileName))
 					File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
-
+                if (System.IO.File.Exists(dtaFilePath))
+                {
+                    File.Delete(dtaFilePath);
+                }
                 // optionally delete AScore results file
                 // TODO: do the deletions
 
