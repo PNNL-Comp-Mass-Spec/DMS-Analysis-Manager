@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2F7509DC-EDAB-4A89-8D89-3B669190FA09}</ProjectGuid>
+    <ProjectGuid>{C599D506-1050-4DA6-A6FD-3D6B0BCC11E7}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TestMagePlugIn</RootNamespace>
