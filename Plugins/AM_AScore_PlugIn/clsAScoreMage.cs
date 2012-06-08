@@ -65,8 +65,11 @@ namespace AnalysisManager_AScore_PlugIn {
         public void Run() {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
-            GetAScoreParameterFile();
+            if(mParamFilename == string.Empty)
+                return;
 
+            GetAScoreParameterFile();
+       
             SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "sequest");
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
