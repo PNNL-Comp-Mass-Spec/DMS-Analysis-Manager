@@ -81,8 +81,7 @@ namespace AnalysisManager_AScore_PlugIn {
 
         private bool GetAScoreParameterFile() {
 
-            string[] fragtypes = new string[] { "_cid.xml", "_etd.xml", "_hcd.xml" };
-            //' Retrieve the AScore Parameter .xml file specified for this job
+            
             if (string.IsNullOrEmpty(mParamFilename)) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
             }
@@ -94,19 +93,19 @@ namespace AnalysisManager_AScore_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
             }
 
-            //Copy all frag types for given parameter set
-            foreach (string frag in fragtypes)
+            //Find all parameter files that match the base name and copy to working directory
+            foreach (string pfile in Directory.EnumerateFiles(strMAParameterFileStoragePath, mParamFilename)) 
             {
-                string tempfrag = Path.Combine(strMAParameterFileStoragePath, Path.GetFileNameWithoutExtension(mParamFilename) + frag);
-                if (File.Exists(tempfrag))
+                try
                 {
-                    File.Copy(
-                        tempfrag,
-                        Path.Combine(mWorkingDir, Path.GetFileName(tempfrag)));
+                    File.Copy(Path.Combine(strMAParameterFileStoragePath, pfile), Path.Combine(mWorkingDir, pfile));
+                }
+                catch
+                {
+                    Console.WriteLine("File was already present or could not copy");
                 }
             }
 
-            //Errors were reported in function call, so just return
             return true;
 
         }
