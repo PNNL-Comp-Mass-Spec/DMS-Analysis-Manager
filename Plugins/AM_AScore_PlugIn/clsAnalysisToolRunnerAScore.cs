@@ -31,12 +31,12 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 
 				// Store the AScore version info in the database
-                if (!StoreToolVersionInfo())
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AScore version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-                }
+                //if (!StoreToolVersionInfo())
+                //{
+                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                //    m_message = "Error determining AScore version";
+                //    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                //}
 
 				m_CurrentAScoreTask = "Running AScore";
 				m_LastStatusUpdateTime = System.DateTime.UtcNow;

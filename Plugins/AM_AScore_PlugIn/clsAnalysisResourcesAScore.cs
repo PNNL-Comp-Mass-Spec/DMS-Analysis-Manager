@@ -14,7 +14,7 @@ namespace AnalysisManager_AScore_PlugIn
         public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
         {
             bool blnSuccess = true;
-         //   blnSuccess = RunAScoreGetResources();
+     //       blnSuccess = RunAScoreGetResources();
 
             if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
