@@ -2,8 +2,6 @@
 using System.IO;
 using System.Collections.Generic;
 using System;
-using Mage;
-using MageDisplayLib;
 using AnalysisManager_MAC;
 
 namespace AnalysisManager_Mage_PlugIn {
@@ -14,21 +12,20 @@ namespace AnalysisManager_Mage_PlugIn {
         /// sequentially run the Mage operations listed in "MageOperations" parameter
         /// </summary>
         protected override bool RunMACTool() {
-            bool ok = true;
             //Change the name of the log file for the local log file to the plug in log filename
-            String LogFileName = Path.Combine(m_WorkDir, "Mage_Log");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            String logFileName = Path.Combine(m_WorkDir, "Mage_Log");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileName(logFileName);
 
             // run the appropriate Mage pipeline(s) according to operations list parameter
             string mageOperations = m_jobParams.GetParam("MageOperations");
-            MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
-            ok = ops.RunMageOperations(mageOperations);
+            var ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            bool ok = ops.RunMageOperations(mageOperations);
 
             // Change the name of the log file back to the analysis manager log file
-            LogFileName = m_mgrParams.GetParam("logfilename");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            logFileName = m_mgrParams.GetParam("logfilename");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileName(logFileName);
 
             return ok;
         }
@@ -41,8 +38,7 @@ namespace AnalysisManager_Mage_PlugIn {
         protected override string GetToolNameAndVersion() {
             string strToolVersionInfo = string.Empty;
             System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
-            string strNameAndVersion = null;
-            strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+            string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
             return strToolVersionInfo;
         }
@@ -51,11 +47,13 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Get file version info for supplemental Mage assemblies
         /// </summary>
         /// <returns>List of file info for supplemental DLLs</returns>
-        protected override List<System.IO.FileInfo> GetToolSupplementalVersionInfo() {
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo("Mage.dll"));
-            ioToolFiles.Add(new System.IO.FileInfo("MageExtContentFilters.dll"));
-            ioToolFiles.Add(new System.IO.FileInfo("MageExtExtractionFilters.dll"));
+        protected override List<FileInfo> GetToolSupplementalVersionInfo() {
+            var ioToolFiles = new List<FileInfo>
+                                  {
+                                      new FileInfo("Mage.dll"),
+                                      new FileInfo("MageExtContentFilters.dll"),
+                                      new FileInfo("MageExtExtractionFilters.dll")
+                                  };
             return ioToolFiles;
         }
 

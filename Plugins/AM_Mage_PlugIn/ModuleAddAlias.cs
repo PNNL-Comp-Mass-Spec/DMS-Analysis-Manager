@@ -11,11 +11,11 @@ namespace AnalysisManager_Mage_PlugIn {
     public class ModuleAddAlias : ContentFilter {
 
         // Column indexes
-        private int aliasColIdx;
-        private int datasetIdx;
+        private int _aliasColIdx;
+        private int _datasetIdx;
 
         // lookup table for dataset aliases
-        private Dictionary<string, string> datasetAliases = new Dictionary<string, string>();
+        private Dictionary<string, string> _datasetAliases = new Dictionary<string, string>();
 
         public override void Prepare() {
             base.Prepare();
@@ -24,16 +24,16 @@ namespace AnalysisManager_Mage_PlugIn {
          }
 
         protected override void ColumnDefsFinished() {
-            aliasColIdx = OutputColumnPos["Alias"];
-            datasetIdx = OutputColumnPos["Dataset"];
+            _aliasColIdx = OutputColumnPos["Alias"];
+            _datasetIdx = OutputColumnPos["Dataset"];
         }
 
         // handle a data row - make sure alias field has an appropriate value
         protected override bool CheckFilter(ref object[] vals) {
             if (OutputColumnDefs != null) {
                 object[] outRow = MapDataRow(vals);
-                string dataset = outRow[datasetIdx].ToString();
-                outRow[aliasColIdx] = LookupAlias(dataset);
+                string dataset = outRow[_datasetIdx].ToString();
+                outRow[_aliasColIdx] = LookupAlias(dataset);
                 vals = outRow;
             }
             return true;
@@ -47,13 +47,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="dataset">Dataset Name</param>
         /// <returns>Alias for dataset name</returns>
         private string LookupAlias(string dataset) {
-            string alias = dataset;
-            if (datasetAliases.ContainsKey(dataset)) {
-                alias = datasetAliases[dataset];
-            } else {
-                alias = MakeAlias(dataset);
-            }
-            return alias;
+            return _datasetAliases.ContainsKey(dataset) ? _datasetAliases[dataset] : MakeAlias(dataset);
         }
 
         /// <summary>
@@ -68,9 +62,9 @@ namespace AnalysisManager_Mage_PlugIn {
                 if (candidateAlias.Last() == '_') {
                     continue;
                 }
-                if (!datasetAliases.ContainsValue(candidateAlias)) {
+                if (!_datasetAliases.ContainsValue(candidateAlias)) {
                     alias = candidateAlias;
-                    datasetAliases.Add(dataset, alias);
+                    _datasetAliases.Add(dataset, alias);
                     break;
                 }
             }
@@ -82,22 +76,23 @@ namespace AnalysisManager_Mage_PlugIn {
         /// a lookup table of dataset names to short label equivalents
         /// </summary>
         /// <param name="factorsObj">Mage simple sink object holding </param>
-        public void SetupAliasLookup(SimpleSink factorsObj, bool PadAliases = true, bool StripPrefix = false) {
-
+        /// <param name="padAliases"> </param>
+        /// <param name="stripPrefix"> </param>
+        public void SetupAliasLookup(SimpleSink factorsObj, bool padAliases = true, bool stripPrefix = false) {
             // get non-duplicate set of dataset names
-            HashSet<string> uniqueNameSet = new HashSet<string>();
+            var uniqueNameSet = new HashSet<string>();
             int dIdx = factorsObj.ColumnIndex["Dataset"];
             foreach (Object[] row in factorsObj.Rows) {
                 uniqueNameSet.Add(row[dIdx].ToString());
             }
 
             // build alias lookup table for names
-            Dictionary<string, string> nameLookup = BuildAliasLookupTable(uniqueNameSet, PadAliases);
+            Dictionary<string, string> nameLookup = BuildAliasLookupTable(uniqueNameSet, padAliases);
 
             // set up to use the lookup table
             if (nameLookup.Count > 0) {
-                if (StripPrefix) StripOffCommonPrefix(nameLookup);
-                datasetAliases = nameLookup;
+                if (stripPrefix) StripOffCommonPrefix(nameLookup);
+                _datasetAliases = nameLookup;
             }
         }
 
@@ -105,16 +100,17 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Builds a lookup table of aliases given a unique set of names
         /// </summary>
         /// <param name="uniqueNameSet">unique set of names to build alias lookup from</param>
+        /// <param name="padAliasWidth"> </param>
         /// <returns>Lookup table of aliases for names, indexed by name</returns>
         public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true) {
 
             // get sorted list of unique dataset names
-            List<string> nameList = new List<string>(uniqueNameSet);
+            var nameList = new List<string>(uniqueNameSet);
             nameList.Sort();
 
             // create lookup tables for alias widths and alaises
-            Dictionary<string, string> nameLookup = new Dictionary<string, string>();
-            Dictionary<string, int> aliasWidths = new Dictionary<string, int>();
+            var nameLookup = new Dictionary<string, string>();
+            var aliasWidths = new Dictionary<string, int>();
             foreach (string name in nameList) {
                 nameLookup.Add(name, "");
                 aliasWidths.Add(name, 0);

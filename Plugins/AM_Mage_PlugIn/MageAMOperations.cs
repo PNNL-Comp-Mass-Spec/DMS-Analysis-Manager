@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
 using AnalysisManagerBase;
 using System.IO;
 
@@ -13,17 +12,20 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #region Member Variables
 
-        protected IJobParams m_jobParams;
+        private readonly IJobParams _jobParams;
 
-        protected IMgrParams m_mgrParams;
+        private readonly IMgrParams _mgrParams;
+
+        private bool _previousStepResultsImported;
 
         #endregion
 
         #region Constructors
 
         public MageAMOperations(IJobParams jobParms, IMgrParams mgrParms) {
-            m_jobParams = jobParms;
-            m_mgrParams = mgrParms;
+            _previousStepResultsImported = false;
+            _jobParams = jobParms;
+            _mgrParams = mgrParms;
         }
 
         #endregion
@@ -76,14 +78,39 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "importjoblist":
                     blnSuccess = ImportJobList();
                     break;
-                default:
-                    // Future: throw an error
+                case "nooperation":
+                    blnSuccess = NoOperation();
                     break;
+                case "makemetadatadb":
+                    blnSuccess = MakeMetadataDB();
+                    break;
+                    // Future: throw an error
             }
             return blnSuccess;
         }
 
+        /// <summary>
+        /// Create SQLite db file containing metadata for data package
+        /// </summary>
+        /// <returns></returns>
+        private bool MakeMetadataDB()
+        {
+            var mageObj = new MageAMMetadataPipelines(_jobParams, _mgrParams);
+            //GetPriorStepResults();
+            mageObj.MakeMetadataDB();
+            return true;
+        }
+
         #region Mage Operations Functions
+
+        /// <summary>
+        ///  don't do anything
+        /// </summary>
+        /// <returns></returns>
+        private bool NoOperation() {
+            GetPriorStepResults();
+            return true;
+        }
 
         /// <summary>
         /// Import factors for set of datasets referenced by analysis jobs in data package
@@ -91,11 +118,11 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool GetFactors() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string sql = GetSQLFromParameter("FactorsSource", mageObj);
+            GetPriorStepResults();
             mageObj.GetDatasetFactors(sql);
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -103,11 +130,11 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ExtractFromJobs() {
-            bool ok = true;
-            MageAMExtractionPipelines mageObj = new MageAMExtractionPipelines(m_jobParams, m_mgrParams);
+            var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
             string sql = GetSQLFromParameter("ExtractionSource", mageObj);
+            GetPriorStepResults();
             mageObj.ExtractFromJobs(sql);
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -116,12 +143,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportFDRTables() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
-            string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            const string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
             string inputfileList = mageObj.GetJobParam("MageFDRFiles");
+            GetPriorStepResults();
             mageObj.ImportFilesInFolderToSQLite(inputFolderPath, inputfileList, "CopyAndImport");
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -130,12 +157,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportDataPackageFiles() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
             string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
+            GetPriorStepResults();
             mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", "CopyAndImport");
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -144,12 +171,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportReporterIons() {
-            bool ok = true;
-            m_jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            _jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string sql = GetSQLFromParameter("ReporterIonSource", mageObj);
-            mageObj.ImportJobResults(sql, "_ReporterIons.txt", "reporter_ions", "SimpleImport");
-            return ok;
+            GetPriorStepResults();
+            mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport");
+            return true;
         }
 
         /// <summary>
@@ -158,12 +185,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportFirstHits() {
-            bool ok = true;
-            m_jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string sql = GetSQLFromParameter("FirstHitsSource", mageObj);
+            GetPriorStepResults();
             mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -172,12 +199,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportRawFileList() {
-            bool ok = true;
-            m_jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
+            GetPriorStepResults();
             mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files");
-            return ok;
+            return true;
         }
 
         /// <summary>
@@ -185,17 +212,30 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportJobList() {
-            bool ok = true;
-            MageAMFileProcessingPipelines mageObj = new MageAMFileProcessingPipelines(m_jobParams, m_mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
+            GetPriorStepResults();
             mageObj.ImportJobList(sql, "t_data_package_analysis_jobs");
-            return ok;
+            return true;
         }
 
 
         #endregion
 
         #region Utility Functions
+
+        /// <summary>
+        /// Import any results from previous step, if there are any, and if they haven't already be imported
+        /// </summary>
+        /// <returns></returns>
+        private void GetPriorStepResults() {
+            if (!_previousStepResultsImported) {
+                _previousStepResultsImported = true;
+                var mageObj = new MageAMPipelineBase(_jobParams, _mgrParams);
+                mageObj.GetPriorResultsToWorkDir();
+            }
+        }
+
 
         /// <summary>
         /// Get an executable SQL statement by populating a given query template
@@ -218,70 +258,22 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <returns></returns>
         private static string GetSQLForTemplate(string sqlTemplateName, MageAMPipelineBase mageObject) {
             SQL.QueryTemplate qt = SQL.GetQueryTemplate(sqlTemplateName);
-            string[] ps = GetParamValues(mageObject, qt.paramNameList);
+            string[] ps = GetParamValues(mageObject, qt.ParamNameList);
             return SQL.GetSQL(qt, ps);
         }
 
         /// <summary>
         /// Returns an array of parameter values for the given list of parameter names
         /// </summary>
-        /// <param name="parms">Parameter object holding parameter values</param>
         /// <param name="paramNameList">Comma delimited list of parameter names to retrieve values for</param>
         /// <param name="mageObject">Object holding a copy of job parameters</param>
         /// <returns>Array of values (order will match param name list)</returns>
         public static string[] GetParamValues(MageAMPipelineBase mageObject, string paramNameList) {
-            List<string> paramValues = new List<string>();
-            foreach (string paramName in paramNameList.Split(',')) {
-                string val = mageObject.GetJobParam(paramName.Trim());
-                paramValues.Add(val);
-            }
-            return paramValues.ToArray();
+            return paramNameList.Split(',').Select(paramName => mageObject.GetJobParam(paramName.Trim())).ToArray();
         }
 
         #endregion
     }
+
+
 }
-
-/*
-ExtractFromJobs() {
-GetSQLFromParameter("ExtractionSource", mageObj);
-RequireJobParam("ExtractionType"); //"Sequest First Hits"
-ResultType.TypeList[extractionType];
-GetJobParam("KeepAllResults", "Yes");
-GetJobParam("ResultFilterSetID", "All Pass");
-GetJobParam("MSGFCutoff", "All Pass");
-
-
-GetFactors() {
-GetSQLFromParameter("FactorsSource", mageObj);
-
-
-ImportFDRTables() {
-mageObj.GetJobParam("MageFDRFiles");
-GetJobParam("FileNameSelector");
-GetJobParam("FileSelectorMode", "RegEx");
-GetJobParam("IncludeFilesOrFolders", "File");
-GetJobParam("RecursiveSearch", "No");
-
-
-
-ImportDataPackageFiles() {
-mageObj.RequireJobParam("transferFolderPath");
-RequireJobParam("DataPackageSourceFolderName"));
-
-
-ImportReporterIons() {
-GetSQLFromParameter("ReporterIonSource", mageObj);
-
-
-ImportFirstHits() {
-GetSQLFromParameter("FirstHitsSource", mageObj);
-
-
-ImportRawFileList() {
-GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
-
-
-ImportJobList() {
-GetSQLForTemplate("JobsFromDataPackageID", mageObj);
-*/

@@ -16,7 +16,7 @@ namespace AnalysisManager_Mage_PlugIn {
         // Specific set of allowed file names.
         // If not null, processing will be restricted to only files in list
         // (derived from FileNameList property)
-        HashSet<string> mFileNameSet = null;
+        private HashSet<string> _fileNameSet;
 
         #endregion
 
@@ -40,18 +40,18 @@ namespace AnalysisManager_Mage_PlugIn {
         #region Constructors
 
         public MageAMFileContentProcessor() {
-            base.SourceFolderColumnName = "Folder";
-            base.SourceFileColumnName = "Name";
-            base.OutputFolderPath = "ignore";
-            base.OutputFileName = "ignore";
+            SourceFolderColumnName = "Folder";
+            SourceFileColumnName = "Name";
+            OutputFolderPath = "ignore";
+            OutputFileName = "ignore";
             Operation = "SimpleImport";
         }
 
         public MageAMFileContentProcessor(MageAMFileProcessingPipelines filePipeline) {
-            base.SourceFolderColumnName = "Folder";
-            base.SourceFileColumnName = "Name";
-            base.OutputFolderPath = "ignore";
-            base.OutputFileName = "ignore";
+            SourceFolderColumnName = "Folder";
+            SourceFileColumnName = "Name";
+            OutputFolderPath = "ignore";
+            OutputFileName = "ignore";
             FilePipeline = filePipeline;
             Operation = "SimpleImport";
         }
@@ -77,23 +77,22 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="destPath"></param>
         /// <param name="context">Additional metadata about file to be processed</param>
         protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context) {
-            string dbFilePath = "";
-            string columnList;
-            if (mFileNameSet != null && !mFileNameSet.Contains(sourceFile)) return;
+            if (_fileNameSet != null && !_fileNameSet.Contains(sourceFile)) return;
+            string dbFilePath;
             switch (Operation) {
                 case "CopyAndImport":
                     string workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
                     File.Copy(sourcePath, workingFilePath, true);
-                    dbFilePath = FilePipeline.GetSQLiteResultsDBFilePath();
+                    dbFilePath = FilePipeline.GetResultsDBFilePath();
                     FilePipeline.ImportFileToSQLite(workingFilePath, dbFilePath, DBTableName);
                     break;
                 case "SimpleImport":
-                    dbFilePath = FilePipeline.GetSQLiteResultsDBFilePath();
+                    dbFilePath = FilePipeline.GetResultsDBFilePath();
                     FilePipeline.ImportFileToSQLite(sourcePath, dbFilePath, DBTableName);
                     break;
                 case "AddDatasetIDToImport":
-                    dbFilePath = FilePipeline.GetSQLiteResultsDBFilePath();
-                    columnList = "Dataset_ID|+|int, *";
+                    dbFilePath = FilePipeline.GetResultsDBFilePath();
+                    const string columnList = "Dataset_ID|+|int, *";
                     FilePipeline.ImportFileToSQLiteWithColumnMods(sourcePath, dbFilePath, DBTableName, columnList, context);
                     break;
             }
@@ -109,7 +108,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="delimitedList"></param>
         /// <returns></returns>
         protected HashSet<string> ConvertListToSet(string delimitedList) {
-            HashSet<string> set = new HashSet<string>();
+            var set = new HashSet<string>();
             String[] items = delimitedList.Split(',');
             foreach (string item in items) {
                 set.Add(item.Trim());
@@ -121,11 +120,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Populate (or clear) set of permissable file names
         /// </summary>
         private void InitializeFileNameSet() {
-            if (string.IsNullOrEmpty(FileNameList)) {
-                mFileNameSet = null;
-            } else {
-                mFileNameSet = ConvertListToSet(FileNameList);
-            }
+            _fileNameSet = string.IsNullOrEmpty(FileNameList) ? null : ConvertListToSet(FileNameList);
         }
 
         #endregion

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using AnalysisManagerBase;
+﻿using System.Collections.Generic;
 
 namespace AnalysisManager_Mage_PlugIn {
 
@@ -11,16 +9,16 @@ namespace AnalysisManager_Mage_PlugIn {
 
         // holds a single query definition template
         public class QueryTemplate {
-            public string templateSQL { get; set; }
-            public string paramNameList { get; set; }
+            public string TemplateSQL { get; set; }
+            public string ParamNameList { get; set; }
             public QueryTemplate(string sql, string list) {
-                templateSQL = sql;
-                paramNameList = list;
+                TemplateSQL = sql;
+                ParamNameList = list;
             }
         }
 
         // Definition of query templates
-        private static Dictionary<string, QueryTemplate> queryTemplates = new Dictionary<string, QueryTemplate> {
+        private static readonly Dictionary<string, QueryTemplate> QueryTemplates = new Dictionary<string, QueryTemplate> {
             {"JobsFromDataPackageID", 
                 new QueryTemplate("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}", 
                     "DataPackageID") },
@@ -41,7 +39,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="queryName">Name of query template</param>
         /// <returns>QueryTemplate object</returns>
         public static QueryTemplate GetQueryTemplate(string queryName) {
-            return queryTemplates[queryName];
+            return QueryTemplates[queryName];
         }
  
         /// <summary>
@@ -51,7 +49,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="paramVals">array of parameter values to be substituted into the query template</param>
         /// <returns>SQL</returns>
         public static string GetSQL(QueryTemplate qt, string[] paramVals) {
-            return string.Format(qt.templateSQL, paramVals);
+            return string.Format(qt.TemplateSQL, paramVals);
         }
 
     }

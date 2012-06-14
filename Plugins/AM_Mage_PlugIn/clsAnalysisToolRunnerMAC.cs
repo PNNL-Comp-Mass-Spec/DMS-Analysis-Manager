@@ -13,7 +13,7 @@ namespace AnalysisManager_MAC {
 
         #region "Module Variables"
 
-        protected const float PROGRESS_PCT_MAC_DONE = 95;
+        protected const float ProgressPctMacDone = 95;
 
         #endregion
 
@@ -22,15 +22,9 @@ namespace AnalysisManager_MAC {
         /// </summary>
         /// <returns></returns>
         public override IJobParams.CloseOutType RunTool() {
-
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
             try {
-
-                bool blnSuccess = false;
-
                 //Do the base class stuff
-                if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)) {
+                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -40,6 +34,7 @@ namespace AnalysisManager_MAC {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MAC Plugin");
 
 
+                bool blnSuccess;
                 try {
 
                     // run the appropriate MAC pipeline(s) according to mode parameter
@@ -50,9 +45,9 @@ namespace AnalysisManager_MAC {
                     }
                 } catch (Exception ex) {
                     // Change the name of the log file back to the analysis manager log file
-                    string LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
+                    string logFileName = m_mgrParams.GetParam("logfilename");
+                    log4net.GlobalContext.Properties["LogName"] = logFileName;
+                    clsLogTools.ChangeLogFileName(logFileName);
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message);
                     blnSuccess = false;
@@ -65,8 +60,8 @@ namespace AnalysisManager_MAC {
                 }
 
                 //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_MAC_DONE;
+                m_StopTime = DateTime.UtcNow;
+                m_progress = ProgressPctMacDone;
 
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile()) {
@@ -90,7 +85,7 @@ namespace AnalysisManager_MAC {
 				if (!string.IsNullOrEmpty(m_ResFolderName))
 					m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                result = MakeResultsFolder();
+                IJobParams.CloseOutType result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
@@ -128,8 +123,6 @@ namespace AnalysisManager_MAC {
         /// 
         /// </summary>
         protected void CopyFailedResultsToArchiveFolder() {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
             string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
@@ -141,11 +134,10 @@ namespace AnalysisManager_MAC {
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+            string strFolderPathToArchive = string.Copy(m_WorkDir);
 
             // Make the results folder
-            result = MakeResultsFolder();
+            IJobParams.CloseOutType result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
@@ -156,7 +148,7 @@ namespace AnalysisManager_MAC {
             }
 
             // Copy the results folder to the Archive folder
-            clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
@@ -167,7 +159,7 @@ namespace AnalysisManager_MAC {
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo() {
 
-            string strToolVersionInfo = string.Empty;
+            string strToolVersionInfo;
 
             if (m_DebugLevel >= 2) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info for primary tool assembly");
@@ -184,7 +176,7 @@ namespace AnalysisManager_MAC {
             List<System.IO.FileInfo> ioToolFiles = GetToolSupplementalVersionInfo();
 
             try {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             } catch (Exception ex) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;

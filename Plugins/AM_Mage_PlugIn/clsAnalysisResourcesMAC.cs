@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 
 namespace AnalysisManager_MAC {
 

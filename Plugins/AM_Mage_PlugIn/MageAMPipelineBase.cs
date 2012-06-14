@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using Mage;
 using MageExtExtractionFilters;
-using MageDisplayLib;
 using AnalysisManagerBase;
 using System.IO;
 
@@ -12,24 +10,24 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #region Member Variables
 
-        protected string mResultsDBFileName = "";
+        protected string ResultsDBFileName = "";
 
-        protected string mWorkingDir;
+        protected string WorkingDirPath;
 
-        protected IJobParams mJobParms;
+        protected readonly IJobParams JobParms;
 
-        protected IMgrParams mMgrParms;
+        protected readonly IMgrParams MgrParams;
 
         /// <summary>
         /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
         /// </summary>
-        protected PipelineQueue mPipelineQueue = new PipelineQueue();
+        protected PipelineQueue BasePipelineQueue = new PipelineQueue();
 
 
         /// <summary>
         /// Where extracted results will be delivered
         /// </summary>
-        protected DestinationType mDestination = null;
+        protected DestinationType ResultsDestination;
 
         #endregion
 
@@ -37,7 +35,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
         public string WorkingDir {
             get {
-                return mWorkingDir;
+                return WorkingDirPath;
             }
         }
 
@@ -46,23 +44,23 @@ namespace AnalysisManager_Mage_PlugIn {
         #region Constructors
 
         public MageAMPipelineBase(IJobParams jobParms, IMgrParams mgrParms) {
-            this.mJobParms = jobParms;
-            this.mMgrParms = mgrParms;
-            this.mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
-            this.mWorkingDir = RequireMgrParam("workdir");
+            JobParms = jobParms;
+            MgrParams = mgrParms;
+            ResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
+            WorkingDirPath = RequireMgrParam("workdir");
         }
 
         #endregion
 
         #region Utility Methods
 
-        public string GetSQLiteResultsDBFilePath() {
-            string dbFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+        public string GetResultsDBFilePath() {
+            string dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
             return dbFilePath;
         }
 
         public string RequireMgrParam(string paramName) {
-            string val = mMgrParms.GetParam(paramName);
+            string val = MgrParams.GetParam(paramName);
             if (string.IsNullOrWhiteSpace(val)) {
                 throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
             }
@@ -70,7 +68,7 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         public string RequireJobParam(string paramName) {
-            string val = mJobParms.GetParam(paramName);
+            string val = JobParms.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val)) {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
             }
@@ -78,11 +76,11 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         public string GetJobParam(string paramName) {
-            return mJobParms.GetParam(paramName);
+            return JobParms.GetParam(paramName);
         }
 
         public string GetJobParam(string paramName, string defaultValue) {
-            string val = mJobParms.GetParam(paramName);
+            string val = JobParms.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val))
 				val = defaultValue;
             return val;
@@ -94,9 +92,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="sql">Query to use</param>
         /// <returns></returns>
         protected MSSQLReader MakeDBReaderModule(String sql) {
-            MSSQLReader reader = new MSSQLReader();
-            reader.ConnectionString = RequireMgrParam("ConnectionString");
-            reader.SQLText = sql;
+            var reader = new MSSQLReader {ConnectionString = RequireMgrParam("ConnectionString"), SQLText = sql};
             return reader;
         }
 
@@ -106,7 +102,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="sql">Query to use a source of jobs</param>
         /// <returns>A Mage module containing list of jobs</returns>
         public SimpleSink GetListOfDMSItems(string sql) {
-            SimpleSink itemList = new SimpleSink();
+            var itemList = new SimpleSink();
 
             MSSQLReader reader = MakeDBReaderModule(sql);
 
@@ -121,14 +117,14 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Copy the results SQLite database file produced by the previous job step (if it exists)
         /// to the working directory
         /// </summary>
-        protected void GetPriorResultsToWorkDir() {
+        public void GetPriorResultsToWorkDir() {
             string dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
 
             string stepInputFolderName = GetJobParam("StepInputFolderName");
             if (stepInputFolderName != "") {
-                string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, mResultsDBFileName);
+                string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
                 if (File.Exists(priorResultsDBFilePath)) {
-                    string workingFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
+                    string workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
                     File.Copy(priorResultsDBFilePath, workingFilePath, true);
                 }
             }

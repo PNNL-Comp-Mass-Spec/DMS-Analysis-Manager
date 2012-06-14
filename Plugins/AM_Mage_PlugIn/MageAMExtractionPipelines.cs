@@ -22,7 +22,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// The parameters for the slated extraction
         /// </summary>
-        protected ExtractionType mExtractionParms = null;
+        protected ExtractionType ExtractionParms;
 
         #endregion
 
@@ -52,21 +52,21 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Get the parameters for the extraction pipeline modules from the job parameters
         /// </summary>
         protected void GetExtractionParametersFromJobParameters() {
-            mExtractionParms = new ExtractionType();
-            mDestination = new DestinationType();
+            ExtractionParms = new ExtractionType();
+            ResultsDestination = new DestinationType();
 
             // extraction and filtering parameters
             String extractionType = RequireJobParam("ExtractionType"); //"Sequest First Hits"
-            mExtractionParms.RType = ResultType.TypeList[extractionType];
+            ExtractionParms.RType = ResultType.TypeList[extractionType];
 
-            mExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
-            mExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
-            mExtractionParms.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
+            ExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
+            ExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
+            ExtractionParms.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
 
             // ouput parameters
-            mDestination.Type = DestinationType.Types.SQLite_Output;
-            mDestination.ContainerPath = System.IO.Path.Combine(mWorkingDir, mResultsDBFileName);
-            mDestination.Name = "t_results";
+            ResultsDestination.Type = DestinationType.Types.SQLite_Output;
+            ResultsDestination.ContainerPath = System.IO.Path.Combine(WorkingDirPath, ResultsDBFileName);
+            ResultsDestination.Name = "t_results";
         }
 
         /// <summary>
@@ -74,12 +74,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="jobList">List of jobs to perform extraction from</param>
         protected void ExtractFromJobsList(BaseModule jobList) {
-            mPipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, mExtractionParms, mDestination);
-            foreach (ProcessingPipeline p in mPipelineQueue.Pipelines.ToArray()) {
+            BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParms, ResultsDestination);
+            foreach (ProcessingPipeline p in BasePipelineQueue.Pipelines.ToArray()) {
                 ConnectPipelineToStatusHandlers(p);
             }
-            ConnectPipelineQueueToStatusHandlers(mPipelineQueue);
-            mPipelineQueue.RunRoot(null);
+            ConnectPipelineQueueToStatusHandlers(BasePipelineQueue);
+            BasePipelineQueue.RunRoot(null);
         }
     }
 }
