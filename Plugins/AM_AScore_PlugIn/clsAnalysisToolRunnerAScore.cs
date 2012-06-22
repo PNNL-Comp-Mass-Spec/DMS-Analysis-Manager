@@ -119,7 +119,7 @@ namespace AnalysisManager_AScore_PlugIn
 					return result;
 				}
 
-                //result = CopyResultsFolderToServer();
+                result = CopyResultsFolderToServer();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
@@ -144,8 +144,8 @@ namespace AnalysisManager_AScore_PlugIn
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
            clsAScoreMage dvas = new clsAScoreMage(m_jobParams, m_mgrParams);
-           dvas.Run();
-           return true;
+           return dvas.Run();
+           
        }
        
 

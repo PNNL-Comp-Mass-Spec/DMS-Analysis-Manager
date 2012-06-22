@@ -62,19 +62,24 @@ namespace AnalysisManager_AScore_PlugIn {
         /// <summary>
         /// Do processing
         /// </summary>
-        public void Run() {
+        public bool Run() {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
             if(mParamFilename == string.Empty)
-                return;
+                return false;
 
-            GetAScoreParameterFile();
-       
+            if (!GetAScoreParameterFile())
+            {
+                return false;
+            }
+            //not sure how to show that this was a success
             SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "sequest");
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
             SimpleSink reporterIonJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "MASIC_Finnigan");
-            ImportReporterIons(reporterIonJobsToProcess, "reporter_ions");
+            ImportReporterIons(reporterIonJobsToProcess, "t_reporter_ions");
+
+            return true;
         }
 
         #endregion
@@ -96,16 +101,23 @@ namespace AnalysisManager_AScore_PlugIn {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
             }
 
+            IEnumerable<string> ms = Directory.EnumerateFiles(strMAParameterFileStoragePath, mParamFilename + "*.xml");
+
             //Find all parameter files that match the base name and copy to working directory
-            foreach (string pfile in Directory.EnumerateFiles(strMAParameterFileStoragePath, mParamFilename)) 
+            if (ms.Count() == 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No parameter files present");
+                return false;
+            }
+            foreach (string pfile in ms) 
             {
                 try
                 {
-                    File.Copy(Path.Combine(strMAParameterFileStoragePath, pfile), Path.Combine(mWorkingDir, pfile));
+                    File.Copy(pfile, Path.Combine(mWorkingDir, Path.GetFileName(pfile)));
                 }
                 catch
                 {
-                    Console.WriteLine("File was already present or could not copy");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parameter file already written");
                 }
             }
 
@@ -341,10 +353,12 @@ namespace AnalysisManager_AScore_PlugIn {
                 string resultsFolderPath = vals[resultsFldrIdx].ToString();
                 string paramFileName = vals[paramFileIdx].ToString();
                 string dtaFilePath = CopyDTAResults(resultsFolderPath);
+                if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
+                {
+                    return false;
+                }
                 string settingsFileName = vals[settingsFileIdx].ToString();
                 string findFragmentation = (paramFileName + settingsFileName).ToLower();
-
-
                 if (findFragmentation.Contains("hcd"))
                 {
                     fragtype = "hcd";
@@ -398,13 +412,17 @@ namespace AnalysisManager_AScore_PlugIn {
                 AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
 
                 // load AScore results into SQLite database
-                string tableName = "T_AScoreResults"; // TODO: how do we name table
+                string tableName = "t_results"; // TODO: how do we name table
                 string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                 clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
                 dtaManager.Abort();
+                if (System.IO.File.Exists(ascoreOutputFilePath))
+                {
+                    File.Delete(ascoreOutputFilePath);
+                }
                 // Delete extracted_results file and DTA file
-				if (System.IO.File.Exists(ExtractedResultsFileName))
-					File.Delete(Path.Combine(WorkingDir, ExtractedResultsFileName));
+				if (System.IO.File.Exists(fhtFile))
+					File.Delete(fhtFile);
                 if (System.IO.File.Exists(dtaFilePath))
                 {
                     File.Delete(dtaFilePath);
@@ -454,20 +472,44 @@ namespace AnalysisManager_AScore_PlugIn {
                 string unzippedDTAResultsFileName = ""; // "dta_results.txt";
                 string unzippedDTAResultsFilePath = Path.Combine(WorkingDir, unzippedDTAResultsFileName);
                 string[] files = Directory.GetFiles(resultsFolderPath, "*_dta.zip");
-                if (files.Length > 0) {
+                if (files.Length > 0) 
+                {
                     dtaResultsFilename = System.IO.Path.GetFileName(files[0]);
-                    zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
-
-                    unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
-
-                    File.Copy(files[0], zippedDTAResultsFilePath, true);
-
-                    if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false)) {
-                    }
-
-                    // TODO: unzip it
-                    File.Delete(zippedDTAResultsFilePath);
                 }
+                else
+                {
+                    DirectoryInfo resultsParent = Directory.GetParent(resultsFolderPath);
+                    List<DirectoryInfo> childList =  (List<DirectoryInfo>)resultsParent.EnumerateDirectories("DTA*");
+                    if (childList.Count == 1)
+                    {
+                        FileInfo[] fileInfoList = childList[0].EnumerateFiles("*_dta.zip").ToArray();
+                        if (fileInfoList.Length == 1)
+                        {
+                            dtaResultsFilename = fileInfoList[0].Name;
+                        }
+                    }
+                }
+                if (dtaResultsFilename == string.Empty)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found or multiple entries for this job; unable to continue");
+                    return null;
+                }
+                    
+                zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
+
+                unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
+
+                File.Copy(files[0], zippedDTAResultsFilePath, true);
+
+                if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
+                {
+                }
+                // TODO: unzip it
+                File.Delete(zippedDTAResultsFilePath);
+                
+
+
+
                 return unzippedDTAResultsFilePath;
             }
 
