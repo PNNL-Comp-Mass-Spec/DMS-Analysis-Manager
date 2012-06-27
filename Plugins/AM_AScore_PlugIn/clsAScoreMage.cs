@@ -474,24 +474,48 @@ namespace AnalysisManager_AScore_PlugIn {
                 string[] files = Directory.GetFiles(resultsFolderPath, "*_dta.zip");
                 if (files.Length > 0) 
                 {
-                    dtaResultsFilename = System.IO.Path.GetFileName(files[0]);
+                    dtaResultsFilename = Path.GetFileName(files[0]);
                 }
                 else
                 {
-                    DirectoryInfo resultsParent = Directory.GetParent(resultsFolderPath);
-                    List<DirectoryInfo> childList =  (List<DirectoryInfo>)resultsParent.EnumerateDirectories("DTA*");
-                    if (childList.Count == 1)
+                    //DirectoryInfo resultsParent = Directory.GetParent(resultsFolderPath);
+                    //List<DirectoryInfo> childList =  (List<DirectoryInfo>)resultsParent.EnumerateDirectories("DTA*");
+                    //if (childList.Count == 1)
+                    //{
+                    //    FileInfo[] fileInfoList = childList[0].EnumerateFiles("*_dta.zip").ToArray();
+                    //    if (fileInfoList.Length == 1)
+                    //    {
+                    //        dtaResultsFilename = fileInfoList[0].Name;
+                    //    }
+                    //}
+                    string jobPFile = string.Empty;
+                    files = null;
+                    files = Directory.GetFiles(resultsFolderPath, "JobParameters_*.xml");
+                    if (files.Length > 0)
                     {
-                        FileInfo[] fileInfoList = childList[0].EnumerateFiles("*_dta.zip").ToArray();
-                        if (fileInfoList.Length == 1)
+                        jobPFile = System.IO.Path.GetFileName(files[0]);
+                    }
+
+
+                    string DTAfolderName = null;
+                    ReadJobParametersFile(jobPFile, ref DTAfolderName);
+                    if (DTAfolderName != null)
+                    {
+                        files = null;
+
+                        string DTAdirectory = Path.Combine(Directory.GetParent(resultsFolderPath).FullName, DTAfolderName);
+                        files = Directory.GetFiles(DTAdirectory, "*_dta.zip");
+                        if (files.Length > 0)
                         {
-                            dtaResultsFilename = fileInfoList[0].Name;
+                            dtaResultsFilename = Path.GetFileName(files[0]);
                         }
                     }
+
+
                 }
                 if (dtaResultsFilename == string.Empty)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found or multiple entries for this job; unable to continue");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found");
                     return null;
                 }
                     
@@ -512,6 +536,81 @@ namespace AnalysisManager_AScore_PlugIn {
 
                 return unzippedDTAResultsFilePath;
             }
+
+
+            private void ReadJobParametersFile(string JobParameterFilePath, ref string DTAGenFolderName)
+            {
+                System.Xml.XmlDocument oXmlDoc = default(System.Xml.XmlDocument);
+
+                try
+                {
+                    oXmlDoc = new System.Xml.XmlDocument();
+                    oXmlDoc.Load(JobParameterFilePath);
+
+                    DTAGenFolderName = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
+
+               
+
+                }
+                catch (Exception ex)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not find DTA directory");
+                }
+
+            }
+
+            /// <summary>
+            /// The function gets the name of the "value" attribute.
+            /// </summary>
+            /// <param name="sectionName">The name of the section.</param>
+            /// <param name="keyName">The name of the key.</param>
+            ///<return>The function returns the name of the "value" attribute.</return>
+            private string GetIniValue(System.Xml.XmlDocument oXmlDoc, string sectionName, string keyName)
+            {
+                System.Xml.XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
+                if (N != null)
+                {
+                    return (N.Attributes.GetNamedItem("value").Value);
+                }
+                return null;
+            }
+
+
+            /// <summary>
+            /// The function gets an item.
+            /// </summary>
+            /// <param name="sectionName">The name of the section.</param>
+            /// <param name="keyName">The name of the key.</param>
+            /// <return>The function returns a XML element.</return>
+            private System.Xml.XmlElement GetItem(System.Xml.XmlDocument oXmlDoc, string sectionName, string keyName)
+            {
+                System.Xml.XmlElement section = default(System.Xml.XmlElement);
+                if (!string.IsNullOrEmpty(keyName))
+                {
+                    section = GetSection(oXmlDoc, sectionName);
+                    if (section != null)
+                    {
+                        return (System.Xml.XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
+                    }
+                }
+                return null;
+            }
+
+            /// <summary>
+            /// The function gets a section as XmlElement.
+            /// </summary>
+            /// <param name="sectionName">The name of a section.</param>
+            /// <return>The function returns a section as XmlElement.</return>
+            private System.Xml.XmlElement GetSection(System.Xml.XmlDocument oXmlDoc, string sectionName)
+            {
+                if (!string.IsNullOrEmpty(sectionName))
+                {
+                    return (System.Xml.XmlElement)oXmlDoc.SelectSingleNode("//section[@name='" + sectionName + "']");
+                }
+                return null;
+            }
+
+
 
 
             // Build Mage source module containing one job to process
