@@ -72,7 +72,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				System.IO.DirectoryInfo diRemoteRScriptFolder;
 
-				string strCyclopsWorkflowFileStoragePath = "\\\\gigasax\\DMS_Workflows\\Cyclops\\" + analysisType;
+				string strCyclopsWorkflowFileStoragePath = "\\\\gigasax\\DMS_Workflows\\Cyclops\\RScript";
 				diRemoteRScriptFolder = new System.IO.DirectoryInfo(strCyclopsWorkflowFileStoragePath);
 
 				if (!diRemoteRScriptFolder.Exists) {
