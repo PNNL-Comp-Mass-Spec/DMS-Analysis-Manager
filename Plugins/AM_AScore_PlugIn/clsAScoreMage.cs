@@ -493,7 +493,7 @@ namespace AnalysisManager_AScore_PlugIn {
                     files = Directory.GetFiles(resultsFolderPath, "JobParameters_*.xml");
                     if (files.Length > 0)
                     {
-                        jobPFile = System.IO.Path.GetFileName(files[0]);
+                        jobPFile = System.IO.Path.GetFullPath(files[0]);
                     }
 
 
