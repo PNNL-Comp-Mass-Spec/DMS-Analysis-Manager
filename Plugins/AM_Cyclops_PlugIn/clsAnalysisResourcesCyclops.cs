@@ -72,7 +72,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				System.IO.DirectoryInfo diRemoteRScriptFolder;
 
-				string strCyclopsWorkflowFileStoragePath = "\\\\gigasax\\DMS_Workflows\\Cyclops\\RScript";
+                string strCyclopsWorkflowFileStoragePath = @"\\gigasax\DMS_Workflows\Cyclops\RScript";                
 				diRemoteRScriptFolder = new System.IO.DirectoryInfo(strCyclopsWorkflowFileStoragePath);
 
 				if (!diRemoteRScriptFolder.Exists) {
@@ -92,8 +92,14 @@ namespace AnalysisManager_Cyclops_PlugIn
 					diRFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, diRFile.Name));					
 				}
 
+                string strAnalysisType = m_jobParams.GetParam("AnalysisType");
+                string strCyclopsWorkflowDirectory = Path.Combine( 
+                    Directory.GetParent(strCyclopsWorkflowFileStoragePath).FullName,
+                    strAnalysisType);
 				//Now copy the Cyclops workflow file to the working directory
-				if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, diRemoteRScriptFolder.FullName, m_WorkingDir)) {
+				if (!CopyFileToWorkDir(strCyclopsWorkflowFileName,
+                    strCyclopsWorkflowDirectory, m_WorkingDir))
+                {
 					//Errors were reported in function call, so just return
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
