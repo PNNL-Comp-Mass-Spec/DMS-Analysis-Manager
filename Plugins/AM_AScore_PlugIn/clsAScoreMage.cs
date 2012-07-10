@@ -554,7 +554,7 @@ namespace AnalysisManager_AScore_PlugIn {
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not find DTA directory");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory via job parameter SharedResultsFolders: " + ex.Message);
                 }
 
             }
