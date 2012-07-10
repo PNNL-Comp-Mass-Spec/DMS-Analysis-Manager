@@ -66,6 +66,9 @@
     <Reference Include="log4net">
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="MSDataFileReader">
+      <HintPath>..\..\AM_Common\MSDataFileReader.dll</HintPath>
+    </Reference>
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>

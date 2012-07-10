@@ -3196,6 +3196,10 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Reports the amount of free memory on this computer (in MB)
+	''' </summary>
+	''' <returns>Free memory, in MB</returns>
 	Public Shared Function GetFreeMemoryMB() As Single
 
 		Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
@@ -3223,6 +3227,166 @@ Public MustInherit Class clsAnalysisResources
 		Return sngFreeMemory
 
 	End Function
+
+	''' <summary>
+	''' Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
+	''' </summary>
+	''' <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
+	''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
+	''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
+	''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function ValidateCDTAFileScanAndCSTags(ByVal strSourceFilePath As String, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByRef strOutputFilePath As String) As Boolean
+
+		Dim strOutputFilePathTemp As String
+		Dim strLineIn As String
+		Dim strDTAHeader As String
+
+		Dim intScanNumberStart As Integer
+		Dim intScanNumberEnd As Integer
+		Dim intScanCount As Integer
+		Dim intCharge As Integer
+
+		Dim blnValidScanInfo As Boolean = False
+		Dim blnParentIonLineIsNext As Boolean = False
+		Dim blnParentIonLineUpdated As Boolean = False
+
+		Dim blnSuccess As Boolean = False
+
+		' We use the DtaTextFileReader to parse out the scan and charge from the header line
+		Dim objReader As MSDataFileReader.clsDtaTextFileReader
+
+		Dim fiOriginalFile As System.IO.FileInfo
+		Dim fiUpdatedFile As System.IO.FileInfo
+
+		Try
+
+			If String.IsNullOrEmpty(strSourceFilePath) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: strSourceFilePath is empty")
+				Return False
+			End If
+
+			fiOriginalFile = New System.IO.FileInfo(strSourceFilePath)
+			If Not fiOriginalFile.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: source file not found: " & strSourceFilePath)
+				Return False
+			End If
+
+			If blnReplaceSourceFile Then
+				strOutputFilePathTemp = strSourceFilePath & ".tmp"
+			Else
+				' strOutputFilePath must contain a valid file path
+				If String.IsNullOrEmpty(strOutputFilePath) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: variable strOutputFilePath must define a file path when blnReplaceSourceFile=False")
+					Return False
+				End If
+				strOutputFilePathTemp = strOutputFilePath
+			End If
+
+			fiUpdatedFile = New System.IO.FileInfo(strOutputFilePathTemp)
+
+			objReader = New MSDataFileReader.clsDtaTextFileReader(False)
+
+			' Open the input file
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiOriginalFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				' Create the output file
+				Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(fiUpdatedFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+					Do While srInFile.Peek > -1
+						strLineIn = srInFile.ReadLine()
+
+						If String.IsNullOrEmpty(strLineIn) Then
+							swOutFile.WriteLine()
+						Else
+							If strLineIn.StartsWith("="c) Then
+								' Parse the DTA header line, for example:
+								' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
+
+								' Remove the leading and trailing characters, then extract the scan and charge
+								strDTAHeader = strLineIn.Trim(New Char() {"="c, " "c, ControlChars.Quote})
+								blnValidScanInfo = objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
+
+								blnParentIonLineIsNext = True
+
+							ElseIf blnParentIonLineIsNext Then
+								' strLineIn contains the parent ion line text
+
+								' Construct the parent ion line to write out
+								' Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
+								' Next contains the charge state, then scan= and cs= tags, for example:
+								' 447.34573 1   scan=3 cs=1
+
+								If Not strLineIn.Contains("scan=") Then
+									' Append scan=x to the parent ion line
+									strLineIn = strLineIn.Trim() & "   scan=" & intScanNumberStart.ToString()
+									blnParentIonLineUpdated = True
+								End If
+
+								If Not strLineIn.Contains("cs=") Then
+									' Append cs=y to the parent ion line
+									strLineIn = strLineIn.Trim() & " cs=" & intCharge.ToString()
+									blnParentIonLineUpdated = True
+								End If
+
+								blnParentIonLineIsNext = False
+
+							End If
+
+							swOutFile.WriteLine(strLineIn)
+
+						End If
+					Loop
+
+				End Using
+			End Using
+
+			If blnParentIonLineUpdated Then
+				System.Threading.Thread.Sleep(100)
+
+				If blnReplaceSourceFile Then
+					' Replace the original file with the new one
+					Dim strOldFilePath As String
+					Dim intAddon As Integer = 0
+
+					Do
+						strOldFilePath = fiOriginalFile.FullName & ".old"
+						If intAddon > 0 Then
+							strOldFilePath &= intAddon.ToString()
+						End If
+						intAddon += 1
+					Loop While System.IO.File.Exists(strOldFilePath)
+
+					fiOriginalFile.MoveTo(strOldFilePath)
+					System.Threading.Thread.Sleep(100)
+
+					fiUpdatedFile.MoveTo(strSourceFilePath)
+
+					If blnDeleteSourceFileIfUpdated Then
+						fiOriginalFile.Delete()
+					End If
+
+					blnSuccess = True
+				Else
+					' Directly wrote to the output file; nothing to rename
+					blnSuccess = True
+				End If
+			Else
+				' No changes were made; nothing to update
+				' However, delete the new file we created
+				fiUpdatedFile.Delete()
+				blnSuccess = True
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateCDTAFileScanAndCSTags: " & ex.Message)
+			Return False
+		End Try
+
+		Return blnSuccess
+
+	End Function
+
 
 	''' <summary>
 	''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column

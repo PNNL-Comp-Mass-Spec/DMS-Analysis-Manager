@@ -508,7 +508,7 @@ Public Class clsGlobal
 				Exit While
 			Catch ex As System.Exception
 				RetryCount -= 1
-				sErrorMessage = "clsGloba.ExecuteSP(), exception calling stored procedure " & SpCmd.CommandText & ", " & ex.Message
+				sErrorMessage = "clsGlobal.ExecuteSP(), exception calling stored procedure " & SpCmd.CommandText & ", " & ex.Message
 				sErrorMessage &= ". ResCode = " & ResCode.ToString & ". Retry count = " & RetryCount.ToString
 				sErrorMessage &= "; " & clsGlobal.GetExceptionStackTrace(ex)
 				Console.WriteLine(sErrorMessage)
