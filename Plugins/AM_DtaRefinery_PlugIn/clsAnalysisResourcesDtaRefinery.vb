@@ -55,11 +55,21 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         'Retrieve unzipped dta files (do not unconcatenate since DTA Refinery reads the _DTA.txt file)
         If Not RetrieveDtaFiles(False) Then
-            'Errors were reported in function call, so just return
+			' Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Retrieve DeconMSn Log file and DeconMSn Profile File
+		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
+		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & "_dta.txt")
+		Dim blnReplaceSourceFile As Boolean = True
+		Dim blnDeleteSourceFileIfUpdated As Boolean = True
+
+		If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
+			m_message = "Error validating the _DTA.txt file"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' Retrieve DeconMSn Log file and DeconMSn Profile File
         If Not RetrieveDeconMSnLogFiles() Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
