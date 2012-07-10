@@ -78,7 +78,6 @@
     <Compile Include="MageAMExtractionPipelines.cs" />
     <Compile Include="MageAMFileContentProcessor.cs" />
     <Compile Include="MageAMFileProcessingPipelines.cs" />
-    <Compile Include="MageAMMetadataPipelines.cs" />
     <Compile Include="ModuleAddAlias.cs" />
     <Compile Include="MageAMOperations.cs" />
     <Compile Include="MageAMPipelineBase.cs" />

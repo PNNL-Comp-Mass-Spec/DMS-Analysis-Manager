@@ -81,26 +81,12 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "nooperation":
                     blnSuccess = NoOperation();
                     break;
-                case "makemetadatadb":
-                    blnSuccess = MakeMetadataDB();
-                    break;
                     // Future: throw an error
             }
             return blnSuccess;
         }
 
-        /// <summary>
-        /// Create SQLite db file containing metadata for data package
-        /// </summary>
-        /// <returns></returns>
-        private bool MakeMetadataDB()
-        {
-            var mageObj = new MageAMMetadataPipelines(_jobParams, _mgrParams);
-            //GetPriorStepResults();
-            mageObj.MakeMetadataDB();
-            return true;
-        }
-
+    
         #region Mage Operations Functions
 
         /// <summary>
