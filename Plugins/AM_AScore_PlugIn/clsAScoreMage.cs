@@ -352,7 +352,7 @@ namespace AnalysisManager_AScore_PlugIn {
                 // copy DTA file for current job to working directory
                 string resultsFolderPath = vals[resultsFldrIdx].ToString();
                 string paramFileName = vals[paramFileIdx].ToString();
-                string dtaFilePath = CopyDTAResults(resultsFolderPath);
+                string dtaFilePath;
                 if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
                 {
                     return false;
@@ -472,31 +472,19 @@ namespace AnalysisManager_AScore_PlugIn {
                 string unzippedDTAResultsFileName = ""; // "dta_results.txt";
                 string unzippedDTAResultsFilePath = Path.Combine(WorkingDir, unzippedDTAResultsFileName);
                 string[] files = Directory.GetFiles(resultsFolderPath, "*_dta.zip");
-                if (files.Length > 0) 
+                if (files.Length > 0) //check if the dta is in the search tool's directory
                 {
                     dtaResultsFilename = Path.GetFileName(files[0]);
                 }
                 else
                 {
-                    //DirectoryInfo resultsParent = Directory.GetParent(resultsFolderPath);
-                    //List<DirectoryInfo> childList =  (List<DirectoryInfo>)resultsParent.EnumerateDirectories("DTA*");
-                    //if (childList.Count == 1)
-                    //{
-                    //    FileInfo[] fileInfoList = childList[0].EnumerateFiles("*_dta.zip").ToArray();
-                    //    if (fileInfoList.Length == 1)
-                    //    {
-                    //        dtaResultsFilename = fileInfoList[0].Name;
-                    //    }
-                    //}
                     string jobPFile = string.Empty;
                     files = null;
-                    files = Directory.GetFiles(resultsFolderPath, "JobParameters_*.xml");
+                    files = Directory.GetFiles(resultsFolderPath, "JobParameters_*.xml");//find the appropriate dta directory
                     if (files.Length > 0)
                     {
                         jobPFile = System.IO.Path.GetFullPath(files[0]);
                     }
-
-
                     string DTAfolderName = null;
                     ReadJobParametersFile(jobPFile, ref DTAfolderName);
                     if (DTAfolderName != null)
@@ -510,30 +498,21 @@ namespace AnalysisManager_AScore_PlugIn {
                             dtaResultsFilename = Path.GetFileName(files[0]);
                         }
                     }
-
-
                 }
-                if (dtaResultsFilename == string.Empty)
+                if (dtaResultsFilename == string.Empty)//if we have changed the string from empty we have found the correct dta
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found");
                     return null;
                 }
-                    
+
                 zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
-
                 unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
-
                 File.Copy(files[0], zippedDTAResultsFilePath, true);
-
                 if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
                 {
                 }
                 // TODO: unzip it
                 File.Delete(zippedDTAResultsFilePath);
-                
-
-
-
                 return unzippedDTAResultsFilePath;
             }
 
@@ -547,10 +526,21 @@ namespace AnalysisManager_AScore_PlugIn {
                     oXmlDoc = new System.Xml.XmlDocument();
                     oXmlDoc.Load(JobParameterFilePath);
 
-                    DTAGenFolderName = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
-
-               
-
+                    string folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
+                    List<string> folders = folderVals.Split(',').ToList();
+                    DTAGenFolderName = folders[folders.Count-1]; //this is the default folder if all else fails
+                    if (folders.Count > 1)
+                    {
+                        folders.RemoveAll(entries => entries.Contains("DTA_Gen"));//I love lambda expressions
+                        if (folders.Count == 1)
+                        {
+                            DTAGenFolderName = folders[0];
+                        }
+                        else if (folders.Count > 1)
+                        {
+                            DTAGenFolderName = folders[folders.Count - 1];
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
