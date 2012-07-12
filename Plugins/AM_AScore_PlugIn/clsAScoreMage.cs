@@ -546,7 +546,8 @@ namespace AnalysisManager_AScore_PlugIn {
                 {
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory via job parameter SharedResultsFolders: " + ex.Message);
                 }
-
+                
+                DTAGenFolderName = DTAGenFolderName.Trim();
             }
 
             /// <summary>
