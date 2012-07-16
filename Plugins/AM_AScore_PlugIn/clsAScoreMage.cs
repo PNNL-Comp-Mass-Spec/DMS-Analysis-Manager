@@ -66,7 +66,7 @@ namespace AnalysisManager_AScore_PlugIn {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
 
             if(mParamFilename == string.Empty)
-                return false;
+                return true;
 
             if (!GetAScoreParameterFile())
             {
