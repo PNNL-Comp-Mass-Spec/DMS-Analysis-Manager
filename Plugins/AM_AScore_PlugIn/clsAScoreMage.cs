@@ -52,7 +52,7 @@ namespace AnalysisManager_AScore_PlugIn {
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
             this.mStrExternalUnzipperFilePath = mMP.RequireMgrParam("zipprogram");
             this.mSearchType = mJP.RequireJobParam("AScoreSearchType");
-            this.mParamFilename = mJP.RequireJobParam("AScoreParamFilename");
+            this.mParamFilename = mJP.GetJobParam("AScoreParamFilename");
         }
 
         #endregion
@@ -73,7 +73,7 @@ namespace AnalysisManager_AScore_PlugIn {
                 return false;
             }
             //not sure how to show that this was a success
-            SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "sequest");
+            SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
             SimpleSink reporterIonJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "MASIC_Finnigan");
