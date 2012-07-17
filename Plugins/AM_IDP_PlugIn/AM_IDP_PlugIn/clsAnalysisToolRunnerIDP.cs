@@ -59,7 +59,10 @@ namespace AnalysisManager_IDP_PlugIn
                 try
                 {
                     clsIDP idp = new clsIDP(d_Params);
-                    blnSuccess = idp.Run();
+
+                    // if a workflow is not passed to IDPicker, then do not run the program.
+                    if (!string.IsNullOrEmpty(d_Params["IDPWorkflowName"]))
+                        blnSuccess = idp.Run();
 
                     //Change the name of the log file for the local log file to the plug in log filename
                     LogFileName = m_mgrParams.GetParam("logfilename");
