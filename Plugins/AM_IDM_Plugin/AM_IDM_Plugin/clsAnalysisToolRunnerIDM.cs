@@ -48,7 +48,8 @@ namespace AnalysisManager_IDM_Plugin
                 {
                     // TODO : Create in instance of IDM and run the tool!
                     InterferenceDetector idm = new InterferenceDetector();
-                    blnSuccess = idm.Run(m_WorkDir); 
+                    
+                    blnSuccess = idm.Run(Path.Combine(m_WorkDir,"Results.db3")); 
 
                     //Change the name of the log file for the local log file to the plug in log filename
                     LogFileName = m_mgrParams.GetParam("logfilename");
