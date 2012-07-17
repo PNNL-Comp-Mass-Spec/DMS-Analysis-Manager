@@ -1,0 +1,57 @@
+SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+
+
+Game Plan
+
+1) Obtain .Raw file
+2) Look in SourceJob folder for _Peaks.txt file
+	- If not present, then that's OK; the LipidMaps tool will create it
+3) If parameter SourceJob2 is defined and > 0, then get .Raw file and _Peaks.txt file from second dataset
+	- Use parameters SourceJob2FolderPath and SourceJob2FolderPathArchive to find the necessary files
+	- Example values:
+		- \\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151
+		- \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151
+
+4) Look for the newest LipidMaps_yyyy*.txt at \\gigasax\dms_parameter_Files\LipidMapSearch\LipidMapsDB\
+	- If more than 3 days old (or if no match to LipidMaps_yyyy.txt file from this calendar year), then download a new version:
+		- Examine folder \\gigasax\dms_parameter_Files\LipidMapSearch\LipidMapsDB\
+			- If file LipidMapsDownload.lock exists and is less than 2 hours old, then wait for it to age or disappear
+				- After it disappears, if we now have a recent LipidMaps*.txt file, then use it and do not download
+			- If file LipidMapsDownload.lock exists and is over 2 hours old, then delete it and proceed with download
+			- If file LipidMapsDownload.lock does not exist, then proceed with download
+	- To download a new version:
+		- Create a flag file to indicate we're downloading a new version
+			\\gigasax\dms_parameter_Files\LipidMapSearch\LipidMapsDB\LipidMaps.lock
+		- Run this command:
+			C:\DMS_Programs\DMS_Workdir1\LipidTools.exe -UpdateDBOnly
+		- With a working directory of 
+			C:\DMS_Programs\DMS_Workdir1
+		- This will create file LipidMaps.txt in C:\DMS_Programs\DMS_Workdir1
+		- When complete, copy the file to:
+			\\gigasax\dms_parameter_Files\LipidMapSearch\LipidMapsDB\LipidMaps_yyyy-mm-dd.txt
+	- Copy the newest LipidMaps_yyyy*.txt to the working directory, naming it LipidMaps.txt
+
+5) Obtain the Parameter file
+	- Parse it to determine the command line switches
+	- Equivalency table:
+		"AlignmentToleranceNET", "an"
+		"AlignmentToleranceMassPPM", "am"
+		"DBMatchToleranceMassPPM", "mm"
+		"DBMatchToleranceMzPpmCID", "ct"
+		"DBMatchToleranceMzPpmHCD", "ht"
+
+
+6) Run the program:
+	LipidTools.exe 
+		-db "C:\DMS_Workdir1\LipidMaps.txt" 
+		-rp "C:/Temp/TestData/XG_lipid_pt5a.RAW" 
+		-pp "C:/Temp/TestData/XG_lipid_pt5a_peaks.txt"          (skip if _peaks.txt was not found for SourceJob)
+		-rn "C:/Temp/TestData/XG_lipid_pt5aNeg.RAW"             (skip if only using one dataset)
+		-pn "C:/Temp/TestData/XG_lipid_pt5aNeg_peaks.txt" 		(skip if only using one dataset, or if _peaks.txt was not found for SourceJob2)
+		-an 0.02 
+		-am 20 
+		-mm 20 
+		-ct 50 
+		-ht 500 
+		-o "C:/DMS_Workdir1/LipidMap_"
+

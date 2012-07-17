@@ -477,7 +477,7 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <param name="strFolderPath">Folder path to examine</param>
 	''' <param name="strFileName">File name to find</param>
-	''' <returns></returns>
+	''' <returns>Full path to the file, if found</returns>
 	''' <remarks></remarks>
 	Public Shared Function FindFileInDirectoryTree(ByVal strFolderPath As String, ByVal strFileName As String) As String
 		Dim ioFolder As System.IO.DirectoryInfo

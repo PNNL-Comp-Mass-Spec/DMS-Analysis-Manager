@@ -252,6 +252,11 @@
 		Class="AnalysisManager_IDM_Plugin.clsAnalysisToolRunnerIDM"
 		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="lipidmapsearch" 
+		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch"
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -505,6 +510,11 @@
 		Tool="idm" 
 		Class="AnalysisManager_IDM_Plugin.clsAnalysisResourcesIDM"
 		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
+	/>
+	<Resourcer 
+		Tool="lipidmapsearch" 
+		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch"
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
 	/>
 
 </Resourcers>

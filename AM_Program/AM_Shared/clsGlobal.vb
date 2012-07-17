@@ -543,6 +543,66 @@ Public Class clsGlobal
 
 	End Function
 
+	Private Shared Function ByteArrayToString(ByVal arrInput() As Byte) As String
+		' Converts a byte array into a hex string
+
+		Dim strOutput As New System.Text.StringBuilder(arrInput.Length)
+
+		For i As Integer = 0 To arrInput.Length - 1
+			strOutput.Append(arrInput(i).ToString("X2"))
+		Next
+
+		Return strOutput.ToString().ToLower
+
+	End Function
+
+	Public Shared Function ComputeFileHashMD5(ByVal strPath As String) As String
+		' Calculates the MD5 hash of a given file
+		' Code from Tim Hastings, at http://www.nonhostile.com/page000017.asp
+
+		Dim objReader As System.IO.Stream
+		Dim objMD5 As New System.Security.Cryptography.MD5CryptoServiceProvider
+		Dim arrHash() As Byte
+
+		' open file (as read-only)
+		objReader = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+
+		' hash contents of this stream
+		arrHash = objMD5.ComputeHash(objReader)
+
+		' Cleanup the objects
+		objReader.Close()
+		objReader = Nothing
+		objMD5 = Nothing
+
+		' Return the hash, formatted as a string
+		Return ByteArrayToString(arrHash)
+
+	End Function
+
+	Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
+		' Calculates the Sha-1 hash of a given file
+
+		Dim objReader As System.IO.Stream
+		Dim objSha1 As New System.Security.Cryptography.SHA1CryptoServiceProvider
+		Dim arrHash() As Byte
+
+		' open file (as read-only)
+		objReader = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+
+		' hash contents of this stream
+		arrHash = objSha1.ComputeHash(objReader)
+
+		' Cleanup the objects
+		objReader.Close()
+		objReader = Nothing
+		objSha1 = Nothing
+
+		' Return the hash, formatted as a string
+		Return ByteArrayToString(arrHash)
+
+	End Function
+
 #End Region
 
 End Class

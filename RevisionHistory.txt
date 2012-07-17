@@ -1,5 +1,10 @@
 Analysis Tool Manager History
 
+July 17, 2012
+	- Added the LipidMapSearch plugin
+	- Added MD5 and Sha-1 hash computation functions to clsGlobal
+	- Updated the ICR-2LS plugin to check the archive for the ser file
+
 May 7, 2012
 	- Added clsScanStatsGenerator to AM_Shared
 	- Updated MSGFDB plugin to check for phosphorylation search of HCD data and using -protocol 1

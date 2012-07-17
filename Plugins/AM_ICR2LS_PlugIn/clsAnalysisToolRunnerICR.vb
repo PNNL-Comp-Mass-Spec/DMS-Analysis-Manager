@@ -45,6 +45,8 @@ Public Class clsAnalysisToolRunnerICR
 		Dim UseAllScans As Boolean = True
 
 		Dim SerFileOrFolderPath As String
+		Dim blnIsFolder As Boolean = False
+
 		Dim eICR2LSMode As ICR2LSProcessingModeConstants
 		Dim strSerTypeName As String
 
@@ -109,34 +111,31 @@ Public Class clsAnalysisToolRunnerICR
 		End If
 
 		' Look for a ser file in the working directory
-		SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_SER_FILE)
+		SerFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(DatasetFolderPathBase, blnIsFolder)
 
-		If System.IO.File.Exists(SerFileOrFolderPath) Then
+		If String.IsNullOrEmpty(SerFileOrFolderPath) Then
+
+			' Did not find a ser file or 0.ser folder
+			' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+			'  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Did not find a ser file or 0.ser folder; assuming we are processing zipped s-folders")
 			End If
 		Else
-
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file not found: " & SerFileOrFolderPath & "; looking for 0.ser folder")
-			End If
-
-			' Look for the "0.ser" folder in the working directory
-			SerFileOrFolderPath = System.IO.Path.Combine(DatasetFolderPathBase, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
-			If Not System.IO.Directory.Exists(SerFileOrFolderPath) Then
-				' Folder does not exist
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder not found: " & SerFileOrFolderPath & "; assuming we are processing zipped s-folders")
+				If blnIsFolder Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "0.ser folder found: " & SerFileOrFolderPath)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Ser file found: " & SerFileOrFolderPath)
 				End If
 
-				' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-				'  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-				SerFileOrFolderPath = String.Empty
 			End If
 		End If
 
+
 		If Not String.IsNullOrEmpty(SerFileOrFolderPath) Then
-			If System.IO.Path.GetFileName(SerFileOrFolderPath).ToLower = clsAnalysisResources.BRUKER_SER_FILE.ToLower() Then
+			If Not blnIsFolder Then
 				eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK
 				strSerTypeName = "file"
 			Else

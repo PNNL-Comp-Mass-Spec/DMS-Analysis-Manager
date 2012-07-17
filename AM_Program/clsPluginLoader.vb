@@ -151,6 +151,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker, IToolRunner)
 
+			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch".ToLower
+			'	myToolRunner = DirectCast(New AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -233,6 +236,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker".ToLower
 			'	myModule = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker, IAnalysisResources)
+
+			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch".ToLower
+			'	myModule = DirectCast(New AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch, IAnalysisResources)
 
 		End Select
 
