@@ -10,7 +10,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-	Protected Const LIPID_MAPS_DB_FILENAME As String = "LipidMapsDB.txt"
+	Protected Const LIPID_MAPS_DB_FILENAME_PREFIX As String = "LipidMapsDB_"
 	Protected Const LIPID_MAPS_STALE_DB_AGE_DAYS As Integer = 5
 
 	Protected Const LIPID_TOOLS_RESULT_FILE_PREFIX As String = "LipidMap_"
@@ -39,6 +39,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 	Protected mConsoleOutputProgressMap As System.Collections.Generic.Dictionary(Of String, Integer)
 
 	Protected mDownloadingLipidMapsDatabase As Boolean
+	Protected mLipidMapsDBFilename As String = String.Empty
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 #End Region
@@ -101,7 +102,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			m_jobParams.AddResultFileToSkip(LIPID_MAPS_DB_FILENAME)				' Don't keep the Lipid Maps Database since we keep the permanent copy on Gigasax
+			m_jobParams.AddResultFileToSkip(mLipidMapsDBFilename)				' Don't keep the Lipid Maps Database since we keep the permanent copy on Gigasax
 
 			mConsoleOutputErrorMsg = String.Empty
 
@@ -113,7 +114,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
 
 			'Set up and execute a program runner to run LipidTools
-			CmdStr = " -db " & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME)) & " -NoDBUpdate"
+			CmdStr = " -db " & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, mLipidMapsDBFilename)) & " -NoDBUpdate"
 			CmdStr &= " -rp " & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))	' Positive-mode .Raw file
 
 			strFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX)
@@ -170,6 +171,12 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
 			End If
+
+			' Append a line to the console output file listing the name of the LipidMapsDB that we used
+			Using swConsoleOutputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+				swConsoleOutputFile.WriteLine("LipidMapsDB Name: " & mLipidMapsDBFilename)
+				swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " & clsGlobal.ComputeFileHashSha1(System.IO.Path.Combine(m_WorkDir, mLipidMapsDBFilename)))
+			End Using
 
 			If Not blnSuccess Then
 				Dim Msg As String
@@ -368,7 +375,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 		Dim strTimeStamp As String = System.DateTime.Now.ToString("yyyy-MM-dd")
 
 		' Create a new lock file
-		strLockFilePath = System.IO.Path.Combine(diLipidMapsDBFolder.FullName, System.IO.Path.GetFileNameWithoutExtension(LIPID_MAPS_DB_FILENAME) & "_" & strTimeStamp & ".lock")
+		strLockFilePath = System.IO.Path.Combine(diLipidMapsDBFolder.FullName, LIPID_MAPS_DB_FILENAME_PREFIX & strTimeStamp & ".lock")
 		Using swLockFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strLockFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
 			swLockFile.WriteLine("Downloading LipidMaps.txt file on " & m_MachName & " at " & System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt"))
 		End Using
@@ -377,7 +384,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 		' Call the LipidTools program to obtain the latest database from http://www.lipidmaps.org/
 		Dim CmdStr As String
 		Dim blnSuccess As Boolean
-		Dim strLipidMapsDBFileLocal As String = System.IO.Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME)
+		Dim strLipidMapsDBFileLocal As String = System.IO.Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME_PREFIX & strTimeStamp & ".txt")
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloading latest LipidMaps database")
 
@@ -422,10 +429,16 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Hash code of the newly downloaded database matches the hash for " & strNewestLipidMapsDBFileName & ": " & strNewestLipidMapsDBFileHash)
 			End If
 
+			If System.IO.Path.GetFileName(strLipidMapsDBFileLocal) <> strNewestLipidMapsDBFileName Then
+				' Rename the newly downloaded file to strNewestLipidMapsDBFileName
+				System.Threading.Thread.Sleep(500)
+				System.IO.File.Move(strLipidMapsDBFileLocal, System.IO.Path.Combine(m_WorkDir, strNewestLipidMapsDBFileName))
+			End If
+
 		Else
 			' Copy the new file up to the server
 
-			strNewestLipidMapsDBFileName = System.IO.Path.GetFileNameWithoutExtension(LIPID_MAPS_DB_FILENAME) & "_" & strTimeStamp & ".txt"
+			strNewestLipidMapsDBFileName = String.Copy(strLipidMapsDBFileLocal)
 
 			Dim intCopyAttempts As Integer = 0
 
@@ -469,7 +482,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
 		dtLipidMapsDBFileTime = System.DateTime.MinValue
 
-		For Each fiFile As System.IO.FileInfo In diLipidMapsDBFolder.GetFileSystemInfos(System.IO.Path.GetFileNameWithoutExtension(LIPID_MAPS_DB_FILENAME) & "_*.txt")
+		For Each fiFile As System.IO.FileInfo In diLipidMapsDBFolder.GetFileSystemInfos(LIPID_MAPS_DB_FILENAME_PREFIX & "*.txt")
 			If fiFile.LastWriteTimeUtc > dtLipidMapsDBFileTime Then
 				dtLipidMapsDBFileTime = fiFile.LastWriteTimeUtc
 				strNewestLipidMapsDBFileName = fiFile.Name
@@ -569,8 +582,9 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 			End If
 
 			' File is now up-to-date; copy locally (if not already in the work dir)
+			mLipidMapsDBFilename = String.Copy(strNewestLipidMapsDBFileName)
 			strSourceFilePath = System.IO.Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName)
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME)
+			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, strNewestLipidMapsDBFileName)
 
 			If Not System.IO.File.Exists(strTargetFilePath) Then
 				If m_DebugLevel >= 1 Then
@@ -578,7 +592,6 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 				End If
 				System.IO.File.Copy(strSourceFilePath, strTargetFilePath)
 			End If
-
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception obtaining lipid Maps DB: " & ex.Message)
