@@ -178,6 +178,10 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 				swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " & clsGlobal.ComputeFileHashSha1(System.IO.Path.Combine(m_WorkDir, mLipidMapsDBFilename)))
 			End Using
 
+			' Update the evaluation message to include the lipid maps DB filename
+			' This message will appear in Evaluation_Message column of T_Job_Steps
+			m_EvalMessage = String.Copy(mLipidMapsDBFilename)
+
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running LipidTools"
