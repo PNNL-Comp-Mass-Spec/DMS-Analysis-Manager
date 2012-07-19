@@ -807,6 +807,8 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 						' Check whether strKey is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
 							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+						ElseIf strKey.ToLower = "adducts" Then
+							sbOptions.Append(" -adducts " & """" & strValue & """")
 						End If
 
 					End If
