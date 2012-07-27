@@ -21,8 +21,10 @@ Namespace AnalysisManagerProg
 		'*********************************************************************************************************
 
 #Region "Constants"
+		' These constants are used to create the Windows Event log (aka the EmergencyLog) that this program rights to
+		'  when the manager is disabled or cannot make an entry in the log file
 		Private Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-		Private Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
+		Public Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 		Private Const MAX_ERROR_COUNT As Integer = 6
 
 		Private Const DECON2LS_FATAL_REMOTING_ERROR As String = "Fatal remoting error"
@@ -782,6 +784,62 @@ Namespace AnalysisManagerProg
 
 		End Function
 
+		Public Shared Function CreateAnalysisManagerEventLog() As Boolean
+			Dim blnSuccess As Boolean
+			blnSuccess = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+
+			If blnSuccess Then
+				Console.WriteLine()
+				Console.WriteLine("Windows Event Log '" & CUSTOM_LOG_NAME & "' has been validated for source '" & CUSTOM_LOG_SOURCE_NAME & "'")
+				Console.WriteLine()
+			End If
+		End Function
+
+		Protected Shared Function CreateAnalysisManagerEventLog(ByVal SourceName As String, ByVal LogName As String) As Boolean
+
+			Try
+				If String.IsNullOrEmpty(SourceName) Then
+					Console.WriteLine("Error creating the Windows Event Log: SourceName cannot be blank")
+					Return False
+				End If
+
+				If String.IsNullOrEmpty(LogName) Then
+					Console.WriteLine("Error creating the Windows Event Log: LogName cannot be blank")
+					Return False
+				End If
+
+				If Not EventLog.SourceExists(SourceName) Then
+					Console.WriteLine("Creating Windows Event Log " & LogName & " for source " & SourceName)
+					Dim SourceData As EventSourceCreationData = New EventSourceCreationData(SourceName, LogName)
+					EventLog.CreateEventSource(SourceData)
+				End If
+
+				' Create custom event logging object and update it's configuration
+				Dim ELog As New EventLog
+				ELog.Log = LogName
+				ELog.Source = SourceName
+
+				Try
+					ELog.MaximumKilobytes = 1024
+				Catch ex As Exception
+					Console.WriteLine("Warning: unable to update the maximum log size to 1024 KB: " & ControlChars.NewLine & "  " & ex.Message)
+				End Try
+
+				Try
+					ELog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90)
+				Catch ex As Exception
+					Console.WriteLine("Warning: unable to update the overflow policy to keep events for 90 days and overwrite as needed: " & ControlChars.NewLine & "  " & ex.Message)
+				End Try
+
+			Catch ex As Exception
+				Console.WriteLine("Exception creating the Windows Event Log named '" & LogName & "' for source '" & SourceName & "': " & ex.Message)
+				Return False
+			End Try
+
+			Return True
+
+		End Function
+
 		''' <summary>
 		''' Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
 		''' </summary>
@@ -1279,7 +1337,13 @@ Namespace AnalysisManagerProg
 			lstMgrSettings.Add("MgrActive_Local", My.Settings.MgrActive_Local.ToString)
 
 			'Manager name
-			lstMgrSettings.Add("MgrName", My.Settings.MgrName)
+
+
+			' Note: if the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
+			'   then that text is replaced with this computer's domain name
+			' This is a case-sensitive comparison
+
+			lstMgrSettings.Add("MgrName", My.Settings.MgrName.Replace("$ComputerName$", Environment.MachineName))
 
 			'Default settings in use flag
 			lstMgrSettings.Add("UsingDefaults", My.Settings.UsingDefaults.ToString)

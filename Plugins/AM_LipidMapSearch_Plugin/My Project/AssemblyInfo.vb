@@ -8,17 +8,17 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("AnalysisManagerSMAQCPlugIn")> 
+<Assembly: AssemblyTitle("AnalysisManagerLipidMapSearchPlugIn")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("PNNL")> 
-<Assembly: AssemblyProduct("AnalysisManagerSMAQCPlugIn")> 
+<Assembly: AssemblyProduct("AnalysisManagerLipidMapSearchPlugIn")> 
 <Assembly: AssemblyCopyright("")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("79814bea-8216-4c08-8347-d8b62edcc9ec")> 
+<Assembly: Guid("5B1D3B01-6F56-4C76-A0FF-F576EE40070B")> 
 
 ' Version information for an assembly consists of the following four values:
 '

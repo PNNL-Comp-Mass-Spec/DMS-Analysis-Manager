@@ -403,7 +403,14 @@ Public Class clsDtaGenThermoRaw
 					End If
 
 					CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
-					CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
+
+					' For ExtractMSn, -S means the number of allowed different intermediate scans for grouping (default=1), for example -S1
+					' For DeconMSn, -S means the type of spectra to process, for example -SALL or -SCID
+
+					If m_RunningExtractMSn Then
+						CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
+					End If
+
 					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
 					CmdStr &= " -D" & m_WorkDir & " " & RawFile
 

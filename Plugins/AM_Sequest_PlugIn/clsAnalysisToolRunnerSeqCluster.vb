@@ -26,6 +26,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected Const OUT_FILE_APPEND_INTERVAL_SECONDS As Integer = 30
 	Protected Const OUT_FILE_APPEND_HOLDOFF_SECONDS As Integer = 30
 	Protected Const STALE_NODE_THRESHOLD_MINUTES As Integer = 5
+	Protected Const MAX_NODE_RESPAWN_ATTEMPTS As Integer = 4
 #End Region
 
 #Region "Structures"
@@ -67,6 +68,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected mLastActiveNodeLogTime As System.DateTime
 
 	Protected mResetPVM As Boolean
+	Protected mNodeCountSpawnErrorOccurences As Integer
 
 	Protected WithEvents m_CmdRunner As clsRunDosProgram
 	Protected WithEvents m_UtilityRunner As clsRunDosProgram
@@ -157,6 +159,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			UpdateSequestNodeProcessingStats(True)
 		End If
 
+		mNodeCountSpawnErrorOccurences = 0
+
 		Do
 			' Reset several pieces of information on each iteration of this Do Loop
 			mSequestNodes.Clear()
@@ -195,18 +199,21 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 				If intDTACountRemaining > 0 Then
 
-					Dim intPVMRetriesRemaining As Integer = 4
-					Do While intPVMRetriesRemaining > 0
-						blnSuccess = ResetPVM()
-						If blnSuccess Then
-							Exit Do
-						Else
-							intPVMRetriesRemaining -= 1
-							If intPVMRetriesRemaining > 0 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try " & intPVMRetriesRemaining & " more time" & CheckForPlurality(intPVMRetriesRemaining))
+					blnSuccess = False
+					If mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS Then
+						Dim intPVMRetriesRemaining As Integer = 4
+						Do While intPVMRetriesRemaining > 0
+							blnSuccess = ResetPVM()
+							If blnSuccess Then
+								Exit Do
+							Else
+								intPVMRetriesRemaining -= 1
+								If intPVMRetriesRemaining > 0 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try " & intPVMRetriesRemaining & " more time" & CheckForPlurality(intPVMRetriesRemaining))
+								End If
 							End If
-						End If
-					Loop
+						Loop
+					End If
 
 					If Not blnSuccess Then
 						m_message = PVM_RESET_ERROR_MESSAGE
@@ -527,9 +534,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 						strMessage = "Not enough nodes were spawned (Threshold = " & intNodeCountMinimum & " nodes): " & mSequestNodesSpawned & " spawned vs. " & intNodeCountExpected & " expected"
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 
+						mNodeCountSpawnErrorOccurences += 1
 						mResetPVM = True
 					End If
-
+				Else
+					mNodeCountSpawnErrorOccurences = 0
 				End If
 
 				Return True
@@ -1288,7 +1297,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				Dim strMessage As String
 				strMessage = "Too many nodes are inactive (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+				mNodeCountSpawnErrorOccurences += 1
 				mResetPVM = True
+			Else
+				mNodeCountSpawnErrorOccurences = 0
 			End If
 
 		Catch ex As Exception

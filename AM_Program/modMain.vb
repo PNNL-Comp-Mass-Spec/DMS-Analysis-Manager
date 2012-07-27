@@ -23,14 +23,11 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "May 31, 2012"
-
-	Private mInputFilePath As String
+	Public Const PROGRAM_DATE As String = "July 26, 2012"
 
 	Private mCodeTestMode As Boolean
+	Private mCreateWindowsEventLog As Boolean
 	Private mTraceMode As Boolean
-
-	Private mQuietMode As Boolean
 
 	Public Function Main() As Integer
 		' Returns 0 if no error, error code if an error
@@ -42,7 +39,6 @@ Module modMain
 		Dim blnProceed As Boolean
 
 		intReturnCode = 0
-		mInputFilePath = String.Empty
 		mCodeTestMode = False
 		mTraceMode = False
 
@@ -51,6 +47,9 @@ Module modMain
 
 			' Look for /T or /Test on the command line
 			' If present, this means "code test mode" is enabled
+			' 
+			' Other valid switches are /I, /T,/Test, /Trace, /EL, /Q, and /?
+			'
 			If objParseCommandLine.ParseCommandLine Then
 				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
 			End If
@@ -101,7 +100,8 @@ Module modMain
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
 					End Try
-
+				ElseIf mCreateWindowsEventLog Then
+					AnalysisManagerProg.clsMainProcess.CreateAnalysisManagerEventLog()
 				Else
 					' Initiate automated analysis
 					If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
@@ -115,11 +115,7 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			If mQuietMode Then
-				Throw ex
-			Else
-				Console.WriteLine("Error occurred in modMain->Main: " & ControlChars.NewLine & ex.Message)
-			End If
+			Console.WriteLine("Error occurred in modMain->Main: " & ControlChars.NewLine & ex.Message)
 			intReturnCode = -1
 		End Try
 
@@ -131,7 +127,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "T", "Test", "Trace", "Q"}
+		Dim strValidParameters() As String = New String() {"T", "Test", "Trace", "EL"}
 
 		Try
 			' Make sure no invalid parameters are present
@@ -140,29 +136,21 @@ Module modMain
 			Else
 				With objParseCommandLine
 					' Query objParseCommandLine to see if various parameters are present
-					If .RetrieveValueForParameter("I", strValue) Then
-						mInputFilePath = strValue
-					ElseIf .NonSwitchParameterCount > 0 Then
-						mInputFilePath = .RetrieveNonSwitchParameter(0)
-					End If
 
 					If .RetrieveValueForParameter("T", strValue) Then mCodeTestMode = True
 					If .RetrieveValueForParameter("Test", strValue) Then mCodeTestMode = True
 
 					If .RetrieveValueForParameter("Trace", strValue) Then mTraceMode = True
 
-					If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
+					If .RetrieveValueForParameter("EL", strValue) Then mCreateWindowsEventLog = True
+
 				End With
 
 				Return True
 			End If
 
 		Catch ex As Exception
-			If mQuietMode Then
-				Throw New System.Exception("Error parsing the command line parameters", ex)
-			Else
-				Console.WriteLine("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message)
-			End If
+			Console.WriteLine("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message)
 		End Try
 
 	End Function
@@ -173,10 +161,13 @@ Module modMain
 
 			Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
 			Console.WriteLine()
-			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " [/T] [/Q]")
+			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " [/EL] [/T] [/Trace] [/Q]")
 			Console.WriteLine()
 
-			Console.WriteLine("Use /T to start the program in code test mode.")
+			Console.WriteLine("Use /EL to create the Windows Event Log named '" & AnalysisManagerProg.clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
+			Console.WriteLine()
+			Console.WriteLine("Use /T or /Test to start the program in code test mode.")
+			Console.WriteLine()
 			Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")
 			Console.WriteLine()
 
