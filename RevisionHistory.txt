@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+July 27, 2012
+	- Updated to support the MgrSettingsGroupName parameter
+		- Defines a ghost analysis manager that tracks settings shared by a group of analysis managers
+
 July 26, 2012
 	- Added command line switch /EL, which can be used to create the DMS_AnalysisMgr Windows event log, then exit the program
 

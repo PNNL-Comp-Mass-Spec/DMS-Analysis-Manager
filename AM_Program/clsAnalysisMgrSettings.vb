@@ -104,7 +104,12 @@ Public Class clsAnalysisMgrSettings
 		m_MgrFolderPath = MgrFolderPath
 
 		If Not LoadSettings(lstMgrSettings) Then
-			Throw New ApplicationException("Unable to initialize manager settings class")
+			If Not String.IsNullOrEmpty(m_ErrMsg) Then
+				Throw New ApplicationException("Unable to initialize manager settings class: " & m_ErrMsg)
+			Else
+				Throw New ApplicationException("Unable to initialize manager settings class: unknown error")
+			End If
+
 		End If
 
 	End Sub
@@ -205,17 +210,49 @@ Public Class clsAnalysisMgrSettings
 
 		'Requests manager specific settings from database. Performs retries if necessary.
 
+		Dim ManagerName As String
+		Dim strMgrSettingsGroup As String
+		Dim dtSettings As DataTable = Nothing
+		Dim blnSuccess As Boolean
+
+		Dim blnSkipExistingParameters As Boolean
+		Dim blnReturnErrorIfNoParameters As Boolean
+
+		ManagerName = Me.GetParam("MgrName")
+		blnReturnErrorIfNoParameters = True
+		blnSuccess = LoadMgrSettingsFromDBWork(ManagerName, dtSettings, blnReturnErrorIfNoParameters)
+		If Not blnSuccess Then
+			Return False
+		End If
+
+		blnSkipExistingParameters = False
+		blnSuccess = StoreParameters(dtSettings, blnSkipExistingParameters, ManagerName)
+
+		strMgrSettingsGroup = Me.GetParam("MgrSettingGroupName", "")
+		If Not String.IsNullOrEmpty(strMgrSettingsGroup) Then
+			' This manager has group-based settings defined; load them now
+
+			blnReturnErrorIfNoParameters = False
+			blnSuccess = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, dtSettings, blnReturnErrorIfNoParameters)
+
+			If blnSuccess Then
+				blnSkipExistingParameters = True
+				blnSuccess = StoreParameters(dtSettings, blnSkipExistingParameters, ManagerName)
+			End If
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	Private Function LoadMgrSettingsFromDBWork(ByVal ManagerName As String, ByRef dtSettings As DataTable, ByVal blnReturnErrorIfNoParameters As Boolean) As Boolean
+
 		Dim RetryCount As Short = 3
-		Dim MyMsg As String
-		Dim ParamKey As String
-		Dim ParamVal As String
 		Dim ConnectionString As String = Me.GetParam("MgrCnfgDbConnectStr")
 
-		Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams " & _
-		  "WHERE ManagerName = '" & Me.GetParam("MgrName") & "'"
+		Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
 
-		Dim Dt As DataTable = Nothing
-		Dim blnsuccess As Boolean
+		dtSettings = Nothing
 
 		'Get a table to hold the results of the query
 		While RetryCount > 0
@@ -224,16 +261,16 @@ Public Class clsAnalysisMgrSettings
 					Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
 						Using Ds As DataSet = New DataSet
 							Da.Fill(Ds)
-							Dt = Ds.Tables(0)
+							dtSettings = Ds.Tables(0)
 						End Using  'Ds
 					End Using  'Da
 				End Using  'Cn
 				Exit While
 			Catch ex As System.Exception
 				RetryCount -= 1S
-				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " & ex.Message & "; ConnectionString: " & ConnectionString
+				Dim MyMsg As String
+				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Exception getting manager settings from database: " & ex.Message & "; ConnectionString: " & ConnectionString
 				MyMsg &= ", RetryCount = " & RetryCount.ToString
-
 				WriteErrorMsg(MyMsg)
 
 				System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
@@ -242,41 +279,58 @@ Public Class clsAnalysisMgrSettings
 
 		'If loop exited due to errors, return false
 		If RetryCount < 1 Then
-			MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database"
-			WriteErrorMsg(MyMsg)
-			Dt.Dispose()
+			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
+			WriteErrorMsg(m_ErrMsg)
+			If Not dtSettings Is Nothing Then dtSettings.Dispose()
 			Return False
 		End If
 
 		'Verify at least one row returned
-		If Dt.Rows.Count < 1 Then
+		If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
 			' No data was returned
-			MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager '" & Me.GetParam("MgrName") & "' not found using " & ConnectionString
-			WriteErrorMsg(MyMsg)
-			Dt.Dispose()
+			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not found using " & ConnectionString
+			WriteErrorMsg(m_ErrMsg)
+			dtSettings.Dispose()
 			Return False
 		End If
+
+		Return True
+
+	End Function
+
+	Private Function StoreParameters(ByVal dtSettings As DataTable, ByVal blnSkipExisting As Boolean, ByVal ManagerName As String) As Boolean
+
+		Dim ParamKey As String
+		Dim ParamVal As String
+		Dim blnSuccess As Boolean
 
 		'Fill a string dictionary with the manager parameters that have been found
 		Dim CurRow As DataRow
 		Try
-			For Each CurRow In Dt.Rows
+			For Each CurRow In dtSettings.Rows
 				'Add the column heading and value to the dictionary
-				ParamKey = DbCStr(CurRow(Dt.Columns("ParameterName")))
-				ParamVal = DbCStr(CurRow(Dt.Columns("ParameterValue")))
+				ParamKey = DbCStr(CurRow(dtSettings.Columns("ParameterName")))
+				ParamVal = DbCStr(CurRow(dtSettings.Columns("ParameterValue")))
 
-				Me.SetParam(ParamKey, ParamVal)
+				If m_ParamDictionary.ContainsKey(ParamKey) Then
+					If Not blnSkipExisting Then
+						m_ParamDictionary(ParamKey) = ParamVal
+					End If
+				Else
+					m_ParamDictionary.Add(ParamKey, ParamVal)
+				End If
 			Next
-			blnsuccess = True
+			blnSuccess = True
+
 		Catch ex As System.Exception
-			MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " & ex.Message
-			WriteErrorMsg(MyMsg)
-			blnsuccess = False
+			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
+			WriteErrorMsg(m_ErrMsg)
+			blnSuccess = False
 		Finally
-			Dt.Dispose()
+			If Not dtSettings Is Nothing Then dtSettings.Dispose()
 		End Try
 
-		Return blnsuccess
+		Return blnSuccess
 
 	End Function
 

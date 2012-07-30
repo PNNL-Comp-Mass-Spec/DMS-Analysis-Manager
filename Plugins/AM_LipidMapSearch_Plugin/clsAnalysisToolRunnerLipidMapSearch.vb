@@ -442,18 +442,24 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 		Else
 			' Copy the new file up to the server
 
-			strNewestLipidMapsDBFileName = String.Copy(strLipidMapsDBFileLocal)
+			strNewestLipidMapsDBFileName = System.IO.Path.GetFileName(strLipidMapsDBFileLocal)
 
 			Dim intCopyAttempts As Integer = 0
 
 			Do While intCopyAttempts <= 2
 
+				Dim strLipidMapsDBFileTarget As String
+				strLipidMapsDBFileTarget = diLipidMapsDBFolder.FullName & " plus " & strNewestLipidMapsDBFileName
+
 				Try
 					intCopyAttempts += 1
-					System.IO.File.Copy(strLipidMapsDBFileLocal, System.IO.Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName))
+					strLipidMapsDBFileTarget = System.IO.Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName)
+					System.IO.File.Copy(strLipidMapsDBFileLocal, strLipidMapsDBFileTarget)
 					Exit Do
 				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying Lipid Maps DB to server; attempt=" & intCopyAttempts)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying Lipid Maps DB to server; attempt=" & intCopyAttempts & ": " & ex.Message)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Source path: " & strLipidMapsDBFileLocal)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Target path: " & strLipidMapsDBFileTarget)
 					' Wait 5 seconds, then try again
 					System.Threading.Thread.Sleep(5000)
 				End Try
@@ -567,7 +573,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 						strNewestLipidMapsDBFileName = DownloadNewLipidMapsDB(diLipidMapsDBFolder, strNewestLipidMapsDBFileName)
 						Exit Do
 					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception downloading Lipid Maps DB; attempt=" & intDownloadAttempts)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception downloading Lipid Maps DB; attempt=" & intDownloadAttempts & ": " & ex.Message)
 						' Wait 5 seconds, then try again
 						System.Threading.Thread.Sleep(5000)
 					End Try
