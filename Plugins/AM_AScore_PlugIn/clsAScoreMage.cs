@@ -282,6 +282,9 @@ namespace AnalysisManager_AScore_PlugIn {
 
         // ------------------------------------------------------------------------------
         #region Mage AScore class
+        //TODO: I have implemented the mzXML accessor for msgfdb data, now need to add functionality
+        //to look for mzxml files to copy filfe.
+
 
         /// <summary>
         /// This is a Mage module that does AScore processing 
@@ -357,6 +360,7 @@ namespace AnalysisManager_AScore_PlugIn {
                 {
                     return false;
                 }
+
                 string settingsFileName = vals[settingsFileIdx].ToString();
                 string findFragmentation = (paramFileName + settingsFileName).ToLower();
                 if (findFragmentation.Contains("hcd"))
