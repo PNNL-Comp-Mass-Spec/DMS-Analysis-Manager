@@ -218,7 +218,12 @@ Public Class clsAnalysisMgrSettings
 		Dim blnSkipExistingParameters As Boolean
 		Dim blnReturnErrorIfNoParameters As Boolean
 
-		ManagerName = Me.GetParam("MgrName")
+		ManagerName = Me.GetParam("MgrName", "")
+		If String.IsNullOrEmpty(ManagerName) Then
+			m_ErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+			Return False
+		End If
+
 		blnReturnErrorIfNoParameters = True
 		blnSuccess = LoadMgrSettingsFromDBWork(ManagerName, dtSettings, blnReturnErrorIfNoParameters)
 		If Not blnSuccess Then
@@ -248,11 +253,15 @@ Public Class clsAnalysisMgrSettings
 	Private Function LoadMgrSettingsFromDBWork(ByVal ManagerName As String, ByRef dtSettings As DataTable, ByVal blnReturnErrorIfNoParameters As Boolean) As Boolean
 
 		Dim RetryCount As Short = 3
-		Dim ConnectionString As String = Me.GetParam("MgrCnfgDbConnectStr")
+		Dim ConnectionString As String = Me.GetParam("MgrCnfgDbConnectStr", "")
+		dtSettings = Nothing
+
+		If String.IsNullOrEmpty(ManagerName) Then
+			m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+			Return False
+		End If
 
 		Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
-
-		dtSettings = Nothing
 
 		'Get a table to hold the results of the query
 		While RetryCount > 0
@@ -288,7 +297,7 @@ Public Class clsAnalysisMgrSettings
 		'Verify at least one row returned
 		If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
 			' No data was returned
-			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not found using " & ConnectionString
+			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & ConnectionString
 			WriteErrorMsg(m_ErrMsg)
 			dtSettings.Dispose()
 			Return False
@@ -305,12 +314,11 @@ Public Class clsAnalysisMgrSettings
 		Dim blnSuccess As Boolean
 
 		'Fill a string dictionary with the manager parameters that have been found
-		Dim CurRow As DataRow
 		Try
-			For Each CurRow In dtSettings.Rows
+			For Each oRow As DataRow In dtSettings.Rows
 				'Add the column heading and value to the dictionary
-				ParamKey = DbCStr(CurRow(dtSettings.Columns("ParameterName")))
-				ParamVal = DbCStr(CurRow(dtSettings.Columns("ParameterValue")))
+				ParamKey = DbCStr(oRow(dtSettings.Columns("ParameterName")))
+				ParamVal = DbCStr(oRow(dtSettings.Columns("ParameterValue")))
 
 				If m_ParamDictionary.ContainsKey(ParamKey) Then
 					If Not blnSkipExisting Then
