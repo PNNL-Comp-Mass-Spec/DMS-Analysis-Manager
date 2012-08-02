@@ -74,6 +74,8 @@ Public Class clsScanTypeFileCreator
 		Dim intValue As Integer
 		Dim intScanNumber As Integer
 		Dim strCollisionMode As String
+		Dim strFilterText As String
+
 		Dim blnStoreData As Boolean
 
 		Try
@@ -102,8 +104,11 @@ Public Class clsScanTypeFileCreator
 						intLinesRead += 1
 						strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-						If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
+						If intLinesRead = 1 AndAlso strSplitLine.Length > 1 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
 							' This is a header line; define the column mapping
+							intScanNumberColIndex = -1
+							intCollisionModeColIndex = -1
+							intScanFilterColIndex = -1
 							For intColIndex As Integer = 0 To strSplitLine.Length - 1
 								Select Case strSplitLine(intColIndex).ToLower()
 									Case "ScanNumber".ToLower()
@@ -123,12 +128,11 @@ Public Class clsScanTypeFileCreator
 								strCollisionMode = String.Empty
 								blnStoreData = False
 
-								If intCollisionModeColIndex >= 0 Then
-									strCollisionMode = strSplitLine(intCollisionModeColIndex)
+								If TryGetValueStr(strSplitLine, intCollisionModeColIndex, strCollisionMode) Then
 									blnStoreData = True
 								Else
-									If intScanFilterColIndex >= 0 Then
-										Dim strFilterText As String
+									strFilterText = String.empty
+									If TryGetValueStr(strSplitLine, intScanFilterColIndex, strFilterText) Then
 
 										strFilterText = strSplitLine(intScanFilterColIndex)
 
@@ -227,6 +231,9 @@ Public Class clsScanTypeFileCreator
 
 							If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
 								' This is a header line; define the column mapping
+								intScanNumberColIndex = -1
+								intScanTypeColIndex = -1
+								intScanTypeNameColIndex = -1
 								For intColIndex As Integer = 0 To strSplitLine.Length - 1
 									Select Case strSplitLine(intColIndex).ToLower()
 										Case "ScanNumber".ToLower()
@@ -260,8 +267,12 @@ Public Class clsScanTypeFileCreator
 										strScanTypeName = String.Empty
 										If blnScanStatsExLoaded Then
 											mScanTypeMap.TryGetValue(intScanNumber, strScanTypeName)
-										Else
-											strScanTypeName = strSplitLine(intScanTypeNameColIndex)
+										ElseIf intScanTypeNameColIndex >= 0 Then
+											TryGetValueStr(strSplitLine, intScanTypeNameColIndex, strScanTypeName)
+										End If
+
+										If String.IsNullOrEmpty(strScanTypeName) Then
+											strScanTypeName = "CID_Assumed"
 										End If
 
 										swOutFile.WriteLine(intScanNumber & ControlChars.Tab & strScanTypeName & ControlChars.Tab & intScanType)
@@ -295,7 +306,7 @@ Public Class clsScanTypeFileCreator
 	''' <param name="strData"></param>
 	''' <param name="intColIndex"></param>
 	''' <param name="intValue"></param>
-	''' <returns>True if success; false if intColIndex is less than 0 or if the text cannot be converted to an integer</returns>
+	''' <returns>True if success; false if intColIndex is less than 0, intColIndex is out of range for strData(), or the text cannot be converted to an integer</returns>
 	''' <remarks></remarks>
 	Private Function TryGetValueInt(strData() As String, intColIndex As Integer, ByRef intValue As Integer) As Boolean
 		If intColIndex >= 0 AndAlso intColIndex < strData.Length Then
@@ -306,4 +317,20 @@ Public Class clsScanTypeFileCreator
 		Return False
 	End Function
 
+	''' <summary>
+	''' Tries to retrieve the string value at index intColIndex in strData()
+	''' </summary>
+	''' <param name="strData"></param>
+	''' <param name="intColIndex"></param>
+	''' <param name="strValue"></param>
+	''' <returns>True if success; false if intColIndex is less than 0 or intColIndex is out of range for strData()</returns>
+	''' <remarks></remarks>
+	Private Function TryGetValueStr(strData() As String, intColIndex As Integer, ByRef strValue As String) As Boolean
+		If intColIndex >= 0 AndAlso intColIndex < strData.Length Then
+			strValue = strData(intColIndex)
+			If String.IsNullOrEmpty(strValue) Then strValue = String.Empty
+			Return True
+		End If
+		Return False
+	End Function
 End Class

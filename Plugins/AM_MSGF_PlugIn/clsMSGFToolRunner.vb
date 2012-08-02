@@ -78,7 +78,7 @@ Public Class clsMSGFRunner
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
 
-	Protected mMSXmlGeneratorExe As String = String.Empty			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
+	Protected mMSXmlGeneratorExe As String = String.Empty			' ReadW.exe or MSConvert.exe (code will assume MSConvert.exe if an empty string)
 	Protected mMSXmlGeneratorAppPath As String = String.Empty
 
 	Protected mUsingMSGFDB As Boolean = True
@@ -1081,8 +1081,8 @@ Public Class clsMSGFRunner
 		mMSXmlGeneratorExe = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
 
 		If String.IsNullOrEmpty(mMSXmlGeneratorExe) Then
-			' Assume we're using ReadW
-			mMSXmlGeneratorExe = "ReadW.exe"
+			' Assume we're using MSConvert
+			mMSXmlGeneratorExe = "MSConvert.exe"
 		End If
 
 		mMSXmlGeneratorAppPath = String.Empty
