@@ -34,6 +34,16 @@ namespace TestMagePlugIn {
 				System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
+        private void Test_ImportImprovClusterFiles_Click(object sender, EventArgs e) {
+            TestAMMageOperations tpp = new TestAMMageOperations();
+            bool bSuccess = tpp.Test_ImportImprovClusterFiles();
+
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
+        }
+
         private void Test_ImportFDRTables_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
 			bool bSuccess = tpp.Test_ImportFDRTables();
@@ -88,5 +98,6 @@ namespace TestMagePlugIn {
             Junk junk = new Junk();
             junk.TestAlias();
         }
-    }
+
+     }
 }

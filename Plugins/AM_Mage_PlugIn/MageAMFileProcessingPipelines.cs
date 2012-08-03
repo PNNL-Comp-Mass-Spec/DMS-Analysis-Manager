@@ -150,6 +150,22 @@ namespace AnalysisManager_Mage_PlugIn {
             pipeline.RunRoot(null);
         }
 
+        public void ImportImprovClusterFileToSQLite(string inputFilePath, string dbFilePath, string dbTableName)
+        {
+            var reader = new DelimitedFileReader { FilePath = inputFilePath };
+
+            var filter = new MissingValueFilter {FillColumnName = "Group_Num"};
+
+            var writer = new SQLiteWriter();
+            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            writer.DbPath = dbFilePath;
+            writer.TableName = tableName;
+
+            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
+            ConnectPipelineToStatusHandlers(pipeline);
+            pipeline.RunRoot(null);
+        }
+
         /// <summary>
         /// Get list of selected files from list of folders
         /// </summary>

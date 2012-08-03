@@ -16,6 +16,24 @@ namespace TestMagePlugIn {
 
         //--[IMPROV]------------------------------ 
 
+        public bool Test_ImportImprovClusterFiles() {
+            Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+                {"DataPackageID", "167"},
+                {"DataPackageSourceFolderName", "ImportFiles"},
+                {"ResultsBaseName", "Results"},
+                {"transferFolderPath", @"\\protoapps\DataPkgs\Public\2012\167_Test_Package_For_John"},
+                {"OutputFolderName", "IPV201205180754_Auto678460"},
+            };
+            Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase){
+                {"workdir", mWorkDir}
+            };
+            MgrParamsStub m_mgrParams = new MgrParamsStub(mMgrParms);
+            JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
+
+            MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            bool bSuccess = TestRunOperation(ops, "ImportIMPROVClusterFiles");
+            return bSuccess;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -173,6 +191,7 @@ namespace TestMagePlugIn {
             bool bSuccess = ops.RunMageOperation(operationName);
 			return bSuccess;
         }
+
 
     }
 }

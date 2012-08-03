@@ -63,6 +63,9 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "importdatapackagefiles":
                     blnSuccess = ImportDataPackageFiles();
                     break;
+                case "importimprovclusterfiles":
+                    blnSuccess = ImportIMPROVClusterDataPackageFile();
+                    break;
                 case "getfdrtables":
                     blnSuccess = ImportFDRTables();
                     break;
@@ -81,12 +84,12 @@ namespace AnalysisManager_Mage_PlugIn {
                 case "nooperation":
                     blnSuccess = NoOperation();
                     break;
-                    // Future: throw an error
+                // Future: throw an error
             }
             return blnSuccess;
         }
 
-    
+
         #region Mage Operations Functions
 
         /// <summary>
@@ -143,12 +146,28 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <returns></returns>
         private bool ImportDataPackageFiles() {
+            const string importMode = "CopyAndImport";
+            return ImportDataPackageFiles(importMode);
+        }
+
+        private bool ImportDataPackageFiles(string importMode) {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
             string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
             GetPriorStepResults();
-            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", "CopyAndImport");
+            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", importMode);
             return true;
+        }
+
+        /// <summary>
+        /// Copy files in data package folder named by "DataPackageSourceFolderName" job parameter
+        /// to the step results folder and import contents to tables in the SQLite step results database,
+        /// process import through filter that fills in missing cluster ID values
+        /// </summary>
+        /// <returns></returns>
+        private bool ImportIMPROVClusterDataPackageFile() {
+            const string importMode = "IMPROVClusterImport";
+            return ImportDataPackageFiles(importMode);
         }
 
         /// <summary>

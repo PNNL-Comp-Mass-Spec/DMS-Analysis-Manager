@@ -31,6 +31,7 @@
             this.Test_GetFactors = new System.Windows.Forms.Button();
             this.Test_ExtractFromJobs = new System.Windows.Forms.Button();
             this.Junk = new System.Windows.Forms.Button();
+            this.Test_ImportImprovClusterFiles = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // Test_ImportDataPackageFiles
@@ -113,11 +114,22 @@
             this.Junk.UseVisualStyleBackColor = true;
             this.Junk.Click += new System.EventHandler(this.Junk_Click);
             // 
+            // Test_ImportImprovClusterFiles
+            // 
+            this.Test_ImportImprovClusterFiles.Location = new System.Drawing.Point(16, 212);
+            this.Test_ImportImprovClusterFiles.Name = "Test_ImportImprovClusterFiles";
+            this.Test_ImportImprovClusterFiles.Size = new System.Drawing.Size(200, 24);
+            this.Test_ImportImprovClusterFiles.TabIndex = 8;
+            this.Test_ImportImprovClusterFiles.Text = "Test ImportImprovClusterFiles";
+            this.Test_ImportImprovClusterFiles.UseVisualStyleBackColor = true;
+            this.Test_ImportImprovClusterFiles.Click += new System.EventHandler(this.Test_ImportImprovClusterFiles_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(275, 300);
+            this.Controls.Add(this.Test_ImportImprovClusterFiles);
             this.Controls.Add(this.Junk);
             this.Controls.Add(this.Test_ExtractFromJobs);
             this.Controls.Add(this.Test_GetFactors);
@@ -142,6 +154,7 @@
         private System.Windows.Forms.Button Test_GetFactors;
         private System.Windows.Forms.Button Test_ExtractFromJobs;
         private System.Windows.Forms.Button Junk;
+        private System.Windows.Forms.Button Test_ImportImprovClusterFiles;
     }
 }
 

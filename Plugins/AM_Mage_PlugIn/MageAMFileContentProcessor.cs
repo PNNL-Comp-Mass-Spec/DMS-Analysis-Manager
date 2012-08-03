@@ -79,9 +79,10 @@ namespace AnalysisManager_Mage_PlugIn {
         protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context) {
             if (_fileNameSet != null && !_fileNameSet.Contains(sourceFile)) return;
             string dbFilePath;
+            string workingFilePath;
             switch (Operation) {
                 case "CopyAndImport":
-                    string workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
+                    workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
                     File.Copy(sourcePath, workingFilePath, true);
                     dbFilePath = FilePipeline.GetResultsDBFilePath();
                     FilePipeline.ImportFileToSQLite(workingFilePath, dbFilePath, DBTableName);
@@ -94,6 +95,12 @@ namespace AnalysisManager_Mage_PlugIn {
                     dbFilePath = FilePipeline.GetResultsDBFilePath();
                     const string columnList = "Dataset_ID|+|int, *";
                     FilePipeline.ImportFileToSQLiteWithColumnMods(sourcePath, dbFilePath, DBTableName, columnList, context);
+                    break;
+                case "IMPROVClusterImport":
+                    workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
+                    File.Copy(sourcePath, workingFilePath, true);
+                    dbFilePath = FilePipeline.GetResultsDBFilePath();
+                    FilePipeline.ImportImprovClusterFileToSQLite(workingFilePath, dbFilePath, DBTableName);
                     break;
             }
         }
