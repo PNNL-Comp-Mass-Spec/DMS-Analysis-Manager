@@ -124,7 +124,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim strSequestLogFilePath As String
 		Dim blnSuccess As Boolean
 
-		If m_mgrParams.GetParam("cluster", False) Then
+		If m_mgrParams.GetParam("cluster", True) Then
 			' Running on a Sequest cluster
 			strSequestLogFilePath = System.IO.Path.Combine(m_WorkDir, "sequest.log")
 			blnSuccess = ValidateSequestNodeCount(strSequestLogFilePath)

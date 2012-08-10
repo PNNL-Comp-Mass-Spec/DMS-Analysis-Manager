@@ -37,6 +37,17 @@ Public Class clsAnalysisResourcesXT
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
+		' X!Tandem uses this information to determine the scan number
+		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & "_dta.txt")
+		Dim blnReplaceSourceFile As Boolean = True
+		Dim blnDeleteSourceFileIfUpdated As Boolean = True
+
+		If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
+			m_message = "Error validating the _DTA.txt file"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
         'Add all the extensions of the files to delete after run
         m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
         m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA

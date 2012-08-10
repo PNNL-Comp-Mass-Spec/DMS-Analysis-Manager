@@ -545,7 +545,7 @@ Public Class clsAnalysisResourcesSeq
 
 		' If running on a cluster, then distribute the database file across the nodes
 		' We do this after we have successfully retrieved the DTA files and unzipped them
-		If m_mgrParams.GetParam("cluster", False) Then
+		If m_mgrParams.GetParam("cluster", True) Then
 			' Check the cluster nodes, updating local database copies as necessary
 			Dim OrbDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
 			If String.IsNullOrEmpty(OrbDBName) Then

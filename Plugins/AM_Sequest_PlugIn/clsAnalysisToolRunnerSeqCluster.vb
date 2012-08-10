@@ -69,6 +69,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	Protected mResetPVM As Boolean
 	Protected mNodeCountSpawnErrorOccurences As Integer
+	Protected mNodeCountActiveErrorOccurences As Integer
+	Protected mLastSequestStartTime As System.DateTime
 
 	Protected WithEvents m_CmdRunner As clsRunDosProgram
 	Protected WithEvents m_UtilityRunner As clsRunDosProgram
@@ -82,6 +84,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	Protected mSequestLogNodesFound As Boolean
 	Protected mSequestNodesSpawned As Integer
+	Protected mIgnoreNodeCountActiveErrors As Boolean
 
 	Protected mSequestNodeProcessingStats As udtSequestNodeProcessingStats
 
@@ -160,6 +163,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		End If
 
 		mNodeCountSpawnErrorOccurences = 0
+		mNodeCountActiveErrorOccurences = 0
+		mLastSequestStartTime = System.DateTime.UtcNow
+
+		mIgnoreNodeCountActiveErrors = m_jobParams.GetJobParameter("IgnoreSequestNodeCountActiveErrors", False)
 
 		Do
 			' Reset several pieces of information on each iteration of this Do Loop
@@ -182,6 +189,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			End If
 
 			' Run Sequest to generate OUT files
+			mLastSequestStartTime = System.DateTime.UtcNow
 			blnSuccess = m_CmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", True)
 
 			mSequestSearchEndTime = System.DateTime.UtcNow
@@ -200,7 +208,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 				If intDTACountRemaining > 0 Then
 
 					blnSuccess = False
-					If mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS Then
+					If mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS And mNodeCountActiveErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS Then
 						Dim intPVMRetriesRemaining As Integer = 4
 						Do While intPVMRetriesRemaining > 0
 							blnSuccess = ResetPVM()
@@ -530,14 +538,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
 					Dim intDTACountRemaining As Integer = GetDTAFileCountRemaining()
 
 					If intDTACountRemaining > mSequestNodesSpawned Then
+						mNodeCountSpawnErrorOccurences += 1
+
 						Dim strMessage As String
-						strMessage = "Not enough nodes were spawned (Threshold = " & intNodeCountMinimum & " nodes): " & mSequestNodesSpawned & " spawned vs. " & intNodeCountExpected & " expected"
+						strMessage = "Not enough nodes were spawned (Threshold = " & intNodeCountMinimum & " nodes): " & mSequestNodesSpawned & " spawned vs. " & intNodeCountExpected & " expected; mNodeCountSpawnErrorOccurences=" & mNodeCountSpawnErrorOccurences
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 
-						mNodeCountSpawnErrorOccurences += 1
 						mResetPVM = True
 					End If
-				Else
+				ElseIf mNodeCountSpawnErrorOccurences > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Resetting mNodeCountSpawnErrorOccurences from " & mNodeCountSpawnErrorOccurences & " to 0")
 					mNodeCountSpawnErrorOccurences = 0
 				End If
 
@@ -545,6 +555,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			Else
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Did not find 'Spawned xx slave processes' in the sequest.log file; node names not yet determined")
+				End If
+
+				If System.DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined")
+
+					mNodeCountSpawnErrorOccurences += 1
+					mResetPVM = True
 				End If
 			End If
 
@@ -866,6 +883,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			End If
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, " ... PVM restarted")
+			mLastActiveNodeQueryTime = System.DateTime.UtcNow
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ResetPVM: " & ex.Message)
@@ -1293,14 +1311,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			Dim intActiveNodeCountMinimum As Integer
 			intActiveNodeCountMinimum = CInt(Math.Floor(0.5 * mSequestNodesSpawned))
 
-			If intNodeCountActive < intActiveNodeCountMinimum Then
+			If intNodeCountActive < intActiveNodeCountMinimum AndAlso Not mIgnoreNodeCountActiveErrors Then
+				mNodeCountActiveErrorOccurences += 1
 				Dim strMessage As String
-				strMessage = "Too many nodes are inactive (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start"
+				strMessage = "Too many nodes are inactive (Threshold = " & intActiveNodeCountMinimum & " nodes): " & intNodeCountActive & " active vs. " & mSequestNodesSpawned & " total nodes at start; mNodeCountActiveErrorOccurences=" & mNodeCountActiveErrorOccurences
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-				mNodeCountSpawnErrorOccurences += 1
 				mResetPVM = True
-			Else
-				mNodeCountSpawnErrorOccurences = 0
+			ElseIf mNodeCountActiveErrorOccurences > 0 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Resetting mNodeCountActiveErrorOccurences from " & mNodeCountActiveErrorOccurences & " to 0")
+				mNodeCountActiveErrorOccurences = 0
 			End If
 
 		Catch ex As Exception
