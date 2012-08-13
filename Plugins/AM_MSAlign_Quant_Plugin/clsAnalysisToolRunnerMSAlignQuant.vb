@@ -148,6 +148,16 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
 			End If
 
+			If blnSuccess Then
+				' Make sure that the quantitation output file was created
+				Dim strOutputFileName As String = m_Dataset & "_quant.txt"
+				If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, strOutputFileName)) Then
+					m_message = "MSAlign_Quant result file not found (" & strOutputFileName & ")"
+					blnSuccess = False
+				End If
+
+			End If
+
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running TargetedWorkflowsConsole"
