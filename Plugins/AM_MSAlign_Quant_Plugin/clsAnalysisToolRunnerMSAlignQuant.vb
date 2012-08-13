@@ -180,6 +180,8 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 					m_jobParams.AddResultFileToSkip(fiDeconWorkflowsLogFile.Name)
 				End If
 
+				' Don't keep the _peaks.txt file since it can get quite large
+				m_jobParams.AddResultFileToSkip(m_Dataset & "_peaks.txt")
 			End If
 
 			m_progress = PROGRESS_PCT_COMPLETE
