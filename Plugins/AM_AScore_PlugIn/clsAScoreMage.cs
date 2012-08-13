@@ -76,8 +76,8 @@ namespace AnalysisManager_AScore_PlugIn {
             SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
-            SimpleSink reporterIonJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "MASIC_Finnigan");
-            ImportReporterIons(reporterIonJobsToProcess, "t_reporter_ions");
+          //  SimpleSink reporterIonJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "MASIC_Finnigan");
+          //  ImportReporterIons(reporterIonJobsToProcess, "t_reporter_ions");
 
             return true;
         }
