@@ -23,6 +23,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 	Protected Const IDPicker_Report As String = "idpReport.exe"
 	Protected Const IDPicker_GUI As String = "IdPickerGui.exe"
 
+	Protected Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
+	Protected Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
+
 	Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
 
 	Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
@@ -261,6 +264,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 				' Something went wrong
 				' In order to help diagnose things, we will move whatever files were created into the result folder, 
 				'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+				m_jobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
+				m_jobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
+
 				CopyFailedResultsToArchiveFolder()
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -829,9 +836,6 @@ Public Class clsAnalysisToolRunnerIDPicker
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function RunAssemble() As Boolean
-
-		Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
-		Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
 
 		Dim strAssembleFilePath As String
 		Dim progLoc As String

@@ -252,6 +252,16 @@
 		Class="AnalysisManager_IDM_Plugin.clsAnalysisToolRunnerIDM"
 		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="lipidmapsearch" 
+		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch"
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msalign_quant" 
+		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant"
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -506,7 +516,16 @@
 		Class="AnalysisManager_IDM_Plugin.clsAnalysisResourcesIDM"
 		AssemblyFile="AnalysisManager_IDM_Plugin.dll" 
 	/>
-
+	<Resourcer 
+		Tool="lipidmapsearch" 
+		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch"
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msalign_quant" 
+		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant"
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
+	/>
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

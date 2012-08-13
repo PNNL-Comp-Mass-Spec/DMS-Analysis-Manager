@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{AFE0E4E1-052A-4B87-90EF-0871E6BE67B2}") = "AnalysisManagerMSAlignQuantPlugIn", "AnalysisManagerMSAlignQuantPlugIn.vbproj", "{46993519-3E09-475B-B836-7A32108AAFD1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46993519-3E09-475B-B836-7A32108AAFD1}.Debug|x86.ActiveCfg = Debug|x86
+		{46993519-3E09-475B-B836-7A32108AAFD1}.Debug|x86.Build.0 = Debug|x86
+		{46993519-3E09-475B-B836-7A32108AAFD1}.Release|x86.ActiveCfg = Release|x86
+		{46993519-3E09-475B-B836-7A32108AAFD1}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

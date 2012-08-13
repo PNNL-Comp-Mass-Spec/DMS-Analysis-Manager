@@ -15,7 +15,7 @@ Public Class clsAnalysisResourcesMSXMLBruker
 
 #Region "Methods"
     ''' <summary>
-    ''' Retrieves files necessary for performance of Sequest analysis
+	''' Retrieves files necessary for creating the .mzXML file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -30,7 +30,8 @@ Public Class clsAnalysisResourcesMSXMLBruker
 			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' This dataset type is acceptable
 			Case Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Dataset type " & strRawDataType & " is not supported; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
+				m_message = "Dataset type " & strRawDataType & " is not supported"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		End Select

@@ -257,6 +257,11 @@
 		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch"
 		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="msalign_quant" 
+		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant"
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -516,7 +521,11 @@
 		Class="AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch"
 		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" 
 	/>
-
+	<Resourcer 
+		Tool="msalign_quant" 
+		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant"
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
+	/>
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

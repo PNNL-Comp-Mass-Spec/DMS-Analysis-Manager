@@ -112,6 +112,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_jobParams As IJobParams
 	Protected m_mgrParams As IMgrParams
 	Protected m_WorkingDir As String
+	Protected m_DatasetName As String
 	Protected m_message As String
 	Protected m_DebugLevel As Short
 
@@ -209,6 +210,7 @@ Public MustInherit Class clsAnalysisResources
 		m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
 
 		m_WorkingDir = m_mgrParams.GetParam("workdir")
+		m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
 		m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 
@@ -368,7 +370,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			Dim Fi As New System.IO.FileInfo(SourceFile)
-			Dim TargetName As String = m_jobParams.GetParam("JobParameters", "DatasetNum") & Fi.Extension
+			Dim TargetName As String = m_DatasetName & Fi.Extension
 			DestFilePath = System.IO.Path.Combine(OutDir, TargetName)
 
 			If CreateStoragePathInfoOnly Then
@@ -511,7 +513,6 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function GenerateScanStatsFile() As Boolean
 
-		Dim strDatasetName As String
 		Dim strRawDataType As String
 		Dim strInputFilePath As String
 
@@ -521,7 +522,6 @@ Public MustInherit Class clsAnalysisResources
 		Dim objScanStatsGenerator As clsScanStatsGenerator
 		Dim blnSuccess As Boolean
 
-		strDatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
 		strRawDataType = m_jobParams.GetParam("RawDataType")
 
 		strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
@@ -541,9 +541,9 @@ Public MustInherit Class clsAnalysisResources
 		' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
 		Select Case clsAnalysisResources.GetRawDataType(strRawDataType)
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				strInputFilePath = strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION
+				strInputFilePath = m_DatasetName & clsAnalysisResources.DOT_RAW_EXTENSION
 			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
-				strInputFilePath = strDatasetName & clsAnalysisResources.DOT_UIMF_EXTENSION
+				strInputFilePath = m_DatasetName & clsAnalysisResources.DOT_UIMF_EXTENSION
 			Case Else
 				m_message = "Invalid dataset type for auto-generating ScanStats.txt file: " & strRawDataType
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " & m_message)
@@ -925,9 +925,8 @@ Public MustInherit Class clsAnalysisResources
 	   ByVal FileExtension As String, _
 	   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
-		Dim DataFileName As String = DSName & FileExtension
-		Dim DSFolderPath As String = FindValidFolder(DSName, DataFileName)
+		Dim DataFileName As String = m_DatasetName & FileExtension
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
 
 		If CopyFileToWorkDir(DataFileName, DSFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 			Return True
@@ -951,8 +950,7 @@ Public MustInherit Class clsAnalysisResources
 		'Data files are in a subfolder off of the main dataset folder
 		'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
-		Dim ServerPath As String = FindValidFolder(DSName, "", "*" & DOT_D_EXTENSION)
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" & DOT_D_EXTENSION)
 
 		Dim DSFolders() As String
 		Dim DSFiles() As String = Nothing
@@ -1013,10 +1011,9 @@ Public MustInherit Class clsAnalysisResources
 	 ByRef SourceFilePath As String) As Boolean
 
 		' Copies this dataset's .mzXML file to the working directory
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 		Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 		Dim MSXmlFoldernameBase As String = "MSXML_Gen_1_"
-		Dim MzXMLFilename As String = DSName & ".mzXML"
+		Dim MzXMLFilename As String = m_DatasetName & ".mzXML"
 		Dim ServerPath As String
 
 		Dim MaxRetryCount As Integer = 1
@@ -1038,7 +1035,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Look for the MSXmlFolder
 			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-			ServerPath = FindValidFolder(DSName, "", MSXmlFoldername, MaxRetryCount, False)
+			ServerPath = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False)
 
 			If Not String.IsNullOrEmpty(ServerPath) Then
 
@@ -1100,7 +1097,6 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 		Dim ServerPath As String
 		Dim ScanStatsFilename As String
 
@@ -1108,8 +1104,8 @@ Public MustInherit Class clsAnalysisResources
 
 		' Look for the MASIC Results folder
 		' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-		ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
-		ServerPath = FindValidFolder(DSName, "", "SIC*", MaxRetryCount, False)
+		ScanStatsFilename = m_DatasetName & SCAN_STATS_FILE_SUFFIX
+		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, False)
 
 		If String.IsNullOrEmpty(ServerPath) Then
 			m_message = "Dataset folder path not defined"
@@ -1171,14 +1167,12 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal MASICResultsFolderPath As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
-
 		Dim ScanStatsFilename As String
 
 		Dim MaxRetryCount As Integer = 1
 
 		' Copy the MASIC files from the MASIC results folder
-		ScanStatsFilename = DSName & SCAN_STATS_FILE_SUFFIX
+		ScanStatsFilename = m_DatasetName & SCAN_STATS_FILE_SUFFIX
 
 		If String.IsNullOrEmpty(MASICResultsFolderPath) Then
 			m_message = "MASIC Results folder path not defined"
@@ -1205,7 +1199,7 @@ Public MustInherit Class clsAnalysisResources
 					' ScanStats File successfully copied
 					' Also look for and copy the _ScanStatsEx.txt file
 
-					If Not CopyFileToWorkDir(DSName & SCAN_STATS_EX_FILE_SUFFIX, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+					If Not CopyFileToWorkDir(m_DatasetName & SCAN_STATS_EX_FILE_SUFFIX, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 						m_message = "_ScanStatsEx.txt file not found at " & diSourceFile.Directory.FullName
 					Else
 
@@ -1214,7 +1208,7 @@ Public MustInherit Class clsAnalysisResources
 						If RetrieveSICStatsFile Then
 
 							' Also look for and copy the _SICStats.txt file
-							If Not CopyFileToWorkDir(DSName & "_SICStats.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+							If Not CopyFileToWorkDir(m_DatasetName & "_SICStats.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 								m_message = "_SICStats.txt file not found at " & diSourceFile.Directory.FullName
 							Else
 								' All files successfully copied
@@ -1285,14 +1279,13 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal objFileNamesToSkip As List(Of String)) As Boolean
 
 		'Copies a data folder ending in FolderExtension to the working directory
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
 		If Not FolderExtension.StartsWith(".") Then
 			FolderExtension = "." & FolderExtension
 		End If
 		Dim FolderExtensionWildcard As String = "*" & FolderExtension
 
-		Dim ServerPath As String = FindValidFolder(DSName, "", FolderExtensionWildcard)
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", FolderExtensionWildcard)
 		Dim DestFolderPath As String
 
 		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
@@ -1304,7 +1297,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'Do the copy
 		Try
-			DestFolderPath = System.IO.Path.Combine(WorkDir, DSName & FolderExtension)
+			DestFolderPath = System.IO.Path.Combine(WorkDir, m_DatasetName & FolderExtension)
 
 			If CreateStoragePathInfoOnly Then
 				If Not System.IO.Directory.Exists(DSFolderPath) Then
@@ -1345,7 +1338,6 @@ Public MustInherit Class clsAnalysisResources
 
 		Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 		Dim ChameleonCachedDataFolder As String = m_mgrParams.GetParam("ChameleonCachedDataFolder")
 		Dim diCachedDataFolder As System.IO.DirectoryInfo
 
@@ -1379,11 +1371,11 @@ Public MustInherit Class clsAnalysisResources
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diCachedDataFolder.FullName)
 					Return False
 				Else
-					strUnzipFolderPathBase = System.IO.Path.Combine(diCachedDataFolder.FullName, DSName)
+					strUnzipFolderPathBase = System.IO.Path.Combine(diCachedDataFolder.FullName, m_DatasetName)
 				End If
 
 				For Each diSubFolder As System.IO.DirectoryInfo In diCachedDataFolder.GetDirectories()
-					If diSubFolder.Name.ToLower <> DSName.ToLower Then
+					If diSubFolder.Name.ToLower <> m_DatasetName.ToLower Then
 						' Delete this directory
 						Try
 							If m_DebugLevel >= 2 Then
@@ -1406,7 +1398,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Delete any .mis files that do not start with this dataset's name
 				For Each fiFile As System.IO.FileInfo In diCachedDataFolder.GetFiles("*.mis")
-					If System.IO.Path.GetFileNameWithoutExtension(fiFile.Name).ToLower <> DSName.ToLower Then
+					If System.IO.Path.GetFileNameWithoutExtension(fiFile.Name).ToLower <> m_DatasetName.ToLower Then
 						fiFile.Delete()
 					End If
 				Next
@@ -1423,7 +1415,7 @@ Public MustInherit Class clsAnalysisResources
 
 		' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
 		' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-		ServerPath = FindValidFolder(DSName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+		ServerPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
 
 		Try
 
@@ -1431,7 +1423,7 @@ Public MustInherit Class clsAnalysisResources
 			Dim strImagingSeqFilePathFinal As String
 
 			' Look for the .mis file (ImagingSequence file) 
-			strImagingSeqFilePathFinal = System.IO.Path.Combine(diCachedDataFolder.FullName, DSName & ".mis")
+			strImagingSeqFilePathFinal = System.IO.Path.Combine(diCachedDataFolder.FullName, m_DatasetName & ".mis")
 
 			If Not System.IO.File.Exists(strImagingSeqFilePathFinal) Then
 
@@ -1622,7 +1614,6 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Private Function RetrieveSFolders(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
 		Dim ZipFiles() As String
 		Dim DSWorkFolder As String
 		Dim UnZipper As clsIonicZipTools
@@ -1636,7 +1627,7 @@ Public MustInherit Class clsAnalysisResources
 
 			'First Check for the existence of a 0.ser Folder
 			'If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
-			Dim DSFolderPath As String = FindValidFolder(DSName, "", BRUKER_ZERO_SER_FOLDER)
+			Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "", BRUKER_ZERO_SER_FOLDER)
 
 			If Not String.IsNullOrEmpty(DSFolderPath) Then
 				Dim diSourceFolder As System.IO.DirectoryInfo
@@ -1694,7 +1685,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			'Create a dataset subdirectory under the working directory
-			DSWorkFolder = System.IO.Path.Combine(WorkDir, DSName)
+			DSWorkFolder = System.IO.Path.Combine(WorkDir, m_DatasetName)
 			System.IO.Directory.CreateDirectory(DSWorkFolder)
 
 			'Set up the unzipper
@@ -1753,9 +1744,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Private Function CopySFoldersToWorkDir(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		'
-		Dim DSName As String = m_jobParams.GetParam("JobParameters", "DatasetNum")
-		Dim DSFolderPath As String = FindValidFolder(DSName, "s*.zip")
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "s*.zip")
 
 		Dim ZipFiles() As String
 		Dim DestFilePath As String
@@ -2477,13 +2466,13 @@ Public MustInherit Class clsAnalysisResources
 		Dim SourceFolderPath As String
 
 		'Retrieve zipped DTA file
-		SourceFileName = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_dta.zip"
+		SourceFileName = m_DatasetName & "_dta.zip"
 		SourceFolderPath = FindDataFile(SourceFileName)
 
 		If SourceFolderPath = "" Then
 			' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
 
-			SourceFileName = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_dta.txt"
+			SourceFileName = m_DatasetName & "_dta.txt"
 			SourceFolderPath = FindDataFile(SourceFileName)
 
 			If SourceFolderPath = "" Then
@@ -2534,8 +2523,19 @@ Public MustInherit Class clsAnalysisResources
 		If UnConcatenate Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
 
+			Dim fiSourceFile As System.IO.FileInfo
+			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt"))
+
+			If Not fiSourceFile.exists Then
+				m_message = "_DTA.txt file not found after unzipping"
+				Return False
+			ElseIf fiSourceFile.length = 0 Then
+				m_message = "_DTA.txt file is empty (zero-bytes)"
+				Return False
+			End If
+
 			Dim FileSplitter As New clsSplitCattedFiles()
-			FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
+			FileSplitter.SplitCattedDTAsOnly(m_DatasetName, m_WorkingDir)
 
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated DTA file")
@@ -2555,7 +2555,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected Overridable Function RetrieveOutFiles(ByVal UnConcatenate As Boolean) As Boolean
 
 		'Retrieve zipped OUT file
-		Dim ZippedFileName As String = m_jobParams.GetParam("JobParameters", "DatasetNum") & "_out.zip"
+		Dim ZippedFileName As String = m_DatasetName & "_out.zip"
 		Dim ZippedFolderName As String = FindDataFile(ZippedFileName)
 
 		If ZippedFolderName = "" Then Return False 'No folder found containing the zipped OUT files
@@ -2572,13 +2572,23 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		End If
 
-
 		'Unconcatenate OUT file if needed
 		If UnConcatenate Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated OUT file")
 
+			Dim fiSourceFile As System.IO.FileInfo
+			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"))
+
+			If Not fiSourceFile.Exists Then
+				m_message = "_OUT.txt file not found after unzipping"
+				Return False
+			ElseIf fiSourceFile.Length = 0 Then
+				m_message = "_OUT.txt file is empty (zero-bytes)"
+				Return False
+			End If
+
 			Dim FileSplitter As New clsSplitCattedFiles()
-			FileSplitter.SplitCattedOutsOnly(m_jobParams.GetParam("JobParameters", "DatasetNum"), m_WorkingDir)
+			FileSplitter.SplitCattedOutsOnly(m_DatasetName, m_WorkingDir)
 
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated OUT file")

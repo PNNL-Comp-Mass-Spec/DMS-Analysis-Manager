@@ -145,6 +145,17 @@ Public Class clsSplitCattedFiles
 		Dim strFileType As String = String.Empty
 		Dim resultsFolder As String = System.IO.Path.GetDirectoryName(filePath)
 
+		Dim fiSourceFile As System.IO.FileInfo
+		fiSourceFile = New System.IO.FileInfo(filePath)
+
+		If Not fiSourceFile.Exists Then
+			Throw New System.IO.FileNotFoundException("Error in SplitCattedFile, File not found: " & filePath)
+			Return False
+		ElseIf fiSourceFile.Length = 0 Then
+			Throw New System.IO.FileNotFoundException("Error in SplitCattedFile, file is empty (zero-bytes): " & filePath)
+			Return False
+		End If
+
 		Try
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(filePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
@@ -203,7 +214,7 @@ Public Class clsSplitCattedFiles
 			ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
 
 		Catch ex As Exception
-			Throw New Exception("Error splitting " & filePath & ": " & ex.Message, ex)
+			Throw New Exception("Error splitting " & filePath & " in SplitCattedFile: " & ex.Message, ex)
 		End Try
 
 		If fileCounter > 0 Then
