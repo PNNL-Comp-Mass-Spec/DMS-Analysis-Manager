@@ -16,7 +16,7 @@ Public Class clsMGFtoDtaGenMainProcess
 	Inherits clsDtaGen
 
 #Region "Constants"
-	Protected Const USE_THREADING As Boolean = False
+	Protected Const USE_THREADING As Boolean = True
 #End Region
 
 #Region "Structures"
@@ -102,13 +102,13 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private Function VerifyMGFFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
 		'Verifies a .mgf file exists in specfied directory
-        If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & ".mgf")) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
-            Return False
-        End If
+		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & clsAnalysisResources.DOT_MGF_EXTENSION)) Then
+			m_ErrMsg = ""
+			Return True
+		Else
+			m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
+			Return False
+		End If
 
 	End Function
 
@@ -159,7 +159,7 @@ Public Class clsMGFtoDtaGenMainProcess
 		Dim MGFFile As String
 
 		'Get the parameters from the various setup files
-        MGFFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mgf")
+		MGFFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
 		mScanStart = m_JobParams.GetJobParameter("ScanStart", 0)
 		mScanStop = m_JobParams.GetJobParameter("ScanStop", 0)
 		mMWLower = m_JobParams.GetJobParameter("MWStart", 0)
@@ -201,21 +201,6 @@ Public Class clsMGFtoDtaGenMainProcess
 		End If
 
 		mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
-
-		' Spectrum processing options
-		'With mSpectrumProcessingOptions
-		'	.MaximumIonsPerSpectrum = CInt(m_JobParams.GetParam("MaximumIonsPerSpectrum"))
-		'End With
-
-		'' Spectrum filtering options
-		'With mFilterSpectraOptions
-		'	.FilterSpectra = CBool(m_JobParams.GetParam("FilterSpectra"))
-		'	.MinimumParentIonMZ = CInt(m_JobParams.GetParam("MinimumParentIonMZ"))
-		'	.MinimumStandardMassSpacingIonPairs = CInt(m_JobParams.GetParam("MinimumStandardMassSpacingIonPairs"))
-		'	.IonPairMassToleranceHalfWidthDa = CSng(m_JobParams.GetParam("IonPairMassToleranceHalfWidthDa"))
-		'	.NoiseLevelIntensityThreshold = CInt(m_JobParams.GetParam("NoiseLevelIntensityThreshold"))
-		'	.DataPointCountToConsider = CShort(m_JobParams.GetParam("DataPointCountToConsider"))
-		'End With
 
 		With mMGFtoDTA
 			.CreateIndividualDTAFiles = False

@@ -29,6 +29,8 @@ Public Class clsDtaGenResources
 				m_message = "Instrument data not found: " & strFileToFind
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
 			End If
 		Else
 			'Get input data file

@@ -155,8 +155,6 @@ Public Class clsDtaGenThermoRaw
 			Return True
 		Else
 			strExtension = clsAnalysisResources.DOT_MGF_EXTENSION
-			m_JobParams.AddResultFileToSkip(DSName & strExtension)
-
 			If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
 				m_ErrMsg = String.Empty
 				Return True

@@ -96,7 +96,7 @@ Public Class clsDtaGenMSConvert
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
 		End If
 
-		strMGFFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mgf")
+		strMGFFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
 
 		Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
 		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
@@ -140,7 +140,6 @@ Public Class clsDtaGenMSConvert
 		Return blnSuccess
 
 	End Function
-
 
 	''' <summary>
 	''' Create .mgf file using MSConvert
