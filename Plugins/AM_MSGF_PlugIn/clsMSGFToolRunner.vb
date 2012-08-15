@@ -109,6 +109,8 @@ Public Class clsMSGFRunner
 
 		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
+		Dim blnMGFInstrumentData As Boolean
+
 		Dim Msg As String = String.Empty
 
 		Dim blnSuccess As Boolean
@@ -130,6 +132,8 @@ Public Class clsMSGFRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+
 		' Determine the raw data type
 		eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"))
 
@@ -138,7 +142,6 @@ Public Class clsMSGFRunner
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 			' Result type is not supported
-
 			Msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
 			m_message = clsGlobal.AppendToComment(m_message, Msg)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
@@ -155,12 +158,11 @@ Public Class clsMSGFRunner
 		mMSGFVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
 
-		mKeepMSGFInputFiles = m_JobParams.GetJobParameter("KeepMSGFInputFile", False)
-		blnDoNotFilterPeptides = m_JobParams.GetJobParameter("MSGFIgnoreFilters", False)
+		mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", False)
+		blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", False)
 
 		Try
 			blnProcessingError = False
-
 
 			If mUsingMSGFDB And eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 				' Don't actually run MSGF
@@ -190,7 +192,7 @@ Public Class clsMSGFRunner
 				End If
 
 				' Create the _MSGF_input.txt file
-				blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, intMSGFInputFileLineCount)
+				blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, intMSGFInputFileLineCount)
 
 				If Not blnSuccess Then
 					Msg = "Error creating MSGF input file"
@@ -203,7 +205,9 @@ Public Class clsMSGFRunner
 
 
 				If Not blnProcessingError Then
-					If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
+					If blnMGFInstrumentData Then
+						blnSuccess = True
+					ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
 						blnSuccess = True
 					ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
 						blnSuccess = ConvertMzMLToMzXML()
@@ -225,7 +229,7 @@ Public Class clsMSGFRunner
 
 
 				If Not blnProcessingError Then
-					blnUseExistingMSGFResults = m_JobParams.GetJobParameter("UseExistingMSGFResults", False)
+					blnUseExistingMSGFResults = m_jobParams.GetJobParameter("UseExistingMSGFResults", False)
 
 					If blnUseExistingMSGFResults Then
 						' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
@@ -270,11 +274,12 @@ Public Class clsMSGFRunner
 					' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
 					' Will also make sure that all of the peptides have numeric SpecProb values
 					' For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
+					' If the Instrument Data was a .MGF file, then we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 
 					' Sleep for 1 second to give the MSGF results file a chance to finalize
 					System.Threading.Thread.Sleep(1000)
 
-					blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath)
+					blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData)
 
 					If Not blnSuccess Then
 						Msg = "MSGF results file post-processing error"
@@ -815,6 +820,7 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Private Function CreateMSGFInputFile(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
 	 ByVal blnDoNotFilterPeptides As Boolean, _
+	 ByVal blnMGFInstrumentData As Boolean, _
 	 ByRef intMSGFInputFileLineCount As Integer) As Boolean
 
 		Dim Msg As String
@@ -862,6 +868,7 @@ Public Class clsMSGFRunner
 			mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
 
 			mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
+			mMSGFInputCreator.MGFInstrumentData = blnMGFInstrumentData
 
 			m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
 
@@ -1230,10 +1237,12 @@ Public Class clsMSGFRunner
 	''' The synopsis-based MSGF results will be extended to include any entries skipped when
 	'''  creating the MSGF input file (to aid in linking up files later)
 	''' </summary>
+	''' <param name="eResultType">PHRP result type</param>
 	''' <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
+	''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
 	''' <returns>True if success; false if one or more errors</returns>
 	''' <remarks></remarks>
-	Protected Function PostProcessMSGFResults(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
+	Protected Function PostProcessMSGFResults(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String, ByVal blnMGFInstrumentData As Boolean) As Boolean
 
 		Dim fiInputFile As System.IO.FileInfo
 		Dim fiMSGFSynFile As System.IO.FileInfo
@@ -1266,7 +1275,7 @@ Public Class clsMSGFRunner
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
 			m_StatusTools.UpdateAndWrite(m_progress)
 
-			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
+			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
 
 		Catch ex As Exception
 			Msg = "Error post-processing the MSGF Results file: " & _
@@ -1326,16 +1335,18 @@ Public Class clsMSGFRunner
 	''' <summary>
 	''' Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
 	''' </summary>
-	''' <param name="eResultType"></param>
-	''' <param name="strMSGFResultsFilePath"></param>
-	''' <param name="strMSGFSynopsisResults"></param>
-	''' <param name="blnFirstHitsDataPresent"></param>
-	''' <param name="blnTooManyPrecursorMassMismatches"></param>
+	''' <param name="eResultType">PHRP result type</param>
+	''' <param name="strMSGFResultsFilePath">MSGF Results file path</param>
+	''' <param name="strMSGFSynopsisResults">MSGF synopsis file path</param>
+	''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
+	''' <param name="blnFirstHitsDataPresent">Will be set to True if First-hits data is present</param>
+	''' <param name="blnTooManyPrecursorMassMismatches">Will be set to True if too many precursor mass mismatches are found</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function PostProcessMSGFResultsWork(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
 	  ByVal strMSGFResultsFilePath As String, _
 	  ByVal strMSGFSynopsisResults As String, _
+	  ByVal blnMGFInstrumentData As Boolean, _
 	  ByRef blnFirstHitsDataPresent As Boolean, _
 	  ByRef blnTooManyPrecursorMassMismatches As Boolean) As Boolean
 
@@ -1349,8 +1360,9 @@ Public Class clsMSGFRunner
 		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
 
 		Dim intLinesRead As Integer
-		Dim intErrorCount As Integer
+		Dim intSpecProbErrorCount As Integer
 		Dim intPrecursorMassErrorCount As Integer
+		Dim intMGFLookupErrorCount As Integer
 
 		Dim strOriginalPeptide As String
 		Dim strScan As String
@@ -1376,10 +1388,10 @@ Public Class clsMSGFRunner
 		Dim blnSkipLine As Boolean
 		Dim blnHeaderLineParsed As Boolean
 
-		'''''''''''''''''''''''''''''
+		'''''''''''''''''''''''''''''''''''''''''''''''''''''''
 		' Note: Do not put a Try/Catch block in this function
 		' Allow the calling function to catch any errors
-		'''''''''''''''''''''''''''''
+		'''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 		' Initialize the column mapping
 		' Using a case-insensitive comparer
@@ -1410,8 +1422,9 @@ Public Class clsMSGFRunner
 				blnFirstHitsDataPresent = False
 
 				intLinesRead = 0
-				intErrorCount = 0
+				intSpecProbErrorCount = 0
 				intPrecursorMassErrorCount = 0
+				intMGFLookupErrorCount = 0
 
 				Do While srMSGFResults.Peek >= 0
 					strLineIn = srMSGFResults.ReadLine
@@ -1443,6 +1456,23 @@ Public Class clsMSGFRunner
 							strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
 							strNotes = String.Empty
 
+							If blnMGFInstrumentData Then
+								' Update the scan number
+								Dim intMGFScanIndex As Integer
+								Dim intActualScanNumber As Integer = 0
+								If Integer.TryParse(strScan, intMGFScanIndex) Then
+									intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex)
+								End If
+
+								If intActualScanNumber = 0 Then
+									intMGFLookupErrorCount += 1
+
+									' Log the first 5 instances to the log file as warnings
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to determine the scan number for MGF spectrum index " & strScan & " on line  " & intLinesRead & " in the result file")
+								End If
+								strScan = intActualScanNumber.ToString()
+							End If
+
 							If Double.TryParse(strSpecProb, dblSpecProb) Then
 								If strOriginalPeptide <> strPeptide Then
 									strNotes = String.Copy(strPeptide)
@@ -1451,11 +1481,10 @@ Public Class clsMSGFRunner
 								' Update strSpecProb to reduce the number of significant figures
 								strSpecProb = dblSpecProb.ToString("0.000000E+00")
 							Else
-
 								' The specProb column does not contain a number
-								intErrorCount += 1
+								intSpecProbErrorCount += 1
 
-								If intErrorCount <= MAX_ERRORS_TO_LOG Then
+								If intSpecProbErrorCount <= MAX_ERRORS_TO_LOG Then
 									' Log the first 5 instances to the log file as warnings
 
 									If strOriginalPeptide <> strPeptide Then
@@ -1539,8 +1568,12 @@ Public Class clsMSGFRunner
 
 		End Using
 
-		If intErrorCount > 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb was not numeric for " & intErrorCount & " entries in the MSGF result file")
+		If intSpecProbErrorCount > 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb was not numeric for " & intSpecProbErrorCount & " entries in the MSGF result file")
+		End If
+
+		If intMGFLookupErrorCount > 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount & " entries in the MSGF result file")
 		End If
 
 		' Check whether more than 10% of the results have a precursor mass error
@@ -1812,7 +1845,7 @@ Public Class clsMSGFRunner
 		Dim blnUseSegments As Boolean = False
 		Dim strSegmentUsageMessage As String = String.Empty
 
-		intMSGFEntriesPerSegment = m_JobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
+		intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFInputFileLineCount = " & intMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " & intMSGFEntriesPerSegment)
 		End If
@@ -1936,7 +1969,7 @@ Public Class clsMSGFRunner
 		' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
 		' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
 		' (job 611216 succeeded with a value of 5000)
-		intJavaMemorySize = m_JobParams.GetJobParameter("MSGFJavaMemorySize", 2000)
+		intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000)
 		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 		If m_DebugLevel >= 1 Then
@@ -1957,7 +1990,7 @@ Public Class clsMSGFRunner
 		End If
 
 		CmdStr &= " -i " & PossiblyQuotePath(strInputFilePath)			 ' Input file
-		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML or .mzML file
+		CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					 ' Folder containing .mzXML, .mzML, or .mgf file
 		CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)		 ' Output file
 
 		' MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD

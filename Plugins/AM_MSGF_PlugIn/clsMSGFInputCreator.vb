@@ -28,6 +28,7 @@ Public MustInherit Class clsMSGFInputCreator
 	Protected mSkippedLineInfo As System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
 
 	Protected mDoNotFilterPeptides As Boolean
+	Protected mMGFInstrumentData As Boolean
 
 	' This dictionary is initially populated with a string constructed using
 	' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
@@ -35,6 +36,15 @@ Public MustInherit Class clsMSGFInputCreator
 	' It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
 	' Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
 	Protected mMSGFCachedResults As System.Collections.Generic.SortedDictionary(Of String, String)
+
+	' This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
+	' It is only used if MGFInstrumentData=True
+	Protected mScanAndChargeToMGFIndex As System.Collections.Generic.SortedDictionary(Of String, Integer)
+
+	' This dictionary is the inverse of mScanAndChargeToMGFIndex
+	' mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
+	' It is only used if MGFInstrumentData=True
+	Protected mMGFIndexToScan As System.Collections.Generic.SortedDictionary(Of Integer, Integer)
 
 	Protected mErrorMessage As String = String.Empty
 
@@ -45,6 +55,7 @@ Public MustInherit Class clsMSGFInputCreator
 	Protected mMSGFResultsFilePath As String = String.Empty
 
 	Protected mMSGFInputFileLineCount As Integer = 0
+
 
 	' Note that this reader is instantiated and disposed of several times
 	' We declare it here as a classwide variable so that we can attach the event handlers
@@ -74,6 +85,15 @@ Public MustInherit Class clsMSGFInputCreator
 		Get
 			Return mErrorMessage
 		End Get
+	End Property
+
+	Public Property MGFInstrumentData() As Boolean
+		Get
+			Return mMGFInstrumentData
+		End Get
+		Set(value As Boolean)
+			mMGFInstrumentData = value
+		End Set
 	End Property
 
 	Public ReadOnly Property MSGFInputFileLineCount() As Integer
@@ -182,6 +202,10 @@ Public MustInherit Class clsMSGFInputCreator
 		End If
 	End Function
 
+	Protected Function ConstructMGFMappingCode(ByVal intScanNumber As Integer, ByVal intCharge As Integer) As String
+		Return intScanNumber.ToString & "_" & intCharge.ToString
+	End Function
+
 	Protected Function ConstructMSGFResultCode(ByVal intScanNumber As Integer, _
 	 ByVal intCharge As Integer, _
 	 ByRef strPeptide As String) As String
@@ -195,6 +219,61 @@ Public MustInherit Class clsMSGFInputCreator
 	 ByRef strPeptide As String) As String
 
 		Return strScanNumber & "_" & strCharge & "_" & strPeptide
+
+	End Function
+
+	Protected Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
+		Dim objMGFReader As New MsMsDataFileReader.clsMGFReader
+
+		Dim intMsMsDataCount As Integer
+		Dim strMSMSDataList() As String = Nothing
+		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+
+		Dim strScanAndCharge As String
+		Dim intSpectrumIndex As Integer
+
+		Dim blnSpectrumFound As Boolean
+
+		Try
+
+			If Not objMGFReader.OpenFile(strMGFFilePath) Then
+				ReportError("Error opening the .MGF file")
+				Return False
+			End If
+
+			mScanAndChargeToMGFIndex = New System.Collections.Generic.SortedDictionary(Of String, Integer)
+			mMGFIndexToScan = New System.Collections.Generic.SortedDictionary(Of Integer, Integer)
+
+			udtSpectrumHeaderInfo = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+
+			intSpectrumIndex = 0
+			Do
+				' Read the next available spectrum
+				blnSpectrumFound = objMGFReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
+				If blnSpectrumFound Then
+					intSpectrumIndex += 1
+
+					For intChargeIndex As Integer = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+						strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
+						mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
+					Next
+
+					mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart)
+
+				End If
+			Loop While blnSpectrumFound
+			
+		Catch ex As Exception
+			ReportError("Error indexing the MGF file: " & ex.Message)
+			Return False
+		End Try
+
+		If intSpectrumIndex > 0 Then
+			Return True
+		Else
+			ReportError("No spectra were found in the MGF file")
+			Return False
+		End If
 
 	End Function
 
@@ -314,7 +393,7 @@ Public MustInherit Class clsMSGFInputCreator
 	''' <remarks></remarks>
 	Public Function CreateMSGFInputFileUsingPHRPResultFiles() As Boolean
 
-		Dim strMzXMLFileName As String = String.Empty
+		Dim strSpectrumFileName As String = String.Empty
 		Dim blnSuccess As Boolean = False
 
 		Try
@@ -328,9 +407,21 @@ Public MustInherit Class clsMSGFInputCreator
 				Return False
 			End If
 
-			' mzXML filename is dataset plus .mzXML
-			' Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
-			strMzXMLFileName = mDatasetName & ".mzXML"
+			If mMGFInstrumentData Then
+				strSpectrumFileName = mDatasetName & ".mgf"
+
+				' Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
+				blnSuccess = CreateMGFScanToIndexMap(System.IO.Path.Combine(mWorkDir, strSpectrumFileName))
+				If Not blnSuccess Then
+					Return False
+				End If
+
+			Else
+				' mzXML filename is dataset plus .mzXML
+				' Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
+				strSpectrumFileName = mDatasetName & ".mzXML"
+			End If
+
 
 			' Create the MSGF Input file that we will write data to
 			Using swMSGFInputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mMSGFInputFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
@@ -378,7 +469,7 @@ Public MustInherit Class clsMSGFInputCreator
 						Return False
 					End If
 
-					ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strMzXMLFileName, True)
+					ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, True)
 					mPHRPReader.Dispose()
 
 					blnSuccess = True
@@ -395,7 +486,7 @@ Public MustInherit Class clsMSGFInputCreator
 						Return False
 					End If
 
-					ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strMzXMLFileName, False)
+					ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, False)
 					mPHRPReader.Dispose()
 
 					blnSuccess = True
@@ -459,18 +550,35 @@ Public MustInherit Class clsMSGFInputCreator
 	End Sub
 
 	''' <summary>
+	''' Determines the scan number for the given MGF file spectrum index
+	''' </summary>
+	''' <param name="intMGFSpectrumIndex"></param>
+	''' <returns>Scan number if found; 0 if no match</returns>
+	''' <remarks></remarks>
+	Public Function GetScanByMGFSpectrumIndex(ByVal intMGFSpectrumIndex As Integer) As Integer
+		Dim intScanNumber As Integer
+
+		If mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, intScanNumber) Then
+			Return intScanNumber
+		Else
+			Return 0
+		End If
+
+	End Function
+
+	''' <summary>
 	''' Read data from a synopsis file or first hits file
 	''' Write filter-passing synopsis file data to the MSGF input file
 	''' Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
 	''' </summary>
 	''' <param name="objReader"></param>
 	''' <param name="swMSGFInputFile"></param>
-	''' <param name="strMzXMLFileName"></param>
+	''' <param name="strSpectrumFileName"></param>
 	''' <param name="blnParsingSynopsisFile"></param>
 	''' <remarks></remarks>
 	Private Sub ReadAndStorePHRPData(ByRef objReader As PHRPReader.clsPHRPReader, _
 	  ByRef swMSGFInputFile As System.IO.StreamWriter, _
-	  ByVal strMzXMLFileName As String, _
+	  ByVal strSpectrumFileName As String, _
 	  ByVal blnParsingSynopsisFile As Boolean)
 
 		Dim strPeptideResultCode As String
@@ -482,6 +590,10 @@ Public MustInherit Class clsMSGFInputCreator
 		Dim intScanNumberPrevious As Integer = 0
 		Dim intChargePrevious As Integer = 0
 		Dim strPeptidePrevious As String = String.Empty
+
+		Dim strScanAndCharge As String
+		Dim intScanNumberToWrite As Integer
+		Dim intMGFIndexLookupFailureCount As Integer
 
 		Dim blnPassesFilters As Boolean
 
@@ -557,13 +669,29 @@ Public MustInherit Class clsMSGFInputCreator
 
 			If blnSuccess And blnPassesFilters Then
 
+				If mMGFInstrumentData Then
+					strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge)
+					If Not mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, intScanNumberToWrite) Then
+						' Match not found; this is unexpected
+						intScanNumberToWrite = 0
+
+						intMGFIndexLookupFailureCount += 1
+						If intMGFIndexLookupFailureCount <= 10 Then
+							ReportError("Unable to find " & strScanAndCharge & " in mScanAndChargeToMGFIndex for peptide " & objPSM.Peptide)
+						End If
+					End If
+
+				Else
+					intScanNumberToWrite = objPSM.ScanNumber
+				End If
+
 				' The title column holds the original peptide sequence
 				' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
 
 				swMSGFInputFile.WriteLine( _
-				   strMzXMLFileName & ControlChars.Tab & _
+				   strSpectrumFileName & ControlChars.Tab & _
 				   objPSM.Peptide & ControlChars.Tab & _
-				   objPSM.ScanNumber & ControlChars.Tab & _
+				   intScanNumberToWrite & ControlChars.Tab & _
 				   objPSM.PeptideWithNumericMods & ControlChars.Tab & _
 				   objPSM.Charge & ControlChars.Tab & _
 				   objPSM.ProteinFirst & ControlChars.Tab & _
@@ -582,9 +710,11 @@ Public MustInherit Class clsMSGFInputCreator
 
 			End If
 
-
 		Loop
 
+		If intMGFIndexLookupFailureCount > 10 Then
+			ReportError("Was unable to find a match in mScanAndChargeToMGFIndex for " & intMGFIndexLookupFailureCount & " PSM results")
+		End If
 
 	End Sub
 

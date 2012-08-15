@@ -61,6 +61,7 @@ Public Class clsAnalysisResourcesMSGF
 		Dim DatasetName As String
 		Dim RawDataType As String
 		Dim eRawDataType As eRawDataTypeConstants
+		Dim blnMGFInstrumentData As Boolean
 
 		Dim FileToGet As String
 		Dim SynFileSizeBytes As Int64
@@ -92,6 +93,7 @@ Public Class clsAnalysisResourcesMSGF
 		' Make sure the dataset type is valid
 		RawDataType = m_jobParams.GetParam("RawDataType")
 		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 			' We do not need the mzXML file, the parameter file, or various other files if we are running MSGFDB and running MSGF v6432 or later
@@ -116,14 +118,16 @@ Public Class clsAnalysisResourcesMSGF
 			' Not running MSGFDB or running MSFDB but using legacy msgf
 			blnOnlyCopyFHTandSYNfiles = False
 
-			Select Case eRawDataType
-				Case eRawDataTypeConstants.ThermoRawFile, eRawDataTypeConstants.mzML, eRawDataTypeConstants.mzXML
-					' This is a valid data type
-				Case Else
-					m_message = "Dataset type " & RawDataType & " is not supported by MSGF"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & "; must be one of the following: " & RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_MZML_FILES & ", " & RAW_DATA_TYPE_DOT_MZXML_FILES)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Select
+			If Not blnMGFInstrumentData Then
+				Select Case eRawDataType
+					Case eRawDataTypeConstants.ThermoRawFile, eRawDataTypeConstants.mzML, eRawDataTypeConstants.mzXML
+						' This is a valid data type
+					Case Else
+						m_message = "Dataset type " & RawDataType & " is not supported by MSGF"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & "; must be one of the following: " & RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_MZML_FILES & ", " & RAW_DATA_TYPE_DOT_MZXML_FILES)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End Select
+			End If
 
 		End If
 
@@ -266,7 +270,18 @@ Public Class clsAnalysisResourcesMSGF
 			End If
 		End If
 
-		If Not blnOnlyCopyFHTandSYNfiles Then
+		If blnMGFInstrumentData Then
+
+			Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
+			If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
+				m_message = "Instrument data not found: " & strFileToFind
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: " & m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+			End If
+
+		ElseIf Not blnOnlyCopyFHTandSYNfiles Then
 
 			' See if a .mzXML file already exists for this dataset
 			blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)

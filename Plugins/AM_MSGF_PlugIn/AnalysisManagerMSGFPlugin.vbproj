@@ -63,6 +63,9 @@
     <Reference Include="AnalysisManagerMsXmlGenPlugIn">
       <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
     </Reference>
+    <Reference Include="MsMsDataFileReader">
+      <HintPath>..\..\AM_Common\MsMsDataFileReader.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
