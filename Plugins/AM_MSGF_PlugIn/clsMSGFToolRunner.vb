@@ -1186,18 +1186,18 @@ Public Class clsMSGFRunner
 
 	''' <summary>
 	''' Compare intPrecursorMassErrorCount to intLinesRead
-	''' If more than 10% of the results have a precursor mass error, then set blnTooManyPrecursorMassMismatches to True
 	''' </summary>
 	''' <param name="intLinesRead"></param>
 	''' <param name="intPrecursorMassErrorCount"></param>
-	''' <param name="blnTooManyPrecursorMassMismatches"></param>
+	''' <returns>True if more than 10% of the results have a precursor mass error</returns>
 	''' <remarks></remarks>
-	Private Sub PostProcessMSGFCheckPrecursorMassErrorCount(ByVal intLinesRead As Integer, ByVal intPrecursorMassErrorCount As Integer, ByRef blnTooManyPrecursorMassMismatches As Boolean)
+	Private Function PostProcessMSGFCheckPrecursorMassErrorCount(ByVal intLinesRead As Integer, ByVal intPrecursorMassErrorCount As Integer) As Boolean
 
 		Const MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT As Integer = 10
 
 		Dim sngPercentDataPrecursorMassError As Single
 		Dim Msg As String
+		Dim blnTooManyPrecursorMassMismatches As Boolean
 
 		Try
 			' If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
@@ -1224,7 +1224,9 @@ Public Class clsMSGFRunner
 			' Ignore errors here
 		End Try
 
-	End Sub
+		Return blnTooManyPrecursorMassMismatches
+
+	End Function
 
 	''' <summary>
 	''' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
@@ -1252,7 +1254,7 @@ Public Class clsMSGFRunner
 
 		Dim blnSuccess As Boolean
 		Dim blnFirstHitsDataPresent As Boolean = False
-		Dim blnTooManyPrecursorMassMismatches As Boolean = False
+		Dim blnTooManyErrors As Boolean = False
 
 		Try
 			If String.IsNullOrEmpty(strMSGFResultsFilePath) Then
@@ -1275,7 +1277,7 @@ Public Class clsMSGFRunner
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
 			m_StatusTools.UpdateAndWrite(m_progress)
 
-			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyPrecursorMassMismatches)
+			blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyErrors)
 
 		Catch ex As Exception
 			Msg = "Error post-processing the MSGF Results file: " & _
@@ -1324,7 +1326,7 @@ Public Class clsMSGFRunner
 			blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile()
 		End If
 
-		If blnTooManyPrecursorMassMismatches Then
+		If blnTooManyErrors Then
 			Return False
 		Else
 			Return blnSuccess
@@ -1340,7 +1342,7 @@ Public Class clsMSGFRunner
 	''' <param name="strMSGFSynopsisResults">MSGF synopsis file path</param>
 	''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
 	''' <param name="blnFirstHitsDataPresent">Will be set to True if First-hits data is present</param>
-	''' <param name="blnTooManyPrecursorMassMismatches">Will be set to True if too many precursor mass mismatches are found</param>
+	''' <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function PostProcessMSGFResultsWork(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, _
@@ -1348,7 +1350,7 @@ Public Class clsMSGFRunner
 	  ByVal strMSGFSynopsisResults As String, _
 	  ByVal blnMGFInstrumentData As Boolean, _
 	  ByRef blnFirstHitsDataPresent As Boolean, _
-	  ByRef blnTooManyPrecursorMassMismatches As Boolean) As Boolean
+	  ByRef blnTooManyErrors As Boolean) As Boolean
 
 		Const MAX_ERRORS_TO_LOG As Integer = 5
 
@@ -1573,11 +1575,16 @@ Public Class clsMSGFRunner
 		End If
 
 		If intMGFLookupErrorCount > 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount & " entries in the MSGF result file")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount & " entries in the MSGF result file")
+			If intLinesRead > 0 AndAlso intMGFLookupErrorCount / CSng(intLinesRead) > 0.1 Then
+				blnTooManyErrors = True
+			End If
 		End If
 
 		' Check whether more than 10% of the results have a precursor mass error
-		PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead, intPrecursorMassErrorCount, blnTooManyPrecursorMassMismatches)
+		If PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead, intPrecursorMassErrorCount) Then
+			blnTooManyErrors = True
+		End If
 
 		' If we get here, return True
 		Return True
@@ -2471,7 +2478,7 @@ Public Class clsMSGFRunner
 	Private Sub mMSGFInputCreator_ErrorEvent(ByVal strErrorMessage As String) Handles mMSGFInputCreator.ErrorEvent
 		mMSGFInputCreatorErrorCount += 1
 		If mMSGFInputCreatorErrorCount < 10 OrElse mMSGFInputCreatorErrorCount Mod 1000 = 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" & mMSGFInputCreatorErrorCount)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" & mMSGFInputCreatorErrorCount & ")")
 		End If
 	End Sub
 

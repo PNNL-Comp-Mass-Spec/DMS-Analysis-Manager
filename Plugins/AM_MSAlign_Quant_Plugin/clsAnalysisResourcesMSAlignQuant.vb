@@ -51,14 +51,31 @@ Public Class clsAnalysisResourcesMSAlignQuant
 		Select Case strRawDataType.ToLower
 			Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_BRUKER_FT_FOLDER
 				If RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
-					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)  'Raw file
+
+					' Confirm that the .Raw or .D folder was actually copied locally
+					If strRawDataType.ToLower() = RAW_DATA_TYPE_DOT_RAW_FILES Then
+						If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, m_DatasetName & DOT_RAW_EXTENSION)) Then
+							m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
+							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+						End If
+						m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)  'Raw file
+
+					ElseIf strRawDataType.ToLower() = RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+						If Not System.IO.Directory.Exists(System.IO.Path.Combine(m_WorkingDir, m_DatasetName & DOT_D_EXTENSION)) Then
+							m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
+							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+						End If
+					End If
+
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 			Case Else
 				m_message = "Dataset type " & strRawDataType & " is not supported"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_DOT_RAW_FILES & " or " & RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_DOT_RAW_FILES & " or " & RAW_DATA_TYPE_BRUKER_FT_FOLDER)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Select
 

@@ -12,7 +12,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 #Region "Module Variables"
 
 	Protected Const TARGETED_QUANT_XML_FILE_NAME As String = "TargetedWorkflowParams.xml"
-	Protected Const TARGETED_WORKFLOWS_CONSOLE_OUTPUT As String = "TargetedQuant_ConsoleOutput.txt"
+	Protected Const TARGETED_WORKFLOWS_CONSOLE_OUTPUT As String = "TargetedWorkflow_ConsoleOutput.txt"
 	Protected Const PROGRESS_PCT_CREATING_PARAMETERS As Integer = 5
 
 	Protected Const PROGRESS_TARGETED_WORKFLOWS_STARTING As Integer = 10
@@ -161,7 +161,12 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			If Not blnSuccess Then
 				Dim Msg As String
 				Msg = "Error running TargetedWorkflowsConsole"
-				m_message = clsGlobal.AppendToComment(m_message, Msg)
+
+				If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+					m_message = clsGlobal.AppendToComment(m_message, Msg & "; " & mConsoleOutputErrorMsg)
+				Else
+					m_message = clsGlobal.AppendToComment(m_message, Msg)
+				End If
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
@@ -393,7 +398,11 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
 			Dim srInFile As System.IO.StreamReader
 			Dim strLineIn As String
+			Dim strLineInLCase As String
+
 			Dim intLinesRead As Integer
+			Dim intCharIndex As Integer
+
 			Dim oMatch As System.Text.RegularExpressions.Match
 			Dim dblSubProgressAddon As Double
 
@@ -408,6 +417,8 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				intLinesRead += 1
 
 				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+					strLineInLCase = strLineIn.ToLower()
 
 					' Update progress if the line contains any one of the expected phrases
 					For Each oItem As System.Collections.Generic.KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
@@ -425,6 +436,22 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 								dblSubProgressAddon /= 100
 							End If
 						End If
+					End If
+
+					intCharIndex = strLineInLCase.IndexOf("exception of type")
+					If intCharIndex < 0 Then
+						intCharIndex = strLineInLCase.IndexOf(ControlChars.Tab & "error")
+
+						If intCharIndex > 0 Then
+							intCharIndex += 1
+						ElseIf strLineInLCase.StartsWith("error") Then
+							intCharIndex = 0
+						End If
+					End If
+
+					If intCharIndex >= 0 Then
+						' Error message found; update m_message
+						mConsoleOutputErrorMsg = strLineIn.Substring(intCharIndex)
 					End If
 
 				End If

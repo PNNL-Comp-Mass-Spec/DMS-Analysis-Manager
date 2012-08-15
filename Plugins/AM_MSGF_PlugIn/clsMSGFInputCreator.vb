@@ -253,10 +253,15 @@ Public MustInherit Class clsMSGFInputCreator
 				If blnSpectrumFound Then
 					intSpectrumIndex += 1
 
-					For intChargeIndex As Integer = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
-						strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
+					If udtSpectrumHeaderInfo.ParentIonChargeCount = 0 Then
+						strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0)
 						mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
-					Next
+					Else
+						For intChargeIndex As Integer = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+							strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
+							mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
+						Next
+					End If
 
 					mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart)
 
@@ -672,12 +677,14 @@ Public MustInherit Class clsMSGFInputCreator
 				If mMGFInstrumentData Then
 					strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge)
 					If Not mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, intScanNumberToWrite) Then
-						' Match not found; this is unexpected
-						intScanNumberToWrite = 0
+						' Match not found; try searching for scan and charge 0
+						If Not mScanAndChargeToMGFIndex.TryGetValue(ConstructMGFMappingCode(objPSM.ScanNumber, 0), intScanNumberToWrite) Then
+							intScanNumberToWrite = 0
 
-						intMGFIndexLookupFailureCount += 1
-						If intMGFIndexLookupFailureCount <= 10 Then
-							ReportError("Unable to find " & strScanAndCharge & " in mScanAndChargeToMGFIndex for peptide " & objPSM.Peptide)
+							intMGFIndexLookupFailureCount += 1
+							If intMGFIndexLookupFailureCount <= 10 Then
+								ReportError("Unable to find " & strScanAndCharge & " in mScanAndChargeToMGFIndex for peptide " & objPSM.Peptide)
+							End If
 						End If
 					End If
 
