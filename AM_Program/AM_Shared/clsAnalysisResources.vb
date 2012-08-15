@@ -2622,7 +2622,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim TempDir As String = String.Empty
 		Dim FileFound As Boolean = False
 
-		Dim strParentFolderPath As String = String.Empty
+		Dim strParentFolderPaths As System.Collections.Generic.List(Of String)
 		Dim strDatasetFolderName As String
 		Dim strInputFolderName As String
 
@@ -2660,33 +2660,26 @@ Public MustInherit Class clsAnalysisResources
 				SharedResultFolderNames.Add(strSharedResultFolders)
 			End If
 
-			Dim intIndexEnd As Integer
+			strParentFolderPaths = New System.Collections.Generic.List(Of String)
+			strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
+			strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
+
 			If SearchArchivedDatasetFolder Then
-				intIndexEnd = 2
-			Else
-				intIndexEnd = 1
+				strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
 			End If
 
-			For intParentFolderIndex As Integer = 0 To intIndexEnd
-
-				Select Case intParentFolderIndex
-					Case 0
-						strParentFolderPath = m_jobParams.GetParam("transferFolderPath")	'Xfer folder
-					Case 1
-						strParentFolderPath = m_jobParams.GetParam("DatasetStoragePath")	'Storage server
-					Case 2
-						strParentFolderPath = m_jobParams.GetParam("DatasetArchivePath")	'Archive
-					Case Else
-						' Programming bug
-						strParentFolderPath = String.Empty
-				End Select
+			For Each strParentFolderPath As String In strParentFolderPaths
 
 				If Not String.IsNullOrEmpty(strParentFolderPath) Then
-					FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))	' Parent Folder / Input folder
+					If Not String.IsNullOrEmpty(strInputFolderName) Then
+						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))	' Parent Folder / Dataset Folder / Input folder
+					End If
 
 					For Each strSharedFolderName As String In SharedResultFolderNames
-						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))			' Parent Folder / Shared results folder
+						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))			' Parent Folder / Dataset Folder /  Shared results folder
 					Next
+
+					FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))	' Parent Folder / Dataset Folder
 				End If
 
 			Next
@@ -2743,7 +2736,9 @@ Public MustInherit Class clsAnalysisResources
 		Dim strTargetFolderPath As String
 
 		strTargetFolderPath = System.IO.Path.Combine(strParentFolderPath, strDatasetFolderName)
-		strTargetFolderPath = System.IO.Path.Combine(strTargetFolderPath, strInputFolderName)
+		If Not String.IsNullOrEmpty(strInputFolderName) Then
+			strTargetFolderPath = System.IO.Path.Combine(strTargetFolderPath, strInputFolderName)
+		End If
 
 		Return strTargetFolderPath
 
