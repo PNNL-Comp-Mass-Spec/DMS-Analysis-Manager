@@ -56,8 +56,9 @@ Class clsMessageSender
         End If
         Try
 			Dim connectionFactory As IConnectionFactory = New ActiveMQ.ConnectionFactory(Me.brokerUri)
-            Me.connection = connectionFactory.CreateConnection()
-            Me.connection.Start()
+			Me.connection = connectionFactory.CreateConnection()
+			Me.connection.RequestTimeout = New System.TimeSpan(0, 0, 15)
+			Me.connection.Start()
 
             Me.session = connection.CreateSession()
 
@@ -73,7 +74,7 @@ Class clsMessageSender
             ' but we don't have to do anything specific at this point (except eat the exception)
 
             '+ e.ToString() // temp debug
-            '            Console.WriteLine("=== Error creating connection ===" & Environment.NewLine)
+			Console.WriteLine("=== Error creating Activemq connection ===" & Environment.NewLine & e.Message)
         End Try
     End Sub
 

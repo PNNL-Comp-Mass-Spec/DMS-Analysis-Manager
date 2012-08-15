@@ -66,10 +66,15 @@ Class clsMessageQueueLogger
 	Public Sub Dispose()
 		LogStatusMessage(Nothing)
 		' Signal the worker to exit.
-		worker.Join()
-		' Wait for the consumer's thread to finish.
-		' Release any OS resources.
-		waitHandle.Close()
+		' Wait a maximum of 15 seconds
+		If Not worker.Join(15000) Then
+			' Still no response, so kill the thread
+			worker.Abort()
+		Else
+			' Wait for the consumer's thread to finish.
+			' Release any OS resources.
+			waitHandle.Close()
+		End If
 	End Sub
 
 End Class
