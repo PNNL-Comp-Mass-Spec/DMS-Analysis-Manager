@@ -20,13 +20,29 @@ Public Class clsDtaGenResources
 #Region "Methods"
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		'Get input data file
-		If RetrieveSpectra(m_jobParams.GetParam("RawDataType"), m_WorkingDir) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
+		Dim blnMGFInstrumentData As Boolean = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+
+		If blnMGFInstrumentData Then
+			Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
+			If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
+				m_message = "Instrument data not found: " & strFileToFind
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			'Get input data file
+			If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Error retrieving instrument data file"
+				End If
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 #End Region

@@ -98,7 +98,7 @@ Public Class clsDtaGenMSConvert
 
 		strMGFFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mgf")
 
-		Dim strRawDataType As String = m_JobParams.GetParam("RawDataType")
+		Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
 		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 
 		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)

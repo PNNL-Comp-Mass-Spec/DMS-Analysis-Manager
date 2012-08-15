@@ -28,6 +28,7 @@ Public Class clsDtaGenToolRunner
 
 #Region "Module-wide variables"
 	Protected mConcatenateDTAs As Boolean
+	Protected m_StepNum As Integer
 #End Region
 
 #Region "Methods"
@@ -43,7 +44,7 @@ Public Class clsDtaGenToolRunner
 		'do the stuff in the base class
 		If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		'implement master MSMS analysis tool sequence
+		m_StepNum = m_jobParams.GetJobParameter("Step", 0)
 
 		'Create spectra files
 		result = CreateMSMSSpectra()
@@ -55,10 +56,10 @@ Public Class clsDtaGenToolRunner
         'Add the current job data to the summary file
         Try
             If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
             End If
         Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
         End Try
 
         'Get rid of raw data file
@@ -70,7 +71,6 @@ Public Class clsDtaGenToolRunner
         'Add all the extensions of the files to delete after run
 		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") ' Unzipped, concatenated DTA
 		m_jobParams.AddResultFileExtensionToSkip(".dta")	 ' DTA files
-		m_jobParams.AddResultFileExtensionToSkip(".mgf")	 ' MGF file
 
         'Add any files that are an exception to the captured files to delete list
         m_jobParams.AddResultFileToKeep("lcq_dta.txt")
@@ -131,11 +131,18 @@ Public Class clsDtaGenToolRunner
 
 	Protected Function GetDTAGenerator(ByRef SpectraGen As ISpectraFileProcessor) As eDTAGeneratorConstants
 
-		Dim strDTAGenerator As String = m_jobParams.GetParam("DtaGenerator")
-		Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim strDTAGenerator As String = m_jobParams.GetJobParameter("DtaGenerator", "")
+		Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
 		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		Dim blnMGFInstrumentData As Boolean = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+
+		If blnMGFInstrumentData Then
+			mConcatenateDTAs = False
+			SpectraGen = New clsMGFtoDtaGenMainProcess()
+			Return eDTAGeneratorConstants.MGFtoDTA
+		End If
 
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
@@ -188,6 +195,7 @@ Public Class clsDtaGenToolRunner
 
 		End Select
 
+		Return eDTAGeneratorConstants.Unknown
 
 	End Function
 
@@ -218,10 +226,10 @@ Public Class clsDtaGenToolRunner
 		'Add the current job data to the summary file
 		Try
 			If Not UpdateSummaryFile() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
 			End If
 		Catch Err As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
 		End Try
 
 		'Delete .dta files
@@ -233,7 +241,7 @@ Public Class clsDtaGenToolRunner
 				DeleteFileWithRetries(TmpFile)
 			Next
 		Catch Err As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting .dta files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & "; " & Err.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting .dta files, job " & m_JobNum & ", step " & m_StepNum & "; " & Err.Message)
 			m_message = clsGlobal.AppendToComment(m_message, "Error deleting .dta files")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
@@ -246,7 +254,7 @@ Public Class clsDtaGenToolRunner
 					DeleteFileWithRetries(TmpFile)
 				End If
 			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error: " & ex.Message & " deleting concatenated dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & "; " & ex.Message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error: " & ex.Message & " deleting concatenated dta file, job " & m_JobNum & ", step " & m_StepNum & "; " & ex.Message)
 				m_message = clsGlobal.AppendToComment(m_message, "Error packaging results")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
@@ -285,7 +293,7 @@ Public Class clsDtaGenToolRunner
 
 		'Make individual spectra files from input raw data file, using plugin
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
 
 		Dim SpectraGen As ISpectraFileProcessor = Nothing
 		Dim eDTAGenerator As eDTAGeneratorConstants
@@ -319,6 +327,8 @@ Public Class clsDtaGenToolRunner
 		Dim blnSuccess As Boolean
 		If eDTAGenerator = eDTAGeneratorConstants.DeconMSn Then
 			blnSuccess = StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
+		ElseIf eDTAGenerator = eDTAGeneratorConstants.MGFtoDTA Then
+			blnSuccess = StoreToolVersionInfoDLL(SpectraGen.DtaToolNameLoc)
 		Else
 			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
 		End If
@@ -397,12 +407,12 @@ Public Class clsDtaGenToolRunner
 
 		' Packages dta files into concatenated text files
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
 
 		Dim ConcatTools As New clsConcatToolWrapper(m_WorkDir)
 
 		If Not ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error packaging results: " & ConcatTools.ErrMsg & ", job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error packaging results: " & ConcatTools.ErrMsg & ", job " & m_JobNum & ", step " & m_StepNum)
 			m_message = clsGlobal.AppendToComment(m_message, "Error packaging results: " & ConcatTools.ErrMsg)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
@@ -432,6 +442,7 @@ Public Class clsDtaGenToolRunner
 			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_RAW_EXTENSION))
 			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZXML_EXTENSION))
 			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZML_EXTENSION))
+			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MGF_EXTENSION))
 
 			For Each MyFile In lstFilesToDelete
 				If m_DebugLevel >= 2 Then
@@ -441,7 +452,7 @@ Public Class clsDtaGenToolRunner
 			Next
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		Catch Err As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting .raw file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & Err.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting .raw file, job " & m_JobNum & ", step " & m_StepNum & Err.Message)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
@@ -514,6 +525,30 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
+	Protected Function StoreToolVersionInfoDLL(ByVal strDtaGeneratorDLLPath As String) As Boolean
+
+		Dim strToolVersionInfo As String = String.Empty
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
+
+		' Lookup the version of the DLL
+		MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDtaGeneratorDLLPath)
+
+		' Store paths to key files in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		ioToolFiles.Add(New System.IO.FileInfo(strDtaGeneratorDLLPath))
+
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
+
+	End Function
+
 	''' <summary>
 	''' Zips concatenated DTA file to reduce size
 	''' </summary>
@@ -525,7 +560,7 @@ Public Class clsDtaGenToolRunner
 		Dim DtaFileName As String = m_Dataset & "_dta.txt"
 		Dim DtaFilePath As String = System.IO.Path.Combine(m_WorkDir, DtaFileName)
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
 
 		'Verify file exists
 		If Not System.IO.File.Exists(DtaFilePath) Then
@@ -536,12 +571,12 @@ Public Class clsDtaGenToolRunner
 		'Zip the file
 		Try
 			If Not MyBase.ZipFile(DtaFilePath, False) Then
-				Dim Msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
+				Dim Msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		Catch ex As Exception
-			Dim Msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message
+			Dim Msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try

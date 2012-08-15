@@ -18,6 +18,10 @@ Public Class clsDtaGenThermoRaw
 	'This class creates DTA files using either DeconMSn.exe or ExtractMSn.exe
 	'*********************************************************************************************************
 
+#Region "Constants"
+	Protected Const USE_THREADING As Boolean = True
+#End Region
+
 #Region "Module variables"
 	Protected m_NumScans As Integer
 	Protected WithEvents m_RunProgTool As clsRunDosProgram
@@ -82,9 +86,15 @@ Public Class clsDtaGenThermoRaw
 
 		'Make the DTA files (the process runs in a separate thread)
 		Try
-			m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
-			m_thThread.Start()
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+			If USE_THREADING Then
+				m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
+				m_thThread.Start()
+				m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+			Else
+				MakeDTAFilesThreaded()
+				m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+			End If
+
 		Catch ex As Exception
 			m_ErrMsg = "Error calling MakeDTAFilesThreaded"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ": " & ex.Message, ex)
@@ -100,14 +110,14 @@ Public Class clsDtaGenThermoRaw
 		Dim strDTAGenProgram As String
 		Dim strDTAToolPath As String
 
-		strDTAGenProgram = m_JobParams.GetParam("DtaGenerator")
+		strDTAGenProgram = m_JobParams.GetJobParameter("DtaGenerator", "")
 
 		If strDTAGenProgram.ToLower() = EXTRACT_MSN_FILENAME.ToLower() Then
 			' Extract_MSn uses the lcqdtaloc folder path
-			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("lcqdtaloc"), strDTAGenProgram)
+			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("lcqdtaloc", ""), strDTAGenProgram)
 		Else
 			' DeconMSn uses the XcalDLLPath
-			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("XcalDLLPath"), strDTAGenProgram)
+			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("XcalDLLPath", ""), strDTAGenProgram)
 		End If
 
 		Return strDTAToolPath
@@ -144,8 +154,16 @@ Public Class clsDtaGenThermoRaw
 			m_ErrMsg = String.Empty
 			Return True
 		Else
-			m_ErrMsg = "Data file " & DSName & strExtension & " not found in working directory"
-			Return False
+			strExtension = clsAnalysisResources.DOT_MGF_EXTENSION
+			m_JobParams.AddResultFileToSkip(DSName & strExtension)
+
+			If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
+				m_ErrMsg = String.Empty
+				Return True
+			Else
+				m_ErrMsg = "Data file " & DSName & strExtension & " not found in working directory"
+				Return False
+			End If
 		End If
 
 	End Function
@@ -504,8 +522,8 @@ Public Class clsDtaGenThermoRaw
 
 		If reDTAFile Is Nothing Then
 			reDTAFile = New System.Text.RegularExpressions.Regex("(\d+)\.\d+\.\d+\.dta$", _
-																   System.Text.RegularExpressions.RegexOptions.Compiled Or _
-																   System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+							System.Text.RegularExpressions.RegexOptions.Compiled Or _
+							System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 		End If
 
 		Try

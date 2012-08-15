@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+August 15, 2012
+	- Now aborting the message queue thread if stuck for over 15 seconds
+	- Updated DTASpectraFileGen program to use MascotGenericFileToDTA.dll for conversion of MGF files to DTA.txt files
+
 July 27, 2012
 	- Updated to support the MgrSettingsGroupName parameter
 		- Defines a ghost analysis manager that tracks settings shared by a group of analysis managers

@@ -4,6 +4,9 @@
 ' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 ' Started November 2005
 
+'
+'           TODO: UPDATE THIS TO USE MascotGenericFileToDTA.DLL
+'   
 
 Option Strict On
 
@@ -12,33 +15,39 @@ Imports AnalysisManagerBase
 Public Class clsMGFtoDtaGenMainProcess
 	Inherits clsDtaGen
 
+#Region "Constants"
+	Protected Const USE_THREADING As Boolean = False
+#End Region
+
 #Region "Structures"
 
-	Private Structure udtSpectrumProcessingOptions
-		Public GuesstimateChargeForAllSpectra As Boolean					 ' When True, then tries to guesstimate a charge for all spectra, even those that already have a charge defined
-		Public ForceChargeAddnForPredefined2PlusOr3Plus As Boolean		 ' When True, then always adds 2+ and 3+ charge when an existing 2+ or 3+ charge was already defined
+	'Private Structure udtSpectrumProcessingOptions
+	'	Public GuesstimateChargeForAllSpectra As Boolean					 ' When True, then tries to guesstimate a charge for all spectra, even those that already have a charge defined
+	'	Public ForceChargeAddnForPredefined2PlusOr3Plus As Boolean		 ' When True, then always adds 2+ and 3+ charge when an existing 2+ or 3+ charge was already defined
 
-		Public ThresholdIonPctForSingleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is less than this number, then the charge is definitely 1+
-		Public ThresholdIonPctForDoubleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is greater than this number, then the charge is definitely 2+ or higher
+	'	Public ThresholdIonPctForSingleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is less than this number, then the charge is definitely 1+
+	'	Public ThresholdIonPctForDoubleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is greater than this number, then the charge is definitely 2+ or higher
 
-		Public MaximumIonsPerSpectrum As Integer					' Set to 0 to use all data; if greater than 0, then data will be sorted on decreasing intensity and the top x ions will be retained
-	End Structure
+	'	Public MaximumIonsPerSpectrum As Integer					' Set to 0 to use all data; if greater than 0, then data will be sorted on decreasing intensity and the top x ions will be retained
+	'End Structure
 
 	' The following is used to keep track of options the user might set via the interface functions
 	' If a parameter file is defined in this class, then it will be passed to objFilterSpectra
 	' If the parameter file has a section named "filteroptions" then any options defined there will override this values
-	Private Structure udtFilterSpectraOptionsType
-		Public FilterSpectra As Boolean
-		Public MinimumParentIonMZ As Single
-		Public MinimumStandardMassSpacingIonPairs As Integer
-		Public IonPairMassToleranceHalfWidthDa As Single
-		Public NoiseLevelIntensityThreshold As Single
-		Public DataPointCountToConsider As Integer
-	End Structure
+	'Private Structure udtFilterSpectraOptionsType
+	'	Public FilterSpectra As Boolean
+	'	Public MinimumParentIonMZ As Single
+	'	Public MinimumStandardMassSpacingIonPairs As Integer
+	'	Public IonPairMassToleranceHalfWidthDa As Single
+	'	Public NoiseLevelIntensityThreshold As Single
+	'	Public DataPointCountToConsider As Integer
+	'End Structure
 #End Region
 
 #Region "Module variables"
 	Private m_thThread As System.Threading.Thread
+
+	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
 	' DTA generation options
 	Private mScanStart As Integer
@@ -47,15 +56,15 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private mMWUpper As Single
 
 	' Spectrum processing and filtering options
-	Private mSpectrumProcessingOptions As udtSpectrumProcessingOptions
-	Private mFilterSpectraOptions As udtFilterSpectraOptionsType
+	'Private mSpectrumProcessingOptions As udtSpectrumProcessingOptions
+	'Private mFilterSpectraOptions As udtFilterSpectraOptionsType
 
 #End Region
 
     Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) 
         MyBase.Setup(InitParams)
 
-		m_DtaToolNameLoc = System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "MsMsSpectrumFilter.dll")
+		m_DtaToolNameLoc = System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
 
     End Sub
 
@@ -71,14 +80,20 @@ Public Class clsMGFtoDtaGenMainProcess
         End If
 
         'Make the DTA files (the process runs in a separate thread)
-        Try
-            m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
-            m_thThread.Start()
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-        Catch ex As Exception
-            m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-        End Try
+		Try
+			If USE_THREADING Then
+				m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
+				m_thThread.Start()
+				m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+			Else
+				MakeDTAFilesThreaded()
+				m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+			End If
+			
+		Catch ex As Exception
+			m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
+			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+		End Try
 
         Return m_Status
 
@@ -143,45 +158,12 @@ Public Class clsMGFtoDtaGenMainProcess
 
 		Dim MGFFile As String
 
-		Dim CreateDefaultCharges As Boolean = True
-		Dim ExplicitChargeStart As Short				  ' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
-		Dim ExplicitChargeEnd As Short				  ' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
-
-		'DAC debugging
-		System.Threading.Thread.CurrentThread.Name = "MakeDTAFilesFromMGF"
-
 		'Get the parameters from the various setup files
         MGFFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mgf")
-		mScanStart = CInt(m_JobParams.GetParam("ScanStart"))
-		mScanStop = CInt(m_JobParams.GetParam("ScanStop"))
-		mMWLower = CInt(m_JobParams.GetParam("MWStart"))
-		mMWUpper = CInt(m_JobParams.GetParam("MWStop"))
-
-		CreateDefaultCharges = CBool(m_JobParams.GetParam("CreateDefaultCharges"))
-		ExplicitChargeStart = CShort(m_JobParams.GetParam("ExplicitChargeStart"))
-		ExplicitChargeEnd = CShort(m_JobParams.GetParam("ExplicitChargeEnd"))
-
-		' Spectrum processing options
-		With mSpectrumProcessingOptions
-			.GuesstimateChargeForAllSpectra = CBool(m_JobParams.GetParam("GuesstimateChargeForAllSpectra"))
-			.ForceChargeAddnForPredefined2PlusOr3Plus = CBool(m_JobParams.GetParam("ForceChargeAddnForPredefined2PlusOr3Plus"))
-			.ThresholdIonPctForSingleCharge = CInt(m_JobParams.GetParam("ThresholdIonPctForSingleCharge"))
-			.ThresholdIonPctForDoubleCharge = CInt(m_JobParams.GetParam("ThresholdIonPctForDoubleCharge"))
-			.MaximumIonsPerSpectrum = CInt(m_JobParams.GetParam("MaximumIonsPerSpectrum"))
-		End With
-
-		' Spectrum filtering options
-		With mFilterSpectraOptions
-			.FilterSpectra = CBool(m_JobParams.GetParam("FilterSpectra"))
-			.MinimumParentIonMZ = CInt(m_JobParams.GetParam("MinimumParentIonMZ"))
-			.MinimumStandardMassSpacingIonPairs = CInt(m_JobParams.GetParam("MinimumStandardMassSpacingIonPairs"))
-			.IonPairMassToleranceHalfWidthDa = CSng(m_JobParams.GetParam("IonPairMassToleranceHalfWidthDa"))
-			.NoiseLevelIntensityThreshold = CInt(m_JobParams.GetParam("NoiseLevelIntensityThreshold"))
-			.DataPointCountToConsider = CShort(m_JobParams.GetParam("DataPointCountToConsider"))
-		End With
-
-		'DAC debugging
-		Debug.WriteLine("clsMGFtoDtaGenMainProcess.MakeDTAFilesFromMGF, preparing DTA creation loop, thread " & System.Threading.Thread.CurrentThread.Name)
+		mScanStart = m_JobParams.GetJobParameter("ScanStart", 0)
+		mScanStop = m_JobParams.GetJobParameter("ScanStop", 0)
+		mMWLower = m_JobParams.GetJobParameter("MWStart", 0)
+		mMWUpper = m_JobParams.GetJobParameter("MWStop", 0)
 
 		'Run the MGF to DTA converter
 		If Not ConvertMGFtoDTA(MGFFile, m_WorkDir) Then
@@ -191,18 +173,9 @@ Public Class clsMGFtoDtaGenMainProcess
 			Return False
 		End If
 
-		' Possibly generate the explicit charges
-		' If CreateDefaultCharges = False, then the .Dta files that do not qualify for the explicit charges will be deleted
-		If Not m_AbortRequested Then
-			GenerateMissingChargeStateDTAFiles(m_WorkDir, "*.dta", ExplicitChargeStart, ExplicitChargeEnd, CreateDefaultCharges)
-		End If
-
 		If m_AbortRequested Then
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
 		End If
-
-		'DAC debugging
-		Debug.WriteLine("clsMGFtoDtaGenMainProcess.MakeDTAFilesFromMGF, DTA creation loop complete, thread " & System.Threading.Thread.CurrentThread.Name)
 
 		'We got this far, everything must have worked
 		If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Or m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
@@ -213,488 +186,102 @@ Public Class clsMGFtoDtaGenMainProcess
 
 	End Function
 
+	''' <summary>
+	''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+	''' This functon is called by MakeDTAFilesThreaded
+	''' </summary>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
 	Private Function ConvertMGFtoDTA(ByVal strInputFilePathFull As String, ByVal strOutputFolderPath As String) As Boolean
-		' strInputFilePathFull should contain the path to a .MGF file
-		' This function will create individual .DTA files in strOutputFolderPath for each spectrum in strInputFilePathFull
 
-		Dim objMGFReader As New MsMsDataFileReader.clsMGFReader
-		Dim objSpectrumFilter As MSMSSpectrumFilter.clsMsMsSpectrumFilter = Nothing
-
-		Dim srOutFile As System.IO.StreamWriter = Nothing
-
-		Dim intMsMsDataCount As Integer
-		Dim strMSMSDataList() As String = Nothing
-		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
-
-		Dim strFileNameBase As String
-
-		Dim blnSpectrumFound As Boolean
 		Dim blnSuccess As Boolean
 
-		Try
-			If mFilterSpectraOptions.FilterSpectra Then
-				objSpectrumFilter = New MSMSSpectrumFilter.clsMsMsSpectrumFilter
-				With objSpectrumFilter
-					.ShowMessages = False
-
-					.DiscardValidSpectra = False
-					.OverwriteExistingFiles = True
-
-					' Always use SpectrumFilterMode 1
-					.SpectrumFilterMode = MSMSSpectrumFilter.clsMsMsSpectrumFilter.eSpectrumFilterMode.mode1
-
-					.SetFilterMode1Option(MSMSSpectrumFilter.clsMsMsSpectrumFilter.FilterMode1Options.MinimumStandardMassSpacingIonPairs, mFilterSpectraOptions.MinimumStandardMassSpacingIonPairs)
-					.SetFilterMode1Option(MSMSSpectrumFilter.clsMsMsSpectrumFilter.FilterMode1Options.IonPairMassToleranceHalfWidthDa, mFilterSpectraOptions.IonPairMassToleranceHalfWidthDa)
-					.SetFilterMode1Option(MSMSSpectrumFilter.clsMsMsSpectrumFilter.FilterMode1Options.NoiseLevelIntensityThreshold, mFilterSpectraOptions.NoiseLevelIntensityThreshold)
-					.SetFilterMode1Option(MSMSSpectrumFilter.clsMsMsSpectrumFilter.FilterMode1Options.DataPointCountToConsider, mFilterSpectraOptions.DataPointCountToConsider)
-
-					.SettingsLoadedViaCode = True
-				End With
-			End If
-
-			' Define the charge guesstimation thresholds
-			With objMGFReader
-				' Leave .CommentLineStartChar defined as the default: .CommentLineStartChar = "#"c
-				.ThresholdIonPctForSingleCharge = mSpectrumProcessingOptions.ThresholdIonPctForSingleCharge
-				.ThresholdIonPctForDoubleCharge = mSpectrumProcessingOptions.ThresholdIonPctForDoubleCharge
-			End With
-
-			' Define strFileNameBase
-			strFileNameBase = System.IO.Path.GetFileNameWithoutExtension(strInputFilePathFull)
-
-			'TODO: Fix this later
-			'If Not m_DSName Is Nothing AndAlso m_DSName.Length > 0 Then
-			'	strFileNameBase = String.Copy(m_DSName)
-			'End If
-
-			' Open the input file and parse it
-			If Not objMGFReader.OpenFile(strInputFilePathFull) Then
-				blnSuccess = False
-				Exit Try
-			End If
-
-			Do
-				' Read the next available spectrum
-				blnSpectrumFound = objMGFReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
-				If blnSpectrumFound Then
-					If Not CreateDTAEntry(objMGFReader, objSpectrumFilter, strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo, strFileNameBase, strOutputFolderPath, srOutFile) Then
-						' Error creating DTA entry; CreateDTAEntry should have already updated m_ErrMsg
-						' Abort processing
-						blnSuccess = False
-						Exit Do
-					End If
-				End If
-			Loop While blnSpectrumFound
-
-			blnSuccess = True
-			If Not srOutFile Is Nothing Then
-				srOutFile.Close()
-			End If
-		Catch ex As Exception
-			m_ErrMsg = "Error reading input file: " & strInputFilePathFull & "; " & ex.Message
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	Private Function CreateDTAEntry(ByRef objMGFReader As MsMsDataFileReader.clsMGFReader, ByRef objSpectrumFilter As MSMSSpectrumFilter.clsMsMsSpectrumFilter, ByVal strMSMSData() As String, ByRef intMsMsDataCount As Integer, ByVal udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, ByVal strFileNameBase As String, ByVal strOutputFolderPath As String, ByRef srOutFile As System.IO.StreamWriter) As Boolean
-		' Returns True if success, False if an error
-
-		Dim intDataCount As Integer
-		Dim sngIonMasses() As Single = Nothing
-		Dim sngIonIntensities() As Single = Nothing
-
-		Dim intChargeIndex As Integer
-		Dim intDataIndex As Integer
-
-		Dim sngParentIonMH As Single
-
-		Dim strSplitLine() As String
-
-		Dim sngValueData() As Single
-		Dim strMsMsDataNew() As String
-
-		Dim udtSpectrumQualityScore As MSMSSpectrumFilter.clsMsMsSpectrumFilter.udtSpectrumQualityScoreType
-		Dim intCharge As Integer
-
-		Dim strFileName As String
-		Dim strOutputFilePath As String = ""
-
-		Dim blnCreateEntry As Boolean
-		Dim blnSuccess As Boolean
-
-		Try
-			' Set these to True for now
-			blnCreateEntry = True
-			blnSuccess = True
-
-			' Make sure scan is between mScanStart and mScanStop
-            If mScanStop > 0 AndAlso mScanStop >= mScanStart Then
-                If udtSpectrumHeaderInfo.ScanNumberStart < mScanStart Or udtSpectrumHeaderInfo.ScanNumberStart > mScanStop Then
-                    If udtSpectrumHeaderInfo.ScanNumberEnd < mScanStart Or udtSpectrumHeaderInfo.ScanNumberEnd > mScanStop Then
-                        blnCreateEntry = False
-                    End If
-                End If
-            End If
-
-			If blnCreateEntry Then
-				' Populate sngIonMasses() and sngIonIntensities()
-				intDataCount = objMGFReader.ParseMsMsDataList(strMSMSData, intMsMsDataCount, sngIonMasses, sngIonIntensities)
-
-				If mFilterSpectraOptions.FilterSpectra Then
-					If udtSpectrumHeaderInfo.ParentIonMZ < mFilterSpectraOptions.MinimumParentIonMZ Then
-						' Do not create an entry for this scan since parent ion m/z is too low
-						blnCreateEntry = False
-					Else
-						With udtSpectrumHeaderInfo
-							If .ParentIonChargeCount = 0 OrElse .ParentIonCharges Is Nothing Then
-								intCharge = 0
-							Else
-								intCharge = .ParentIonCharges(0)
-							End If
-
-							udtSpectrumQualityScore = objSpectrumFilter.EvaluateMsMsSpectrum( _
-									 sngIonMasses, _
-									 sngIonIntensities, _
-									 intCharge, _
-									 .ParentIonMH, _
-									 .ParentIonMZ, 0)
-						End With
-
-						If udtSpectrumQualityScore.SpectrumQualityScore <= 0 Then
-							' Do not create an entry for this scan since spectrum doesn't pass filter
-							blnCreateEntry = False
-						End If
-					End If
-				End If
-
-
-				If blnCreateEntry Then
-					If mSpectrumProcessingOptions.GuesstimateChargeForAllSpectra OrElse _
-					 udtSpectrumHeaderInfo.ParentIonChargeCount = 0 OrElse _
-					 udtSpectrumHeaderInfo.ParentIonCharges(0) = 0 Then
-						' Guesstimating charge for all spectra or unknown charge
-						' Determine the appropriate charge based on the parent ion m/z and the ions that are present
-						objMGFReader.GuesstimateCharge(intDataCount, sngIonMasses, sngIonIntensities, udtSpectrumHeaderInfo, _
-										mSpectrumProcessingOptions.GuesstimateChargeForAllSpectra, _
-										mSpectrumProcessingOptions.ForceChargeAddnForPredefined2PlusOr3Plus)
-					End If
-
-					With udtSpectrumHeaderInfo
-						If .ParentIonChargeCount = 0 OrElse .ParentIonCharges(0) = 0 Then
-							' This code should never be reached
-							.ParentIonChargeCount = 1
-							.ParentIonCharges(0) = 1
-						End If
-					End With
-
-					For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
-
-						Try
-							' The filename consists of the base name, then a . then the StartScanNumber then a . then EndScanNumber then . then Charge then .dta
-							' The scan numbers are zero-padded to 4 digits
-							With udtSpectrumHeaderInfo
-								strFileName = strFileNameBase & "." & .ScanNumberStart.ToString.PadLeft(4, "0"c) & "." & .ScanNumberEnd.ToString.PadLeft(4, "0"c) & "." & .ParentIonCharges(intChargeIndex).ToString & ".dta"
-							End With
-
-							' Create a new .Dta file for this scan
-							strOutputFilePath = System.IO.Path.Combine(strOutputFolderPath, strFileName)
-							srOutFile = New System.IO.StreamWriter(strOutputFilePath)
-						Catch ex As Exception
-							If strOutputFilePath Is Nothing Then strOutputFilePath = strFileNameBase
-							m_ErrMsg = "Error creating DTA file: " & strOutputFilePath & "; " & ex.Message
-							blnSuccess = False
-							Exit For
-						End Try
-
-						With udtSpectrumHeaderInfo
-							' MGF files display the parent ion m/z value
-							' DTA files display the MH+ value of the parent ion, regardless of its charge
-							' Thus, convert to MH if necessary
-							sngParentIonMH = CSng(objMGFReader.ConvoluteMass(.ParentIonMZ, .ParentIonCharges(intChargeIndex), 1))
-							srOutFile.WriteLine(Math.Round(sngParentIonMH, 3).ToString & " " & .ParentIonCharges(intChargeIndex))
-						End With
-
-						' Make sure strMSMSData does not contain any tabs
-						' Also, make sure it just contains two numbers
-						For intDataIndex = 0 To intMsMsDataCount - 1
-							strMSMSData(intDataIndex) = strMSMSData(intDataIndex).Replace(ControlChars.Tab, " ").Trim
-
-							' Make sure strLineOut contains just two numbers
-							strSplitLine = strMSMSData(intDataIndex).Split(" "c)
-							If strSplitLine.Length > 2 Then
-								strMSMSData(intDataIndex) = strSplitLine(0) & " " & strSplitLine(1)
-							End If
-						Next intDataIndex
-
-						If mSpectrumProcessingOptions.MaximumIonsPerSpectrum > 0 AndAlso _
-						 intMsMsDataCount > mSpectrumProcessingOptions.MaximumIonsPerSpectrum Then
-							' Sort strMsMsData() on descending intensity and only keep the top mMaximumIonsPerSpectrum ions
-							' First extract out the intensity values from strMsMsData()
-							ReDim sngValueData(intMsMsDataCount - 1)
-							For intDataIndex = 0 To intMsMsDataCount - 1
-								strSplitLine = strMSMSData(intDataIndex).Trim.Split(" "c)
-
-								If strSplitLine.Length >= 2 Then
-									Try
-										sngValueData(intDataIndex) = Single.Parse(strSplitLine(1))
-									Catch ex As Exception
-										sngValueData(intDataIndex) = 0
-									End Try
-								Else
-									sngValueData(intDataIndex) = 0
-								End If
-							Next intDataIndex
-
-							' Sort sngValueData and sort strMsMsData in parallel
-							Array.Sort(sngValueData, strMSMSData)
-
-							' Copy the last mMaximumIonsPerSpectrum data points from strMsMsData into strMsMsDataNew
-							ReDim strMsMsDataNew(mSpectrumProcessingOptions.MaximumIonsPerSpectrum - 1)
-							Array.Copy(strMSMSData, intMsMsDataCount - mSpectrumProcessingOptions.MaximumIonsPerSpectrum, strMsMsDataNew, 0, mSpectrumProcessingOptions.MaximumIonsPerSpectrum)
-
-							' Now we need to re-sort strMsMsDataNew() on mass
-							' However, we need to use a numeric sort, so we'll recycle sngValueData and store the masses in it
-							ReDim sngValueData(mSpectrumProcessingOptions.MaximumIonsPerSpectrum - 1)
-							For intDataIndex = 0 To mSpectrumProcessingOptions.MaximumIonsPerSpectrum - 1
-								strSplitLine = strMsMsDataNew(intDataIndex).Trim.Split(" "c)
-
-								If strSplitLine.Length >= 1 Then
-									Try
-										sngValueData(intDataIndex) = Single.Parse(strSplitLine(0))
-									Catch ex As Exception
-										sngValueData(intDataIndex) = 0
-									End Try
-								Else
-									sngValueData(intDataIndex) = 0
-								End If
-							Next intDataIndex
-
-							' Sort sngValueData and sort strMsMsDataNew in parallel
-							Array.Sort(sngValueData, strMsMsDataNew)
-
-							' Now write out the first .MaximumIonsPerSpectrum data points in strMsMsDataNew()
-							For intDataIndex = 0 To mSpectrumProcessingOptions.MaximumIonsPerSpectrum - 1
-								srOutFile.WriteLine(strMsMsDataNew(intDataIndex))
-							Next intDataIndex
-
-						Else
-							' Write out all of the data
-							For intDataIndex = 0 To intMsMsDataCount - 1
-								srOutFile.WriteLine(strMSMSData(intDataIndex))
-							Next intDataIndex
-						End If
-
-						' Add a blank line and close the file
-						srOutFile.WriteLine()
-						srOutFile.Close()
-
-					Next intChargeIndex
-
-				End If
-			End If
-
-		Catch ex As Exception
-			m_ErrMsg = "Error in CreateDTAEntry: " & ex.Message
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	Private Function GenerateMissingChargeStateDTAFiles(ByVal strWorkingFolderPath As String, ByVal strFileMatchSpec As String, ByVal ExplicitChargeStart As Short, ByVal ExplicitChargeEnd As Short, ByVal RetainDefaultChargeFiles As Boolean) As Boolean
-		' Looks for DTA files in folder strInputFolderPath
-		' Generates missing charge states as directed by ExplicitChargeStart and ExplicitChargeEnd
-		' Returns True if success; false if an error
-
-		Dim blnSuccess As Boolean = False
-		Dim strDTAFilepath As String
-
-		Dim strFileDeletionMatchSpec As String
-
-		Dim CurrentCharge As Short
-
-		If ExplicitChargeStart = 0 Or ExplicitChargeEnd = 0 Or ExplicitChargeStart > ExplicitChargeEnd Then
-			' Do not create any explict charges; return true
-			Return True
+		If m_DebugLevel > 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
 		End If
 
-		Try
-			If strFileMatchSpec Is Nothing OrElse strFileMatchSpec.Length = 0 Then
-				strFileMatchSpec = "*.dta"
-			End If
+		mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
 
-			' Generate the additional charge state files for each .Dta file in strWorkingFolderPath
-			For Each strDTAFilepath In System.IO.Directory.GetFiles(strWorkingFolderPath, strFileMatchSpec)
-				blnSuccess = GenerateMissingChargeStateOneDTA(strDTAFilepath, ExplicitChargeStart, ExplicitChargeEnd)
+		' Spectrum processing options
+		'With mSpectrumProcessingOptions
+		'	.MaximumIonsPerSpectrum = CInt(m_JobParams.GetParam("MaximumIonsPerSpectrum"))
+		'End With
 
-				If Not blnSuccess Or m_AbortRequested Then
-					Return False
-				End If
-			Next strDTAFilepath
+		'' Spectrum filtering options
+		'With mFilterSpectraOptions
+		'	.FilterSpectra = CBool(m_JobParams.GetParam("FilterSpectra"))
+		'	.MinimumParentIonMZ = CInt(m_JobParams.GetParam("MinimumParentIonMZ"))
+		'	.MinimumStandardMassSpacingIonPairs = CInt(m_JobParams.GetParam("MinimumStandardMassSpacingIonPairs"))
+		'	.IonPairMassToleranceHalfWidthDa = CSng(m_JobParams.GetParam("IonPairMassToleranceHalfWidthDa"))
+		'	.NoiseLevelIntensityThreshold = CInt(m_JobParams.GetParam("NoiseLevelIntensityThreshold"))
+		'	.DataPointCountToConsider = CShort(m_JobParams.GetParam("DataPointCountToConsider"))
+		'End With
 
-		Catch ex As Exception
-			m_ErrMsg = "Error calling GenerateMissingChargeStateOneDTA: " & ex.Message
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			blnSuccess = False
-		End Try
+		With mMGFtoDTA
+			.CreateIndividualDTAFiles = False
+			.MGFFileCommentLineStartChar = .MGFFileCommentLineStartChar
+			.GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", False)
+			.ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", False)
 
+			' Note that these settings are values between 0 and 100
+			.ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge", CInt(.ThresholdIonPctForSingleCharge))
+			.ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge", CInt(.ThresholdIonPctForDoubleCharge))
 
-		Try
-			If blnSuccess And Not RetainDefaultChargeFiles Then
-				' Search for and delete the .Dta files that are not of the desired charge states
-				For CurrentCharge = 1 To 3
-					If CurrentCharge < ExplicitChargeStart OrElse CurrentCharge > ExplicitChargeEnd Then
-						strFileDeletionMatchSpec = System.IO.Path.GetFileNameWithoutExtension(strFileMatchSpec)
-						If strFileDeletionMatchSpec Is Nothing OrElse strFileDeletionMatchSpec.Length = 0 Then
-							strFileDeletionMatchSpec = "*"
-						End If
+			.FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", False)
 
-						strFileDeletionMatchSpec &= "." & CurrentCharge.ToString & ".dta"
-						For Each strDTAFilepath In System.IO.Directory.GetFiles(strWorkingFolderPath, strFileDeletionMatchSpec)
-							System.IO.File.Delete(strDTAFilepath)
-						Next strDTAFilepath
-					End If
-				Next CurrentCharge
-			End If
+			' Filter spectra options:
+			.DiscardValidSpectra = .DiscardValidSpectra
+			.IonPairMassToleranceHalfWidthDa = .IonPairMassToleranceHalfWidthDa
+			.MinimumStandardMassSpacingIonPairs = .MinimumStandardMassSpacingIonPairs
+			.NoiseLevelIntensityThreshold = .NoiseLevelIntensityThreshold
+			.SequestParamFilePath = .SequestParamFilePath
 
-		Catch ex As Exception
-			m_ErrMsg = "Error deleting unwanted DTA files: " & ex.Message
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			blnSuccess = False
-		End Try
+			.LogMessagesToFile = False
+
+			.MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0)
+			.ScanToExportMinimum = mScanStart
+			.ScanToExportMaximum = mScanStop
+			.MinimumParentIonMZ = mMWLower
+
+		End With
+
+		blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath)
+
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_ErrMsg) Then
+			m_ErrMsg = mMGFtoDTA.GetErrorMessage()
+		End If
+
+		m_SpectraFileCount = mMGFtoDTA.SpectraCountWritten
+		m_Progress = 95
 
 		Return blnSuccess
-
-	End Function
-
-	Private Function GenerateMissingChargeStateOneDTA(ByVal strInputFilePath As String, ByVal ExplicitChargeStart As Short, ByVal ExplicitChargeEnd As Short) As Boolean
-		' This function opens a DTA file, generates the missing charges and creates the corresponding DTA files for the missing charges.
-		' Returns True if success; false if an error
-
-		Dim ioFileInfo As System.IO.FileInfo
-		Dim swOutFile() As System.IO.StreamWriter
-		Dim intOutFileCount As Integer
-
-		Dim strOutFileName As String
-		Dim strOutputFilePath As String
-
-		Dim intChargeNumber As Integer
-		Dim intChargeIndex As Integer
-		Dim intLineIndex As Integer
-
-		Dim dblMZ As Double
-
-		Dim objMsMsDataFileReader As MsMsDataFileReader.clsDtaTextFileReader
-		Dim dblNewMH As Double
-
-		Dim strMSMSDataList() As String = Nothing
-		Dim intMsMsDataCount As Integer
-		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsDtaTextFileReader.udtSpectrumHeaderInfoType = Nothing
-
-		Dim blnCreateEntry As Boolean
-
-		intOutFileCount = 0
-		ReDim swOutFile(ExplicitChargeEnd - ExplicitChargeStart + 1)
-
-		Try
-			objMsMsDataFileReader = New MsMsDataFileReader.clsDtaTextFileReader
-			objMsMsDataFileReader.ReadSingleDtaFile(strInputFilePath, strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
-
-			' Lookup the charge state of the parent ion in the .Dta
-			intChargeNumber = udtSpectrumHeaderInfo.ParentIonCharges(0)
-
-			' Lookup the m/z value
-			dblMZ = CDbl(udtSpectrumHeaderInfo.ParentIonMZ.ToString())
-
-			If intChargeNumber = 0 Or dblMZ = 0.0 Then
-				' Skip this .Dta file since invalid charge number of m/z value
-				Return True
-			End If
-
-			' First, generate the missing charges and calculate corrsponding M+H values
-			'  using the ConvoluteMass function. These values are then written to the
-			'  new files that are generated.
-			For intChargeIndex = ExplicitChargeStart To ExplicitChargeEnd
-				If intChargeIndex <> intChargeNumber Then
-
-					objMsMsDataFileReader = New MsMsDataFileReader.clsDtaTextFileReader
-					dblNewMH = objMsMsDataFileReader.ConvoluteMass(dblMZ, intChargeIndex, 1)
-
-					' Make sure dblNewMH is between mMWLower and mMWUpper
-					blnCreateEntry = True
-					If mMWUpper > 0 AndAlso mMWUpper >= mMWLower Then
-						If dblNewMH < mMWLower Or dblNewMH > mMWUpper Then
-							blnCreateEntry = False
-						End If
-					End If
-
-					If blnCreateEntry Then
-						' Generate the file name for a missing charge file
-						' First strip off .dta
-						strOutFileName = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath)
-
-						' Next strip off the charge state (for example .1 or .2 or .3)
-						strOutFileName = System.IO.Path.GetFileNameWithoutExtension(strOutFileName)
-
-						' Now define the full path to the new file
-						strOutputFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strInputFilePath), strOutFileName & "." & intChargeIndex.ToString & System.IO.Path.GetExtension(strInputFilePath))
-
-						' Check if strOutputFilePath points to a valid file
-						' If it doesn't, then create it
-						ioFileInfo = New System.IO.FileInfo(strOutputFilePath)
-						If Not ioFileInfo.Exists() Then
-							swOutFile(intChargeIndex - ExplicitChargeStart) = New IO.StreamWriter(strOutputFilePath)
-							' Use the following to write out the data to the new output file
-							swOutFile(intChargeIndex - ExplicitChargeStart).WriteLine(Math.Round(dblNewMH, 4).ToString & " " & intChargeIndex.ToString)
-							intOutFileCount += 1
-						End If
-					End If
-				End If
-			Next intChargeIndex
-
-			If intOutFileCount > 0 Then
-				' Next, write the mass/intensity pairs to the new DTA files
-				For intLineIndex = 0 To intMsMsDataCount - 1
-					For intChargeIndex = 0 To ExplicitChargeEnd - ExplicitChargeStart
-						If Not swOutFile(intChargeIndex) Is Nothing Then
-							swOutFile(intChargeIndex).WriteLine(strMSMSDataList(intLineIndex))
-						End If
-					Next intChargeIndex
-				Next intLineIndex
-
-				' Close the new DTA file(s)
-				For intChargeIndex = 0 To ExplicitChargeEnd - ExplicitChargeStart
-					If Not swOutFile(intChargeIndex) Is Nothing Then
-						swOutFile(intChargeIndex).Close()
-						swOutFile(intChargeIndex) = Nothing
-					End If
-				Next intChargeIndex
-			End If
-
-		Catch ex As Exception
-			m_ErrMsg = "Error while processing DTA file: " & strInputFilePath & "; " & ex.Message
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return False
-		End Try
-
-		Return True
 
 	End Function
 
 	Private Function VerifyDtaCreation() As Boolean
 
-		'Verify at least one .dta file has been created
-		If CountDtaFiles() < 1 Then
-			m_ErrMsg = "No dta files created"
+		'Verify that the _DTA.txt file was created and is not empty
+		Dim fiCDTAFile As System.IO.FileInfo
+		fiCDTAFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_DTA.txt"))
+
+		If Not fiCDTAFile.Exists Then
+			m_ErrMsg = "_DTA.txt file not created"
+			Return False
+		ElseIf fiCDTAFile.Length = 0 Then
+			m_ErrMsg = "_DTA.txt file is empty"
 			Return False
 		Else
 			Return True
 		End If
 
 	End Function
+
+	Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
+		If String.IsNullOrEmpty(m_ErrMsg) Then
+			m_ErrMsg = "MGFtoDTA_Error: " & strMessage
+		ElseIf m_ErrMsg.Length < 300 Then
+			m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
+		End If
+	End Sub
 
 End Class

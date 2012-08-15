@@ -125,7 +125,7 @@ Public MustInherit Class clsDtaGen
 			m_Dataset = .DatasetName
 		End With
 
-		m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetParam("RawDataType"))
+		m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetJobParameter("RawDataType", ""))
 
 		m_Progress = 0
 

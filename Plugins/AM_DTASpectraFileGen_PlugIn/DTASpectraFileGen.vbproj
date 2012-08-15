@@ -101,10 +101,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
-    <Reference Include="MsMsSpectrumFilter, Version=1.4.3840.23010, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MsMsSpectrumFilter.dll</HintPath>
-    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
