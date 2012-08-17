@@ -30,7 +30,7 @@ Public Class clsPepHitResultsProcWrapper
     Private m_PHRPConsoleOutputFilePath As String
 
 	' This list tracks the error messages reported by CmdRunner
-	Protected mCmdRunnerErrors As System.Collections.Generic.List(Of String)
+	Protected mCmdRunnerErrors As System.Collections.Concurrent.ConcurrentBag(Of String)
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -65,7 +65,7 @@ Public Class clsPepHitResultsProcWrapper
         m_JobParams = JobParams
 		m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1)
 
-		mCmdRunnerErrors = New System.Collections.Generic.List(Of String)
+		mCmdRunnerErrors = New System.Collections.Concurrent.ConcurrentBag(Of String)
     End Sub
 
     ''' <summary>
@@ -131,7 +131,7 @@ Public Class clsPepHitResultsProcWrapper
             ioInputFile = New System.IO.FileInfo(PeptideSearchResultsFileName)
             m_PHRPConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
-            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
+			CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
 
             Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
             progLoc = System.IO.Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
@@ -158,20 +158,22 @@ Public Class clsPepHitResultsProcWrapper
                 CmdStr &= " /InsSyn:" & CreateInspectSynopsisFile.ToString()
             End If
 
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
-            End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+			End If
 
             With CmdRunner
                 .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
+				.CacheStandardOutput = True
+				.EchoOutputToConsole = True
 
                 .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
-            End With
+				.ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
+			End With
 
-			blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True)
+			' Abort PHRP if it runs for over 90 minutes (this generally indicates it's stuck)
+			Dim intMaxRuntimeSeconds As Integer = 90 * 60
+			blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True, intMaxRuntimeSeconds)
 
 			If mCmdRunnerErrors.Count > 0 Then
 				' Append the error messages to the console output file

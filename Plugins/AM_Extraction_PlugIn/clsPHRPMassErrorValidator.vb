@@ -146,7 +146,12 @@ Public Class clsPHRPMassErrorValidator
 
 			' Report any warnings cached during instantiation of mPHRPReader
 			For Each strMessage As String In mPHRPReader.WarningMessages
-				ShowWarningMessage(strMessage)
+				If strMessage.StartsWith("Warning, taxonomy file not found") Then
+					' Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
+					' We don't need that information in this application
+				Else
+					ShowWarningMessage(strMessage)
+				End If
 			Next
 
 			mPHRPReader.ClearErrors()

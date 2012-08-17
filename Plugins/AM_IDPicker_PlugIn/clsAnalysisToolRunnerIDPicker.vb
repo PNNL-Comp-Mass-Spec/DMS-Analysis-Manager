@@ -56,10 +56,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 	Protected mCmdRunnerMaxRuntimeMinutes As Integer
 
 	' This list tracks the error messages reported by CmdRunner
-	Protected mCmdRunnerErrors As System.Collections.Generic.List(Of String)
+	Protected mCmdRunnerErrors As System.Collections.Concurrent.ConcurrentBag(Of String)
 
 	' This list tracks error message text that we look for when considering whether or not to ignore an error message
-	Protected mCmdRunnerErrorsToIgnore As System.Collections.Generic.List(Of String)
+	Protected mCmdRunnerErrorsToIgnore As System.Collections.Concurrent.ConcurrentBag(Of String)
 
 	' This list tracks files that we want to include in the zipped up IDPicker report folder
 	Protected mFilenamesToAddToReportFolder As System.Collections.Generic.List(Of String)
@@ -97,8 +97,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim blnSuccess As Boolean
 
 		mIDPickerOptions = New System.Collections.Generic.Dictionary(Of String, String)(System.StringComparer.CurrentCultureIgnoreCase)
-		mCmdRunnerErrors = New System.Collections.Generic.List(Of String)
-		mCmdRunnerErrorsToIgnore = New System.Collections.Generic.List(Of String)
+		mCmdRunnerErrors = New System.Collections.Concurrent.ConcurrentBag(Of String)
+		mCmdRunnerErrorsToIgnore = New System.Collections.Concurrent.ConcurrentBag(Of String)
 		mFilenamesToAddToReportFolder = New System.Collections.Generic.List(Of String)
 
 		Try
@@ -436,6 +436,13 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	End Function
 
+	Protected Sub ClearConcurrentBag(ByRef oBag As System.Collections.Concurrent.ConcurrentBag(Of String))
+		Dim item As String = String.Empty
+		Do While Not oBag.IsEmpty
+			oBag.TryTake(item)
+		Loop
+	End Sub
+
 	''' <summary>
 	''' Copies a file into folder strReportFolderPath then adds it to m_jobParams.AddResultFileToSkip
 	''' </summary>
@@ -480,7 +487,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
 
-			mCmdRunnerErrorsToIgnore.Clear()
+			ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
+
 			m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE
 
 			blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, False, intMaxRuntimeMinutes)
@@ -857,7 +865,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		End If
 
 		' Define the errors that we can ignore
-		mCmdRunnerErrorsToIgnore.Clear()
+		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
 		mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
 		mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
 
@@ -913,7 +921,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim blnSuccess As Boolean
 
 		' Define the errors that we can ignore
-		mCmdRunnerErrorsToIgnore.Clear()
+		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
 		mCmdRunnerErrorsToIgnore.Add("could not find the default configuration file")
 		mCmdRunnerErrorsToIgnore.Add("could not find the default residue masses file")
 
@@ -969,7 +977,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		strOutputFolderName = "IDPicker"
 
 		' Define the errors that we can ignore
-		mCmdRunnerErrorsToIgnore.Clear()
+		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
 		mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
 		mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
 
@@ -1086,7 +1094,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		End If
 
 		mCmdRunnerDescription = String.Copy(strProgramDescription)
-		mCmdRunnerErrors.Clear()
+		ClearConcurrentBag(mCmdRunnerErrors)
 
 		CmdRunner = New clsRunDosProgram(m_WorkDir)
 
