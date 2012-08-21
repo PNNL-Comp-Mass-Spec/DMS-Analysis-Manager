@@ -66,8 +66,16 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
+	''' <summary>
+	''' Copies the required input files to the working directory
+	''' </summary>
+	''' <param name="strDatasetName">Dataset name</param>
+	''' <param name="strSearchEngineParamFileName">Search engine parameter file name</param>
+	''' <param name="eReturnCode">Return code</param>
+	''' <returns>True if success, otherwise false</returns>
+	''' <remarks></remarks>
 	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
-		' This tracks the filenames to find and whether or not they are required
+		' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
 		Dim lstFileNamesToGet As System.Collections.Generic.SortedList(Of String, Boolean)
 		Dim lstExtraFilesToGet As System.Collections.Generic.List(Of String)
 
@@ -153,6 +161,11 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
+	''' <summary>
+	''' Retrieve the ID Picker parameter file
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Protected Function RetrieveIDPickerParamFile() As Boolean
 
 		Dim strIDPickerParamFileName As String = m_jobParams.GetParam("IDPickerParamFile")
@@ -182,9 +195,14 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
+	''' <summary>
+	''' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+	''' </summary>
+	''' <param name="strDatasetName"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Protected Function RetrieveMASICFiles(ByVal strDatasetName As String) As Boolean
 
-		' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 		If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
 			' _ScanStats.txt file not found
 			' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
@@ -204,6 +222,13 @@ Public Class clsAnalysisResourcesIDPicker
 
 	End Function
 
+	''' <summary>
+	''' Determines the files that need to be copied to the work directory, based on the result type
+	''' </summary>
+	''' <param name="eResultType">PHRP result type (Seqest, X!Tandem, etc.)</param>
+	''' <param name="strDatasetName">Dataset name</param>
+	''' <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
+	''' <remarks></remarks>
 	Protected Function GetPHRPFileNames(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strDatasetName As String) As System.Collections.Generic.SortedList(Of String, Boolean)
 
 		Dim lstFileNamesToGet As System.Collections.Generic.SortedList(Of String, Boolean)
@@ -219,6 +244,7 @@ Public Class clsAnalysisResourcesIDPicker
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
+		lstFileNamesToGet.Add(clsPHRPReader.GetToolVersionInfoFilename(eResultType), True)
 
 		Return lstFileNamesToGet
 
