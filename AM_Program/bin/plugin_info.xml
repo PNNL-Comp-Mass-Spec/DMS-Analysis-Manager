@@ -262,6 +262,11 @@
 		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant"
 		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="ipd_mac" 
+		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDP"
+		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -526,6 +531,12 @@
 		Class="AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant"
 		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" 
 	/>
+	<Resourcer 
+		Tool="ipd_mac" 
+		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDP"
+		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" 
+	/>
+
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
