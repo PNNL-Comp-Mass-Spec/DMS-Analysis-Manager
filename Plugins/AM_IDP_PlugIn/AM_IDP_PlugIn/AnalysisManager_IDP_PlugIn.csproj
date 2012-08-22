@@ -8,8 +8,8 @@
     <ProjectGuid>{C0B0A764-AB8F-42AA-A1D3-F2ABA5A6D20C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AM_IDP_PlugIn</RootNamespace>
-    <AssemblyName>AM_IDP_PlugIn</AssemblyName>
+    <RootNamespace>AnalysisManagerIDPMacPlugIn</RootNamespace>
+    <AssemblyName>AnalysisManagerIDPMacPlugIn</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,19 +31,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared, Version=2.3.4546.16445, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\AM_Program\AM_Shared\bin\Debug\AM_Shared.dll</HintPath>
+    <Reference Include="AM_Shared">
+      <HintPath>..\..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="IDP">
-      <HintPath>..\..\..\..\MiscConsoleApplications\IDP\IDP\bin\Debug\IDP.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\IDP.dll</HintPath>
     </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\..\..\..\Cyclops\Cyclops\bin\Debug\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM, Version=2.1.4520.29857, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\AM_Program\AM_Shared\bin\Debug\PRISM.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
