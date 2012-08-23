@@ -267,6 +267,21 @@
 		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDP"
 		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="dataimport" 
+		Class="AnalysisManagerDataImportPlugIn.clsAnalysisToolRunnerDataImport"
+		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="msgfdb_ims" 
+		Class="AnalysisManagerMSGFDB_IMSPlugIn.clsAnalysisToolRunnerMSGFDB_IMS"
+		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="prosight_quant" 
+		Class="AnalysisManagerProSightQuantPlugIn.clsAnalysisToolRunnerProSightQuant"
+		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" 
+	/>
 
 </ToolRunners>
 
@@ -535,6 +550,21 @@
 		Tool="ipd_mac" 
 		Class="AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDP"
 		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="dataimport" 
+		Class="AnalysisManagerDataImportPlugIn.clsAnalysisResourcesDataImport"
+		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msgfdb_ims" 
+		Class="AnalysisManagerMSGFDB_IMSPlugIn.clsAnalysisResourcesMSGFDB_IMS"
+		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="prosight_quant" 
+		Class="AnalysisManagerProSightQuantPlugIn.clsAnalysisResourcesProSightQuant"
+		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" 
 	/>
 
 </Resourcers>

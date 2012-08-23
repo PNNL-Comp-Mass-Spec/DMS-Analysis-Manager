@@ -37,70 +37,87 @@ Public Class clsResultXferToolRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
 		Dim Result As IJobParams.CloseOutType
 
-		'Call base class for initial setup
-		MyBase.RunTool()
+		Try
+			'Call base class for initial setup
+			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-        ' Store the AnalysisManager version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining AnalysisManager version"
+			' Store the AnalysisManager version info in the database
+			If Not StoreToolVersionInfo() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining AnalysisManager version"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Transfer the results
+			Result = PerformResultsXfer()
+			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Unknown error calling PerformResultsXfer"
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+		
+			DeleteTransferFolderIfEmpty()
+
+			'Stop the job timer
+			m_StopTime = System.DateTime.UtcNow
+
+		Catch ex As Exception
+			m_message = "Error in ResultsXferPlugin->RunTool: " & ex.Message
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+		End Try
 
-        ' Transfer the results
-		Result = PerformResultsXfer()
-		If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: Handle any errors
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		'Stop the job timer
-		m_StopTime = System.DateTime.UtcNow
-
-        ' If there are no more folders in the dataset folder in the xfer directory, then delete the folder
-        ' Note that another manager might be simultaneously examining this folder to see if it's empty
-        ' If that manager deletes this folder first, then an exception could occur in this manager
-        ' Thus, we will log any exceptions that occur, but we won't treat them as a job failure
-
-        Try
-			Dim DSFolderPath As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
-			Dim FoundFolders() As String = System.IO.Directory.GetDirectories(DSFolderPath)
-
-            If FoundFolders.Count = 0 Then
-                ' Dataset folder in transfer folder is empty; delete it
-                Try
-                    If m_DebugLevel >= 3 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting empty dataset folder in transfer directory: " & DSFolderPath)
-                    End If
-
-                    System.IO.Directory.Delete(DSFolderPath)
-                Catch ex As Exception
-                    ' Log this exception, but don't treat it is a job failure
-                    Msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " & _
-                      m_jobParams.GetParam("DatasetFolderName") & " in xfer folder(another results manager may have deleted it): " & ex.Message
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
-                End Try
-            Else
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder in transfer directory still has subfolders; will not delete folder: " & DSFolderPath)
-                End If
-            End If
-
-        Catch ex As Exception
-            ' Log this exception, but don't treat it is a job failure
-            Msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " & _
-              m_jobParams.GetParam("DatasetFolderName") & " in xfer folder (another results manager may have deleted it): " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
-        End Try
-
-        'If we got to here, everything worked, so exit
+		'If we got to here, everything worked, so exit
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 
+	Protected Sub DeleteTransferFolderIfEmpty()
+
+		Dim Msg As String = ""
+
+		' If there are no more folders in the dataset folder in the xfer directory, then delete the folder
+		' Note that another manager might be simultaneously examining this folder to see if it's empty
+		' If that manager deletes this folder first, then an exception could occur in this manager
+		' Thus, we will log any exceptions that occur, but we won't treat them as a job failure
+
+		Try
+			Dim DSFolderPath As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
+			Dim FoundFolders() As String = System.IO.Directory.GetDirectories(DSFolderPath)
+
+			If FoundFolders.Count = 0 Then
+				' Dataset folder in transfer folder is empty; delete it
+				Try
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting empty dataset folder in transfer directory: " & DSFolderPath)
+					End If
+
+					System.IO.Directory.Delete(DSFolderPath)
+				Catch ex As Exception
+					' Log this exception, but don't treat it is a job failure
+					Msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " & _
+					  m_jobParams.GetParam("DatasetFolderName") & " in xfer folder(another results manager may have deleted it): " & ex.Message
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+				End Try
+			Else
+				If m_DebugLevel >= 3 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder in transfer directory still has subfolders; will not delete folder: " & DSFolderPath)
+				End If
+			End If
+
+		Catch ex As Exception
+			' Log this exception, but don't treat it is a job failure
+			Msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " & _
+			  m_jobParams.GetParam("DatasetFolderName") & " in xfer folder (another results manager may have deleted it): " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		End Try
+
+	End Sub
 	''' <summary>
 	''' Performs the results transfer
 	''' </summary>
