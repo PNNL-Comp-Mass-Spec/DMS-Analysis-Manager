@@ -58,103 +58,103 @@ Public Class clsAnalysisResourcesIN
     ''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
     ''' <returns>TRUE for success, FALSE for error</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
+	Public Shadows Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
 
-        'Retrieve zipped DTA file
-        Dim DtaResultFileName As String
-        Dim strUnzippedFileNameRoot As String
-        Dim strPathToDelete As String = String.Empty
+		'Retrieve zipped DTA file
+		Dim DtaResultFileName As String
+		Dim strUnzippedFileNameRoot As String
+		Dim strPathToDelete As String = String.Empty
 
-        Dim CloneStepRenum As String
-        Dim stepNum As String
-        Dim parallelZipNum As Integer
-        Dim isParallelized As Boolean = False
+		Dim CloneStepRenum As String
+		Dim stepNum As String
+		Dim parallelZipNum As Integer
+		Dim isParallelized As Boolean = False
 
-        Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
+		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 
-        CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart")
-        stepNum = m_jobParams.GetParam("Step")
+		CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart")
+		stepNum = m_jobParams.GetParam("Step")
 
-        'Determine if this is parallelized inspect job
-        If System.String.IsNullOrEmpty(CloneStepRenum) Then
-            DtaResultFileName = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
-            strUnzippedFileNameRoot = m_jobParams.GetParam("DatasetNum")
-        Else
-            parallelZipNum = CInt(stepNum) - CInt(CloneStepRenum) + 1
-            DtaResultFileName = m_jobParams.GetParam("DatasetNum") & "_" & CStr(parallelZipNum) & "_dta.txt"
-            strUnzippedFileNameRoot = m_jobParams.GetParam("DatasetNum") & "_" & CStr(parallelZipNum)
-            isParallelized = True
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing parallelized Inspect segment " & parallelZipNum.ToString)
-        End If
+		'Determine if this is parallelized inspect job
+		If System.String.IsNullOrEmpty(CloneStepRenum) Then
+			DtaResultFileName = m_jobParams.GetParam("DatasetNum") & "_dta.zip"
+			strUnzippedFileNameRoot = m_jobParams.GetParam("DatasetNum")
+		Else
+			parallelZipNum = CInt(stepNum) - CInt(CloneStepRenum) + 1
+			DtaResultFileName = m_jobParams.GetParam("DatasetNum") & "_" & CStr(parallelZipNum) & "_dta.txt"
+			strUnzippedFileNameRoot = m_jobParams.GetParam("DatasetNum") & "_" & CStr(parallelZipNum)
+			isParallelized = True
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing parallelized Inspect segment " & parallelZipNum.ToString)
+		End If
 
-        Dim DtaResultFolderName As String = FindDataFile(DtaResultFileName)
+		Dim DtaResultFolderName As String = FindDataFile(DtaResultFileName)
 
-        If DtaResultFolderName = "" Then
-            ' No folder found containing the zipped DTA files (error will have already been logged)
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FindDataFile returned False for " & DtaResultFileName)
-            End If
-            Return False
-        End If
+		If DtaResultFolderName = "" Then
+			' No folder found containing the zipped DTA files (error will have already been logged)
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FindDataFile returned False for " & DtaResultFileName)
+			End If
+			Return False
+		End If
 
-        'Copy the file
-        If Not CopyFileToWorkDir(DtaResultFileName, DtaResultFolderName, WorkingDir) Then
-            ' Error copying file (error will have already been logged)
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & DtaResultFileName & " using folder " & DtaResultFolderName)
-            End If
-            Return False
-        End If
+		'Copy the file
+		If Not CopyFileToWorkDir(DtaResultFileName, DtaResultFolderName, WorkingDir) Then
+			' Error copying file (error will have already been logged)
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & DtaResultFileName & " using folder " & DtaResultFolderName)
+			End If
+			Return False
+		End If
 
-        ' Check to see if the job is parallelized
-        '  If it is parallelized, we do not need to unzip the concatenated DTA file (since it is already unzipped)
-        '  If not parallelized, then we do need to unzip
-        If Not isParallelized OrElse System.IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
-            'Unzip concatenated DTA file
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
+		' Check to see if the job is parallelized
+		'  If it is parallelized, we do not need to unzip the concatenated DTA file (since it is already unzipped)
+		'  If not parallelized, then we do need to unzip
+		If Not isParallelized OrElse System.IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
+			'Unzip concatenated DTA file
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
 			If UnzipFileStart(System.IO.Path.Combine(WorkingDir, DtaResultFileName), WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
 				End If
 			End If
-        End If
+		End If
 
-        'Unconcatenate DTA file if needed
-        If UnConcatenate Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
+		'Unconcatenate DTA file if needed
+		If UnConcatenate Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
 
 			Dim FileSplitter As New clsSplitCattedFiles()
-            '				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), WorkingDir)
-            FileSplitter.SplitCattedDTAsOnly(strUnzippedFileNameRoot, WorkingDir)
+			'				FileSplitter.SplitCattedDTAsOnly(m_jobParams.GetParam("DatasetNum"), WorkingDir)
+			FileSplitter.SplitCattedDTAsOnly(strUnzippedFileNameRoot, WorkingDir)
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Completed splitting concatenated DTA file")
-            End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Completed splitting concatenated DTA file")
+			End If
 
-            Try
-                ' Now that the _dta.txt has been deconcatenated, we need to delete it; if we don't, Inspect will search it too
+			Try
+				' Now that the _dta.txt has been deconcatenated, we need to delete it; if we don't, Inspect will search it too
 
-                strPathToDelete = System.IO.Path.Combine(WorkingDir, strUnzippedFileNameRoot & "_dta.txt")
+				strPathToDelete = System.IO.Path.Combine(WorkingDir, strUnzippedFileNameRoot & "_dta.txt")
 
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting concatenated DTA file: " & strPathToDelete)
-                End If
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting concatenated DTA file: " & strPathToDelete)
+				End If
 
-                System.Threading.Thread.Sleep(1000)
-                System.IO.File.Delete(strPathToDelete)
+				System.Threading.Thread.Sleep(1000)
+				System.IO.File.Delete(strPathToDelete)
 
-                If System.IO.File.Exists(strPathToDelete) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Deletion of concatenated DTA file failed: " & strPathToDelete)
-                End If
+				If System.IO.File.Exists(strPathToDelete) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Deletion of concatenated DTA file failed: " & strPathToDelete)
+				End If
 
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception trying to delete file " & strPathToDelete & "; " & ex.Message)
-            End Try
-        End If
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception trying to delete file " & strPathToDelete & "; " & ex.Message)
+			End Try
+		End If
 
-        Return True
+		Return True
 
-    End Function
+	End Function
 #End Region
 
 End Class

@@ -302,6 +302,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		End If
 
+		' Zip the _Peaks.txt file (if it exists)
+		ZipPeaksFile()
+
 		'Delete the raw data files
 		If m_DebugLevel > 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
@@ -1133,6 +1136,41 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		End If
 
 	End Sub
+
+	Private Function ZipPeaksFile() As Boolean
+
+		Dim strPeaksFilePath As String
+		Dim strZippedPeaksFilePath As String
+
+		Try
+			strPeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_peaks.txt")
+			strZippedPeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_peaks.zip")
+
+			If System.IO.File.Exists(strPeaksFilePath) Then
+
+				If Not MyBase.ZipFile(strPeaksFilePath, False, strZippedPeaksFilePath) Then
+					Dim Msg As String = "Error zipping _peaks.txt file, job " & m_JobNum
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+					m_message = clsGlobal.AppendToComment(m_message, "Error zipping Peaks.txt file")
+					Return False
+				End If
+
+				' Add the _peaks.txt file to .FilesToDelete since we only want to keep the Zipped version
+				m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strPeaksFilePath))
+
+			End If
+
+		Catch ex As Exception
+			Dim Msg As String = "clsAnalysisToolRunnerDecon2ls.ZipPeaksFile, Exception zipping Peaks.txt file, job " & m_JobNum & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			m_message = clsGlobal.AppendToComment(m_message, "Error zipping Peaks.txt file")
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
 
 #End Region
 

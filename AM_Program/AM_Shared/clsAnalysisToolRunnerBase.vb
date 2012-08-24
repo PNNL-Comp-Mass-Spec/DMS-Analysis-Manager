@@ -404,7 +404,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function MakeResultsFolder() As IJobParams.CloseOutType
+	Protected Function MakeResultsFolder() As IJobParams.CloseOutType
 
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 
@@ -433,7 +433,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function MoveResultFiles() As IJobParams.CloseOutType
+	Protected Function MoveResultFiles() As IJobParams.CloseOutType
 		Const REJECT_LOGGING_THRESHOLD As Integer = 10
 		Const ACCEPT_LOGGING_THRESHOLD As Integer = 50
 		Const LOG_LEVEL_REPORT_ACCEPT_OR_REJECT As Integer = 5
@@ -938,7 +938,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strDLLFilePath">Path to the DLL</param>
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+	Protected Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 
 		Dim ioFileInfo As System.IO.FileInfo
 		Dim blnSuccess As Boolean
@@ -978,7 +978,7 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
-	Protected Overridable Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+	Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 		Dim ioFileInfo As System.IO.FileInfo
 		Dim blnSuccess As Boolean
 
@@ -1041,7 +1041,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strDLLFilePath"></param>
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function StoreToolVersionInfoOneFile64Bit(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+	Protected Function StoreToolVersionInfoOneFile64Bit(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 
 		Dim strNameAndVersion As String = String.Empty
 		Dim strAppPath As String
@@ -1134,7 +1134,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <returns>TRUE for success, FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function UpdateSummaryFile() As Boolean
+	Protected Function UpdateSummaryFile() As Boolean
 		Dim strTool As String
 		Dim strToolAndStepTool As String
 		Try
@@ -1383,7 +1383,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="FileNamePath">Full path to file for deletion</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>Raises exception if error occurs</remarks>
-	Public Overridable Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
+	Public Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
 		Return DeleteFileWithRetries(FileNamePath, m_DebugLevel)
 	End Function
 
@@ -1466,7 +1466,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Overridable Function CopyResultsFolderToServer() As IJobParams.CloseOutType
+	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
 
 		Dim SourceFolderPath As String = String.Empty
 		Dim TransferFolderPath As String = String.Empty

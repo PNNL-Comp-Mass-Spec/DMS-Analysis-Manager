@@ -130,8 +130,8 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Properties"
-	' explanation of what happened to last operation this class performed
-	Public Overridable ReadOnly Property Message() As String Implements IAnalysisResources.Message
+	' Explanation of what happened to last operation this class performed
+	Public ReadOnly Property Message() As String Implements IAnalysisResources.Message
 		Get
 			Return m_message
 		End Get
@@ -827,7 +827,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="WorkDir">Destination directory for copy</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveSpectra(ByVal RawDataType As String, ByVal WorkDir As String) As Boolean
+	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal WorkDir As String) As Boolean
 		Return RetrieveSpectra(RawDataType, WorkDir, False)
 	End Function
 
@@ -839,9 +839,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveSpectra(ByVal RawDataType As String, _
-	  ByVal WorkDir As String, _
-	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveSpectra(ByVal RawDataType As String, _
+   ByVal WorkDir As String, _
+   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim blnSuccess As Boolean = False
 		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -921,9 +921,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveDatasetFile(ByVal WorkDir As String, _
-	   ByVal FileExtension As String, _
-	   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveDatasetFile(ByVal WorkDir As String, _
+	ByVal FileExtension As String, _
+	ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim DataFileName As String = m_DatasetName & FileExtension
 		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
@@ -943,9 +943,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveMgfFile(ByVal WorkDir As String, _
-	  ByVal GetCdfAlso As Boolean, _
-	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveMgfFile(ByVal WorkDir As String, _
+   ByVal GetCdfAlso As Boolean, _
+   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		'Data files are in a subfolder off of the main dataset folder
 		'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
@@ -1006,9 +1006,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveMZXmlFile(ByVal WorkDir As String, _
-	 ByVal CreateStoragePathInfoOnly As Boolean, _
-	 ByRef SourceFilePath As String) As Boolean
+	Protected Function RetrieveMZXmlFile(ByVal WorkDir As String, _
+  ByVal CreateStoragePathInfoOnly As Boolean, _
+  ByRef SourceFilePath As String) As Boolean
 
 		' Copies this dataset's .mzXML file to the working directory
 		Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
@@ -1079,7 +1079,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim RetrieveSICStatsFile As Boolean = False
 		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly)
@@ -1241,9 +1241,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="WorkDir">Destination directory for copy</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveDotDFolder(ByVal WorkDir As String, _
-	  ByVal CreateStoragePathInfoOnly As Boolean, _
-	  ByVal blnSkipBAFFiles As Boolean) As Boolean
+	Protected Function RetrieveDotDFolder(ByVal WorkDir As String, _
+   ByVal CreateStoragePathInfoOnly As Boolean, _
+   ByVal blnSkipBAFFiles As Boolean) As Boolean
 		Dim objFileNamesToSkip As List(Of String)
 
 		objFileNamesToSkip = New List(Of String)
@@ -1260,8 +1260,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="WorkDir">Destination directory for copy</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveDotRawFolder(ByVal WorkDir As String, _
-	 ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveDotRawFolder(ByVal WorkDir As String, _
+  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 		Return RetrieveDotXFolder(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, New List(Of String))
 	End Function
 
@@ -1273,10 +1273,10 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FolderExtension">Extension on the folder; for example, ".D"</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveDotXFolder(ByVal WorkDir As String, _
-	  ByVal FolderExtension As String, _
-	  ByVal CreateStoragePathInfoOnly As Boolean, _
-	  ByVal objFileNamesToSkip As List(Of String)) As Boolean
+	Protected Function RetrieveDotXFolder(ByVal WorkDir As String, _
+   ByVal FolderExtension As String, _
+   ByVal CreateStoragePathInfoOnly As Boolean, _
+   ByVal objFileNamesToSkip As List(Of String)) As Boolean
 
 		'Copies a data folder ending in FolderExtension to the working directory
 
@@ -2165,7 +2165,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String) As Boolean
+	Protected Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String) As Boolean
 
 		If m_DebugLevel >= 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Obtaining org db file")
@@ -2338,8 +2338,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="WorkDir">Working directory on analysis machine</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>NOTE: ParamFilePath isn't used in this override, but is needed in parameter list for compatability</remarks>
-	Protected Overridable Function RetrieveGeneratedParamFile(ByVal ParamFileName As String, ByVal ParamFilePath As String, _
-	  ByVal WorkDir As String) As Boolean
+	Protected Function RetrieveGeneratedParamFile(ByVal ParamFileName As String, ByVal ParamFilePath As String, _
+   ByVal WorkDir As String) As Boolean
 
 		Dim ParFileGen As ParamFileGenerator.MakeParams.IGenerateFile = Nothing
 		Dim blnSuccess As Boolean
@@ -2393,8 +2393,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FilePath">File storage path</param>
 	''' <param name="WorkDir">Working directory on analysis machine</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
-	Protected Overridable Function RetrieveFile(ByVal FileName As String, ByVal FilePath As String, _
-	  ByVal WorkDir As String) As Boolean
+	Protected Function RetrieveFile(ByVal FileName As String, ByVal FilePath As String, _
+   ByVal WorkDir As String) As Boolean
 
 		'Copy the file
 		If Not CopyFileToWorkDir(FileName, FilePath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
@@ -2411,7 +2411,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="ToolName">Version specified in mgr config file</param>
 	''' <returns>IGenerateFile.ParamFileType based on input version</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function SetBioworksVersion(ByVal ToolName As String) As ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType
+	Protected Function SetBioworksVersion(ByVal ToolName As String) As ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType
 
 		Dim strToolNameLCase As String
 
@@ -2460,7 +2460,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
 	''' <returns>TRUE for success, FALSE for error</returns>
 	''' <remarks></remarks>
-	Public Overridable Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
+	Public Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
 
 		Dim SourceFileName As String
 		Dim SourceFolderPath As String
@@ -2526,10 +2526,10 @@ Public MustInherit Class clsAnalysisResources
 			Dim fiSourceFile As System.IO.FileInfo
 			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt"))
 
-			If Not fiSourceFile.exists Then
+			If Not fiSourceFile.Exists Then
 				m_message = "_DTA.txt file not found after unzipping"
 				Return False
-			ElseIf fiSourceFile.length = 0 Then
+			ElseIf fiSourceFile.Length = 0 Then
 				m_message = "_DTA.txt file is empty (zero-bytes)"
 				Return False
 			End If
@@ -2552,7 +2552,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
 	''' <returns>TRUE for success, FALSE for error</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function RetrieveOutFiles(ByVal UnConcatenate As Boolean) As Boolean
+	Protected Function RetrieveOutFiles(ByVal UnConcatenate As Boolean) As Boolean
 
 		'Retrieve zipped OUT file
 		Dim ZippedFileName As String = m_DatasetName & "_out.zip"
@@ -2605,8 +2605,12 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FileToFind">Name of the file to search for</param>
 	''' <returns>Path to the file if found; empty string if not found</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function FindDataFile(ByVal FileToFind As String) As String
-		Return FindDataFile(FileToFind, True)
+	Protected Function FindDataFile(ByVal FileToFind As String) As String
+		Return FindDataFile(FileToFind, SearchArchivedDatasetFolder:=True)
+	End Function
+
+	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean) As String
+		Return FindDataFile(FileToFind, SearchArchivedDatasetFolder, LogFileNotFound:=True)
 	End Function
 
 	''' <summary>
@@ -2616,7 +2620,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
 	''' <returns>Path to the file if found; empty string if not found</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean) As String
+	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean, ByVal LogFileNotFound As Boolean) As String
 
 		Dim FoldersToSearch As New System.Collections.Generic.List(Of String)
 		Dim TempDir As String = String.Empty
@@ -2710,11 +2714,13 @@ Public MustInherit Class clsAnalysisResources
 				' Log this as an error if SearchArchivedDatasetFolder=True
 				' Log this as a warning if SearchArchivedDatasetFolder=False
 
-				If SearchArchivedDatasetFolder Then
-					m_message = "Data file not found: " & FileToFind
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " & FileToFind)
+				If LogFileNotFound Then
+					If SearchArchivedDatasetFolder Then
+						m_message = "Data file not found: " & FileToFind
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Else
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " & FileToFind)
+					End If
 				End If
 
 				Return String.Empty
@@ -2751,7 +2757,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean) As Boolean
+	Protected Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean) As Boolean
 
 		Return FindAndRetrieveMiscFiles(FileName, Unzip, True)
 	End Function
@@ -2764,7 +2770,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overridable Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean, ByVal SearchArchivedDatasetFolder As Boolean) As Boolean
+	Protected Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean, ByVal SearchArchivedDatasetFolder As Boolean) As Boolean
 
 		'Find file location
 		Dim FolderName As String
@@ -2804,7 +2810,7 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <returns>TRUE if file created successfully; FALSE otherwise</returns>
 	''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
-	Protected Friend Overridable Function RetrieveSettingsFileFromDb() As Boolean
+	Protected Friend Function RetrieveSettingsFileFromDb() As Boolean
 
 		Dim OutputFile As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
 
