@@ -162,6 +162,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSGFDB", True)
 
+			If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
+				' Parse the console output file one more time in hopes of finding an error message
+				ParseConsoleOutputFile()
+			End If
+
 			If Not mToolVersionWritten Then
 				If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
 					ParseConsoleOutputFile()
@@ -386,10 +391,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim result As IJobParams.CloseOutType
 
 		'Zip the output file
-		result = ZipMSGFDBResults(ResultsFileName)
+		result = mMSGFDBUtils.ZipOutputFile(Me, ResultsFileName)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
 		End If
+
+		m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
 
 		' Create the Peptide to Protein map file
 		UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
@@ -434,44 +441,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		m_progress = sngPercentComplete
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
-
-	''' <summary>
-	''' Zips MSGFDB Output File
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Private Function ZipMSGFDBResults(ResultsFileName As String) As IJobParams.CloseOutType
-		Dim TmpFilePath As String
-
-		Try
-
-			TmpFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
-			If Not System.IO.File.Exists(TmpFilePath) Then
-				m_message = "MSGFDB results file not found: " & ResultsFileName
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-			End If
-
-			If Not MyBase.ZipFile(TmpFilePath, False) Then
-				Dim Msg As String = "Error zipping output files, job " & m_JobNum
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-				m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Add the _msgfdb.txt file to .ResultFilesToSkip since we only want to keep the Zipped version
-			m_jobParams.AddResultFileToSkip(ResultsFileName)
-			m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
-
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipMSGFDBResults, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
 
 #End Region
 

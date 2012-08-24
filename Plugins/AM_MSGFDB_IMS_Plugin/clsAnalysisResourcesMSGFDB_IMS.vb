@@ -106,11 +106,11 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting DeconTools result files for job " & intSourceJob)
 
-		If Not FindAndRetrieveMiscFiles(m_DatasetName & "_isos.csv", False) Then
+		If Not FindAndRetrieveMiscFiles(m_DatasetName & "_isos.csv", Unzip:=False) Then
 			Return False
 		End If
 
-		If Not FindAndRetrieveMiscFiles(m_DatasetName & "_scans.csv", False) Then
+		If Not FindAndRetrieveMiscFiles(m_DatasetName & "_scans.csv", Unzip:=False) Then
 			Return False
 		End If
 
@@ -118,7 +118,7 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 		Dim strMatchedPath As String
 
 		' First look for the zipped version of the _peaks.txt file
-		strMatchedPath = FindDataFile(strPeaksFileName, True, False)
+		strMatchedPath = FindDataFile(strPeaksFileName, SearchArchivedDatasetFolder:=True, LogFileNotFound:=False)
 		If Not String.IsNullOrEmpty(strMatchedPath) Then
 			' Zipped version found; retrieve it
 			If Not FindAndRetrieveMiscFiles(strPeaksFileName, Unzip:=True) Then

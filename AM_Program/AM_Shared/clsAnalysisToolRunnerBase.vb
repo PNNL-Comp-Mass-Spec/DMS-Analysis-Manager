@@ -1729,7 +1729,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="ZipFilePath">File to unzip</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function UnzipFile(ByVal ZipFilePath As String) As Boolean
+	Public Function UnzipFile(ByVal ZipFilePath As String) As Boolean
 		Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
 	End Function
 
@@ -1741,7 +1741,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="TargetDirectory">Target directory for the extracted files</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
+	Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
 		Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
 	End Function
 
@@ -1754,7 +1754,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
+	Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
 		m_IonicZipTools.DebugLevel = m_DebugLevel
 		Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
 	End Function
@@ -1819,8 +1819,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
 	''' <returns>True if success; false if an error</returns>
-	Protected Function ZipFile(ByVal SourceFilePath As String, _
-	   ByVal DeleteSourceAfterZip As Boolean) As Boolean
+	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
 		Dim blnSuccess As Boolean
 		m_IonicZipTools.DebugLevel = m_DebugLevel
 		blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
@@ -1840,9 +1839,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
 	''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
 	''' <returns>True if success; false if an error</returns>
-	Protected Function ZipFile(ByVal SourceFilePath As String, _
-	   ByVal DeleteSourceAfterZip As Boolean, _
-	   ByVal ZipFilePath As String) As Boolean
+	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean, ByVal ZipFilePath As String) As Boolean
 		Dim blnSuccess As Boolean
 		m_IonicZipTools.DebugLevel = m_DebugLevel
 		blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)

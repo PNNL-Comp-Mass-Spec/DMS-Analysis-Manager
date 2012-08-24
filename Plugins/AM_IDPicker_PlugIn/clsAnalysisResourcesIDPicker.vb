@@ -11,6 +11,9 @@ Public Class clsAnalysisResourcesIDPicker
 
 	Protected mSynopsisFileIsEmpty As Boolean
 
+	' This dictionary holds any filenames that we need to rename after copying locally
+	Protected mInputFileRenames As System.Collections.Generic.Dictionary(Of String, String)
+
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strDatasetName As String
@@ -100,6 +103,8 @@ Public Class clsAnalysisResourcesIDPicker
 			Return False
 		End If
 
+		mInputFileRenames = New System.Collections.Generic.Dictionary(Of String, String)
+
 		lstFileNamesToGet = GetPHRPFileNames(eResultType, strDatasetName)
 		mSynopsisFileIsEmpty = False
 
@@ -141,7 +146,6 @@ Public Class clsAnalysisResourcesIDPicker
 
 		Next
 
-
 		If eResultType = clsPHRPReader.ePeptideHitResultType.XTandem Then
 			' X!Tandem requires a few additional parameter files
 			lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(System.IO.Path.Combine(m_WorkingDir, strSearchEngineParamFileName))
@@ -156,6 +160,28 @@ Public Class clsAnalysisResourcesIDPicker
 				m_jobParams.AddResultFileToSkip(strFileName)
 			Next
 		End If
+
+		For Each item As Collections.Generic.KeyValuePair(Of String, String) In mInputFileRenames
+			Dim fiFile As System.IO.FileInfo
+			fiFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, item.Key))
+			If Not fiFile.Exists Then
+				m_message = "File " & item.Key & " not found; unable to rename to " & item.Value
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+				Return False
+			Else
+				Try
+					fiFile.MoveTo(System.IO.Path.Combine(m_WorkingDir, item.Value))
+				Catch ex As Exception
+					m_message = "Error renaming file " & item.Key & " to " & item.Value
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & ex.Message)
+					eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+					Return False
+				End Try
+
+				m_jobParams.AddResultFileToSkip(item.Value)
+			End If
+		Next
 
 		Return True
 
@@ -244,7 +270,19 @@ Public Class clsAnalysisResourcesIDPicker
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
-		lstFileNamesToGet.Add(clsPHRPReader.GetToolVersionInfoFilename(eResultType), True)
+
+		Dim strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
+		Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", "")
+		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFDB_IMS" Then
+			' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
+			' However, this is the MSGFDB_IMS script, so the file is currently "Tool_Version_Info_MSGFDB_IMS.txt"
+			' We'll copy the current file locally, then rename it to the expected name
+			Dim strOriginalName As String = "Tool_Version_Info_MSGFDB_IMS.txt"
+			mInputFileRenames.Add(strOriginalName, strToolVersionFile)
+			strToolVersionFile = String.Copy(strOriginalName)
+		End If
+
+		lstFileNamesToGet.Add(strToolVersionFile, True)
 
 		Return lstFileNamesToGet
 

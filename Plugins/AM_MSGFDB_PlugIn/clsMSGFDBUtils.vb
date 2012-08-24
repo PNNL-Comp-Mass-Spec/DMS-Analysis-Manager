@@ -100,6 +100,8 @@ Public Class clsMSGFDBUtils
 		m_DebugLevel = intDebugLevel
 
 		mMSGFDbVersion = String.Empty
+		mConsoleOutputErrorMsg = String.Empty
+
 	End Sub
 
 	Public Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String, blnResultsIncludeDecoyPeptides As Boolean) As IJobParams.CloseOutType
@@ -537,7 +539,6 @@ Public Class clsMSGFDBUtils
 			Dim intThreadCount As Short = 0
 
 			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
-			mConsoleOutputErrorMsg = String.Empty
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
@@ -1298,6 +1299,42 @@ Public Class clsMSGFDBUtils
 		Loop
 
 	End Sub
+
+
+	''' <summary>
+	''' Zips MSGFDB Output File
+	''' </summary>
+	''' <returns>CloseOutType enum indicating success or failure</returns>
+	''' <remarks></remarks>
+	Public Function ZipOutputFile(ByRef oToolRunner As clsAnalysisToolRunnerBase, ByVal FileName As String) As IJobParams.CloseOutType
+		Dim TmpFilePath As String
+
+		Try
+
+			TmpFilePath = System.IO.Path.Combine(m_WorkDir, FileName)
+			If Not System.IO.File.Exists(TmpFilePath) Then
+				ReportError("MSGFDB results file not found: " & FileName, "")
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+			End If
+
+			If Not oToolRunner.ZipFile(TmpFilePath, False) Then
+				Dim Msg As String = "Error zipping output files"
+				ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
+			m_jobParams.AddResultFileToSkip(FileName)
+
+		Catch ex As Exception
+			Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+			ReportError("Error zipping output files", Msg)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
 
 #End Region
 
