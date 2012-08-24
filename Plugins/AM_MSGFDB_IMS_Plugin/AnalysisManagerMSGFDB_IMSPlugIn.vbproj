@@ -7,13 +7,14 @@
     </ProductVersion>
     <SchemaVersion>
     </SchemaVersion>
-    <ProjectGuid>{44E81B35-BA39-47AD-9B67-FBAFC925CACA}</ProjectGuid>
+    <ProjectGuid>{4E84D857-B776-4CE9-A93B-2906C5996AF9}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>AnalysisManagerMSGFDBPlugIn</RootNamespace>
-    <AssemblyName>AnalysisManagerMSGFDBPlugIn</AssemblyName>
+    <RootNamespace>AnalysisManagerMSGFDB_IMSPlugIn</RootNamespace>
+    <AssemblyName>AnalysisManagerMSGFDB_IMSPlugIn</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Windows</MyType>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup>
     <OptionExplicit>On</OptionExplicit>
@@ -22,7 +23,7 @@
     <OptionCompare>Binary</OptionCompare>
   </PropertyGroup>
   <PropertyGroup>
-    <OptionStrict>On</OptionStrict>
+    <OptionStrict>Off</OptionStrict>
   </PropertyGroup>
   <PropertyGroup>
     <OptionInfer>On</OptionInfer>
@@ -32,51 +33,38 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\</OutputPath>
-    <DocumentationFile>AnalysisManagerMSGFDBPlugIn.xml</DocumentationFile>
+    <DocumentationFile>AnalysisManagerMSGFDB_IMSPlugIn.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\</OutputPath>
-    <DocumentationFile>AnalysisManagerMSGFDBPlugIn.xml</DocumentationFile>
+    <DocumentationFile>AnalysisManagerMSGFDB_IMSPlugIn.xml</DocumentationFile>
     <Optimize>true</Optimize>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="CondenseCDTAFile">
-      <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
-    </Reference>
-    <Reference Include="PeptideToProteinMapEngine">
-      <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
-    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
-    <Reference Include="ProteinFileReader, Version=1.1.3847.22126, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThermoRawFileReaderDLL">
-      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
     <Import Include="System.Collections" />
     <Import Include="System.Collections.Generic" />
@@ -84,12 +72,15 @@
     <Import Include="System.Diagnostics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSGFDB.vb" />
-    <Compile Include="clsAnalysisToolRunnerMSGFDB.vb" />
-    <Compile Include="clsCreateMSGFDBSuffixArrayFiles.vb" />
-    <Compile Include="clsMSGFDBUtils.vb" />
-    <Compile Include="clsScanTypeFileCreator.vb" />
+    <Compile Include="clsAnalysisResourcesMSGFDB_IMS.vb" />
+    <Compile Include="clsAnalysisToolRunnerMSGFDB_IMS.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj">
+      <Project>{44E81B35-BA39-47AD-9B67-FBAFC925CACA}</Project>
+      <Name>AnalysisManagerMSGFDBPlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
