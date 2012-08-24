@@ -156,11 +156,11 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			' For example, 
 			'  -t 20ppm -m 3 -inst 1 -e 1 -c13 0 -nnet 2 -tda 1 -minLength 6 -maxLength 50 -n 1 -uniformAAProb 0 -thread 4 -mod C:\DMS_WorkDir1\MSGFDB_Mods.txt
 
-			Dim intPrecursorMassTolPPM As Integer = 20
-			Dim intFragmentMassTolPPM As Integer = 20
-			Dim intNumMsMsBetweenEachMS1 As Integer = 3
-			Dim intParentToFragmentIMSScanDiffMax As Integer = 3
-			Dim intParentToFragmentLCScanDiffMax As Integer = 10
+			Dim intPrecursorMassTolPPM As Integer = m_jobParams.GetJobParameter("PrecursorMassTolPPM", 20)
+			Dim intFragmentMassTolPPM As Integer = m_jobParams.GetJobParameter("FragmentMassTolPPM", 20)
+			Dim intNumMsMsBetweenEachMS1 As Integer = m_jobParams.GetJobParameter("NumMsMsBetweenEachMS1", 3)
+			Dim intParentToFragmentIMSScanDiffMax As Integer = m_jobParams.GetJobParameter("ParentToFragmentIMSScanDiffMax", 3)
+			Dim intParentToFragmentLCScanDiffMax As Integer = m_jobParams.GetJobParameter("ParentToFragmentLCScanDiffMax", 10)
 
 			CmdStr = mIonMobilityMsMsProgLoc
 			CmdStr &= " -isos:" & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_isos.csv"))
