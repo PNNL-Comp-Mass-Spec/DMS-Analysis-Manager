@@ -150,9 +150,21 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
 			If blnSuccess Then
 				' Make sure that the quantitation output file was created
-				Dim strOutputFileName As String = m_Dataset & "_quant.txt"
+
+				' If DeconTools created a file named _results.txt then we'll rename that to _quant.txt
+				' This is a hack fix for 8/26/2012
+				Dim strOutputFileName As String = m_Dataset & "_results.txt"
+				Dim fiOutputFileName As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, strOutputFileName))
+				If fiOutputFileName.Exists Then
+					fiOutputFileName.MoveTo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_quant.txt"))
+					fiOutputFileName.Refresh()
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renamed " & strOutputFileName & " to " & fiOutputFileName.Name)
+				End If
+
+				strOutputFileName = m_Dataset & "_quant.txt"
 				If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, strOutputFileName)) Then
 					m_message = "MSAlign_Quant result file not found (" & strOutputFileName & ")"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					blnSuccess = False
 				End If
 
