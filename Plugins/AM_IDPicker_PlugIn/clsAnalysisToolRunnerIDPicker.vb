@@ -52,9 +52,6 @@ Public Class clsAnalysisToolRunnerIDPicker
 	' This variable holds the name of the program that is currently running via CmdRunner
 	Protected mCmdRunnerDescription As String = String.Empty
 
-	Protected mCmdRunnerStartTime As System.DateTime
-	Protected mCmdRunnerMaxRuntimeMinutes As Integer
-
 	' This list tracks the error messages reported by CmdRunner
 	Protected mCmdRunnerErrors As System.Collections.Concurrent.ConcurrentBag(Of String)
 
@@ -1140,12 +1137,12 @@ Public Class clsAnalysisToolRunnerIDPicker
 				.WriteConsoleOutputToFile = True
 				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, strConsoleOutputFileName)
 			End If
+
 		End With
 
-		mCmdRunnerStartTime = System.DateTime.UtcNow
-		mCmdRunnerMaxRuntimeMinutes = intMaxRuntimeMinutes
+		Dim intMaxRuntimeSeconds As Integer = intMaxRuntimeMinutes * 60
 
-		blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True)
+		blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True, intMaxRuntimeSeconds)
 
 		If mCmdRunnerErrors.Count = 0 And Not String.IsNullOrEmpty(CmdRunner.CachedConsoleError) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
@@ -1354,12 +1351,12 @@ Public Class clsAnalysisToolRunnerIDPicker
 			UpdateStatusRunning(m_progress)
 		End If
 
-		If mCmdRunnerMaxRuntimeMinutes > 0 AndAlso System.DateTime.UtcNow.Subtract(mCmdRunnerStartTime).TotalMinutes >= mCmdRunnerMaxRuntimeMinutes Then
-			' Abort execution since running too long
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting " & mCmdRunnerDescription & " since running over " & mCmdRunnerMaxRuntimeMinutes & " minutes")
-			CmdRunner.AbortProgramNow()
-		End If
+	End Sub
 
+	Private Sub CmdRunner_Timeout() Handles CmdRunner.Timeout
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborted " & mCmdRunnerDescription)
+		End If
 	End Sub
 
 #End Region

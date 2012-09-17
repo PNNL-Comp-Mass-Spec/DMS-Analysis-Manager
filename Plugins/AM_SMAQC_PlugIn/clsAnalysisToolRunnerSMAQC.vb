@@ -27,17 +27,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 	Protected WithEvents CmdRunner As clsRunDosProgram
 #End Region
 
-#Region "Structures"
-	Protected Structure udtSMAQCResultType
-		Public Name As String
-		Public Value As String
-		Public Sub Clear()
-			Name = String.Empty
-			Value = String.Empty
-		End Sub
-	End Structure
-#End Region
-
 #Region "Methods"
 	''' <summary>
 	''' Runs SMAQC tool
@@ -246,7 +235,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 	' No longer needed
 	''Protected Function CopySMAQCRuntimeFiles(ByVal strSourceFolder As String) As Boolean
 
-	''	Dim lstSourceFileNames As New System.Collections.Generic.List(Of String)
+	''	Dim lstSourceFileNames As New List(Of String)
 
 	''	Try
 	''		lstSourceFileNames.Add("config.xml")
@@ -380,7 +369,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	End Sub
 
-	Protected Function ConvertResultsToXML(ByRef lstResults As System.Collections.Generic.List(Of udtSMAQCResultType), ByRef strXMLResults As String) As Boolean
+	Protected Function ConvertResultsToXML(ByRef lstResults As List(Of KeyValuePair(Of String, String)), ByRef strXMLResults As String) As Boolean
 
 		' XML will look like:
 
@@ -412,8 +401,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			sbXML.Append("<Measurements>")
 
-			For Each udtResult As udtSMAQCResultType In lstResults
-				sbXML.Append("<Measurement Name=""" & udtResult.Name & """>" & udtResult.Value & "</Measurement>")
+			For Each kvResult As KeyValuePair(Of String, String) In lstResults
+				sbXML.Append("<Measurement Name=""" & kvResult.Key & """>" & kvResult.Value & "</Measurement>")
 			Next
 
 			sbXML.Append("</Measurements>")
@@ -437,7 +426,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 	''' <param name="ResultsFilePath"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function LoadSMAQCResults(ByVal ResultsFilePath As String) As System.Collections.Generic.List(Of udtSMAQCResultType)
+	Protected Function LoadSMAQCResults(ByVal ResultsFilePath As String) As List(Of KeyValuePair(Of String, String))
 
 		' Typical file contents:
 
@@ -455,7 +444,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4C, 27.18
 
 		' The measurments are returned via this list
-		Dim lstResults As New System.Collections.Generic.List(Of udtSMAQCResultType)
+		Dim lstResults As New List(Of KeyValuePair(Of String, String))
 
 		If Not System.IO.File.Exists(ResultsFilePath) Then
 			m_message = "SMAQC Results file not found"
@@ -467,47 +456,40 @@ Public Class clsAnalysisToolRunnerSMAQC
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing SMAQC Results file " & ResultsFilePath)
 		End If
 
-		Dim srInFile As System.IO.StreamReader
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
 		Dim blnMeasurementsFound As Boolean
 		Dim blnHeadersFound As Boolean
-		
-		srInFile = New System.IO.StreamReader(New System.IO.FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-		Do While srInFile.Peek() >= 0
-			strLineIn = srInFile.ReadLine()
+		Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			If Not String.IsNullOrWhiteSpace(strLineIn) Then
+			Do While srInFile.Peek() > -1
+				strLineIn = srInFile.ReadLine()
 
-				If Not blnMeasurementsFound Then
-					If strLineIn.StartsWith("[Data]") Then
-						blnMeasurementsFound = True
+				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+					If Not blnMeasurementsFound Then
+						If strLineIn.StartsWith("[Data]") Then
+							blnMeasurementsFound = True
+						End If
+					ElseIf Not blnHeadersFound Then
+						If strLineIn.StartsWith("Dataset") Then
+							blnHeadersFound = True
+						End If
+					Else
+						' This is a measurement result line
+						strSplitLine = strLineIn.Split(","c)
+
+						If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 3 Then
+							lstResults.Add(New KeyValuePair(Of String, String)(strSplitLine(1).Trim(), strSplitLine(2).Trim()))
+						End If
 					End If
-				ElseIf Not blnHeadersFound Then
-					If strLineIn.StartsWith("Dataset") Then
-						blnHeadersFound = True
-					End If
-				Else
-					' This is a measurement result line
-					strSplitLine = strLineIn.Split(","c)
 
-					If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 3 Then
-						Dim udtResult As udtSMAQCResultType = New udtSMAQCResultType
-						udtResult.Clear()
-
-						udtResult.Name = strSplitLine(1).Trim()
-						udtResult.Value = strSplitLine(2).Trim()
-
-						lstResults.Add(udtResult)
-					End If
 				End If
+			Loop
 
-			End If
-		Loop
-
-		srInFile.Close()
+		End Using
 
 		Return lstResults
 
@@ -650,6 +632,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	Protected Function PostSMAQCResultsToDB(ByVal strXMLResults As String) As Boolean
 
+		' This Connection String points to the DMS5 database
 		Dim strConnectionString As String
 		strConnectionString = m_mgrParams.GetParam("connectionstring")
 
@@ -776,7 +759,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 	Protected Function ReadAndStoreSMAQCResults(ByVal ResultsFilePath As String) As Boolean
 
 		Dim blnSuccess As Boolean
-		Dim lstResults As System.Collections.Generic.List(Of udtSMAQCResultType)
+		Dim lstResults As List(Of KeyValuePair(Of String, String))
 
 		Try
 
@@ -862,7 +845,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If Not ioSMAQC.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of System.IO.FileInfo))
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -876,7 +859,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		Dim ioToolFiles As New List(Of System.IO.FileInfo)
 		ioToolFiles.Add(ioSMAQC)
 
 		Try
@@ -892,38 +875,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 		m_progress = sngPercentComplete
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
-
-	''' <summary>
-	''' Zips SMAQC Output File
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Private Function ZipSMAQCResults(ResultsFileName As String) As IJobParams.CloseOutType
-		Dim TmpFilePath As String
-
-		Try
-
-			TmpFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
-			If Not MyBase.ZipFile(TmpFilePath, False) Then
-				Dim Msg As String = "Error zipping output files, job " & m_JobNum
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-				m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Add the _SMAQC.txt file to .FilesToDelete since we only want to keep the Zipped version
-			m_jobParams.AddResultFileToSkip(ResultsFileName)
-
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerSMAQC.ZipSMAQCResults, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
 
 #End Region
 
