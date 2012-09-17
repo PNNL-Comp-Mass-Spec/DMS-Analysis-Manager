@@ -347,95 +347,107 @@ namespace AnalysisManager_AScore_PlugIn {
             // process the job described by the fields in the input vals object
             protected override bool CheckFilter(ref object[] vals) {
 
-                string fragtype = "";
-                // extract contents of results file for current job to local file in working directory
-                BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
-                ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
-
-                // copy DTA file for current job to working directory
-                string resultsFolderPath = vals[resultsFldrIdx].ToString();
-                string paramFileName = vals[paramFileIdx].ToString();
-                string dtaFilePath;
-                if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
+                try
                 {
-                    return false;
-                }
+                    string fragtype = "";
+                    // extract contents of results file for current job to local file in working directory
+                    BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
+                    ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
 
-                string settingsFileName = vals[settingsFileIdx].ToString();
-                string findFragmentation = (paramFileName + settingsFileName).ToLower();
-                if (findFragmentation.Contains("hcd"))
-                {
-                    fragtype = "hcd";
-                }
-                else if (findFragmentation.Contains("etd"))
-                {
-                    fragtype = "etd";
-                }
-                else
-                {
-                    fragtype = "cid";
-                }
-
-                // process extracted results file and DTA file with AScore
-                string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
-                string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
-
-                // TODO: make the call to AScore
-                string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
-                string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                string paramFile = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(paramFilename) + "_" + fragtype + ".xml"); //paramFileName);
-
-                if (!File.Exists(paramFile))
-                {
-                    Console.WriteLine("This type of parameter file does not exist");
-                    return false;
-                }
-
-                ParameterFileManager paramManager = new ParameterFileManager(paramFile);
-                DtaManager dtaManager = new DtaManager(dtaFile);
-                DatasetManager datasetManager;
-
-                switch (searchType) {
-                    case "xtandem":
-                        datasetManager = new XTandemFHT(fhtFile);
-                        break;
-                    case "sequest":
-                        datasetManager = new SequestFHT(fhtFile);
-                        break;
-                    case "inspect":
-                        datasetManager = new InspectFHT(fhtFile);
-                        break;
-                    case "msgfdb":
-                        datasetManager = new MsgfdbFHT(fhtFile);
-                        break;
-                    default:
-                        Console.WriteLine("Incorrect search type check again");
+                    // copy DTA file for current job to working directory
+                    string resultsFolderPath = vals[resultsFldrIdx].ToString();
+                    string paramFileName = vals[paramFileIdx].ToString();
+                    string dtaFilePath;
+                    if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
+                    {
                         return false;
+                    }
+
+                    string settingsFileName = vals[settingsFileIdx].ToString();
+                    string findFragmentation = (paramFileName + settingsFileName).ToLower();
+                    if (findFragmentation.Contains("hcd"))
+                    {
+                        fragtype = "hcd";
+                    }
+                    else if (findFragmentation.Contains("etd"))
+                    {
+                        fragtype = "etd";
+                    }
+                    else
+                    {
+                        fragtype = "cid";
+                    }
+
+                    // process extracted results file and DTA file with AScore
+                    string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
+                    string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
+
+                    // TODO: make the call to AScore
+                    string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
+                    string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
+                    string paramFile = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(paramFilename) + "_" + fragtype + ".xml"); //paramFileName);
+
+                    if (!File.Exists(paramFile))
+                    {
+                        Console.WriteLine("This type of parameter file does not exist");
+                        return false;
+                    }
+
+                    ParameterFileManager paramManager = new ParameterFileManager(paramFile);
+                    DtaManager dtaManager = new DtaManager(dtaFile);
+                    DatasetManager datasetManager;
+
+                    switch (searchType)
+                    {
+                        case "xtandem":
+                            datasetManager = new XTandemFHT(fhtFile);
+                            break;
+                        case "sequest":
+                            datasetManager = new SequestFHT(fhtFile);
+                            break;
+                        case "inspect":
+                            datasetManager = new InspectFHT(fhtFile);
+                            break;
+                        case "msgfdb":
+                            datasetManager = new MsgfdbFHT(fhtFile);
+                            break;
+                        default:
+                            Console.WriteLine("Incorrect search type check again");
+                            return false;
+                    }
+
+                    AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
+
+                    // load AScore results into SQLite database
+                    string tableName = "t_results"; // TODO: how do we name table
+                    string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
+                    clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
+                    dtaManager.Abort();
+                    if (System.IO.File.Exists(ascoreOutputFilePath))
+                    {
+                        File.Delete(ascoreOutputFilePath);
+                    }
+                    // Delete extracted_results file and DTA file
+                    if (System.IO.File.Exists(fhtFile))
+                        File.Delete(fhtFile);
+                    if (System.IO.File.Exists(dtaFilePath))
+                    {
+                        File.Delete(dtaFilePath);
+                    }
+                    // optionally delete AScore results file
+                    // TODO: do the deletions
+
+
+                    return true;
                 }
-
-                AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
-
-                // load AScore results into SQLite database
-                string tableName = "t_results"; // TODO: how do we name table
-                string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-                clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
-                dtaManager.Abort();
-                if (System.IO.File.Exists(ascoreOutputFilePath))
+                catch (Exception e)
                 {
-                    File.Delete(ascoreOutputFilePath);
+                    Console.WriteLine(e.Message);
+                    return false;
                 }
-                // Delete extracted_results file and DTA file
-				if (System.IO.File.Exists(fhtFile))
-					File.Delete(fhtFile);
-                if (System.IO.File.Exists(dtaFilePath))
-                {
-                    File.Delete(dtaFilePath);
-                }
-                // optionally delete AScore results file
-                // TODO: do the deletions
-
-                return true;
+                
             }
+
 
             #endregion
 
@@ -496,10 +508,13 @@ namespace AnalysisManager_AScore_PlugIn {
                         files = null;
 
                         string DTAdirectory = Path.Combine(Directory.GetParent(resultsFolderPath).FullName, DTAfolderName);
-                        files = Directory.GetFiles(DTAdirectory, "*_dta.zip");
-                        if (files.Length > 0)
+                        if (Directory.Exists(DTAdirectory))
                         {
-                            dtaResultsFilename = Path.GetFileName(files[0]);
+                            files = Directory.GetFiles(DTAdirectory, "*_dta.zip");
+                            if (files.Length > 0)
+                            {
+                                dtaResultsFilename = Path.GetFileName(files[0]);
+                            }
                         }
                     }
                 }
@@ -511,12 +526,15 @@ namespace AnalysisManager_AScore_PlugIn {
 
                 zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
                 unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
-                File.Copy(files[0], zippedDTAResultsFilePath, true);
-                if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
+                if (File.Exists(files[0]))
                 {
+                    File.Copy(files[0], zippedDTAResultsFilePath, true);
+                    if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
+                    {
+                    }
+                    // TODO: unzip it
+                    File.Delete(zippedDTAResultsFilePath);
                 }
-                // TODO: unzip it
-                File.Delete(zippedDTAResultsFilePath);
                 return unzippedDTAResultsFilePath;
             }
 
