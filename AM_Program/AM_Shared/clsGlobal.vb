@@ -118,11 +118,9 @@ Public Class clsGlobal
 		Const REGEX_FUNCTION_NAME As String = "at ([^(]+)\("
 		Const REGEX_FILE_NAME As String = "in .+\\(.+)"
 
-		Dim trTextReader As System.IO.StringReader
 		Dim intIndex As Integer
 
-		Dim intFunctionCount As Integer = 0
-		Dim strFunctions() As String
+		Dim lstFunctions As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
 
 		Dim strCurrentFunction As String
 		Dim strFinalFile As String = String.Empty
@@ -136,71 +134,62 @@ Public Class clsGlobal
 
 		' Process each line in objException.StackTrace
 		' Populate strFunctions() with the function name of each line
-		trTextReader = New System.IO.StringReader(objException.StackTrace)
+		Using trTextReader As System.IO.StringReader = New System.IO.StringReader(objException.StackTrace)
 
-		intFunctionCount = 0
-		ReDim strFunctions(9)
+			Do While trTextReader.Peek > -1
+				strLine = trTextReader.ReadLine()
 
-		Do While trTextReader.Peek >= 0
-			strLine = trTextReader.ReadLine
+				If Not String.IsNullOrEmpty(strLine) Then
+					strCurrentFunction = String.Empty
 
-			If Not strLine Is Nothing AndAlso strLine.Length > 0 Then
-				strCurrentFunction = String.Empty
-
-				objMatch = reFunctionName.Match(strLine)
-				If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-					strCurrentFunction = objMatch.Groups(1).Value
-				Else
-					' Look for the word " in "
-					intIndex = strLine.ToLower.IndexOf(" in ")
-					If intIndex = 0 Then
-						' " in" not found; look for the first space after startIndex 4
-						intIndex = strLine.IndexOf(" ", 4)
-					End If
-					If intIndex = 0 Then
-						' Space not found; use the entire string
-						intIndex = strLine.Length - 1
-					End If
-
-					If intIndex > 0 Then
-						strCurrentFunction = strLine.Substring(0, intIndex)
-					End If
-
-				End If
-
-				If Not strCurrentFunction Is Nothing AndAlso strCurrentFunction.Length > 0 Then
-					If intFunctionCount >= strFunctions.Length Then
-						' Reserve more space in strFunctions()
-						ReDim Preserve strFunctions(strFunctions.Length * 2 - 1)
-					End If
-
-					strFunctions(intFunctionCount) = strCurrentFunction
-					intFunctionCount += 1
-				End If
-
-				If strFinalFile.Length = 0 Then
-					' Also extract the file name where the Exception occurred
-					objMatch = reFileName.Match(strLine)
+					objMatch = reFunctionName.Match(strLine)
 					If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-						strFinalFile = objMatch.Groups(1).Value
-					End If
-				End If
+						strCurrentFunction = objMatch.Groups(1).Value
+					Else
+						' Look for the word " in "
+						intIndex = strLine.ToLower.IndexOf(" in ")
+						If intIndex = 0 Then
+							' " in" not found; look for the first space after startIndex 4
+							intIndex = strLine.IndexOf(" ", 4)
+						End If
+						If intIndex = 0 Then
+							' Space not found; use the entire string
+							intIndex = strLine.Length - 1
+						End If
 
-			End If
-		Loop
+						If intIndex > 0 Then
+							strCurrentFunction = strLine.Substring(0, intIndex)
+						End If
+
+					End If
+
+					If Not String.IsNullOrEmpty(strCurrentFunction) Then
+						lstFunctions.Add(strCurrentFunction)
+					End If
+
+					If strFinalFile.Length = 0 Then
+						' Also extract the file name where the Exception occurred
+						objMatch = reFileName.Match(strLine)
+						If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
+							strFinalFile = objMatch.Groups(1).Value
+						End If
+					End If
+
+				End If
+			Loop
+
+		End Using
 
 		strStackTrace = String.Empty
-		For intIndex = intFunctionCount - 1 To 0 Step -1
-			If Not strFunctions(intIndex) Is Nothing Then
-				If strStackTrace.Length = 0 Then
-					strStackTrace = "Stack trace: " & strFunctions(intIndex)
-				Else
-					strStackTrace &= "-:-" & strFunctions(intIndex)
-				End If
+		For intIndex = lstFunctions.Count - 1 To 0 Step -1
+			If strStackTrace.Length = 0 Then
+				strStackTrace = "Stack trace: " & lstFunctions(intIndex)
+			Else
+				strStackTrace &= "-:-" & lstFunctions(intIndex)
 			End If
 		Next intIndex
 
-		If Not strStackTrace Is Nothing AndAlso strFinalFile.Length > 0 Then
+		If Not String.IsNullOrEmpty(strStackTrace) AndAlso Not String.IsNullOrWhiteSpace(strFinalFile) Then
 			strStackTrace &= " in " & strFinalFile
 		End If
 
@@ -560,19 +549,16 @@ Public Class clsGlobal
 		' Calculates the MD5 hash of a given file
 		' Code from Tim Hastings, at http://www.nonhostile.com/page000017.asp
 
-		Dim objReader As System.IO.Stream
 		Dim objMD5 As New System.Security.Cryptography.MD5CryptoServiceProvider
 		Dim arrHash() As Byte
 
 		' open file (as read-only)
-		objReader = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
-
-		' hash contents of this stream
-		arrHash = objMD5.ComputeHash(objReader)
+		Using objReader As System.IO.Stream = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+			' hash contents of this stream
+			arrHash = objMD5.ComputeHash(objReader)
+		End Using
 
 		' Cleanup the objects
-		objReader.Close()
-		objReader = Nothing
 		objMD5 = Nothing
 
 		' Return the hash, formatted as a string
@@ -583,19 +569,16 @@ Public Class clsGlobal
 	Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
 		' Calculates the Sha-1 hash of a given file
 
-		Dim objReader As System.IO.Stream
 		Dim objSha1 As New System.Security.Cryptography.SHA1CryptoServiceProvider
 		Dim arrHash() As Byte
 
 		' open file (as read-only)
-		objReader = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
-
-		' hash contents of this stream
-		arrHash = objSha1.ComputeHash(objReader)
+		Using objReader As System.IO.Stream = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+			' hash contents of this stream
+			arrHash = objSha1.ComputeHash(objReader)
+		End Using
 
 		' Cleanup the objects
-		objReader.Close()
-		objReader = Nothing
 		objSha1 = Nothing
 
 		' Return the hash, formatted as a string
