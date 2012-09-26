@@ -756,7 +756,7 @@ Public Class clsAnalysisJob
 			.Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
 			.Parameters.Item("@evaluationMessage").Value = EvalMsg
 
-			.Parameters.Add(New SqlClient.SqlParameter("@organismDBName", SqlDbType.VarChar, 64))
+			.Parameters.Add(New SqlClient.SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
 			.Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
 
 			Dim strValue As String = String.Empty
