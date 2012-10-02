@@ -61,92 +61,116 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DTA_Refinery")
-
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDtaRefinery.RunTool(): Enter")
-        End If
-
-        ' verify that program file exists
-        ' DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
-        Dim progLoc As String = m_mgrParams.GetParam("DTARefineryLoc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then progLoc = "Parameter 'DTARefineryLoc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Dim CmdStr As String
-        CmdStr = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile"))
-        CmdStr &= " " & System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-        CmdStr &= " " & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)
-
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DTA_Refinery")
 		End If
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "DTARefinery", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
 
-            ValidateDTARefineryLogFile()
+		CmdRunner = New clsRunDosProgram(m_WorkDir)
+		With CmdRunner
+			.CreateNoWindow = False
+			.EchoOutputToConsole = False
+			.CacheStandardOutput = False
+			.WriteConsoleOutputToFile = False
+		End With
 
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging DTA_Refinery problems
-            CopyFailedResultsToArchiveFolder()
+		' verify that program file exists
+		' DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
+		Dim progLoc As String = m_mgrParams.GetParam("DTARefineryLoc")
+		If Not System.IO.File.Exists(progLoc) Then
+			If progLoc.Length = 0 Then progLoc = "Parameter 'DTARefineryLoc' not defined for this manager"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file: " & progLoc)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		Dim CmdStr As String
+		CmdStr = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile"))
+		CmdStr &= " " & System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
+		CmdStr &= " " & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName)
 
-        'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+		' Create a batch file to run the command
+		' Capture the console output (including output to the error stream) via redirection symbols: 
+		'    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
 
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
+		Dim strBatchFilePath As String = System.IO.Path.Combine(m_WorkDir, "Run_DTARefinery.bat")
+		Dim strConsoleOutputFileName As String = "DTARefinery_Console_Output.txt"
+		m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strBatchFilePath))
 
-        'Make sure objects are released
-        System.Threading.Thread.Sleep(2000)        '2 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+		Dim strBatchFileCmdLine As String = progLoc & " " & CmdStr & " > " & strConsoleOutputFileName & " 2>&1"
 
-        If Not ValidateDTARefineryLogFile() Then
-            result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-        Else
-            'Zip the output file
-            result = ZipMainOutputFile()
-        End If
+		' Create the batch file
+		Using swBatchFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strBatchFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging DTA_Refinery problems
-            CopyFailedResultsToArchiveFolder()
-            Return result
-        End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strBatchFileCmdLine)
+			End If
 
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
+			swBatchFile.WriteLine(strBatchFileCmdLine)
+		End Using
 
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
+		System.Threading.Thread.Sleep(100)
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+		If Not CmdRunner.RunProgram(strBatchFilePath, String.Empty, "DTARefinery", True) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
 
-    End Function
+			ValidateDTARefineryLogFile()
+
+			' Move the source files and any results to the Failed Job folder
+			' Useful for debugging DTA_Refinery problems
+			CopyFailedResultsToArchiveFolder()
+
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		'Stop the job timer
+		m_StopTime = System.DateTime.UtcNow
+
+		'Add the current job data to the summary file
+		If Not UpdateSummaryFile() Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+		End If
+
+		'Make sure objects are released
+		System.Threading.Thread.Sleep(2000)		   '2 second delay
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+		If Not ValidateDTARefineryLogFile() Then
+			result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+		Else
+			'Zip the output file
+			result = ZipMainOutputFile()
+		End If
+
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			' Move the source files and any results to the Failed Job folder
+			' Useful for debugging DTA_Refinery problems
+			CopyFailedResultsToArchiveFolder()
+			Return result
+		End If
+
+		result = MakeResultsFolder()
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			'TODO: What do we do here?
+			Return result
+		End If
+
+		result = MoveResultFiles()
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			'TODO: What do we do here?
+			' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+			Return result
+		End If
+
+		result = CopyResultsFolderToServer()
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			'TODO: What do we do here?
+			' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+			Return result
+		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'ZipResult
+
+	End Function
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
@@ -358,10 +382,10 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
     End Function
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
+	''' <summary>
+	''' Event handler for CmdRunner.LoopWaiting event
+	''' </summary>
+	''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
