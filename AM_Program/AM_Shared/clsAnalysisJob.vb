@@ -349,6 +349,11 @@ Public Class clsAnalysisJob
 
 		Dim strValue As String = String.Empty
 
+		If String.IsNullOrEmpty(Name) Then
+			' User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
+			Return GetParam(Section)
+		End If
+
 		If TryGetParam(Section, Name, strValue) Then
 			Return strValue
 		Else
