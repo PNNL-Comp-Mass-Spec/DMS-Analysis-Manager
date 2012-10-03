@@ -11,7 +11,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports AnalysisManagerMsXmlGenPlugIn
 
 Public Class clsDtaGenThermoRaw
 	Inherits clsDtaGen
