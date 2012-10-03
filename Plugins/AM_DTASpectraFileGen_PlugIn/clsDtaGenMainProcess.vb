@@ -4,12 +4,14 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
+' Uses DeconMSn or ExtractMSn to create _DTA.txt file from a .Raw file
+
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports AnalysisManagerMsXmlGenPlugIn
 
 Public Class clsDtaGenThermoRaw
 	Inherits clsDtaGen
@@ -20,6 +22,7 @@ Public Class clsDtaGenThermoRaw
 
 #Region "Constants"
 	Protected Const USE_THREADING As Boolean = True
+	Protected Const DEFAULT_SCAN_STOP As Integer = 999999
 #End Region
 
 #Region "Module variables"
@@ -29,8 +32,10 @@ Public Class clsDtaGenThermoRaw
 
 	Protected m_MaxScanInFile As Integer
 	Private m_RunningExtractMSn As Boolean
+	Private m_InstrumentFileName As String = String.Empty
 
 	Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
+
 #End Region
 
 #Region "API Declares"
@@ -60,6 +65,7 @@ Public Class clsDtaGenThermoRaw
 		MyBase.Setup(InitParams)
 
 		m_DtaToolNameLoc = ConstructDTAToolPath()
+
 	End Sub
 
 	''' <summary>
@@ -83,6 +89,8 @@ Public Class clsDtaGenThermoRaw
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
 			Return m_Status
 		End If
+
+		m_InstrumentFileName = m_Dataset & ".raw"
 
 		'Make the DTA files (the process runs in a separate thread)
 		Try
@@ -292,7 +300,7 @@ Public Class clsDtaGenThermoRaw
 
 		'Makes DTA files using extract_msn.exe or DeconMSn.exe
 		Dim CmdStr As String
-		Dim RawFile As String
+		Dim strInstrumentDataFilePath As String
 
 		Dim ScanStart As Integer
 		Dim ScanStop As Integer
@@ -318,12 +326,13 @@ Public Class clsDtaGenThermoRaw
 		End If
 
 		'Get the parameters from the various parameter dictionaries
-		RawFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
+
+		strInstrumentDataFilePath = System.IO.Path.Combine(m_WorkDir, m_InstrumentFileName)
 
 		'Note: Defaults are used if certain parameters are not present in m_JobParams
 
 		ScanStart = m_JobParams.GetJobParameter("ScanStart", CInt(1))
-		ScanStop = m_JobParams.GetJobParameter("ScanStop", CInt(999999))
+		ScanStop = m_JobParams.GetJobParameter("ScanStop", DEFAULT_SCAN_STOP)
 
 		' Note: Set MaxIntermediateScansWhenGrouping to 0 to disable grouping
 		MaxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", CInt(1))
@@ -338,7 +347,16 @@ Public Class clsDtaGenThermoRaw
 		ExplicitChargeEnd = m_JobParams.GetJobParameter("ExplicitChargeEnd", CShort(0))
 
 		'Get the maximum number of scans in the file
-		m_MaxScanInFile = GetMaxScan(RawFile)
+		Dim RawFile As String = String.Copy(strInstrumentDataFilePath)
+		If System.IO.Path.GetExtension(strInstrumentDataFilePath).ToLower() <> clsAnalysisResources.DOT_RAW_EXTENSION Then
+			RawFile = System.IO.Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION)
+		End If
+
+		If System.IO.File.Exists(RawFile) Then
+			m_MaxScanInFile = GetMaxScan(RawFile)
+		Else
+			m_MaxScanInFile = 0
+		End If
 
 		Select Case m_MaxScanInFile
 			Case -1
@@ -428,7 +446,7 @@ Public Class clsDtaGenThermoRaw
 					End If
 
 					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
-					CmdStr &= " -D" & m_WorkDir & " " & RawFile
+					CmdStr &= " -D" & m_WorkDir & " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_InstrumentFileName))
 
 					If m_DebugLevel >= 1 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & CmdStr)
@@ -446,8 +464,12 @@ Public Class clsDtaGenThermoRaw
 							.EchoOutputToConsole = True
 
 							.WriteConsoleOutputToFile = False
-							.ConsoleOutputFilePath = String.Empty	   ' Allow the console output filename to be auto-generated
+							.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "DeconMSn_ConsoleOutput.txt")
+
+							' Need to set the working directory as the same folder as DeconMSn; otherwise, may crash
+							.WorkDir = System.IO.Path.GetDirectoryName(m_DtaToolNameLoc)
 						End If
+
 					End With
 
 					If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then

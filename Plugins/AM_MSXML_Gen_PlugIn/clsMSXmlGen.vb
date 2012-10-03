@@ -17,7 +17,8 @@ Public MustInherit Class clsMSXmlGen
 	Protected mDatasetName As String
 	Protected mOutputType As MSXMLOutputTypeConstants
 
-	Protected mCentroidMSXML As Boolean
+	Protected mCentroidMS1 As Boolean
+	Protected mCentroidMS2 As Boolean
 
 	Protected mUseProgRunnerResultCode As Boolean		' When true, then return an error if the progrunner returns a non-zero exit code
 
@@ -63,7 +64,25 @@ Public MustInherit Class clsMSXmlGen
 		mProgramPath = ProgramPath
 		mDatasetName = DatasetName
 		mOutputType = eOutputType
-		mCentroidMSXML = CentroidMSXML
+		mCentroidMS1 = CentroidMSXML
+		mCentroidMS2 = CentroidMSXML
+
+		mErrorMessage = String.Empty
+	End Sub
+
+	Public Sub New(ByVal WorkDir As String, _
+	   ByVal ProgramPath As String, _
+	   ByVal DatasetName As String, _
+	   ByVal eOutputType As MSXMLOutputTypeConstants, _
+	   ByVal CentroidMS1 As Boolean, _
+	   ByVal CentroidMS2 As Boolean)
+
+		mWorkDir = WorkDir
+		mProgramPath = ProgramPath
+		mDatasetName = DatasetName
+		mOutputType = eOutputType
+		mCentroidMS1 = CentroidMS1
+		mCentroidMS2 = CentroidMS2
 
 		mErrorMessage = String.Empty
 	End Sub
@@ -151,6 +170,60 @@ Public MustInherit Class clsMSXmlGen
 		Return blnSuccess
 
 	End Function
+
+	Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As System.DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
+
+		Dim strSourceFilePath As String = System.IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+		Dim strMsXmlFilePath As String = System.IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+
+		LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMsXmlFilePath)
+
+	End Sub
+
+	Public Sub LogCreationStatsSourceToMsXml(ByVal dtStartTimeUTC As System.DateTime, ByVal strSourceFilePath As String, ByVal strMsXmlFilePath As String)
+
+		Try
+			' Save some stats to the log
+
+			Dim strMessage As String
+			Dim ioFileInfo As System.IO.FileInfo
+			Dim dblSourceFileSizeMB As Double, dblMsXmlSizeMB As Double
+			Dim dblTotalMinutes As Double
+
+			Dim strSourceFileExtension As String = System.IO.Path.GetExtension(strSourceFilePath)
+			Dim strTargetFileExtension As String = System.IO.Path.GetExtension(strMsXmlFilePath)
+
+			dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
+
+			ioFileInfo = New System.IO.FileInfo(strSourceFilePath)
+			If ioFileInfo.Exists Then
+				dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
+			End If
+
+			ioFileInfo = New System.IO.FileInfo(strMsXmlFilePath)
+			If ioFileInfo.Exists Then
+				dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024
+			End If
+
+			strMessage = "MsXml creation time = " & dblTotalMinutes.ToString("0.00") & " minutes"
+
+			If dblTotalMinutes > 0 Then
+				strMessage &= "; Processing rate = " & (dblSourceFileSizeMB / dblTotalMinutes / 60).ToString("0.0") & " MB/second"
+			End If
+
+			strMessage &= "; " & strSourceFileExtension & " file size = " & dblSourceFileSizeMB.ToString("0.0") & " MB"
+			strMessage &= "; " & strTargetFileExtension & " file size = " & dblMsXmlSizeMB.ToString("0.0") & " MB"
+
+			If dblMsXmlSizeMB > 0 Then
+				strMessage &= "; Filesize Ratio = " & (dblMsXmlSizeMB / dblSourceFileSizeMB).ToString("0.00")
+			End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving msXML stats", ex)
+		End Try
+
+	End Sub
 
 	Protected MustOverride Function SetupTool() As Boolean
 

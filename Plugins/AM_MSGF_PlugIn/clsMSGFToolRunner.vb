@@ -696,7 +696,7 @@ Public Class clsMSGFRunner
 		Dim ProgLoc As String
 		Dim CmdStr As String
 
-		Dim dtStartTime As System.DateTime
+		Dim dtStartTimeUTC As System.DateTime
 		Dim strSourceFilePath As String
 
 		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
@@ -745,7 +745,7 @@ Public Class clsMSGFRunner
 		End With
 
 
-		dtStartTime = System.DateTime.UtcNow
+		dtStartTimeUTC = System.DateTime.UtcNow
 
 		If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
 			' .RunProgram returned False
@@ -768,43 +768,7 @@ Public Class clsMSGFRunner
 		End If
 
 		If m_DebugLevel >= 1 Then
-			Try
-				' Save some stats to the log
-
-				Dim strMessage As String
-				Dim ioFileInfo As System.IO.FileInfo
-				Dim dblMzMLSizeMB As Double, dblMzXMLSizeMB As Double
-				Dim dblTotalMinutes As Double
-
-				dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
-
-				ioFileInfo = New System.IO.FileInfo(strSourceFilePath)
-				If ioFileInfo.Exists Then
-					dblMzMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
-				End If
-
-				ioFileInfo = New System.IO.FileInfo(strMzXmlFilePath)
-				If ioFileInfo.Exists Then
-					dblMzXMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
-				End If
-
-				strMessage = "mzXML creation time = " & dblTotalMinutes.ToString("0.00") & " minutes"
-
-				If dblTotalMinutes > 0 Then
-					strMessage &= "; Processing rate = " & (dblMzMLSizeMB / dblTotalMinutes / 60).ToString("0.0") & " MB/second"
-				End If
-
-				strMessage &= "; .mzML file size = " & dblMzMLSizeMB.ToString("0.0") & " MB"
-				strMessage &= "; .mzXML file size = " & dblMzXMLSizeMB.ToString("0.0") & " MB"
-
-				If dblMzXMLSizeMB > 0 Then
-					strMessage &= "; Filesize Ratio = " & (dblMzXMLSizeMB / dblMzMLSizeMB).ToString("0.00")
-				End If
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats", ex)
-			End Try
+			mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMzXmlFilePath)
 		End If
 
 		Return True
@@ -944,7 +908,7 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Private Function CreateMZXMLFile() As Boolean
 
-		Dim dtStartTime As System.DateTime
+		Dim dtStartTimeUTC As System.DateTime
 
 		' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
 		Dim CentroidMSXML As Boolean = True
@@ -995,8 +959,7 @@ Public Class clsMSGFRunner
 			Return False
 		End If
 
-
-		dtStartTime = System.DateTime.UtcNow
+		dtStartTimeUTC = System.DateTime.UtcNow
 
 		' Create the file
 		blnSuccess = mMSXmlGen.CreateMSXMLFile()
@@ -1018,43 +981,7 @@ Public Class clsMSGFRunner
 		End If
 
 		If m_DebugLevel >= 1 Then
-			Try
-				' Save some stats to the log
-
-				Dim strMessage As String
-				Dim ioFileInfo As System.IO.FileInfo
-				Dim dblFileSizeMB As Double, dblXMLSizeMB As Double
-				Dim dblTotalMinutes As Double
-
-				dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
-
-				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
-				If ioFileInfo.Exists Then
-					dblFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
-				End If
-
-				ioFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION))
-				If ioFileInfo.Exists Then
-					dblXMLSizeMB = ioFileInfo.Length / 1024.0 / 1024
-				End If
-
-				strMessage = "mzXML creation time = " & dblTotalMinutes.ToString("0.00") & " minutes"
-
-				If dblTotalMinutes > 0 Then
-					strMessage &= "; Processing rate = " & (dblFileSizeMB / dblTotalMinutes / 60).ToString("0.0") & " MB/second"
-				End If
-
-				strMessage &= "; .Raw file size = " & dblFileSizeMB.ToString("0.0") & " MB"
-				strMessage &= "; .mzXML file size = " & dblXMLSizeMB.ToString("0.0") & " MB"
-
-				If dblFileSizeMB > 0 Then
-					strMessage &= "; Filesize Ratio = " & (dblXMLSizeMB / dblFileSizeMB).ToString("0.00")
-				End If
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving mzXML stats", ex)
-			End Try
+			mMSXmlGen.LogCreationStatsRawToMzXml(dtStartTimeUTC, m_WorkDir, m_Dataset)
 		End If
 
 		Return True

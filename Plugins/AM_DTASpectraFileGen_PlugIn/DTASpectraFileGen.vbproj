@@ -94,6 +94,9 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="AnalysisManagerMsXmlGenPlugIn">
+      <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
+    </Reference>
     <Reference Include="MascotGenericFileToDTA">
       <HintPath>..\..\AM_Common\MascotGenericFileToDTA.dll</HintPath>
     </Reference>

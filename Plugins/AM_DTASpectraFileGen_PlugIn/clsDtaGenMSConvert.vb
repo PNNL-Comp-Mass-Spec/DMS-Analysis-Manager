@@ -16,6 +16,7 @@ Public Class clsDtaGenMSConvert
 
 	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
 
+	Protected mForceCentroidOn As Boolean = False
 	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
 	Protected Structure udtScanInfoType
@@ -23,6 +24,15 @@ Public Class clsDtaGenMSConvert
 		Public ScanEnd As Integer
 		Public Charge As Integer
 	End Structure
+
+	Public Property ForceCentroidOn As Boolean
+		Get
+			Return mForceCentroidOn
+		End Get
+		Set(value As Boolean)
+			mForceCentroidOn = value
+		End Set
+	End Property
 
 	Public Overrides Sub Setup(InitParams As AnalysisManagerBase.ISpectraFileProcessor.InitializationParams)
 		MyBase.Setup(InitParams)
@@ -87,7 +97,7 @@ Public Class clsDtaGenMSConvert
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Private Function ConvertMGFtoDTA() As Boolean
+	Protected Function ConvertMGFtoDTA() As Boolean
 
 		Dim strMGFFilePath As String
 		Dim blnSuccess As Boolean
@@ -143,7 +153,7 @@ Public Class clsDtaGenMSConvert
 
 	''' <summary>
 	''' Create .mgf file using MSConvert
-	''' This functon is called by MakeDTAFilesThreaded
+	''' This function is called by MakeDTAFilesThreaded
 	''' </summary>
 	''' <param name="eRawDataType">Raw data file type</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
@@ -155,6 +165,7 @@ Public Class clsDtaGenMSConvert
 
 		Dim ScanStart As Integer
 		Dim ScanStop As Integer
+		Dim blnLimitingScanRange As Boolean = False
 
 		Dim CentroidMGF As Boolean
 		Dim CentroidPeakCountToRetain As Integer
@@ -179,7 +190,7 @@ Public Class clsDtaGenMSConvert
 		m_JobParams.AddResultFileToSkip(System.IO.Path.GetFileName(RawFilePath))
 
 		ScanStart = 1
-		ScanStop = 999999
+		ScanStop = DEFAULT_SCAN_STOP
 
 		If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
 			'Get the maximum number of scans in the file
@@ -207,6 +218,10 @@ Public Class clsDtaGenMSConvert
 		'Verify max scan specified is in file
 		If m_MaxScanInFile > 0 Then
 			If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
+			If ScanStop < m_MaxScanInFile Then blnLimitingScanRange = True
+			If ScanStart > 1 Then blnLimitingScanRange = True
+		Else
+			If ScanStart > 1 Or ScanStop < DEFAULT_SCAN_STOP Then blnLimitingScanRange = True
 		End If
 
 		'Determine max number of scans to be performed
@@ -218,6 +233,10 @@ Public Class clsDtaGenMSConvert
 		' Lookup Centroid Settings
 		CentroidMGF = m_JobParams.GetJobParameter("CentroidMGF", False)
 		CentroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+
+		If mForceCentroidOn Then
+			CentroidMGF = True
+		End If
 
 		'Set up command
 		CmdStr = " " & RawFilePath
@@ -238,6 +257,10 @@ Public Class clsDtaGenMSConvert
 			End If
 
 			CmdStr &= " --filter ""peakPicking true 1-"" --filter ""threshold count " & CentroidPeakCountToRetain & " most-intense"""
+		End If
+
+		If blnLimitingScanRange Then
+			CmdStr &= " --filter ""scanNumber [" & ScanStart & "," & ScanStop & "]"""
 		End If
 
 		CmdStr &= " --mgf -o " & m_WorkDir
@@ -455,6 +478,7 @@ Public Class clsDtaGenMSConvert
 			End If
 
 			' Delete the original .mgf file and replace it with strNewMGFFile
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			System.Threading.Thread.Sleep(500)
 			clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel)
 			System.Threading.Thread.Sleep(500)

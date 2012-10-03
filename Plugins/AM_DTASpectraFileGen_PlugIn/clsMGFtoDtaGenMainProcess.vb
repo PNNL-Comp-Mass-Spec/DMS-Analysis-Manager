@@ -1,12 +1,8 @@
-' This class creates DTA files using MGF/CDF files generated from Agilent Ion Trap MS/MS data
-' It uses 
+' This class creates DTA files using a MGF file
 ' 
 ' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 ' Started November 2005
-
-'
-'           TODO: UPDATE THIS TO USE MascotGenericFileToDTA.DLL
-'   
+' Re-worked in 2012 to use MascotGenericFileToDTA.dll
 
 Option Strict On
 
@@ -19,31 +15,6 @@ Public Class clsMGFtoDtaGenMainProcess
 	Protected Const USE_THREADING As Boolean = True
 #End Region
 
-#Region "Structures"
-
-	'Private Structure udtSpectrumProcessingOptions
-	'	Public GuesstimateChargeForAllSpectra As Boolean					 ' When True, then tries to guesstimate a charge for all spectra, even those that already have a charge defined
-	'	Public ForceChargeAddnForPredefined2PlusOr3Plus As Boolean		 ' When True, then always adds 2+ and 3+ charge when an existing 2+ or 3+ charge was already defined
-
-	'	Public ThresholdIonPctForSingleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is less than this number, then the charge is definitely 1+
-	'	Public ThresholdIonPctForDoubleCharge As Single			' Number between 0 and 100; if the percentage of ions greater than the parent ion m/z is greater than this number, then the charge is definitely 2+ or higher
-
-	'	Public MaximumIonsPerSpectrum As Integer					' Set to 0 to use all data; if greater than 0, then data will be sorted on decreasing intensity and the top x ions will be retained
-	'End Structure
-
-	' The following is used to keep track of options the user might set via the interface functions
-	' If a parameter file is defined in this class, then it will be passed to objFilterSpectra
-	' If the parameter file has a section named "filteroptions" then any options defined there will override this values
-	'Private Structure udtFilterSpectraOptionsType
-	'	Public FilterSpectra As Boolean
-	'	Public MinimumParentIonMZ As Single
-	'	Public MinimumStandardMassSpacingIonPairs As Integer
-	'	Public IonPairMassToleranceHalfWidthDa As Single
-	'	Public NoiseLevelIntensityThreshold As Single
-	'	Public DataPointCountToConsider As Integer
-	'End Structure
-#End Region
-
 #Region "Module variables"
 	Private m_thThread As System.Threading.Thread
 
@@ -54,10 +25,6 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private mScanStop As Integer
 	Private mMWLower As Single
 	Private mMWUpper As Single
-
-	' Spectrum processing and filtering options
-	'Private mSpectrumProcessingOptions As udtSpectrumProcessingOptions
-	'Private mFilterSpectraOptions As udtFilterSpectraOptionsType
 
 #End Region
 

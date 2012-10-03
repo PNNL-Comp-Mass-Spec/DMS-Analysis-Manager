@@ -33,24 +33,24 @@ Public Class clsMSXMLGenReadW
             ' Version 2.x syntax
             ' Syntax is: readw <raw file path> <c/p> [<output file>]
 
-            If mCentroidMSXML Then
-                ' Centroiding is enabled
-                CmdStr = " " & RawFilePath & " c"
-            Else
-                CmdStr = " " & RawFilePath & " p"
-            End If
+			If mCentroidMS1 OrElse mCentroidMS2 Then
+				' Centroiding is enabled
+				CmdStr = " " & RawFilePath & " c"
+			Else
+				CmdStr = " " & RawFilePath & " p"
+			End If
 
         Else
             ' Version 3 or higher
             ' Syntax is ReAdW [options] <raw file path> [<output file>]
             '  where Options will include --mzXML and possibly -c
 
-            If mCentroidMSXML Then
-                ' Centroiding is enabled
-                CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
-            Else
-                CmdStr = " --" & msXmlFormat & " " & RawFilePath
-            End If
+			If mCentroidMS1 OrElse mCentroidMS2 Then
+				' Centroiding is enabled
+				CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
+			Else
+				CmdStr = " --" & msXmlFormat & " " & RawFilePath
+			End If
         End If
     
 

@@ -21,7 +21,9 @@ Public MustInherit Class clsDtaGen
 	Protected m_WorkDir As String = String.Empty	'Working directory on analysis machine
 	Protected m_Dataset As String = String.Empty
 	Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
-	Protected m_DtaToolNameLoc As String = ""		' Path to the program used to create DTA files
+
+	Protected m_DtaToolNameLoc As String = String.Empty				' Path to the program used to create DTA files
+
 	Protected m_Status As ISpectraFileProcessor.ProcessStatus
 	Protected m_Results As ISpectraFileProcessor.ProcessResults
 	Protected m_MgrParams As IMgrParams

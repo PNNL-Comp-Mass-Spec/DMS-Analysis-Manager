@@ -12,20 +12,20 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsMSXmlGenMSConvert
-    Inherits clsMSXmlGen
+	Inherits clsMSXmlGen
 
-	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 150
+	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
 
 	Protected mCentroidPeakCountToRetain As Integer
 
 #Region "Methods"
 
 	Public Sub New(ByVal WorkDir As String, _
-				   ByVal MSConvertProgramPath As String, _
-				   ByVal DatasetName As String, _
-				   ByVal eOutputType As MSXMLOutputTypeConstants, _
-				   ByVal CentroidMSXML As Boolean, _
-				   ByVal CentroidPeakCountToRetain As Integer)
+	   ByVal MSConvertProgramPath As String, _
+	   ByVal DatasetName As String, _
+	   ByVal eOutputType As MSXMLOutputTypeConstants, _
+	   ByVal CentroidMSXML As Boolean, _
+	   ByVal CentroidPeakCountToRetain As Integer)
 
 		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, eOutputType, CentroidMSXML)
 
@@ -35,14 +35,29 @@ Public Class clsMSXmlGenMSConvert
 
 	End Sub
 
-    
-    Protected Overrides Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
+	Public Sub New(ByVal WorkDir As String, _
+	   ByVal MSConvertProgramPath As String, _
+	   ByVal DatasetName As String, _
+	   ByVal eOutputType As MSXMLOutputTypeConstants, _
+	   ByVal CentroidMS1 As Boolean, _
+	   ByVal CentroidMS2 As Boolean, _
+	   ByVal CentroidPeakCountToRetain As Integer)
 
-        Dim CmdStr As String
+		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, eOutputType, CentroidMS1, CentroidMS2)
+
+		mCentroidPeakCountToRetain = CentroidPeakCountToRetain
+
+		mUseProgRunnerResultCode = False
+
+	End Sub
+
+	Protected Overrides Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
+
+		Dim CmdStr As String
 
 		CmdStr = " " & RawFilePath
 
-		If mCentroidMSXML Then
+		If mCentroidMS1 OrElse mCentroidMS2 Then
 			' Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
 			' Syntax details:
 			'   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
@@ -51,22 +66,30 @@ Public Class clsMSXmlGenMSConvert
 			' So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
 			' --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
 
+			If mCentroidMS1 And Not mCentroidMS2 Then
+				CmdStr &= " --filter ""peakPicking true 1"""
+			ElseIf Not mCentroidMS1 And mCentroidMS2 Then
+				CmdStr &= " --filter ""peakPicking true 2-"""
+			Else
+				CmdStr &= " --filter ""peakPicking true 1-"""
+			End If
+
 			If mCentroidPeakCountToRetain = 0 Then
 				mCentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
 			ElseIf mCentroidPeakCountToRetain < 25 Then
 				mCentroidPeakCountToRetain = 25
 			End If
 
-			CmdStr &= " --filter ""peakPicking true 1-"" --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
+			CmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
 		End If
 
-		CmdStr &= " --" & msXmlFormat & " -o " & mWorkDir
+		CmdStr &= " --" & msXmlFormat & " --32 -o " & mWorkDir
 
 		Return CmdStr
 
-    End Function
+	End Function
 
-    Protected Overrides Function SetupTool() As Boolean
+	Protected Overrides Function SetupTool() As Boolean
 
 		' Tool setup for MSConvert involves creating a
 		'  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
@@ -77,7 +100,7 @@ Public Class clsMSXmlGenMSConvert
 
 		Return objProteowizardTools.RegisterProteoWizard()
 
-    End Function
+	End Function
 
 #End Region
 

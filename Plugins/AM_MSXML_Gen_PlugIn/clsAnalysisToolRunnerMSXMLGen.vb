@@ -102,6 +102,8 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 		Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")				' Typically mzXML or mzML
 		Dim CentroidMSXML As Boolean
+		Dim CentroidMS1 As Boolean
+		Dim CentroidMS2 As Boolean
 		Dim CentroidPeakCountToRetain As Integer
 
 		Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
@@ -122,6 +124,13 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 		' Lookup Centroid Settings
 		CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
+		If CentroidMSXML Then
+			CentroidMS1 = True
+			CentroidMS1 = True
+		Else
+			CentroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
+			CentroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
+		End If
 		CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 
 		If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
@@ -134,12 +143,12 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			' ReadW
 			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML)
+			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMS1 Or CentroidMS2)
 
 		ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
 			' MSConvert
 
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMS1, CentroidMS2, CentroidPeakCountToRetain)
 
 		Else
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unsupported XmlGenerator: " & msXmlGenerator)
