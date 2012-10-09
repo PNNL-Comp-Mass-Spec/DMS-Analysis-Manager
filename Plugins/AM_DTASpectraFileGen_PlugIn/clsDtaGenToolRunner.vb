@@ -394,6 +394,7 @@ Public Class clsDtaGenToolRunner
 			Dim fiCDTA As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & CDTA_FILE_SUFFIX))
 			If Not fiCDTA.Exists() Then
 				m_message = "File not found in CentroidCDTA: " & fiCDTA.Name
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 			End If
 
@@ -442,6 +443,7 @@ Public Class clsDtaGenToolRunner
 			Dim fiCDTA As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & CDTA_FILE_SUFFIX))
 			If Not fiCDTA.Exists() Then
 				m_message = "File not found in CentroidCDTA (after calling clsDtaGenMSConvert): " & fiCDTA.Name
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
 			End If
 
@@ -492,13 +494,24 @@ Public Class clsDtaGenToolRunner
 
 		' Packages dta files into concatenated text files
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
+		' Make sure at least one .dta file was created
+		Dim diWorkDir As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(m_WorkDir)
+		Dim intDTACount As Integer = diWorkDir.GetFiles("*.dta").Length
 
-		Dim ConcatTools As New clsConcatToolWrapper(m_WorkDir)
+		If intDTACount = 0 Then
+			m_message = "No .DTA files were created"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " for job " & m_JobNum)
+			Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+		ElseIf m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
+		End If
+
+
+		Dim ConcatTools As New clsConcatToolWrapper(diWorkDir.FullName)
 
 		If Not ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error packaging results: " & ConcatTools.ErrMsg & ", job " & m_JobNum & ", step " & m_StepNum)
 			m_message = clsGlobal.AppendToComment(m_message, "Error packaging results: " & ConcatTools.ErrMsg)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum & ", step " & m_StepNum)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -695,8 +708,8 @@ Public Class clsDtaGenToolRunner
 
 		Dim RetVal As ISpectraFileProcessor.ProcessStatus = oDTAGenerator.Start
 		If RetVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner." & strCallingFunction & ": Error starting spectra processor: " & oDTAGenerator.ErrMsg)
-			m_message = clsGlobal.AppendToComment(m_message, "Error starting spectra processor: " & oDTAGenerator.ErrMsg)
+			m_message = "Error starting spectra processor: " & oDTAGenerator.ErrMsg
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner." & strCallingFunction & ": " & m_message)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
