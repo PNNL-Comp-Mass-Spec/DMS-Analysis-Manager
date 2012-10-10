@@ -1,0 +1,63 @@
+2010-11-09 18:54:47,116 [9] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (PipelineToGetLocalFileList)
+2010-11-09 18:54:47,248 [6] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList started...
+2010-11-09 18:54:47,310 [6] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList completed...
+2010-11-09 18:54:59,047 [9] INFO  TraceLog [(null)] - Building pipeline 'PipelineToFilterSelectedfiles'
+2010-11-09 18:54:59,051 [9] INFO  TraceLog [(null)] - Added module 'Selected Files' (PipelineToFilterSelectedfiles)
+2010-11-09 18:54:59,055 [9] INFO  TraceLog [(null)] - Added module 'Broker' (PipelineToFilterSelectedfiles)
+2010-11-09 18:54:59,057 [9] INFO  TraceLog [(null)] - Connected input of module 'Broker' to output of module 'Selected Files (PipelineToFilterSelectedfiles)
+2010-11-09 18:54:59,058 [9] INFO  TraceLog [(null)] - Added module 'Manifest File Writer' (PipelineToFilterSelectedfiles)
+2010-11-09 18:54:59,059 [9] INFO  TraceLog [(null)] - Connected input of module 'Manifest File Writer' to output of module 'Broker (PipelineToFilterSelectedfiles)
+2010-11-09 18:54:59,061 [6] INFO  TraceLog [(null)] - Pipeline PipelineToFilterSelectedfiles started...
+2010-11-09 18:54:59,072 [6] INFO  TraceLog [(null)] - Building pipeline 'FileProcessingPipeline'
+2010-11-09 18:54:59,073 [6] INFO  TraceLog [(null)] - Added module 'Reader' (FileProcessingPipeline)
+2010-11-09 18:54:59,075 [6] INFO  TraceLog [(null)] - Added module 'Filter' (FileProcessingPipeline)
+2010-11-09 18:54:59,076 [6] INFO  TraceLog [(null)] - Connected input of module 'Filter' to output of module 'Reader (FileProcessingPipeline)
+2010-11-09 18:54:59,076 [6] INFO  TraceLog [(null)] - Added module 'Writer' (FileProcessingPipeline)
+2010-11-09 18:54:59,077 [6] INFO  TraceLog [(null)] - Connected input of module 'Writer' to output of module 'Filter (FileProcessingPipeline)
+2010-11-09 18:54:59,078 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline started...
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline completed...
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Building pipeline 'FileProcessingPipeline'
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Added module 'Reader' (FileProcessingPipeline)
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Added module 'Filter' (FileProcessingPipeline)
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Connected input of module 'Filter' to output of module 'Reader (FileProcessingPipeline)
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Added module 'Writer' (FileProcessingPipeline)
+2010-11-09 18:54:59,100 [6] INFO  TraceLog [(null)] - Connected input of module 'Writer' to output of module 'Filter (FileProcessingPipeline)
+2010-11-09 18:54:59,101 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline started...
+2010-11-09 18:54:59,143 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline completed...
+2010-11-09 18:54:59,143 [6] INFO  TraceLog [(null)] - Building pipeline 'FileProcessingPipeline'
+2010-11-09 18:54:59,143 [6] INFO  TraceLog [(null)] - Added module 'Reader' (FileProcessingPipeline)
+2010-11-09 18:54:59,143 [6] INFO  TraceLog [(null)] - Added module 'Filter' (FileProcessingPipeline)
+2010-11-09 18:54:59,144 [6] INFO  TraceLog [(null)] - Connected input of module 'Filter' to output of module 'Reader (FileProcessingPipeline)
+2010-11-09 18:54:59,144 [6] INFO  TraceLog [(null)] - Added module 'Writer' (FileProcessingPipeline)
+2010-11-09 18:54:59,144 [6] INFO  TraceLog [(null)] - Connected input of module 'Writer' to output of module 'Filter (FileProcessingPipeline)
+2010-11-09 18:54:59,145 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline started...
+2010-11-09 18:54:59,176 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline completed...
+2010-11-09 18:54:59,176 [6] INFO  TraceLog [(null)] - Building pipeline 'FileProcessingPipeline'
+2010-11-09 18:54:59,176 [6] INFO  TraceLog [(null)] - Added module 'Reader' (FileProcessingPipeline)
+2010-11-09 18:54:59,176 [6] INFO  TraceLog [(null)] - Added module 'Filter' (FileProcessingPipeline)
+2010-11-09 18:54:59,176 [6] INFO  TraceLog [(null)] - Connected input of module 'Filter' to output of module 'Reader (FileProcessingPipeline)
+2010-11-09 18:54:59,177 [6] INFO  TraceLog [(null)] - Added module 'Writer' (FileProcessingPipeline)
+2010-11-09 18:54:59,177 [6] INFO  TraceLog [(null)] - Connected input of module 'Writer' to output of module 'Filter (FileProcessingPipeline)
+2010-11-09 18:54:59,177 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline started...
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline completed...
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Building pipeline 'FileProcessingPipeline'
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Added module 'Reader' (FileProcessingPipeline)
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Added module 'Filter' (FileProcessingPipeline)
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Connected input of module 'Filter' to output of module 'Reader (FileProcessingPipeline)
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Added module 'Writer' (FileProcessingPipeline)
+2010-11-09 18:54:59,186 [6] INFO  TraceLog [(null)] - Connected input of module 'Writer' to output of module 'Filter (FileProcessingPipeline)
+2010-11-09 18:54:59,187 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline started...
+2010-11-09 18:54:59,217 [6] INFO  TraceLog [(null)] - Pipeline FileProcessingPipeline completed...
+2010-11-09 18:54:59,219 [6] INFO  TraceLog [(null)] - Pipeline PipelineToFilterSelectedfiles completed...
+2010-11-10 05:19:16,320 [1] INFO  TraceLog [(null)] - Starting
+2010-11-10 05:26:17,089 [1] INFO  TraceLog [(null)] - Building pipeline 'PipelineToGetLocalFileList'
+2010-11-10 05:26:17,099 [1] INFO  TraceLog [(null)] - Added module 'Reader' (PipelineToGetLocalFileList)
+2010-11-10 05:26:17,104 [1] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (PipelineToGetLocalFileList)
+2010-11-10 05:26:17,137 [5] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList started...
+2010-11-10 05:26:17,216 [5] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList completed...
+2010-11-10 13:37:42,649 [1] INFO  TraceLog [(null)] - Starting
+2010-11-10 13:37:44,149 [1] INFO  TraceLog [(null)] - Building pipeline 'PipelineToGetLocalFileList'
+2010-11-10 13:37:44,158 [1] INFO  TraceLog [(null)] - Added module 'Reader' (PipelineToGetLocalFileList)
+2010-11-10 13:37:44,163 [1] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (PipelineToGetLocalFileList)
+2010-11-10 13:37:44,174 [5] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList started...
+2010-11-10 13:37:44,241 [5] INFO  TraceLog [(null)] - Pipeline PipelineToGetLocalFileList completed...

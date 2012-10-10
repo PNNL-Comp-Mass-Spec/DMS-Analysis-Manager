@@ -1,0 +1,56 @@
+2010-11-10 05:11:24,352 [6] INFO  TraceLog [(null)] - Pipeline FileListPipeline started...
+2010-11-10 05:11:24,603 [6] INFO  TraceLog [(null)] - Pipeline FileListPipeline completed...
+2010-11-10 05:19:37,680 [1] INFO  TraceLog [(null)] - Starting
+2010-11-10 05:36:25,270 [1] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 05:36:25,277 [1] INFO  TraceLog [(null)] - Added module 'Reader' (JobQueryPipeline)
+2010-11-10 05:36:25,283 [1] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (JobQueryPipeline)
+2010-11-10 05:36:25,295 [5] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline started...
+2010-11-10 05:36:25,955 [5] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get column info finish (00:00:00.0230023):SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 05:36:26,053 [5] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get data finish (00:00:00.0970097) [156]:SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 05:36:26,054 [5] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline completed...
+2010-11-10 05:41:13,714 [1] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 05:41:13,715 [1] INFO  TraceLog [(null)] - Added module 'Reader' (JobQueryPipeline)
+2010-11-10 05:41:13,728 [1] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (JobQueryPipeline)
+2010-11-10 05:41:13,731 [6] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline started...
+2010-11-10 05:41:13,809 [6] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get column info finish (00:00:00.0100010):SELECT * FROM V_Mage_Data_Package_Analysis_Jobs  WHERE  Data_Package_ID = 183 
+2010-11-10 05:41:13,854 [6] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get data finish (00:00:00.0450045) [12]:SELECT * FROM V_Mage_Data_Package_Analysis_Jobs  WHERE  Data_Package_ID = 183 
+2010-11-10 05:41:13,855 [6] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline completed...
+2010-11-10 05:49:04,916 [1] INFO  TraceLog [(null)] - Building pipeline 'FileListPipeline'
+2010-11-10 05:49:04,921 [1] INFO  TraceLog [(null)] - Added module 'Selected Items' (FileListPipeline)
+2010-11-10 05:49:04,923 [1] INFO  TraceLog [(null)] - Added module 'File Filter' (FileListPipeline)
+2010-11-10 05:49:04,925 [1] INFO  TraceLog [(null)] - Connected input of module 'File Filter' to output of module 'Selected Items (FileListPipeline)
+2010-11-10 05:49:04,926 [1] INFO  TraceLog [(null)] - Connected external handler to module 'File Filter' (FileListPipeline)
+2010-11-10 05:49:04,931 [5] INFO  TraceLog [(null)] - Pipeline FileListPipeline started...
+2010-11-10 05:49:05,373 [5] INFO  TraceLog [(null)] - Pipeline FileListPipeline completed...
+2010-11-10 05:49:20,322 [1] INFO  TraceLog [(null)] - Building pipeline 'FileListPipeline'
+2010-11-10 05:49:20,322 [1] INFO  TraceLog [(null)] - Added module 'Selected Items' (FileListPipeline)
+2010-11-10 05:49:20,322 [1] INFO  TraceLog [(null)] - Added module 'File Filter' (FileListPipeline)
+2010-11-10 05:49:20,322 [1] INFO  TraceLog [(null)] - Connected input of module 'File Filter' to output of module 'Selected Items (FileListPipeline)
+2010-11-10 05:49:20,327 [1] INFO  TraceLog [(null)] - Connected external handler to module 'File Filter' (FileListPipeline)
+2010-11-10 05:49:20,328 [5] INFO  TraceLog [(null)] - Pipeline FileListPipeline started...
+2010-11-10 05:49:20,622 [5] INFO  TraceLog [(null)] - Pipeline FileListPipeline completed...
+2010-11-10 07:02:37,972 [1] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 07:02:37,972 [1] INFO  TraceLog [(null)] - Added module 'Reader' (JobQueryPipeline)
+2010-11-10 07:02:37,984 [1] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (JobQueryPipeline)
+2010-11-10 07:02:37,986 [5] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline started...
+2010-11-10 07:02:38,449 [5] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get column info finish (00:00:00.0090009):SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 07:02:38,540 [5] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get data finish (00:00:00.0910091) [156]:SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 07:02:38,541 [5] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline completed...
+2010-11-10 08:03:39,696 [9] INFO  TraceLog [(null)] - Starting
+2010-11-10 08:03:48,044 [9] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 08:05:39,764 [9] INFO  TraceLog [(null)] - Starting
+2010-11-10 08:08:36,929 [9] INFO  TraceLog [(null)] - Starting
+2010-11-10 08:10:23,471 [9] INFO  TraceLog [(null)] - Starting
+2010-11-10 08:14:14,779 [10] INFO  TraceLog [(null)] - Starting
+2010-11-10 08:14:34,015 [10] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 08:14:35,216 [10] INFO  TraceLog [(null)] - Added module 'Reader' (JobQueryPipeline)
+2010-11-10 08:14:35,927 [10] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (JobQueryPipeline)
+2010-11-10 09:02:12,029 [9] INFO  TraceLog [(null)] - Starting
+2010-11-10 09:02:13,463 [9] INFO  TraceLog [(null)] - Building pipeline 'JobQueryPipeline'
+2010-11-10 09:02:13,471 [9] INFO  TraceLog [(null)] - Added module 'Reader' (JobQueryPipeline)
+2010-11-10 09:02:13,477 [9] INFO  TraceLog [(null)] - Connected external handler to module 'Reader' (JobQueryPipeline)
+2010-11-10 09:02:13,493 [3] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline started...
+2010-11-10 09:02:13,782 [3] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get column info finish (00:00:00.0200020):SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 09:02:13,885 [3] INFO  TraceLog [(null)] - MSSQLReader.GetData --> Get data finish (00:00:00.1020102) [156]:SELECT * FROM V_Mage_Analysis_Jobs  WHERE  Dataset LIKE '%sarc_ms%' 
+2010-11-10 09:02:13,886 [3] INFO  TraceLog [(null)] - Pipeline JobQueryPipeline completed...
+2010-11-10 15:05:57,740 [1] INFO  TraceLog [(null)] - Starting
