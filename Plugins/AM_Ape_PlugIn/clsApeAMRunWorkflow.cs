@@ -59,7 +59,8 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!_shouldExit)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape");
+							mErrorMessage = "Error running Ape";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
                             blnSuccess = false;
                         }
                     }

@@ -101,47 +101,63 @@ namespace AnalysisManager_Ape_PlugIn
             string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
             //mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
 			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, 3, dotnetConnString, GetJobIDList(), apeDatabase, mHandle);
+			string jobList = GetJobIDList();
+			if (string.IsNullOrEmpty(jobList))
+			{
+				return false;
+			}
+
+			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.AMTTagDbJobs, dotnetConnString, jobList, apeDatabase, mHandle);
 
             return blnSuccess;
         }
 
-        private string GetExperimentList()
-        {
-            string constr = RequireMgrParam("connectionstring");
-            string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + GetJobParam("DataPackageID");
-            string expList = string.Empty;
-            using (SqlConnection conn = new SqlConnection(constr))
-            {
-                conn.Open();
-                // Get the experiments from the Data Package
-                SqlCommand query = new SqlCommand(sqlText, conn);
-                using (SqlDataReader reader = query.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        if (!string.IsNullOrEmpty(reader[0].ToString()))
-                        {
-                        expList += reader[0].ToString() + ", ";
-                        }
-                    }
-                }
-            }
+		// Unused function
+		//private string GetExperimentList()
+		//{
+		//    string constr = RequireMgrParam("connectionstring");
+		//    string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + GetJobParam("DataPackageID");
+		//    string expList = string.Empty;
+		//    using (SqlConnection conn = new SqlConnection(constr))
+		//    {
+		//        conn.Open();
+		//        // Get the experiments from the Data Package
+		//        SqlCommand query = new SqlCommand(sqlText, conn);
+		//        using (SqlDataReader reader = query.ExecuteReader())
+		//        {
+		//            while (reader.Read())
+		//            {
+		//                if (!string.IsNullOrEmpty(reader[0].ToString()))
+		//                {
+		//                expList += reader[0].ToString() + ", ";
+		//                }
+		//            }
+		//        }
+		//    }
 
-            return expList;
-        }
+		//    return expList;
+		//}
 
         private string GetJobIDList()
         {
             string constr = RequireMgrParam("connectionstring");
-            string sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
-                             "WHERE Data_Package_ID = " + GetJobParam("DataPackageID") + " and Tool = 'Sequest'";
+			string dataPackageID = GetJobParam("DataPackageID");
 
-            string expList = string.Empty;
+			if (string.IsNullOrEmpty(dataPackageID))
+			{
+				mErrorMessage = "Data Package ID not defined via job parameter dataPackageID";
+				return string.Empty;
+			}
+
+            string sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
+							 "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
+
+            string jobList = string.Empty;
+			int intJobCount = 0;
             using (SqlConnection conn = new SqlConnection(constr))
             {
                 conn.Open();
-                // Get the experiments from the Data Package
+                // Get the matching jobs from the Data Package
                 SqlCommand query = new SqlCommand(sqlText, conn);
                 using (SqlDataReader reader = query.ExecuteReader())
                 {
@@ -149,15 +165,25 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            expList += reader[0].ToString() + ", ";
+                            jobList += reader[0].ToString() + ", ";
+							intJobCount += 1;
                         }
                     }
                 }
             }
 
-            return expList;
-        }
+			if (string.IsNullOrEmpty(jobList))
+			{
+				mErrorMessage = "Jobs not found via query " + sqlText;
+			}
+			else
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intJobCount + " jobs in clsApeAMGetImprovResults");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Job list: " + jobList);
+			}
 
+            return jobList;
+        }
 
     }
 	

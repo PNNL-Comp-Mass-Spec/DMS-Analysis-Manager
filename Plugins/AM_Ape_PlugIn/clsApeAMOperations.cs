@@ -11,6 +11,17 @@ namespace AnalysisManager_Ape_PlugIn
         protected IJobParams m_jobParams;
 
         protected IMgrParams m_mgrParams;
+		
+		private string mErrorMessage = string.Empty;
+
+		#endregion
+
+		#region "Properties"
+
+		public string ErrorMessage
+		{
+			get { return mErrorMessage; }
+		}
 
         #endregion
 
@@ -59,6 +70,9 @@ namespace AnalysisManager_Ape_PlugIn
 
                     blnSuccess = apeWfObj.RunWorkflow(m_jobParams.GetParam("DataPackageID"));
 
+					if (!blnSuccess)
+						mErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
+
                     break;
 
                 case "getimprovresults":
@@ -68,6 +82,9 @@ namespace AnalysisManager_Ape_PlugIn
                     apeImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
 
                     blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
+
+					if (!blnSuccess)
+						mErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
 
                     break;
 
@@ -79,6 +96,9 @@ namespace AnalysisManager_Ape_PlugIn
 
                     blnSuccess = apeQImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
 
+					if (!blnSuccess)
+						mErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
+
                     break;
 
                 case "getviperresults":
@@ -89,12 +109,14 @@ namespace AnalysisManager_Ape_PlugIn
 
                     blnSuccess = apeVImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
 
+					if (!blnSuccess)
+						mErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
+
                     break;
 
                 default:
                     blnSuccess = false;
-                    //m_message = "Ape Operation: " + apeOperation + "not recognized.";
-                    // Future: throw an error
+					mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";                    
                     break;
             }
             return blnSuccess;

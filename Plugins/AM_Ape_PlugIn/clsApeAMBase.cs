@@ -12,14 +12,38 @@ namespace AnalysisManager_Ape_PlugIn
 			public delegate void ProgressChangedEventHandler(object sender, ProgressChangedEventArgs e);
 		#endregion
 
-        #region Member Variables
-        protected string mResultsDBFileName = "";
+		#region Enums
+			public enum eSqlServerToSqlLiteConversionMode
+			{
+				ViperResults=0,
+				PTDB=1,
+				AMTTagDBAll=2,
+				AMTTagDbJobs=3,
+				ImproveDB=4,
+				QRollupResults=5
+			}
+
+		#endregion
+
+		#region Member Variables
+		protected string mResultsDBFileName = "";
 
         protected string mWorkingDir;
 
         protected IJobParams mJobParms;
 
         protected IMgrParams mMgrParms;
+
+		protected string mErrorMessage = string.Empty;
+
+		#endregion
+
+		#region "Properties"
+
+		public string ErrorMessage
+		{
+			get { return mErrorMessage; }
+		}
 
         #endregion
 		
