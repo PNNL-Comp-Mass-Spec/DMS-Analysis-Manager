@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
 	Public Sub New()
-		mFileDate = "September 15, 2011"
+		mFileDate = "October 25, 2012"
 		mErrorCode = eProcessFilesErrorCodes.NoError
 		mProgressStepDescription = String.Empty
 
@@ -531,12 +531,11 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 				intMatchCount = 0
 				For Each ioFileMatch As System.IO.FileInfo In ioFolderInfo.GetFiles(strInputFilePath)
+					intMatchCount += 1
 
 					blnSuccess = ProcessFile(ioFileMatch.FullName, strOutputFolderPath, strParameterFilePath, blnResetErrorCode)
 
 					If Not blnSuccess OrElse mAbortProcessing Then Exit For
-					intMatchCount += 1
-
 					If intMatchCount Mod 100 = 0 Then Console.Write(".")
 
 				Next ioFileMatch

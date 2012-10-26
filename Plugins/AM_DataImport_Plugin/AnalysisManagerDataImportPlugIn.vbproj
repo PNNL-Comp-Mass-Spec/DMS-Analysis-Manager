@@ -79,7 +79,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
-copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
+copy "$(TargetName).dll" "$(ProjectDir)..\..\AM_Program\bin"
+copy "$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

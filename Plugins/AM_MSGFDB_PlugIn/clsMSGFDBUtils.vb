@@ -341,6 +341,7 @@ Public Class clsMSGFDBUtils
 						WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
 
 						' Write the decoy protein
+						' Future ToDo: Switch from REV_ to XXX_
 						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & "REV_" & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
 						WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
 					End If
