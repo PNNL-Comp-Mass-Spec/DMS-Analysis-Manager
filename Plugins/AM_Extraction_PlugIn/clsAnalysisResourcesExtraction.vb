@@ -24,6 +24,7 @@ Public Class clsAnalysisResourcesExtraction
 #End Region
 
 #Region "Module variables"
+	Protected mRetrieveOrganismDB As Boolean
 #End Region
 
 #Region "Events"
@@ -40,6 +41,10 @@ Public Class clsAnalysisResourcesExtraction
 	''' <remarks></remarks>
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+		' Set this to true for now
+		' It will be changed to False if processing MSGFDB results and the _PepToProtMap.txt file is successfully retrieved
+		mRetrieveOrganismDB = True
+
 		'Get analysis results files
 		If GetInputFiles(m_jobParams.GetParam("ResultType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -49,6 +54,14 @@ Public Class clsAnalysisResourcesExtraction
 		If RetrieveMiscFiles() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
+
+		If mRetrieveOrganismDB Then
+			' Retrieve the Fasta file; required to create the _ProteinMods.txt file
+			If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		End If
+
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -99,6 +112,7 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileExtensionToSkip("_out.txt") 'Unzipped, concatenated OUT
 					m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 					m_jobParams.AddResultFileExtensionToSkip(".out")  'DTA files
+					m_jobParams.AddResultFileExtensionToSkip("_PepToProtMapMTS.txt") ' Created by the PeptideToProteinMapEngine when creating the _ProteinMods.txt file
 
 				Case "XT_Peptide_Hit"
 					FileToGet = strDataset & "_xt.zip"
@@ -157,6 +171,9 @@ Public Class clsAnalysisResourcesExtraction
 						Else
 							Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
 						End If
+					Else
+						' The OrgDB (aka fasta file) is not required
+						mRetrieveOrganismDB = False
 					End If
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
@@ -184,7 +201,11 @@ Public Class clsAnalysisResourcesExtraction
 						Else
 							Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 						End If
+					Else
+						' The OrgDB (aka fasta file) is not required
+						mRetrieveOrganismDB = False
 					End If
+
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles

@@ -73,101 +73,86 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String) As IJobParams.CloseOutType
-        '  Let the DLL auto-determines the input filename, based on the dataset name
-        Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True)
-    End Function
+	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, ByVal FastaFilePath As String) As IJobParams.CloseOutType
+		'  Let the DLL auto-determines the input filename, based on the dataset name
+		Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True, FastaFilePath)
+	End Function
 
-    ''' <summary>
-    ''' Converts Sequest, X!Tandem, or Inspect output file to a flat file
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
-                                           ByVal CreateInspectFirstHitsFile As Boolean, _
-                                           ByVal CreateInspectSynopsisFile As Boolean) As IJobParams.CloseOutType
+	''' <summary>
+	''' Converts Sequest, X!Tandem, or Inspect output file to a flat file
+	''' </summary>
+	''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+	''' <remarks></remarks>
+	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
+	  ByVal CreateInspectFirstHitsFile As Boolean, _
+	  ByVal CreateInspectSynopsisFile As Boolean, _
+	  ByVal FastaFilePath As String) As IJobParams.CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+		Dim ModDefsFileName As String
+		Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
 
-        result = MakeTextOutputFiles(PeptideSearchResultsFileName, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+		Dim ioInputFile As System.IO.FileInfo
 
-        Return result
-
-    End Function
-
-
-    ''' <summary>
-    ''' Makes flat text file from PeptideSearchResultsFileName
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function MakeTextOutputFiles(ByVal PeptideSearchResultsFileName As String, _
-                                         ByVal CreateInspectFirstHitsFile As Boolean, _
-                                         ByVal CreateInspectSynopsisFile As Boolean) As IJobParams.CloseOutType
-
-        Dim ModDefsFileName As String
-        Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
-
-        Dim ioInputFile As System.IO.FileInfo
-
-        Dim CmdStr As String
+		Dim CmdStr As String
 		Dim blnSuccess As Boolean
 
-        Try
-            m_Progress = 0
-            m_ErrMsg = String.Empty
+		Try
+			m_Progress = 0
+			m_ErrMsg = String.Empty
 
-            If String.IsNullOrWhiteSpace(PeptideSearchResultsFileName) Then
-                m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue"
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-            End If
+			If String.IsNullOrWhiteSpace(PeptideSearchResultsFileName) Then
+				m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue"
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
 
-            ' Define the modification definitions file name
-            ModDefsFileName = System.IO.Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
+			' Define the modification definitions file name
+			ModDefsFileName = System.IO.Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
 
-            ioInputFile = New System.IO.FileInfo(PeptideSearchResultsFileName)
-            m_PHRPConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
+			ioInputFile = New System.IO.FileInfo(PeptideSearchResultsFileName)
+			m_PHRPConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
 			CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
 
-            Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
-            progLoc = System.IO.Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
+			Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
+			progLoc = System.IO.Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
 
-            ' verify that program file exists
-            If Not System.IO.File.Exists(progLoc) Then
-                m_ErrMsg = "PHRP not found at " & progLoc
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+			' verify that program file exists
+			If Not System.IO.File.Exists(progLoc) Then
+				m_ErrMsg = "PHRP not found at " & progLoc
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-            ' Set up and execute a program runner to run the PHRP
-            ' Note that /SynPvalue is only used when processing Inspect files
-            CmdStr = ioInputFile.FullName & _
-                     " /O:" & ioInputFile.DirectoryName & _
-                     " /M:" & ModDefsFileName & _
-                     " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
-                     " /N:" & ParamFileName & _
-                     " /SynPvalue:0.2"
+			' Set up and execute a program runner to run the PHRP
+			' Note that /SynPvalue is only used when processing Inspect files
+			CmdStr = ioInputFile.FullName & _
+					 " /O:" & ioInputFile.DirectoryName & _
+					 " /M:" & ModDefsFileName & _
+					 " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
+					 " /N:" & ParamFileName & _
+					 " /SynPvalue:0.2" & _
+					 " /ProteinMods"
 
-            ' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
-            ' Thus, we only need to use these switches if either or these should be false
-            If Not CreateInspectFirstHitsFile Or Not CreateInspectSynopsisFile Then
-                CmdStr &= " /InsFHT:" & CreateInspectFirstHitsFile.ToString()
-                CmdStr &= " /InsSyn:" & CreateInspectSynopsisFile.ToString()
-            End If
+			If Not String.IsNullOrEmpty(FastaFilePath) Then
+				CmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(FastaFilePath)
+			End If
+
+			' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
+			' Thus, we only need to use these switches if either or these should be false
+			If Not CreateInspectFirstHitsFile Or Not CreateInspectSynopsisFile Then
+				CmdStr &= " /InsFHT:" & CreateInspectFirstHitsFile.ToString()
+				CmdStr &= " /InsSyn:" & CreateInspectSynopsisFile.ToString()
+			End If
 
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
 			End If
 
-            With CmdRunner
-                .CreateNoWindow = True
+			With CmdRunner
+				.CreateNoWindow = True
 				.CacheStandardOutput = True
 				.EchoOutputToConsole = True
 
-                .WriteConsoleOutputToFile = True
+				.WriteConsoleOutputToFile = True
 				.ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
 			End With
 
@@ -189,7 +174,7 @@ Public Class clsPepHitResultsProcWrapper
 				End Using
 			End If
 
-			If Not blnsuccess Then
+			If Not blnSuccess Then
 				m_ErrMsg = "Error running PHRP"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -240,6 +225,7 @@ Public Class clsPepHitResultsProcWrapper
 					lstFilesToCheck.Add("_SeqToProteinMap.txt")
 					lstFilesToCheck.Add("_ModSummary.txt")
 					lstFilesToCheck.Add("_ModDetails.txt")
+					lstFilesToCheck.Add("_ProteinMods.txt")
 				End If
 
 				For Each strFileName As String In lstFilesToCheck
@@ -265,13 +251,13 @@ Public Class clsPepHitResultsProcWrapper
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-        If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete")
-        End If
+		If m_DebugLevel >= 3 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete")
+		End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-    End Function
+	End Function
 
     Private Sub ParsePHRPConsoleOutputFile()
         Static reProcessing As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Processing: (\d+)")

@@ -156,7 +156,7 @@ Public Class clsPeptideExtractWrapper
 		Finally
 			'Make sure no stray objects are hanging around
 			m_ExtractTools = Nothing
-			System.Threading.Thread.Sleep(2000)	'Delay 2 seconds, then clean up processes
+			System.Threading.Thread.Sleep(1000)	'Delay 1 second, then clean up processes
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		End Try
 
@@ -165,7 +165,7 @@ Public Class clsPeptideExtractWrapper
 	Private Function TestOutputSynFile() As IJobParams.CloseOutType
 
 		'Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
-		Dim WorkFile As String = ""
+		Dim WorkFile As String = String.Empty
 		Dim FoundFile As Boolean = False
 
 		'Test for presence of _syn.txt file

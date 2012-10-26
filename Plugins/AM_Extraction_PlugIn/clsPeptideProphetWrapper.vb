@@ -26,12 +26,12 @@ Public Class clsPeptideProphetWrapper
 #End Region
 
 #Region "Module variables"
-    Private m_PeptideProphetRunnerLocation As String = ""
-    Private m_ErrMsg As String = ""
+	Private m_PeptideProphetRunnerLocation As String = String.Empty
+	Private m_ErrMsg As String = String.Empty
     Private m_DebugLevel As Short = 1
-    Private m_InputFile As String = ""
-    Private m_OutputFolderPath As String = ""
-    Private m_Enzyme As String = ""
+	Private m_InputFile As String = String.Empty
+	Private m_OutputFolderPath As String = String.Empty
+	Private m_Enzyme As String = String.Empty
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 

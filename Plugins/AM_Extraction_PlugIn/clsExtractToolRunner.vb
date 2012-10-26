@@ -28,6 +28,7 @@ Public Class clsExtractToolRunner
 #Region "Module variables"
     Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
 	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
+	Protected mGeneratedFastaFilePath As String
 #End Region
 
 #Region "Properties"
@@ -41,9 +42,12 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 		Dim Result As IJobParams.CloseOutType
 		Dim eReturnCode As IJobParams.CloseOutType
+
+		Dim OrgDbDir As String
+		Dim FastaFileName As String
 
 		Dim blnProcessingError As Boolean
 
@@ -58,6 +62,17 @@ Public Class clsExtractToolRunner
 				m_message = "Error determining version of Data Extraction tools"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
+
+			' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+			FastaFileName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
+			If String.IsNullOrEmpty(FastaFileName) Then
+				mGeneratedFastaFilePath = String.Empty
+			Else
+				mGeneratedFastaFilePath = System.IO.Path.Combine(OrgDbDir, FastaFileName)
+			End If
+
 
 			Select Case m_jobParams.GetParam("ResultType")
 				Case "Peptide_Hit"	'Sequest result type
@@ -187,13 +202,13 @@ Public Class clsExtractToolRunner
 
 			Result = CopyResultsFolderToServer()
 			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'TODO: What do we do here?
+				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 				Return Result
 			End If
 
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunTool(); Exception running extraction tool: " & _
-				ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -211,7 +226,7 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Private Function PerformPeptideExtraction() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 		Dim Result As IJobParams.CloseOutType
 		Dim PepExtractTool As New clsPeptideExtractWrapper(m_mgrParams, m_jobParams, m_StatusTools)
 
@@ -255,7 +270,7 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Private Function RunPhrpForSequest() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 		Dim Result As IJobParams.CloseOutType
 		Dim strSynFilePath As String = String.Empty
 
@@ -270,7 +285,7 @@ Public Class clsExtractToolRunner
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
 			strSynFilePath = String.Copy(strTargetFilePath)
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
 
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
@@ -300,7 +315,7 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForXTandem() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 		Dim Result As IJobParams.CloseOutType
 		Dim strSynFilePath As String = String.Empty
 
@@ -315,7 +330,7 @@ Public Class clsExtractToolRunner
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
 
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
@@ -344,7 +359,7 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 
 		Dim CreateMSGFDBFirstHitsFile As Boolean
 		Dim CreateMSGFDBSynopsisFile As Boolean
@@ -372,7 +387,7 @@ Public Class clsExtractToolRunner
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -409,7 +424,7 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForInSpecT() As IJobParams.CloseOutType
 
-		Dim Msg As String = ""
+		Dim Msg As String = String.Empty
 
 		Dim CreateInspectFirstHitsFile As Boolean
 		Dim CreateInspectSynopsisFile As Boolean
@@ -445,7 +460,7 @@ Public Class clsExtractToolRunner
 			CreateInspectFirstHitsFile = True
 			CreateInspectSynopsisFile = False
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -474,7 +489,7 @@ Public Class clsExtractToolRunner
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_syn.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -720,7 +735,7 @@ Public Class clsExtractToolRunner
 	Private Sub DeleteTemporaryFiles(ByVal strFileList() As String)
 		Dim intFileIndex As Integer
 
-		System.Threading.Thread.Sleep(2000)					   'Delay for 2 seconds
+		System.Threading.Thread.Sleep(1000)					   'Delay for 1 second
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Delete each file in strFileList
