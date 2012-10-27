@@ -231,7 +231,7 @@ Public Class clsMSGFResultsSummarizer
 			Using objReader As clsPHRPReader = New clsPHRPReader(strFirstHitsFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=False)
 				While objReader.MoveNext()
 
-					Dim objPSM As PHRPReader.clsPSM
+					Dim objPSM As clsPSM
 					objPSM = objReader.CurrentPSM
 
 					If objPSM.Charge >= 0 Then
@@ -290,13 +290,13 @@ Public Class clsMSGFResultsSummarizer
 		End If
 
 		If blnSuccess Then
-			Dim objReader As PHRPReader.clsPHRPSeqMapReader
+			Dim objReader As clsPHRPSeqMapReader
 			Dim lstResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, Integer) = Nothing
-			Dim lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo)) = Nothing
-			Dim lstSeqInfo As System.Collections.Generic.SortedList(Of Integer, PHRPReader.clsSeqInfo) = Nothing
+			Dim lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of clsProteinInfo)) = Nothing
+			Dim lstSeqInfo As System.Collections.Generic.SortedList(Of Integer, clsSeqInfo) = Nothing
 
 			' Load the protein information and associate with the data in lstFilteredPSMs
-			objReader = New PHRPReader.clsPHRPSeqMapReader(mDatasetName, mWorkDir, mResultType)
+			objReader = New clsPHRPSeqMapReader(mDatasetName, mWorkDir, mResultType)
 			blnSuccess = objReader.GetProteinMapping(lstResultToSeqMap, lstSeqToProteinMap, lstSeqInfo)
 
 			If blnSuccess Then
@@ -662,11 +662,11 @@ Public Class clsMSGFResultsSummarizer
 
 		Try
 
-			Using objPHRPReader As New PHRPReader.clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=True)
+			Using objPHRPReader As New clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=True)
 
 				Do While objPHRPReader.MoveNext()
 
-					Dim objPSM As PHRPReader.clsPSM
+					Dim objPSM As clsPSM
 					objPSM = objPHRPReader.CurrentPSM
 
 					If Double.TryParse(objPSM.MSGFSpecProb, dblSpecProb) Then
@@ -779,7 +779,7 @@ Public Class clsMSGFResultsSummarizer
 	Protected Function SummarizeResults(ByVal blnUsingMSGFFilter As Boolean, _
 	  ByRef lstFilteredPSMs As System.Collections.Generic.Dictionary(Of Integer, udtPSMInfoType), _
 	  ByRef lstResultToSeqMap As System.Collections.Generic.SortedList(Of Integer, Integer), _
-	  ByRef lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo))) As Boolean
+	  ByRef lstSeqToProteinMap As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of clsProteinInfo))) As Boolean
 
 		' lstPSMs only contains the filter-passing results (keys are ResultID, values are the first protein for each ResultID)
 		' Link up with lstResultToSeqMap to determine the unique number of filter-passing peptides
@@ -792,7 +792,7 @@ Public Class clsMSGFResultsSummarizer
 		Dim lstUniqueProteins As System.Collections.Generic.Dictionary(Of String, Integer)
 
 		Dim intObsCount As Integer
-		Dim lstProteins As System.Collections.Generic.List(Of PHRPReader.clsProteinInfo) = Nothing
+		Dim lstProteins As System.Collections.Generic.List(Of clsProteinInfo) = Nothing
 
 		Try
 			lstUniqueSequences = New System.Collections.Generic.Dictionary(Of Integer, Integer)
@@ -814,7 +814,7 @@ Public Class clsMSGFResultsSummarizer
 					If lstSeqToProteinMap.TryGetValue(intSeqID, lstProteins) Then
 						' Update the observation count for each protein
 
-						For Each objProtein As PHRPReader.clsProteinInfo In lstProteins
+						For Each objProtein As clsProteinInfo In lstProteins
 
 							If lstUniqueProteins.TryGetValue(objProtein.ProteinName, intObsCount) Then
 								lstUniqueProteins(objProtein.ProteinName) = intObsCount + 1
@@ -838,7 +838,7 @@ Public Class clsMSGFResultsSummarizer
 				mFDRBasedCounts.TotalPSMs = lstFilteredPSMs.Count
 				mFDRBasedCounts.UniquePeptideCount = lstUniqueSequences.Count
 				mFDRBasedCounts.UniqueProteinCount = lstUniqueProteins.Count
-			End If			
+			End If
 
 		Catch ex As Exception
 			SetErrorMessage("Exception summarizing results: " & ex.Message)

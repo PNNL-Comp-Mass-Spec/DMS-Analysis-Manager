@@ -48,6 +48,31 @@ Public Class clsGlobal
 
 	End Function
 
+	Public Shared Function CollapseLine(ByRef strSplitLine() As String) As String
+		Dim sbText As New System.Text.StringBuilder(1024)
+
+		If strSplitLine.Length > 0 Then
+			sbText.Append(strSplitLine(0))
+			For intIndex As Integer = 1 To strSplitLine.Length - 1
+				sbText.Append(ControlChars.Tab & strSplitLine(intIndex))
+			Next
+		End If
+
+		Return sbText.ToString()
+	End Function
+
+	Public Shared Function CollapseList(lstFields As System.Collections.Generic.List(Of String)) As String
+		Dim sbText As New System.Text.StringBuilder
+
+		For Each item As String In lstFields
+			If sbText.Length > 0 Then sbText.Append(ControlChars.Tab)
+			sbText.Append(item)
+		Next
+
+		Return sbText.ToString()
+
+	End Function
+
 	''' <summary>
 	''' Returns the directory in which the entry assembly (typically the Program .exe file) residues 
 	''' </summary>

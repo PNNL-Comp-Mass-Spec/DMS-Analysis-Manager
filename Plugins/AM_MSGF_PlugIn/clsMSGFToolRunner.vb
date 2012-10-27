@@ -347,8 +347,7 @@ Public Class clsMSGFRunner
 			End If
 
 		Catch ex As System.Exception
-			Msg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & _
-			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			Msg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1253,6 +1252,10 @@ Public Class clsMSGFRunner
 			blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile()
 		End If
 
+		If blnSuccess And eResultType <> clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+			blnSuccess = UpdateProteinModsFile(eResultType, strMSGFResultsFilePath)
+		End If
+
 		If blnTooManyErrors Then
 			Return False
 		Else
@@ -2050,6 +2053,80 @@ Public Class clsMSGFRunner
 
 	End Function
 
+	Protected Function LoadMSGFResults(ByVal strMSGFResultsFilePath As String, ByRef lstMSGFResults As System.Collections.Generic.Dictionary(Of Integer, String)) As Boolean
+
+		Dim strLineIn As String
+		Dim strSplitLine() As String
+		Dim intMSGFSpecProbColIndex As Integer
+
+		Dim intResultID As Integer
+
+		Dim blnSuccess As Boolean = False
+
+		Try
+			If lstMSGFResults Is Nothing Then
+				lstMSGFResults = New System.Collections.Generic.Dictionary(Of Integer, String)
+			Else
+				lstMSGFResults.Clear()
+			End If
+
+			intMSGFSpecProbColIndex = -1
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				Do While srInFile.Peek > -1
+					strLineIn = srInFile.ReadLine()
+
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						strSplitLine = strLineIn.Split()
+
+						If strSplitLine.Length > 0 Then
+							If intMSGFSpecProbColIndex < 0 Then
+								' Assume this is the headerline, look for SpecProb
+								For intIndex As Integer = 0 To strSplitLine.Length - 1
+									If strSplitLine(intIndex).ToLower() = "SpecProb".ToLower() Then
+										intMSGFSpecProbColIndex = intIndex
+										Exit For
+									End If
+								Next
+
+								If intMSGFSpecProbColIndex < 0 Then
+									' Match not found; abort
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "SpecProb column not found in file " & strMSGFResultsFilePath)
+									blnSuccess = False
+									Exit Do
+								End If
+							Else
+								' Data line
+								If Integer.TryParse(strSplitLine(0), intResultID) Then
+
+									If intMSGFSpecProbColIndex < strSplitLine.Length Then
+										Try
+											lstMSGFResults.Add(intResultID, strSplitLine(intMSGFSpecProbColIndex))
+										Catch ex As Exception
+											' Ignore errors here
+											' Possibly a key violation or a column index issue
+										End Try
+									End If
+
+								End If
+							End If
+						End If
+					End If
+
+				Loop
+
+			End Using
+
+			blnSuccess = True
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in LoadMSGFResults: " & ex.Message)
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
 
 	''' <summary>
 	''' Parse the MSGF console output file to determine the MSGF version
@@ -2072,39 +2149,38 @@ Public Class clsMSGFRunner
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
 			End If
 
-			Dim srInFile As System.IO.StreamReader
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+				intLinesRead = 0
+				Do While srInFile.Peek() > -1
+					strLineIn = srInFile.ReadLine()
+					intLinesRead += 1
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					If intLinesRead = 1 Then
-						' The first line is the MSGF version
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+						If intLinesRead = 1 Then
+							' The first line is the MSGF version
 
-						If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
-						End If
-
-						mMSGFVersion = String.Copy(strLineIn)
-
-					Else
-						If strLineIn.ToLower.Contains("error") Then
-							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running MSGF:"
+							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
 							End If
-							mConsoleOutputErrorMsg &= "; " & strLineIn
+
+							mMSGFVersion = String.Copy(strLineIn)
+
+						Else
+							If strLineIn.ToLower.Contains("error") Then
+								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+									mConsoleOutputErrorMsg = "Error running MSGF:"
+								End If
+								mConsoleOutputErrorMsg &= "; " & strLineIn
+							End If
 						End If
 					End If
-				End If
-			Loop
+				Loop
 
-			srInFile.Close()
+			End Using
 
 		Catch ex As Exception
 			' Ignore errors here
@@ -2140,7 +2216,7 @@ Public Class clsMSGFRunner
 				udtThisSegment.Entries = 0
 				udtThisSegment.Segment = 0
 
-				Do While srInFile.Peek >= 0
+				Do While srInFile.Peek > -1
 					strLineIn = srInFile.ReadLine()
 					intLinesRead += 1
 
@@ -2309,7 +2385,9 @@ Public Class clsMSGFRunner
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception summarizing the MSGF results: " & ex.Message)
+			Msg = "Exception summarizing the MSGF results"
+			m_message = clsGlobal.AppendToComment(m_message, Msg)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
 			Return False
 		End Try
 
@@ -2364,6 +2442,133 @@ Public Class clsMSGFRunner
 			End If
 		End Try
 	End Sub
+
+	Protected Function UpdateProteinModsFile(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
+		Dim Msg As String
+
+		Dim fiProteinModsFile As System.IO.FileInfo
+		Dim fiProteinModsFileNew As System.IO.FileInfo
+		Dim strLineIn As String
+		Dim strSplitLine() As String
+
+		Dim lstMSGFResults As System.Collections.Generic.Dictionary(Of Integer, String)
+
+		Dim intMSGFSpecProbColIndex As Integer
+		Dim intResultID As Integer
+		Dim strMSGFSpecProb As String = String.Empty
+		Dim dblValue As Double
+
+		Dim blnSuccess As Boolean
+
+		Try
+			fiProteinModsFile = New System.IO.FileInfo(IO.Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)))
+			fiProteinModsFileNew = New System.IO.FileInfo(fiProteinModsFile.FullName & ".tmp")
+
+			If Not fiProteinModsFile.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PHRP ProteinMods.txt file not found: " & fiProteinModsFile.Name)
+				blnSuccess = True
+			Else
+				lstMSGFResults = New System.Collections.Generic.Dictionary(Of Integer, String)
+				blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, lstMSGFResults)
+				If Not blnSuccess Then
+					Return False
+				End If
+
+				intMSGFSpecProbColIndex = -1
+				blnSuccess = True
+
+				Using srSource As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiProteinModsFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+					Using swTarget As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(fiProteinModsFileNew.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+						Do While srSource.Peek > -1
+							strLineIn = srSource.ReadLine()
+
+							If String.IsNullOrEmpty(strLineIn) Then
+								swTarget.WriteLine()
+							Else
+								strSplitLine = strLineIn.Split()
+
+								If strSplitLine.Length <= 0 Then
+									swTarget.WriteLine()
+								Else
+
+									If intMSGFSpecProbColIndex < 0 Then
+										' Assume this is the headerline, look for MSGF_SpecProb
+										For intIndex As Integer = 0 To strSplitLine.Length - 1
+											If strSplitLine(intIndex).ToLower() = "MSGF_SpecProb".ToLower() Then
+												intMSGFSpecProbColIndex = intIndex
+												Exit For
+											End If
+										Next
+
+										If intMSGFSpecProbColIndex < 0 Then
+											' Match not found; abort
+											blnSuccess = False
+											Exit Do
+										End If
+									Else
+										' Data line; determine the ResultID
+										If Integer.TryParse(strSplitLine(0), intResultID) Then
+
+											' Lookup the MSGFSpecProb value for this ResultID
+											If lstMSGFResults.TryGetValue(intResultID, strMSGFSpecProb) Then
+												' Only update the value if strMSGFSpecProb is a number
+												If Double.TryParse(strMSGFSpecProb, dblValue) Then
+													strSplitLine(intMSGFSpecProbColIndex) = strMSGFSpecProb
+												End If
+											End If
+										End If
+									End If
+
+									swTarget.WriteLine(clsGlobal.CollapseLine(strSplitLine))
+								End If
+							End If
+
+						Loop
+					End Using
+				End Using
+
+				If blnSuccess Then
+					' Replace the original file with the new one
+					System.Threading.Thread.Sleep(200)
+					PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+					Try
+						fiProteinModsFile.Delete()
+
+						Try
+							fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName)
+							If m_DebugLevel >= 2 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Updated MSGF_SpecProb values in the ProteinMods.txt file")
+							End If
+
+							blnSuccess = True
+						Catch ex As Exception
+							Msg = "Error updating the ProteinMods.txt file; cannot rename new version"
+							m_message = clsGlobal.AppendToComment(m_message, Msg)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
+							Return False
+						End Try
+
+					Catch ex As Exception
+						Msg = "Error updating the ProteinMods.txt file; cannot delete old version"
+						m_message = clsGlobal.AppendToComment(m_message, Msg)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
+						Return False
+					End Try
+
+				End If
+			End If
+
+		Catch ex As Exception
+			Msg = "Exception updating the ProteinMods.txt file"
+			m_message = clsGlobal.AppendToComment(m_message, Msg)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return blnSuccess
+
+	End Function
 
 #End Region
 

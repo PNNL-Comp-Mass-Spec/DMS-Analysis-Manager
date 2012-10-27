@@ -139,6 +139,15 @@ Public Class clsAnalysisResourcesMSGF
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			m_jobParams.AddResultFileToSkip(FileToGet)
+
+			' Also copy the _ProteinMods.txt file
+			FileToGet = clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_DatasetName)
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				' Ignore this error; we don't really need this file
+			Else
+				m_jobParams.AddResultFileToSkip(FileToGet)
+			End If
+
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
