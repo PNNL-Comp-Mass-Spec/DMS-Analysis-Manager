@@ -1,7 +1,6 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
+﻿Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{E9BEC2A6-8F33-4D5C-8C75-E27742B09355}") = "AnalysisManagerIDPickerPlugIn", "AnalysisManagerIDPickerPlugIn.vbproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerIDPickerPlugIn", "AnalysisManagerIDPickerPlugIn.vbproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
