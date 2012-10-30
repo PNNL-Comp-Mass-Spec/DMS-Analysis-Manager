@@ -145,7 +145,7 @@ Public Class clsAnalysisResourcesMSGF
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				' Ignore this error; we don't really need this file
 			Else
-				m_jobParams.AddResultFileToSkip(FileToGet)
+				m_jobParams.AddResultFileToKeep(FileToGet)
 			End If
 
 		End If
