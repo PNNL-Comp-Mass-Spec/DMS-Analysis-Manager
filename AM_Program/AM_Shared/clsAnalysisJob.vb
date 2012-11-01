@@ -120,7 +120,7 @@ Public Class clsAnalysisJob
 	End Sub
 
 	''' <summary>
-	''' Adds a parameter to the class
+	''' Adds (or updates) a job parameter
 	''' </summary>
 	''' <param name="SectionName">Section name for parameter</param>
 	''' <param name="ParamName">Name of parameter</param>

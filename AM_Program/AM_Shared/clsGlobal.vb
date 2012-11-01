@@ -402,7 +402,7 @@ Public Class clsGlobal
 
 		'If input object is DbNull, returns "", otherwise returns String representation of object
 		If InpObj Is DBNull.Value Then
-			Return ""
+			Return String.Empty
 		Else
 			Return CStr(InpObj)
 		End If

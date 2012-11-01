@@ -75,6 +75,9 @@
     <Reference Include="ParamFileGenerator">
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM, Version=2.1.4520.23090, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
