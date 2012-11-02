@@ -78,8 +78,9 @@ Public Class clsMSGFRunner
 	Protected mMSGFVersion As String = String.Empty
 	Protected mMSGFProgLoc As String = String.Empty
 
-	Protected mMSXmlGeneratorExe As String = String.Empty			' ReadW.exe or MSConvert.exe (code will assume MSConvert.exe if an empty string)
 	Protected mMSXmlGeneratorAppPath As String = String.Empty
+
+	Protected WithEvents mMSXmlCreator As clsMSXMLCreator
 
 	Protected mUsingMSGFDB As Boolean = True
 	Protected mMSGFDBVersion As String = "Unknown"
@@ -88,7 +89,6 @@ Public Class clsMSGFRunner
 
 	Protected mConsoleOutputErrorMsg As String
 
-	Protected WithEvents mMSXmlGen As clsMSXmlGen
 	Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
 	Protected WithEvents mMSGFRunner As clsRunDosProgram
 
@@ -214,7 +214,7 @@ Public Class clsMSGFRunner
 					Else
 						' Create the .mzXML file
 						' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
-						blnSuccess = CreateMZXMLFile()
+						blnSuccess = CreateMzXMLFile()
 					End If
 
 					If Not blnSuccess Then
@@ -691,86 +691,24 @@ Public Class clsMSGFRunner
 
 	Protected Function ConvertMzMLToMzXML() As Boolean
 
-		Dim oProgRunner As clsRunDosProgram
-		Dim ProgLoc As String
-		Dim CmdStr As String
-
-		Dim dtStartTimeUTC As System.DateTime
-		Dim strSourceFilePath As String
+		Dim blnSuccess As Boolean
 
 		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
-		' mzXML filename is dataset plus .mzXML
-		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+		blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML()
 
-		If System.IO.File.Exists(strMzXmlFilePath) Then
-			' File already exists; nothing to do
-			Return True
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+			m_message = mMSXmlCreator.ErrorMessage
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Unknown error creating the mzXML file"
+			End If
 		End If
 
-		strSourceFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
-		m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strSourceFilePath))
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
 
-		Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-		ProgLoc = System.IO.Path.Combine(ProteoWizardDir, "msconvert.exe")
-		If Not System.IO.File.Exists(ProgLoc) Then
-			m_message = "MSConvert not found; unable to convert .mzML file to .mzXML"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ProgLoc)
-			Return False
-		End If
-
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset & " using " & System.IO.Path.GetFileName(strSourceFilePath))
-		End If
-
-		'Setup a program runner tool to call MSConvert
-		oProgRunner = New clsRunDosProgram(m_WorkDir)
-
-		'Set up command
-		CmdStr = " " & PossiblyQuotePath(strSourceFilePath) & " --mzXML -o " & m_WorkDir
-
-		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ProgLoc & " " & CmdStr)
-		End If
-
-		With oProgRunner
-			.CreateNoWindow = True
-			.CacheStandardOutput = True
-			.EchoOutputToConsole = True
-
-			.WriteConsoleOutputToFile = False
-			.ConsoleOutputFilePath = String.Empty	   ' Allow the console output filename to be auto-generated
-		End With
-
-
-		dtStartTimeUTC = System.DateTime.UtcNow
-
-		If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
-			' .RunProgram returned False
-			m_message = "Error running " & System.IO.Path.GetFileNameWithoutExtension(ProgLoc) & " to convert the .mzML file to a .mzXML file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
-
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... mzXML file created")
-		End If
-
-		' Validate that the .mzXML file was actually created
-		If Not System.IO.File.Exists(strMzXmlFilePath) Then
-			m_message = ".mzXML file was not created by MSConvert"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMzXmlFilePath)
-			Return False
-		Else
-			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strMzXmlFilePath))
-		End If
-
-		If m_DebugLevel >= 1 Then
-			mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMzXmlFilePath)
-		End If
-
-		Return True
+		Return blnSuccess
 
 	End Function
 
@@ -900,90 +838,25 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	''' <summary>
-	''' Generate the mzXML
-	''' </summary>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
-	Private Function CreateMZXMLFile() As Boolean
-
-		Dim dtStartTimeUTC As System.DateTime
-
-		' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
-		Dim CentroidMSXML As Boolean = True
-
-		Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
+	Protected Function CreateMzXMLFile() As Boolean
 
 		Dim blnSuccess As Boolean
 
 		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
-		' mzXML filename is dataset plus .mzXML
-		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+		blnSuccess = mMSXmlCreator.CreateMZXMLFile()
 
-		If System.IO.File.Exists(strMzXmlFilePath) Then
-			' File already exists; nothing to do
-			Return True
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+			m_message = mMSXmlCreator.ErrorMessage
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Unknown error creating the mzXML file"
+			End If
 		End If
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the .mzXML file for " & m_Dataset)
-		End If
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-		eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
-
-		' Instantiate the processing class
-		' Note that mMSXmlGeneratorExe and mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo()
-		' mMSXmlGeneratorExe comes from m_jobParams.GetParam("MSXMLGenerator")
-
-		If mMSXmlGeneratorExe.ToLower().Contains("readw") Then
-			' ReadW
-			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
-
-			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML)
-
-		ElseIf mMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
-			' MSConvert
-
-			' Lookup Centroid Settings
-			CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", True)
-			Dim CentroidPeakCountToRetain As Integer = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
-
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
-
-		Else
-			m_message = "Unsupported XmlGenerator: " & mMSXmlGeneratorExe
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
-
-		dtStartTimeUTC = System.DateTime.UtcNow
-
-		' Create the file
-		blnSuccess = mMSXmlGen.CreateMSXMLFile()
-
-		If Not blnSuccess Then
-			m_message = mMSXmlGen.ErrorMessage
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
-			Return False
-
-		ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mMSXmlGen.ErrorMessage)
-		End If
-
-		' Validate that the .mzXML file was actually created
-		If Not System.IO.File.Exists(strMzXmlFilePath) Then
-			m_message = ".mzXML file was not created by " & mMSXmlGeneratorExe
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strMzXmlFilePath)
-			Return False
-		End If
-
-		If m_DebugLevel >= 1 Then
-			mMSXmlGen.LogCreationStatsRawToMzXml(dtStartTimeUTC, m_WorkDir, m_Dataset)
-		End If
-
-		Return True
+		Return blnSuccess
 
 	End Function
 
@@ -1010,46 +883,11 @@ Public Class clsMSGFRunner
 			Return False
 		End If
 
-		' Determine the path to the XML Generator
-		mMSXmlGeneratorExe = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
-
-		If String.IsNullOrEmpty(mMSXmlGeneratorExe) Then
-			' Assume we're using MSConvert
-			mMSXmlGeneratorExe = "MSConvert.exe"
-		End If
-
-		mMSXmlGeneratorAppPath = String.Empty
-		If mMSXmlGeneratorExe.ToLower().Contains("readw") Then
-			' ReadW
-			' Note that msXmlGenerator will likely be ReAdW.exe
-			mMSXmlGeneratorAppPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", mMSXmlGeneratorExe)
-
-		ElseIf mMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
-			' MSConvert
-			Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-			mMSXmlGeneratorAppPath = System.IO.Path.Combine(ProteoWizardDir, mMSXmlGeneratorExe)
-
-		Else
-			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+		mMSXmlGeneratorAppPath = MyBase.GetMSXmlGeneratorAppPath()
 
 		Return True
 
 	End Function
-
-	Protected Sub DeleteTemporaryfile(ByVal strFilePath As String)
-
-		Try
-			If System.IO.File.Exists(strFilePath) Then
-				System.IO.File.Delete(strFilePath)
-			End If
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strFilePath, ex)
-		End Try
-
-	End Sub
 
 	Protected Function DetermineMSGFProgramLocation(ByRef blnUsingMSGFDB As Boolean) As String
 
@@ -2574,11 +2412,19 @@ Public Class clsMSGFRunner
 
 #Region "Event Handlers"
 
-	''' <summary>
-	''' Event handler for MSXmlGenReadW.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
+	Private Sub mMSXmlCreator_DebugEvent(Message As String) Handles mMSXmlCreator.DebugEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Message)
+	End Sub
+
+	Private Sub mMSXmlCreator_ErrorEvent(Message As String) Handles mMSXmlCreator.ErrorEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
+	End Sub
+
+	Private Sub mMSXmlCreator_WarningEvent(Message As String) Handles mMSXmlCreator.WarningEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
+	End Sub
+
+	Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
 		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
 		' Synchronize the stored Debug level with the value stored in the database
@@ -2591,15 +2437,6 @@ Public Class clsMSGFRunner
 			m_progress = PROGRESS_PCT_MSXML_GEN_RUNNING
 			m_StatusTools.UpdateAndWrite(m_progress)
 		End If
-	End Sub
-
-	''' <summary>
-	''' Event handler for mMSXmlGen.ProgRunnerStarting event
-	''' </summary>
-	''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-	''' <remarks></remarks>
-	Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
 	End Sub
 
 	''' <summary>

@@ -117,6 +117,7 @@ Public MustInherit Class clsAnalysisResources
 		Public DatasetID As Integer
 		Public Tool As String
 		Public ResultType As String
+		Public PeptideHitResultType As clsPHRPReader.ePeptideHitResultType
 		Public OrganismDBName As String
 		Public SettingsFileName As String
 		Public ParameterFileName As String
@@ -1617,7 +1618,12 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-
+	''' <summary>
+	''' Lookups up dataset information the data package associated with this analysis job
+	''' </summary>
+	''' <param name="dctDataPackageJobs"></param>
+	''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
+	''' <remarks></remarks>
 	Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
 		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
@@ -1633,14 +1639,16 @@ Public MustInherit Class clsAnalysisResources
 	''' <summary>
 	''' Lookups up dataset information for a data package
 	''' </summary>
-	''' <param name="dctDataPackageJobs"></param>
+	''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+	''' <param name="DataPackageID">Data Package ID</param>
+	''' <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Public Shared Function LoadDataPackageJobInfo(ByVal ConnectionString As String, DataPackageID As Integer, ByRef dctDataPackageJobs As Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
 		'Requests Dataset information from a data package
 		Dim RetryCount As Short = 3
-		Dim sMsg As String
+		Dim strMsg As String
 
 		If dctDataPackageJobs Is Nothing Then
 			dctDataPackageJobs = New Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)
@@ -1672,17 +1680,17 @@ Public MustInherit Class clsAnalysisResources
 				Exit While
 			Catch ex As System.Exception
 				RetryCount -= 1S
-				sMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
-				sMsg &= ", RetryCount = " + RetryCount.ToString
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sMsg)
+				strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
+				strMsg &= ", RetryCount = " + RetryCount.ToString
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 				System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
 			End Try
 		End While
 
 		'If loop exited due to errors, return false
 		If RetryCount < 1 Then
-			sMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sMsg)
+			strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
 			Return False
 		End If
@@ -1690,8 +1698,8 @@ Public MustInherit Class clsAnalysisResources
 		'Verify at least one row returned
 		If Dt.Rows.Count < 1 Then
 			' No data was returned
-			sMsg = "clsAnalysisResources.LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sMsg)
+			strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
 			Return False
 		Else
@@ -1704,6 +1712,7 @@ Public MustInherit Class clsAnalysisResources
 					.DatasetID = clsGlobal.DbCInt(CurRow("DatasetID"))
 					.Tool = clsGlobal.DbCStr(CurRow("Tool"))
 					.ResultType = clsGlobal.DbCStr(CurRow("ResultType"))
+					.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(.ResultType)
 					.ServerStoragePath = clsGlobal.DbCStr(CurRow("ServerStoragePath"))
 					.ArchiveStoragePath = clsGlobal.DbCStr(CurRow("ArchiveStoragePath"))
 					.ResultsFolderName = clsGlobal.DbCStr(CurRow("ResultsFolder"))
@@ -2021,6 +2030,66 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Protected Function RetrieveDataPackagePeptideHitJobInfo() As Generic.List(Of udtDataPackageJobInfoType)
+
+		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+		Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+
+		If DataPackageID < 0 Then
+			m_message = "DataPackageID is not defined for this analysis job"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
+			Return New Generic.List(Of udtDataPackageJobInfoType)
+		Else
+			Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID)
+		End If
+
+	End Function
+
+	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(ByVal ConnectionString As String, ByVal DataPackageID As Integer) As Generic.List(Of udtDataPackageJobInfoType)
+
+		Dim lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)
+		Dim dctDataPackageJobs As Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)
+
+		Dim strMsg As String
+
+		' This list tracks the info for the jobs associated with this aggregation job's data package
+		lstDataPackagePeptideHitJobs = New Generic.List(Of udtDataPackageJobInfoType)
+
+		' This dictionary will track the jobs associated with this aggregation job's data package
+		' Key is job number, value is an instance of udtDataPackageJobInfoType
+		dctDataPackageJobs = New Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)
+
+		Try
+			If Not LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs) Then
+				strMsg = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
+				Return lstDataPackagePeptideHitJobs
+			End If
+		Catch ex As System.Exception
+			strMsg = "Exception calling LoadDataPackageJobInfo"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; " & strMsg, ex)
+			Return lstDataPackagePeptideHitJobs
+		End Try
+
+		Try
+			For Each kvItem As Generic.KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
+
+				If kvItem.Value.PeptideHitResultType <> clsPHRPReader.ePeptideHitResultType.Unknown Then
+					' Cache this job info in lstDataPackagePeptideHitJobs
+					lstDataPackagePeptideHitJobs.Add(kvItem.Value)
+				End If
+
+			Next
+
+		Catch ex As System.Exception
+			strMsg = "Exception determining data package jobs for this aggregation job"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
+		End Try
+
+		Return lstDataPackagePeptideHitJobs
+
+	End Function
+
 	''' <summary>
 	''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
 	''' </summary>
@@ -2032,11 +2101,12 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim SourceFolderPath As String = "??"
 		Dim SourceFilename As String = "??"
-		Dim ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType
-		Dim blnSuccess As Boolean = False
+		Dim TargetFolderPath As String
 
-		Dim dctDataPackageJobs As Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)
-		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of Integer, String)
+		Dim blnSuccess As Boolean = False
+		Dim blnPrefixRequired As Boolean
+
+		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, String)
 
 		' This list tracks the info for the jobs associated with this aggregation job's data package
 		If lstDataPackagePeptideHitJobs Is Nothing Then
@@ -2045,59 +2115,47 @@ Public MustInherit Class clsAnalysisResources
 			lstDataPackagePeptideHitJobs.Clear()
 		End If
 
-		' This dictionary will track the jobs associated with this aggregation job's data package
-		' Key is job number, value is an instance of udtDataPackageJobInfoType
-		dctDataPackageJobs = New Generic.Dictionary(Of Integer, udtDataPackageJobInfoType)
-
-		' The keys in this dictionary are job numbers; the values will be the path to the mzXML file, or an empty string if the .Raw file needs to be retrieved
-		dctInstrumentDataToRetrieve = New Generic.Dictionary(Of Integer, String)
+		' The keys in this dictionary are udtJobInfo entries; the values will be the path to the mzXML file, or an empty string if the .Raw file needs to be retrieved
+		dctInstrumentDataToRetrieve = New Generic.Dictionary(Of udtDataPackageJobInfoType, String)
 
 		Try
-			If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
-				m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
+			lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo()
+
+			If lstDataPackagePeptideHitJobs.Count = 0 Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Error determining the peptide hit jobs associated with this job's data package ID"
+				End If
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
 				Return False
 			End If
+
 		Catch ex As System.Exception
-			m_message = "Exception calling LoadDataPackageJobInfo"
+			m_message = "Exception calling RetrieveDataPackagePeptideHitJobInfo"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; " & m_message, ex)
 			Return False
 		End Try
 
 		Try
-			For Each kvItem As Generic.KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
+			For Each udtJobInfo As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
 
-				If Not OverrideCurrentDatasetInfo(kvItem.Value) Then
+				If Not OverrideCurrentDatasetInfo(udtJobInfo) Then
 					' Error message has already been logged
 					Return False
 				End If
 
-				Select Case kvItem.Value.ResultType
-					Case "Peptide_Hit"
-						ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Sequest
-					Case "XT_Peptide_Hit"
-						ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.XTandem
-					Case "IN_Peptide_Hit"
-						ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Inspect
-					Case "MSG_Peptide_Hit"
-						ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB
-					Case Else
-						' Unsupported type; skip this job
-						ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown
-				End Select
-
-				If ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
-					m_message = "PeptideHit ResultType not recognized: " & kvItem.Value.ResultType.ToString()
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
-					Return False
+				If udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PeptideHit ResultType not recognized for job " & udtJobInfo.Job & ": " & udtJobInfo.ResultType.ToString())
 				Else
 					Dim lstFilesToGet As Generic.List(Of String) = New Generic.List(Of String)
+					Dim strSynopsisFileName As String
 
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, kvItem.Value.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, kvItem.Value.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, kvItem.Value.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, kvItem.Value.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, kvItem.Value.Dataset))
+					strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset)
+					lstFilesToGet.Add(strSynopsisFileName)
+
+					lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+					lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
 					SourceFolderPath = String.Empty
 
 					For Each SourceFilename In lstFilesToGet
@@ -2107,7 +2165,26 @@ Public MustInherit Class clsAnalysisResources
 							SourceFolderPath = FindDataFile(SourceFilename)
 						End If
 
-						If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+						If SourceFilename = strSynopsisFileName Then
+							' Check whether a synopsis file by this name has already been copied locally
+							' If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
+							If IO.File.Exists(IO.Path.Combine(m_WorkingDir, SourceFilename)) Then
+								blnPrefixRequired = True
+							Else
+								blnPrefixRequired = False
+							End If
+						End If
+
+						If blnPrefixRequired Then
+							TargetFolderPath = IO.Path.Combine(m_WorkingDir, "FileRename")
+							If Not IO.Directory.Exists(TargetFolderPath) Then
+								IO.Directory.CreateDirectory(TargetFolderPath)
+							End If
+						Else
+							TargetFolderPath = String.Copy(m_WorkingDir)
+						End If
+
+						If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, TargetFolderPath, clsLogTools.LogLevels.ERROR) Then
 							m_message = "CopyFileToWorkDir returned False for " + SourceFilename + " using folder " + SourceFolderPath
 							If m_DebugLevel >= 1 Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -2117,13 +2194,32 @@ Public MustInherit Class clsAnalysisResources
 							If m_DebugLevel > 1 Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + SourceFilename + " from folder " + SourceFolderPath)
 							End If
+
+							If blnPrefixRequired Then
+								Try
+									Dim fiFileToRename As System.IO.FileInfo = New System.IO.FileInfo(IO.Path.Combine(TargetFolderPath, SourceFilename))
+									Dim strFilePathWithPrefix As String = IO.Path.Combine(m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_" & fiFileToRename.Name)
+
+									Threading.Thread.Sleep(100)
+									fiFileToRename.MoveTo(strFilePathWithPrefix)
+
+									m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strFilePathWithPrefix))
+
+								Catch ex As Exception
+									m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & udtJobInfo.Job & " (data package has multiple jobs for the same dataset)"
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+									Return False
+								End Try
+
+							Else
+								m_jobParams.AddResultFileToSkip(SourceFilename)
+							End If
 						End If
 
-						m_jobParams.AddResultFileToSkip(SourceFilename)
 					Next
 
 					' Cache this job info in lstDataPackagePeptideHitJobs
-					lstDataPackagePeptideHitJobs.Add(kvItem.Value)
+					lstDataPackagePeptideHitJobs.Add(udtJobInfo)
 
 					Dim strMzXMLFilePath As String = String.Empty
 
@@ -2132,16 +2228,16 @@ Public MustInherit Class clsAnalysisResources
 
 					If String.IsNullOrEmpty(strMzXMLFilePath) Then
 						' mzXML file not found
-						If kvItem.Value.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
+						If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
 							' Will need to retrieve the .Raw file for this dataset
-							dctInstrumentDataToRetrieve.Add(kvItem.Key, String.Empty)
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, String.Empty)
 						Else
-							m_message = "mzXML file not found for dataset " & kvItem.Value.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
+							m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 							Return False
 						End If
 					Else
-						dctInstrumentDataToRetrieve.Add(kvItem.Key, strMzXMLFilePath)
+						dctInstrumentDataToRetrieve.Add(udtJobInfo, strMzXMLFilePath)
 					End If
 
 				End If
@@ -2149,7 +2245,7 @@ Public MustInherit Class clsAnalysisResources
 			Next
 
 			If blnRetrieveMzXMLFile Then
-				blnSuccess = RetrieveDataPackageMzXMLFiles(dctDataPackageJobs, dctInstrumentDataToRetrieve)
+				blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve)
 			Else
 				blnSuccess = True
 			End If
@@ -2163,63 +2259,62 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function RetrieveDataPackageMzXMLFiles(ByVal dctDataPackageJobs As Generic.Dictionary(Of Integer, udtDataPackageJobInfoType), ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of Integer, String)) As Boolean
+	Protected Function RetrieveDataPackageMzXMLFiles(ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, String)) As Boolean
 
 		Dim blnSuccess As Boolean
-		Dim intCurrentJob As Integer = 0
+		Dim intCurrentJob As Integer
+		Dim lstDatasetsProcessed As Generic.SortedSet(Of String)
 
 		Try
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(".mzXML")
+			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
+			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
+
+			lstDatasetsProcessed = New Generic.SortedSet(Of String)
 
 			' All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
-			For Each kvItem As Generic.KeyValuePair(Of Integer, String) In dctInstrumentDataToRetrieve
+			For Each kvItem As Generic.KeyValuePair(Of udtDataPackageJobInfoType, String) In dctInstrumentDataToRetrieve
 
-				Dim udtJobInfo As udtDataPackageJobInfoType = New udtDataPackageJobInfoType
-				intCurrentJob = kvItem.Key
 				Dim strMzXMLFilePath As String = kvItem.Value
+				intCurrentJob = kvItem.Key.Job
 
-				If Not dctDataPackageJobs.TryGetValue(intCurrentJob, udtJobInfo) Then
-					m_message = "Job not found in dctDataPackageJobs; this is an unexpected error"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "RetrieveDataPackagePeptideHitJobPHRPFiles, " & m_message)
-					Return False
-				End If
+				' Skip this dataset if we already processed it
+				If Not lstDatasetsProcessed.Contains(kvItem.Key.Dataset) Then
 
-				If Not OverrideCurrentDatasetInfo(udtJobInfo) Then
-					' Error message has already been logged
-					Return False
-				End If
-
-				If String.IsNullOrEmpty(strMzXMLFilePath) Then
-					blnSuccess = False
-				Else
-					' mzXML file exists; try to retrieve it
-					blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
-				End If
-
-				If blnSuccess Then
-					' .mzXML file found and copied locally
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied .mzXML file for job " & udtJobInfo.Job & ": " & strMzXMLFilePath)
-					End If
-				Else
-					' .mzXML file not found
-					' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-					If RetrieveSpectra(udtJobInfo.RawDataType, m_WorkingDir) Then
-						m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
-						m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
-					Else
-						m_message = "Error occurred retrieving instrument data file for job " & udtJobInfo.Job
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "RetrieveDataPackagePeptideHitJobPHRPFiles, " & m_message)
+					If Not OverrideCurrentDatasetInfo(kvItem.Key) Then
+						' Error message has already been logged
 						Return False
 					End If
-				End If
 
+					If String.IsNullOrEmpty(strMzXMLFilePath) Then
+						blnSuccess = False
+					Else
+						' mzXML file exists; try to retrieve it
+						blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
+					End If
+
+					If blnSuccess Then
+						' .mzXML file found and copied locally
+						If m_DebugLevel >= 1 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied .mzXML file for job " & intCurrentJob & ": " & strMzXMLFilePath)
+						End If
+					Else
+						' .mzXML file not found
+						' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
+						If Not RetrieveSpectra(kvItem.Key.RawDataType, m_WorkingDir) Then
+							m_message = "Error occurred retrieving instrument data file for job " & intCurrentJob
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "RetrieveDataPackageMzXMLFiles, " & m_message)
+							Return False
+						End If
+					End If
+
+					lstDatasetsProcessed.Add(kvItem.Key.Dataset)
+				End If
 			Next
 
 		Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDaatPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
 			blnSuccess = False
 		End Try
 

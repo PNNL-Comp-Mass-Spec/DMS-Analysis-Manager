@@ -183,47 +183,553 @@ Public Class clsAnalysisToolRunnerBase
 	End Sub
 
 	''' <summary>
-	''' Loads the job settings file
+	''' Calculates total run time for a job
 	''' </summary>
-	''' <returns>TRUE for success, FALSE for failure</returns>
+	''' <param name="StartTime">Time job started</param>
+	''' <param name="StopTime">Time of job completion</param>
+	''' <returns>Total job run time (HH:MM)</returns>
 	''' <remarks></remarks>
-	Protected Function LoadSettingsFile() As Boolean
-		Dim fileName As String = m_jobParams.GetParam("settingsFileName")
-		If fileName <> "na" Then
-			Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
-			If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
-				Return m_settingsFileParams.LoadSettings(filePath)
-			Else
-				Return False			'Settings file wasn't found
-			End If
+	Protected Function CalcElapsedTime(ByVal StartTime As DateTime, ByVal StopTime As DateTime) As String
+		Dim dtElapsedTime As System.TimeSpan
+
+		If StopTime < StartTime Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
+			StopTime = System.DateTime.UtcNow
+		End If
+
+		If StopTime < StartTime OrElse StartTime = System.DateTime.MinValue Then
+			Return String.Empty
+		End If
+
+		dtElapsedTime = StopTime.Subtract(StartTime)
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, StartTime = " & StartTime.ToString)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Stoptime = " & StopTime.ToString)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Hours = " & dtElapsedTime.Hours.ToString)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Minutes = " & dtElapsedTime.Minutes.ToString)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Seconds = " & dtElapsedTime.Seconds.ToString)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, TotalMinutes = " & dtElapsedTime.TotalMinutes.ToString("0.00"))
+		End If
+
+		Return dtElapsedTime.Hours.ToString("###0") & ":" & dtElapsedTime.Minutes.ToString("00") & ":" & dtElapsedTime.Seconds.ToString("00")
+
+	End Function
+
+	''' <summary>
+	''' Computes the incremental progress that has been made beyond CurrentTaskProgressAtStart, based on the number of items processed and the next overall progress level
+	''' </summary>
+	''' <param name="CurrentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
+	''' <param name="CurrentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
+	''' <param name="CurrentTaskItemsProcessed">Number of items processed so far during this subtask</param>
+	''' <param name="CurrentTaskTotalItems">Total number of items to process during this subtask</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function ComputeIncrementalProgress(ByVal CurrentTaskProgressAtStart As Single, ByVal CurrentTaskProgressAtEnd As Single, ByVal CurrentTaskItemsProcessed As Integer, ByVal CurrentTaskTotalItems As Integer) As Single
+		If CurrentTaskTotalItems < 1 Then
+			Return CurrentTaskProgressAtStart
+		ElseIf CurrentTaskItemsProcessed > CurrentTaskTotalItems Then
+			Return CurrentTaskProgressAtEnd
 		Else
-			Return True		  'Settings file wasn't required
+			Return CSng(CurrentTaskProgressAtStart + (CurrentTaskItemsProcessed / CurrentTaskTotalItems) * (CurrentTaskProgressAtEnd - CurrentTaskProgressAtStart) / 100)
+		End If
+	End Function
+
+	''' <summary>
+	''' Copies the files from the results folder to the transfer folder on the server
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
+
+		Dim SourceFolderPath As String = String.Empty
+		Dim TransferFolderPath As String = String.Empty
+		Dim TargetFolderPath As String = String.Empty
+		Dim ResultsFolderName As String = String.Empty
+
+		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+
+		Dim strMessage As String
+		Dim blnErrorEncountered As Boolean = False
+		Dim intFailedFileCount As Integer = 0
+
+
+		Dim intRetryCount As Integer = 10
+		Dim intRetryHoldoffSeconds As Integer = 15
+		Dim blnIncreaseHoldoffOnEachRetry As Boolean = True
+
+		Try
+			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
+
+			ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
+			If String.IsNullOrEmpty(ResultsFolderName) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+				m_message = "Results folder not found"
+				'TODO: Handle errors
+				' Without a source folder; there isn't much we can do
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			SourceFolderPath = System.IO.Path.Combine(m_WorkDir, ResultsFolderName)
+
+			'Verify the source folder exists
+			If Not System.IO.Directory.Exists(SourceFolderPath) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
+				m_message = "Results folder not found"
+				'TODO: Handle errors
+				' Without a source folder; there isn't much we can do
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
+
+			' Verify transfer directory exists
+			' First make sure TransferFolderPath is defined
+			If String.IsNullOrEmpty(TransferFolderPath) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+				m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Now verify transfer directory exists
+			Try
+				objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+				m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
+
+			'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
+			' First make sure "DatasetNum" is defined
+			If String.IsNullOrEmpty(m_Dataset) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+				m_message = "Dataset name is undefined"
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Now create the folder if it doesn't exist
+			TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
+			Try
+				objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+				m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
+
+			' Now append the output folder name to TargetFolderPath
+			TargetFolderPath = System.IO.Path.Combine(TargetFolderPath, ResultsFolderName)
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory")
+			If SourceFolderPath.Length > 0 Then
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+			End If
+
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+
+		' Copy results folder to xfer folder
+		' Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
+		Try
+
+			' Copy all of the files and subdirectories in the local result folder to the target folder
+			Dim eResult As IJobParams.CloseOutType
+
+			' Copy the files and subfolders
+			eResult = CopyResultsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
+			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+			 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath))
+			blnErrorEncountered = True
+		End Try
+
+		If blnErrorEncountered Then
+			strMessage = "Error copying " & intFailedFileCount.ToString & " file"
+			If intFailedFileCount <> 1 Then
+				strMessage &= "s"
+			End If
+			strMessage &= " to transfer folder"
+			m_message = clsGlobal.AppendToComment(m_message, strMessage)
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
 	End Function
 
 	''' <summary>
-	''' Runs the analysis tool
-	''' Major work is performed by overrides
+	''' Copies each of the files in the source folder to the target folder
+	''' Uses CopyFileWithRetry to retry the copy up to intRetryCount times
 	''' </summary>
-	''' <returns>CloseoutType enum representing completion status</returns>
+	''' <param name="SourceFolderPath"></param>
+	''' <param name="TargetFolderPath"></param>
 	''' <remarks></remarks>
-	Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
+	Private Function CopyResultsFolderRecursive(ByVal RootSourceFolderPath As String, ByVal SourceFolderPath As String, ByVal TargetFolderPath As String, _
+	  ByRef objAnalysisResults As clsAnalysisResults, _
+	  ByRef blnErrorEncountered As Boolean, _
+	  ByRef intFailedFileCount As Integer, _
+	  ByVal intRetryCount As Integer, _
+	  ByVal intRetryHoldoffSeconds As Integer, _
+	  ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
 
-		' Synchronize the stored Debug level with the value stored in the database
-		GetCurrentMgrSettingsFromDB()
+		Dim objSourceFolderInfo As System.IO.DirectoryInfo
+		Dim objSourceFile As System.IO.FileInfo
+		Dim objTargetFile As System.IO.FileInfo
 
-		'Make log entry
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+		Dim htFilesToOverwrite As System.Collections.Hashtable
 
-		'Start the job timer
-		m_StartTime = System.DateTime.UtcNow
+		Dim ResultFiles() As String
+		Dim strSourceFileName As String
+		Dim strTargetPath As String
 
-		'Remainder of method is supplied by subclasses
+		Dim strMessage As String
+
+		Try
+			htFilesToOverwrite = New System.Collections.Hashtable
+			htFilesToOverwrite.Clear()
+
+			If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
+				' The target folder already exists
+
+				' Examine the files in the results folder to see if any of the files already exist in the xfer folder
+				' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
+
+				objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
+				For Each objSourceFile In objSourceFolderInfo.GetFiles()
+					If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
+						objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
+
+						If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
+							strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
+
+							If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+							End If
+
+
+							htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
+						End If
+					End If
+				Next
+			Else
+				' Need to create the target folder
+				Try
+					objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
+				Catch ex As Exception
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+					m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+					objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End Try
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+		' Note: Entries in ResultFiles will have full file paths, not just file names
+		ResultFiles = System.IO.Directory.GetFiles(SourceFolderPath, "*.*")
+
+		For Each FileToCopy As String In ResultFiles
+			strSourceFileName = System.IO.Path.GetFileName(FileToCopy)
+			strTargetPath = System.IO.Path.Combine(TargetFolderPath, strSourceFileName)
+
+			Try
+				If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
+					' Copy file and overwrite existing
+					objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+					 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+				Else
+					' Copy file only if it doesn't currently exist
+					If Not System.IO.File.Exists(strTargetPath) Then
+						objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+					End If
+				End If
+			Catch ex As Exception
+				' Continue copying files; we'll fail the results at the end of this function
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
+				blnErrorEncountered = True
+				intFailedFileCount += 1
+			End Try
+		Next
+
+
+		' Recursively call this function for each subfolder
+		' If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
+		Dim eResult As IJobParams.CloseOutType
+		eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+		Dim diSourceFolder As System.IO.DirectoryInfo
+		Dim strTargetFolderPathCurrent As String
+		diSourceFolder = New System.IO.DirectoryInfo(SourceFolderPath)
+
+		For Each objSubFolder As System.IO.DirectoryInfo In diSourceFolder.GetDirectories()
+			strTargetFolderPathCurrent = System.IO.Path.Combine(TargetFolderPath, objSubFolder.Name)
+
+			eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
+			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+			 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
+
+		Next
+
+		Return eResult
+
+	End Function
+
+	''' <summary>
+	''' Makes multiple tries to delete specified file
+	''' </summary>
+	''' <param name="FileNamePath">Full path to file for deletion</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks>Raises exception if error occurs</remarks>
+	Public Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
+		Return DeleteFileWithRetries(FileNamePath, m_DebugLevel)
+	End Function
+
+	''' <summary>
+	''' Makes multiple tries to delete specified file
+	''' </summary>
+	''' <param name="FileNamePath">Full path to file for deletion</param>
+	''' <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks>Raises exception if error occurs</remarks>
+	Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer) As Boolean
+
+		Dim RetryCount As Integer = 0
+		Dim ErrType As AMFileNotDeletedAfterRetryException.RetryExceptionType
+
+		If intDebugLevel > 4 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method")
+		End If
+
+		'Verify specified file exists
+		If Not File.Exists(FileNamePath) Then
+			'Throw an exception
+			Throw New AMFileNotFoundException(FileNamePath, "Specified file not found")
+			Return False
+		End If
+
+		While RetryCount < 3
+			Try
+				File.Delete(FileNamePath)
+				If intDebugLevel > 4 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit")
+				End If
+				Return True
+
+			Catch Err1 As UnauthorizedAccessException
+				'File may be read-only. Clear read-only flag and try again
+				If intDebugLevel > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR1: " & Err1.Message)
+					If Not Err1.InnerException Is Nothing Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err1.InnerException.Message)
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " may be read-only, attribute reset attempt #" & _
+					 RetryCount.ToString)
+				End If
+				File.SetAttributes(FileNamePath, File.GetAttributes(FileNamePath) And (Not FileAttributes.ReadOnly))
+				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception
+				RetryCount += 1
+
+			Catch Err2 As IOException
+				'If problem is locked file, attempt to fix lock and retry
+				If intDebugLevel > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR2: " & Err2.Message)
+					If Not Err2.InnerException Is Nothing Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err2.InnerException.Message)
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error deleting file " & FileNamePath & ", attempt #" & RetryCount.ToString)
+				End If
+				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception
+				'Delay 5 seconds
+				System.Threading.Thread.Sleep(5000)
+				'Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
+				RetryCount += 1
+
+			Catch Err3 As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message)
+				Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
+				Return False
+			End Try
+		End While
+
+		'If we got to here, then we've exceeded the max retry limit
+		Throw New AMFileNotDeletedAfterRetryException(FileNamePath, ErrType, "Unable to delete or move file after multiple retries")
+		Return False
+
+	End Function
+
+	Protected Function DeleteRawDataFiles() As IJobParams.CloseOutType
+		Dim RawDataType As String
+		RawDataType = m_jobParams.GetParam("RawDataType")
+
+		Return DeleteRawDataFiles(RawDataType)
+	End Function
+
+	Protected Function DeleteRawDataFiles(ByVal RawDataType As String) As IJobParams.CloseOutType
+		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+
+		Return DeleteRawDataFiles(eRawDataType)
+	End Function
+
+	Protected Function DeleteRawDataFiles(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As IJobParams.CloseOutType
+
+		'Deletes the raw data files/folders from the working directory
+		Dim IsFile As Boolean = True
+		Dim IsNetworkDir As Boolean = False
+		Dim FileOrFolderName As String = String.Empty
+
+		Select Case eRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				IsFile = True
+
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
+				IsFile = True
+
+			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
+				IsFile = True
+
+			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+				IsFile = True
+
+			Case clsAnalysisResources.eRawDataTypeConstants.mzML
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+				IsFile = True
+
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
+
+				Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+				'Check for "0.ser" folder
+				If String.IsNullOrEmpty(NewSourceFolder) Then
+					FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+					IsNetworkDir = False
+				Else
+					IsNetworkDir = True
+				End If
+
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
+				' Bruker_FT folders are actually .D folders
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
+				''''''''''''''''''''''''''''''''''''
+				' TODO: Finalize this code
+				'       DMS doesn't yet have a BrukerTOF dataset 
+				'        so we don't know the official folder structure
+				''''''''''''''''''''''''''''''''''''
+
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
+
+				''''''''''''''''''''''''''''''''''''
+				' TODO: Finalize this code
+				'       DMS doesn't yet have a BrukerTOF dataset 
+				'        so we don't know the official folder structure
+				''''''''''''''''''''''''''''''''''''
+
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+				IsFile = False
+
+			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
+
+				' BrukerTOFBaf folders are actually .D folders
+				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				IsFile = False
+
+			Case Else
+				'Should never get this value
+				m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & eRawDataType.ToString()
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Select
+
+
+		If IsFile Then
+			'Data is a file, so use file deletion tools
+			Try
+				' DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
+				' Thus, need to wrap it with an Exception handler
+
+				If DeleteFileWithRetries(FileOrFolderName) Then
+					Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+				Else
+					m_message = "Error deleting raw data file " & FileOrFolderName
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+			Catch ex As Exception
+				m_message = "Exception deleting raw data file " & FileOrFolderName & ": " & _
+				ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
+		ElseIf IsNetworkDir Then
+			'The files were on the network and do not need to be deleted
+
+		Else
+			'Use folder deletion tools
+			Try
+				System.IO.Directory.Delete(FileOrFolderName, True)
+				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			Catch ex As System.Exception
+				m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
+				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
+		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
+
+	Protected Sub DeleteTemporaryfile(ByVal strFilePath As String)
+
+		Try
+			If System.IO.File.Exists(strFilePath) Then
+				System.IO.File.Delete(strFilePath)
+			End If
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strFilePath, ex)
+		End Try
+
+	End Sub
 
 	''' <summary>
 	''' Determine the path to the correct version of the step tool
@@ -395,6 +901,73 @@ Public Class clsAnalysisToolRunnerBase
 			Return True
 		Else
 			Return False
+		End If
+
+	End Function
+
+	''' <summary>
+	''' Returns the full path to the program to use for converting a dataset to a .mzXML file
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function GetMSXmlGeneratorAppPath() As String
+
+		Dim strMSXmlGeneratorExe As String = GetMSXmlGeneratorExeName()
+		Dim strMSXmlGeneratorAppPath As String = String.Empty
+
+		strMSXmlGeneratorAppPath = String.Empty
+		If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
+			' ReadW
+			' Note that msXmlGenerator will likely be ReAdW.exe
+			strMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdW", "ReAdWProgLoc", strMSXmlGeneratorExe)
+
+		ElseIf strMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
+			' MSConvert
+			Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
+			strMSXmlGeneratorAppPath = System.IO.Path.Combine(ProteoWizardDir, strMSXmlGeneratorExe)
+
+		Else
+			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+		End If
+
+		Return strMSXmlGeneratorAppPath
+
+	End Function
+
+	''' <summary>
+	''' Returns the name of the .Exe to use to convert a dataset to a .mzXML file
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function GetMSXmlGeneratorExeName() As String
+		' Determine the path to the XML Generator
+		Dim strMSXmlGeneratorExe As String = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
+
+		If String.IsNullOrEmpty(strMSXmlGeneratorExe) Then
+			' Assume we're using MSConvert
+			strMSXmlGeneratorExe = "MSConvert.exe"
+		End If
+
+		Return strMSXmlGeneratorExe
+	End Function
+
+	''' <summary>
+	''' Loads the job settings file
+	''' </summary>
+	''' <returns>TRUE for success, FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Function LoadSettingsFile() As Boolean
+		Dim fileName As String = m_jobParams.GetParam("settingsFileName")
+		If fileName <> "na" Then
+			Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
+			If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
+				Return m_settingsFileParams.LoadSettings(filePath)
+			Else
+				Return False			'Settings file wasn't found
+			End If
+		Else
+			Return True		  'Settings file wasn't required
 		End If
 
 	End Function
@@ -625,6 +1198,22 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
+	''' Adds manager assembly data to job summary file
+	''' </summary>
+	''' <param name="OutputPath">Path to summary file</param>
+	''' <remarks></remarks>
+	Protected Sub OutputSummary(ByVal OutputPath As String)
+
+		'Saves the summary file in the results folder
+		Dim objAssemblyTools As clsAssemblyTools = New clsAssemblyTools
+
+		objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
+
+		m_SummaryFile.SaveSummaryFile(System.IO.Path.Combine(OutputPath, m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"))
+
+	End Sub
+
+	''' <summary>
 	''' Adds double quotes around a path if it contains a space
 	''' </summary>
 	''' <param name="strPath"></param>
@@ -775,6 +1364,29 @@ Public Class clsAnalysisToolRunnerBase
 		End Try
 
 		Return True
+
+	End Function
+
+	''' <summary>
+	''' Runs the analysis tool
+	''' Major work is performed by overrides
+	''' </summary>
+	''' <returns>CloseoutType enum representing completion status</returns>
+	''' <remarks></remarks>
+	Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
+
+		' Synchronize the stored Debug level with the value stored in the database
+		GetCurrentMgrSettingsFromDB()
+
+		'Make log entry
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+
+		'Start the job timer
+		m_StartTime = System.DateTime.UtcNow
+
+		'Remainder of method is supplied by subclasses
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 
@@ -1185,540 +1797,6 @@ Public Class clsAnalysisToolRunnerBase
 		End Try
 
 		Return True
-
-	End Function
-
-	''' <summary>
-	''' Calculates total run time for a job
-	''' </summary>
-	''' <param name="StartTime">Time job started</param>
-	''' <param name="StopTime">Time of job completion</param>
-	''' <returns>Total job run time (HH:MM)</returns>
-	''' <remarks></remarks>
-	Protected Function CalcElapsedTime(ByVal StartTime As DateTime, ByVal StopTime As DateTime) As String
-		Dim dtElapsedTime As System.TimeSpan
-
-		If StopTime < StartTime Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
-			StopTime = System.DateTime.UtcNow
-		End If
-
-		If StopTime < StartTime OrElse StartTime = System.DateTime.MinValue Then
-			Return String.Empty
-		End If
-
-		dtElapsedTime = StopTime.Subtract(StartTime)
-
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, StartTime = " & StartTime.ToString)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Stoptime = " & StopTime.ToString)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Hours = " & dtElapsedTime.Hours.ToString)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Minutes = " & dtElapsedTime.Minutes.ToString)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Seconds = " & dtElapsedTime.Seconds.ToString)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, TotalMinutes = " & dtElapsedTime.TotalMinutes.ToString("0.00"))
-		End If
-
-		Return dtElapsedTime.Hours.ToString("###0") & ":" & dtElapsedTime.Minutes.ToString("00") & ":" & dtElapsedTime.Seconds.ToString("00")
-
-	End Function
-
-	Protected Function DeleteRawDataFiles() As IJobParams.CloseOutType
-		Dim RawDataType As String
-		RawDataType = m_jobParams.GetParam("RawDataType")
-
-		Return DeleteRawDataFiles(RawDataType)
-	End Function
-
-	Protected Function DeleteRawDataFiles(ByVal RawDataType As String) As IJobParams.CloseOutType
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
-
-		Return DeleteRawDataFiles(eRawDataType)
-	End Function
-
-	Protected Function DeleteRawDataFiles(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As IJobParams.CloseOutType
-
-		'Deletes the raw data files/folders from the working directory
-		Dim IsFile As Boolean = True
-		Dim IsNetworkDir As Boolean = False
-		Dim FileOrFolderName As String = String.Empty
-
-		Select Case eRawDataType
-			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-				IsFile = True
-
-			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
-				IsFile = True
-
-			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
-				IsFile = True
-
-			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
-				IsFile = True
-
-			Case clsAnalysisResources.eRawDataTypeConstants.mzML
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
-				IsFile = True
-
-			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
-
-				Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
-				'Check for "0.ser" folder
-				If String.IsNullOrEmpty(NewSourceFolder) Then
-					FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
-					IsNetworkDir = False
-				Else
-					IsNetworkDir = True
-				End If
-
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
-				' Bruker_FT folders are actually .D folders
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
-				''''''''''''''''''''''''''''''''''''
-				' TODO: Finalize this code
-				'       DMS doesn't yet have a BrukerTOF dataset 
-				'        so we don't know the official folder structure
-				''''''''''''''''''''''''''''''''''''
-
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
-
-				''''''''''''''''''''''''''''''''''''
-				' TODO: Finalize this code
-				'       DMS doesn't yet have a BrukerTOF dataset 
-				'        so we don't know the official folder structure
-				''''''''''''''''''''''''''''''''''''
-
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
-				IsFile = False
-
-			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
-
-				' BrukerTOFBaf folders are actually .D folders
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
-				IsFile = False
-
-			Case Else
-				'Should never get this value
-				m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " & eRawDataType.ToString()
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Select
-
-
-		If IsFile Then
-			'Data is a file, so use file deletion tools
-			Try
-				' DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
-				' Thus, need to wrap it with an Exception handler
-
-				If DeleteFileWithRetries(FileOrFolderName) Then
-					Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-				Else
-					m_message = "Error deleting raw data file " & FileOrFolderName
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-
-			Catch ex As Exception
-				m_message = "Exception deleting raw data file " & FileOrFolderName & ": " & _
-				ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-		ElseIf IsNetworkDir Then
-			'The files were on the network and do not need to be deleted
-
-		Else
-			'Use folder deletion tools
-			Try
-				System.IO.Directory.Delete(FileOrFolderName, True)
-				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-			Catch ex As System.Exception
-				m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
-				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-		End If
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
-
-	''' <summary>
-	''' Adds manager assembly data to job summary file
-	''' </summary>
-	''' <param name="OutputPath">Path to summary file</param>
-	''' <remarks></remarks>
-	Protected Sub OutputSummary(ByVal OutputPath As String)
-
-		'Saves the summary file in the results folder
-		Dim objAssemblyTools As clsAssemblyTools = New clsAssemblyTools
-
-		objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
-
-		m_SummaryFile.SaveSummaryFile(System.IO.Path.Combine(OutputPath, m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"))
-
-	End Sub
-
-	''' <summary>
-	''' Makes multiple tries to delete specified file
-	''' </summary>
-	''' <param name="FileNamePath">Full path to file for deletion</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks>Raises exception if error occurs</remarks>
-	Public Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
-		Return DeleteFileWithRetries(FileNamePath, m_DebugLevel)
-	End Function
-
-	''' <summary>
-	''' Makes multiple tries to delete specified file
-	''' </summary>
-	''' <param name="FileNamePath">Full path to file for deletion</param>
-	''' <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks>Raises exception if error occurs</remarks>
-	Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer) As Boolean
-
-		Dim RetryCount As Integer = 0
-		Dim ErrType As AMFileNotDeletedAfterRetryException.RetryExceptionType
-
-		If intDebugLevel > 4 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method")
-		End If
-
-		'Verify specified file exists
-		If Not File.Exists(FileNamePath) Then
-			'Throw an exception
-			Throw New AMFileNotFoundException(FileNamePath, "Specified file not found")
-			Return False
-		End If
-
-		While RetryCount < 3
-			Try
-				File.Delete(FileNamePath)
-				If intDebugLevel > 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit")
-				End If
-				Return True
-
-			Catch Err1 As UnauthorizedAccessException
-				'File may be read-only. Clear read-only flag and try again
-				If intDebugLevel > 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR1: " & Err1.Message)
-					If Not Err1.InnerException Is Nothing Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err1.InnerException.Message)
-					End If
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " may be read-only, attribute reset attempt #" & _
-					 RetryCount.ToString)
-				End If
-				File.SetAttributes(FileNamePath, File.GetAttributes(FileNamePath) And (Not FileAttributes.ReadOnly))
-				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception
-				RetryCount += 1
-
-			Catch Err2 As IOException
-				'If problem is locked file, attempt to fix lock and retry
-				If intDebugLevel > 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " exception ERR2: " & Err2.Message)
-					If Not Err2.InnerException Is Nothing Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err2.InnerException.Message)
-					End If
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error deleting file " & FileNamePath & ", attempt #" & RetryCount.ToString)
-				End If
-				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception
-				'Delay 5 seconds
-				System.Threading.Thread.Sleep(5000)
-				'Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
-				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-				RetryCount += 1
-
-			Catch Err3 As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message)
-				Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
-				Return False
-			End Try
-		End While
-
-		'If we got to here, then we've exceeded the max retry limit
-		Throw New AMFileNotDeletedAfterRetryException(FileNamePath, ErrType, "Unable to delete or move file after multiple retries")
-		Return False
-
-	End Function
-
-	''' <summary>
-	''' Copies the files from the results folder to the transfer folder on the server
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
-
-		Dim SourceFolderPath As String = String.Empty
-		Dim TransferFolderPath As String = String.Empty
-		Dim TargetFolderPath As String = String.Empty
-		Dim ResultsFolderName As String = String.Empty
-
-		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-
-		Dim strMessage As String
-		Dim blnErrorEncountered As Boolean = False
-		Dim intFailedFileCount As Integer = 0
-
-
-		Dim intRetryCount As Integer = 10
-		Dim intRetryHoldoffSeconds As Integer = 15
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = True
-
-		Try
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
-
-			ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
-			If String.IsNullOrEmpty(ResultsFolderName) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-				m_message = "Results folder not found"
-				'TODO: Handle errors
-				' Without a source folder; there isn't much we can do
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			SourceFolderPath = System.IO.Path.Combine(m_WorkDir, ResultsFolderName)
-
-			'Verify the source folder exists
-			If Not System.IO.Directory.Exists(SourceFolderPath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
-				m_message = "Results folder not found"
-				'TODO: Handle errors
-				' Without a source folder; there isn't much we can do
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
-
-			' Verify transfer directory exists
-			' First make sure TransferFolderPath is defined
-			If String.IsNullOrEmpty(TransferFolderPath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
-				m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Now verify transfer directory exists
-			Try
-				objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-				m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-
-			'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
-			' First make sure "DatasetNum" is defined
-			If String.IsNullOrEmpty(m_Dataset) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-				m_message = "Dataset name is undefined"
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' Now create the folder if it doesn't exist
-			TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
-			Try
-				objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-				m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-
-			' Now append the output folder name to TargetFolderPath
-			TargetFolderPath = System.IO.Path.Combine(TargetFolderPath, ResultsFolderName)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory")
-			If SourceFolderPath.Length > 0 Then
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-			End If
-
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-
-		' Copy results folder to xfer folder
-		' Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
-		Try
-
-			' Copy all of the files and subdirectories in the local result folder to the target folder
-			Dim eResult As IJobParams.CloseOutType
-
-			' Copy the files and subfolders
-			eResult = CopyResultsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
-			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
-			 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-
-			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath))
-			blnErrorEncountered = True
-		End Try
-
-		If blnErrorEncountered Then
-			strMessage = "Error copying " & intFailedFileCount.ToString & " file"
-			If intFailedFileCount <> 1 Then
-				strMessage &= "s"
-			End If
-			strMessage &= " to transfer folder"
-			m_message = clsGlobal.AppendToComment(m_message, strMessage)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
-
-	End Function
-
-	''' <summary>
-	''' Copies each of the files in the source folder to the target folder
-	''' Uses CopyFileWithRetry to retry the copy up to intRetryCount times
-	''' </summary>
-	''' <param name="SourceFolderPath"></param>
-	''' <param name="TargetFolderPath"></param>
-	''' <remarks></remarks>
-	Private Function CopyResultsFolderRecursive(ByVal RootSourceFolderPath As String, ByVal SourceFolderPath As String, ByVal TargetFolderPath As String, _
-	  ByRef objAnalysisResults As clsAnalysisResults, _
-	  ByRef blnErrorEncountered As Boolean, _
-	  ByRef intFailedFileCount As Integer, _
-	  ByVal intRetryCount As Integer, _
-	  ByVal intRetryHoldoffSeconds As Integer, _
-	  ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
-
-		Dim objSourceFolderInfo As System.IO.DirectoryInfo
-		Dim objSourceFile As System.IO.FileInfo
-		Dim objTargetFile As System.IO.FileInfo
-
-		Dim htFilesToOverwrite As System.Collections.Hashtable
-
-		Dim ResultFiles() As String
-		Dim strSourceFileName As String
-		Dim strTargetPath As String
-
-		Dim strMessage As String
-
-		Try
-			htFilesToOverwrite = New System.Collections.Hashtable
-			htFilesToOverwrite.Clear()
-
-			If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
-				' The target folder already exists
-
-				' Examine the files in the results folder to see if any of the files already exist in the xfer folder
-				' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
-
-				objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
-				For Each objSourceFile In objSourceFolderInfo.GetFiles()
-					If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
-						objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
-
-						If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
-							strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
-
-							If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-							End If
-
-
-							htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
-						End If
-					End If
-				Next
-			Else
-				' Need to create the target folder
-				Try
-					objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-					m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-					objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End Try
-			End If
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		' Note: Entries in ResultFiles will have full file paths, not just file names
-		ResultFiles = System.IO.Directory.GetFiles(SourceFolderPath, "*.*")
-
-		For Each FileToCopy As String In ResultFiles
-			strSourceFileName = System.IO.Path.GetFileName(FileToCopy)
-			strTargetPath = System.IO.Path.Combine(TargetFolderPath, strSourceFileName)
-
-			Try
-				If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
-					' Copy file and overwrite existing
-					objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-					 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-				Else
-					' Copy file only if it doesn't currently exist
-					If Not System.IO.File.Exists(strTargetPath) Then
-						objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
-						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-					End If
-				End If
-			Catch ex As Exception
-				' Continue copying files; we'll fail the results at the end of this function
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
-				blnErrorEncountered = True
-				intFailedFileCount += 1
-			End Try
-		Next
-
-
-		' Recursively call this function for each subfolder
-		' If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
-		Dim eResult As IJobParams.CloseOutType
-		eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-		Dim diSourceFolder As System.IO.DirectoryInfo
-		Dim strTargetFolderPathCurrent As String
-		diSourceFolder = New System.IO.DirectoryInfo(SourceFolderPath)
-
-		For Each objSubFolder As System.IO.DirectoryInfo In diSourceFolder.GetDirectories()
-			strTargetFolderPathCurrent = System.IO.Path.Combine(TargetFolderPath, objSubFolder.Name)
-
-			eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
-			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
-			 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-
-			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
-
-		Next
-
-		Return eResult
 
 	End Function
 

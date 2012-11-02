@@ -1,5 +1,8 @@
 MSGF Results Summarizer Change Log
 
+Version 1.1.4688; November 1, 2012
+	- New version of AnalysisManagerMSGFPlugin.dll that uses MSXML_Generator.dll (which in turn uses AnalysisManagerMsXmlGenPlugIn.dll)
+
 Version 1.1.4511; May 8, 2012
 	- Now computing stats first with an MSGF threshold, then with an FDR threshold
 	- New version of PHRPReader.dll

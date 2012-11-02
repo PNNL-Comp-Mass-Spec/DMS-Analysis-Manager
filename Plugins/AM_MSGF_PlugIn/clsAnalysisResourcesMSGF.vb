@@ -296,7 +296,7 @@ Public Class clsAnalysisResourcesMSGF
 			blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(".mzXML")
+			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
 			If blnSuccess Then
 				' .mzXML file found and copied locally; no need to retrieve the .Raw file
@@ -307,8 +307,8 @@ Public Class clsAnalysisResourcesMSGF
 				' .mzXML file not found
 				' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
 				If RetrieveSpectra(RawDataType, m_WorkingDir) Then
-					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
-					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
+					m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)			' Raw file
+					m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' mzXML file
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
