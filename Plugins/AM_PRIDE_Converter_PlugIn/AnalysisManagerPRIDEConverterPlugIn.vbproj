@@ -58,8 +58,15 @@
     <Reference Include="AnalysisManagerMsXmlGenPlugIn">
       <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
     </Reference>
+    <Reference Include="PHRPReader, Version=1.1.4682.28334, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="ProteinFileReader">
+      <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
