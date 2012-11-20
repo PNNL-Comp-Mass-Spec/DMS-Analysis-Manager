@@ -231,7 +231,7 @@ Public Class clsAnalysisToolRunnerBase
 		ElseIf CurrentTaskItemsProcessed > CurrentTaskTotalItems Then
 			Return CurrentTaskProgressAtEnd
 		Else
-			Return CSng(CurrentTaskProgressAtStart + (CurrentTaskItemsProcessed / CurrentTaskTotalItems) * (CurrentTaskProgressAtEnd - CurrentTaskProgressAtStart) / 100)
+			Return CSng(CurrentTaskProgressAtStart + (CurrentTaskItemsProcessed / CurrentTaskTotalItems) * (CurrentTaskProgressAtEnd - CurrentTaskProgressAtStart))
 		End If
 	End Function
 
@@ -950,6 +950,25 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 
 		Return strMSXmlGeneratorExe
+	End Function
+
+	''' <summary>
+	''' Lookups up dataset information the data package associated with this analysis job
+	''' </summary>
+	''' <param name="dctDataPackageJobs"></param>
+	''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
+	''' <remarks></remarks>
+	Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Generic.Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
+
+		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+		Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+
+		If DataPackageID < 0 Then
+			Return False
+		Else
+			Return clsAnalysisResources.LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
+		End If
+
 	End Function
 
 	''' <summary>

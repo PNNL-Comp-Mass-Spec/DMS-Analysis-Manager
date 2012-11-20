@@ -282,6 +282,15 @@ Public Class clsAnalysisJob
 	End Function
 
 	''' <summary>
+	''' Gets a job parameter with the given name (in any parameter section)
+	''' </summary>
+	''' <param name="Name">Key name for parameter</param>
+	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
+		Return clsGlobal.CSngSafe(Me.GetParam(Name), ValueIfMissing)
+	End Function
+
+	''' <summary>
 	''' Gets a job parameter with the given name, preferentially using the specified parameter section
 	''' </summary>
 	''' <param name="Section">Section name for parameter</param>
@@ -318,6 +327,17 @@ Public Class clsAnalysisJob
 		Else
 			Return strValue
 		End If
+	End Function
+
+	''' <summary>
+	''' Gets a job parameter with the given name, preferentially using the specified parameter section
+	''' </summary>
+	''' <param name="Section">Section name for parameter</param>
+	''' <param name="Name">Key name for parameter</param>
+	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
+		Return clsGlobal.CSngSafe(Me.GetParam(Section, Name), ValueIfMissing)
 	End Function
 
 	''' <summary>

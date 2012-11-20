@@ -68,10 +68,12 @@ Public Interface IJobParams
 	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As String) As String
 	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer
 	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Short) As Short
+	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single
 
 	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Boolean) As Boolean
 	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As String) As String
 	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer
+	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Single) As Single
 
 	Sub RemoveResultFileToSkip(ByVal FileName As String)
 

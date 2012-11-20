@@ -157,6 +157,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant, IToolRunner)
 
+			Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter".ToLower
+				myToolRunner = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -245,6 +248,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant".ToLower
 			'	myModule = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant, IAnalysisResources)
+
+			Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter".ToLower
+				myModule = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter, IAnalysisResources)
 
 		End Select
 

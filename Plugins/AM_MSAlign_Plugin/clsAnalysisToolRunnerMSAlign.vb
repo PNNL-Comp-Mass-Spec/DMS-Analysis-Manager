@@ -367,6 +367,61 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 	End Function
 
+	Protected Function CopyFastaCheckResidues(ByVal strSourceFilePath As String, ByVal strTargetFilePath As String) As Boolean
+		Const RESIDUES_PER_LINE As Integer = 60
+
+		Dim oReader As ProteinFileReader.FastaFileReader
+		Dim reInvalidResidues As System.Text.RegularExpressions.Regex
+		Dim strProteinResidues As String
+
+		Dim intIndex As Integer
+		Dim intResidueCount As Integer
+		Dim intLength As Integer
+		Dim intWarningCount As Integer = 0
+
+		Try
+			reInvalidResidues = New System.Text.RegularExpressions.Regex("[BJOUXZ]", Text.RegularExpressions.RegexOptions.Compiled)
+
+			oReader = New ProteinFileReader.FastaFileReader()
+			If Not oReader.OpenFile(strSourceFilePath) Then
+				m_message = "Error opening fasta file in CopyFastaCheckResidues"
+				Return False
+			End If
+
+			Using swNewFasta As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Do While oReader.ReadNextProteinEntry()
+
+					swNewFasta.WriteLine(oReader.ProteinLineStartChar & oReader.HeaderLine)
+					strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-")
+
+					If intWarningCount < 5 AndAlso strProteinResidues.GetHashCode() <> oReader.ProteinSequence.GetHashCode() Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Changed invalid residues to '-' in protein " & oReader.ProteinName)
+						intWarningCount += 1
+					End If
+
+					intIndex = 0
+					intResidueCount = strProteinResidues.Length
+					Do While intIndex < strProteinResidues.Length
+						intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex)
+						swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength))
+						intIndex += RESIDUES_PER_LINE
+					Loop
+
+				Loop
+			End Using
+
+			oReader.CloseFile()
+
+		Catch ex As Exception
+			m_message = "Exception in CopyFastaCheckResidues"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return False
+		End Try
+	
+		Return True
+
+	End Function
+
 	Protected Sub CopyFailedResultsToArchiveFolder()
 
 		Dim result As IJobParams.CloseOutType
@@ -727,6 +782,8 @@ Public Class clsAnalysisToolRunnerMSAlign
 			fiSourceFolder = New System.IO.DirectoryInfo(m_WorkDir)
 
 			' Copy the .Fasta file into the MSInput folder
+			' MSAlign will crash if any non-standard residues are present (BJOUXZ)
+			' Thus, we will read the source file with a reader and create a new fasta file
 
 			' Define the path to the fasta file
 			Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
@@ -741,7 +798,12 @@ Public Class clsAnalysisToolRunnerMSAlign
 			End If
 
 			mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
-			fiFastaFile.CopyTo(System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.FastaFileName))
+
+			If Not CopyFastaCheckResidues(fiFastaFile.FullName, System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.FastaFileName)) Then
+				If String.IsNullOrEmpty(m_message) Then m_message = "CopyFastaCheckResidues returned false"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
 
 			' Move the _msdeconv.msalign file to the MSInput folder
 			fiFiles = fiSourceFolder.GetFiles("*" & clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX)

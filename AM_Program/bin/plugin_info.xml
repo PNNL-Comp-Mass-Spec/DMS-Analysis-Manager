@@ -282,7 +282,12 @@
 		Class="AnalysisManagerProSightQuantPlugIn.clsAnalysisToolRunnerProSightQuant"
 		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" 
 	/>
-
+	<ToolRunner 
+		Tool="pride_converter" 
+		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter"
+		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
+	/>
+	
 </ToolRunners>
 
 <Resourcers>
@@ -565,6 +570,11 @@
 		Tool="prosight_quant" 
 		Class="AnalysisManagerProSightQuantPlugIn.clsAnalysisResourcesProSightQuant"
 		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="pride_converter" 
+		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter"
+		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
 	/>
 
 </Resourcers>
