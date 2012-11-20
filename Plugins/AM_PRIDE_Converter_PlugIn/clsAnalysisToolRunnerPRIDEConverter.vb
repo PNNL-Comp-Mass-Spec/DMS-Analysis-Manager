@@ -333,6 +333,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		Dim blnFDRValuesArePresent As Boolean = False
 		Dim blnPepFDRValuesArePresent As Boolean = False
+		Dim intSkipCount As Integer = 0
 
 		Try
 
@@ -514,9 +515,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 							' In contrast, the .msgf-report.xml file _can_ contain multiple matches for the same scan
 
 							If lstScansWritten.Contains(objReader.CurrentPSM.ScanNumber) Then
-								Console.WriteLine("Skipping ResultID " & objReader.CurrentPSM.ResultID & " since previous result already stored for scan " & objReader.CurrentPSM.ScanNumber)
+								If intSkipCount < 10 Then
+									Console.WriteLine("Skipping ResultID " & objReader.CurrentPSM.ResultID & " since previous result already stored for scan " & objReader.CurrentPSM.ScanNumber)
+								End If
+								intSkipCount += 1
 							Else
-
 
 								swMSGFFile.WriteLine( _
 								 strMzXMLFilename & ControlChars.Tab & _
