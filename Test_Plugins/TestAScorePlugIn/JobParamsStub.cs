@@ -162,6 +162,29 @@ namespace TestAScorePlugIn {
 			return strValue;
 		}
 
+		public float GetJobParameter(string Name, float ValueIfMissing)
+		{
+			string strValue = null;
+
+			try
+			{
+				strValue = this.GetParam(Name);
+
+				if (string.IsNullOrEmpty(strValue))
+				{
+					return ValueIfMissing;
+				}
+
+			}
+			catch
+			{
+				return ValueIfMissing;
+			}
+
+			// Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+			return Convert.ToSingle(strValue);
+		}
+
 		public int GetJobParameter(string Name, int ValueIfMissing)
 		{
 			string strValue = null;
@@ -192,6 +215,11 @@ namespace TestAScorePlugIn {
 		}
 
 		public bool GetJobParameter(string Section, string Name, bool ValueIfMissing)
+		{
+			return GetJobParameter(Name, ValueIfMissing);
+		}
+
+		public float GetJobParameter(string Section, string Name, float ValueIfMissing)
 		{
 			return GetJobParameter(Name, ValueIfMissing);
 		}
