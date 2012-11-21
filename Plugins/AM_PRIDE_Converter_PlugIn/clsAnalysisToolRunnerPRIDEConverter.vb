@@ -371,6 +371,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		Dim blnFDRValuesArePresent As Boolean = False
 		Dim blnPepFDRValuesArePresent As Boolean = False
+		Dim blnMSGFValuesArePresent As Boolean = False
 
 		Try
 
@@ -446,19 +447,33 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
 								dblPValue = ComputeApproximatePValue(dblMSGFSpecProb)
 								dblScoreForCurrentMatch = dblMSGFSpecProb
+								blnMSGFValuesArePresent = True
 							Else
-								dblPValue = 0.025
-								' Note: storing -XCorr so that lower values will be considered higher confidence
-								dblScoreForCurrentMatch = -(objReader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1))
+								If blnMSGFValuesArePresent Then
+									' Skip this result; it had a score value too low to be processed with MSGF
+									dblPValue = 1
+									blnValidPSM = False
+								Else
+									dblPValue = 0.025
+									' Note: storing 1000-XCorr so that lower values will be considered higher confidence
+									dblScoreForCurrentMatch = 1000 - (objReader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1))
+								End If
 							End If
 
 						Case clsPHRPReader.ePeptideHitResultType.XTandem
 							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
 								dblPValue = ComputeApproximatePValue(dblMSGFSpecProb)
 								dblScoreForCurrentMatch = dblMSGFSpecProb
+								blnMSGFValuesArePresent = True
 							Else
-								dblPValue = 0.025
-								dblScoreForCurrentMatch = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1)
+								If blnMSGFValuesArePresent Then
+									' Skip this result; it had a score value too low to be processed with MSGF
+									dblPValue = 1
+									blnValidPSM = False
+								Else
+									dblPValue = 0.025
+									dblScoreForCurrentMatch = 1000 + objReader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1)
+								End If
 							End If
 
 						Case clsPHRPReader.ePeptideHitResultType.Inspect
@@ -467,8 +482,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
 								dblScoreForCurrentMatch = dblMSGFSpecProb
 							Else
-								' Note: storing -TotalPRMScore so that lower values will be considered higher confidence
-								dblScoreForCurrentMatch = -(objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1))
+								If blnMSGFValuesArePresent Then
+									' Skip this result; it had a score value too low to be processed with MSGF
+									dblPValue = 1
+									blnValidPSM = False
+								Else
+									' Note: storing 1000-TotalPRMScore so that lower values will be considered higher confidence
+									dblScoreForCurrentMatch = 1000 - (objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1))
+								End If
 							End If
 
 						Case clsPHRPReader.ePeptideHitResultType.MSGFDB
