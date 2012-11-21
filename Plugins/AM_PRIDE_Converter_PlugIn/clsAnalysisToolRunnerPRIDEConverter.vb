@@ -1548,6 +1548,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim blnSuccess As Boolean
 		blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
 
+		' Assure that the console output file has been parsed
+		ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
 		End If
@@ -1636,7 +1639,23 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		' Example Console output:
 		'
-		' ????
+		' 2012-11-20 16:58:47,333 INFO ReportUnmarshallerFactory - Unmarshaller Initialized
+		' 2012-11-20 16:58:47,333 INFO ReportReader - Creating index:
+		' 2012-11-20 16:58:49,860 INFO ReportMarshallerFactory - Marshaller Initialized
+		' Writing PRIDE XML to F:\DMS_WorkDir5\AID_MAC_001_R1_20Nov07_Draco_07-07-19_Job863734.msgf-pride.xml
+		' 2012-11-20 16:58:49,860 INFO PrideXmlWriter - DAO Configuration: {search_engine=MSGF, peptide_threshold=0.05, add_carbamidomethylation=false}
+		' 2012-11-20 16:58:49,860 WARN PrideXmlWriter - Writing file : F:\DMS_WorkDir5\AID_MAC_001_R1_20Nov07_Draco_07-07-19_Job863734.msgf-pride.xml
+		' 2012-11-20 16:59:01,124 INFO PrideXmlWriter - Marshalled 1000 spectra
+		' 2012-11-20 16:59:01,124 INFO PrideXmlWriter - Used: 50 Free: 320 Heap size: 371 Xmx: 2728
+		' 2012-11-20 16:59:02,231 INFO PrideXmlWriter - Marshalled 2000 spectra
+		' 2012-11-20 16:59:02,231 INFO PrideXmlWriter - Used: 214 Free: 156 Heap size: 371 Xmx: 2728
+		' 2012-11-20 16:59:03,152 INFO PrideXmlWriter - Marshalled 3000 spectra
+		' 2012-11-20 16:59:03,152 INFO PrideXmlWriter - Used: 128 Free: 223 Heap size: 351 Xmx: 2728
+		' 2012-11-20 16:59:04,103 INFO PrideXmlWriter - Marshalled 4000 spectra
+		' 2012-11-20 16:59:04,103 INFO PrideXmlWriter - Used: 64 Free: 278 Heap size: 342 Xmx: 2728
+		' 2012-11-20 16:59:05,258 INFO PrideXmlWriter - Marshalled 5000 spectra
+		' 2012-11-20 16:59:05,258 INFO PrideXmlWriter - Used: 21 Free: 312 Heap size: 333 Xmx: 2728
+		' 2012-11-20 16:59:06,693 ERROR StandardXpathAccess - The index does not contain any entry for the requested xpath: /Report/PTMs/PTM
 
 		Try
 
@@ -1658,13 +1677,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
+				mConsoleOutputErrorMsg = String.Empty
+
 				intLinesRead = 0
 				Do While srInFile.Peek() > -1
 					strLineIn = srInFile.ReadLine()
 					intLinesRead += 1
 
 					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						If strLineIn.ToLower.Contains("error") Then
+						If strLineIn.ToLower.Contains(" error ") Then
 							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 								mConsoleOutputErrorMsg = "Error running Pride Converter:"
 							End If
@@ -1734,6 +1755,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		Dim blnSuccess As Boolean
 		blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
+
+		' Assure that the console output file has been parsed
+		ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 			If mConsoleOutputErrorMsg.Contains("/Report/PTMs/PTM") Then

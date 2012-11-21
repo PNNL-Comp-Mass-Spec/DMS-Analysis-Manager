@@ -2173,25 +2173,8 @@ Public MustInherit Class clsAnalysisResources
 			For Each kvItem As Generic.KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
 
 				If kvItem.Value.PeptideHitResultType <> clsPHRPReader.ePeptideHitResultType.Unknown Then
-					If DataPackageID = 663 Then
-						' Debug Hack: Only keep jobs from "AID_MAC_001_R2_20Nov07_Draco_07-07-19" and "AID_MAC_005_R2_20Nov07_Draco_07-07-19"
-
-						If kvItem.Value.Dataset = "AID_MAC_001_R2_20Nov07_Draco_07-07-19" Or kvItem.Value.Dataset = "AID_MAC_005_R2_20Nov07_Draco_07-07-19" Then
-							lstDataPackagePeptideHitJobs.Add(kvItem.Value)
-						End If
-
-						'ElseIf DataPackageID = 667 Then
-
-						'	' Debug Hack: Only keep jobs from "QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08"
-
-						'	If kvItem.Value.Dataset = "QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08" Then
-						'		lstDataPackagePeptideHitJobs.Add(kvItem.Value)
-						'	End If
-
-					Else
-						' Cache this job info in lstDataPackagePeptideHitJobs
-						lstDataPackagePeptideHitJobs.Add(kvItem.Value)
-					End If
+					' Cache this job info in lstDataPackagePeptideHitJobs
+					lstDataPackagePeptideHitJobs.Add(kvItem.Value)
 
 				End If
 
