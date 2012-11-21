@@ -23,14 +23,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	Protected Const FILE_EXTENSION_MSGF_REPORT_XML As String = ".msgf-report.xml"
 	Protected Const FILE_EXTENSION_MSGF_PRIDE_XML As String = ".msgf-pride.xml"
 
+	Protected Const DEFAULT_PVALUE_THRESHOLD As Double = 0.05
+
 	Protected mConsoleOutputErrorMsg As String
 
 	' This dictionary tracks the peptide hit jobs defined for this data package
 	' The keys are job numbers and the values contains job info
 	Protected mDataPackagePeptideHitJobs As Generic.Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
 
-	Protected mToolVersionWritten As Boolean
-	Protected mPrideConverterVersion As String = String.Empty
 	Protected mPrideConverterProgLoc As String = String.Empty
 
 	Protected mJavaProgLoc As String = String.Empty
@@ -43,19 +43,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 #Region "Structures and Enums"
 	Protected Structure udtFilterThresholdsType
+		Public PValueThreshold As Single
 		Public FDRThreshold As Single
 		Public PepFDRThreshold As Single
-		Public MSGFSpecProbThresold As Single
+		Public MSGFSpecProbThreshold As Single
 		Public UseFDRThreshold As Boolean
 		Public UsePepFDRThreshold As Boolean
 		Public UseMSGFSpecProb As Boolean
 		Public Sub Clear()
+			PValueThreshold = DEFAULT_PVALUE_THRESHOLD
 			UseFDRThreshold = False
 			UsePepFDRThreshold = False
 			UseMSGFSpecProb = True
 			FDRThreshold = 0.01
 			PepFDRThreshold = 0.01
-			MSGFSpecProbThresold = 0.000000001
+			MSGFSpecProbThreshold = 0.000000001
 		End Sub
 	End Structure
 
@@ -74,6 +76,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Public MSGFSpecProb As String
 		Public DeltaScore As String
 		Public DeltaScoreOther As String
+		Public Protein As String
 	End Structure
 
 	Protected Enum eMSGFReportXMLFileLocation
@@ -121,9 +124,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Note: we will store the Pride Converter version info in the database after we process the first job with Pride Converter
-			mToolVersionWritten = False
-			mPrideConverterVersion = String.Empty
+			' Store the PRIDE Converter version info in the database
+			If Not StoreToolVersionInfo(mPrideConverterProgLoc) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+				m_message = "Error determining PRIDE Converter version"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 			mConsoleOutputErrorMsg = String.Empty
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PRIDEConverter")
@@ -182,6 +189,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			End If
 
 			m_jobParams.AddResultFileExtensionToSkip(".msgf")
+			m_jobParams.AddResultFileExtensionToSkip(".msgf-report.xml")
+			m_jobParams.AddResultFileToSkip("PRIDEConverter_ConsoleOutput.txt")
+			m_jobParams.AddResultFileToSkip("PRIDEConverter_Version.txt")
 
 			result = MakeResultsFolder()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -210,6 +220,27 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+
+	End Function
+
+	Protected Function ComputeApproximatePValue(ByVal dblMSGFSpecProb As Double) As Double
+		Dim dblSpecProb As Double
+		Dim dblPValueEstimate As Double = dblMSGFSpecProb
+
+		Try
+
+			' Estimate Log10(PValue) using 10^(Log10(SpecProb) x 0.9988 + 6.43)
+			' This was determined using Job 893431 for dataset QC_Shew_12_02_0pt25_Frac-08_7Nov12_Tiger_12-09-36
+			'
+			dblPValueEstimate = Math.Log10(dblSpecProb) * 0.9988 + 6.43
+			dblPValueEstimate = Math.Pow(10, dblPValueEstimate)
+
+		Catch ex As Exception
+			' Ignore errors here
+			' We will simply return strMSGFSpecProb
+		End Try
+
+		Return dblPValueEstimate
 
 	End Function
 
@@ -307,8 +338,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	  ByRef dctProteinPSMCounts As Generic.Dictionary(Of Integer, Integer)) As String
 
 		Const MSGF_SPECPROB_NOTDEFINED As Integer = 10
+		Const PVALUE_NOTDEFINED As Integer = 10
 
-		Dim lstScansWritten As Generic.SortedSet(Of Integer)
+		Dim dctBestMatchByScan As Generic.Dictionary(Of Integer, Generic.KeyValuePair(Of Double, String))
+		Dim dctBestMatchByScanScoreValues As Generic.Dictionary(Of Integer, udtPseudoMSGFDataType)
+
 		Dim udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType = New clsAnalysisResources.udtDataPackageJobInfoType
 
 		Dim strMzXMLFilename As String
@@ -327,13 +361,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim dblMSGFSpecProb As Double
 		Dim dblFDR As Double
 		Dim dblPepFDR As Double
+		Dim dblPValue As Double
+
+		Dim dblScoreForCurrentMatch As Double
 
 		Dim blnValidPSM As Boolean
+		Dim blnNewScanNumber As Boolean
 		Dim blnThresholdChecked As Boolean
 
 		Dim blnFDRValuesArePresent As Boolean = False
 		Dim blnPepFDRValuesArePresent As Boolean = False
-		Dim intSkipCount As Integer = 0
 
 		Try
 
@@ -347,7 +384,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				lstPseudoMSGFData.Clear()
 			End If
 
-			lstScansWritten = New Generic.SortedSet(Of Integer)
+
+			' The .MSGF file can only contain one match for each scan number
+			' If it includes multiple matches, then PRIDE Converter crashes when reading the .mzXML file
+			' Furthermore, the .msgf-report.xml file cannot have extra entries that are not in the .msgf file
+			' Thus, only keep the best-scoring match for each spectrum
+			'
+			' The keys in each of dctBestMatchByScan and dctBestMatchByScanScoreValues are scan numbers
+			' The value for dctBestMatchByScan is a KeyValue pair where the key is the score for this match
+			dctBestMatchByScan = New Generic.Dictionary(Of Integer, Generic.KeyValuePair(Of Double, String))
+			dctBestMatchByScanScoreValues = New Generic.Dictionary(Of Integer, udtPseudoMSGFDataType)
+
 
 			strMzXMLFilename = strDataset & ".mzXML"
 
@@ -377,220 +424,313 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				objReader.SkipDuplicatePSMs = False
 
-				strPseudoMsgfFilePath = IO.Path.Combine(m_WorkDir, udtJobInfo.Dataset & "_Job" & udtJobInfo.Job & FILE_EXTENSION_PSEUDO_MSGF)
-				Using swMSGFFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strPseudoMsgfFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				' Read the data, filtering on either PepFDR or FDR if defined, or MSGF_SpecProb if PepFDR and/or FDR are not available
+				While objReader.MoveNext()
 
-					' Write the header line
-					swMSGFFile.WriteLine( _
-					 "#SpectrumFile" & ControlChars.Tab & _
-					 "Scan#" & ControlChars.Tab & _
-					 "Annotation" & ControlChars.Tab & _
-					 "Protein" & ControlChars.Tab & _
-					 "Charge" & ControlChars.Tab & _
-					 "MQScore" & ControlChars.Tab & _
-					 "Length" & ControlChars.Tab & _
-					 "TotalPRMScore" & ControlChars.Tab & _
-					 "MedianPRMScore" & ControlChars.Tab & _
-					 "FractionY" & ControlChars.Tab & _
-					 "FractionB" & ControlChars.Tab & _
-					 "Intensity" & ControlChars.Tab & _
-					 "NTT" & ControlChars.Tab & _
-					 "p-value" & ControlChars.Tab & _
-					 "F-Score" & ControlChars.Tab & _
-					 "DeltaScore" & ControlChars.Tab & _
-					 "DeltaScoreOther" & ControlChars.Tab & _
-					 "RecordNumber" & ControlChars.Tab & _
-					 "DBFilePos" & ControlChars.Tab & _
-					 "SpecFilePos" & ControlChars.Tab & _
-					 "SpecProb"
-					 )
+					blnValidPSM = True
+					blnThresholdChecked = False
 
-					' Write each data line, filtering on either PepFDR or FDR if defined, or MSGF_SpecProb if PepFDR and/or FDR are not available
-					While objReader.MoveNext()
+					dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED
+					dblFDR = -1
+					dblPepFDR = -1
+					dblPValue = PVALUE_NOTDEFINED
+					dblScoreForCurrentMatch = 100
 
-						blnValidPSM = True
-						blnThresholdChecked = False
+					' Determine MSGFSpecProb; store 10 if we don't find a valid number
+					If Not Double.TryParse(objReader.CurrentPSM.MSGFSpecProb, dblMSGFSpecProb) Then
+						dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED
+					End If
 
-						' Determine MSGFSpecProb; store 10 if we don't find a valid number
-						If Not Double.TryParse(objReader.CurrentPSM.MSGFSpecProb, dblMSGFSpecProb) Then
-							dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED
+					Select Case udtJobInfo.PeptideHitResultType
+						Case clsPHRPReader.ePeptideHitResultType.Sequest
+							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
+								dblPValue = ComputeApproximatePValue(dblMSGFSpecProb)
+								dblScoreForCurrentMatch = dblMSGFSpecProb
+							Else
+								dblPValue = 0.025
+								' Note: storing -XCorr so that lower values will be considered higher confidence
+								dblScoreForCurrentMatch = -(objReader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1))
+							End If
+
+						Case clsPHRPReader.ePeptideHitResultType.XTandem
+							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
+								dblPValue = ComputeApproximatePValue(dblMSGFSpecProb)
+								dblScoreForCurrentMatch = dblMSGFSpecProb
+							Else
+								dblPValue = 0.025
+								dblScoreForCurrentMatch = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1)
+							End If
+
+						Case clsPHRPReader.ePeptideHitResultType.Inspect
+							dblPValue = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED)
+
+							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED Then
+								dblScoreForCurrentMatch = dblMSGFSpecProb
+							Else
+								' Note: storing -TotalPRMScore so that lower values will be considered higher confidence
+								dblScoreForCurrentMatch = -(objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1))
+							End If
+
+						Case clsPHRPReader.ePeptideHitResultType.MSGFDB
+							dblFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1)
+							If dblFDR > -1 Then
+								blnFDRValuesArePresent = True
+							End If
+
+							dblPepFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PepFDR, -1)
+							If dblPepFDR > -1 Then
+								blnPepFDRValuesArePresent = True
+							End If
+
+							dblPValue = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOTDEFINED)
+							dblScoreForCurrentMatch = dblMSGFSpecProb
+					End Select
+
+
+					If udtFilterThresholds.UseMSGFSpecProb Then
+						If dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThreshold Then
+							blnValidPSM = False
 						End If
+						blnThresholdChecked = True
+					End If
 
-						dblFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1)
-						If dblFDR > -1 Then
-							blnFDRValuesArePresent = True
+					If blnPepFDRValuesArePresent AndAlso udtFilterThresholds.UsePepFDRThreshold Then
+						' Typically only MSGFDB results will have PepFDR values
+						If dblPepFDR > udtFilterThresholds.PepFDRThreshold Then
+							blnValidPSM = False
 						End If
+						blnThresholdChecked = True
+					End If
 
-						dblPepFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PepFDR, -1)
-						If dblPepFDR > -1 Then
-							blnPepFDRValuesArePresent = True
+					If blnFDRValuesArePresent AndAlso udtFilterThresholds.UseFDRThreshold Then
+						' Typically only MSGFDB results will have FDR values
+						If dblFDR > udtFilterThresholds.FDRThreshold Then
+							blnValidPSM = False
 						End If
+						blnThresholdChecked = True
+					End If
 
-						If udtFilterThresholds.UseMSGFSpecProb Then
-							If dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThresold Then
+					If blnValidPSM And Not blnThresholdChecked Then
+						' Switch to filtering on MSGFSpecProbThreshold instead of on FDR or PepFDR
+						If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED AndAlso udtFilterThresholds.MSGFSpecProbThreshold < 0.0001 Then
+							If dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThreshold Then
 								blnValidPSM = False
 							End If
-							blnThresholdChecked = True
 						End If
+					End If
 
-						If blnPepFDRValuesArePresent AndAlso udtFilterThresholds.UsePepFDRThreshold Then
-							' Typically only MSGFDB results will have PepFDR values
-							If dblPepFDR > udtFilterThresholds.PepFDRThreshold Then
-								blnValidPSM = False
-							End If
-							blnThresholdChecked = True
+					If blnValidPSM Then
+						' Filter on P-value
+						If dblPValue >= udtFilterThresholds.PValueThreshold Then
+							blnValidPSM = False
 						End If
+					End If
 
-						If blnFDRValuesArePresent AndAlso udtFilterThresholds.UseFDRThreshold Then
-							' Typically only MSGFDB results will have FDR values
-							If dblFDR > udtFilterThresholds.FDRThreshold Then
-								blnValidPSM = False
-							End If
-							blnThresholdChecked = True
-						End If
+					If blnValidPSM Then
 
-						If blnValidPSM And Not blnThresholdChecked Then
-							' Switch to filtering on MSGFSpecProbThresold instead of on FDR or PepFDR
-							If dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED AndAlso udtFilterThresholds.MSGFSpecProbThresold < 0.0001 Then
-								If dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThresold Then
+						' Determine the protein index in dctProteins
+
+						Dim kvIndexAndSequence As Generic.KeyValuePair(Of Integer, String) = Nothing
+
+						If Not dctProteins.TryGetValue(objReader.CurrentPSM.ProteinFirst, kvIndexAndSequence) Then
+
+							' Protein not found in dctProteinPSMCounts
+							' If the search engine is MSGFDB and the protein name starts with REV_ or XXX_ then skip this protein since it's a decoy result
+							' Otherwise, add the protein to dctProteins and dctProteinPSMCounts, though we won't know its sequence
+
+							Dim strProteinUCase As String = objReader.CurrentPSM.ProteinFirst.ToUpper()
+
+							If udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+								If strProteinUCase.StartsWith("REV_") OrElse strProteinUCase.StartsWith("XXX_") Then
+									blnValidPSM = False
+								End If
+							Else
+								If strProteinUCase.StartsWith("REVERSED_") OrElse strProteinUCase.StartsWith("SCRAMBLED_") OrElse strProteinUCase.StartsWith("XXX.") Then
 									blnValidPSM = False
 								End If
 							End If
-						End If
 
-						If blnValidPSM Then
-
-							Dim kvIndexAndSequence As Generic.KeyValuePair(Of Integer, String) = Nothing
-
-							If Not dctProteins.TryGetValue(objReader.CurrentPSM.ProteinFirst, kvIndexAndSequence) Then
-
-								' Protein not found in dctProteinPSMCounts
-								' If the search engine is MSGFDB and the protein name starts with REV_ or XXX_ then skip this protein since it's a decoy result
-								' Otherwise, add the protein to dctProteins and dctProteinPSMCounts, though we won't know its sequence
-
-								Dim strProteinUCase As String = objReader.CurrentPSM.ProteinFirst.ToUpper()
-
-								If udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-									If strProteinUCase.StartsWith("REV_") OrElse strProteinUCase.StartsWith("XXX_") Then
-										blnValidPSM = False
-									End If
-								Else
-									If strProteinUCase.StartsWith("REVERSED_") OrElse strProteinUCase.StartsWith("SCRAMBLED_") OrElse strProteinUCase.StartsWith("XXX.") Then
-										blnValidPSM = False
-									End If
-								End If
-
-								If blnValidPSM Then
-									kvIndexAndSequence = New Generic.KeyValuePair(Of Integer, String)(dctProteins.Count, String.Empty)
-									dctProteinPSMCounts.Add(kvIndexAndSequence.Key, 0)
-									dctProteins.Add(objReader.CurrentPSM.ProteinFirst, kvIndexAndSequence)
-								End If
-
+							If blnValidPSM Then
+								kvIndexAndSequence = New Generic.KeyValuePair(Of Integer, String)(dctProteins.Count, String.Empty)
+								dctProteinPSMCounts.Add(kvIndexAndSequence.Key, 0)
+								dctProteins.Add(objReader.CurrentPSM.ProteinFirst, kvIndexAndSequence)
 							End If
 
 						End If
 
-						If blnValidPSM Then
+					End If
 
-							' These fields are used to hold different scores depending on the search engine
-							strTotalPRMScore = "0"
-							strPValue = "0"
-							strDeltaScore = "0"
-							strDeltaScoreOther = "0"
+					If blnValidPSM Then
 
-							Select Case udtJobInfo.PeptideHitResultType
-								Case clsPHRPReader.ePeptideHitResultType.Sequest
-									strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp)
-									strPValue = objReader.CurrentPSM.MSGFSpecProb
-									strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn)
-									strDeltaScoreOther = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2)
+						' These fields are used to hold different scores depending on the search engine
+						strTotalPRMScore = "0"
+						strPValue = "0"
+						strDeltaScore = "0"
+						strDeltaScoreOther = "0"
 
-								Case clsPHRPReader.ePeptideHitResultType.MSGFDB
-									strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore)
-									strPValue = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue)
-							End Select
+						Select Case udtJobInfo.PeptideHitResultType
+							Case clsPHRPReader.ePeptideHitResultType.Sequest
+								strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp)
+								strPValue = dblPValue.ToString("0.00")
+								strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn)
+								strDeltaScoreOther = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2)
 
-							' The .MSGF file can only contain one match for each scan number
-							' If it includes multiple matches, then PRIDE Converter crashes when reading the .mzXML file
-							' In contrast, the .msgf-report.xml file _can_ contain multiple matches for the same scan
+							Case clsPHRPReader.ePeptideHitResultType.XTandem
+								strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore)
+								strPValue = dblPValue.ToString("0.00")
+								strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2)
 
-							If lstScansWritten.Contains(objReader.CurrentPSM.ScanNumber) Then
-								If intSkipCount < 10 Then
-									Console.WriteLine("Skipping ResultID " & objReader.CurrentPSM.ResultID & " since previous result already stored for scan " & objReader.CurrentPSM.ScanNumber)
-								End If
-								intSkipCount += 1
+							Case clsPHRPReader.ePeptideHitResultType.Inspect
+								strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore)
+								strPValue = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue)
+								strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore)
+								strDeltaScoreOther = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther)
+
+							Case clsPHRPReader.ePeptideHitResultType.MSGFDB
+								strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore)
+								strPValue = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue)
+
+						End Select
+
+						' Construct the text that we would write to the pseudo MSGF file
+						Dim strMSGFText As String
+						strMSGFText = strMzXMLFilename & ControlChars.Tab & _
+						   objReader.CurrentPSM.ScanNumber & ControlChars.Tab & _
+						   objReader.CurrentPSM.Peptide & ControlChars.Tab & _
+						   objReader.CurrentPSM.ProteinFirst & ControlChars.Tab & _
+						   objReader.CurrentPSM.Charge & ControlChars.Tab & _
+						   objReader.CurrentPSM.MSGFSpecProb & ControlChars.Tab & _
+						   objReader.CurrentPSM.PeptideCleanSequence.Length() & ControlChars.Tab & _
+						   strTotalPRMScore & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   objReader.CurrentPSM.NumTrypticTerminii & ControlChars.Tab & _
+						   strPValue & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   strDeltaScore & ControlChars.Tab & _
+						   strDeltaScoreOther & ControlChars.Tab & _
+						   objReader.CurrentPSM.ResultID & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   "0" & ControlChars.Tab & _
+						   objReader.CurrentPSM.MSGFSpecProb
+
+						' Add or update dctBestMatchByScan and dctBestMatchByScanScoreValues
+						Dim kvBestMatchForScan As Generic.KeyValuePair(Of Double, String) = Nothing
+
+						If dctBestMatchByScan.TryGetValue(objReader.CurrentPSM.ScanNumber, kvBestMatchForScan) Then
+							If dblScoreForCurrentMatch >= kvBestMatchForScan.Key Then
+								' Skip this result since it has a lower score than the match already stored in dctBestMatchByScan
+								blnValidPSM = False
 							Else
+								' Update dctBestMatchByScan
+								dctBestMatchByScan(objReader.CurrentPSM.ScanNumber) = New Generic.KeyValuePair(Of Double, String)(dblScoreForCurrentMatch, strMSGFText)
+								blnValidPSM = True
+							End If
+							blnNewScanNumber = False
+						Else
+							' Scan not yet present in dctBestMatchByScan; add it
+							kvBestMatchForScan = New Generic.KeyValuePair(Of Double, String)(dblScoreForCurrentMatch, strMSGFText)
+							dctBestMatchByScan.Add(objReader.CurrentPSM.ScanNumber, kvBestMatchForScan)
+							blnValidPSM = True
+							blnNewScanNumber = True
+						End If
 
-								swMSGFFile.WriteLine( _
-								 strMzXMLFilename & ControlChars.Tab & _
-								 objReader.CurrentPSM.ScanNumber & ControlChars.Tab & _
-								 objReader.CurrentPSM.Peptide & ControlChars.Tab & _
-								 objReader.CurrentPSM.ProteinFirst & ControlChars.Tab & _
-								 objReader.CurrentPSM.Charge & ControlChars.Tab & _
-								 objReader.CurrentPSM.MSGFSpecProb & ControlChars.Tab & _
-								 objReader.CurrentPSM.PeptideCleanSequence.Length() & ControlChars.Tab & _
-								 strTotalPRMScore & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 objReader.CurrentPSM.NumTrypticTerminii & ControlChars.Tab & _
-								 strPValue & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 strDeltaScore & ControlChars.Tab & _
-								 strDeltaScoreOther & ControlChars.Tab & _
-								 objReader.CurrentPSM.ResultID & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 "0" & ControlChars.Tab & _
-								 objReader.CurrentPSM.MSGFSpecProb
-								 )
+						If blnValidPSM Then
 
+							Dim strPrefix As String = String.Empty
+							Dim strSuffix As String = String.Empty
+							Dim strPrimarySequence As String = String.Empty
 
-								Dim strPrefix As String = String.Empty
-								Dim strSuffix As String = String.Empty
-								Dim strPrimarySequence As String = String.Empty
+							If Not clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objReader.CurrentPSM.Peptide, strPrimarySequence, strPrefix, strSuffix) Then
+								strPrefix = String.Empty
+								strSuffix = String.Empty
+							End If
 
-								If Not clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objReader.CurrentPSM.Peptide, strPrimarySequence, strPrefix, strSuffix) Then
-									strPrefix = String.Empty
-									strSuffix = String.Empty
-								End If
+							Dim udtPseudoMSGFData As udtPseudoMSGFDataType = New udtPseudoMSGFDataType
+							With udtPseudoMSGFData
+								.ResultID = objReader.CurrentPSM.ResultID
+								.Peptide = String.Copy(objReader.CurrentPSM.Peptide)
+								.CleanSequence = String.Copy(objReader.CurrentPSM.PeptideCleanSequence)
+								.PrefixResidue = String.Copy(strPrefix)
+								.SuffixResidue = String.Copy(strSuffix)
+								.ScanNumber = objReader.CurrentPSM.ScanNumber
+								.ChargeState = objReader.CurrentPSM.Charge
+								.PValue = String.Copy(strPValue)
+								.MQScore = String.Copy(objReader.CurrentPSM.MSGFSpecProb)
+								.TotalPRMScore = String.Copy(strTotalPRMScore)
+								.NTT = objReader.CurrentPSM.NumTrypticTerminii
+								.MSGFSpecProb = String.Copy(objReader.CurrentPSM.MSGFSpecProb)
+								.DeltaScore = String.Copy(strDeltaScore)
+								.DeltaScoreOther = String.Copy(strDeltaScoreOther)
+								.Protein = objReader.CurrentPSM.ProteinFirst
+							End With
 
-								Dim udtPseudoMSGFData As udtPseudoMSGFDataType = New udtPseudoMSGFDataType
-								With udtPseudoMSGFData
-									.ResultID = objReader.CurrentPSM.ResultID
-									.Peptide = String.Copy(objReader.CurrentPSM.Peptide)
-									.CleanSequence = String.Copy(objReader.CurrentPSM.PeptideCleanSequence)
-									.PrefixResidue = String.Copy(strPrefix)
-									.SuffixResidue = String.Copy(strSuffix)
-									.ScanNumber = objReader.CurrentPSM.ScanNumber
-									.ChargeState = objReader.CurrentPSM.Charge
-									.PValue = String.Copy(strPValue)
-									.MQScore = String.Copy(objReader.CurrentPSM.MSGFSpecProb)
-									.TotalPRMScore = String.Copy(strTotalPRMScore)
-									.NTT = objReader.CurrentPSM.NumTrypticTerminii
-									.MSGFSpecProb = String.Copy(objReader.CurrentPSM.MSGFSpecProb)
-									.DeltaScore = String.Copy(strDeltaScore)
-									.DeltaScoreOther = String.Copy(strDeltaScoreOther)
-								End With
-
-								Dim lstMatchesForProtein As Generic.List(Of udtPseudoMSGFDataType) = Nothing
-								If lstPseudoMSGFData.TryGetValue(objReader.CurrentPSM.ProteinFirst, lstMatchesForProtein) Then
-									lstMatchesForProtein.Add(udtPseudoMSGFData)
-								Else
-									lstMatchesForProtein = New Generic.List(Of udtPseudoMSGFDataType)
-									lstMatchesForProtein.Add(udtPseudoMSGFData)
-									lstPseudoMSGFData.Add(objReader.CurrentPSM.ProteinFirst, lstMatchesForProtein)
-								End If
-
-
-								lstScansWritten.Add(objReader.CurrentPSM.ScanNumber)
+							If blnNewScanNumber Then
+								dctBestMatchByScanScoreValues.Add(objReader.CurrentPSM.ScanNumber, udtPseudoMSGFData)
+							Else
+								dctBestMatchByScanScoreValues(objReader.CurrentPSM.ScanNumber) = udtPseudoMSGFData
 							End If
 
 						End If
 
-					End While
-				End Using
+					End If
+
+				End While
+
 			End Using
+
+
+			strPseudoMsgfFilePath = IO.Path.Combine(m_WorkDir, udtJobInfo.Dataset & "_Job" & udtJobInfo.Job & FILE_EXTENSION_PSEUDO_MSGF)
+			Using swMSGFFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strPseudoMsgfFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+
+				' Write the header line
+				swMSGFFile.WriteLine( _
+				 "#SpectrumFile" & ControlChars.Tab & _
+				 "Scan#" & ControlChars.Tab & _
+				 "Annotation" & ControlChars.Tab & _
+				 "Protein" & ControlChars.Tab & _
+				 "Charge" & ControlChars.Tab & _
+				 "MQScore" & ControlChars.Tab & _
+				 "Length" & ControlChars.Tab & _
+				 "TotalPRMScore" & ControlChars.Tab & _
+				 "MedianPRMScore" & ControlChars.Tab & _
+				 "FractionY" & ControlChars.Tab & _
+				 "FractionB" & ControlChars.Tab & _
+				 "Intensity" & ControlChars.Tab & _
+				 "NTT" & ControlChars.Tab & _
+				 "p-value" & ControlChars.Tab & _
+				 "F-Score" & ControlChars.Tab & _
+				 "DeltaScore" & ControlChars.Tab & _
+				 "DeltaScoreOther" & ControlChars.Tab & _
+				 "RecordNumber" & ControlChars.Tab & _
+				 "DBFilePos" & ControlChars.Tab & _
+				 "SpecFilePos" & ControlChars.Tab & _
+				 "SpecProb"
+				 )
+
+				' Write out the filter-passing matches to the pseudo MSGF text file
+				For Each kvItem As Generic.KeyValuePair(Of Integer, Generic.KeyValuePair(Of Double, String)) In dctBestMatchByScan
+					swMSGFFile.WriteLine(kvItem.Value.Value)
+				Next
+
+			End Using
+
+			' Store the filter-passing matches in lstPseudoMSGFData
+			For Each kvItem As Generic.KeyValuePair(Of Integer, udtPseudoMSGFDataType) In dctBestMatchByScanScoreValues
+
+				Dim lstMatchesForProtein As Generic.List(Of udtPseudoMSGFDataType) = Nothing
+				If lstPseudoMSGFData.TryGetValue(kvItem.Value.Protein, lstMatchesForProtein) Then
+					lstMatchesForProtein.Add(kvItem.Value)
+				Else
+					lstMatchesForProtein = New Generic.List(Of udtPseudoMSGFDataType)
+					lstMatchesForProtein.Add(kvItem.Value)
+					lstPseudoMSGFData.Add(kvItem.Value.Protein, lstMatchesForProtein)
+				End If
+
+			Next
+
 
 		Catch ex As Exception
 			m_message = "Exception in CreatePseudoMSGFFileUsingPHRPReader"
@@ -644,9 +784,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			udtFilterThresholds.Clear()
 
 			With udtFilterThresholds
-				.FDRThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.FDRThreshold)
-				.PepFDRThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.PepFDRThreshold)
-				.MSGFSpecProbThresold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecProbThresold)
+				.PValueThreshold = m_jobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold)
+				.FDRThreshold = m_jobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold)
+				.PepFDRThreshold = m_jobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold)
+				.MSGFSpecProbThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecProbThreshold)
 
 				.UseFDRThreshold = m_jobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold)
 				.UsePepFDRThreshold = m_jobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold)
@@ -721,27 +862,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				strPseudoMsgfFilePath = CreatePseudoMSGFFileUsingPHRPReader(intJob, strDataset, udtFilterThresholds, lstPseudoMSGFData, dctProteins, dctProteinPSMCounts)
 
-				'If intJob = 861784 Then
-				'	' Temp Debug Hack
-
-				'	Dim lstMatchesForHack As Generic.List(Of udtPseudoMSGFDataType)
-				'	Dim udtItemForHack As udtPseudoMSGFDataType
-				'	lstMatchesForHack = lstPseudoMSGFData("SO_1931")
-				'	udtItemForHack = lstMatchesForHack(1)
-
-				'	With udtItemForHack
-				'		.Peptide = "K.LTVADMTGGNFTVTNGGVFGSLMSTPILNL.P"
-				'		.PrefixResidue = "K"
-				'		.SuffixResidue = "P"
-				'		.ChargeState = 2
-				'		.CleanSequence = "LTVADMTGGNFTVTNGGVFGSLMSTPILNL"
-				'		.TotalPRMScore = "50"
-				'		.PValue = "1E-10"
-				'	End With
-				'	lstMatchesForHack.Add(udtItemForHack)
-
-				'End If
-
 				If String.IsNullOrEmpty(strPseudoMsgfFilePath) Then
 					If String.IsNullOrEmpty(m_message) Then
 						m_message = "Pseudo Msgf file not created for job " & intJob & ", dataset " & strDataset
@@ -752,7 +872,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				If Not blnCreateMSGFReportFilesOnly Then
 
-					strPrideReportXMLFilePath = CreateMSGFReportXMLFile(strTemplateFileName, kvEntry.Value, strPseudoMsgfFilePath, lstPseudoMSGFData, dctProteins, dctProteinPSMCounts, strOrgDBNameGenerated, strProteinCollectionListOrFasta)
+					strPrideReportXMLFilePath = CreateMSGFReportXMLFile(strTemplateFileName, kvEntry.Value, strPseudoMsgfFilePath, lstPseudoMSGFData, dctProteins, dctProteinPSMCounts, strOrgDBNameGenerated, strProteinCollectionListOrFasta, udtFilterThresholds)
 
 					If String.IsNullOrEmpty(strPrideReportXMLFilePath) Then
 						If String.IsNullOrEmpty(m_message) Then
@@ -795,7 +915,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	  ByRef dctProteins As Generic.Dictionary(Of String, Generic.KeyValuePair(Of Integer, String)), _
 	  ByRef dctProteinPSMCounts As Generic.Dictionary(Of Integer, Integer), _
 	  ByVal strOrgDBNameGenerated As String, _
-	  ByVal strProteinCollectionListOrFasta As String) As String
+	  ByVal strProteinCollectionListOrFasta As String, _
+	  ByVal udtFilterThresholds As udtFilterThresholdsType) As String
 
 
 		Dim strPrideReportXMLFilePath As String = String.Empty
@@ -967,7 +1088,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 										objXmlWriter.WriteStartElement("ConfigurationOptions")
 
 										WriteConfigurationOption(objXmlWriter, "search_engine", "MSGF")
-										WriteConfigurationOption(objXmlWriter, "peptide_threshold", "0.05")
+										WriteConfigurationOption(objXmlWriter, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"))
 										WriteConfigurationOption(objXmlWriter, "add_carbamidomethylation", "false")
 
 										objXmlWriter.WriteEndElement()		' ConfigurationOptions
@@ -1325,7 +1446,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				Else
 					' Make sure the result file was created
-					strPrideXmlFilePath = IO.Path.Combine(m_WorkDir, strDataset & FILE_EXTENSION_MSGF_PRIDE_XML)
+					strPrideXmlFilePath = IO.Path.Combine(m_WorkDir, strBaseFileName & FILE_EXTENSION_MSGF_PRIDE_XML)
 					If Not IO.File.Exists(strPrideXmlFilePath) Then
 						m_message = "Pride XML file not created for job " & intJob & ": " & strPrideXmlFilePath
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -1391,6 +1512,65 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Else
 			Return strList.Split(ControlChars.Tab).ToList()
 		End If
+
+	End Function
+
+	Protected Function GetPrideConverterVersion(ByVal strPrideConverterProgLoc As String) As String
+
+		Dim CmdStr As String
+		Dim strVersionFilePath As String
+		Dim strPRIDEConverterVersion As String = "unknown"
+
+		CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+		m_StatusTools.CurrentOperation = "Determining PrideConverter Version"
+		m_StatusTools.UpdateAndWrite(m_progress)
+		strVersionFilePath = System.IO.Path.Combine(m_WorkDir, "PRIDEConverter_Version.txt")
+
+		CmdStr = "-jar " & PossiblyQuotePath(strPrideConverterProgLoc)
+
+		CmdStr &= " -converter -version"
+
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
+		End If
+
+		With CmdRunner
+			.CreateNoWindow = False
+			.CacheStandardOutput = False
+			.EchoOutputToConsole = False
+
+			.WriteConsoleOutputToFile = True
+			.ConsoleOutputFilePath = strVersionFilePath
+			.WorkDir = m_WorkDir
+		End With
+
+		Dim blnSuccess As Boolean
+		blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
+
+		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+		End If
+
+		If Not blnSuccess Then
+			m_message = "Error running PrideConverter to determine its version"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+		Else
+			Dim fiVersionFile As System.IO.FileInfo
+			fiVersionFile = New System.IO.FileInfo(strVersionFilePath)
+
+			If fiVersionFile.Exists Then
+				' Open the version file and read the version
+				Using srVersionFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiVersionFile.FullName, IO.FileMode.Open, IO.FileAccess.Read))
+					If srVersionFile.Peek > -1 Then
+						strPRIDEConverterVersion = srVersionFile.ReadLine()
+					End If
+				End Using
+			End If
+
+		End If
+
+		Return strPRIDEConverterVersion
 
 	End Function
 
@@ -1484,27 +1664,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					intLinesRead += 1
 
 					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						If intLinesRead = 1 Then
-
-							''''''''''''''''''''''''''
-							''''      TO FIX      ''''
-							''''''''''''''''''''''''''
-							'
-							' The first line is the Pride Converter version
-
-							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mPrideConverterVersion) Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "PrideConverter version: " & strLineIn)
+						If strLineIn.ToLower.Contains("error") Then
+							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+								mConsoleOutputErrorMsg = "Error running Pride Converter:"
 							End If
-
-							mPrideConverterVersion = String.Copy(strLineIn)
-
-						Else
-							If strLineIn.ToLower.Contains("error") Then
-								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-									mConsoleOutputErrorMsg = "Error running Pride Converter:"
-								End If
-								mConsoleOutputErrorMsg &= "; " & strLineIn
-							End If
+							mConsoleOutputErrorMsg &= "; " & strLineIn
 						End If
 					End If
 				Loop
@@ -1554,6 +1718,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		CmdStr &= " -spectrafile " & PossiblyQuotePath(strMzXMLFilePath)												' QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML
 		CmdStr &= " -reportfile " & PossiblyQuotePath(strPrideReportFilePath)											' QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-report.xml
 		CmdStr &= " -reportOnlyIdentifiedSpectra"
+		CmdStr &= " -debug"
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
 
@@ -1570,21 +1735,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim blnSuccess As Boolean
 		blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
 
-		If Not mToolVersionWritten Then
-			If String.IsNullOrWhiteSpace(mPrideConverterVersion) Then
-				Dim fiConsoleOutputfile As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT))
-				If fiConsoleOutputfile.Length = 0 Then
-					' File is 0-bytes; delete it
-					DeleteTemporaryfile(fiConsoleOutputfile.FullName)
-				Else
-					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT))
-				End If
-			End If
-			mToolVersionWritten = StoreToolVersionInfo()
-		End If
-
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+			If mConsoleOutputErrorMsg.Contains("/Report/PTMs/PTM") Then
+				' Ignore this error
+				mConsoleOutputErrorMsg = String.Empty
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+			End If
 		End If
 
 		If Not blnSuccess Then
@@ -1637,19 +1794,34 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	''' Stores the tool version info in the database
 	''' </summary>
 	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo() As Boolean
+	Protected Function StoreToolVersionInfo(ByVal strPrideConverterProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
+		Dim fiPrideConverter As System.IO.FileInfo
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		strToolVersionInfo = String.Copy(mPrideConverterVersion)
+		fiPrideConverter = New System.IO.FileInfo(strPrideConverterProgLoc)
+		If Not fiPrideConverter.Exists Then
+			Try
+				strToolVersionInfo = "Unknown"
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+				Return False
+			End Try
+
+			Return False
+		End If
+
+		' Run the PRIDE Converter using the -version switch to determine its version
+		strToolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName)
 
 		' Store paths to key files in ioToolFiles
 		Dim ioToolFiles As New Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mPrideConverterProgLoc))
+		ioToolFiles.Add(fiPrideConverter)
 
 		ioToolFiles.Add(New System.IO.FileInfo(mMSXmlGeneratorAppPath))
 
@@ -1715,10 +1887,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
 			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT))
-			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mPrideConverterVersion) Then
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
-
 		End If
 
 	End Sub
