@@ -1233,6 +1233,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					objXmlWriter.WriteElementString("Start", "0")
 					objXmlWriter.WriteElementString("End", "0")
 					objXmlWriter.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString())
+
+					' ToDo: Write out details of dynamic mods
+					'       Will need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
+					'
+					' XML format:
+					' <ModificationItem>
+					'     <ModLocation>10</ModLocation> 
+					'     <ModAccession>MOD:00425</ModAccession>
+					'     <ModDatabase>MOD</ModDatabase> 
+					'     <ModMonoDelta>15.994915</ModMonoDelta>
+					'     <additional> 
+					'         <cvParam cvLabel="MOD" accession="MOD:00425" name="monohydroxylated residue" value="15.994915" /> 
+					'     </additional> 
+					' </ModificationItem>
+
 					objXmlWriter.WriteElementString("isSpecific", "false")
 
 					objXmlWriter.WriteElementString("UniqueIdentifier", udtPeptide.ScanNumber.ToString())		' I wanted to record ResultID here, but we instead have to record Scan Number; otherwise PRIDE Converter Crashes

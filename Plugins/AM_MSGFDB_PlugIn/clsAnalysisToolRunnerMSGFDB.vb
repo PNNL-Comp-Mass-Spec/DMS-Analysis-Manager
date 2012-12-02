@@ -20,6 +20,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected mToolVersionWritten As Boolean
 	Protected mMSGFDbProgLoc As String
 
+	Protected mMSGFPlus As Boolean
+
 	Protected mResultsIncludeDecoyPeptides As Boolean = False
 
 	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
@@ -68,12 +70,34 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
 			If Not System.IO.File.Exists(JavaProgLoc) Then
 				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
+				m_message = "Cannot find Java: " & JavaProgLoc
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Determine the path to the MSGFDB program
-			mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME)
+			Dim blnUseLegacyMSGFDB As Boolean
+			Dim strMSGFJarfile As String
+
+			blnUseLegacyMSGFDB = m_jobParams.GetJobParameter("UseLegacyMSGFDB", False)
+
+			' =================================================
+			'            TEMPORARY OVERRIDE
+			' =================================================
+			' Support for MSGF+ is not yet ready
+			' Thus, need to force this to be true for now
+			' =================================================
+			blnUseLegacyMSGFDB = True
+
+			If blnUseLegacyMSGFDB Then
+				mMSGFPlus = False
+				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+			Else
+				mMSGFPlus = True
+				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+			End If
+
+			' Determine the path to MSGFDB (or MSGF+)
+			mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
 
 			If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -88,7 +112,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 			' Initialize mMSGFDBUtils
-			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel)
+			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
 			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
@@ -145,7 +169,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+			End If
 
 			CmdRunner = New clsRunDosProgram(m_WorkDir)
 
@@ -203,7 +229,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 			If Not blnProcessingError Then
-				result = PostProcessMSGFDBResults(ResultsFileName)
+				result = PostProcessMSGFDBResults(ResultsFileName, JavaProgLoc)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					If String.IsNullOrEmpty(m_message) Then
 						m_message = "Unknown error post-processing the MSGFDB results"
@@ -260,6 +286,69 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+
+	End Function
+
+	Protected Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal JavaProgLoc As String) As String
+
+		Dim strTSVFilePath As String = String.Empty
+		Dim intJavaMemorySize As Integer
+
+		Dim CmdStr As String
+		Dim blnSuccess As Boolean
+
+		Try
+			strTSVFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(strMZIDFileName))
+			strTSVFilePath &= "_msgfdb.tsv"
+
+			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
+
+			intJavaMemorySize = 2000
+			CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -cp " & mMSGFDbProgLoc
+			CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
+
+			CmdStr &= " -i " & PossiblyQuotePath(IO.Path.Combine(m_WorkDir, strMZIDFileName))
+			CmdStr &= " -o " & PossiblyQuotePath(strTSVFilePath)
+			CmdStr &= " -showQValue 1"
+			CmdStr &= " -showDecoy 1"
+			CmdStr &= " -unroll 1"
+
+			' Make sure the machine has enough free memory to run MSGFPlus
+			Dim blnLogFreeMemoryOnSuccess As Boolean = False
+
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGFDB", blnLogFreeMemoryOnSuccess) Then
+				m_message = "Not enough free memory to run the MzIDToTsv module in MSGFPlus"
+				Return String.Empty
+			End If
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+			End If
+
+			CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+			With CmdRunner
+				.CreateNoWindow = True
+				.CacheStandardOutput = True
+				.EchoOutputToConsole = True
+
+				.WriteConsoleOutputToFile = False
+			End With
+
+			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSGFPlus", True)
+
+			If Not blnSuccess Then
+				m_message = "MSGFPlus returned an error code converting the .mzid file to a .tsv file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return String.Empty
+			End If
+
+		Catch ex As Exception
+			m_message = "Error in MSGFDbPlugin->ConvertMZIDToTSV: " & ex.Message
+			Return String.Empty
+		End Try
+
+		Return strTSVFilePath
 
 	End Function
 
@@ -386,11 +475,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Sub
 
-	Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String) As IJobParams.CloseOutType
+	Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String, ByVal JavaProgLoc As String) As IJobParams.CloseOutType
 
 		Dim result As IJobParams.CloseOutType
 
-		'Zip the output file
+		' Zip the output file
 		result = mMSGFDBUtils.ZipOutputFile(Me, ResultsFileName)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
@@ -401,7 +490,19 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		' Create the Peptide to Protein map file
 		UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
 
-		result = mMSGFDBUtils.CreatePeptideToProteinMapping(ResultsFileName, mResultsIncludeDecoyPeptides)
+		Dim strMSGFDBResultsFileName As String
+		If IO.Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
+			' Convert the .mzid file to a .tsv file
+			strMSGFDBResultsFileName = ConvertMZIDToTSV(ResultsFileName, JavaProgLoc)
+
+			If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		Else
+			strMSGFDBResultsFileName = String.Copy(ResultsFileName)
+		End If
+
+		result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeDecoyPeptides)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 			Return result
 		End If

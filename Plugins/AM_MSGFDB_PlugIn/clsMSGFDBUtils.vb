@@ -31,6 +31,7 @@ Public Class clsMSGFDBUtils
 	Protected Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
 
 	Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+	Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
 	Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
 
 #End Region
@@ -50,6 +51,7 @@ Public Class clsMSGFDBUtils
 	Protected m_JobNum As String
 	Protected m_DebugLevel As Short
 
+	Protected mMSGFPlus As Boolean
 	Protected mMSGFDbVersion As String = String.Empty
 	Protected mErrorMessage As String = String.Empty
 	Protected mConsoleOutputErrorMsg As String = String.Empty
@@ -91,7 +93,7 @@ Public Class clsMSGFDBUtils
 	End Property
 
 #Region "Methods"
-	Public Sub New(oMgrParams As AnalysisManagerBase.IMgrParams, oJobParams As AnalysisManagerBase.IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short)
+	Public Sub New(oMgrParams As AnalysisManagerBase.IMgrParams, oJobParams As AnalysisManagerBase.IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
 		m_mgrParams = oMgrParams
 		m_jobParams = oJobParams
 		m_WorkDir = strWorkDir
@@ -99,8 +101,84 @@ Public Class clsMSGFDBUtils
 		m_JobNum = JobNum
 		m_DebugLevel = intDebugLevel
 
+		mMSGFPlus = blnMSGFPlus
 		mMSGFDbVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
+
+	End Sub
+
+	Protected Sub AdjustSwitchesForMSGFPlus(ByVal blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
+
+		Dim intValue As Integer
+		Dim intCharIndex As Integer
+
+		If blnMSGFPlus Then
+			' MSGF+
+
+			If IsMatch(strArgumentSwitch, "nnet") Then
+				' Auto-switch to ntt
+				strArgumentSwitch = "ntt"
+				If Integer.TryParse(strValue, intValue) Then
+					Select Case intValue
+						Case 0 : strValue = "2"			' Fully-tryptic
+						Case 1 : strValue = "1"			' Partially tryptic
+						Case 2 : strValue = "0"			' No-enzyme search
+						Case Else
+							' Assume partially tryptic
+							strValue = "1"
+					End Select
+				End If
+
+			ElseIf IsMatch(strArgumentSwitch, "c13") Then
+				' Auto-switch to ti
+				strArgumentSwitch = "ti"
+				strValue = "0," & strValue
+
+			ElseIf IsMatch(strArgumentSwitch, "showDecoy") Then
+				' Not valid for MSGF+; skip it
+				strArgumentSwitch = String.Empty
+			End If
+
+		Else
+			' MS-GFDB
+
+			If IsMatch(strArgumentSwitch, "ntt") Then
+				' Auto-switch to nnet
+				strArgumentSwitch = "nnet"
+				If Integer.TryParse(strValue, intValue) Then
+					Select Case intValue
+						Case 2 : strValue = "0"			' Fully-tryptic
+						Case 1 : strValue = "1"			' Partially tryptic
+						Case 0 : strValue = "2"			' No-enzyme search
+						Case Else
+							' Assume partially tryptic
+							strValue = "1"
+					End Select
+				End If
+
+			ElseIf IsMatch(strArgumentSwitch, "ti") Then
+				' Auto-switch to c13
+				strArgumentSwitch = "c13"
+				intCharIndex = strValue.IndexOf(",")
+				If intCharIndex >= 0 Then
+					strValue = strValue.Substring(intCharIndex + 1)
+				End If
+
+			ElseIf IsMatch(strArgumentSwitch, "protocol") Then
+				' Not valid for MS-GFDB; skip it
+				strArgumentSwitch = String.Empty
+
+			ElseIf IsMatch(strArgumentSwitch, "minCharge") Then
+				' Not valid for MS-GFDB; skip it
+				strArgumentSwitch = String.Empty
+
+			ElseIf IsMatch(strArgumentSwitch, "maxCharge") Then
+				' Not valid for MS-GFDB; skip it
+				strArgumentSwitch = String.Empty
+
+			End If
+
+		End If
 
 	End Sub
 
@@ -374,7 +452,8 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
 		dctParamNames.Add("EnzymeID", "e")
 		dctParamNames.Add("C13", "c13")
-		dctParamNames.Add("NNET", "nnet")
+		dctParamNames.Add("NNET", "nnet")				' Used by MS-GFDB
+		dctParamNames.Add("NTT", "ntt")					' Used by MSGF+
 		dctParamNames.Add("minLength", "minLength")
 		dctParamNames.Add("maxLength", "maxLength")
 		dctParamNames.Add("minCharge", "minCharge")
@@ -876,6 +955,8 @@ Public Class clsMSGFDBUtils
 		Dim blnHCD As Boolean = False
 		Dim blnHighResMSn As Boolean = False
 
+		Dim strSearchEngineName As String
+
 		strMSGFDbCmdLineOptions = String.Empty
 		strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
@@ -887,6 +968,12 @@ Public Class clsMSGFDBUtils
 		strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
 		If strDatasetType.ToUpper().Contains("HCD") Then
 			blnHCD = True
+		End If
+
+		If mMSGFPlus Then
+			strSearchEngineName = "MSGF+"
+		Else
+			strSearchEngineName = "MS-GFDB"
 		End If
 
 		sbOptions = New System.Text.StringBuilder(500)
@@ -928,6 +1015,7 @@ Public Class clsMSGFDBUtils
 					If Not String.IsNullOrWhiteSpace(strKey) Then
 
 						Dim strArgumentSwitch As String = String.Empty
+						Dim strArgumentSwitchOriginal As String
 
 						' Check whether strKey is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
@@ -949,7 +1037,22 @@ Public Class clsMSGFDBUtils
 								End Select
 							End If
 
-							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+							strArgumentSwitchOriginal = String.Copy(strArgumentSwitch)
+
+							AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
+
+							If String.IsNullOrEmpty(strArgumentSwitch) Then
+								If m_DebugLevel >= 1 And Not IsMatch(strArgumentSwitch, "showDecoy") Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
+								End If
+							ElseIf String.IsNullOrEmpty(strValue) Then
+								If m_DebugLevel >= 1 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Skipping switch " & strArgumentSwitch & " since the value is empty")
+								End If
+							Else
+								sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+							End If
+
 
 							If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
 								blnShowDecoyParamPresent = True
@@ -967,20 +1070,26 @@ Public Class clsMSGFDBUtils
 							End If
 
 						ElseIf IsMatch(strKey, "uniformAAProb") Then
-							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
-								If FastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
-									sbOptions.Append(" -uniformAAProb 1")
-								Else
-									sbOptions.Append(" -uniformAAProb 0")
-								End If
+
+							If mMSGFPlus Then
+								' Not valid for MSGF+; skip it
 							Else
-								If Integer.TryParse(strValue, intValue) Then
-									sbOptions.Append(" -uniformAAProb " & intValue)
+
+								If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
+									If FastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
+										sbOptions.Append(" -uniformAAProb 1")
+									Else
+										sbOptions.Append(" -uniformAAProb 0")
+									End If
 								Else
-									mErrorMessage = "Invalid value for uniformAAProb in MSGFDB parameter file"
-									ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
-									srParamFile.Close()
-									Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+									If Integer.TryParse(strValue, intValue) Then
+										sbOptions.Append(" -uniformAAProb " & intValue)
+									Else
+										mErrorMessage = "Invalid value for uniformAAProb in MSGFDB parameter file"
+										ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
+										srParamFile.Close()
+										Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+									End If
 								End If
 							End If
 

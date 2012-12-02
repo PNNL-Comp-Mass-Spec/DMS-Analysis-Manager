@@ -45,13 +45,15 @@ Public Class clsAnalysisResourcesExtraction
 		' It will be changed to False if processing MSGFDB results and the _PepToProtMap.txt file is successfully retrieved
 		mRetrieveOrganismDB = True
 
+		Dim strResultType As String = m_jobParams.GetParam("ResultType")
+
 		'Get analysis results files
-		If GetInputFiles(m_jobParams.GetParam("ResultType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+		If GetInputFiles(strResultType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Get misc files
-		If RetrieveMiscFiles() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+		If RetrieveMiscFiles(strResultType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -82,7 +84,7 @@ Public Class clsAnalysisResourcesExtraction
 			Dim strDataset As String = m_jobParams.GetParam("DatasetNum")
 
 			Select Case ResultType
-				Case "Peptide_Hit"	'Sequest
+				Case RESULT_TYPE_SEQUEST
 					ExtractionSkipsCDTAFile = m_jobParams.GetJobParameter("ExtractionSkipsCDTAFile", False)
 
 					If ExtractionSkipsCDTAFile Then
@@ -114,7 +116,7 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileExtensionToSkip(".out")  'DTA files
 					m_jobParams.AddResultFileExtensionToSkip("_PepToProtMapMTS.txt") ' Created by the PeptideToProteinMapEngine when creating the _ProteinMods.txt file
 
-				Case "XT_Peptide_Hit"
+				Case RESULT_TYPE_XTandem
 					FileToGet = strDataset & "_xt.zip"
 					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
 						'Errors were reported in function call, so just return
@@ -141,7 +143,7 @@ Public Class clsAnalysisResourcesExtraction
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 					End If
 
-				Case "IN_Peptide_Hit"
+				Case RESULT_TYPE_INSPECT
 					' Get the zipped Inspect results files
 
 					' This file contains the p-value filtered results
@@ -179,7 +181,7 @@ Public Class clsAnalysisResourcesExtraction
 
 					' Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
-				Case "MSG_Peptide_Hit"
+				Case RESULT_TYPE_MSGFDB
 					FileToGet = strDataset & "_msgfdb.zip"
 					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
 						'Errors were reported in function call, so just return
@@ -210,6 +212,15 @@ Public Class clsAnalysisResourcesExtraction
 
 					' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
 
+				Case RESULT_TYPE_MSALIGN
+					FileToGet = strDataset & "_MSAlign_ResultTable.txt"
+					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+						'Errors were reported in function call, so just return
+						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+					End If
+					m_jobParams.AddResultFileToSkip(FileToGet)
+
+					' Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
 				Case Else
 					m_message = "Invalid tool result type: " & ResultType
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -280,7 +291,7 @@ Public Class clsAnalysisResourcesExtraction
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Protected Friend Function RetrieveMiscFiles() As IJobParams.CloseOutType
+	Protected Friend Function RetrieveMiscFiles(ByVal ResultType As String) As IJobParams.CloseOutType
 
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
@@ -312,7 +323,7 @@ Public Class clsAnalysisResourcesExtraction
 			' Confirm that the file was actually created
 			blnSuccess = System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, ModDefsFilename))
 
-			If Not blnSuccess Then
+			If Not blnSuccess And ResultType <> RESULT_TYPE_MSALIGN Then
 				m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " & strParamFileName)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED

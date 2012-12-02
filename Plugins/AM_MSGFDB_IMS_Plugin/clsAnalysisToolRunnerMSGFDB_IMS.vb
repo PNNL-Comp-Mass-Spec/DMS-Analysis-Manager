@@ -37,6 +37,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 	Protected mToolVersionWritten As Boolean
 	Protected mIonMobilityMsMsProgLoc As String
 	Protected mMSGFDbProgLoc As String
+	Protected mMSGFPlus As Boolean
 
 	Protected mResultsIncludeDecoyPeptides As Boolean = False
 	Protected mIonMobilityMsMsConsoleOutputErrorMsg As String = String.Empty
@@ -87,8 +88,21 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
 			If Not System.IO.File.Exists(JavaProgLoc) Then
 				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
+				m_message = "Cannot find Java: " & JavaProgLoc
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			Dim blnUseLegacyMSGFDB As Boolean
+			Dim strMSGFJarfile As String
+
+			blnUseLegacyMSGFDB = m_jobParams.GetJobParameter("UseLegacyMSGFDB", False)
+			If blnUseLegacyMSGFDB Then
+				mMSGFPlus = False
+				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+			Else
+				mMSGFPlus = True
+				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
 			End If
 
 			' Determine the path to the IonMobilityMsMs program
@@ -100,7 +114,12 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 			' Determine the path to the MSGFDB program
 			' Note that we're using a copy of MSGFDB.jar that resides in the same folder as the IonMobilityMsMsConsole application
-			mMSGFDbProgLoc = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(mIonMobilityMsMsProgLoc), AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME)
+			mMSGFDbProgLoc = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(mIonMobilityMsMsProgLoc), strMSGFJarfile)
+			If Not System.IO.File.Exists(mMSGFDbProgLoc) Then
+				m_message = strMSGFJarfile & " not found in the IonMobilityMsMs folder"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mMSGFDbProgLoc)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
 			' Note: we will store the IonMobilityMSMS and MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
 			mToolVersionWritten = False
@@ -108,7 +127,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			strAssumedScanType = "HCD"
 
 			' Initialize mMSGFDBUtils
-			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel)
+			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
 			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)

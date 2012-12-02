@@ -49,6 +49,7 @@ Public Class clsExtractToolRunner
 		Dim OrgDbDir As String
 		Dim FastaFileName As String
 
+		Dim strCurrentAction As String = String.Empty
 		Dim blnProcessingError As Boolean
 
 		Try
@@ -75,85 +76,52 @@ Public Class clsExtractToolRunner
 
 
 			Select Case m_jobParams.GetParam("ResultType")
-				Case "Peptide_Hit"	'Sequest result type
+				Case clsAnalysisResources.RESULT_TYPE_SEQUEST	'Sequest result type
+
 					'Run Ken's Peptide Extractor DLL
+					strCurrentAction = "running peptide extraction for Sequest"
 					Result = PerformPeptideExtraction()
 					'Check for no data first. If no data, then exit but still copy results to server
 					If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 						Exit Select
 					End If
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide extraction for sequest"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
+
+					'Run PHRP
+					If Result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 						m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE	  ' 33% done
 						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+
+						strCurrentAction = "running peptide hits result processor for Sequest"
+						Result = RunPhrpForSequest()
 					End If
 
-					'Run PHRP
-					Result = RunPhrpForSequest()
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide hits result processor for sequest"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
-						m_progress = SEQUEST_PROGRESS_PHRP_DONE		' 66% done
+					If Result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						m_progress = SEQUEST_PROGRESS_PHRP_DONE	  ' 66% done
 						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+						strCurrentAction = "running peptide prophet for Sequest"
+						Result = RunPeptideProphet()
 					End If
 
-					'Run PeptideProphet
-					Result = RunPeptideProphet()
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide prophet for sequest"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
-						m_progress = SEQUEST_PROGRESS_PEPPROPHET_DONE	  ' 100% done
-						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
-					End If
 
-				Case "XT_Peptide_Hit" 'XTandem result type
+				Case clsAnalysisResources.RESULT_TYPE_XTandem
 					'Run PHRP
+					strCurrentAction = "running peptide hits result processor for X!Tandem"
 					Result = RunPhrpForXTandem()
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide hits result processor for Xtandem"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
-						m_progress = 100	' 100% done
-						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
-					End If
 
-				Case "IN_Peptide_Hit"
+				Case clsAnalysisResources.RESULT_TYPE_INSPECT
 					'Run PHRP
+					strCurrentAction = "running peptide hits result processor for Inspect"
 					Result = RunPhrpForInSpecT()
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide hits result processor for inspect"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
-						m_progress = 100	' 100% done
-						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
-					End If
 
-				Case "MSG_Peptide_Hit"
+				Case clsAnalysisResources.RESULT_TYPE_MSGFDB
 					'Run PHRP
+					strCurrentAction = "running peptide hits result processor for MS-GFDB"
 					Result = RunPhrpForMSGFDB()
-					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-						Msg = "Error running peptide hits result processor for MSGF-DB"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
-						blnProcessingError = True
-					Else
-						m_progress = 100	' 100% done
-						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
-					End If
+
+				Case clsAnalysisResources.RESULT_TYPE_MSALIGN
+					'Run PHRP
+					strCurrentAction = "running peptide hits result processor for MSAlign"
+					Result = RunPhrpForMSAlign()
 
 				Case Else
 					'Should never get here - invalid result type specified
@@ -162,6 +130,16 @@ Public Class clsExtractToolRunner
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Select
+
+			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+				Msg = "Error " & strCurrentAction
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
+				blnProcessingError = True
+			Else
+				m_progress = 100	' 100% done
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+			End If
 
 			'Stop the job timer
 			m_StopTime = System.DateTime.UtcNow
@@ -355,6 +333,55 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
+	End Function
+
+	Private Function RunPhrpForMSAlign() As IJobParams.CloseOutType
+
+		Dim Msg As String = String.Empty
+
+		Dim strTargetFilePath As String
+		Dim strSynFilePath As String = String.Empty
+
+		Dim Result As IJobParams.CloseOutType
+
+		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
+
+		'Run the processor
+		If m_DebugLevel > 3 Then
+			Msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Starting PHRP"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+		End If
+
+		Try
+
+			' Create the Synopsis file using the _MSAlign_ResultTable.txt file
+			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_ResultTable.txt")
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msalign_syn.txt")
+
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
+
+			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+				Msg = "Error running PHRP"
+				If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+		Catch ex As System.Exception
+			Msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " & _
+			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+		' Validate that the mass errors are within tolerance
+		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
 	End Function
 
 	Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType
@@ -636,8 +663,8 @@ Public Class clsExtractToolRunner
 
 				' Make sure the Peptide Prophet output file was actually created
 				strPepProphetOutputFilePath = System.IO.Path.Combine(m_PeptideProphet.OutputFolderPath, _
-																System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
-																PEPPROPHET_RESULT_FILE_SUFFIX)
+							System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
+							PEPPROPHET_RESULT_FILE_SUFFIX)
 
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide prophet processing complete; checking for file " & strPepProphetOutputFilePath)
@@ -663,7 +690,7 @@ Public Class clsExtractToolRunner
 				End If
 			Else
 				Msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize & _
-					  ": " & m_PeptideProphet.ErrMsg
+				   ": " & m_PeptideProphet.ErrMsg
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 
 				If blnIgnorePeptideProphetErrors Then
@@ -763,8 +790,8 @@ Public Class clsExtractToolRunner
 	''' <returns>True if success; false if failure</returns>
 	''' <remarks></remarks>
 	Protected Function InterleaveFiles(ByRef strFileList() As String, _
-									   ByVal strCombinedFilePath As String, _
-									   ByVal blnLookForHeaderLine As Boolean) As Boolean
+			   ByVal strCombinedFilePath As String, _
+			   ByVal blnLookForHeaderLine As Boolean) As Boolean
 
 		Dim Msg As String
 		Dim intIndex As Integer
@@ -890,9 +917,9 @@ Public Class clsExtractToolRunner
 	''' <returns>True if success, false if failure</returns>
 	''' <remarks></remarks>
 	Private Function SplitFileRoundRobin(ByVal strSrcFilePath As String, _
-										 ByVal lngMaxSizeBytes As Int64, _
-										 ByVal blnLookForHeaderLine As Boolean, _
-										 ByRef strSplitFileList() As String) As Boolean
+			  ByVal lngMaxSizeBytes As Int64, _
+			  ByVal blnLookForHeaderLine As Boolean, _
+			  ByRef strSplitFileList() As String) As Boolean
 
 		Dim fiFileInfo As System.IO.FileInfo
 		Dim strBaseName As String
@@ -1002,27 +1029,27 @@ Public Class clsExtractToolRunner
 
 	End Function
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo() As Boolean
 
-        Dim strToolVersionInfo As String = String.Empty
+		Dim strToolVersionInfo As String = String.Empty
 		Dim blnSuccess As Boolean
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
 
-        ' Lookup the version of the PeptideHitResultsProcessor
-        Try
+		' Lookup the version of the PeptideHitResultsProcessor
+		Try
 
-            Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
-            Dim ioPHRP As System.IO.DirectoryInfo
-            ioPHRP = New System.IO.DirectoryInfo(progLoc)
+			Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
+			Dim ioPHRP As System.IO.DirectoryInfo
+			ioPHRP = New System.IO.DirectoryInfo(progLoc)
 
-            ' verify that program file exists
+			' verify that program file exists
 			If ioPHRP.Exists Then
 				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
 			Else
@@ -1030,14 +1057,14 @@ Public Class clsExtractToolRunner
 				Return False
 			End If
 
-        Catch ex As System.Exception
+		Catch ex As System.Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
 			Return False
-        End Try
+		End Try
 
 
-        If m_jobParams.GetParam("ResultType") = "Peptide_Hit" Then
-            'Sequest result type
+		If m_jobParams.GetParam("ResultType") = clsAnalysisResources.RESULT_TYPE_SEQUEST Then
+			'Sequest result type
 
 			' Lookup the version of the PeptideFileExtractor
 			Try
@@ -1053,12 +1080,12 @@ Public Class clsExtractToolRunner
 				Return False
 			End Try
 
-            ' Lookup the version of the PeptideProphetRunner
+			' Lookup the version of the PeptideProphetRunner
 
-            Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
-            Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
+			Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
+			Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
 
-            If ioPeptideProphetRunner.Exists() Then
+			If ioPeptideProphetRunner.Exists() Then
 				' Lookup the version of the PeptideProphetRunner
 				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioPeptideProphetRunner.FullName)
 				If Not blnSuccess Then Return False
@@ -1066,9 +1093,9 @@ Public Class clsExtractToolRunner
 				' Lookup the version of the PeptideProphetLibrary
 				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
 				If Not blnSuccess Then Return False
-            End If
+			End If
 
-        End If
+		End If
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
