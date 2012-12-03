@@ -74,6 +74,12 @@ Public MustInherit Class clsAnalysisResources
 	' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
 	Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
 
+	Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
+	Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
+	Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
+	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Also used for MSGF+
+	Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
+
 	Public Const DOT_WIFF_EXTENSION As String = ".wiff"
 	Public Const DOT_D_EXTENSION As String = ".d"
 	Public Const DOT_RAW_EXTENSION As String = ".raw"
@@ -3652,6 +3658,8 @@ Public MustInherit Class clsAnalysisResources
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
 			Case "msgfdb"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
+			Case "msalign"
+				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 			Case Else
 				' Did not find an exact match
 				' Try a substring match
@@ -3663,6 +3671,8 @@ Public MustInherit Class clsAnalysisResources
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
 				ElseIf strToolNameLCase.Contains("msgfdb") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
+				ElseIf strToolNameLCase.Contains("msalign") Then
+					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 				Else
 					Return Nothing
 				End If
