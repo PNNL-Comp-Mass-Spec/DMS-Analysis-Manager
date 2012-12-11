@@ -1354,7 +1354,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks>List of files to delete is tracked via m_jobParams.ServerFilesToDelete</remarks>
+	''' <remarks>List of files to delete is tracked via m_jobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
 	Public Function RemoveNonResultServerFiles() As Boolean
 
 		Dim FileToDelete As String = ""

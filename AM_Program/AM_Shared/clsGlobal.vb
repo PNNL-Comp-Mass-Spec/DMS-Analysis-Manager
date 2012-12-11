@@ -611,6 +611,50 @@ Public Class clsGlobal
 
 	End Function
 
+
+	''' <summary>
+	''' Compares two files, byte-by-byte
+	''' </summary>
+	''' <param name="strFilePath1">Path to the first file</param>
+	''' <param name="strFilePath2">Path to the second file</param>
+	''' <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
+	''' <remarks></remarks>
+	Public Shared Function FilesMatch(ByVal strFilePath1 As String, ByVal strFilePath2 As String) As Boolean
+
+		Dim fiFile1 As System.IO.FileInfo
+		Dim fiFile2 As System.IO.FileInfo
+
+		Try
+			fiFile1 = New IO.FileInfo(strFilePath1)
+			fiFile2 = New IO.FileInfo(strFilePath2)
+
+			If Not fiFile1.Exists OrElse Not fiFile2.Exists Then
+				Return False
+			ElseIf fiFile1.Length <> fiFile2.Length Then
+				Return False
+			End If
+
+			Using srFile1 As System.IO.BinaryReader = New System.IO.BinaryReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				Using srFile2 As System.IO.BinaryReader = New System.IO.BinaryReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+					While srFile1.BaseStream.Position < fiFile1.Length
+						If srFile1.ReadByte <> srFile2.ReadByte Then
+							Return False
+						End If
+					End While
+				End Using
+			End Using
+
+			Return True
+
+		Catch ex As Exception
+			' Ignore errors here
+			Console.WriteLine("Error in clsAnalysisResources.FilesMatch: " & ex.Message)
+		End Try
+
+		Return False
+
+	End Function
+
 #End Region
 
 End Class

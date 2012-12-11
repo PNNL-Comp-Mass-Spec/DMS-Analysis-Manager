@@ -62,8 +62,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PRISM.dll</HintPath>
     </Reference>
-    <Reference Include="Protein_Exporter, Version=1.2.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Protein_Exporter">
       <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
     <Reference Include="System" />

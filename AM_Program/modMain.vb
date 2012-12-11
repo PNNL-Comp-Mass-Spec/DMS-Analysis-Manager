@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "July 26, 2012"
+	Public Const PROGRAM_DATE As String = "December 10, 2012"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -48,7 +48,7 @@ Module modMain
 			' Look for /T or /Test on the command line
 			' If present, this means "code test mode" is enabled
 			' 
-			' Other valid switches are /I, /T,/Test, /Trace, /EL, /Q, and /?
+			' Other valid switches are /I, /T, /Test, /Trace, /EL, /Q, and /?
 			'
 			If objParseCommandLine.ParseCommandLine Then
 				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
@@ -95,7 +95,7 @@ Module modMain
 
 						'objTest.TestMSGFResultsSummarizer()
 
-						objTest.TestProgRunnerIDPicker()
+						'objTest.TestProgRunnerIDPicker()
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

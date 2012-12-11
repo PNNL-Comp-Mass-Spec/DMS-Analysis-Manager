@@ -57,6 +57,9 @@
     <Reference Include="Apache.NMS.ActiveMQ">
       <HintPath>..\..\AM_Common\Apache.NMS.ActiveMQ.dll</HintPath>
     </Reference>
+    <Reference Include="CondenseCDTAFile">
+      <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
+    </Reference>
     <Reference Include="FileConcatenator">
       <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
     </Reference>

@@ -851,12 +851,19 @@ Public MustInherit Class clsAnalysisResources
 	''' Finds the server or archive folder where specified file is located
 	''' </summary>
 	''' <param name="FileToFind">Name of the file to search for</param>
-	''' <returns>Path to the file if found; empty string if not found</returns>
+	''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
 	''' <remarks></remarks>
 	Protected Function FindDataFile(ByVal FileToFind As String) As String
 		Return FindDataFile(FileToFind, SearchArchivedDatasetFolder:=True)
 	End Function
 
+	''' <summary>
+	''' Finds the server or archive folder where specified file is located
+	''' </summary>
+	''' <param name="FileToFind">Name of the file to search for</param>
+	''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+	''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+	''' <remarks></remarks>
 	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean) As String
 		Return FindDataFile(FileToFind, SearchArchivedDatasetFolder, LogFileNotFound:=True)
 	End Function
@@ -866,7 +873,8 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <param name="FileToFind">Name of the file to search for</param>
 	''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-	''' <returns>Path to the file if found; empty string if not found</returns>
+	''' <param name="LogFileNotFound">True if an error should be logged when a file is not found</param>
+	''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
 	''' <remarks></remarks>
 	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean, ByVal LogFileNotFound As Boolean) As String
 
