@@ -81,7 +81,6 @@ Public Class clsAnalysisResourcesExtraction
 		Dim FileToGet As String
 
 		Try
-			Dim strDataset As String = m_jobParams.GetParam("DatasetNum")
 
 			Select Case ResultType
 				Case RESULT_TYPE_SEQUEST
@@ -116,8 +115,8 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileExtensionToSkip(".out")  'DTA files
 					m_jobParams.AddResultFileExtensionToSkip("_PepToProtMapMTS.txt") ' Created by the PeptideToProteinMapEngine when creating the _ProteinMods.txt file
 
-				Case RESULT_TYPE_XTandem
-					FileToGet = strDataset & "_xt.zip"
+				Case RESULT_TYPE_XTANDEM
+					FileToGet = m_DatasetName & "_xt.zip"
 					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
@@ -125,7 +124,7 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
-					m_jobParams.AddResultFileToSkip(strDataset & "_xt.xml")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_xt.xml")
 
 					' Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
 
@@ -147,7 +146,7 @@ Public Class clsAnalysisResourcesExtraction
 					' Get the zipped Inspect results files
 
 					' This file contains the p-value filtered results
-					FileToGet = strDataset & "_inspect.zip"
+					FileToGet = m_DatasetName & "_inspect.zip"
 					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
@@ -155,7 +154,7 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' This file contains top hit for each scan (no filters)
-					FileToGet = strDataset & "_inspect_fht.zip"
+					FileToGet = m_DatasetName & "_inspect_fht.zip"
 					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
@@ -163,7 +162,7 @@ Public Class clsAnalysisResourcesExtraction
 					m_jobParams.AddResultFileToSkip(FileToGet)
 
 					' Get the peptide to protein mapping file
-					FileToGet = strDataset & "_inspect_PepToProtMap.txt"
+					FileToGet = m_DatasetName & "_inspect_PepToProtMap.txt"
 					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 						'Errors were reported in function call
 
@@ -182,18 +181,74 @@ Public Class clsAnalysisResourcesExtraction
 					' Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
 				Case RESULT_TYPE_MSGFDB
-					FileToGet = strDataset & "_msgfdb.zip"
-					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-					End If
-					m_jobParams.AddResultFileToSkip(FileToGet)
 
-					'Manually adding this file to FilesToDelete; we don't want the unzipped .txt file to be copied to the server
-					m_jobParams.AddResultFileToSkip(strDataset & "_msgfdb.txt")
+					Dim blnUseLegacyMSGFDB As Boolean
+					Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
+					Dim strBaseName As String
+
+					Dim SourceFolderPath As String
+					SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus.zip", True, False)
+					If String.IsNullOrEmpty(SourceFolderPath) Then
+						' File not found
+						SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb.zip", True, False)
+						If String.IsNullOrEmpty(SourceFolderPath) Then
+							' File not found; log a warning
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find either the _msgfplus.zip file or the _msgfdb.zip file; auto-setting blnUseLegacyMSGFDB=False")
+							blnUseLegacyMSGFDB = False
+						Else
+							' File Found
+							blnUseLegacyMSGFDB = True
+						End If
+					Else
+						' Running MSGF+
+						blnUseLegacyMSGFDB = False
+					End If
+
+					If blnUseLegacyMSGFDB Then
+						strBaseName = m_DatasetName & "_msgfdb"
+					Else
+						strBaseName = m_DatasetName & "_msgfplus"
+
+						FileToGet = m_DatasetName & "_msgfdb.tsv"
+
+						SourceFolderPath = FindDataFile(FileToGet, False, False)
+
+						If Not String.IsNullOrEmpty(SourceFolderPath) Then
+							' Examine the date of the TSV file
+							' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
+
+							Dim fiTSVFile As System.IO.FileInfo
+							fiTSVFile = New System.IO.FileInfo(IO.Path.Combine(SourceFolderPath, FileToGet))
+							If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
+								' File is recent; grab it
+								If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
+									' File copy failed; that's OK; we'll grab the _msgfplus.zip file
+								Else
+									blnSkipMSGFResultsZipFileCopy = True
+									m_jobParams.AddResultFileToSkip(FileToGet)
+								End If
+							End If
+
+							m_jobParams.AddServerFileToDelete(fiTSVFile.FullName)
+						End If
+					End If
+
+					If Not blnSkipMSGFResultsZipFileCopy Then
+						FileToGet = strBaseName & ".zip"
+						If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+							'Errors were reported in function call, so just return
+							Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+						End If
+						m_jobParams.AddResultFileToSkip(FileToGet)
+					End If
+
+					'Manually add several files to skip
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.mzid")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.tsv")
 
 					' Get the peptide to protein mapping file
-					FileToGet = strDataset & "_msgfdb_PepToProtMap.txt"
+					FileToGet = m_DatasetName & "_msgfdb_PepToProtMap.txt"
 					If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 						'Errors were reported in function call
 
@@ -213,7 +268,7 @@ Public Class clsAnalysisResourcesExtraction
 					' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
 
 				Case RESULT_TYPE_MSALIGN
-					FileToGet = strDataset & "_MSAlign_ResultTable.txt"
+					FileToGet = m_DatasetName & "_MSAlign_ResultTable.txt"
 					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -295,6 +350,7 @@ Public Class clsAnalysisResourcesExtraction
 
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
+		Dim ModDefsFolder As String
 
 		Dim blnSearchArchivedDatasetFolder As Boolean = False
 		Dim blnSuccess As Boolean
@@ -302,7 +358,7 @@ Public Class clsAnalysisResourcesExtraction
 		Try
 
 			' Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file, and retrieve the MassCorrectionTags.txt file
-			' Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, or MSGFDB ran, we re-generate it here just in case T_Param_File_Mass_Mods had missing information
+			' Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran, we re-generate it here just in case T_Param_File_Mass_Mods had missing information
 			' Furthermore, we need the search engine parameter file for the PHRPReader
 
 			' Note that the _ModDefs.txt file is obtained using this query:
@@ -330,8 +386,20 @@ Public Class clsAnalysisResourcesExtraction
 			End If
 
 			m_jobParams.AddResultFileToSkip(strParamFileName)
-			m_jobParams.AddResultFileToSkip(ModDefsFilename)
 			m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
+
+			' Check whether the newly generated ModDefs file matches the existing one
+			' If it doesn't match, or if the existing one is missing, then we need keep the file
+			' Otherwise, we can skip it
+			ModDefsFolder = FindDataFile(ModDefsFilename)
+			If String.IsNullOrEmpty(ModDefsFolder) Then
+				m_jobParams.AddResultFileToSkip(ModDefsFilename)
+			ElseIf ModDefsFolder.ToLower().StartsWith("\\proto") Then
+				If clsGlobal.FilesMatch(IO.Path.Combine(m_WorkingDir, ModDefsFilename), IO.Path.Combine(ModDefsFolder, ModDefsFilename)) Then
+					m_jobParams.AddResultFileToSkip(ModDefsFilename)
+				End If
+			End If
+
 
 		Catch ex As Exception
 			m_message = "Error retrieving miscellaneous files"

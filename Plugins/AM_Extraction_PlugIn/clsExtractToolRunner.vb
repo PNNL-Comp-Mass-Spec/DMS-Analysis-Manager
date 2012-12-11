@@ -28,6 +28,7 @@ Public Class clsExtractToolRunner
 #Region "Module variables"
     Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
 	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
+	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
 	Protected mGeneratedFastaFilePath As String
 #End Region
 
@@ -103,7 +104,7 @@ Public Class clsExtractToolRunner
 					End If
 
 
-				Case clsAnalysisResources.RESULT_TYPE_XTandem
+				Case clsAnalysisResources.RESULT_TYPE_XTANDEM
 					'Run PHRP
 					strCurrentAction = "running peptide hits result processor for X!Tandem"
 					Result = RunPhrpForXTandem()
@@ -184,6 +185,9 @@ Public Class clsExtractToolRunner
 				Return Result
 			End If
 
+			' Everything succeeded; now delete the _msgfdb.tsv file from the server
+			RemoveNonResultServerFiles()
+
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunTool(); Exception running extraction tool: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
@@ -194,6 +198,68 @@ Public Class clsExtractToolRunner
 
 		'If we got to here, everything worked so exit happily
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	''' <summary>
+	''' Convert the .mzid file created by MSGF+ to a .tsv file
+	''' </summary>
+	''' <returns>The path to the .tsv file if successful; empty string if an error</returns>
+	''' <remarks></remarks>
+	Protected Function ConvertMZIDToTSV() As String
+
+		Dim strMZIDFileName As String
+		Dim JavaProgLoc As String
+		Dim MSGFDbProgLoc As String
+		Dim strTSVFilePath As String
+
+		Try
+
+			strMZIDFileName = m_Dataset & "_msgfplus.mzid"
+			If Not IO.File.Exists(IO.Path.Combine(m_WorkDir, strMZIDFileName)) Then
+				m_message = strMZIDFileName & " file not found"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return String.Empty
+			End If
+
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+			JavaProgLoc = m_mgrParams.GetParam("JavaLoc")
+			If Not System.IO.File.Exists(JavaProgLoc) Then
+				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
+				m_message = "Cannot find Java: " & JavaProgLoc
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return String.Empty
+			End If
+
+			' Determine the path to MSGF+
+			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
+			MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
+
+			If String.IsNullOrEmpty(MSGFDbProgLoc) Then
+				If String.IsNullOrEmpty(m_message) Then m_message = "Parameter 'MSGFDbProgLoc' not defined for this manager"
+				Return String.Empty
+			End If
+
+			' Initialize mMSGFDBUtils
+			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+
+			strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
+
+			If Not String.IsNullOrEmpty(strTSVFilePath) Then
+				' File successfully created
+				Return strTSVFilePath
+			End If
+
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned"
+			End If
+
+		Catch ex As Exception
+			m_message = "Exception in ConvertMZIDToTSV"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+		End Try
+
+		Return String.Empty
 
 	End Function
 
@@ -406,13 +472,31 @@ Public Class clsExtractToolRunner
 
 		Try
 			' The goal:
-			'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file  (which should already have been unzipped from the _msgfdb.zip file)
+			'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file (which should already have been unzipped from the _msgfdb.zip file)
+			'   or from the _msgfdb.tsv file
+
+			Dim blnUseLegacyMSGFDB As Boolean
+			Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
+
+			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
+			If IO.File.Exists(strTargetFilePath) Then
+				blnUseLegacyMSGFDB = True
+			Else
+				strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
+				If Not IO.File.Exists(strTargetFilePath) Then
+					' Need to create the .tsv file
+					strTargetFilePath = ConvertMZIDToTSV()
+					If String.IsNullOrEmpty(strTargetFilePath) Then
+						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+					End If
+				End If
+			End If
+
+			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
 
 			' Create the Synopsis and First Hits files using the _msgfdb.txt file
 			CreateMSGFDBFirstHitsFile = True
 			CreateMSGFDBSynopsisFile = True
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
 
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath)
 
@@ -424,7 +508,7 @@ Public Class clsExtractToolRunner
 			End If
 
 			Try
-				' Delete the _msgfdb.txt file
+				' Delete the _msgfdb.txt or _msgfdb.tsv file
 				System.IO.File.Delete(strTargetFilePath)
 			Catch ex As System.Exception
 				' Ignore errors here

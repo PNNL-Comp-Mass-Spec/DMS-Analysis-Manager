@@ -74,16 +74,15 @@ Public Class clsMSGFInputCreatorMSGFDB
 						Dim objPSM As PHRPReader.clsPSM
 						objPSM = objReader.CurrentPSM
 
-						Dim strSpecProb As String
-						strSpecProb = objPSM.GetScore(PHRPReader.clsPHRPParserMSGFDB.DATA_COLUMN_MSGFDB_SpecProb)
-
+						' objPSM.MSGFSpecProb comes from column MSGFDB_SpecProb   if MS-GFDB
+						'                 it  comes from column MSGFDB_SpecEValue if MS-GF+
 						swMSGFFile.WriteLine( _
 						   objPSM.ResultID & ControlChars.Tab & _
 						   objPSM.ScanNumber & ControlChars.Tab & _
 						   objPSM.Charge & ControlChars.Tab & _
 						   objPSM.ProteinFirst & ControlChars.Tab & _
 						   objPSM.Peptide & ControlChars.Tab & _
-						   strSpecProb & ControlChars.Tab & _
+						   objPSM.MSGFSpecProb & ControlChars.Tab & _
 						   String.Empty)
 					Loop
 

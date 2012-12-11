@@ -10,7 +10,8 @@ Public Class clsMSGFDBUtils
 	Public Const PROGRESS_PCT_MSGFDB_THREADS_SPAWNED As Single = 4
 	Public Const PROGRESS_PCT_MSGFDB_COMPUTING_FDRS As Single = 95
 	Public Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 96
-	Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 97
+	Public Const PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV As Single = 97
+	Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
 	Public Const PROGRESS_PCT_COMPLETE As Single = 99
 
 	Protected Enum eThreadProgressSteps
@@ -57,7 +58,7 @@ Public Class clsMSGFDBUtils
 	Protected mConsoleOutputErrorMsg As String = String.Empty
 
 	Protected mPhosphorylationSearch As Boolean
-	Protected mResultsIncludeDecoyPeptides As Boolean
+	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
 	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
@@ -86,9 +87,9 @@ Public Class clsMSGFDBUtils
 		End Get
 	End Property
 
-	Public ReadOnly Property ResultsIncludeDecoyPeptides As Boolean
+	Public ReadOnly Property ResultsIncludeAutoAddedDecoyPeptides As Boolean
 		Get
-			Return mResultsIncludeDecoyPeptides
+			Return mResultsIncludeAutoAddedDecoyPeptides
 		End Get
 	End Property
 
@@ -132,7 +133,19 @@ Public Class clsMSGFDBUtils
 			ElseIf IsMatch(strArgumentSwitch, "c13") Then
 				' Auto-switch to ti
 				strArgumentSwitch = "ti"
-				strValue = "0," & strValue
+				If Integer.TryParse(strValue, intValue) Then
+					If intValue = 0 Then
+						strValue = "0,0"
+					ElseIf intValue = 1 Then
+						strValue = "-1,1"
+					ElseIf intValue = 2 Then
+						strValue = "-1,2"
+					Else
+						strValue = "0,1"
+					End If
+				Else
+					strValue = "0,1"
+				End If
 
 			ElseIf IsMatch(strArgumentSwitch, "showDecoy") Then
 				' Not valid for MSGF+; skip it
@@ -158,21 +171,22 @@ Public Class clsMSGFDBUtils
 
 			ElseIf IsMatch(strArgumentSwitch, "ti") Then
 				' Auto-switch to c13
+				' Use the digit after the comma in the "ti" specification
 				strArgumentSwitch = "c13"
 				intCharIndex = strValue.IndexOf(",")
 				If intCharIndex >= 0 Then
 					strValue = strValue.Substring(intCharIndex + 1)
+				Else
+					' Comma not found
+					If Integer.TryParse(strValue, intValue) Then
+						strValue = intValue.ToString()
+					Else
+						strValue = "1"
+					End If
+
 				End If
 
-			ElseIf IsMatch(strArgumentSwitch, "protocol") Then
-				' Not valid for MS-GFDB; skip it
-				strArgumentSwitch = String.Empty
-
-			ElseIf IsMatch(strArgumentSwitch, "minCharge") Then
-				' Not valid for MS-GFDB; skip it
-				strArgumentSwitch = String.Empty
-
-			ElseIf IsMatch(strArgumentSwitch, "maxCharge") Then
+			ElseIf IsMatch(strArgumentSwitch, "addFeatures") Then
 				' Not valid for MS-GFDB; skip it
 				strArgumentSwitch = String.Empty
 
@@ -182,7 +196,80 @@ Public Class clsMSGFDBUtils
 
 	End Sub
 
-	Public Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String, blnResultsIncludeDecoyPeptides As Boolean) As IJobParams.CloseOutType
+	Public Function ConvertMZIDToTSV(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
+
+		Dim strTSVFilePath As String = String.Empty
+		Dim intJavaMemorySize As Integer
+
+		Dim CmdStr As String
+		Dim blnSuccess As Boolean
+
+		Try
+			' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
+			' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
+			strTSVFilePath = System.IO.Path.Combine(m_WorkDir, strDatasetName & "_msgfdb.tsv")
+
+			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
+
+			intJavaMemorySize = 2000
+			CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -cp " & MSGFDbProgLoc
+			CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
+
+			CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(IO.Path.Combine(m_WorkDir, strMZIDFileName))
+			CmdStr &= " -o " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strTSVFilePath)
+			CmdStr &= " -showQValue 1"
+			CmdStr &= " -showDecoy 1"
+			CmdStr &= " -unroll 1"
+
+			' Make sure the machine has enough free memory to run MSGFPlus
+			Dim blnLogFreeMemoryOnSuccess As Boolean = False
+
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MzIDToTsv", blnLogFreeMemoryOnSuccess) Then
+				ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
+				Return String.Empty
+			End If
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+			End If
+
+			Dim objCreateTSV As clsRunDosProgram
+			objCreateTSV = New clsRunDosProgram(m_WorkDir)
+
+			With objCreateTSV
+				.CreateNoWindow = True
+				.CacheStandardOutput = True
+				.EchoOutputToConsole = True
+
+				.WriteConsoleOutputToFile = True
+				.ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
+			End With
+
+			blnSuccess = objCreateTSV.RunProgram(JavaProgLoc, CmdStr, "MzIDToTsv", True)
+
+			If Not blnSuccess Then
+				ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
+				Return String.Empty
+			Else
+				Try
+					' Delete the console output file
+					IO.File.Delete(objCreateTSV.ConsoleOutputFilePath)
+				Catch ex As Exception
+					' Ignore errors here
+				End Try
+
+			End If
+
+		Catch ex As Exception
+			ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: & " & ex.Message)
+			Return String.Empty
+		End Try
+
+		Return strTSVFilePath
+
+	End Function
+
+	Public Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String, blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
 
 		Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
@@ -220,7 +307,8 @@ Public Class clsMSGFDBUtils
 			If intLinesRead <= 1 Then
 				' File is empty or only contains a header line
 				msg = "No results above threshold"
-				ReportError(msg, msg & "; MSGF-DB results file is empty")
+				ReportError(msg, msg & "; " & GetSearchEngineName() & " results file is empty")
+
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
 			End If
 
@@ -232,7 +320,7 @@ Public Class clsMSGFDBUtils
 
 		End Try
 
-		If blnResultsIncludeDecoyPeptides Then
+		If blnResultsIncludeAutoAddedDecoyPeptides Then
 			' Read the original fasta file to create a decoy fasta file
 			strFastaFilePath = GenerateDecoyFastaFile(strFastaFilePath, m_WorkDir)
 
@@ -241,7 +329,7 @@ Public Class clsMSGFDBUtils
 				If String.IsNullOrEmpty(mErrorMessage) Then
 					mErrorMessage = "Error creating a decoy version of the fasta file"
 				End If
-				ReportError(mErrorMessage, "")
+				ReportError(mErrorMessage)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -291,7 +379,7 @@ Public Class clsMSGFDBUtils
 
 			If blnSuccess Then
 				If Not System.IO.File.Exists(strResultsFilePath) Then
-					ReportError("Peptide to protein mapping file was not created", "")
+					ReportError("Peptide to protein mapping file was not created", "Peptide to protein mapping file was not created: " & strResultsFilePath)
 					blnSuccess = False
 				Else
 					If m_DebugLevel >= 2 Then
@@ -302,11 +390,11 @@ Public Class clsMSGFDBUtils
 				End If
 			Else
 				If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
-					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage, "")
+					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
 				Else
-					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage(), "")
+					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
 					If mPeptideToProteinMapper.StatusMessage.Length > 0 Then
-						ReportError("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage, "")
+						ReportError("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
 					End If
 				End If
 
@@ -320,7 +408,7 @@ Public Class clsMSGFDBUtils
 					End If
 
 				Else
-					ReportError("Error in CreatePeptideToProteinMapping", "")
+					ReportError("Error in CreatePeptideToProteinMapping")
 					blnSuccess = False
 				End If
 			End If
@@ -361,11 +449,12 @@ Public Class clsMSGFDBUtils
 		End Try
 
 	End Sub
+
 	''' Read the original fasta file to create a decoy fasta file
 	''' <summary>
 	''' Creates a decoy version of the fasta file specified by strInputFilePath
 	''' This new file will include the original proteins plus reversed versions of the original proteins
-	''' Protein names will be prepended with REV_
+	''' Protein names will be prepended with REV_ or XXX_
 	''' </summary>
 	''' <param name="strInputFilePath">Fasta file to process</param>
 	''' <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
@@ -382,7 +471,7 @@ Public Class clsMSGFDBUtils
 		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
 
 		Dim blnInputProteinFound As Boolean
-
+		Dim strPrefix As String
 
 		Try
 			ioSourceFile = New System.IO.FileInfo(strInputFilePath)
@@ -404,8 +493,14 @@ Public Class clsMSGFDBUtils
 			End With
 
 			If Not objFastaFileReader.OpenFile(strInputFilePath) Then
-				ReportError("Error reading fasta file with ProteinFileReader to create decoy file", "")
+				ReportError("Error reading fasta file with ProteinFileReader to create decoy file")
 				Return String.Empty
+			End If
+
+			If mMSGFPlus Then
+				strPrefix = "XXX_"
+			Else
+				strPrefix = "REV_"
 			End If
 
 			Using swProteinOutputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
@@ -419,8 +514,7 @@ Public Class clsMSGFDBUtils
 						WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
 
 						' Write the decoy protein
-						' Future ToDo: Switch from REV_ to XXX_
-						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & "REV_" & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & strPrefix & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
 						WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
 					End If
 
@@ -456,8 +550,8 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add("NTT", "ntt")					' Used by MSGF+
 		dctParamNames.Add("minLength", "minLength")
 		dctParamNames.Add("maxLength", "maxLength")
-		dctParamNames.Add("minCharge", "minCharge")
-		dctParamNames.Add("maxCharge", "maxCharge")
+		dctParamNames.Add("minCharge", "minCharge")		' Only used if the spectrum file doesn't have charge information
+		dctParamNames.Add("maxCharge", "maxCharge")		' Only used if the spectrum file doesn't have charge information
 		dctParamNames.Add("NumMatchesPerSpec", "n")
 
 		' The following are special cases; 
@@ -469,6 +563,18 @@ Public Class clsMSGFDBUtils
 		'   DynamicMod
 
 		Return dctParamNames
+	End Function
+
+	Protected Function GetSearchEngineName() As String
+		Return GetSearchEngineName(mMSGFPlus)
+	End Function
+
+	Public Shared Function GetSearchEngineName(ByVal blnMSGFPlus As Boolean) As String
+		If blnMSGFPlus Then
+			Return "MSGF+"
+		Else
+			Return "MS-GFDB"
+		End If
 	End Function
 
 	Public Function InitializeFastaFile(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByRef FastaFileSizeKB As Single, ByRef FastaFileIsDecoy As Boolean, ByRef FastaFilePath As String) As IJobParams.CloseOutType
@@ -511,15 +617,16 @@ Public Class clsMSGFDBUtils
 
 		Do While intIteration <= 2
 
-			result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDbProgLoc, fiFastaFile.FullName, FastaFileIsDecoy)
+			' Note that FastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
+			result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDbProgLoc, FastaFilePath, FastaFileIsDecoy)
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Exit Do
 			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And intIteration >= 2) Then
 
 				If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
-					ReportError(objIndexedDBCreator.ErrorMessage, "")
+					ReportError(objIndexedDBCreator.ErrorMessage)
 				Else
-					ReportError("Error creating Suffix Array files", "")
+					ReportError("Error creating Suffix Array files")
 				End If
 				Return result
 			End If
@@ -630,7 +737,7 @@ Public Class clsMSGFDBUtils
 					If Not String.IsNullOrWhiteSpace(strLineIn) Then
 						If intLinesRead = 1 Then
 							' The first line is the MSGFDB version
-							If strLineIn.ToLower.Contains("gfdb") Then
+							If strLineIn.ToLower.Contains("gfdb") OrElse strLineIn.ToLower.Contains("ms-gf+") Then
 								If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
 									ReportMessage("MSGFDB version: " & strLineIn)
 								End If
@@ -675,12 +782,12 @@ Public Class clsMSGFDBUtils
 								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
 							End If
 
-						ElseIf strLineIn.StartsWith("Computing EFDRs") Then
+						ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
 							End If
 
-						ElseIf strLineIn.StartsWith("MS-GFDB complete") Then
+						ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
 								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
 							End If
@@ -695,12 +802,12 @@ Public Class clsMSGFDBUtils
 								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
 							End If
 
-						ElseIf strLineIn.Contains("Computing spectral probabilities finished") Then
+						ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
 							End If
 
-						ElseIf strLineIn.Contains("Computing spectral probabilities") Then
+						ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
 							End If
@@ -961,7 +1068,7 @@ Public Class clsMSGFDBUtils
 		strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
 		If Not System.IO.File.Exists(strParameterFilePath) Then
-			ReportError("Parameter file not found", "")
+			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
@@ -970,16 +1077,13 @@ Public Class clsMSGFDBUtils
 			blnHCD = True
 		End If
 
-		If mMSGFPlus Then
-			strSearchEngineName = "MSGF+"
-		Else
-			strSearchEngineName = "MS-GFDB"
-		End If
+		strSearchEngineName = GetSearchEngineName()
 
 		sbOptions = New System.Text.StringBuilder(500)
 
 		' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-		mResultsIncludeDecoyPeptides = False
+		' Alternatively, if running MSGF+, this is set to true if TDA=1
+		mResultsIncludeAutoAddedDecoyPeptides = False
 
 		Try
 
@@ -1032,7 +1136,7 @@ Public Class clsMSGFDBUtils
 									Case Else
 										' Invalid string
 										mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-										ReportError(mErrorMessage, "")
+										ReportError(mErrorMessage)
 										Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 								End Select
 							End If
@@ -1042,7 +1146,7 @@ Public Class clsMSGFDBUtils
 							AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
 
 							If String.IsNullOrEmpty(strArgumentSwitch) Then
-								If m_DebugLevel >= 1 And Not IsMatch(strArgumentSwitch, "showDecoy") Then
+								If m_DebugLevel >= 1 And Not IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
 									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
 								End If
 							ElseIf String.IsNullOrEmpty(strValue) Then
@@ -1054,14 +1158,14 @@ Public Class clsMSGFDBUtils
 							End If
 
 
-							If IsMatch(strKey, MSGFDB_OPTION_SHOWDECOY) Then
+							If IsMatch(strArgumentSwitch, "showDecoy") Then
 								blnShowDecoyParamPresent = True
 								If Integer.TryParse(strValue, intValue) Then
 									If intValue > 0 Then
 										blnShowDecoy = True
 									End If
 								End If
-							ElseIf IsMatch(strKey, MSGFDB_OPTION_TDA) Then
+							ElseIf IsMatch(strArgumentSwitch, "tda") Then
 								If Integer.TryParse(strValue, intValue) Then
 									If intValue > 0 Then
 										blnTDA = True
@@ -1116,20 +1220,20 @@ Public Class clsMSGFDBUtils
 							End If
 
 						ElseIf IsMatch(strKey, "StaticMod") Then
-							If Not IsMatch(strValue, "none") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
 								lstStaticMods.Add(strValue)
 							End If
 
 						ElseIf IsMatch(strKey, "DynamicMod") Then
-							If Not IsMatch(strValue, "none") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
 								lstDynamicMods.Add(strValue)
 							End If
 						End If
 
-						If strKey.ToLower() = MSGFDB_OPTION_INSTRUMENT_ID.ToLower() Then
+						If IsMatch(strKey, MSGFDB_OPTION_INSTRUMENT_ID) Then
 							If Integer.TryParse(strValue, intValue) Then
-								' 0 means Low-res LCQ/LTQ
-								' 1 means High-res LTQ
+								' 0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
+								' 1 means High-res LTQ (Default for HCD).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
 								' 2 means TOF
 								If intValue = 1 Then
 									blnHighResMSn = True
@@ -1137,7 +1241,7 @@ Public Class clsMSGFDBUtils
 							End If
 						End If
 
-						If strKey.ToLower() = MSGFDB_OPTION_FRAGMENTATION_METHOD.ToLower() Then
+						If IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 							If Integer.TryParse(strValue, intValue) Then
 								If intValue = 3 Then
 									blnHCD = True
@@ -1150,12 +1254,17 @@ Public Class clsMSGFDBUtils
 
 			End Using
 
-			If blnShowDecoy And blnTDA Then
-				' Parameter file contains both TDA=1 and showDecoy=1
-				mResultsIncludeDecoyPeptides = True
+			If blnTDA Then
+				If mMSGFPlus Then
+					' Parameter file contains TDA=1 and we're running MSGF+
+					mResultsIncludeAutoAddedDecoyPeptides = True
+				ElseIf blnShowDecoy Then
+					' Parameter file contains both TDA=1 and showDecoy=1
+					mResultsIncludeAutoAddedDecoyPeptides = True
+				End If
 			End If
 
-			If Not blnShowDecoyParamPresent Then
+			If Not blnShowDecoyParamPresent And Not mMSGFPlus Then
 				' Add showDecoy to sbOptions
 				sbOptions.Append(" -showDecoy 0")
 			End If
@@ -1202,9 +1311,11 @@ Public Class clsMSGFDBUtils
 
 		' Check whether we are performing an HCD-based phosphorylation search
 		If mPhosphorylationSearch AndAlso blnHCD Then
-			' Specifiy that "Protocol 1" is being used
-			' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
-			sbOptions.Append(" -protocol 1")
+			If Not sbOptions.ToString().Contains("-protocol ") Then
+				' Specify that "Protocol 1" is being used
+				' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
+				sbOptions.Append(" -protocol 1")
+			End If
 		End If
 
 		strMSGFDbCmdLineOptions = sbOptions.ToString()
@@ -1212,7 +1323,7 @@ Public Class clsMSGFDBUtils
 		If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
 			' Make sure the .Fasta file is not a Decoy fasta
 			If FastaFileIsDecoy Then
-				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)", "")
+				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		End If
@@ -1249,7 +1360,7 @@ Public Class clsMSGFDBUtils
 		If strSplitMod.Length < 5 Then
 			' Invalid mod definition; must have 5 sections
 			mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
-			ReportError(mErrorMessage, "")
+			ReportError(mErrorMessage)
 			Return False
 		End If
 
@@ -1376,7 +1487,7 @@ Public Class clsMSGFDBUtils
 
 
 				mErrorMessage = dblErrorPercent.ToString("0.0") & "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file"
-				ReportError(mErrorMessage, "")
+				ReportError(mErrorMessage)
 
 				If blnIgnorePeptideToProteinMapperErrors Then
 					ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
@@ -1423,7 +1534,7 @@ Public Class clsMSGFDBUtils
 
 			TmpFilePath = System.IO.Path.Combine(m_WorkDir, FileName)
 			If Not System.IO.File.Exists(TmpFilePath) Then
-				ReportError("MSGFDB results file not found: " & FileName, "")
+				ReportError("MSGFDB results file not found: " & FileName)
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 			End If
 
@@ -1449,6 +1560,10 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Event Methods"
+	Protected Sub ReportError(Message As String)
+		ReportError(Message, String.Empty)
+	End Sub
+
 	Protected Sub ReportError(Message As String, DetailedMessage As String)
 		RaiseEvent ErrorEvent(Message, DetailedMessage)
 	End Sub

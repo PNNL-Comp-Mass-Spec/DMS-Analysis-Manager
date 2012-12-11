@@ -39,7 +39,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 	Protected mMSGFDbProgLoc As String
 	Protected mMSGFPlus As Boolean
 
-	Protected mResultsIncludeDecoyPeptides As Boolean = False
+	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 	Protected mIonMobilityMsMsConsoleOutputErrorMsg As String = String.Empty
 
 	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
@@ -130,6 +130,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
+			' Note that InitializeFastaFile() calls objIndexedDBCreator.CreateSuffixArrayFiles() to index the fasta file
+			' Legacy MSGFDB and MSGF+ have different index file formats, but .CreateSuffixArrayFiles() knows how to handle this
 			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
@@ -147,7 +149,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			End If
 
 			' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-			mResultsIncludeDecoyPeptides = mMSGFDBUtils.ResultsIncludeDecoyPeptides
+			' Alternatively, if running MSGF+, this is set to true if TDA=1
+			mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
 
 			' Note that the IonMobilityMsMs program creates a file named Results_MSGFDB
 			' After IonMobilityMsMs finishes, we will rename that file to be ResultsFileName
@@ -540,7 +543,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 		' Create the Peptide to Protein map file
 		UpdateStatusRunning(PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
 
-		result = mMSGFDBUtils.CreatePeptideToProteinMapping(ResultsFileName, mResultsIncludeDecoyPeptides)
+		result = mMSGFDBUtils.CreatePeptideToProteinMapping(ResultsFileName, mResultsIncludeAutoAddedDecoyPeptides)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 			Return result
 		End If

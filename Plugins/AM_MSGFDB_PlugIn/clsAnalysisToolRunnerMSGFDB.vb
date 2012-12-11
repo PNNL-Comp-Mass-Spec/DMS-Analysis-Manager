@@ -18,11 +18,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 #Region "Module Variables"
 	Protected mToolVersionWritten As Boolean
+
+	' Path to MSGFDB.jar or MSGFPlus.jar
 	Protected mMSGFDbProgLoc As String
 
 	Protected mMSGFPlus As Boolean
 
-	Protected mResultsIncludeDecoyPeptides As Boolean = False
+	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 
 	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
 
@@ -65,7 +67,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 			' Note that we need to run MSGFDB with a 64-bit version of Java since it prefers to use 2 or more GB of ram
 			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
 			If Not System.IO.File.Exists(JavaProgLoc) Then
@@ -77,26 +79,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			Dim blnUseLegacyMSGFDB As Boolean
 			Dim strMSGFJarfile As String
+			Dim strSearchEngineName As String
 
 			blnUseLegacyMSGFDB = m_jobParams.GetJobParameter("UseLegacyMSGFDB", False)
-
-			' =================================================
-			'            TEMPORARY OVERRIDE
-			' =================================================
-			' Support for MSGF+ is not yet ready
-			' Thus, need to force this to be true for now
-			' =================================================
-			blnUseLegacyMSGFDB = True
 
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
 				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+				strSearchEngineName = "MS-GFDB"
 			Else
 				mMSGFPlus = True
 				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+				strSearchEngineName = "MSGF+"
 			End If
 
 			' Determine the path to MSGFDB (or MSGF+)
+			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
 			mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
 
 			If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
@@ -126,17 +124,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Problem parsing MSGFDB parameter file"
+					m_message = "Problem parsing " & strSearchEngineName & " parameter file"
 				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-			mResultsIncludeDecoyPeptides = mMSGFDBUtils.ResultsIncludeDecoyPeptides
+			mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
 
-			ResultsFileName = m_Dataset & "_msgfdb.txt"
+			If mMSGFPlus Then
+				ResultsFileName = m_Dataset & "_msgfplus.mzid"
+			Else
+				ResultsFileName = m_Dataset & "_msgfdb.txt"
+			End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGFDB")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & strSearchEngineName)
 
 			' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
 			' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
@@ -164,8 +166,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim blnLogFreeMemoryOnSuccess As Boolean = True
 			If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
 
-			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGFDB", blnLogFreeMemoryOnSuccess) Then
-				m_message = "Not enough free memory to run MSGFDB"
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
+				m_message = "Not enough free memory to run " & strSearchEngineName
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -186,12 +188,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			m_progress = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
 
-			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSGFDB", True)
+			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, strSearchEngineName, True)
 
 			If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
 				' Parse the console output file one more time in hopes of finding an error message
 				ParseConsoleOutputFile()
 			End If
+
 
 			If Not mToolVersionWritten Then
 				If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
@@ -289,66 +292,27 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	''' <summary>
+	''' Convert the .mzid file created by MSGF+ to a .tsv file
+	''' </summary>
+	''' <param name="strMZIDFileName"></param>
+	''' <param name="JavaProgLoc"></param>
+	''' <returns>The path to the .tsv file if successful; empty string if an error</returns>
+	''' <remarks></remarks>
 	Protected Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal JavaProgLoc As String) As String
 
-		Dim strTSVFilePath As String = String.Empty
-		Dim intJavaMemorySize As Integer
+		Dim strTSVFilePath As String
 
-		Dim CmdStr As String
-		Dim blnSuccess As Boolean
+		strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, mMSGFDbProgLoc, m_Dataset, strMZIDFileName)
 
-		Try
-			strTSVFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(strMZIDFileName))
-			strTSVFilePath &= "_msgfdb.tsv"
-
-			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
-
-			intJavaMemorySize = 2000
-			CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -cp " & mMSGFDbProgLoc
-			CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
-
-			CmdStr &= " -i " & PossiblyQuotePath(IO.Path.Combine(m_WorkDir, strMZIDFileName))
-			CmdStr &= " -o " & PossiblyQuotePath(strTSVFilePath)
-			CmdStr &= " -showQValue 1"
-			CmdStr &= " -showDecoy 1"
-			CmdStr &= " -unroll 1"
-
-			' Make sure the machine has enough free memory to run MSGFPlus
-			Dim blnLogFreeMemoryOnSuccess As Boolean = False
-
-			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGFDB", blnLogFreeMemoryOnSuccess) Then
-				m_message = "Not enough free memory to run the MzIDToTsv module in MSGFPlus"
-				Return String.Empty
+		If String.IsNullOrEmpty(strTSVFilePath) Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned"
 			End If
-
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
-			End If
-
-			CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-			With CmdRunner
-				.CreateNoWindow = True
-				.CacheStandardOutput = True
-				.EchoOutputToConsole = True
-
-				.WriteConsoleOutputToFile = False
-			End With
-
-			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSGFPlus", True)
-
-			If Not blnSuccess Then
-				m_message = "MSGFPlus returned an error code converting the .mzid file to a .tsv file"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return String.Empty
-			End If
-
-		Catch ex As Exception
-			m_message = "Error in MSGFDbPlugin->ConvertMZIDToTSV: " & ex.Message
 			Return String.Empty
-		End Try
-
-		Return strTSVFilePath
+		Else
+			Return strTSVFilePath
+		End If
 
 	End Function
 
@@ -485,14 +449,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Return result
 		End If
 
-		m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
-
-		' Create the Peptide to Protein map file
-		UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+		If Not mMSGFPlus Then
+			m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
+		End If
 
 		Dim strMSGFDBResultsFileName As String
 		If IO.Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
 			' Convert the .mzid file to a .tsv file
+
+			UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
 			strMSGFDBResultsFileName = ConvertMZIDToTSV(ResultsFileName, JavaProgLoc)
 
 			If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
@@ -502,7 +467,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			strMSGFDBResultsFileName = String.Copy(ResultsFileName)
 		End If
 
-		result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeDecoyPeptides)
+		' Create the Peptide to Protein map file
+		UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+
+		result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeAutoAddedDecoyPeptides)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 			Return result
 		End If
