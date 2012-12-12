@@ -16,9 +16,6 @@ Public Class clsAnalysisResourcesMSGFDB
 	
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim strDatasetName As String
-		strDatasetName = m_jobParams.GetParam("DatasetNum")
-
 		' Make sure the machine has enough free memory to run MSGFDB
 		If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
 			m_message = "Not enough free memory to run MSGFDB"
@@ -55,7 +52,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			' Instead, use FindAndRetrieveMiscFiles 
 
 			' Note that capitalization matters for the extension; it must be .mzXML
-			Dim FileToGet As String = m_jobParams.GetParam("DatasetNum") & ".mzXML"
+			Dim FileToGet As String = m_DatasetName & ".mzXML"
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -102,7 +99,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			End If
 
 			' If the _dta.txt file is over 2 GB in size, then condense it
-			If Not ValidateDTATextFileSize(m_WorkingDir, strDatasetName & "_dta.txt") Then
+			If Not ValidateDTATextFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If

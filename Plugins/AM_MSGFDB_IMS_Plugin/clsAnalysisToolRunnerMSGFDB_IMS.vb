@@ -95,14 +95,18 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 			Dim blnUseLegacyMSGFDB As Boolean
 			Dim strMSGFJarfile As String
+			Dim strSearchEngineName As String
 
-			blnUseLegacyMSGFDB = m_jobParams.GetJobParameter("UseLegacyMSGFDB", False)
+			blnUseLegacyMSGFDB = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
+
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
 				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+				strSearchEngineName = "MS-GFDB"
 			Else
 				mMSGFPlus = True
 				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+				strSearchEngineName = "MSGF+"
 			End If
 
 			' Determine the path to the IonMobilityMsMs program
@@ -143,7 +147,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Problem parsing MSGFDB parameter file"
+					m_message = "Problem parsing " & strSearchEngineName & " parameter file"
 				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -201,8 +205,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			Dim blnLogFreeMemoryOnSuccess As Boolean = True
 			If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
 
-			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGFDB", blnLogFreeMemoryOnSuccess) Then
-				m_message = "Not enough free memory to run MSGFDB"
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
+				m_message = "Not enough free memory to run " & strSearchEngineName
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 

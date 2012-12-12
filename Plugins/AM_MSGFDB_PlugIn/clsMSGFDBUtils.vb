@@ -1432,6 +1432,40 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
+	Public Shared Function UseLegacyMSGFDB(jobParams As AnalysisManagerBase.IJobParams) As Boolean
+		Dim strValue As String
+		Dim blnUseLegacyMSGFDB As Boolean = True
+
+		strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
+		If Not String.IsNullOrEmpty(strValue) Then
+			If Not Boolean.TryParse(strValue, blnUseLegacyMSGFDB) Then
+				' Error parsing strValue; not boolean
+				strValue = String.Empty
+			End If
+		End If
+
+		If String.IsNullOrEmpty(strValue) Then
+			strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
+
+			If Not String.IsNullOrEmpty(strValue) Then
+				Dim blnUseMSGFPlus As Boolean
+				If Boolean.TryParse(strValue, blnUseMSGFPlus) Then
+					strValue = "False"
+					blnUseLegacyMSGFDB = False
+				Else
+					strValue = String.Empty
+				End If
+			End If
+
+			If String.IsNullOrEmpty(strValue) Then
+				' Default to using legacy MS-GFDB for now; we plan to switch to MSGF+ by January 2013
+				blnUseLegacyMSGFDB = True
+			End If
+		End If
+
+		Return blnUseLegacyMSGFDB
+
+	End Function
 
 	Private Function ValidatePeptideToProteinMapResults(ByVal strPeptideToProteinMapFilePath As String, ByVal blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
 

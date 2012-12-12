@@ -81,7 +81,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim strMSGFJarfile As String
 			Dim strSearchEngineName As String
 
-			blnUseLegacyMSGFDB = m_jobParams.GetJobParameter("UseLegacyMSGFDB", False)
+			blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
 
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
