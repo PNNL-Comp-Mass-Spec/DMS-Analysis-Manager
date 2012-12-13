@@ -577,6 +577,9 @@ Public Class clsDtaGenToolRunner
 		Dim udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 		Dim udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
+		Dim blnNextSpectrumAvailable As Boolean
+		Dim intSpectrumCountSkipped As Integer
+
 		Try
 			Dim oCDTAReaderParentIons As MsMsDataFileReader.clsDtaTextFileReader
 			oCDTAReaderParentIons = New MsMsDataFileReader.clsDtaTextFileReader(False)
@@ -594,53 +597,60 @@ Public Class clsDtaGenToolRunner
 				Return False
 			End If
 
-
+			intSpectrumCountSkipped = 0
 			Using swCDTAOut As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strCDTAFileFinal, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 				While oCDTAReaderParentIons.ReadNextSpectrum(strMsMsDataList, intMsMsDataCount, udtParentIonDataHeader)
 
 					Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-						oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+						blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+						If Not blnNextSpectrumAvailable Then Exit Do
 					Loop
 
-					If Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader) Then
+					blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
+					If Not blnNextSpectrumAvailable Then
 						' We never did find a match; this is unexpected
 						' Try closing the FragIonData file, re-opening, and parsing again
 						oCDTAReaderFragIonData.CloseFile()
+						udtFragIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
 						PRISM.Processes.clsProgRunner.GarbageCollectNow()
 						System.Threading.Thread.Sleep(250)
 
 						oCDTAReaderFragIonData = New MsMsDataFileReader.clsDtaTextFileReader(True)
-						If Not oCDTAReaderParentIons.OpenFile(strCDTAWithParentIonData) Then
-							m_message = "Error re-opening CDTA file with the parent ion data"
+						If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
+							m_message = "Error re-opening CDTA file with the fragment ion data"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 							Return False
 						End If
 
 						Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-							oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+							blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+							If Not blnNextSpectrumAvailable Then Exit Do
 						Loop
 
-						If Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader) Then
-							m_message = "MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & System.IO.Path.GetFileName(strCDTAWithParentIonData)
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-							Return False
+						blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
+						If Not blnNextSpectrumAvailable Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & System.IO.Path.GetFileName(strCDTAWithParentIonData))
+							intSpectrumCountSkipped += 1
 						End If
 					End If
 
-					swCDTAOut.WriteLine()
-					swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars)
-					swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText)
+					If blnNextSpectrumAvailable Then
+						swCDTAOut.WriteLine()
+						swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars)
+						swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText)
 
-					strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText)
+						strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText)
 
-					If String.IsNullOrWhiteSpace(strDataLinesToAppend) Then
-						m_message = "oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " in MergeCDTAs for " & System.IO.Path.GetFileName(strCDTAWithParentIonData)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						Return False
-					Else
-						swCDTAOut.Write(strDataLinesToAppend)
+						If String.IsNullOrWhiteSpace(strDataLinesToAppend) Then
+							m_message = "oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " in MergeCDTAs for " & System.IO.Path.GetFileName(strCDTAWithParentIonData)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							Return False
+						Else
+							swCDTAOut.Write(strDataLinesToAppend)
+						End If
+
 					End If
 
 				End While
@@ -654,6 +664,10 @@ Public Class clsDtaGenToolRunner
 				' Ignore errors here
 			End Try
 
+			If intSpectrumCountSkipped > 0 Then
+				m_EvalMessage = "Skipped " & intSpectrumCountSkipped & " spectra in MergeCDTAs since they were not created by MSConvert"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+			End If
 
 		Catch ex As Exception
 			m_message = "Error merging CDTA files"
@@ -695,12 +709,24 @@ Public Class clsDtaGenToolRunner
 
 	Protected Function ScanHeadersMatch(ByVal udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, ByVal udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType) As Boolean
 
-		If udtParentIonDataHeader.ScanNumberStart = udtFragIonDataHeader.ScanNumberStart AndAlso
-		   udtParentIonDataHeader.ScanNumberEnd = udtFragIonDataHeader.ScanNumberEnd Then
-			Return True
-		Else
-			Return False
+		If udtParentIonDataHeader.ScanNumberStart = udtFragIonDataHeader.ScanNumberStart Then
+			If udtParentIonDataHeader.ScanNumberEnd = udtFragIonDataHeader.ScanNumberEnd Then
+				Return True
+			Else
+				' MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
+				' 3160.0001.13.dta
+				' 3211.0001.11.dta
+				' 3258.0001.12.dta
+				' 3259.0001.13.dta
+
+				' Thus, allow a match if ScanNumberStart matches but ScanNumberEnd is less than ScanNumberStart
+				If udtFragIonDataHeader.ScanNumberEnd < udtFragIonDataHeader.ScanNumberStart Then
+					Return True
+				End If
+			End If
 		End If
+
+		Return False
 
 	End Function
 

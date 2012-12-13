@@ -56,12 +56,19 @@ Public Class clsMSGFDBUtils
 	Protected mMSGFDbVersion As String = String.Empty
 	Protected mErrorMessage As String = String.Empty
 	Protected mConsoleOutputErrorMsg As String = String.Empty
+	Protected mContinuumSpectraSkipped As Integer
 
 	Protected mPhosphorylationSearch As Boolean
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
 	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
+
+	Public ReadOnly Property ContinuumSpectraSkipped() As Integer
+		Get
+			Return mContinuumSpectraSkipped
+		End Get
+	End Property
 
 	Public ReadOnly Property ConsoleOutputErrorMsg As String
 		Get
@@ -105,6 +112,7 @@ Public Class clsMSGFDBUtils
 		mMSGFPlus = blnMSGFPlus
 		mMSGFDbVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
+		mContinuumSpectraSkipped = 0
 
 	End Sub
 
@@ -726,6 +734,7 @@ Public Class clsMSGFDBUtils
 			Dim intThreadCount As Short = 0
 
 			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
+			mContinuumSpectraSkipped = 0
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
@@ -746,15 +755,23 @@ Public Class clsMSGFDBUtils
 							Else
 								If strLineIn.ToLower.Contains("error") Then
 									If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-										mConsoleOutputErrorMsg = "Error running MSGFDB:"
+										mConsoleOutputErrorMsg = "Error running MSGFDB: "
 									End If
-									mConsoleOutputErrorMsg &= "; " & strLineIn
+									If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
+										mConsoleOutputErrorMsg &= "; " & strLineIn
+									End If
 								End If
 							End If
 						End If
 
-						' Update progress if the line starts with one of the expected phrases
-						If strLineIn.StartsWith("Loading database files") Then
+						' Look for warning messages  
+						' Additionally, update progress if the line starts with one of the expected phrases
+						If strLineIn.StartsWith("Ignoring spectrum") Then
+							' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
+							If strLineIn.IndexOf("spectrum is not centroided") > 0 Then
+								mContinuumSpectraSkipped += 1
+							End If
+						ElseIf strLineIn.StartsWith("Loading database files") Then
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
 								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
 							End If

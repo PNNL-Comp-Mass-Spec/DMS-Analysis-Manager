@@ -55,6 +55,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim strAssumedScanType As String = String.Empty
 		Dim ResultsFileName As String
 
+		Dim Msg As String
+
 		Try
 			'Call base class for initial setup
 			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -195,7 +197,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				ParseConsoleOutputFile()
 			End If
 
-
 			If Not mToolVersionWritten Then
 				If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
 					ParseConsoleOutputFile()
@@ -208,8 +209,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 
-			If Not blnSuccess Then
-				Dim Msg As String
+			If Not blnSuccess Then				
 				Msg = "Error running MSGFDB"
 				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
@@ -229,6 +229,20 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
 				End If
+
+				If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
+					' See if any spectra were processed
+					If Not IO.File.Exists(System.IO.Path.Combine(m_WorkDir, ResultsFileName)) Then
+						m_message = "None of the spectra are centroided; unable to process with " & strSearchEngineName
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						blnProcessingError = True
+					Else
+						m_EvalMessage = strSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+					End If
+
+				End If
+
 			End If
 
 			If Not blnProcessingError Then
@@ -237,7 +251,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					If String.IsNullOrEmpty(m_message) Then
 						m_message = "Unknown error post-processing the MSGFDB results"
 					End If
-					Return result
+					blnProcessingError = True
 				End If
 			End If
 
