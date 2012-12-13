@@ -99,6 +99,9 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 			blnUseLegacyMSGFDB = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
 
+			' Always set blnUseLegacyMSGFDB=True since the IonMobilityMSMS software is hard-coded to use MSGFDB.jar
+			blnUseLegacyMSGFDB = True
+
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
 				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME

@@ -1434,7 +1434,9 @@ Public Class clsMSGFDBUtils
 
 	Public Shared Function UseLegacyMSGFDB(jobParams As AnalysisManagerBase.IJobParams) As Boolean
 		Dim strValue As String
-		Dim blnUseLegacyMSGFDB As Boolean = True
+
+		' Default to using MSGF+
+		Dim blnUseLegacyMSGFDB As Boolean = False
 
 		strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
 		If Not String.IsNullOrEmpty(strValue) Then
@@ -1458,8 +1460,8 @@ Public Class clsMSGFDBUtils
 			End If
 
 			If String.IsNullOrEmpty(strValue) Then
-				' Default to using legacy MS-GFDB for now; we plan to switch to MSGF+ by January 2013
-				blnUseLegacyMSGFDB = True
+				' Default to using MSGF+
+				blnUseLegacyMSGFDB = False
 			End If
 		End If
 

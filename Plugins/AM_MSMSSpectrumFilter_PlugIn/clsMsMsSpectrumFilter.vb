@@ -1948,7 +1948,7 @@ Public Class clsMsMsSpectrumFilter
 
 		Dim intIndexWithLongestSequenceTag As Integer
 
-		Dim udtBaselineNoiseStatSegments() As clsBaselineNoiseEstimator.udtBaselineNoiseStatSegmentsType
+		Dim udtBaselineNoiseStatSegments() As clsBaselineNoiseEstimator.udtBaselineNoiseStatSegmentsType = Nothing
 
 		Dim dblProductSumWorkingMasses As Double
 		Dim dblProductSumAAMatches As Double
@@ -2017,7 +2017,7 @@ Public Class clsMsMsSpectrumFilter
 					blnSuccess = False
 				End If
 
-				If Not blnSuccess Then
+				If Not blnSuccess OrElse udtBaselineNoiseStatSegments Is Nothing Then
 					' Compute a single S/N value for the entire spectrum
 					ReDim udtBaselineNoiseStatSegments(0)
 					With udtBaselineNoiseStatSegments(0)
@@ -4301,7 +4301,7 @@ Public Class clsMsMsSpectrumFilter
         Dim sngMZList() As Single
         Dim sngIntensityList() As Single
 
-        Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
         Dim blnSpectralDataUpdated As Boolean
 
         Dim sngFilterRangeStart As Single
@@ -4665,13 +4665,13 @@ Public Class clsMsMsSpectrumFilter
 
         Dim objDtaTextFileReader As New MsMsDataFileReader.clsDtaTextFileReader
 
-        Dim strMSMSDataList() As String
+		Dim strMSMSDataList() As String = Nothing
         Dim intMsMsDataCount As Integer
-        Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
         Dim intDataCount As Integer
-        Dim sngMassList() As Single
-        Dim sngIntensityList() As Single
+		Dim sngMassList() As Single = Nothing
+		Dim sngIntensityList() As Single = Nothing
 
         Dim udtIonMatchStats As udtIonMatchStatsType
 
@@ -4912,8 +4912,8 @@ Public Class clsMsMsSpectrumFilter
 
 		Dim srOutFile As System.IO.StreamWriter = Nothing
 
-        Dim strMSMSDataList() As String
-        Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+		Dim strMSMSDataList() As String = Nothing
+		Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
         Dim intDataCount, intMsMsDataCount As Integer
         Dim intProcessCount As Integer
@@ -4923,8 +4923,8 @@ Public Class clsMsMsSpectrumFilter
         Dim intPositiveDataCountBeforeFilter As Integer
         Dim intPositiveDataCountAfterFilter As Integer
 
-        Dim sngMassList() As Single
-        Dim sngIntensityList() As Single
+		Dim sngMassList() As Single = Nothing
+		Dim sngIntensityList() As Single = Nothing
         Dim udtIonMatchStats As udtIonMatchStatsType
 
         Dim sngBPI As Single
