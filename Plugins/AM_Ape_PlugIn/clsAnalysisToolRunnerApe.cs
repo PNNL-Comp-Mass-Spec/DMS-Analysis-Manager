@@ -60,8 +60,11 @@ namespace AnalysisManager_Ape_PlugIn
 					log4net.GlobalContext.Properties["LogName"] = LogFileName;
 					clsLogTools.ChangeLogFileName(LogFileName);
 
-					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
+					if (!blnSuccess) {
+						if (string.IsNullOrWhiteSpace(m_message))
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape");
+						else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
 					}
 				}
 				catch (Exception ex)

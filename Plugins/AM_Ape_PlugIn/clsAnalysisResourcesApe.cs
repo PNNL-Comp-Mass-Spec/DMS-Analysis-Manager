@@ -45,7 +45,8 @@ namespace AnalysisManager_Ape_PlugIn
 				if (!string.IsNullOrWhiteSpace(apeOperation)) {
 					blnSuccess = RunApeOperation(apeOperation.Trim());
 					if (!blnSuccess) {
-						m_message = "Error running Ape resources operation " + apeOperation;
+						if (string.IsNullOrEmpty(m_message))
+							m_message = "Error running Ape resources operation " + apeOperation;
 						break;
 					}
 				}
