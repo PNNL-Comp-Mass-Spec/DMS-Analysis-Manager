@@ -329,7 +329,7 @@ Public Class clsExtractToolRunner
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
 			strSynFilePath = String.Copy(strTargetFilePath)
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST)
 
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
@@ -374,7 +374,7 @@ Public Class clsExtractToolRunner
 			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM)
 
 		Catch ex As System.Exception
 			Msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
@@ -424,7 +424,7 @@ Public Class clsExtractToolRunner
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_ResultTable.txt")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msalign_syn.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -498,7 +498,7 @@ Public Class clsExtractToolRunner
 			CreateMSGFDBFirstHitsFile = True
 			CreateMSGFDBSynopsisFile = True
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFDB)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -571,7 +571,7 @@ Public Class clsExtractToolRunner
 			CreateInspectFirstHitsFile = True
 			CreateInspectSynopsisFile = False
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"
@@ -600,7 +600,7 @@ Public Class clsExtractToolRunner
 			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
 			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_syn.txt")
 
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath)
+			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
 				Msg = "Error running PHRP"

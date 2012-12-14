@@ -69,24 +69,25 @@ Public Class clsPepHitResultsProcWrapper
     End Sub
 
     ''' <summary>
-    ''' Converts Sequest, X!Tandem, or Inspect output file to a flat file
+	''' Converts Sequest, X!Tandem, Inspect, MSGDB, or MSAlign output file to a flat file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, ByVal FastaFilePath As String) As IJobParams.CloseOutType
+	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, ByVal FastaFilePath As String, ResultType As String) As IJobParams.CloseOutType
 		'  Let the DLL auto-determines the input filename, based on the dataset name
-		Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True, FastaFilePath)
+		Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True, FastaFilePath, ResultType)
 	End Function
 
 	''' <summary>
-	''' Converts Sequest, X!Tandem, or Inspect output file to a flat file
+	''' Converts Sequest, X!Tandem, Inspect, MSGDB, or MSAlign output file to a flat file
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
 	  ByVal CreateInspectFirstHitsFile As Boolean, _
 	  ByVal CreateInspectSynopsisFile As Boolean, _
-	  ByVal FastaFilePath As String) As IJobParams.CloseOutType
+	  ByVal FastaFilePath As String, _
+	  ByVal ResultType As String) As IJobParams.CloseOutType
 
 		Dim ModDefsFileName As String
 		Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
@@ -125,12 +126,12 @@ Public Class clsPepHitResultsProcWrapper
 			' Set up and execute a program runner to run the PHRP
 			' Note that /SynPvalue is only used when processing Inspect files
 			CmdStr = ioInputFile.FullName & _
-					 " /O:" & ioInputFile.DirectoryName & _
-					 " /M:" & ModDefsFileName & _
-					 " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
-					 " /N:" & ParamFileName & _
-					 " /SynPvalue:0.2" & _
-					 " /ProteinMods"
+			   " /O:" & ioInputFile.DirectoryName & _
+			   " /M:" & ModDefsFileName & _
+			   " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
+			   " /N:" & ParamFileName & _
+			   " /SynPvalue:0.2" & _
+			   " /ProteinMods"
 
 			If Not String.IsNullOrEmpty(FastaFilePath) Then
 				CmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(FastaFilePath)
@@ -225,7 +226,17 @@ Public Class clsPepHitResultsProcWrapper
 					lstFilesToCheck.Add("_SeqToProteinMap.txt")
 					lstFilesToCheck.Add("_ModSummary.txt")
 					lstFilesToCheck.Add("_ModDetails.txt")
-					lstFilesToCheck.Add("_ProteinMods.txt")
+
+					If Not String.IsNullOrEmpty(FastaFilePath) Then
+						Dim strWarningMessage As String = String.Empty
+
+						If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
+							lstFilesToCheck.Add("_ProteinMods.txt")
+						End If
+					ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
+						lstFilesToCheck.Add("_ProteinMods.txt")
+					End If
+
 				End If
 
 				For Each strFileName As String In lstFilesToCheck

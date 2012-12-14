@@ -27,6 +27,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 	Protected Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
 
 	Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
+	Protected Const MSGFPLUS_DECOY_PROTEIN_PREFIX As String = "XXX_"
 
 	Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
 
@@ -154,7 +155,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			Dim strDecoyPrefix As String = String.Empty
 
 			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-				' If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_
+				' If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
 				' Check for this
 				blnSuccess = LookForDecoyProteinsInMSGFDBResults(strSynFilePath, ePHRPResultType, strDecoyPrefix)
 				If Not blnSuccess Then
@@ -543,6 +544,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			lstReversedProteinPrefixes.Add("scrambled_")							' MTS scrambled proteins                'scrambled[_]%'
 			lstReversedProteinPrefixes.Add("xxx.")									' Inspect reversed/scrambled proteins   'xxx.%'
 			lstReversedProteinPrefixes.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToLower())	' MSGFDB reversed proteins              'rev[_]%'
+			lstReversedProteinPrefixes.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower())	' MSGF+ reversed proteins               'xxx[_]%'
 
 			' Note that X!Tandem decoy proteins end with ":reversed"
 			' IDPicker doesn't support decoy protein name suffixes, only prefixes
@@ -684,9 +686,14 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
 
-		strDecoyPrefix = String.Empty
+		Dim lstPrefixesToCheck As Generic.List(Of String)
 
 		Try
+			strDecoyPrefix = String.Empty
+			lstPrefixesToCheck = New Generic.List(Of String)
+			lstPrefixesToCheck.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper())
+			lstPrefixesToCheck.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToUpper())
+
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the MSGFDB synopsis file")
 			End If
@@ -694,15 +701,17 @@ Public Class clsAnalysisToolRunnerIDPicker
 			Using oReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSynFilePath, eResultType, False, False, False)
 
 				Do While oReader.MoveNext
-					If oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper()) Then
-						strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, MSGFDB_DECOY_PROTEIN_PREFIX.Length)
+					For Each strPrefixToCheck As String In lstPrefixesToCheck
+						If oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck) Then
+							strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, strPrefixToCheck.Length)
 
-						If m_DebugLevel >= 4 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decoy protein prefix found: " & strDecoyPrefix)
+							If m_DebugLevel >= 4 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decoy protein prefix found: " & strDecoyPrefix)
+							End If
+
+							Exit Do
 						End If
-
-						Exit Do
-					End If
+					Next
 				Loop
 			End Using
 

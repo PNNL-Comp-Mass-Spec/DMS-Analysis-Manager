@@ -69,6 +69,9 @@
       <HintPath>..\..\AM_Common\PeptideFileExtractor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PeptideHitResultsProcessor">
+      <HintPath>..\..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
