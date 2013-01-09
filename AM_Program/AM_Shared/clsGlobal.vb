@@ -10,7 +10,6 @@
 Option Strict On
 
 Imports System.IO
-Imports PRISM.Files.clsFileTools
 
 Public Class clsGlobal
 

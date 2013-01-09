@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+January 9, 2013
+	- New version of PRISM.dll; requires instantiating PRISM.Files.clsFileTools to use most of the functions
+
 August 15, 2012
 	- Now aborting the message queue thread if stuck for over 15 seconds
 	- Updated DTASpectraFileGen program to use MascotGenericFileToDTA.dll for conversion of MGF files to DTA.txt files

@@ -405,7 +405,7 @@ Public Class clsAnalysisToolRunnerBase
 			If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
 				' The target folder already exists
 
-				' Examine the files in the results folder to see if any of the files already exist in the xfer folder
+				' Examine the files in the results folder to see if any of the files already exist in the transfer folder
 				' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
 
 				objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
@@ -1021,7 +1021,7 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Moves result files after tool has completed
+	''' Moves result files to the local results folder after tool has completed
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>

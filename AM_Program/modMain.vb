@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "December 10, 2012"
+	Public Const PROGRAM_DATE As String = "January 9, 2013"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean

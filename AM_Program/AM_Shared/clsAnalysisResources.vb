@@ -147,6 +147,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_DatasetName As String
 	Protected m_message As String
 	Protected m_DebugLevel As Short
+	Protected m_MgrName As String
 
 	Protected m_GenerationStarted As Boolean = False
 	Protected m_GenerationComplete As Boolean = False
@@ -159,6 +160,8 @@ Public MustInherit Class clsAnalysisResources
 	Protected WithEvents m_FastaTimer As System.Timers.Timer
 	Protected m_IonicZipTools As clsIonicZipTools
 
+	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -240,11 +243,15 @@ Public MustInherit Class clsAnalysisResources
 
 		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 		m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
+		m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
 
 		m_WorkingDir = m_mgrParams.GetParam("workdir")
 		m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
 		m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
+
+		ResetTimestampForQueueWaitTimeLogging()
+		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 
 	End Sub
 
@@ -258,9 +265,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="OutDir">Destination directory for file copy</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
-	 ByVal InpFolder As String, _
-	 ByVal OutDir As String) As Boolean
+	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, ByVal InpFolder As String, ByVal OutDir As String) As Boolean
 		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
 	End Function
 
@@ -317,31 +322,35 @@ Public MustInherit Class clsAnalysisResources
 	''' <summary>
 	''' Copies a file with retries in case of failure
 	''' </summary>
-	''' <param name="SrcFileName">Full path to source file</param>
-	''' <param name="DestFileName">Full path to destination file</param>
+	''' <param name="SrcFilePath">Full path to source file</param>
+	''' <param name="DestFilePath">Full path to destination file</param>
 	''' <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
 	''' <returns>TRUE for success; FALSE for error</returns>
 	''' <remarks>Logs copy errors</remarks>
-	Private Function CopyFileWithRetry(ByVal SrcFileName As String, ByVal DestFileName As String, ByVal Overwrite As Boolean) As Boolean
+	Private Function CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean) As Boolean
 		Const RETRY_HOLDOFF_SECONDS As Integer = 15
 
 		Dim RetryCount As Integer = 3
 
 		While RetryCount > 0
 			Try
-				System.IO.File.Copy(SrcFileName, DestFileName, Overwrite)
-				'Copy must have worked, so return TRUE
-				Return True
+				ResetTimestampForQueueWaitTimeLogging()
+				If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
+					Return True
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
+					Return False
+				End If
 			Catch ex As Exception
-				Dim ErrMsg As String = "Exception copying file " + SrcFileName + " to " + DestFileName + ": " + _
+				Dim ErrMsg As String = "Exception copying file " + SrcFilePath + " to " + DestFilePath + ": " + _
 				  ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex)
 
 				ErrMsg &= " Retry Count = " + RetryCount.ToString
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 				RetryCount -= 1
 
-				If Not Overwrite AndAlso System.IO.File.Exists(DestFileName) Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Tried to overwrite an existing file when Overwrite = False: " + DestFileName)
+				If Not Overwrite AndAlso System.IO.File.Exists(DestFilePath) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Tried to overwrite an existing file when Overwrite = False: " + DestFilePath)
 					Return False
 				End If
 
@@ -1881,6 +1890,10 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Protected Sub ResetTimestampForQueueWaitTimeLogging()
+		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+	End Sub
+
 	''' <summary>
 	''' Looks for the specified file in the given folder
 	''' If present, returns the full path to the file
@@ -2932,7 +2945,8 @@ Public MustInherit Class clsAnalysisResources
 			Else
 				' Copy the directory and all subdirectories
 				' Skip any files defined by objFileNamesToSkip
-				PRISM.Files.clsFileTools.CopyDirectory(DSFolderPath, DestFolderPath, objFileNamesToSkip)
+				ResetTimestampForQueueWaitTimeLogging()
+				m_FileTools.CopyDirectory(DSFolderPath, DestFolderPath, objFileNamesToSkip)
 			End If
 
 		Catch ex As Exception
@@ -4092,6 +4106,16 @@ Public MustInherit Class clsAnalysisResources
 
 #End Region
 
+#Region "Event Handlers"
+	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+			End If
+		End If
+	End Sub
+#End Region
 
 End Class
 

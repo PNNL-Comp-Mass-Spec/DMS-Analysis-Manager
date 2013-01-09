@@ -14,6 +14,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 	   protected string m_CurrentMultiAlignTask = string.Empty;
 	   protected System.DateTime m_LastStatusUpdateTime;
 
+	   protected PRISM.Files.clsFileTools m_FileTools;
 
        public override IJobParams.CloseOutType RunTool()
        {
@@ -30,6 +31,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
+				m_FileTools = new PRISM.Files.clsFileTools(m_mgrParams.GetParam("MgrName", "Undefined-Manager"), m_DebugLevel);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign Aggregator");
 
 				// Determine the path to the LCMSFeatureFinder folder
@@ -137,7 +139,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
                 if (diPlotsFolder.Exists)
                 {
                     string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-					PRISM.Files.clsFileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
+					m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
 
 					try
 					{

@@ -27,9 +27,14 @@ Public Class clsAnalysisResults
 
 	' access to mgr parameters
 	Private m_mgrParams As IMgrParams
+	Private m_DebugLevel As Integer
+	Private m_MgrName As String
 
 	' for posting a general explanation for external consumption
 	Protected m_message As String
+
+	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+	Protected m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -51,6 +56,10 @@ Public Class clsAnalysisResults
 	Public Sub New(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams)
 		m_mgrParams = mgrParams
 		m_jobParams = jobParams
+		m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+		m_DebugLevel = m_mgrParams.GetParam("debuglevel", 1)
+
+		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 	End Sub
 
 
@@ -243,8 +252,12 @@ Public Class clsAnalysisResults
 			AttemptCount += 1
 
 			Try
-				System.IO.File.Copy(SrcFilePath, DestFilePath, Overwrite)
-				blnSuccess = True
+				m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+				If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
+					blnSuccess = True
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
+				End If
 
 			Catch ex As Exception
 				Dim ErrMsg As String = "clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath & ": " & ex.Message
@@ -510,6 +523,17 @@ Public Class clsAnalysisResults
 		Return blnFolderExists
 
 	End Function
+#End Region
+
+#Region "Event Handlers"
+	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold to fall below threshold (clsAnalysisResults); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+			End If
+		End If
+	End Sub
 #End Region
 
 End Class

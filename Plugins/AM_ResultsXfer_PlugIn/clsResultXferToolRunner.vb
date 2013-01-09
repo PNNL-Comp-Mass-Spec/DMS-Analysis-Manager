@@ -21,6 +21,8 @@ Public Class clsResultXferToolRunner
 #End Region
 
 #Region "Module variables"
+	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+	Protected m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
 #End Region
 
 #Region "Events"
@@ -44,6 +46,8 @@ Public Class clsResultXferToolRunner
 			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			m_FileTools = New PRISM.Files.clsFileTools(m_mgrParams.GetParam("MgrName", "Undefined-Manager"), m_DebugLevel)
 
 			' Store the AnalysisManager version info in the database
 			If Not StoreToolVersionInfo() Then
@@ -230,7 +234,8 @@ Public Class clsResultXferToolRunner
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Moving '" & FolderToMove & "' to '" & TargetDir & "'")
             End If
 
-            My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting)
+			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			m_FileTools.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting, m_mgrParams.GetParam("MgrName", "Undefined-Manager"))
 
         Catch ex As Exception
             Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
@@ -296,6 +301,17 @@ Public Class clsResultXferToolRunner
 
     End Function
 
+#End Region
+
+#Region "Event Handlers"
+	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (ResultsXfer); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+			End If
+		End If
+	End Sub
 #End Region
 
 End Class

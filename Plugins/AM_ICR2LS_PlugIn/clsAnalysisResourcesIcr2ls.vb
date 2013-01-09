@@ -71,7 +71,8 @@ Public Class clsAnalysisResourcesIcr2ls
 					diSourceFolder = New System.IO.DirectoryInfo(SerFileOrFolderPath)
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying 0.ser folder from archive to working directory: " & SerFileOrFolderPath)
-					PRISM.Files.clsFileTools.CopyDirectory(SerFileOrFolderPath, System.IO.Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
+					ResetTimestampForQueueWaitTimeLogging()
+					m_FileTools.CopyDirectory(SerFileOrFolderPath, System.IO.Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
 
 					If m_DebugLevel >= 1 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
