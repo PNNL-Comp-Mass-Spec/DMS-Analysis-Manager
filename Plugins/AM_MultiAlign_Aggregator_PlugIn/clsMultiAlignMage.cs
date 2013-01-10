@@ -85,7 +85,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
             this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
 			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, e.g. "_LCMSFeatures.txt"
-            this.mParamFilename = mJP.RequireJobParam("MultiAlignParamFilename");
+            this.mParamFilename = mJP.RequireJobParam("ParmFileName");
             this.mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
             this.mJobNum = mJP.RequireJobParam("Job");
         }
@@ -137,7 +137,7 @@ namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
             }
 
             //Set up and execute a program runner to run MultiAlign
-            CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + System.IO.Path.Combine(mWorkingDir, mJP.RequireJobParam("MultiAlignParamFilename")) + " -path " + mWorkingDir + " -name " + MultiAlignResultFilename + " -plots";
+            CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + System.IO.Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
             if (mDebugLevel >= 1)
             {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + CmdStr);
