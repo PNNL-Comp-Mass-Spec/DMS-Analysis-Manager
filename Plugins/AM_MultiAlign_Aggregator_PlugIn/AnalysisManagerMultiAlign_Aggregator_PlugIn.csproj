@@ -8,8 +8,8 @@
     <ProjectGuid>{8101C095-C93A-4B5D-BACE-9761D50D1B73}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AnalysisManager_MultiAlign_Aggregator_PlugIn</RootNamespace>
-    <AssemblyName>AnalysisManager_MultiAlign_Aggregator_PlugIn</AssemblyName>
+    <RootNamespace>AnalysisManagerMultiAlign_AggregatorPlugIn</RootNamespace>
+    <AssemblyName>AnalysisManagerMultiAlign_AggregatorPlugIn</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

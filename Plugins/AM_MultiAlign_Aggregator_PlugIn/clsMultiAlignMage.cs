@@ -4,7 +4,8 @@ using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
 
-namespace AnalysisManager_MultiAlign_Aggregator_PlugIn {
+namespace AnalysisManagerMultiAlign_AggregatorPlugIn
+{
 
     public class clsMultiAlignMage //: clsAnalysisToolRunnerBase
     {

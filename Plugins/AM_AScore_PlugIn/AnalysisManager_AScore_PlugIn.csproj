@@ -21,6 +21,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Debug\AnalysisManager_AScore_PlugIn.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -45,11 +48,13 @@
     <Reference Include="log4net">
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Mage">
-      <HintPath>lib\Mage.dll</HintPath>
+    <Reference Include="Mage, Version=1.3.4303.11542, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\Mage.dll</HintPath>
     </Reference>
-    <Reference Include="MageExtExtractionFilters">
-      <HintPath>lib\MageExtExtractionFilters.dll</HintPath>
+    <Reference Include="MageExtExtractionFilters, Version=1.3.4303.11547, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\MageExtExtractionFilters.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>

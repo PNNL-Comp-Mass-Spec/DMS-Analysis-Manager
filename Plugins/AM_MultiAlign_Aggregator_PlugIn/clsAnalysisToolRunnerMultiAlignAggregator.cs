@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
-namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
+namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
    public class clsAnalysisToolRunnerMultiAlignAggregator : clsAnalysisToolRunnerBase
    {

@@ -1,7 +1,7 @@
 ﻿using System;
 using AnalysisManagerBase;
 
-namespace AnalysisManager_MultiAlign_Aggregator_PlugIn
+namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
     public class clsAnalysisResourcesMultiAlignAggregator : clsAnalysisResources
     {
