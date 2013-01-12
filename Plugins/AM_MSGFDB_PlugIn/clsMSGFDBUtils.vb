@@ -1079,7 +1079,7 @@ Public Class clsMSGFDBUtils
 		Dim blnHCD As Boolean = False
 		Dim blnHighResMSn As Boolean = False
 
-		Dim strSearchEngineName As String
+		Dim strSearchEngineName As String = "Unknown MSGF App"
 
 		strMSGFDbCmdLineOptions = String.Empty
 		strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))

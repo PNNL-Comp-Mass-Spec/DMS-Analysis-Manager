@@ -14,8 +14,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 	   protected string m_CurrentMultiAlignTask = string.Empty;
 	   protected System.DateTime m_LastStatusUpdateTime;
 
-	   protected PRISM.Files.clsFileTools m_FileTools;
-
        public override IJobParams.CloseOutType RunTool()
        {
 			try 
@@ -31,7 +29,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
-				m_FileTools = new PRISM.Files.clsFileTools(m_mgrParams.GetParam("MgrName", "Undefined-Manager"), m_DebugLevel);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign Aggregator");
 
 				// Determine the path to the LCMSFeatureFinder folder

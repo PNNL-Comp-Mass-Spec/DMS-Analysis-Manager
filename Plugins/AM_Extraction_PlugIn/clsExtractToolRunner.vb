@@ -116,7 +116,7 @@ Public Class clsExtractToolRunner
 
 				Case clsAnalysisResources.RESULT_TYPE_MSGFDB
 					'Run PHRP
-					strCurrentAction = "running peptide hits result processor for MS-GFDB"
+					strCurrentAction = "running peptide hits result processor for MSGF+"
 					Result = RunPhrpForMSGFDB()
 
 				Case clsAnalysisResources.RESULT_TYPE_MSALIGN
@@ -233,6 +233,8 @@ Public Class clsExtractToolRunner
 
 			' Determine the path to MSGF+
 			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
+			' The reason?  The AM_MSGFDB_PlugIn uses "MSGFDB" when creating the ToolVersionInfo file
+			' We need to keep the name the same since the PeptideHitResultsProcessor (and possibly other software) expects the file to be named Tool_Version_Info_MSGFDB.txt
 			MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
 
 			If String.IsNullOrEmpty(MSGFDbProgLoc) Then

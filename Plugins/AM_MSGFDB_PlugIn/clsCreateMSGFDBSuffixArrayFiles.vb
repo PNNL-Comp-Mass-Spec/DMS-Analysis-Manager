@@ -22,7 +22,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	End Property
 
 	''' <summary>
-	''' Convert .Fasta file to indexed DB files compatible with MSGFDB
+	''' Convert .Fasta file to indexed DB files compatible with MSGFPlus
 	''' </summary>
 	''' <param name="strLogfileDir"></param>
 	''' <param name="intDebugLevel"></param>

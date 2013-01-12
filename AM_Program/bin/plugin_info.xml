@@ -193,7 +193,7 @@
 		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
 	/>
 	<ToolRunner 
-		Tool="msgfdb" 
+		Tool="msgfplus" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB" 
 		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
 	/>
@@ -273,7 +273,7 @@
 		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" 
 	/>
 	<ToolRunner 
-		Tool="msgfdb_ims" 
+		Tool="msgfplus_ims" 
 		Class="AnalysisManagerMSGFDB_IMSPlugIn.clsAnalysisToolRunnerMSGFDB_IMS"
 		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" 
 	/>
@@ -482,7 +482,7 @@
 		AssemblyFile="AnalysisManagerMSGFPlugin.dll" 
 	/>
 	<Resourcer 
-		Tool="msgfdb" 
+		Tool="msgfplus" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB" 
 		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
 	/>
@@ -562,7 +562,7 @@
 		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" 
 	/>
 	<Resourcer 
-		Tool="msgfdb_ims" 
+		Tool="msgfplus_ims" 
 		Class="AnalysisManagerMSGFDB_IMSPlugIn.clsAnalysisResourcesMSGFDB_IMS"
 		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" 
 	/>

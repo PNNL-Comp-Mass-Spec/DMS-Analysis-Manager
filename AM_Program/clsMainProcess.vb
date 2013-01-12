@@ -1748,6 +1748,7 @@ Namespace AnalysisManagerProg
 				   strStepToolNameLCase.Contains("xtandem") OrElse _
 				   strStepToolNameLCase.Contains("inspect") OrElse _
 				   strStepToolNameLCase.Contains("msgfdb") OrElse _
+				   strStepToolNameLCase.Contains("msgfplus") OrElse _
 				   strStepToolNameLCase.Contains("msalign") OrElse _
 				   strStepToolNameLCase.Contains("omssa") Then
 

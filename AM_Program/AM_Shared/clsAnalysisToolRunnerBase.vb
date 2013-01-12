@@ -56,7 +56,7 @@ Public Class clsAnalysisToolRunnerBase
 	'Debug level
 	Protected m_DebugLevel As Short
 
-	'Working directory, machine name, & job number (used frequently by subclasses)
+	'Working directory, machine name (aka manager name), & job number (used frequently by subclasses)
 	Protected m_WorkDir As String
 	Protected m_MachName As String
 	Protected m_JobNum As String
@@ -74,9 +74,13 @@ Public Class clsAnalysisToolRunnerBase
 	Protected m_FileDate As String
 
 	Protected m_IonicZipTools As clsIonicZipTools
+	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+
 	Protected m_NeedToAbortProcessing As Boolean
 
 	Protected m_SummaryFile As clsSummaryFile
+
+	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
 
 #End Region
 
@@ -175,6 +179,10 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 
 		m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
+
+		ResetTimestampForQueueWaitTimeLogging()
+		m_FileTools = New PRISM.Files.clsFileTools(m_MachName, m_DebugLevel)
+
 		m_NeedToAbortProcessing = False
 
 		m_message = String.Empty
@@ -1386,6 +1394,10 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
+	Protected Sub ResetTimestampForQueueWaitTimeLogging()
+		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+	End Sub
+
 	''' <summary>
 	''' Runs the analysis tool
 	''' Major work is performed by overrides
@@ -1419,9 +1431,16 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
 		Dim swToolVersionFile As System.IO.StreamWriter
 		Dim strToolVersionFilePath As String
+		Dim strStepToolName As String
 
 		Try
-			strToolVersionFilePath = System.IO.Path.Combine(strFolderPath, "Tool_Version_Info_" & m_jobParams.GetParam("StepTool") & ".txt")
+			strStepToolName = m_jobParams.GetParam("StepTool")
+			If strStepToolName.ToLower().StartsWith("msgfplus") Then
+				' For backwards compatibility, need to make sure the file does not start with "MSGFPlus" 
+				strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
+			End If
+
+			strToolVersionFilePath = System.IO.Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
 
 			swToolVersionFile = New System.IO.StreamWriter(New System.IO.FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
@@ -1948,6 +1967,19 @@ Public Class clsAnalysisToolRunnerBase
 		Return blnSuccess
 
 	End Function
+
+#Region "Event Handlers"
+	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+			End If
+		End If
+	End Sub
+
+#End Region
+
 
 #End Region
 

@@ -22,7 +22,7 @@ Public Class clsAnalysisResourcesIDPicker
 		Dim blnMGFInstrumentData As Boolean
 		Dim eReturnCode As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGFDB, etc.)
+		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 
 		If Not FindAndRetrieveMiscFiles(strParamFileName, False) Then
@@ -273,11 +273,11 @@ Public Class clsAnalysisResourcesIDPicker
 
 		Dim strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
 		Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", "")
-		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFDB_IMS" Then
+		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFPlus_IMS" Then
 			' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
-			' However, this is the MSGFDB_IMS script, so the file is currently "Tool_Version_Info_MSGFDB_IMS.txt"
+			' However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
 			' We'll copy the current file locally, then rename it to the expected name
-			Dim strOriginalName As String = "Tool_Version_Info_MSGFDB_IMS.txt"
+			Dim strOriginalName As String = "Tool_Version_Info_MSGFPlus_IMS.txt"
 			mInputFileRenames.Add(strOriginalName, strToolVersionFile)
 			strToolVersionFile = String.Copy(strOriginalName)
 		End If

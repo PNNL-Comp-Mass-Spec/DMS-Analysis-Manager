@@ -13,7 +13,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
 
 	'*********************************************************************************************************
-	'Class for running MSGFDB analysis
+	'Class for running MSGFDB or MSGF+ analysis
 	'*********************************************************************************************************
 
 #Region "Module Variables"
@@ -97,6 +97,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Determine the path to MSGFDB (or MSGF+)
 			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
+			' The reason?  The PeptideHitResultsProcessor (and possibly other software) expects the Tool Version file to be named Tool_Version_Info_MSGFDB.txt
 			mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
 
 			If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
@@ -210,15 +211,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 
 			If Not blnSuccess Then				
-				Msg = "Error running MSGFDB"
+				Msg = "Error running " & strSearchEngineName
 				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
 				If CmdRunner.ExitCode <> 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGFDB returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
 				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSGFDB failed (but exit code is 0)")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strSearchEngineName & " failed (but exit code is 0)")
 				End If
 
 				blnProcessingError = True
@@ -249,7 +250,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				result = PostProcessMSGFDBResults(ResultsFileName, JavaProgLoc)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Unknown error post-processing the MSGFDB results"
+						m_message = "Unknown error post-processing the " & strSearchEngineName & "  results"
 					End If
 					blnProcessingError = True
 				End If

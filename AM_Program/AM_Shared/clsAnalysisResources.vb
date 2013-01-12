@@ -77,7 +77,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
 	Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
 	Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
-	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Also used for MSGF+
+	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Used for MSGFDB and MSGF+
 	Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
 
 	Public Const DOT_WIFF_EXTENSION As String = ".wiff"
@@ -3372,7 +3372,7 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
-	''' Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFDB analysis
+	''' Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
 	''' </summary>
 	''' <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
@@ -3678,8 +3678,8 @@ Public MustInherit Class clsAnalysisResources
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
 			Case "inspect"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
-			Case "msgfdb"
-				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
+			Case "msgfplus"
+				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
 			Case "msalign"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 			Case Else
@@ -3691,8 +3691,8 @@ Public MustInherit Class clsAnalysisResources
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
 				ElseIf strToolNameLCase.Contains("inspect") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
-				ElseIf strToolNameLCase.Contains("msgfdb") Then
-					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFDB
+				ElseIf strToolNameLCase.Contains("msgfplus") Then
+					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
 				ElseIf strToolNameLCase.Contains("msalign") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 				Else
