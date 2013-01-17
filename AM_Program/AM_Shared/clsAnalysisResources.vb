@@ -2488,6 +2488,47 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
+	''' </summary>
+	''' <param name="strProgLocName"></param>
+	''' <returns></returns>
+	''' <remarks>strProgLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
+	Protected Function RetrievePNNLOmicsResourceFiles(ByVal strProgLocName As String) As Boolean
+		Const OMICS_ELEMENT_DATA_FILE As String = "PNNLOmicsElementData.xml"
+
+		' Copy the PNNLOmicsElementData.xml file to the working directory
+		Dim strProgLoc As String
+		Dim fiSourceFile As System.IO.FileInfo
+
+		Try
+			strProgLoc = m_mgrParams.GetParam(strProgLocName)
+			If String.IsNullOrEmpty(strProgLocName) Then
+				m_message = "Manager parameter " + strProgLocName + " is not defined; cannot retrieve file " & OMICS_ELEMENT_DATA_FILE
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			fiSourceFile = New System.IO.FileInfo(IO.Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE))
+			
+			If Not fiSourceFile.Exists Then
+				m_message = "PNNLOmics Element Data file not found"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at: " & fiSourceFile.FullName)
+				Return False
+			End If
+
+			fiSourceFile.CopyTo(IO.Path.Combine(m_WorkingDir, OMICS_ELEMENT_DATA_FILE))
+
+		Catch ex As Exception
+			m_message = "Error copying " & OMICS_ELEMENT_DATA_FILE
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " to working directory: " + ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
 	''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
 	''' </summary>
 	''' <param name="RawDataType">Type of data to copy</param>

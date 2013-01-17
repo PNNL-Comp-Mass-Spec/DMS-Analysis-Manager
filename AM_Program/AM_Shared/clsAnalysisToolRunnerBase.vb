@@ -1092,7 +1092,8 @@ Public Class clsAnalysisToolRunnerBase
 				End If
 
 				If OkToMove Then
-					'Check to see if the file ends with an entry specified in m_ResultFileExtensionsToSkip
+					' Check to see if the file ends with an entry specified in m_ResultFileExtensionsToSkip
+					' Note that entries in m_ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
 					For Each ext As String In m_jobParams.ResultFileExtensionsToSkip
 						If TmpFileNameLcase.EndsWith(ext.ToLower()) Then
 							OkToMove = False
