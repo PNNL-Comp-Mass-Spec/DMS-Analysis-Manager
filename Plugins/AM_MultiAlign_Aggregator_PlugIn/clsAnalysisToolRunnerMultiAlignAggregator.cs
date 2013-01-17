@@ -19,8 +19,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 			try 
 			{
 
-				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
-				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
+				IJobParams.CloseOutType result;
 				bool blnSuccess = false;
 
 				//Do the base class stuff
@@ -54,7 +54,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentMultiAlignTask);
 
-				//Change the name of the log file for the local log file to the plugin log filename
+				// Change the name of the log file for the local log file to the plugin log filename
                 String LogFileName = System.IO.Path.Combine(m_WorkDir, "MultiAlign_Log");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
@@ -62,28 +62,31 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				try
 				{
                     m_progress = PROGRESS_PCT_MULTIALIGN_START;
-
 					blnSuccess = RunMultiAlign(progLoc);
-
-					// Change the name of the log file back to the analysis manager log file
-                    LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
-
-					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MultiAlign: " + m_message);
-					}
 				}
 				catch (System.Exception ex)
 				{
-					// Change the name of the log file back to the analysis manager log file
-                    LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MultiAlign: " + ex.Message);
+					m_message = "Error running MultiAlign: " + ex.Message;
 					blnSuccess = false;
-                    m_message = "Error running MultiAlign";
+				}
+
+				// Change the name of the log file back to the analysis manager log file
+				LogFileName = m_mgrParams.GetParam("logfilename");
+				log4net.GlobalContext.Properties["LogName"] = LogFileName;
+				clsLogTools.ChangeLogFileName(LogFileName);
+
+				if (blnSuccess)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MultiAlign complete");
+				}
+				else
+				{
+					if (string.IsNullOrWhiteSpace(m_message))
+						m_message = "Unknown error running MultiAlign";
+					else
+						m_message = "Error running MultiAlign: " + m_message;
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
 				}
 
 				//Stop the job timer
@@ -130,21 +133,20 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				}
 
                 // Move the Plots folder to the result files folder
-                System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-                diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
+                System.IO.DirectoryInfo diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
 
                 if (diPlotsFolder.Exists)
                 {
                     string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-					m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
 
 					try
 					{
-						diPlotsFolder.Delete(true);
+						diPlotsFolder.MoveTo(strTargetFolderPath);
 					}
 					catch (Exception ex)
 					{
-						Console.WriteLine("Warning: Exception deleting " + diPlotsFolder.FullName + ": " + ex.Message);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
+						m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
 					}
 					
                 }
@@ -174,17 +176,28 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
        /// </summary>
 	   protected bool RunMultiAlign(string sMultiAlignConsolePath)
        {
-            // run the appropriate Mage pipeline(s) according to operations list parameter
-		   clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
-		   bool bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
+		   bool bSuccess;
 
-			if (!bSuccess)
-			{
-				if (oMultiAlignMage.Message.Length > 0)
-					m_message = oMultiAlignMage.Message;
-				else
-					m_message = "Unknown error running multialign";
-			}
+		   try
+		   {
+			   clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
+			   bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
+
+			   if (!bSuccess)
+			   {
+				   if (!string.IsNullOrWhiteSpace(oMultiAlignMage.Message))
+					   m_message = oMultiAlignMage.Message;
+				   else
+					   m_message = "Unknown error running MultiAlign";
+			   }
+
+		   }
+		   catch (Exception ex)
+		   {
+			   m_message = "Unknown error running MultiAlign: " + ex.Message;
+			   clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+			   return false;
+		   }
 
 			return bSuccess;
 

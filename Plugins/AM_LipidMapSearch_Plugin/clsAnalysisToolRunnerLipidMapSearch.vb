@@ -849,6 +849,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 			lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX & "AlignNETError.txt")
 			lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX & "MatchMassError.txt")
 			lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX & "Tiers.txt")
+			lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX & "MassErrorComparison.txt")
 
 			System.Threading.Thread.Sleep(500)
 

@@ -366,6 +366,8 @@ Public Class clsDtaGenToolRunner
 			m_DtaCount = SpectraGen.SpectraFileCount
 			m_progress = SpectraGen.Progress
 
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return eResult
+
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files: " & ex.Message)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception while generating dta files")

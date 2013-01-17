@@ -17,7 +17,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         protected JobParameters mJP;
         protected ManagerParameters mMP;
         protected string mMessage = "";
-		protected string mSearchType = "";								// File extension of input data files, e.g. "_LCMSFeatures.txt"
+		protected string mSearchType = "";								// File extension of input data files, e.g. "_LCMSFeatures.txt" or "_isos.csv"
         protected string mParamFilename = "";
         protected const string MULTIALIGN_INPUT_FILE = "Input.txt";
         protected string mJobNum = "";
@@ -85,7 +85,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             this.mMP = new ManagerParameters(mgrParms);
             this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
-			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, e.g. "_LCMSFeatures.txt"
+			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, e.g. "_LCMSFeatures.txt" or "_isos.csv"
             this.mParamFilename = mJP.RequireJobParam("ParmFileName");
             this.mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
             this.mJobNum = mJP.RequireJobParam("Job");
@@ -101,13 +101,31 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 		/// <returns>True if success; otherwise false</returns>
         public bool Run(string sMultiAlignConsolePath) {
             string dataPackageID = mJP.RequireJobParam("DataPackageID");
+			bool blnSuccess;
 
-            GetMultiAlignParameterFile();
+			blnSuccess = GetMultiAlignParameterFile();
+			if (!blnSuccess) 
+				return false;
 
             SimpleSink multialignJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "Decon2LS_V2");
-            CopyMultiAlignInputFiles(multialignJobsToProcess);
 
-            BuildMultiAlignInputTextFile(mSearchType);
+			if (multialignJobsToProcess.Rows.Count == 0)
+			{
+				if (string.IsNullOrEmpty(mMessage))
+				{
+					mMessage = "Data package " + dataPackageID + " does not have any Decon2LS_V2 analysis jobs";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+				}
+				return false;
+			}
+
+			blnSuccess = CopyMultiAlignInputFiles(multialignJobsToProcess, mSearchType);
+			if (!blnSuccess) 
+				return false;
+
+            blnSuccess = BuildMultiAlignInputTextFile(mSearchType);
+			if (!blnSuccess)
+				return false;
 
             InitializeProgressStepDictionaries();
 
@@ -173,21 +191,42 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         private bool GetMultiAlignParameterFile() {
 
-            //' Retrieve the MultiAlign Parameter .xml file specified for this job
-            if (string.IsNullOrEmpty(mParamFilename)) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
-            }
+			try
+			{
+				// Retrieve the MultiAlign Parameter .xml file specified for this job
+				if (string.IsNullOrEmpty(mParamFilename))
+				{
+					mMessage = "Job parameter ParmFileName not defined in the settings for this MultiAlign job; unable to continue";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+					return false;
+				}
 
-            string strParamFileStoragePathKeyName = AnalysisManagerBase.clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
-            string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strMAParameterFileStoragePath)) {
-                strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
-            }
+				string strParamFileStoragePathKeyName = AnalysisManagerBase.clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
+				string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
+				if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
+				{
+					strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
+				}
 
-			System.IO.File.Copy(System.IO.Path.Combine(strMAParameterFileStoragePath, mParamFilename), System.IO.Path.Combine(mWorkingDir, mParamFilename), true);
+				string sourceFilePath = System.IO.Path.Combine(strMAParameterFileStoragePath, mParamFilename);
 
-            //Errors were reported in function call, so just return
+				if (!System.IO.File.Exists(sourceFilePath))
+				{
+					mMessage = "MultiAlign parameter file not found: " + strMAParameterFileStoragePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+					return false;
+				}
+				System.IO.File.Copy(sourceFilePath, System.IO.Path.Combine(mWorkingDir, mParamFilename), true);
+			}
+			catch (Exception ex)
+			{
+				mMessage = "Error copying the MultiAlign parameter file";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+				return false;
+			}
+         
+
             return true;
 
         }
@@ -202,24 +241,59 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             string connStr = mMP.RequireMgrParam("ConnectionString");
             string sql = string.Format(sqlTemplate, new string[] { dataPackageID, tool });
             SimpleSink jobList = GetListOfItemsFromDB(sql, connStr);
+
+			if (jobList.Rows.Count == 0)
+			{
+				mMessage = "Data package " + dataPackageID + " does not have any " + tool + " analysis jobs";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + " using query " + sqlTemplate);
+			}
+
             return jobList;
         }
 
         /// <summary>
         /// Copy MultiAlign input files into working folder from given list of jobs
+		/// Looks for DeconTools _LCMSFeatures.txt or _isos.csv files for the given jobs
         /// </summary>
         /// <param name="multialignJobsToProcess"></param>
-        private void CopyMultiAlignInputFiles(SimpleSink multialignJobsToProcess) {
-            // get selected list of reporter ion files from list of jobs
-            string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-            SimpleSink fileList = GetListOfFilesFromFolderList(multialignJobsToProcess, mSearchType, columnsToIncludeInOutput);
+        private bool CopyMultiAlignInputFiles(SimpleSink multialignJobsToProcess, string fileSpec) {
 
-            // make module to copy file(s) from server to working directory
-            FileCopy copier = new FileCopy();
-            copier.OutputFolderPath = mWorkingDir;
-            copier.SourceFileColumnName = "Name";
+			try
+			{
 
-            ProcessingPipeline.Assemble("File_Copy", fileList, copier).RunRoot(null);
+				string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+				SimpleSink fileList = GetListOfFilesFromFolderList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
+
+				// Check for "--No Files Found--" for any of the jobs
+				foreach (var row in fileList.Rows)
+				{
+					if (row.Length > 4)
+					{
+						if (row[1].ToString() == Mage.BaseModule.kNoFilesFound)
+						{
+							mMessage = "Did not find any " + fileSpec + " files for job " + row[4].ToString() + " at " + row[3].ToString();
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+							return false;
+						}
+					}
+				}
+
+				// make module to copy file(s) from server to working directory
+				FileCopy copier = new FileCopy();
+				copier.OutputFolderPath = mWorkingDir;
+				copier.SourceFileColumnName = "Name";
+
+				ProcessingPipeline.Assemble("File_Copy", fileList, copier).RunRoot(null);
+
+			}
+			catch (Exception ex)
+			{
+				mMessage = "Error copying DeconTools result files";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+				return false;
+			}
+
+			return true;
 
         }
 
@@ -285,59 +359,61 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             const string INPUT_FILENAME = "input.txt";
 
             bool blnSuccess = true;
-            System.IO.StreamWriter swOutFile = null;
 
             string TargetFilePath = System.IO.Path.Combine(mWorkingDir, INPUT_FILENAME);
 
             string TmpFile = null;
             string[] Files = null;
 
-            blnSuccess = true;
-
-            // Create the MA input file 
+            // Create the MultiAlign input file 
 
             try
             {
-                swOutFile = new System.IO.StreamWriter(new System.IO.FileStream(TargetFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read));
 
                 Files = System.IO.Directory.GetFiles(mWorkingDir, "*" + strInputFileExtension);
 
-                swOutFile.WriteLine("[Files]");
-                string AlignmentDataset = mJP.GetJobParam("AlignmentDataset");
-                foreach (string TmpFile_loopVariable in Files)
-                {
-                    TmpFile = TmpFile_loopVariable;
-                    if (!string.IsNullOrEmpty(AlignmentDataset.Trim()) && TmpFile.Contains(AlignmentDataset))
-                    {
-                        //Add the * to the dataset to align to.
-                        swOutFile.WriteLine(TmpFile + "*");
-                    }
-                    else
-                    {
-                        swOutFile.WriteLine(TmpFile);
-                        //..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
-                    }
-                }
+				if (Files.Length == 0)
+				{
+					mMessage = "Did not find any files of type " + strInputFileExtension + " in folder " + mWorkingDir;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+					return false;
+				}
 
-                //Check to see if a mass tag database has been defined and NO alignment dataset has been defined
-                string AmtDb = mJP.GetJobParam("AMTDB");
-                if (!string.IsNullOrEmpty(AmtDb.Trim()))
-                {
-                    swOutFile.WriteLine("[Database]");
-                    swOutFile.WriteLine("Database = " + mJP.GetJobParam("AMTDB"));
-                    swOutFile.WriteLine("Server = " + mJP.GetJobParam("AMTDBServer"));
-                    //Database = MT_Human_Sarcopenia_MixedLC_P692
-                    //Server = elmer
-                }
+				using (System.IO.StreamWriter swOutFile = new System.IO.StreamWriter(new System.IO.FileStream(TargetFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
+				{
+					swOutFile.WriteLine("[Files]");
+					string AlignmentDataset = mJP.GetJobParam("AlignmentDataset");
+					foreach (string TmpFile_loopVariable in Files)
+					{
+						TmpFile = TmpFile_loopVariable;
+						if (!string.IsNullOrWhiteSpace(AlignmentDataset) && TmpFile.ToLower().Contains(AlignmentDataset.ToLower()))
+						{
+							// Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
+							swOutFile.WriteLine(TmpFile + "*");
+						}
+						else
+						{
+							swOutFile.WriteLine(TmpFile);
+						}
+					}
 
-                swOutFile.Close();
-
+					//Check to see if a mass tag database has been defined and NO alignment dataset has been defined
+					string AmtDb = mJP.GetJobParam("AMTDB");
+					if (!string.IsNullOrEmpty(AmtDb.Trim()))
+					{
+						swOutFile.WriteLine("[Database]");
+						swOutFile.WriteLine("Database = " + mJP.GetJobParam("AMTDB"));			// For example, MT_Human_Sarcopenia_MixedLC_P692
+						swOutFile.WriteLine("Server = " + mJP.GetJobParam("AMTDBServer"));		// For example, Elmer
+					}
+				}
+			
+				blnSuccess = true;
             }
-			catch (System.Exception ex)
+			catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" + INPUT_FILENAME + "): " + ex.Message);
-                blnSuccess = false;
-
+				mMessage = "Error building the input .txt file (" + INPUT_FILENAME + ")";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+				return false;
             }
 
             return blnSuccess;
@@ -449,7 +525,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
             }
-			catch (System.Exception ex)
+			catch (Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 1)
@@ -628,7 +704,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
             }
-			catch (System.Exception ex)
+			catch (Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 2)
