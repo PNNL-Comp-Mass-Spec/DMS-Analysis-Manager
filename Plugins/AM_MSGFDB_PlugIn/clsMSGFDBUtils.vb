@@ -61,6 +61,7 @@ Public Class clsMSGFDBUtils
 	Protected mPhosphorylationSearch As Boolean
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
+	' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
 	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
 
@@ -377,6 +378,7 @@ Public Class clsMSGFDBUtils
 				.ShowMessages = False
 			End With
 
+			' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
 			blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
 
 			mPeptideToProteinMapper.CloseLogFileNow()

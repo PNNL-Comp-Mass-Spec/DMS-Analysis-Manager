@@ -161,7 +161,9 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_IonicZipTools As clsIonicZipTools
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+
 	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
+	Private m_LockQueueWaitTimeStart As System.DateTime = System.DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -1892,6 +1894,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
 		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+		m_LockQueueWaitTimeStart = System.DateTime.UtcNow
 	End Sub
 
 	''' <summary>
@@ -4149,7 +4152,23 @@ Public MustInherit Class clsAnalysisResources
 
 #Region "Event Handlers"
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+
+		Dim intWaitTimeLogIntervalSeconds As Integer = 30
+
+		If m_LockQueueWaitTimeStart = System.DateTime.MinValue Then m_LockQueueWaitTimeStart = System.DateTime.UtcNow()
+
+		Select Case System.DateTime.UtcNow.Subtract(m_LockQueueWaitTimeStart).TotalMinutes		
+			Case Is >= 30
+				intWaitTimeLogIntervalSeconds = 240
+			Case Is >= 15
+				intWaitTimeLogIntervalSeconds = 120
+			Case Is >= 5
+				intWaitTimeLogIntervalSeconds = 60
+			Case Else
+				intWaitTimeLogIntervalSeconds = 30
+		End Select
+
+		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
 			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
