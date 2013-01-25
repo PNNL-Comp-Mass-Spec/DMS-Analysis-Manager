@@ -1225,6 +1225,15 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
+	Public Shared Function NotifyMissingParameter(ByVal oJobParams As IJobParams, ByVal strParameterName As String) As String
+
+		Dim strSettingsFile As String = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?")
+		Dim strToolName As String = oJobParams.GetJobParameter("ToolName", "?UnknownToolName?")
+
+		Return "Settings file " & strSettingsFile & " for tool " & strToolName & " does not have parameter " & strParameterName & " defined"
+
+	End Function
+
 	''' <summary>
 	''' Adds manager assembly data to job summary file
 	''' </summary>
@@ -1637,7 +1646,8 @@ Public Class clsAnalysisToolRunnerBase
 			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
 
 			If Not ioFileInfo.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoViaSystemDiagnostics: " & strDLLFilePath)
+				m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strDLLFilePath)
 				Return False
 			Else
 
@@ -1677,7 +1687,8 @@ Public Class clsAnalysisToolRunnerBase
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining File Version for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+			m_message = "Exception determining File Version for " & System.IO.Path.GetFileName(strDLLFilePath)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -1708,10 +1719,12 @@ Public Class clsAnalysisToolRunnerBase
 			strNameAndVersion = System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
 
 			If Not ioFileInfo.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "File not found by StoreToolVersionInfoOneFile64Bit: " & strDLLFilePath)
+				m_message = "File not found by StoreToolVersionInfoOneFile64Bit"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
 				Return False
 			ElseIf Not System.IO.File.Exists(strAppPath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit: " & strAppPath)
+				m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
 				Return False
 			Else
 				' Call DLLVersionInspector.exe to determine the tool version
@@ -1772,7 +1785,8 @@ Public Class clsAnalysisToolRunnerBase
 			Return True
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Version info for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+			m_message = "Exception determining Version info for " & System.IO.Path.GetFileName(strDLLFilePath)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
 			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, System.IO.Path.GetFileNameWithoutExtension(strDLLFilePath))
 		End Try
 

@@ -35,6 +35,7 @@ Public Class clsAnalysisResults
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
 	Protected m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
+	Protected m_LockQueueWaitTimeStart As System.DateTime = System.DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -252,7 +253,7 @@ Public Class clsAnalysisResults
 			AttemptCount += 1
 
 			Try
-				m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+				ResetTimestampForQueueWaitTimeLogging()
 				If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
 					blnSuccess = True
 				Else
@@ -523,16 +524,24 @@ Public Class clsAnalysisResults
 		Return blnFolderExists
 
 	End Function
+
+	Protected Sub ResetTimestampForQueueWaitTimeLogging()
+		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+		m_LockQueueWaitTimeStart = System.DateTime.UtcNow
+	End Sub
+
 #End Region
 
 #Region "Event Handlers"
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+
+		If clsAnalysisResources.IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
 			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold to fall below threshold (clsAnalysisResults); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResults); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
 			End If
 		End If
+
 	End Sub
 #End Region
 

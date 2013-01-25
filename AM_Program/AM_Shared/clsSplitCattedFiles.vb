@@ -70,7 +70,7 @@ Public Class clsSplitCattedFiles
 
 		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
-		For Each strEntry In lstFilesToSkip
+		For Each strEntry As String In lstFilesToSkip
 			lstFilesToSkipSortedSet.Add(strEntry)
 		Next
 
@@ -98,7 +98,7 @@ Public Class clsSplitCattedFiles
 
 		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
-		For Each strEntry In lstFilesToSkip
+		For Each strEntry As String In lstFilesToSkip
 			lstFilesToSkipSortedSet.Add(strEntry)
 		Next
 

@@ -1555,6 +1555,40 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Protected Function GetCurrentDatasetAndJobInfo() As udtDataPackageJobInfoType
+
+		Dim udtDataPackageJobInfo As udtDataPackageJobInfoType = New udtDataPackageJobInfoType
+
+		With udtDataPackageJobInfo
+			.Job = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
+			.Dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
+			.DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
+			.Experiment = String.Empty
+
+			.Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", String.Empty)
+			.ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", String.Empty)
+			.SettingsFileName = m_jobParams.GetJobParameter("JobParameters", "SettingsFileName", String.Empty)
+
+			.ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", String.Empty)
+
+			.LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", String.Empty)
+			.OrganismDBName = String.Copy(.LegacyFastaFileName)
+
+			.ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", String.Empty)
+			.ProteinOptions = m_jobParams.GetJobParameter("PeptideSearch", "ProteinOptions", String.Empty)
+
+			.ServerStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetStoragePath", String.Empty)
+			.ArchiveStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetArchivePath", String.Empty)
+			.ResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", String.Empty)
+			.DatasetFolderName = m_jobParams.GetJobParameter("JobParameters", "DatasetFolderName", String.Empty)
+			.SharedResultsFolder = m_jobParams.GetJobParameter("JobParameters", "SharedResultsFolders", String.Empty)
+			.RawDataType = m_jobParams.GetJobParameter("JobParameters", "RawDataType", String.Empty)
+		End With
+
+		Return udtDataPackageJobInfo
+
+	End Function
+
 	''' <summary>
 	''' Reports the amount of free memory on this computer (in MB)
 	''' </summary>
@@ -1645,6 +1679,31 @@ Public MustInherit Class clsAnalysisResources
 			Case Else
 				Return eRawDataTypeConstants.Unknown
 		End Select
+
+	End Function
+
+	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As System.DateTime, ByRef dtLastLockQueueWaitTimeLog As System.DateTime) As Boolean
+
+		Dim intWaitTimeLogIntervalSeconds As Integer = 30
+
+		If dtLockQueueWaitTimeStart = System.DateTime.MinValue Then dtLockQueueWaitTimeStart = System.DateTime.UtcNow()
+
+		Select Case System.DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
+			Case Is >= 30
+				intWaitTimeLogIntervalSeconds = 240
+			Case Is >= 15
+				intWaitTimeLogIntervalSeconds = 120
+			Case Is >= 5
+				intWaitTimeLogIntervalSeconds = 60
+			Case Else
+				intWaitTimeLogIntervalSeconds = 30
+		End Select
+
+		If System.DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
+			Return True
+		Else
+			Return False
+		End If
 
 	End Function
 
@@ -1773,40 +1832,6 @@ Public MustInherit Class clsAnalysisResources
 			Dt.Dispose()
 			Return True
 		End If
-
-	End Function
-
-	Protected Function GetCurrentDatasetAndJobInfo() As udtDataPackageJobInfoType
-
-		Dim udtDataPackageJobInfo As udtDataPackageJobInfoType = New udtDataPackageJobInfoType
-
-		With udtDataPackageJobInfo
-			.Job = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
-			.Dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
-			.DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
-			.Experiment = String.Empty
-
-			.Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", String.Empty)
-			.ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", String.Empty)
-			.SettingsFileName = m_jobParams.GetJobParameter("JobParameters", "SettingsFileName", String.Empty)
-
-			.ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", String.Empty)
-
-			.LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", String.Empty)
-			.OrganismDBName = String.Copy(.LegacyFastaFileName)
-
-			.ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", String.Empty)
-			.ProteinOptions = m_jobParams.GetJobParameter("PeptideSearch", "ProteinOptions", String.Empty)
-
-			.ServerStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetStoragePath", String.Empty)
-			.ArchiveStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetArchivePath", String.Empty)
-			.ResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", String.Empty)
-			.DatasetFolderName = m_jobParams.GetJobParameter("JobParameters", "DatasetFolderName", String.Empty)
-			.SharedResultsFolder = m_jobParams.GetJobParameter("JobParameters", "SharedResultsFolders", String.Empty)
-			.RawDataType = m_jobParams.GetJobParameter("JobParameters", "RawDataType", String.Empty)
-		End With
-
-		Return udtDataPackageJobInfo
 
 	End Function
 
@@ -4151,29 +4176,16 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Event Handlers"
+
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
 
-		Dim intWaitTimeLogIntervalSeconds As Integer = 30
-
-		If m_LockQueueWaitTimeStart = System.DateTime.MinValue Then m_LockQueueWaitTimeStart = System.DateTime.UtcNow()
-
-		Select Case System.DateTime.UtcNow.Subtract(m_LockQueueWaitTimeStart).TotalMinutes		
-			Case Is >= 30
-				intWaitTimeLogIntervalSeconds = 240
-			Case Is >= 15
-				intWaitTimeLogIntervalSeconds = 120
-			Case Is >= 5
-				intWaitTimeLogIntervalSeconds = 60
-			Case Else
-				intWaitTimeLogIntervalSeconds = 30
-		End Select
-
-		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
+		If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
 			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
 			End If
 		End If
+
 	End Sub
 #End Region
 
