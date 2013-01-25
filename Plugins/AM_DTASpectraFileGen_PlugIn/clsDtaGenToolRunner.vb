@@ -21,12 +21,13 @@ Public Class clsDtaGenToolRunner
 	Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
 	Protected Const CENTROID_CDTA_PROGRESS_START As Integer = 70
 
-	Protected Enum eDTAGeneratorConstants
+	Public Enum eDTAGeneratorConstants
 		Unknown = 0
 		ExtractMSn = 1
 		DeconMSn = 2
 		MSConvert = 3
 		MGFtoDTA = 4
+		DeconConsole = 5
 	End Enum
 #End Region
 
@@ -139,43 +140,97 @@ Public Class clsDtaGenToolRunner
 
 	End Function
 
-	Protected Function GetDTAGenerator(ByRef SpectraGen As ISpectraFileProcessor) As eDTAGeneratorConstants
+	Protected Function GetDTAGenerator(ByRef SpectraGen As clsDtaGen) As eDTAGeneratorConstants
 
-		Dim strDTAGenerator As String = m_jobParams.GetJobParameter("DtaGenerator", "")
-		Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
+		Dim eDtaGeneratorType As eDTAGeneratorConstants
+		Dim strErrorMessage As String = String.Empty
+
+		eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
+
+		Select Case eDtaGeneratorType
+			Case eDTAGeneratorConstants.MGFtoDTA
+				SpectraGen = New clsMGFtoDtaGenMainProcess()
+
+			Case eDTAGeneratorConstants.MSConvert
+				SpectraGen = New clsDtaGenMSConvert()
+
+			Case eDTAGeneratorConstants.DeconConsole
+				SpectraGen = New clsDtaGenDeconConsole()
+
+			Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
+				SpectraGen = New clsDtaGenThermoRaw()
+
+			Case eDTAGeneratorConstants.Unknown
+				If String.IsNullOrEmpty(strErrorMessage) Then
+					m_message = "GetDTAGeneratorInfo reported an Unknown DTAGenerator type"
+				Else
+					m_message = strErrorMessage
+				End If
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+
+		End Select
+
+		Return eDtaGeneratorType
+
+	End Function
+
+	Public Shared Function GetDTAGeneratorInfo(ByVal oJobParams As IJobParams, ByRef strErrorMessage As String) As eDTAGeneratorConstants
+		Dim blnConcatenateDTAs As Boolean
+		Return GetDTAGeneratorInfo(oJobParams, blnConcatenateDTAs, strErrorMessage)
+	End Function
+
+	Public Shared Function GetDTAGeneratorInfo(ByVal oJobParams As IJobParams, ByRef blnConcatenateDTAs As Boolean, ByRef strErrorMessage As String) As eDTAGeneratorConstants
+
+		Dim strDTAGenerator As String = oJobParams.GetJobParameter("DtaGenerator", "")
+		Dim strRawDataType As String = oJobParams.GetJobParameter("RawDataType", "")
+		Dim blnMGFInstrumentData As Boolean = oJobParams.GetJobParameter("MGFInstrumentData", False)
+
+		strErrorMessage = String.Empty
+		blnConcatenateDTAs = True
+
 		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		Dim blnMGFInstrumentData As Boolean = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+		eRawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown
 
-		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+		If String.IsNullOrEmpty(strRawDataType) Then
+			strErrorMessage = NotifyMissingParameter(oJobParams, "RawDataType")
+			Return eDTAGeneratorConstants.Unknown
+		Else
+			eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+		End If
 
 		If blnMGFInstrumentData Then
-			m_ConcatenateDTAs = False
-			SpectraGen = New clsMGFtoDtaGenMainProcess()
+			blnConcatenateDTAs = False
 			Return eDTAGeneratorConstants.MGFtoDTA
 		End If
 
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
 				If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
-					m_ConcatenateDTAs = False
-					SpectraGen = New clsDtaGenMSConvert()
+					blnConcatenateDTAs = False
 					Return eDTAGeneratorConstants.MSConvert
 
-				Else
-					SpectraGen = New clsDtaGenThermoRaw()
+				ElseIf strDTAGenerator.ToLower() = clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME.ToLower() Then
+					blnConcatenateDTAs = False
+					Return eDTAGeneratorConstants.DeconConsole
 
+				Else
 					Select Case strDTAGenerator.ToLower()
 						Case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME.ToLower()
-							m_ConcatenateDTAs = True
+							blnConcatenateDTAs = True
 							Return eDTAGeneratorConstants.ExtractMSn
 
 						Case clsDtaGenThermoRaw.DECONMSN_FILENAME.ToLower()
-							m_ConcatenateDTAs = True
+							blnConcatenateDTAs = True
 							Return eDTAGeneratorConstants.DeconMSn
 
 						Case Else
-							m_message = "Unknown DTAGenerator for Thermo Raw files: " & strDTAGenerator
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							If String.IsNullOrEmpty(strDTAGenerator) Then
+								strErrorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator")
+							Else
+								strErrorMessage = "Unknown DTAGenerator for Thermo Raw files: " & strDTAGenerator
+							End If
+
 							Return eDTAGeneratorConstants.Unknown
 					End Select
 
@@ -183,24 +238,20 @@ Public Class clsDtaGenToolRunner
 
 			Case clsAnalysisResources.eRawDataTypeConstants.mzML
 				If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
-					m_ConcatenateDTAs = False
-					SpectraGen = New clsDtaGenMSConvert()
+					blnConcatenateDTAs = False
 					Return eDTAGeneratorConstants.MSConvert
 
 				Else
-					m_message = "Unknown DTAGenerator for mzML files: " & strDTAGenerator
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					strErrorMessage = "Invalid DTAGenerator for mzML files: " & strDTAGenerator
 					Return eDTAGeneratorConstants.Unknown
 				End If
 
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-				m_ConcatenateDTAs = True
-				SpectraGen = New clsMGFtoDtaGenMainProcess()
+				blnConcatenateDTAs = True
 				Return eDTAGeneratorConstants.MGFtoDTA
 
 			Case Else
-				m_message = "Unsupported data type for DTA generation: " & strRawDataType
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				strErrorMessage = "Unsupported data type for DTA generation: " & strRawDataType
 				Return eDTAGeneratorConstants.Unknown
 
 		End Select
@@ -208,7 +259,6 @@ Public Class clsDtaGenToolRunner
 		Return eDTAGeneratorConstants.Unknown
 
 	End Function
-
 	''' <summary>
 	''' Detailed method for running a tool
 	''' </summary>
@@ -319,7 +369,7 @@ Public Class clsDtaGenToolRunner
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
 
-		Dim SpectraGen As ISpectraFileProcessor = Nothing
+		Dim SpectraGen As clsDtaGen = Nothing
 		Dim eDTAGenerator As eDTAGeneratorConstants
 
 		eDTAGenerator = GetDTAGenerator(SpectraGen)
@@ -328,7 +378,12 @@ Public Class clsDtaGenToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		m_CentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
+		If eDTAGenerator = eDTAGeneratorConstants.DeconConsole Then
+			m_CentroidDTAs = False
+		Else
+			m_CentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
+		End If
+
 
 		' Initialize the plugin
 
@@ -339,15 +394,27 @@ Public Class clsDtaGenToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-
 		' Store the Version info in the database
 		Dim blnSuccess As Boolean
-		If eDTAGenerator = eDTAGeneratorConstants.DeconMSn Then
-			blnSuccess = StoreToolVersionInfoDeconMSn(SpectraGen.DtaToolNameLoc)
-		ElseIf eDTAGenerator = eDTAGeneratorConstants.MGFtoDTA Then
+		If eDTAGenerator = eDTAGeneratorConstants.MGFtoDTA Then
+			' MGFtoDTA Dll
 			blnSuccess = StoreToolVersionInfoDLL(SpectraGen.DtaToolNameLoc)
 		Else
-			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc)
+			If eDTAGenerator = eDTAGeneratorConstants.DeconConsole Then
+
+				' Possibly use a specific version of DeconTools
+				Dim progLoc As String
+				progLoc = DetermineProgramLocation("DeconMSn", "DeconToolsProgLoc", "DeconConsole.exe")
+
+				If String.IsNullOrWhiteSpace(progLoc) Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Else
+					SpectraGen.UpdateDtaToolNameLoc(progLoc)
+				End If
+
+			End If
+
+			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc, eDTAGenerator)
 		End If
 
 		If Not blnSuccess Then
@@ -539,7 +606,6 @@ Public Class clsDtaGenToolRunner
 
 		'Deletes the .raw file from the working directory
 		Dim lstFilesToDelete As System.Collections.Generic.List(Of String)
-		Dim MyFile As String
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.DeleteDataFile, executing method")
@@ -553,7 +619,7 @@ Public Class clsDtaGenToolRunner
 			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZML_EXTENSION))
 			lstFilesToDelete.AddRange(System.IO.Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MGF_EXTENSION))
 
-			For Each MyFile In lstFilesToDelete
+			For Each MyFile As String In lstFilesToDelete
 				If m_DebugLevel >= 2 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenToolRunner.DeleteDataFile, deleting file " & MyFile)
 				End If
@@ -732,7 +798,7 @@ Public Class clsDtaGenToolRunner
 
 	End Function
 
-	Protected Function StartAndWaitForDTAGenerator(ByVal oDTAGenerator As ISpectraFileProcessor, ByVal strCallingFunction As String, ByVal blnSecondPass As Boolean) As IJobParams.CloseOutType
+	Protected Function StartAndWaitForDTAGenerator(ByVal oDTAGenerator As clsDtaGen, ByVal strCallingFunction As String, ByVal blnSecondPass As Boolean) As IJobParams.CloseOutType
 
 		Dim RetVal As ISpectraFileProcessor.ProcessStatus = oDTAGenerator.Start
 		If RetVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
@@ -793,64 +859,68 @@ Public Class clsDtaGenToolRunner
 	''' Stores the tool version info in the database
 	''' </summary>
 	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo(ByVal strDtaGeneratorAppPath As String) As Boolean
+	Protected Function StoreToolVersionInfo(ByVal strDtaGeneratorAppPath As String, ByVal eDtaGenerator As eDTAGeneratorConstants) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
+		Dim fiDtaGenerator As System.IO.FileInfo
+		Dim blnSuccess As Boolean
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
+
+		fiDtaGenerator = New System.IO.FileInfo(strDtaGeneratorAppPath)
+		If Not fiDtaGenerator.Exists Then
+			Try
+				m_message = "DtaGenerator not found"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDtaGeneratorAppPath)
+				strToolVersionInfo = "Unknown"
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+				Return False
+			End Try
+
+			Return False
 		End If
 
 		' Store strDtaGeneratorAppPath in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(strDtaGeneratorAppPath))
+		ioToolFiles.Add(fiDtaGenerator)
 
-		' Possibly also store the MSConvert version
-		If m_CentroidDTAs Then
-			ioToolFiles.Add(New System.IO.FileInfo(GetMSConvertAppPath()))
+		If eDtaGenerator = eDTAGeneratorConstants.DeconConsole OrElse eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
+			' Lookup the version of the DeconConsole application
+			Dim strDllPath As String
+
+			blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiDtaGenerator.FullName)
+			If Not blnSuccess Then Return False
+
+			If eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
+				' Legacy DeconMSn
+				strDllPath = System.IO.Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll")
+				ioToolFiles.Add(New System.IO.FileInfo(strDllPath))
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+				If Not blnSuccess Then Return False
+
+			ElseIf eDtaGenerator = eDTAGeneratorConstants.DeconConsole Then
+				' DeconConsole re-implementation of DeconMSn
+
+				' Lookup the version of the DeconTools Backend (in the DeconTools folder)
+				' In addition, add it to ioToolFiles
+				strDllPath = System.IO.Path.Combine(fiDtaGenerator.DirectoryName, "DeconTools.Backend.dll")
+				ioToolFiles.Add(New System.IO.FileInfo(strDllPath))
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+				If Not blnSuccess Then Return False
+
+
+				' Lookup the version of DeconEngineV2 (in the DeconTools folder)
+				strDllPath = System.IO.Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll")
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+				If Not blnSuccess Then Return False
+			End If
+
 		End If
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
-
-	End Function
-
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfoDeconMSn(ByVal strDtaGeneratorAppPath As String) As Boolean
-
-		Dim strToolVersionInfo As String = String.Empty
-		Dim strDeconMSnEnginePath As String = String.Empty
-
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
-
-		' Lookup the version of DeconMSn
-		MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDtaGeneratorAppPath)
-
-		' Lookup the version of DeconMSnEngine
-		Try
-			Dim ioDeconMSnInfo As System.IO.FileInfo = New System.IO.FileInfo(strDtaGeneratorAppPath)
-			strDeconMSnEnginePath = System.IO.Path.Combine(ioDeconMSnInfo.DirectoryName, "DeconMSnEngine.dll")
-
-			MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconMSnEnginePath)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconMSnEngine.dll: " & ex.Message)
-			Return False
-		End Try
-
-		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(strDtaGeneratorAppPath))
-		ioToolFiles.Add(New System.IO.FileInfo(strDeconMSnEnginePath))
 
 		' Possibly also store the MSConvert version
 		If m_CentroidDTAs Then

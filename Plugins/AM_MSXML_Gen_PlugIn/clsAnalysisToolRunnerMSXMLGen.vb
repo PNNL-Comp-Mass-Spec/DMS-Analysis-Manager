@@ -131,7 +131,14 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			CentroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
 			CentroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
 		End If
-		CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+
+		' Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
+		CentroidPeakCountToRetain = m_JobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
+
+		If CentroidPeakCountToRetain = 0 Then
+			' Look for parameter CentroidPeakCountToRetain in any section
+			CentroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+		End If
 
 		If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "mMSXmlGeneratorAppPath is empty; this is unexpected")

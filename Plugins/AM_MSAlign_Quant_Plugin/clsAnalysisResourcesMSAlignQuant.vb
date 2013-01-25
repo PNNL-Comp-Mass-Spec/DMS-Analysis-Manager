@@ -22,9 +22,9 @@ Public Class clsAnalysisResourcesMSAlignQuant
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strParamFileStoragePath)
 		End If
 
-		Dim strParamFileName As String = m_jobParams.GetParam("MSAlignQuantParamFile")
+		Dim strParamFileName As String = m_jobParams.GetJobParameter("MSAlignQuantParamFile", String.Empty)
 		If String.IsNullOrEmpty(strParamFileName) Then
-			m_message = "MSAlignQuantParamFile param file not defined in the settings file for this analysis job (" & m_jobParams.GetJobParameter("SettingsFileName", "??") & ")"
+			m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile")
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If

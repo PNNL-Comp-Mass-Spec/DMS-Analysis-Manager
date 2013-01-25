@@ -183,7 +183,15 @@ Public Class clsMSXMLCreator
 
 			' Lookup Centroid Settings
 			CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", True)
-			Dim CentroidPeakCountToRetain As Integer = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+			Dim CentroidPeakCountToRetain As Integer
+
+			' Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
+			CentroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
+
+			If CentroidPeakCountToRetain = 0 Then
+				' Look for parameter CentroidPeakCountToRetain in any section
+				CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+			End If
 
 			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
 

@@ -307,7 +307,7 @@ Public Class clsAnalysisToolRunnerProSightQuant
 
 			strWorkflowParamFileName = m_jobParams.GetParam("ProSightQuantParamFile")
 			If String.IsNullOrEmpty(strWorkflowParamFileName) Then
-				m_message = "ProSightQuantParamFile param file not defined in the settings file for this analysis job (" & m_jobParams.GetJobParameter("SettingsFileName", "??") & ")"
+				m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "ProSightQuantParamFile")
 				Return String.Empty
 			End If
 

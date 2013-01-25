@@ -133,6 +133,10 @@ Public MustInherit Class clsDtaGen
 
 	End Sub
 
+	Public Sub UpdateDtaToolNameLoc(ByVal progLoc As String)
+		m_DtaToolNameLoc = progLoc
+	End Sub
+
 	Protected Function VerifyDirExists(ByVal TestDir As String) As Boolean
 
 		'Verifies that the specified directory exists

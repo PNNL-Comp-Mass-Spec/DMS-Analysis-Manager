@@ -30,7 +30,7 @@ Public Class clsAnalysisResourcesProSightQuant
 
 		Dim strParamFileName As String = m_jobParams.GetParam("ProSightQuantParamFile")
 		If String.IsNullOrEmpty(strParamFileName) Then
-			m_message = "ProSightQuantParamFile param file not defined in the settings file for this analysis job (" & m_jobParams.GetJobParameter("SettingsFileName", "??") & ")"
+			m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "ProSightQuantParamFile")
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If

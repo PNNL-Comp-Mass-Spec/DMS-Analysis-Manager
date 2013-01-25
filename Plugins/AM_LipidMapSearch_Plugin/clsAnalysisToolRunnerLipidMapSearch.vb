@@ -770,6 +770,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
 		Dim strKey As String
 		Dim strValue As String
+		Dim blnValue As Boolean
 
 		Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
 
@@ -813,8 +814,20 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 						' Check whether strKey is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
 							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-						ElseIf strKey.ToLower = "adducts" Then
+
+						ElseIf strKey.ToLower() = "adducts" Then
 							sbOptions.Append(" -adducts " & """" & strValue & """")
+
+						ElseIf strKey.ToLower() = "noscangroups" Then
+							If Boolean.TryParse(strValue, blnValue) Then
+								If blnValue Then
+									sbOptions.Append(" -NoScanGroups")
+								End If
+							End If
+
+						Else
+							' Ignore the option
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unrecognized setting in the LipidMaps parameter file: " & strKey)
 						End If
 
 					End If

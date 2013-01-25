@@ -31,7 +31,7 @@ Public Class clsDtaGenThermoRaw
 
 	Protected m_MaxScanInFile As Integer
 	Private m_RunningExtractMSn As Boolean
-	Private m_InstrumentFileName As String = String.Empty
+	Protected m_InstrumentFileName As String = String.Empty
 
 	Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
 
@@ -53,9 +53,11 @@ Public Class clsDtaGenThermoRaw
 	Private Const OF_SHARE_DENY_WRITE As Short = &H20S
 	Private Const OF_SHARE_EXCLUSIVE As Short = &H10S
 
-	Public Const DECONMSN_FILENAME As String = "deconmsn.exe"
+	Public Const DECONMSN_FILENAME As String = "DeconMSn.exe"
 	Public Const EXTRACT_MSN_FILENAME As String = "extract_msn.exe"
 	Public Const MSCONVERT_FILENAME As String = "msconvert.exe"
+	Public Const DECON_CONSOLE_FILENAME As String = "DeconConsole.exe"
+
 #End Region
 
 #Region "Methods"
@@ -89,6 +91,7 @@ Public Class clsDtaGenThermoRaw
 			Return m_Status
 		End If
 
+		' Note that clsDtaGenMSConvert will update m_InstrumentFileName if processing a .mzXml file
 		m_InstrumentFileName = m_Dataset & ".raw"
 
 		'Make the DTA files (the process runs in a separate thread)
@@ -112,6 +115,11 @@ Public Class clsDtaGenThermoRaw
 
 	End Function
 
+	''' <summary>
+	''' Returns the default path to the DTA generator tool
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
 	Protected Overridable Function ConstructDTAToolPath() As String
 
 		Dim strDTAGenProgram As String
@@ -193,7 +201,6 @@ Public Class clsDtaGenThermoRaw
 		If Not VerifyRawFileExists(m_WorkDir, m_Dataset) Then Return False 'Error message handled by VerifyRawFileExists
 
 		'DTA creation tool exists?
-		m_DtaToolNameLoc = ConstructDTAToolPath()
 		If Not VerifyFileExists(m_DtaToolNameLoc) Then Return False 'Error message handled by VerifyFileExists
 
 		'If we got to here, there was no problem
@@ -533,6 +540,11 @@ Public Class clsDtaGenThermoRaw
 
 	End Function
 
+	Protected Overridable Sub MonitorProgress()
+		Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
+		m_SpectraFileCount = FileList.GetLength(0)		
+	End Sub
+
 	Private Sub UpdateDTAProgress(ByVal DTAFileName As String)
 		Static reDTAFile As System.Text.RegularExpressions.Regex
 
@@ -593,11 +605,11 @@ Public Class clsDtaGenThermoRaw
 		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
 		clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_MgrParams, m_DebugLevel)
 
-		' Count the number of .Dta files (only count the files every 10 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 10 Then
+		' Count the number of .Dta files or monitor the log file to determine the percent complete
+		' (only count the files every 15 seconds)
+		If System.DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 15 Then
 			dtLastDtaCountTime = System.DateTime.UtcNow
-			Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
-			m_SpectraFileCount = FileList.GetLength(0)
+			MonitorProgress()
 		End If
 
 		'Update the status file (limit the updates to every 5 seconds)

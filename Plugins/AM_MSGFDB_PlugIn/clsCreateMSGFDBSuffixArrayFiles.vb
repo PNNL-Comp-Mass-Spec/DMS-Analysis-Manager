@@ -46,13 +46,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 		Dim strOutputNameBase As String
 
-		Dim dbLockFilename As String
+		Dim fiLockFile As System.IO.FileInfo
 		Dim dbSarrayFilename As String
 
-		Dim fi As System.IO.FileInfo
-		Dim createTime As DateTime
-		Dim durationTime As TimeSpan
-		Dim currentTime As DateTime
 		Dim sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
 
 		Dim blnMSGFPlus As Boolean
@@ -100,37 +96,43 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			strOutputNameBase = System.IO.Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
-			dbLockFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock")
+			fiLockFile = New System.IO.FileInfo(System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock"))
 			dbSarrayFilename = System.IO.Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & ".csarr")
 
 			' Check to see if another Analysis Manager is already creating the indexed DB files
-			strCurrentTask = "Looking for lock file " & dbLockFilename
-			If System.IO.File.Exists(dbLockFilename) Then
+			strCurrentTask = "Looking for lock file " & fiLockFile.FullName
+			If fiLockFile.Exists AndAlso System.DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
+				' Lock file is over 60 minutes old; delete it
 				If intDebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .csarr file " & System.IO.Path.GetFileName(dbSarrayFilename))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file is over 60 minutes old (created " & fiLockFile.LastWriteTime.ToString() & "); deleting it")
+				End If
+				DeleteLockFile(fiLockFile)
+
+			ElseIf fiLockFile.Exists Then
+
+				If intDebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & fiLockFile.FullName & "; waiting for file to be removed by other manager generating .csarr file " & System.IO.Path.GetFileName(dbSarrayFilename))
 				End If
 
 				' Lock file found; wait up to sngMaxWaitTimeHours hours
-				fi = My.Computer.FileSystem.GetFileInfo(dbLockFilename)
-				createTime = fi.CreationTimeUtc
-				currentTime = System.DateTime.UtcNow
-				durationTime = currentTime - createTime
-				While System.IO.File.Exists(dbLockFilename) And durationTime.Hours < sngMaxWaitTimeHours
+				Dim blnStaleFile As Boolean = False
+				Do While fiLockFile.Exists
 					' Sleep for 2 seconds
 					System.Threading.Thread.Sleep(2000)
 
-					' Update the current time and elapsed duration
-					currentTime = System.DateTime.UtcNow
-					durationTime = currentTime - createTime
-				End While
+					If System.DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours Then
+						blnStaleFile = True
+						Exit Do
+					Else
+						fiLockFile.Refresh()
+					End If
+				Loop
 
 				'If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
-				If durationTime.Hours > sngMaxWaitTimeHours Then
-					strCurrentTask = "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file: " & dbLockFilename & " to be deleted, but it is still present; deleting the file now and continuing"
+				If blnStaleFile Then
+					strCurrentTask = "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file to be deleted, but it is still present; deleting the file now and continuing"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strCurrentTask)
-					If System.IO.File.Exists(dbLockFilename) Then
-						System.IO.File.Delete(dbLockFilename)
-					End If
+					DeleteLockFile(fiLockFile)
 				End If
 
 			End If
@@ -215,7 +217,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				'lstFilesToFind.Add(".sarray")
 				'lstFilesToFind.Add(".revConcat.sarray")
 
-				' Suffixes for MSGFDB (effective 8/22/2011) and and MSGF+ 
+				' Suffixes for MSGFDB (effective 8/22/2011) and MSGF+ 
 				lstFilesToFind.Add(".canno")
 				lstFilesToFind.Add(".cnlcp")
 				lstFilesToFind.Add(".csarr")
@@ -318,23 +320,24 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				End If
 
 				If intDebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & dbLockFilename)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & fiLockFile.FullName)
 				End If
 
 				' Check one more time for a lock file
 				' If it exists, then another manager just created it and we should bort
 				strCurrentTask = "Look for the lock file one last time"
-				If System.IO.File.Exists(dbLockFilename) Then
+				fiLockFile.Refresh()
+				If fiLockFile.Exists Then
 					If intDebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Warning: new lock file found: " & dbLockFilename & "; aborting")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Warning: new lock file found: " & fiLockFile.FullName & "; aborting")
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
 					End If
 				End If
 
 				' Create lock file
 				Dim bSuccess As Boolean
-				strCurrentTask = "Create the lock file: " & dbLockFilename
-				bSuccess = CreateLockFile(dbLockFilename)
+				strCurrentTask = "Create the lock file: " & fiLockFile.FullName
+				bSuccess = CreateLockFile(fiLockFile.FullName)
 				If Not bSuccess Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
@@ -386,6 +389,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				If Not objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", True) Then
 					mErrorMessage = "Error running BuildSA in " & IO.Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
+					DeleteLockFile(fiLockFile)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				Else
 					If intDebugLevel >= 1 Then
@@ -394,14 +398,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				End If
 
 				If intDebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & dbLockFilename)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & fiLockFile.FullName)
 				End If
 
 				' Delete the lock file
 				strCurrentTask = "Delete the lock file"
-				If System.IO.File.Exists(dbLockFilename) Then
-					System.IO.File.Delete(dbLockFilename)
-				End If
+				DeleteLockFile(fiLockFile)
 			End If
 
 		Catch ex As Exception
@@ -414,6 +416,17 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
+
+	Protected Sub DeleteLockFile(ByVal fiLockFile As System.IO.FileInfo)
+		Try
+			fiLockFile.Refresh()
+			If fiLockFile.Exists Then
+				fiLockFile.delete()
+			End If
+		Catch ex As Exception
+			' Ignore errors here
+		End Try
+	End Sub
 
 	''' <summary>
 	''' Creates a lock file

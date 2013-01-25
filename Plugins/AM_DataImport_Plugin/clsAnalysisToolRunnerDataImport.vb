@@ -208,7 +208,7 @@ Public Class clsAnalysisToolRunnerDataImport
 			If String.IsNullOrEmpty(strSourceFileSpec) Then strSourceFileSpec = MATCH_ALL_FILES
 
 			If String.IsNullOrEmpty(strSharePath) Then
-				m_message = "DataImportSharePath not defined in the settings file for this analysis job (" & m_jobParams.GetJobParameter("SettingsFileName", "??") & ")"
+				m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DataImportSharePath")
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
 			End If
