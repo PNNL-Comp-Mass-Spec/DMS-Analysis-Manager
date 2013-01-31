@@ -271,7 +271,14 @@ namespace AnalysisManager_AScore_PlugIn {
         protected ExtractionType GetExtractionParametersFromJobParameters() {
             ExtractionType extractionParms = new ExtractionType();
             String extractionType = mJP.RequireJobParam("ExtractionType"); //"Sequest First Hits"
-            extractionParms.RType = ResultType.TypeList[extractionType];
+            if (extractionType == "MSGF+ First Hits")
+            {
+                extractionParms.RType = ResultType.TypeList["MSGFDB First Hits"];
+            }
+            else
+            {
+                extractionParms.RType = ResultType.TypeList[extractionType];
+            }
             extractionParms.KeepAllResults = mJP.GetJobParam("KeepAllResults", "Yes");
             extractionParms.ResultFilterSetID = mJP.GetJobParam("ResultFilterSetID", "All Pass");
             extractionParms.MSGFCutoff = mJP.GetJobParam("MSGFCutoff", "All Pass");
@@ -408,7 +415,7 @@ namespace AnalysisManager_AScore_PlugIn {
                         case "inspect":
                             datasetManager = new InspectFHT(fhtFile);
                             break;
-                        case "msgfdb":
+                        case "msgf":
                             datasetManager = new MsgfdbFHT(fhtFile);
                             break;
                         default:
@@ -421,7 +428,10 @@ namespace AnalysisManager_AScore_PlugIn {
                     // load AScore results into SQLite database
                     string tableName = "t_results"; // TODO: how do we name table
                     string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
+                    clsAScoreMage.ImportFileToSQLite(fhtFile, dbFilePath, tableName);
+                    tableName = "t_results_ascore";
                     clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
+
                     dtaManager.Abort();
                     if (System.IO.File.Exists(ascoreOutputFilePath))
                     {
