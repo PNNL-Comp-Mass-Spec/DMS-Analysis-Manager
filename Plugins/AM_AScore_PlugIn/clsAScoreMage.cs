@@ -271,7 +271,7 @@ namespace AnalysisManager_AScore_PlugIn {
         protected ExtractionType GetExtractionParametersFromJobParameters() {
             ExtractionType extractionParms = new ExtractionType();
             String extractionType = mJP.RequireJobParam("ExtractionType"); //"Sequest First Hits"
-            if (extractionType == "MSGF+ First Hits")
+            if (extractionType == "MSGF+ First Hits" && !ResultType.TypeList.ContainsKey("MSGF+ First Hits"))
             {
                 extractionParms.RType = ResultType.TypeList["MSGFDB First Hits"];
             }
