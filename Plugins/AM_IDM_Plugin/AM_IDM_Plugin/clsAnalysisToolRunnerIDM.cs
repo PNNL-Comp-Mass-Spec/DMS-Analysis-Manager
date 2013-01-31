@@ -11,8 +11,7 @@ namespace AnalysisManager_IDM_Plugin
     class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
     {
         #region Members
-        protected const float PROGRESS_PCT_IDM_START = 5;
-        protected const float PROGRESS_PCT_IDM_DONE = 95;
+		protected System.DateTime mLastProgressUpdate;
         #endregion
 
         #region Methods
@@ -30,7 +29,12 @@ namespace AnalysisManager_IDM_Plugin
                 }
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running IDM");
-                m_progress = PROGRESS_PCT_IDM_START;
+				
+				// Store the Version info in the database
+				StoreToolVersionInfo();
+
+				mLastProgressUpdate = System.DateTime.UtcNow;
+                m_progress = 0;
                 m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
 
@@ -46,10 +50,13 @@ namespace AnalysisManager_IDM_Plugin
 
                 try
                 {
-                    // TODO : Create in instance of IDM and run the tool!
+                    // Create in instance of IDM and run the tool
                     InterferenceDetector idm = new InterferenceDetector();
                     
-                    blnSuccess = idm.Run(Path.Combine(m_WorkDir,"Results.db3")); 
+					// Attach the progress event
+					idm.ProgressChanged += new InterferenceDetector.ProgressChangedHandler(InterfenceDetectorProgressHandler);
+
+                    blnSuccess = idm.Run(m_WorkDir, "Results.db3"); 
 
                     //Change the name of the log file for the local log file to the plug in log filename
                     LogFileName = m_mgrParams.GetParam("logfilename");
@@ -70,7 +77,7 @@ namespace AnalysisManager_IDM_Plugin
 
                 //Stop the job timer
                 m_StopTime = System.DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_IDM_DONE;
+                m_progress = 100;
 
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
@@ -177,48 +184,62 @@ namespace AnalysisManager_IDM_Plugin
 
         }
 
+		protected void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
+		{
+			
+			m_progress = e.Value;
+
+			if (System.DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalMinutes >= 1)
+			{
+				mLastProgressUpdate = System.DateTime.UtcNow;
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+			}
+			
+			
+		}
+
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
+			string strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-            string strToolVersionInfo = string.Empty;
+			System.IO.FileInfo fiIDMdll = new System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "InterDetect.dll"));
 
-            if (m_DebugLevel >= 2)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-            }
-
-            try
-            {
-                System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("IDM").GetName();
-
-                string strNameAndVersion;
-                strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for IDM: " + ex.Message);
-                return false;
-            }
-
-            // Store paths to key DLLs
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo("Cyclops.dll"));
-
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+			return StoreToolVersionInfoDLL(fiIDMdll.FullName);
         }
+
+		protected bool StoreToolVersionInfoDLL(string strIDMdllPath)
+		{
+
+			string strToolVersionInfo = string.Empty;
+
+			if (m_DebugLevel >= 2)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+			}
+
+			// Lookup the version of the DLL
+			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strIDMdllPath);
+
+			// Store paths to key files in ioToolFiles
+			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+			ioToolFiles.Add(new System.IO.FileInfo(strIDMdllPath));
+		
+			try
+			{
+				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+				return false;
+			}
+
+		}
+				
         #endregion
     }
 }
