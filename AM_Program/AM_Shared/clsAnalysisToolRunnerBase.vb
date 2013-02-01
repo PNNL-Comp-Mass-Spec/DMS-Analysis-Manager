@@ -505,13 +505,24 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Makes multiple tries to delete specified file
+	''' Makes up to 3 attempts to delete specified file
 	''' </summary>
 	''' <param name="FileNamePath">Full path to file for deletion</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>Raises exception if error occurs</remarks>
 	Public Function DeleteFileWithRetries(ByVal FileNamePath As String) As Boolean
-		Return DeleteFileWithRetries(FileNamePath, m_DebugLevel)
+		Return DeleteFileWithRetries(FileNamePath, m_DebugLevel, 3)
+	End Function
+
+	''' <summary>
+	''' Makes up to 3 attempts to delete specified file
+	''' </summary>
+	''' <param name="FileNamePath">Full path to file for deletion</param>
+	''' <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks>Raises exception if error occurs</remarks>
+	Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer) As Boolean
+		Return DeleteFileWithRetries(FileNamePath, intDebugLevel, 3)
 	End Function
 
 	''' <summary>
@@ -519,9 +530,10 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <param name="FileNamePath">Full path to file for deletion</param>
 	''' <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+	''' <param name="MaxRetryCount">Maximum number of deletion attempts</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>Raises exception if error occurs</remarks>
-	Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer) As Boolean
+	Public Shared Function DeleteFileWithRetries(ByVal FileNamePath As String, ByVal intDebugLevel As Integer, ByVal MaxRetryCount As Integer) As Boolean
 
 		Dim RetryCount As Integer = 0
 		Dim ErrType As AMFileNotDeletedAfterRetryException.RetryExceptionType
@@ -537,7 +549,7 @@ Public Class clsAnalysisToolRunnerBase
 			Return False
 		End If
 
-		While RetryCount < 3
+		While RetryCount < MaxRetryCount
 			Try
 				File.Delete(FileNamePath)
 				If intDebugLevel > 4 Then
@@ -569,8 +581,10 @@ Public Class clsAnalysisToolRunnerBase
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error deleting file " & FileNamePath & ", attempt #" & RetryCount.ToString)
 				End If
 				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception
-				'Delay 5 seconds
-				System.Threading.Thread.Sleep(5000)
+
+				'Delay 2 seconds
+				System.Threading.Thread.Sleep(2000)
+
 				'Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 				RetryCount += 1

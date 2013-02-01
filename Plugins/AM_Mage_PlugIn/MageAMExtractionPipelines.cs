@@ -57,7 +57,15 @@ namespace AnalysisManager_Mage_PlugIn {
 
             // extraction and filtering parameters
             String extractionType = RequireJobParam("ExtractionType"); //"Sequest First Hits"
-            ExtractionParms.RType = ResultType.TypeList[extractionType];
+
+			try
+			{
+				ExtractionParms.RType = ResultType.TypeList[extractionType];
+			}
+			catch
+			{
+				throw new Exception("Unrecognized value for ExtractionType: " + extractionType);
+			}
 
             ExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
             ExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");

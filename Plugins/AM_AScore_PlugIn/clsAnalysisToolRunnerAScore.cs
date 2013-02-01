@@ -31,12 +31,12 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 
 				// Store the AScore version info in the database
-                //if (!StoreToolVersionInfo())
-                //{
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                //    m_message = "Error determining AScore version";
-                //    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-                //}
+				if (!StoreToolVersionInfo())
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					m_message = "Error determining AScore version";
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
 				m_CurrentAScoreTask = "Running AScore";
 				m_LastStatusUpdateTime = System.DateTime.UtcNow;
@@ -199,12 +199,25 @@ namespace AnalysisManager_AScore_PlugIn
 
         }
 
+	   /// <summary>
+	   /// Stores the tool version info in the database
+	   /// </summary>
+	   /// <remarks></remarks>
+	   protected bool StoreToolVersionInfo()
+	   {
+		   string strAppFolderPath = clsGlobal.GetAppFolderPath();
+
+		   System.IO.FileInfo fiIDMdll = new System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
+
+		   return StoreToolVersionInfoDLL(fiIDMdll.FullName);
+	   }
+
 
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+	   protected bool StoreToolVersionInfoDLL(string strAScoreDLLPath)
         {
 
             string strToolVersionInfo = string.Empty;
@@ -213,23 +226,13 @@ namespace AnalysisManager_AScore_PlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
             }
 
-			try
-			{
-				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("AScore_DLL").GetName();
+			// Lookup the version of the DLL
+			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAScoreDLLPath);
 
-				string strNameAndVersion = null;
-				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-			}
-			catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AScore: " + ex.Message);
-                return false;
-            }
-
-			// Store paths to key DLLs
+			// Store paths to key files in ioToolFiles
 			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-
+			ioToolFiles.Add(new System.IO.FileInfo(strAScoreDLLPath));
+				
             try
             {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);

@@ -14,13 +14,14 @@ namespace AnalysisManager_AScore_PlugIn
         public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
         {
             bool blnSuccess = true;
-     //       blnSuccess = RunAScoreGetResources();
+			//  blnSuccess = RunAScoreGetResources();
 
             if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
-            if (m_DebugLevel >= 1)
+            if (m_DebugLevel > 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+				// ToDo: Change this in the future
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
             }
 
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
