@@ -53,8 +53,9 @@ namespace AnalysisManager_MAC {
                     blnSuccess = false;
 
                     m_message = "Error running MAC";
-                    if (ex.Message.Contains("ImportFiles\\--No Files Found")) {
-                        m_message += "; ImportFiles folder in the data package is empty or does not exist";
+					string sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
+                    if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found")) {
+						m_message += "; " + sDataPackageSourceFolderName + " folder in the data package is empty or does not exist";
                     }
 
                 }

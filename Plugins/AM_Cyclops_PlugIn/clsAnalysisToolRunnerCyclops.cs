@@ -46,28 +46,23 @@ namespace AnalysisManager_Cyclops_PlugIn
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-				// Determine the path to the R DLLs
-				string RProgLoc = m_mgrParams.GetParam("RProgLoc");
-				if (string.IsNullOrWhiteSpace(RProgLoc)) {
-					m_message = "RProgLoc manager parameter is not defined";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; update the Mangager_Control database");
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+				// Determine the path to R
+				string RProgLocFromRegistry = GetRPathFromWindowsRegistry();
 
-				RProgLoc = System.IO.Path.Combine(RProgLoc, "bin", "i386");
-				if (!System.IO.Directory.Exists(RProgLoc)) {
-					m_message = "R folder not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + RProgLoc);
+				if (!Directory.Exists(RProgLocFromRegistry))
+				{
+					m_message = "R folder not found (path determined from the Windows Registry)";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + RProgLocFromRegistry);
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
                 string strOrgDbDir = m_jobParams.GetParam("orgdbdir");
-                string strFastaFilePath = System.IO.Path.Combine(strOrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                string strFastaFilePath = Path.Combine(strOrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
 
 				Dictionary<string, string> d_Params = new Dictionary<string, string>();
 				d_Params.Add("Job", m_jobParams.GetParam("Job"));
-				d_Params.Add("RDLL", GetRPathFromWindowsRegistry());
+				d_Params.Add("RDLL", RProgLocFromRegistry);
 				d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
 				d_Params.Add("workDir", m_WorkDir);
 				d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
@@ -144,12 +139,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}
 				
 				// Move the Plots folder to the result files folder
-				System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-				diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
+				DirectoryInfo diPlotsFolder = default(DirectoryInfo);
+				diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
 				if (diPlotsFolder.Exists) 
 				{
-					string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+					string strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
 					diPlotsFolder.MoveTo(strTargetFolderPath);
 				}
 
@@ -192,8 +187,8 @@ namespace AnalysisManager_Cyclops_PlugIn
 			/* 
 				try
 				{
-					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+					File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
+					File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
 				}
 				catch
 				{
@@ -210,7 +205,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
                 }
             }
 
@@ -246,8 +241,8 @@ namespace AnalysisManager_Cyclops_PlugIn
 			}
 
 			// Store paths to key DLLs
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo("Cyclops.dll"));
+			System.Collections.Generic.List<FileInfo> ioToolFiles = new System.Collections.Generic.List<FileInfo>();
+			ioToolFiles.Add(new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll")));
 
 			try {
 				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
@@ -259,25 +254,37 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         }
 
+		/// <summary>
+		/// Determines the folder that contains R.exe and Rcmd.exe
+		/// </summary>
+		/// <returns>Folder path, e.g. C:\Program Files\R\R-2.15.1\bin\x64</returns>
         private string GetRPathFromWindowsRegistry()
         {
-            Microsoft.Win32.RegistryKey rCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\R-core");
-            if (rCore == null)
+			const string RCORE_SUBKEY = @"SOFTWARE\R-core";
+
+			Microsoft.Win32.RegistryKey regRCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY);
+            if (regRCore == null)
             {
-                throw new System.ApplicationException("Registry key is not found.");
+				throw new System.ApplicationException("Registry key is not found: " + RCORE_SUBKEY);
             }
             bool is64Bit = System.Environment.Is64BitProcess;
-            Microsoft.Win32.RegistryKey r = rCore.OpenSubKey(is64Bit ? "R64" : "R");
-            if (r == null)
+			string sRSubKey = is64Bit ? "R64" : "R";
+			Microsoft.Win32.RegistryKey regR = regRCore.OpenSubKey(sRSubKey);
+            if (regR == null)
             {
-                throw new System.ApplicationException("Registry key is not found.");
+                throw new System.ApplicationException("Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey);
             }
-            System.Version currentVersion = new System.Version((string)r.GetValue("Current Version"));
-            string installPath = (string)r.GetValue("InstallPath");
-            string bin = System.IO.Path.Combine(installPath, "bin");
+            System.Version currentVersion = new System.Version((string)regR.GetValue("Current Version"));
+            string installPath = (string)regR.GetValue("InstallPath");
+            string bin = Path.Combine(installPath, "bin");
+
             // Up to 2.11.x, DLLs are installed in R_HOME\bin.
             // From 2.12.0, DLLs are installed in the one level deeper directory.
-            return currentVersion < new System.Version(2, 12) ? bin : System.IO.Path.Combine(bin, is64Bit ? "x64" : "i386");
+			if (currentVersion < new System.Version(2, 12))
+				return bin;
+			else
+				return Path.Combine(bin, is64Bit ? "x64" : "i386");
+
         }
 	}
 }

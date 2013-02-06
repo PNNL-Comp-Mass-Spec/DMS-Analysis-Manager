@@ -27,6 +27,10 @@ namespace AnalysisManager_Mage_PlugIn {
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
 
+			if (!string.IsNullOrEmpty(ops.WarningMsg))
+			{
+				m_EvalMessage = ops.WarningMsg;
+			}
             return ok;
         }
 
