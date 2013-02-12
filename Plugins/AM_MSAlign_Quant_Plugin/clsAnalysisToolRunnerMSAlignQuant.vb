@@ -453,7 +453,13 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
 					If intCharIndex >= 0 Then
 						' Error message found; update m_message
-						mConsoleOutputErrorMsg = strLineIn.Substring(intCharIndex)
+						Dim strNewError As String = strLineIn.Substring(intCharIndex)
+
+						If strNewError.StartsWith("Error: every peptide in the mass tags file had an unknown modification") Then
+							strNewError = "Error: every peptide in the mass tags file had an unknown modification"
+						End If
+
+						mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError)						
 					End If
 
 				End If

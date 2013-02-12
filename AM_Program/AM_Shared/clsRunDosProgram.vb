@@ -368,6 +368,12 @@ Public Class clsRunDosProgram
 					End If
 				End If
 
+				If m_ProgRunner.State = PRISM.Processes.clsProgRunner.States.StartingProcess AndAlso System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 AndAlso System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90 Then
+					' It has taken over 30 seconds for the thread to start
+					' Try re-joining
+					m_ProgRunner.JoinThreadNow()
+				End If
+
 				If m_AbortProgramNow Then
 					If m_AbortProgramPostLogEntry AndAlso Not blnAbortLogged Then
 						blnAbortLogged = True
