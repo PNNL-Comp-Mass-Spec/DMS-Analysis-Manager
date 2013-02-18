@@ -1328,14 +1328,19 @@ Public Class clsMSGFDBUtils
 		End If
 
 
-		' Check whether we are performing an HCD-based phosphorylation search
-		If mPhosphorylationSearch AndAlso blnHCD Then
-			If Not sbOptions.ToString().Contains("-protocol ") Then
-				' Specify that "Protocol 1" is being used
-				' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
-				sbOptions.Append(" -protocol 1")
-			End If
-		End If
+		'' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
+		'' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
+		'' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
+		'' The following code is therefore no long used
+		''
+		'' Check whether we are performing an HCD-based phosphorylation search
+		'If mPhosphorylationSearch AndAlso blnHCD Then
+		'	If Not sbOptions.ToString().Contains("-protocol ") Then
+		'		' Specify that "Protocol 1" is being used
+		'		' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
+		'		sbOptions.Append(" -protocol 1")
+		'	End If
+		'End If
 
 		strMSGFDbCmdLineOptions = sbOptions.ToString()
 
