@@ -260,18 +260,6 @@ Public MustInherit Class clsAnalysisResources
 	Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
 
 	''' <summary>
-	''' Copies specified file from storage server to local working directory
-	''' </summary>
-	''' <param name="InpFile">Name of file to copy</param>
-	''' <param name="InpFolder">Path to folder where input file is located</param>
-	''' <param name="OutDir">Destination directory for file copy</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
-	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, ByVal InpFolder As String, ByVal OutDir As String) As Boolean
-		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
-	End Function
-
-	''' <summary>
 	''' Copies the zipped s-folders to the working directory
 	''' </summary>
 	''' <param name="WorkDir">Destination directory for copy</param>
@@ -330,9 +318,25 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for error</returns>
 	''' <remarks>Logs copy errors</remarks>
 	Private Function CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean) As Boolean
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxCopyAttempts)
+	End Function
+
+	''' <summary>
+	''' Copies a file with retries in case of failure
+	''' </summary>
+	''' <param name="SrcFilePath">Full path to source file</param>
+	''' <param name="DestFilePath">Full path to destination file</param>
+	''' <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
+	''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+	''' <returns>TRUE for success; FALSE for error</returns>
+	''' <remarks>Logs copy errors</remarks>
+	Private Function CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, ByVal MaxCopyAttempts As Integer) As Boolean
+
 		Const RETRY_HOLDOFF_SECONDS As Integer = 15
 
-		Dim RetryCount As Integer = 3
+		If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
+		Dim RetryCount As Integer = MaxCopyAttempts
 
 		While RetryCount > 0
 			Try
@@ -377,6 +381,19 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="InpFile">Name of file to copy</param>
 	''' <param name="InpFolder">Path to folder where input file is located</param>
 	''' <param name="OutDir">Destination directory for file copy</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, ByVal InpFolder As String, ByVal OutDir As String) As Boolean
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+	End Function
+
+	''' <summary>
+	''' Copies specified file from storage server to local working directory
+	''' </summary>
+	''' <param name="InpFile">Name of file to copy</param>
+	''' <param name="InpFolder">Path to folder where input file is located</param>
+	''' <param name="OutDir">Destination directory for file copy</param>
 	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
@@ -385,7 +402,28 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+
+	End Function
+
+	''' <summary>
+	''' Copies specified file from storage server to local working directory
+	''' </summary>
+	''' <param name="InpFile">Name of file to copy</param>
+	''' <param name="InpFolder">Path to folder where input file is located</param>
+	''' <param name="OutDir">Destination directory for file copy</param>
+	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
+	  ByVal InpFolder As String, _
+	  ByVal OutDir As String, _
+	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+	  ByVal MaxCopyAttempts As Integer) As Boolean
+
+		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 
 	End Function
 
@@ -404,6 +442,29 @@ Public MustInherit Class clsAnalysisResources
 	   ByVal OutDir As String, _
 	   ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
 	   ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly, MaxCopyAttempts)
+
+	End Function
+
+	''' <summary>
+	''' Copies specified file from storage server to local working directory
+	''' </summary>
+	''' <param name="InpFile">Name of file to copy</param>
+	''' <param name="InpFolder">Path to folder where input file is located</param>
+	''' <param name="OutDir">Destination directory for file copy</param>
+	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+	''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Overloads Function CopyFileToWorkDir(ByVal InpFile As String, _
+	   ByVal InpFolder As String, _
+	   ByVal OutDir As String, _
+	   ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+	   ByVal CreateStoragePathInfoOnly As Boolean, _
+	   ByVal MaxCopyAttempts As Integer) As Boolean
 
 		Dim SourceFile As String = String.Empty
 		Dim DestFilePath As String = String.Empty
@@ -424,7 +485,7 @@ Public MustInherit Class clsAnalysisResources
 				Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
 			End If
 
-			If CopyFileWithRetry(SourceFile, DestFilePath, True) Then
+			If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
 				If m_DebugLevel > 3 Then
 					Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File copied: " + SourceFile
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
@@ -459,7 +520,8 @@ Public MustInherit Class clsAnalysisResources
 	Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String) As Boolean
-		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, False)
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 	End Function
 
 	''' <summary>
@@ -475,7 +537,26 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, False)
+		Dim MaxCopyAttempts As Integer = 3
+		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+	End Function
+
+	''' <summary>
+	''' Copies specified file from storage server to local working directory
+	''' </summary>
+	''' <param name="InpFile">Name of file to copy</param>
+	''' <param name="InpFolder">Path to folder where input file is located</param>
+	''' <param name="OutDir">Destination directory for file copy</param>
+	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	''' ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
+	  ByVal InpFolder As String, _
+	  ByVal OutDir As String, _
+	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+	  ByVal MaxCopyAttempts As Integer) As Boolean
+		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 	End Function
 
 	''' <summary>
@@ -486,13 +567,15 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="OutDir">Destination directory for file copy</param>
 	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
 	''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt, and this file's first line will be the full path to the source file</param>
+	''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Protected Overloads Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	  ByVal CreateStoragePathInfoOnly As Boolean, _
+	  ByVal MaxCopyAttempts As Integer) As Boolean
 
 
 		Dim SourceFile As String = String.Empty
@@ -517,7 +600,7 @@ Public MustInherit Class clsAnalysisResources
 				Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
 			End If
 
-			If CopyFileWithRetry(SourceFile, DestFilePath, True) Then
+			If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
 				If m_DebugLevel > 3 Then
 					Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDirWithRename, File copied: " + SourceFile
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
@@ -2537,7 +2620,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			fiSourceFile = New System.IO.FileInfo(IO.Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE))
-			
+
 			If Not fiSourceFile.Exists Then
 				m_message = "PNNLOmics Element Data file not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at: " & fiSourceFile.FullName)
@@ -2629,7 +2712,7 @@ Public MustInherit Class clsAnalysisResources
 		If Not FileFound Then Return False
 
 		'Do the copy
-		If Not CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then Return False
+		If Not CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
 
 		'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
 		If Not GetCdfAlso Then Return True
@@ -2641,7 +2724,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		'Copy the .cdf file that was found
-		If CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+		If CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then
 			Return True
 		Else
 			Return False
@@ -2702,7 +2785,14 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim RetrieveSICStatsFile As Boolean = False
-		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly)
+		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
+
+	End Function
+
+	Protected Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+
+		Dim RetrieveSICStatsFile As Boolean = False
+		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
 
 	End Function
 
@@ -2716,6 +2806,10 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
+	End Function
+
+	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
 		Dim ServerPath As String
 		Dim ScanStatsFilename As String
@@ -2762,7 +2856,7 @@ Public MustInherit Class clsAnalysisResources
 					If String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
 						m_message = "MASIC ScanStats file not found below " + diFolderInfo.FullName
 					Else
-						Return RetrieveScanAndSICStatsFiles(WorkDir, System.IO.Path.GetDirectoryName(strNewestScanStatsFilePath), RetrieveSICStatsFile, CreateStoragePathInfoOnly)
+						Return RetrieveScanAndSICStatsFiles(WorkDir, System.IO.Path.GetDirectoryName(strNewestScanStatsFilePath), RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile)
 					End If
 				End If
 			End If
@@ -2785,14 +2879,11 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal MASICResultsFolderPath As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal MASICResultsFolderPath As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
-		Dim ScanStatsFilename As String
-
-		Dim MaxRetryCount As Integer = 1
+		Dim MaxCopyAttempts As Integer = 2
 
 		' Copy the MASIC files from the MASIC results folder
-		ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX
 
 		If String.IsNullOrEmpty(MASICResultsFolderPath) Then
 			m_message = "MASIC Results folder path not defined"
@@ -2806,44 +2897,56 @@ Public MustInherit Class clsAnalysisResources
 				m_message = "MASIC Results folder not found: " + diFolderInfo.FullName
 			Else
 
-				diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, ScanStatsFilename))
+				If RetrieveScanStatsFile Then
+					' Look for and copy the _ScanStats.txt file
+					diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, m_DatasetName + SCAN_STATS_FILE_SUFFIX))
 
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStats.txt file: " + diSourceFile.FullName)
-				End If
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStats.txt file: " + diSourceFile.FullName)
+					End If
 
-				If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-					m_message = SCAN_STATS_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
-				Else
-
-					' ScanStats File successfully copied
-					' Also look for and copy the _ScanStatsEx.txt file
-
-					If Not CopyFileToWorkDir(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-						m_message = "_ScanStatsEx.txt file not found at " + diSourceFile.Directory.FullName
-					Else
-
-						' ScanStatsEx file successfully copied
-
-						If RetrieveSICStatsFile Then
-
-							' Also look for and copy the _SICStats.txt file
-							If Not CopyFileToWorkDir(m_DatasetName + "_SICStats.txt", diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
-								m_message = "_SICStats.txt file not found at " + diSourceFile.Directory.FullName
-							Else
-								' All files successfully copied
-								Return True
-							End If
-
-						Else
-							' All files successfully copied
-							Return True
-						End If
-
+					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
+						m_message = SCAN_STATS_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
+						Return False
 					End If
 				End If
 
+				If RetrieveScanStatsExFile Then
+					' Look for and copy the _ScanStatsEx.txt file
+					diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX))
+
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying ScanStatsEx.txt file: " + diSourceFile.FullName)
+					End If
+
+					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
+						m_message = SCAN_STATS_EX_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
+						Return False
+					End If
+				End If
+
+
+				If RetrieveSICStatsFile Then
+
+					' Look for and copy the _SICStats.txt file
+					diSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(MASICResultsFolderPath, m_DatasetName + "_SICStats.txt"))
+
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying _SICStats.txt file: " + diSourceFile.FullName)
+					End If
+
+					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
+						m_message = "_SICStats.txt file not found at " + diSourceFile.Directory.FullName
+						Return False
+					End If
+				End If
+
+
+				' All files successfully copied
+				Return True
+
 			End If
+
 
 		End If
 

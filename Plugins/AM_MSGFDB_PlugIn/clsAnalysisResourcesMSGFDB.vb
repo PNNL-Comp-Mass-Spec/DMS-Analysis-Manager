@@ -84,7 +84,23 @@ Public Class clsAnalysisResourcesMSGFDB
 				End Select
 			Else
 				' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
-				If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
+				Dim blnSuccess As Boolean
+				blnSuccess = RetrieveScanStatsFiles(m_WorkingDir, CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
+
+				If blnSuccess Then
+					' Open the ScanStts file and read the header line to see if column ScanTypeName is present
+					Dim blnScanTypeColumnFound As Boolean
+					Dim strScanStatsFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+					blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeColumn(strScanStatsFilePath)
+
+					If Not blnScanTypeColumnFound Then
+						' We also have to retrieve the _ScanStatsEx.txt file
+						blnSuccess = RetrieveScanStatsFiles(m_WorkingDir, CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
+					End If
+
+				End If
+
+				If Not blnSuccess Then
 					' _ScanStats.txt file not found
 					' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
 					If Not GenerateScanStatsFile() Then
@@ -117,6 +133,27 @@ Public Class clsAnalysisResourcesMSGFDB
 		m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function ValidateScanStatsFileHasScanTypeColumn(ByVal strScanStatsFilePath As String) As Boolean
+
+		Dim blnScanTypeColumnFound As Boolean = False
+
+		Using srScanStatsFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+
+			If srScanStatsFile.Peek > -1 Then
+				Dim lstColumns As Generic.List(Of String)
+				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+
+				If lstColumns.Contains("ScanTypeName") Then
+					blnScanTypeColumnFound = True
+				End If
+			End If
+
+		End Using
+
+		Return blnScanTypeColumnFound
 
 	End Function
 

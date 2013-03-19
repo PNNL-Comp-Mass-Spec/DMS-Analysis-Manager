@@ -48,7 +48,7 @@ Public Class clsAnalysisResourcesSMAQC
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files by searching for any valid MASIC folder")
 			End If
 
-			Return RetrieveScanAndSICStatsFiles(m_WorkingDir, True, CreateStoragePathInfoFile)
+			Return RetrieveScanAndSICStatsFiles(m_WorkingDir, RetrieveSICStatsFile:=True, CreateStoragePathInfoOnly:=CreateStoragePathInfoFile)
 
 		Else
 			If m_DebugLevel >= 2 Then
@@ -77,7 +77,7 @@ Public Class clsAnalysisResourcesSMAQC
 						m_message = "Unable to find MASIC results folder " & strMASICResultsFolderName
 					Else
 
-						Return RetrieveScanAndSICStatsFiles(m_WorkingDir, diMASICFolderInfo.FullName, True, CreateStoragePathInfoFile)
+						Return RetrieveScanAndSICStatsFiles(m_WorkingDir, diMASICFolderInfo.FullName, True, CreateStoragePathInfoFile, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
 
 					End If
 				End If

@@ -555,7 +555,8 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")
 		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
 		dctParamNames.Add("EnzymeID", "e")
-		dctParamNames.Add("C13", "c13")
+		dctParamNames.Add("C13", "c13")					' Used by MS-GFDB
+		dctParamNames.Add("IsotopeError", "ti")			' Used by MSGF+
 		dctParamNames.Add("NNET", "nnet")				' Used by MS-GFDB
 		dctParamNames.Add("NTT", "ntt")					' Used by MSGF+
 		dctParamNames.Add("minLength", "minLength")

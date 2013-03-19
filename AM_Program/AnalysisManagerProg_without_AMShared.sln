@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg_without_AMShared", "AnalysisManagerProg_without_AMShared.vbproj", "{05C1816A-C330-4B32-AB60-644064B74B92}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05C1816A-C330-4B32-AB60-644064B74B92}.Debug|x86.ActiveCfg = Debug|x86
+		{05C1816A-C330-4B32-AB60-644064B74B92}.Debug|x86.Build.0 = Debug|x86
+		{05C1816A-C330-4B32-AB60-644064B74B92}.Release|x86.ActiveCfg = Release|x86
+		{05C1816A-C330-4B32-AB60-644064B74B92}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
