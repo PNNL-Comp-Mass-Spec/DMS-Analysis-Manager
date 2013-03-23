@@ -30,8 +30,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' <param name="JavaProgLoc"></param>
 	''' <param name="MSGFDBProgLoc"></param>
 	''' <param name="strFASTAFilePath">Input/output parameter; will get updated if running Legacy MSGFDB</param>
-	''' <param name="blnFastaFileIsDecoy">
-	''' </param>
+	''' <param name="blnFastaFileIsDecoy">When True, then only creates the forward-based index files.  When False, then creates both the forward and reverse index files</param>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Function CreateSuffixArrayFiles(ByVal strLogFileDir As String, _

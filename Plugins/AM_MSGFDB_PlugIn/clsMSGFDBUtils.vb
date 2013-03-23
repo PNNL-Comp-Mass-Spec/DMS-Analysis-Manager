@@ -588,7 +588,78 @@ Public Class clsMSGFDBUtils
 		End If
 	End Function
 
+	Protected Function GetKeyValueSetting(ByVal strText As String) As Generic.KeyValuePair(Of String, String)
+
+		Dim strKey As String = String.Empty
+		Dim strValue As String = String.Empty
+
+		If Not String.IsNullOrWhiteSpace(strText) Then
+			strText = strText.Trim()
+
+			If Not strText.StartsWith("#") AndAlso strText.Contains("="c) Then
+
+				Dim intCharIndex As Integer
+				intCharIndex = strText.IndexOf("=")
+
+				If intCharIndex > 0 Then
+					strKey = strText.Substring(0, intCharIndex).Trim()
+					If intCharIndex < strText.Length - 1 Then
+						strValue = strText.Substring(intCharIndex + 1).Trim()
+					Else
+						strValue = String.Empty
+					End If
+				End If
+			End If
+
+		End If
+
+		Return New Generic.KeyValuePair(Of String, String)(strKey, strValue)
+	End Function
+
+	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String) As String
+		Return GetSettingFromMSGFDbParamFile(strParameterFilePath, strSettingToFind, String.Empty)
+	End Function
+
+	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String, ByVal strValueIfNotFound As String) As String
+
+		Dim strLineIn As String
+		Dim kvSetting As Generic.KeyValuePair(Of String, String)
+
+		If Not System.IO.File.Exists(strParameterFilePath) Then
+			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+			Return strValueIfNotFound
+		End If
+
+		Try
+
+			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				Do While srParamFile.Peek > -1
+					strLineIn = srParamFile.ReadLine()
+
+					kvSetting = GetKeyValueSetting(strLineIn)
+				
+					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso IsMatch(kvSetting.Key, strSettingToFind) Then
+						Return kvSetting.Value
+					End If
+				Loop
+
+			End Using
+
+		Catch ex As Exception
+			mErrorMessage = "Exception reading MSGFDB parameter file"
+			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+		End Try
+
+		Return strValueIfNotFound
+
+	End Function
+
 	Public Function InitializeFastaFile(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByRef FastaFileSizeKB As Single, ByRef FastaFileIsDecoy As Boolean, ByRef FastaFilePath As String) As IJobParams.CloseOutType
+		Return InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, String.Empty)
+	End Function
+
+	Public Function InitializeFastaFile(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByRef FastaFileSizeKB As Single, ByRef FastaFileIsDecoy As Boolean, ByRef FastaFilePath As String, ByVal strMSGFDBParameterFilePath As String) As IJobParams.CloseOutType
 
 		Dim OrgDbDir As String
 		Dim result As IJobParams.CloseOutType
@@ -617,6 +688,23 @@ Public Class clsMSGFDBUtils
 			If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
 				FastaFileIsDecoy = True
 			End If
+		End If
+
+		If Not FastaFileIsDecoy AndAlso FastaFileSizeKB / 1024.0 / 1024.0 > 1 AndAlso Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
+			' If the Fasta file is large (over 1 GB in size) then look for "TDA=0" in the MSGF+ parameter file
+			' If TDA=0 exists, then we're performing a forward-only search and we will auto-change FastaFileIsDecoy to True
+			'   to prevent the reverse indices from being created
+
+			Dim strTDASetting As String
+			strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
+
+			If strTDASetting.Trim() = "0" Then
+				FastaFileIsDecoy = True
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing large FASTA file with forward-only search; auto switching to -tda 0")
+				End If
+			End If
+
 		End If
 
 		If m_DebugLevel >= 3 Then
@@ -651,7 +739,7 @@ Public Class clsMSGFDBUtils
 	End Function
 
 	''' <summary>
-	''' Compare to strings (not case sensitive)
+	''' Compare two strings (not case sensitive)
 	''' </summary>
 	''' <param name="strText1"></param>
 	''' <param name="strText2"></param>
@@ -1048,6 +1136,7 @@ Public Class clsMSGFDBUtils
 	''' Read the MSGFDB options file and convert the options to command line switches
 	''' </summary>
 	''' <param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
+	''' <param name="FastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
 	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
 	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
 	''' <returns>Options string if success; empty string if an error</returns>
@@ -1060,8 +1149,7 @@ Public Class clsMSGFDBUtils
 		Dim strLineIn As String
 		Dim sbOptions As System.Text.StringBuilder
 
-		Dim strKey As String
-		Dim strValue As String
+		Dim kvSetting As Generic.KeyValuePair(Of String, String)
 		Dim intValue As Integer
 
 		Dim intParamFileThreadCount As Integer = 0
@@ -1114,37 +1202,20 @@ Public Class clsMSGFDBUtils
 
 				Do While srParamFile.Peek > -1
 					strLineIn = srParamFile.ReadLine()
-					strKey = String.Empty
-					strValue = String.Empty
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						strLineIn = strLineIn.Trim()
+					kvSetting = GetKeyValueSetting(strLineIn)
 
-						If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+					If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
-							Dim intCharIndex As Integer
-							intCharIndex = strLineIn.IndexOf("=")
-							If intCharIndex > 0 Then
-								strKey = strLineIn.Substring(0, intCharIndex).Trim()
-								If intCharIndex < strLineIn.Length - 1 Then
-									strValue = strLineIn.Substring(intCharIndex + 1).Trim()
-								Else
-									strValue = String.Empty
-								End If
-							End If
-						End If
-
-					End If
-
-					If Not String.IsNullOrWhiteSpace(strKey) Then
+						Dim strValue As String = kvSetting.Value
 
 						Dim strArgumentSwitch As String = String.Empty
 						Dim strArgumentSwitchOriginal As String
 
-						' Check whether strKey is one of the standard keys defined in dctParamNames
-						If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
+						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-							If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+							If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 								' Override FragmentationMethodID using strAssumedScanType
 								Select Case strAssumedScanType.ToUpper()
 									Case "CID"
@@ -1193,7 +1264,7 @@ Public Class clsMSGFDBUtils
 								End If
 							End If
 
-						ElseIf IsMatch(strKey, "uniformAAProb") Then
+						ElseIf IsMatch(kvSetting.Key, "uniformAAProb") Then
 
 							If mMSGFPlus Then
 								' Not valid for MSGF+; skip it
@@ -1217,7 +1288,7 @@ Public Class clsMSGFDBUtils
 								End If
 							End If
 
-						ElseIf DEFINE_MAX_THREADS AndAlso IsMatch(strKey, "NumThreads") Then
+						ElseIf DEFINE_MAX_THREADS AndAlso IsMatch(kvSetting.Key, "NumThreads") Then
 							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "all") Then
 								' Do not append -thread to the command line; MSGFDB will use all available cores by default
 							Else
@@ -1229,7 +1300,7 @@ Public Class clsMSGFDBUtils
 							End If
 
 
-						ElseIf IsMatch(strKey, "NumMods") Then
+						ElseIf IsMatch(kvSetting.Key, "NumMods") Then
 							If Integer.TryParse(strValue, intValue) Then
 								intNumMods = intValue
 							Else
@@ -1239,18 +1310,18 @@ Public Class clsMSGFDBUtils
 								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 							End If
 
-						ElseIf IsMatch(strKey, "StaticMod") Then
+						ElseIf IsMatch(kvSetting.Key, "StaticMod") Then
 							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
 								lstStaticMods.Add(strValue)
 							End If
 
-						ElseIf IsMatch(strKey, "DynamicMod") Then
+						ElseIf IsMatch(kvSetting.Key, "DynamicMod") Then
 							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
 								lstDynamicMods.Add(strValue)
 							End If
 						End If
 
-						If IsMatch(strKey, MSGFDB_OPTION_INSTRUMENT_ID) Then
+						If IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
 							If Integer.TryParse(strValue, intValue) Then
 								' 0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
 								' 1 means High-res LTQ (Default for HCD).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
@@ -1261,7 +1332,7 @@ Public Class clsMSGFDBUtils
 							End If
 						End If
 
-						If IsMatch(strKey, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+						If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 							If Integer.TryParse(strValue, intValue) Then
 								If intValue = 3 Then
 									blnHCD = True

@@ -116,7 +116,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
-			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
+			' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+			Dim strParameterFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, strParameterFilePath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			End If
