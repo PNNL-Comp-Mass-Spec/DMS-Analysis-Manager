@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using AnalysisManagerBase;
-
+using System.IO;
+using System.Data.SQLite;
 
 namespace AnalysisManager_MAC {
 
@@ -184,6 +185,36 @@ namespace AnalysisManager_MAC {
             }
 
         }
+
+		protected bool TableExists(FileInfo fiSqlLiteDatabase, string tableName)
+		{
+			bool tableFound = false;
+
+			try
+			{
+				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+				 using (SQLiteConnection conn = new SQLiteConnection(connectionString))
+				 {
+					 conn.Open();
+
+					 string query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
+					 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
+					 {
+						 object result = cmd.ExecuteScalar();
+						 if (Convert.ToInt32(result) > 0)
+							 tableFound = true;
+						
+					 }
+				 }
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking for table in SqLite file: " + ex.Message);
+			}
+
+			return tableFound;
+		}
 
         /// <summary>
         /// Subclass must override this to provide version info for primary MAC tool assembly

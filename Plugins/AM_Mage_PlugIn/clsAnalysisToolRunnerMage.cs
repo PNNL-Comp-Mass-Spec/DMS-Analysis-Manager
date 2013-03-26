@@ -22,6 +22,25 @@ namespace AnalysisManager_Mage_PlugIn {
             var ops = new MageAMOperations(m_jobParams, m_mgrParams);
             bool ok = ops.RunMageOperations(mageOperations);
 
+			// Make sure the Results.db3 file was created
+			FileInfo fiResultsDB = new FileInfo(System.IO.Path.Combine(m_WorkDir, "Results.db3"));
+			if (!fiResultsDB.Exists)
+			{
+				m_message = "Results.db3 file was not created";
+				return false;
+			}
+
+			// If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created 
+			// If it wasn't, then no matching jobs were found and we should fail out this job step
+			if (mageOperations.ToLower().Contains("ExtractFromJobs".ToLower()))
+			{
+				if (!TableExists(fiResultsDB, "t_results"))
+				{
+					m_message = "Results.db3 file does not have table T_Results; Mage did not extract results from any jobs";
+					return false;
+				}
+			}
+
             // Change the name of the log file back to the analysis manager log file
             logFileName = m_mgrParams.GetParam("logfilename");
             log4net.GlobalContext.Properties["LogName"] = logFileName;

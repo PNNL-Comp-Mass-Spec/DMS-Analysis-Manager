@@ -163,6 +163,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator, IToolRunner)
 
+			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -257,6 +260,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator".ToLower
 			'	myModule = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator, IAnalysisResources)
+
+			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage".ToLower
+			'	myModule = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage, IAnalysisResources)
 
 		End Select
 
