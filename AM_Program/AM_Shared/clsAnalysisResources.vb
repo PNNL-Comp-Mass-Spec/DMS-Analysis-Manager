@@ -672,6 +672,7 @@ Public MustInherit Class clsAnalysisResources
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + LegacyFasta)
 		End If
 
+		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
 		m_FastaTimer = New System.Timers.Timer
 		m_FastaTimer.Interval = 5000
 		m_FastaTimer.AutoReset = True
@@ -691,7 +692,7 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End Try
 
-		'Wait for fasta creation to finish
+		' Wait for fasta creation to finish
 		While Not (m_GenerationComplete Or m_FastaGenTimeOut)
 			System.Threading.Thread.Sleep(2000)
 		End While

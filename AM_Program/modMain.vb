@@ -97,6 +97,8 @@ Module modMain
 
 						'objTest.TestProgRunnerIDPicker()
 
+						objTest.TestProteinDBExport("c:\dms_temp_org")
+
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
 					End Try

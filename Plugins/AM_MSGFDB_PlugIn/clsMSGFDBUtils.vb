@@ -102,6 +102,7 @@ Public Class clsMSGFDBUtils
 	End Property
 
 #Region "Methods"
+
 	Public Sub New(oMgrParams As AnalysisManagerBase.IMgrParams, oJobParams As AnalysisManagerBase.IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
 		m_mgrParams = oMgrParams
 		m_jobParams = oJobParams
@@ -664,7 +665,10 @@ Public Class clsMSGFDBUtils
 		Dim OrgDbDir As String
 		Dim result As IJobParams.CloseOutType
 
-		Dim objIndexedDBCreator As New clsCreateMSGFDBSuffixArrayFiles
+		Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
+		Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+
+		objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName)
 
 		' Define the path to the fasta file
 		OrgDbDir = m_mgrParams.GetParam("orgdbdir")
@@ -711,13 +715,16 @@ Public Class clsMSGFDBUtils
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create Suffix Array files")
 		End If
 
-		' Index the fasta file to create the Suffix Array files
+		' Look for the suffix array files that should exist for the fasta file
+		' Either copy them from Gigasax or re-create them
+		' 
 		Dim intIteration As Integer = 1
+		Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
 
 		Do While intIteration <= 2
 
 			' Note that FastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
-			result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDbProgLoc, FastaFilePath, FastaFileIsDecoy)
+			result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDbProgLoc, FastaFilePath, FastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath)
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Exit Do
 			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And intIteration >= 2) Then

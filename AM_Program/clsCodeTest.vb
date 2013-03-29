@@ -57,6 +57,30 @@ Public Class clsCodeTest
 
 	End Sub
 
+	''' <summary>
+	''' Initializes m_mgrParams and returns example job params
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function InitializeManagerParams() As clsAnalysisJob
+
+		Dim intDebugLevel As Integer = 1
+
+		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+
+		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+		m_mgrParams.SetParam("MgrName", "Monroe_Test")
+		m_mgrParams.SetParam("debuglevel", "1")
+
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+
+		Return objJobParams
+
+	End Function
 	'Public Function Test(ByVal DestFolder As String) As Boolean
 	'       Dim HashString As String = String.Empty
 
@@ -459,8 +483,41 @@ Public Class clsCodeTest
 		strProteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig"
 		strProteinOptions = "seq_direction=forward,filetype=fasta"
 
+		' Test 100 MB fasta file
+		'strLegacyFasta = "na"
+		'strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
+		'strProteinOptions = "seq_direction=forward,filetype=fasta"
 
-		Return TestProteinDBExport(DestFolder, "na", strProteinCollectionList, strProteinOptions)
+		Dim blnSuccess As Boolean
+		blnSuccess = TestProteinDBExport(DestFolder, "na", strProteinCollectionList, strProteinOptions)
+
+		If blnSuccess Then
+
+			Dim oJobParams As IJobParams
+			oJobParams = InitializeManagerParams()
+
+			Dim blnMsgfPlus As Boolean = True
+			Dim strJobNum As String = "12345"
+			Dim intDebugLevel As Short = CShort(m_mgrParams.GetParam("debuglevel", 1))
+
+			Dim JavaProgLoc As String = "C:\Program Files\Java\jre7\bin\java.exe"
+			Dim MSGFDbProgLoc As String = "C:\DMS_Programs\MSGFDB\MSGFPlus.jar"
+			Dim FastaFileIsDecoy As Boolean = False
+			Dim FastaFilePath As String = String.Empty
+
+			oJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName)
+
+			'' Note: This won't compile if the AM_Shared project is loaded in the solution
+			'Dim oTool As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+			'oTool = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, oJobParams, strJobNum, m_mgrParams.GetParam("workdir"), intDebugLevel, blnMsgfPlus)
+
+			'Dim FastaFileSizeKB As Single
+			'Dim eResult As IJobParams.CloseOutType
+
+			'' Note that FastaFilePath will be populated by this function call
+			'eResult = oTool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
+
+		End If
 
 	End Function
 
@@ -484,12 +541,12 @@ Public Class clsCodeTest
 		m_GenerationStarted = False
 		m_GenerationComplete = False
 
-		'Setup a timer to prevent an infinite loop if there's a fasta generation problem
+		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
 		m_FastaTimer = New System.Timers.Timer
 		m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
 		m_FastaTimer.AutoReset = False
 
-		'Create the fasta file
+		' Create the fasta file
 		m_FastaGenTimeOut = False
 		Try
 			m_FastaTimer.Start()
@@ -499,7 +556,7 @@ Public Class clsCodeTest
 			Return False
 		End Try
 
-		'Wait for fasta creation to finish
+		' Wait for fasta creation to finish
 		While Not m_GenerationComplete
 			System.Threading.Thread.Sleep(2000)
 		End While
