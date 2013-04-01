@@ -687,8 +687,7 @@ Public MustInherit Class clsAnalysisResources
 			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
 		Catch Ex As Exception
 			m_message = "Exception generating OrgDb file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + _
-			 "; " + clsGlobal.GetExceptionStackTrace(Ex))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + Ex.Message + "; " + clsGlobal.GetExceptionStackTrace(Ex))
 			Return False
 		End Try
 
