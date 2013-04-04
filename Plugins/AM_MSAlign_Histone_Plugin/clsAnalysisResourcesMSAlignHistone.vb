@@ -1,0 +1,50 @@
+'*********************************************************************************************************
+' Written by Matthew Monroe for the US Department of Energy 
+' Pacific Northwest National Laboratory, Richland, WA
+' Created 10/12/2011
+'
+'*********************************************************************************************************
+
+Option Strict On
+
+Imports AnalysisManagerBase
+
+Public Class clsAnalysisResourcesMSAlignHistone
+	Inherits clsAnalysisResources
+
+	Public Const MSDECONV_MSALIGN_FILE_SUFFIX As String = "_msdeconv.msalign"
+
+	Public Overrides Function GetResources() As IJobParams.CloseOutType
+
+		Dim FileToGet As String
+
+		' Make sure the machine has enough free memory to run MSAlign
+		If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
+			m_message = "Not enough free memory to run MSAlign"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' Retrieve param file
+		If Not RetrieveFile( _
+		   m_jobParams.GetParam("ParmFileName"), _
+		   m_jobParams.GetParam("ParmFileStoragePath"), _
+		   m_mgrParams.GetParam("workdir")) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+		' Retrieve Fasta file
+		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+		' Retrieve the MSAlign file
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
+		FileToGet = m_jobParams.GetParam("DatasetNum") & MSDECONV_MSALIGN_FILE_SUFFIX
+		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+		m_jobParams.AddResultFileToSkip(FileToGet)
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+End Class

@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 11.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerIDPickerPlugIn", "AnalysisManagerIDPickerPlugIn.vbproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
