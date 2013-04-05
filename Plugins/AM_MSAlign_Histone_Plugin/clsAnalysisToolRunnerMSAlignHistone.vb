@@ -101,15 +101,15 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
 			' Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
 			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
-			If Not System.IO.File.Exists(JavaProgLoc) Then
+			If Not IO.File.Exists(JavaProgLoc) Then
 				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Determine the path to the MSAlign program
+			' Determine the path to the MSAlign_Histone program
 			' Note that 
-			mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", System.IO.Path.Combine("jar", MSAlign_JAR_NAME))
+			mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", IO.Path.Combine("jar", MSAlign_JAR_NAME))
 
 			If String.IsNullOrWhiteSpace(mMSAlignProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -140,18 +140,18 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			End If
 
 			' Read the MSAlign Parameter File
-			Dim strParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+			Dim strParamFilePath As String = IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 			Dim strMSAlignCmdLineOptions As String = String.Empty
 
 			blnSuccess = CreateMSAlignCommandLine(strParamFilePath, strMSAlignCmdLineOptions)
 			If Not blnSuccess Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Error parsing the MSAlign parameter file"
+					m_message = "Unknown error parsing the MSAlign parameter file"
 				End If
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSAlignCmdLineOptions) Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Problem parsing MSAlign parameter file"
+					m_message = "Problem parsing MSAlign parameter file: command line switches are not present"
 				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -175,7 +175,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				.EchoOutputToConsole = True
 
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
+				.ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
 
 			End With
 
@@ -185,9 +185,14 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 			If Not mToolVersionWritten Then
 				If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+					ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 				End If
 				mToolVersionWritten = StoreToolVersionInfo()
+			End If
+
+			If Not blnSuccess AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+				' Parse the console output file one more time to see if an exception was logged
+				ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 			End If
 
 			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -229,7 +234,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 					End If
 
 					Dim strResultTableSourcePath As String
-					strResultTableSourcePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_" & RESULT_TABLE_FILE_EXTENSION)
+					strResultTableSourcePath = IO.Path.Combine(m_WorkDir, m_Dataset & "_" & RESULT_TABLE_FILE_EXTENSION)
 
 					If Not blnProcessingError AndAlso IO.File.Exists(strResultTableSourcePath) Then
 
@@ -326,7 +331,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				Return False
 			End If
 
-			Using swNewFasta As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swNewFasta As System.IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 				Do While oReader.ReadNextProteinEntry()
 
 					swNewFasta.WriteLine(oReader.ProteinLineStartChar & oReader.HeaderLine)
@@ -377,7 +382,20 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		strFolderPathToArchive = String.Copy(m_WorkDir)
 
 		Try
-			System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
+			IO.File.Delete(IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
+
+			' Copy any search result files that are not empty from the MSAlign folder to the work directory
+			Dim dctResultFiles As Generic.Dictionary(Of String, String)
+			dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset)
+
+			For Each kvItem As Generic.KeyValuePair(Of String, String) In dctResultFiles
+				Dim fiSearchResultFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
+
+				If fiSearchResultFile.Exists AndAlso fiSearchResultFile.Length > 0 Then
+					fiSearchResultFile.CopyTo(IO.Path.Combine(m_WorkDir, IO.Path.GetFileName(fiSearchResultFile.Name)))
+				End If
+			Next			
+
 		Catch ex As Exception
 			' Ignore errors here
 		End Try
@@ -389,7 +407,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			result = MoveResultFiles()
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				strFolderPathToArchive = IO.Path.Combine(m_WorkDir, m_ResFolderName)
 			End If
 		End If
 
@@ -406,7 +424,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		Dim diMSAlignWork As System.IO.DirectoryInfo
 
 		Try
-			fiMSAlignJarFile = New System.IO.FileInfo(strMSAlignJarFilePath)
+			fiMSAlignJarFile = New IO.FileInfo(strMSAlignJarFilePath)
 
 			If Not fiMSAlignJarFile.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign .Jar file not found: " & fiMSAlignJarFile.FullName)
@@ -414,8 +432,8 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			End If
 
 			' The source folder is one level up from the .Jar file
-			diMSAlignSrc = New System.IO.DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName)
-			diMSAlignWork = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "MSAlign"))
+			diMSAlignSrc = New IO.DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName)
+			diMSAlignWork = New IO.DirectoryInfo(IO.Path.Combine(m_WorkDir, "MSAlign"))
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory")
 
@@ -437,13 +455,13 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			diMSAlignWork.CreateSubdirectory("etc")
 
 			' Copy all files in the jar and xsl folders to the target
-			Dim lstSubfolderNames As New Generic.List(Of String)()
+			Dim lstSubfolderNames As Generic.List(Of String) = New Generic.List(Of String)
 			lstSubfolderNames.Add("jar")
 			lstSubfolderNames.Add("xsl")
 			lstSubfolderNames.Add("etc")
 
 			For Each strSubFolder As String In lstSubfolderNames
-				Dim strTargetSubfolder = System.IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
+				Dim strTargetSubfolder = IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
 
 				Dim diSubfolder As System.IO.DirectoryInfo()
 				diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder)
@@ -453,10 +471,18 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 					Return False
 				End If
 
-				For Each ioFile As System.IO.FileInfo In diSubfolder(0).GetFiles()
-					ioFile.CopyTo(System.IO.Path.Combine(strTargetSubfolder, ioFile.Name))
+				For Each fiFile As System.IO.FileInfo In diSubfolder(0).GetFiles()
+					fiFile.CopyTo(IO.Path.Combine(strTargetSubfolder, fiFile.Name))
 				Next
 
+			Next
+
+			' Copy the histone ptm XML files
+			Dim fiSourceFiles As Generic.List(Of IO.FileSystemInfo)
+			fiSourceFiles = diMSAlignSrc.GetFileSystemInfos("histone*_ptm.xml").ToList()
+
+			For Each fiFile As IO.FileInfo In fiSourceFiles
+				fiFile.CopyTo(IO.Path.Combine(diMSAlignWork.FullName, fiFile.Name))
 			Next
 
 		Catch ex As Exception
@@ -523,7 +549,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			dctParameterMap.Add("report", "r")
 
 			' Open the parameter file
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New IO.StreamReader(New IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			' The first two parameters on the command line are Fasta File name and input file name
 			strCommandLine &= mInputPropertyValues.FastaFileName & " " & mInputPropertyValues.SpectrumFileName
@@ -588,6 +614,8 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 						Dim strSwitch As String = String.Empty
 						If dctParameterMap.TryGetValue(strKeyName, strSwitch) Then
 							strCommandLine &= " -" & strSwitch & " " & strValue
+						Else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring unrecognized MSAlign_Histone parameter: " & strKeyName)
 						End If
 
 					Else
@@ -610,18 +638,57 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 	End Function
 
+	Protected Function FilesMatch(ByVal strFilePath1 As String, ByVal strFilePath2 As String) As Boolean
+
+		Dim blnFilesMatch As Boolean = False
+		Try
+			Dim fiFile1 As IO.FileInfo = New IO.FileInfo(strFilePath1)
+			Dim fiFile2 As IO.FileInfo = New IO.FileInfo(strFilePath2)
+
+			If fiFile1.Exists AndAlso fiFile2.Exists Then
+				If fiFile1.Length = fiFile2.Length Then
+
+					blnFilesMatch = True
+
+					Using srInfile1 As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+						Using srInfile2 As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+							Do While srInfile1.Peek > -1
+								If srInfile2.Peek < 0 Then
+									blnFilesMatch = False
+									Exit Do
+								Else
+									If srInfile1.ReadLine() <> srInfile2.ReadLine() Then
+										blnFilesMatch = False
+										Exit Do
+									End If
+								End If
+							Loop
+						End Using
+					End Using
+
+				End If
+			End If
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FilesMatch: " & ex.Message)
+			blnFilesMatch = False
+		End Try
+
+		Return blnFilesMatch
+
+	End Function
+
 	Protected Function GetExpectedMSAlignResultFiles(ByVal strDatasetName As String) As Generic.Dictionary(Of String, String)
 		' Keys in this dictionary are the expected file name
 		' Values are the new name to rename the file to
 		Dim dctResultFiles As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
+		Dim strBaseName As String = IO.Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName)
 
-		dctResultFiles.Add(strDatasetName & "." & OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName & "_PTM_Search_Result.xml")
-		dctResultFiles.Add(strDatasetName & "." & OUTPUT_FILE_EXTENSION_TOP_RESULT, String.Empty)							' Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
-		dctResultFiles.Add(strDatasetName & "." & OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName & "_PTM_Search_Result_EValue.xml")
-		dctResultFiles.Add(strDatasetName & "." & OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName & "_PTM_Search_Result_Final.xml")
+		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName & "_PTM_Search_Result.xml")
+		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_TOP_RESULT, String.Empty)							' Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
+		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName & "_PTM_Search_Result_EValue.xml")
+		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName & "_PTM_Search_Result_Final.xml")
 
-		dctResultFiles.Add(strDatasetName & "." & RESULT_TABLE_FILE_EXTENSION, strDatasetName & "_" & RESULT_TABLE_FILE_EXTENSION)
-
+		dctResultFiles.Add(strBaseName & "." & RESULT_TABLE_FILE_EXTENSION, strDatasetName & "_" & RESULT_TABLE_FILE_EXTENSION)
 
 		Return dctResultFiles
 
@@ -642,7 +709,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 			' Define the path to the fasta file
 			Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-			Dim strFASTAFilePath As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+			Dim strFASTAFilePath As String = IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
 			Dim fiFastaFile As System.IO.FileInfo = New System.IO.FileInfo(strFASTAFilePath)
 
@@ -654,7 +721,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 			mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
 
-			If Not CopyFastaCheckResidues(fiFastaFile.FullName, System.IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)) Then
+			If Not CopyFastaCheckResidues(fiFastaFile.FullName, IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)) Then
 				If String.IsNullOrEmpty(m_message) Then m_message = "CopyFastaCheckResidues returned false"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
@@ -667,7 +734,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				Return False
 			Else
 				mInputPropertyValues.SpectrumFileName = String.Copy(fiFiles(0).Name)
-				fiFiles(0).MoveTo(System.IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName))
+				fiFiles(0).MoveTo(IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName))
 			End If
 
 		Catch ex As Exception
@@ -702,8 +769,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				.EchoOutputToConsole = True
 
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT)
-
+				.ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT)
 			End With
 
 			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
@@ -716,11 +782,12 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
 				If CmdRunner.ExitCode <> 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code during report creation: " & CmdRunner.ExitCode.ToString)
 				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed (but exit code is 0)")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed during report creation (but exit code is 0)")
 				End If
-
+			Else
+				m_jobParams.AddResultFileToSkip(MSAlign_Report_CONSOLE_OUTPUT)
 			End If
 
 		Catch ex As Exception
@@ -740,12 +807,14 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 	''' <remarks></remarks>
 	Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
-		' Example Console output (v0.5 does not have console output)
+		' Example Console output
 		'
-		' Initializing indexes...
-		' Processing spectrum scan 660...         0% finished (0 minutes used).
-		' Processing spectrum scan 1329...        1% finished (0 minutes used).
-		' Processing spectrum scan 1649...        1% finished (0 minutes used).
+		' Start at Thu Apr 04 15:10:48 PDT 2013
+		' MS-Align+ 0.9.0.16 2013-02-02
+		' Fast filteration started.
+		' Fast filteration finished.
+		' Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
+		' Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
 
 		Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
@@ -773,6 +842,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			Dim intProgress As Int16
 			Dim intActualProgress As Int16
 
+			mConsoleOutputErrorMsg = String.Empty
 			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			intLinesRead = 0
@@ -781,7 +851,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				intLinesRead += 1
 
 				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					If intLinesRead = 1 Then
+					If intLinesRead <= 2 AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 						' Parse out the MSAlign version
 						If strLineIn.ToLower.Contains("align") Then
 							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
@@ -790,29 +860,32 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 							mMSAlignVersion = String.Copy(strLineIn)
 						Else
-							If strLineIn.ToLower.Contains("error") Then
-								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-									mConsoleOutputErrorMsg = "Error running MSAlign:"
+							If strLineIn.ToLower.Contains("error") OrElse strLineIn.Contains("[ java.lang") Then
+								mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
+							End If
+						End If
+					End If
+
+					If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+						mConsoleOutputErrorMsg &= "; " & strLineIn
+					Else
+
+						' Update progress if the line starts with Processing spectrum
+						If strLineIn.IndexOf("Processing spectrum") >= 0 Then
+							oMatch = reExtractPercentFinished.Match(strLineIn)
+							If oMatch.Success Then
+								If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
+									intActualProgress = intProgress
 								End If
-								mConsoleOutputErrorMsg &= "; " & strLineIn
 							End If
-						End If
-					End If
 
-					' Update progress if the line starts with Processing spectrum
-					If strLineIn.StartsWith("Processing spectrum") Then
-						oMatch = reExtractPercentFinished.Match(strLineIn)
-						If oMatch.Success Then
-							If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
-								intActualProgress = intProgress
-							End If
+						ElseIf strLineIn.Contains("[ java.lang") Then
+							' This is likely an exception
+							mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
 						End If
 
-					ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-						If strLineIn.ToLower.StartsWith("error") Then
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-						End If
 					End If
+
 				End If
 			Loop
 
@@ -963,14 +1036,16 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		Dim dctResultsFilesToMove As Generic.Dictionary(Of String, String)
 		Dim blnProcessingError As Boolean = False
 
+		Dim strEValueResultFilePath As String = String.Empty
+		Dim strFinalResultFilePath As String = String.Empty
+
 		Try
 			dctResultsFilesToMove = GetExpectedMSAlignResultFiles(m_Dataset)
 
 			For Each kvItem As Generic.KeyValuePair(Of String, String) In dctResultsFilesToMove
-				Dim strResultFilePath As String
-				strResultFilePath = IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key)
+				Dim fiSearchResultFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
 
-				If Not System.IO.File.Exists(strResultFilePath) Then
+				If Not fiSearchResultFile.Exists Then
 					' Note that ValidateResultFiles should have already logged the missing files
 
 				Else
@@ -979,11 +1054,18 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 					If String.IsNullOrEmpty(kvItem.Value) Then
 						' Skip this file
-					Else
+					Else					
 						Dim strTargetFilePath As String
 						strTargetFilePath = IO.Path.Combine(m_WorkDir, kvItem.Value)
 
-						System.IO.File.Copy(strResultFilePath, strTargetFilePath, True)
+						fiSearchResultFile.CopyTo(strTargetFilePath, True)
+
+						If kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_E_VALUE_RESULT) Then
+							strEValueResultFilePath = strTargetFilePath
+						ElseIf kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_OUTPUT_RESULT) Then
+							strFinalResultFilePath = strTargetFilePath
+						End If
+
 					End If
 
 				End If
@@ -992,6 +1074,15 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			' Zip the Html and XML folders
 			ZipMSAlignResultFolder("html")
 			ZipMSAlignResultFolder("XML")
+
+			' Skip the E_VALUE_RESULT file if it is identical to the OUTPUT_RESULT file
+			If Not String.IsNullOrEmpty(strEValueResultFilePath) AndAlso Not String.IsNullOrEmpty(strFinalResultFilePath) Then
+
+				If FilesMatch(strEValueResultFilePath, strFinalResultFilePath) Then
+					m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strEValueResultFilePath))
+				End If
+
+			End If
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateAndCopyResultFiles: " & ex.Message)
@@ -1015,10 +1106,9 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset)
 
 			For Each kvItem As Generic.KeyValuePair(Of String, String) In dctResultFiles
-				Dim strResultFilePath As String
-				strResultFilePath = IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key)
+				Dim fiSearchResultFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
 
-				If Not System.IO.File.Exists(strResultFilePath) Then
+				If Not fiSearchResultFile.Exists Then
 					Dim Msg As String
 					Msg = "MSAlign results file not found (" & kvItem.Key & ")"
 
@@ -1027,7 +1117,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 						m_message = clsGlobal.AppendToComment(m_message, Msg)
 					End If
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & strResultFilePath & ")" & ", job " & m_JobNum)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & fiSearchResultFile.FullName & ")" & ", job " & m_JobNum)
 					blnProcessingError = True
 				End If
 			Next
@@ -1078,7 +1168,6 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 				' Create the output file
 				Using swOutFile As IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
 
 					Do While srInFile.Peek > -1
 						strLineIn = srInFile.ReadLine
@@ -1152,8 +1241,8 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		Dim strSourceFolderPath As String
 
 		Try
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
-			strSourceFolderPath = System.IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
+			strTargetFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
+			strSourceFolderPath = IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
 
 			' Confirm that the folder has one or more files or subfolders
 			Dim diSourceFolder As New System.IO.DirectoryInfo(strSourceFolderPath)
@@ -1213,7 +1302,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+			ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 
 			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
 				mToolVersionWritten = StoreToolVersionInfo()
