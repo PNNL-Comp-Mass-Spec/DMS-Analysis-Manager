@@ -271,7 +271,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
 
-		Dim strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
+		Dim strToolVersionFile As String = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
 		Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", "")
 		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFPlus_IMS" Then
 			' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
