@@ -803,7 +803,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
 	''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
 	''' <remarks></remarks>
-	Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As System.Collections.Generic.Queue(Of String), ByVal strFileToQueueForDeletion As String)
+	Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As Generic.Queue(Of String), ByVal strFileToQueueForDeletion As String)
 
 		If strFilesToDelete.Count > 0 Then
 			' Call the garbage collector, then try to delete the first queued file
@@ -972,17 +972,17 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean, ByVal LogFileNotFound As Boolean) As String
 
-		Dim FoldersToSearch As New System.Collections.Generic.List(Of String)
+		Dim FoldersToSearch As New Generic.List(Of String)
 		Dim TempDir As String = String.Empty
 		Dim FileFound As Boolean = False
 
-		Dim strParentFolderPaths As System.Collections.Generic.List(Of String)
+		Dim strParentFolderPaths As Generic.List(Of String)
 		Dim strDatasetFolderName As String
 		Dim strInputFolderName As String
 
 		Dim strSharedResultFolders As String
 
-		Dim SharedResultFolderNames As New System.Collections.Generic.List(Of String)
+		Dim SharedResultFolderNames As New Generic.List(Of String)
 
 		Try
 			' Fill collection with possible folder locations
@@ -1014,7 +1014,7 @@ Public MustInherit Class clsAnalysisResources
 				SharedResultFolderNames.Add(strSharedResultFolders)
 			End If
 
-			strParentFolderPaths = New System.Collections.Generic.List(Of String)
+			strParentFolderPaths = New Generic.List(Of String)
 			strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
 			strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
 
@@ -1149,8 +1149,8 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim MaxRetryCount As Integer = 1
 
-		Dim lstValuesToCheck As System.Collections.Generic.List(Of Integer)
-		lstValuesToCheck = New System.Collections.Generic.List(Of Integer)
+		Dim lstValuesToCheck As Generic.List(Of Integer)
+		lstValuesToCheck = New Generic.List(Of Integer)
 
 		' Initialize the values we'll look for
 		lstValuesToCheck.Add(154)			' MSXML_Gen_1_154_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=MSConvert.exe; CentroidPeakCountToRetain=250; MSXMLOutputType=mzXML;
@@ -3152,7 +3152,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim ServerPath As String
 		Dim strUnzipFolderPathBase As String = String.Empty
 
-		Dim strFilesToDelete As New System.Collections.Generic.Queue(Of String)
+		Dim strFilesToDelete As New Generic.Queue(Of String)
 
 		Dim strZipFilePathRemote As String = String.Empty
 		Dim strZipFilePathToExtract As String
@@ -3854,6 +3854,8 @@ Public MustInherit Class clsAnalysisResources
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
 			Case "msalign"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
+			Case "msalign_histone"
+				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
 			Case Else
 				' Did not find an exact match
 				' Try a substring match
@@ -3865,6 +3867,8 @@ Public MustInherit Class clsAnalysisResources
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
 				ElseIf strToolNameLCase.Contains("msgfplus") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
+				ElseIf strToolNameLCase.Contains("msalign_histone") Then
+					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
 				ElseIf strToolNameLCase.Contains("msalign") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 				Else

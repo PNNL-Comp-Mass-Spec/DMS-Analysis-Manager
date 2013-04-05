@@ -27,7 +27,7 @@ Public Class clsAnalysisJob
 
 #Region "Module variables"
 	' The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
-	Protected m_JobParams As System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.Dictionary(Of String, String))
+	Protected m_JobParams As Generic.Dictionary(Of String, Generic.Dictionary(Of String, String))
 
 	Protected m_JobId As Integer
 	Protected m_TaskWasClosed As Boolean
@@ -395,11 +395,11 @@ Public Class clsAnalysisJob
 	''' <remarks></remarks>
 	Public Sub SetParam(ByVal Section As String, ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 
-		Dim oParams As System.Collections.Generic.Dictionary(Of String, String) = Nothing
+		Dim oParams As Generic.Dictionary(Of String, String) = Nothing
 
 		If Not m_JobParams.TryGetValue(Section, oParams) Then
 			' Need to add a section with a blank name
-			oParams = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+			oParams = New Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 			m_JobParams.Add(Section, oParams)
 		End If
 
@@ -425,7 +425,7 @@ Public Class clsAnalysisJob
 		ParamValue = String.Empty
 
 		If Not m_JobParams Is Nothing Then
-			For Each oEntry As System.Collections.Generic.KeyValuePair(Of String, System.Collections.Generic.Dictionary(Of String, String)) In m_JobParams
+			For Each oEntry As Generic.KeyValuePair(Of String, Generic.Dictionary(Of String, String)) In m_JobParams
 				If oEntry.Value.TryGetValue(ParamName, ParamValue) Then
 					If String.IsNullOrWhiteSpace(ParamValue) Then
 						ParamValue = String.Empty
@@ -462,7 +462,7 @@ Public Class clsAnalysisJob
 	''' <remarks></remarks>
 	Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
 
-		Dim oParams As System.Collections.Generic.Dictionary(Of String, String) = Nothing
+		Dim oParams As Generic.Dictionary(Of String, String) = Nothing
 		ParamValue = String.Empty
 
 		If Not m_JobParams Is Nothing Then
@@ -589,7 +589,7 @@ Public Class clsAnalysisJob
 					paramXml = CStr(MyCmd.Parameters("@parameters").Value)
 
 					'Step task was found; get the data for it
-					Dim dctParameters As New System.Collections.Generic.List(Of clsDBTask.udtParameterInfoType)
+					Dim dctParameters As New Generic.List(Of clsDBTask.udtParameterInfoType)
 					dctParameters = FillParamDictXml(paramXml)
 
 					If dctParameters IsNot Nothing Then
@@ -647,7 +647,7 @@ Public Class clsAnalysisJob
 		m_DatasetInfoList.Clear()
 
 		If m_JobParams Is Nothing Then
-			m_JobParams = New System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+			m_JobParams = New Generic.Dictionary(Of String, Generic.Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
 		End If
 
 		m_JobParams.Clear()

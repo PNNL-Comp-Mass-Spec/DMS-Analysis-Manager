@@ -28,7 +28,6 @@
 Option Strict On
 
 Imports System.Text.RegularExpressions
-Imports System.Collections.Generic
 
 Public Class clsSplitCattedFiles
 
@@ -63,12 +62,12 @@ Public Class clsSplitCattedFiles
 	End Function
 
 	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
-		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, New System.Collections.Generic.SortedSet(Of String))
+		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, New Generic.SortedSet(Of String))
 	End Function
 
-	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String)) As Boolean
+	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As Generic.List(Of String)) As Boolean
 
-		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+		Dim lstFilesToSkipSortedSet As Generic.SortedSet(Of String) = New Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
 		For Each strEntry As String In lstFilesToSkip
 			lstFilesToSkipSortedSet.Add(strEntry)
@@ -77,7 +76,7 @@ Public Class clsSplitCattedFiles
 		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
 	End Function
 
-	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
+	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As Generic.SortedSet(Of String)) As Boolean
 		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, datasetName + "_dta.txt")
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
 		If fi.Exists Then
@@ -91,12 +90,12 @@ Public Class clsSplitCattedFiles
 	End Function
 
 	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
-		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, New System.Collections.Generic.SortedSet(Of String))
+		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, New Generic.SortedSet(Of String))
 	End Function
 
-	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.List(Of String)) As Boolean
+	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As Generic.List(Of String)) As Boolean
 
-		Dim lstFilesToSkipSortedSet As System.Collections.Generic.SortedSet(Of String) = New System.Collections.Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+		Dim lstFilesToSkipSortedSet As Generic.SortedSet(Of String) = New Generic.SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
 		For Each strEntry As String In lstFilesToSkip
 			lstFilesToSkipSortedSet.Add(strEntry)
@@ -105,7 +104,7 @@ Public Class clsSplitCattedFiles
 		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
 	End Function
 
-	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
+	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As Generic.SortedSet(Of String)) As Boolean
 		Dim fullPath As String = System.IO.Path.Combine(resultsFolderPath, datasetName + "_out.txt")
 		Dim fi As System.IO.FileInfo = New System.IO.FileInfo(fullPath)
 		If fi.Exists Then
@@ -124,7 +123,7 @@ Public Class clsSplitCattedFiles
 	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
 	''' <remarks></remarks>
 	Private Function SplitCattedFile(ByVal filePath As String) As Boolean
-		Return SplitCattedFile(filePath, New System.Collections.Generic.SortedSet(Of String))
+		Return SplitCattedFile(filePath, New Generic.SortedSet(Of String))
 	End Function
 
 	''' <summary>
@@ -133,7 +132,7 @@ Public Class clsSplitCattedFiles
 	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
 	''' <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
 	''' <remarks></remarks>
-	Private Function SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As System.Collections.Generic.SortedSet(Of String)) As Boolean
+	Private Function SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As Generic.SortedSet(Of String)) As Boolean
 		Dim s As String
 		Dim fileText As Queue(Of String) = New Queue(Of String)
 		Dim objFileSepMatch As Match = Nothing
@@ -229,7 +228,7 @@ Public Class clsSplitCattedFiles
 	 ByRef fileText As Queue(Of String), _
 	 ByVal exportFileName As String, _
 	 ByVal resultsFolder As String, _
-	 ByRef lstFilesToSkip As System.Collections.Generic.SortedSet(Of String))
+	 ByRef lstFilesToSkip As Generic.SortedSet(Of String))
 
 		Dim filetype As String = System.IO.Path.GetExtension(exportFileName).TrimStart("."c)
 

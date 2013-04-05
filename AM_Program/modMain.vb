@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "January 11, 2013"
+	Public Const PROGRAM_DATE As String = "April 4, 2013"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -117,7 +117,7 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			Console.WriteLine("Error occurred in modMain->Main: " & ControlChars.NewLine & ex.Message)
+            ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
 			intReturnCode = -1
 		End Try
 
@@ -125,16 +125,28 @@ Module modMain
 
 	End Function
 
+	''' <summary>
+	''' Returns the .NET assembly version followed by the program date
+	''' </summary>
+	''' <param name="strProgramDate"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Private Function GetAppVersion(ByVal strProgramDate As String) As String
+		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & strProgramDate & ")"
+	End Function
+
 	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"T", "Test", "Trace", "EL"}
+		Dim lstValidParameters As Generic.List(Of String) = New Generic.List(Of String) From {"T", "Test", "Trace", "EL"}
 
 		Try
 			' Make sure no invalid parameters are present
-			If objParseCommandLine.InvalidParametersPresent(strValidParameters) Then
-				Return False
+            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
+				ShowErrorMessage("Invalid commmand line parameters",
+				  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
+                Return False
 			Else
 				With objParseCommandLine
 					' Query objParseCommandLine to see if various parameters are present
@@ -152,10 +164,43 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			Console.WriteLine("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message)
-		End Try
+            ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
+        End Try
+
+        Return False
 
 	End Function
+
+    Private Sub ShowErrorMessage(ByVal strMessage As String)
+        Dim strSeparator As String = "------------------------------------------------------------------------------"
+
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strMessage)
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
+
+		WriteToErrorStream(strMessage)
+    End Sub
+
+	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As List(Of String))
+		Dim strSeparator As String = "------------------------------------------------------------------------------"
+		Dim strMessage As String
+
+		Console.WriteLine()
+		Console.WriteLine(strSeparator)
+		Console.WriteLine(strTitle)
+		strMessage = strTitle & ":"
+
+		For Each item As String In items
+			Console.WriteLine("   " + item)
+			strMessage &= " " & item
+		Next
+		Console.WriteLine(strSeparator)
+		Console.WriteLine()
+
+		WriteToErrorStream(strMessage)
+	End Sub
 
 	Private Sub ShowProgramHelp()
 
@@ -176,11 +221,11 @@ Module modMain
 			Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)")
 			Console.WriteLine()
 
-			Console.WriteLine("This is version " & System.Windows.Forms.Application.ProductVersion & " (" & PROGRAM_DATE & ")")
+			Console.WriteLine("Version: " & GetAppVersion(PROGRAM_DATE))
 			Console.WriteLine()
 
 			Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-			Console.WriteLine("Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/")
+			Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov")
 			Console.WriteLine()
 
 			Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " & _
@@ -200,9 +245,19 @@ Module modMain
 			System.Threading.Thread.Sleep(750)
 
 		Catch ex As Exception
-			Console.WriteLine("Error displaying the program syntax: " & ex.Message)
+			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
 		End Try
 
+	End Sub
+
+	Private Sub WriteToErrorStream(strErrorMessage As String)
+		Try
+			Using swErrorStream As System.IO.StreamWriter = New System.IO.StreamWriter(Console.OpenStandardError())
+				swErrorStream.WriteLine(strErrorMessage)
+			End Using
+		Catch ex As Exception
+			' Ignore errors here
+		End Try
 	End Sub
 
 	Public Sub ShowTraceMessage(ByVal strMessage As String)

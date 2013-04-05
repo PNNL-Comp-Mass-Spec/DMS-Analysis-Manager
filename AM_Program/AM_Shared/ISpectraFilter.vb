@@ -38,7 +38,7 @@ Public Interface ISpectraFilter
 	Structure InitializationParams
 		Dim SourceFolderPath As String
 		Dim OutputFolderPath As String
-		'' Unused: Dim MiscParams As System.Collections.Specialized.StringDictionary
+		'' Unused: Dim MiscParams As Specialized.StringDictionary
 		Dim DebugLevel As Integer
 		Dim Logger As PRISM.Logging.ILogger
 		Dim MgrParams As IMgrParams

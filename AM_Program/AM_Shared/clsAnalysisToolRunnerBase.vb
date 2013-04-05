@@ -398,7 +398,7 @@ Public Class clsAnalysisToolRunnerBase
 		Dim objSourceFile As System.IO.FileInfo
 		Dim objTargetFile As System.IO.FileInfo
 
-		Dim htFilesToOverwrite As System.Collections.Hashtable
+		Dim htFilesToOverwrite As Hashtable
 
 		Dim ResultFiles() As String
 		Dim strSourceFileName As String
@@ -407,7 +407,7 @@ Public Class clsAnalysisToolRunnerBase
 		Dim strMessage As String
 
 		Try
-			htFilesToOverwrite = New System.Collections.Hashtable
+			htFilesToOverwrite = New Hashtable
 			htFilesToOverwrite.Clear()
 
 			If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
@@ -1063,11 +1063,11 @@ Public Class clsAnalysisToolRunnerBase
 		Dim strLogMessage As String
 
 		Dim strExtension As String
-		Dim dctRejectStats As System.Collections.Generic.Dictionary(Of String, Integer)
-		Dim dctAcceptStats As System.Collections.Generic.Dictionary(Of String, Integer)
+		Dim dctRejectStats As Generic.Dictionary(Of String, Integer)
+		Dim dctAcceptStats As Generic.Dictionary(Of String, Integer)
 		Dim intCount As Integer
 
-		Dim objExtension As System.Collections.Generic.Dictionary(Of String, Integer).Enumerator
+		Dim objExtension As Generic.Dictionary(Of String, Integer).Enumerator
 
 		Dim blnErrorEncountered As Boolean = False
 
@@ -1075,8 +1075,8 @@ Public Class clsAnalysisToolRunnerBase
 		Try
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 			ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
-			dctRejectStats = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-			dctAcceptStats = New System.Collections.Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			dctRejectStats = New Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			dctAcceptStats = New Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 			'Log status
 			If m_DebugLevel >= 2 Then
@@ -1494,7 +1494,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
-		Return SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
+		Return SetStepTaskToolVersion(strToolVersionInfo, New Generic.List(Of FileInfo))
 	End Function
 
 	''' <summary>
@@ -1505,7 +1505,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo)) As Boolean
+	   ByVal ioToolFiles As Generic.List(Of FileInfo)) As Boolean
 
 		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
 	End Function
@@ -1519,7 +1519,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As System.Collections.Generic.List(Of FileInfo), _
+	   ByVal ioToolFiles As Generic.List(Of FileInfo), _
 	   ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
 
 		Dim strExeInfo As String = String.Empty

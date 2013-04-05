@@ -2,7 +2,6 @@
 
 Imports System
 Imports System.Threading
-Imports System.Collections.Generic
 
 ' delegate that does the eventual posting
 Public Delegate Sub MessageSenderDelegate(ByVal message As String)

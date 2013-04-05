@@ -20,7 +20,7 @@ Public Class clsPluginLoader
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Private m_msgList As New System.Collections.Generic.List(Of String)
+	Private m_msgList As New Generic.List(Of String)
 	Private m_MgrFolderPath As String
 	Private m_pluginConfigFile As String = "plugin_info.xml"
 	Private m_SummaryFile As AnalysisManagerBase.clsSummaryFile
@@ -139,6 +139,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
 
+			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlignHistone".ToLower
+			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisToolRunnerMSAlignHistone, IToolRunner)
+
 			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
 
@@ -236,6 +239,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
+
+			'Case "AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone".ToLower()
+			'	myModule = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisResourcesMSAlignHistone, IAnalysisResources)
 
 			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower
 			'	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)

@@ -218,6 +218,11 @@
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
 	/>
 	<ToolRunner 
+		Tool="msalign_histone" 
+		Class="AnalysisManagerMSAlignHistonePlugin.clsAnalysisToolRunnerMSAlignHistone" 
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" 
+	/>
+	<ToolRunner 
 		Tool="ape" 
 		Class="AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe"
 		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" 
@@ -505,6 +510,11 @@
 		Tool="msalign" 
 		Class="AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign" 
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msalign_histone" 
+		Class="AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone" 
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="ape" 

@@ -44,7 +44,7 @@ Public MustInherit Class clsDBTask
 	Protected m_MgrParams As IMgrParams
 	Protected m_ConnStr As String
 	Protected m_BrokerConnStr As String
-	Protected m_ErrorList As New System.Collections.Generic.List(Of String)
+	Protected m_ErrorList As New Generic.List(Of String)
 	Protected m_DebugLevel As Integer
 
 	'Job status
@@ -169,7 +169,7 @@ Public MustInherit Class clsDBTask
 
 	End Sub
 
-	Protected Function FillParamDictXml(ByVal InpXml As String) As System.Collections.Generic.List(Of udtParameterInfoType)
+	Protected Function FillParamDictXml(ByVal InpXml As String) As Generic.List(Of udtParameterInfoType)
 
 		Dim ErrMsg As String
 
@@ -182,7 +182,7 @@ Public MustInherit Class clsDBTask
 			Dim xpn As XPathNavigator = xdoc.CreateNavigator()
 			Dim nodes As XPathNodeIterator = xpn.Select("//item")
 
-			Dim dctParameters As New System.Collections.Generic.List(Of udtParameterInfoType)
+			Dim dctParameters As New Generic.List(Of udtParameterInfoType)
 			Dim udtParamInfo As udtParameterInfoType
 
 			' Traverse the parsed XML document and extract the key and value for each item

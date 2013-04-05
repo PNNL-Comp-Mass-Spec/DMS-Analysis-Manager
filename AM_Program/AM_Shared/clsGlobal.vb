@@ -60,7 +60,7 @@ Public Class clsGlobal
 		Return sbText.ToString()
 	End Function
 
-	Public Shared Function CollapseList(lstFields As System.Collections.Generic.List(Of String)) As String
+	Public Shared Function CollapseList(lstFields As Generic.List(Of String)) As String
 		Dim sbText As New System.Text.StringBuilder
 
 		For Each item As String In lstFields
@@ -144,7 +144,7 @@ Public Class clsGlobal
 
 		Dim intIndex As Integer
 
-		Dim lstFunctions As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
+		Dim lstFunctions As Generic.List(Of String) = New Generic.List(Of String)
 
 		Dim strCurrentFunction As String
 		Dim strFinalFile As String = String.Empty

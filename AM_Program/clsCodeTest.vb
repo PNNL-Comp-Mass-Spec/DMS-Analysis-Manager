@@ -32,7 +32,7 @@ Public Class clsCodeTest
 		Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
 
 		' Get settings from config file
-		Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
+		Dim lstMgrSettings As Generic.Dictionary(Of String, String)
 
 		Try
 			lstMgrSettings = AnalysisManagerProg.clsMainProcess.LoadMgrSettingsFromFile()
@@ -1483,7 +1483,7 @@ Public Class clsCodeTest
 	''' <remarks></remarks>
 	Public Sub FixICR2LSResultFileNames(ByVal strFolderPath As String, ByVal strDatasetName As String)
 
-		Dim objExtensionsToCheck As New System.Collections.Generic.List(Of String)
+		Dim objExtensionsToCheck As New Generic.List(Of String)
 
 		Dim fiFolder As System.IO.DirectoryInfo
 		Dim fiFile As System.IO.FileInfo
@@ -1678,15 +1678,15 @@ Public Class clsCodeTest
 		Dim strHostName As String
 
 		' This dictionary tracks the number of DTAs processed by each node
-		Dim dctHostCounts As System.Collections.Generic.Dictionary(Of String, Integer)
+		Dim dctHostCounts As Generic.Dictionary(Of String, Integer)
 
 		' This dictionary tracks the number of distinct nodes on each host
-		Dim dctHostNodeCount As System.Collections.Generic.Dictionary(Of String, Integer)
+		Dim dctHostNodeCount As Generic.Dictionary(Of String, Integer)
 
 		Dim intValue As Integer
 
 		' This dictionary tracks the number of DTAs processed per node on each host
-		Dim dctHostProcessingRate As System.Collections.Generic.Dictionary(Of String, Single)
+		Dim dctHostProcessingRate As Generic.Dictionary(Of String, Single)
 
 		' This array is used to compute a median
 		Dim sngHostProcessingRateSorted() As Single
@@ -1738,13 +1738,13 @@ Public Class clsCodeTest
 			End If
 
 			' Initialize the dictionary that will track the number of spectra processed by each host
-			dctHostCounts = New System.Collections.Generic.Dictionary(Of String, Integer)
+			dctHostCounts = New Generic.Dictionary(Of String, Integer)
 
 			' Initialize the dictionary that will track the number of distinct nodes on each host
-			dctHostNodeCount = New System.Collections.Generic.Dictionary(Of String, Integer)
+			dctHostNodeCount = New Generic.Dictionary(Of String, Integer)
 
 			' Initialize the dictionary that will track processing rates
-			dctHostProcessingRate = New System.Collections.Generic.Dictionary(Of String, Single)
+			dctHostProcessingRate = New Generic.Dictionary(Of String, Single)
 
 			Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
@@ -1888,7 +1888,7 @@ Public Class clsCodeTest
 				Dim sngThresholdRate As Single
 				Dim intWarningCount As Integer
 
-				For Each objItem As System.Collections.Generic.KeyValuePair(Of String, Integer) In dctHostCounts
+				For Each objItem As Generic.KeyValuePair(Of String, Integer) In dctHostCounts
 					intNodeCountThisHost = 0
 					dctHostNodeCount.TryGetValue(objItem.Key, intNodeCountThisHost)
 					If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
@@ -1903,7 +1903,7 @@ Public Class clsCodeTest
 				ReDim sngHostProcessingRateSorted(dctHostProcessingRate.Count - 1)
 
 				intIndex = 0
-				For Each objItem As System.Collections.Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
+				For Each objItem As Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
 					sngHostProcessingRateSorted(intindex) = objItem.Value
 					intIndex += 1
 				Next
@@ -1923,7 +1923,7 @@ Public Class clsCodeTest
 				intWarningCount = 0
 				sngThresholdRate = CSng(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-				For Each objItem As System.Collections.Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
+				For Each objItem As Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
 					If objItem.Value < sngThresholdRate Then
 						intWarningCount = +1
 					End If
@@ -1944,7 +1944,7 @@ Public Class clsCodeTest
 				intWarningCount = 0
 				sngThresholdRate = CSng(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-				For Each objItem As System.Collections.Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
+				For Each objItem As Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
 					If objItem.Value > sngThresholdRate Then
 						intWarningCount = +1
 					End If
@@ -1963,7 +1963,7 @@ Public Class clsCodeTest
 				If m_DebugLevel >= 2 OrElse blnShowDetailedRates Then
 					' Log the number of DTAs processed by each host
 
-					For Each objItem As System.Collections.Generic.KeyValuePair(Of String, Integer) In dctHostCounts
+					For Each objItem As Generic.KeyValuePair(Of String, Integer) In dctHostCounts
 
 						intNodeCountThisHost = 0
 						dctHostNodeCount.TryGetValue(objItem.Key, intNodeCountThisHost)

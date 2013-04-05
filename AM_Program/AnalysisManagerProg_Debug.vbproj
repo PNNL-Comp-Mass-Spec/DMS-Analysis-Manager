@@ -155,9 +155,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_Mage_PlugIn\AnalysisManager_Mage_PlugIn.csproj">
-      <Project>{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}</Project>
-      <Name>AnalysisManager_Mage_PlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_MSAlign_Histone_Plugin\AM_MSAlign_Histone_Plugin.vbproj">
+      <Project>{146B6C50-F2D5-409C-B424-BCB1B6C421AD}</Project>
+      <Name>AM_MSAlign_Histone_Plugin</Name>
     </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>

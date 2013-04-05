@@ -191,7 +191,7 @@ Public Class clsIonicZipTools
             If String.IsNullOrEmpty(FileFilter) Then
                 objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
             Else
-                Dim objEntries As System.Collections.Generic.ICollection(Of Ionic.Zip.ZipEntry)
+				Dim objEntries As Generic.ICollection(Of Ionic.Zip.ZipEntry)
                 objEntries = objZipper.SelectEntries(FileFilter)
 
                 For Each objItem As Ionic.Zip.ZipEntry In objEntries

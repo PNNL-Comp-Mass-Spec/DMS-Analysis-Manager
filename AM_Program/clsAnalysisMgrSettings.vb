@@ -28,7 +28,7 @@ Public Class clsAnalysisMgrSettings
 #Region "Module variables"
 	Private Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
 
-	Private m_ParamDictionary As System.Collections.Generic.Dictionary(Of String, String)
+	Private m_ParamDictionary As Generic.Dictionary(Of String, String)
 	Private m_ErrMsg As String = ""
 	Private m_EmergencyLogSource As String = ""
 	Private m_EmergencyLogName As String = ""
@@ -98,7 +98,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="EmergencyLogSource">Source name registered for emergency logging</param>
 	''' <param name="EmergencyLogName">Name of system log for emergency logging</param>
 	''' <remarks></remarks>
-	Public Sub New(ByVal EmergencyLogSource As String, ByVal EmergencyLogName As String, ByVal lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String), ByVal MgrFolderPath As String)
+	Public Sub New(ByVal EmergencyLogSource As String, ByVal EmergencyLogName As String, ByVal lstMgrSettings As Generic.Dictionary(Of String, String), ByVal MgrFolderPath As String)
 		m_EmergencyLogName = EmergencyLogName
 		m_EmergencyLogSource = EmergencyLogSource
 		m_MgrFolderPath = MgrFolderPath
@@ -120,7 +120,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ConfigFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
 	''' <returns>True if successful; False on error</returns>
 	''' <remarks></remarks>
-	Public Function LoadSettings(ByVal ConfigFileSettings As System.Collections.Generic.Dictionary(Of String, String)) As Boolean Implements AnalysisManagerBase.IMgrParams.LoadSettings
+	Public Function LoadSettings(ByVal ConfigFileSettings As Generic.Dictionary(Of String, String)) As Boolean Implements AnalysisManagerBase.IMgrParams.LoadSettings
 
 		m_ErrMsg = ""
 
@@ -156,7 +156,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="InpDict"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function CheckInitialSettings(ByRef InpDict As System.Collections.Generic.Dictionary(Of String, String)) As Boolean
+	Private Function CheckInitialSettings(ByRef InpDict As Generic.Dictionary(Of String, String)) As Boolean
 
 		Dim MyMsg As String
 

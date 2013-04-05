@@ -141,7 +141,7 @@ Namespace AnalysisManagerProg
 		Private Function InitMgr() As Boolean
 
 			' Get settings from config file
-			Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
+			Dim lstMgrSettings As Generic.Dictionary(Of String, String)
 
 			Try
 				If Me.TraceMode Then ShowTraceMessage("Reading application config file")
@@ -915,8 +915,8 @@ Namespace AnalysisManagerProg
 
 			Dim objMatch As System.Text.RegularExpressions.Match
 
-			Dim qErrorMsgQueue As System.Collections.Queue
-			Dim htUniqueErrorMessages As System.Collections.Hashtable
+			Dim qErrorMsgQueue As Queue
+			Dim htUniqueErrorMessages As Hashtable
 
 			' Note that strRecentErrorMessages() and dtRecentErrorMessageDates() are parallel arrays
 			Dim intRecentErrorMessageCount As Integer
@@ -950,10 +950,10 @@ Namespace AnalysisManagerProg
 				reJobStartLine = New System.Text.RegularExpressions.Regex(JOB_START_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 
 				' Initialize the queue that holds recent error messages
-				qErrorMsgQueue = New System.Collections.Queue(intErrorMessageCountToReturn)
+				qErrorMsgQueue = New Queue(intErrorMessageCountToReturn)
 
 				' Initialize the hashtable to hold the error messages, but without date stamps
-				htUniqueErrorMessages = New System.Collections.Hashtable
+				htUniqueErrorMessages = New Hashtable
 
 				' Examine the most recent error reported by objLogger
 				strLineIn = clsLogTools.MostRecentErrorMessage
@@ -1111,8 +1111,8 @@ Namespace AnalysisManagerProg
 
 		Protected Sub DetermineRecentErrorCacheError(ByRef objMatch As System.Text.RegularExpressions.Match, _
 		 ByVal strErrorMessage As String, _
-		 ByRef htUniqueErrorMessages As System.Collections.Hashtable, _
-		 ByRef qErrorMsgQueue As System.Collections.Queue, _
+		 ByRef htUniqueErrorMessages As Hashtable, _
+		 ByRef qErrorMsgQueue As Queue, _
 		 ByVal intMaxErrorMessageCountToReturn As Integer)
 
 			Dim strTimestamp As String
@@ -1317,10 +1317,10 @@ Namespace AnalysisManagerProg
 		''' </summary>
 		''' <returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
 		''' <remarks></remarks>
-		Friend Shared Function LoadMgrSettingsFromFile() As System.Collections.Generic.Dictionary(Of String, String)
+		Friend Shared Function LoadMgrSettingsFromFile() As Generic.Dictionary(Of String, String)
 
 			'Load initial settings into string dictionary for return
-			Dim lstMgrSettings As New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+			Dim lstMgrSettings As New Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
 			' Note: When you are editing this project using the Visual Studio IDE, if you edit the values
 			'  ->My Project>Settings.settings, then when you run the program (from within the IDE), then it
@@ -1405,7 +1405,7 @@ Namespace AnalysisManagerProg
 				If Me.TraceMode Then ShowTraceMessage("Reading application config file")
 
 				'Get settings from config file
-				Dim lstMgrSettings As System.Collections.Generic.Dictionary(Of String, String)
+				Dim lstMgrSettings As Generic.Dictionary(Of String, String)
 				lstMgrSettings = LoadMgrSettingsFromFile()
 
 				If Me.TraceMode Then ShowTraceMessage("Storing manager settings in m_MgrSettings")
@@ -1433,7 +1433,7 @@ Namespace AnalysisManagerProg
 		End Function
 
 		Private Sub RemoveTempFiles()
-			Dim lstFilesToDelete As New System.Collections.Generic.List(Of System.IO.FileInfo)
+			Dim lstFilesToDelete As New Generic.List(Of System.IO.FileInfo)
 
 			Dim diMgrFolder As DirectoryInfo = New DirectoryInfo(m_MgrFolderPath)
 			Dim msg As String
