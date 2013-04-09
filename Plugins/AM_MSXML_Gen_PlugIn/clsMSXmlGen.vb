@@ -15,6 +15,7 @@ Public MustInherit Class clsMSXmlGen
 	Protected mWorkDir As String
 	Protected mProgramPath As String
 	Protected mDatasetName As String
+	Protected mSourceFilePath As String = String.Empty
 	Protected mOutputType As MSXMLOutputTypeConstants
 
 	Protected mCentroidMS1 As Boolean
@@ -49,6 +50,12 @@ Public MustInherit Class clsMSXmlGen
 			Else
 				Return mErrorMessage
 			End If
+		End Get
+	End Property
+
+	Public ReadOnly Property SourceFilePath As String
+		Get
+			Return mSourceFilePath
 		End Get
 	End Property
 #End Region
@@ -98,7 +105,7 @@ Public MustInherit Class clsMSXmlGen
 		Dim CmdStr As String
 
 		Dim msXmlFormat As String = "mzXML"
-		Dim RawFilePath As String = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+		mSourceFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 
 		Dim blnSuccess As Boolean
 
@@ -121,7 +128,7 @@ Public MustInherit Class clsMSXmlGen
 
 		'Set up and execute a program runner to run MS XML executable
 
-		CmdStr = CreateArguments(msXmlFormat, RawFilePath)
+		CmdStr = CreateArguments(msXmlFormat, mSourceFilePath)
 
 		blnSuccess = SetupTool()
 		If Not blnSuccess Then
@@ -158,7 +165,7 @@ Public MustInherit Class clsMSXmlGen
 		Else
 			' Make sure the output file was created and is non-zero
 			Dim strOutputFilePath As String
-			strOutputFilePath = System.IO.Path.ChangeExtension(RawFilePath, msXmlFormat)
+			strOutputFilePath = System.IO.Path.ChangeExtension(mSourceFilePath, msXmlFormat)
 
 			If Not System.IO.File.Exists(strOutputFilePath) Then
 				mErrorMessage = "Output file not found: " & strOutputFilePath

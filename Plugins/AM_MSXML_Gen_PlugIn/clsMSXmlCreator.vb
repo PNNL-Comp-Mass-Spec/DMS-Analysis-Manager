@@ -223,7 +223,7 @@ Public Class clsMSXMLCreator
 		End If
 
 		If m_DebugLevel >= 1 Then
-			mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, m_WorkDir, strMzXmlFilePath)
+			mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, mMSXmlGen.SourceFilePath, strMzXmlFilePath)
 		End If
 
 		Return True

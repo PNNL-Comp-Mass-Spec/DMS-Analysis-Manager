@@ -1926,37 +1926,46 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks> Does not override the job number</remarks>
 	Protected Function OverrideCurrentDatasetAndJobInfo(ByVal udtDataPackageJobInfo As udtDataPackageJobInfoType) As Boolean
 
+		Dim blnAggregationJob As Boolean = False
+
 		If String.IsNullOrEmpty(udtDataPackageJobInfo.Dataset) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job in the data package"
+			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 
-		' Update job params to have the details for the current dataset
-		' This is required so that we can use FindDataFile to find the desired files
-		If String.IsNullOrEmpty(udtDataPackageJobInfo.ServerStoragePath) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job in the data package"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
+		If udtDataPackageJobInfo.Dataset.ToLower() = "Aggregation".ToLower() Then
+			blnAggregationJob = True
 		End If
 
-		If String.IsNullOrEmpty(udtDataPackageJobInfo.ArchiveStoragePath) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job in the data package"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+		If Not blnAggregationJob Then
+			' Update job params to have the details for the current dataset
+			' This is required so that we can use FindDataFile to find the desired files
+			If String.IsNullOrEmpty(udtDataPackageJobInfo.ServerStoragePath) Then
+				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
 
-		If String.IsNullOrEmpty(udtDataPackageJobInfo.ResultsFolderName) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job in the data package"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+			If String.IsNullOrEmpty(udtDataPackageJobInfo.ArchiveStoragePath) Then
+				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
 
-		If String.IsNullOrEmpty(udtDataPackageJobInfo.DatasetFolderName) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job in the data package"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
+			If String.IsNullOrEmpty(udtDataPackageJobInfo.ResultsFolderName) Then
+				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			If String.IsNullOrEmpty(udtDataPackageJobInfo.DatasetFolderName) Then
+				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
 		End If
+	
 
 		With udtDataPackageJobInfo
 
