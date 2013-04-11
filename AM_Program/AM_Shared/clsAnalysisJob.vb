@@ -159,7 +159,7 @@ Public Class clsAnalysisJob
 	''' Add a filename extension to not move to the results folder
 	''' </summary>
 	''' <param name="Extension"></param>
-	''' <remarks></remarks>
+	''' <remarks>Can be a file extension or even a partial file name like _peaks.txt</remarks>
 	Public Sub AddResultFileExtensionToSkip(ByVal Extension As String) Implements IJobParams.AddResultFileExtensionToSkip
 		If Not m_ResultFileExtensionsToSkip.Contains(Extension) Then
 			m_ResultFileExtensionsToSkip.Add(Extension)
@@ -172,6 +172,7 @@ Public Class clsAnalysisJob
 	''' <param name="FileName"></param>
 	''' <remarks></remarks>
 	Public Sub AddResultFileToKeep(ByVal FileName As String) Implements IJobParams.AddResultFileToKeep
+		FileName = IO.Path.GetFileName(FileName)
 		If Not m_ResultFilesToKeep.Contains(FileName) Then
 			m_ResultFilesToKeep.Add(FileName)
 		End If
@@ -183,6 +184,7 @@ Public Class clsAnalysisJob
 	''' <param name="FileName"></param>
 	''' <remarks></remarks>
 	Public Sub AddResultFileToSkip(ByVal FileName As String) Implements IJobParams.AddResultFileToSkip
+		FileName = IO.Path.GetFileName(FileName)
 		If Not m_ResultFilesToSkip.Contains(FileName) Then
 			m_ResultFilesToSkip.Add(FileName)
 		End If

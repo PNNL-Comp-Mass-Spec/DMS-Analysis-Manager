@@ -20,6 +20,9 @@ Public Class clsGlobal
 	Public Const XML_FILENAME_EXTENSION As String = "xml"
 
 	Public Const STEPTOOL_PARAMFILESTORAGEPATH_PREFIX As String = "StepTool_ParamFileStoragePath_"
+
+	Public Const SERVER_CACHE_HASHCHECK_FILE_SUFFIX As String = ".hashcheck"
+
 #End Region
 
 #Region "Methods"
@@ -590,6 +593,61 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Creates a .hashcheck file for the specified file
+	''' The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+	''' </summary>
+	''' <param name="strDataFilePath"></param>
+	''' <param name="blnComputeMD5Hash">If True, then computes the MD5 hash</param>
+	''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
+	''' <remarks></remarks>
+	Public Shared Function CreateHashcheckFile(ByVal strDataFilePath As String, ByVal blnComputeMD5Hash As Boolean) As String
+
+		Dim strMD5Hash As String
+
+		If Not IO.File.Exists(strDataFilePath) Then Return String.Empty
+
+		If blnComputeMD5Hash Then
+			strMD5Hash = ComputeFileHashMD5(strDataFilePath)
+		Else
+			strMD5Hash = String.Empty
+		End If
+
+		Return CreateHashcheckFile(strDataFilePath, strMD5Hash)
+
+	End Function
+
+	''' <summary>
+	''' Creates a .hashcheck file for the specified file
+	''' The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+	''' </summary>
+	''' <param name="strDataFilePath"></param>
+	''' <param name="strMD5Hash"></param>
+	''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
+	''' <remarks></remarks>
+	Public Shared Function CreateHashcheckFile(ByVal strDataFilePath As String, ByVal strMD5Hash As String) As String
+
+		Dim fiDataFile As IO.FileInfo
+		Dim strHashFilePath As String
+
+		fiDataFile = New IO.FileInfo(strDataFilePath)
+
+		If Not fiDataFile.Exists Then Return String.Empty
+
+		strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+		If String.IsNullOrWhiteSpace(strMD5Hash) Then strMD5Hash = String.Empty
+
+		Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+			swOutFile.WriteLine("# Hashcheck file created " & System.DateTime.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+			swOutFile.WriteLine("size=" & fiDataFile.Length)
+			swOutFile.WriteLine("modification_date_utc=" & fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
+			swOutFile.WriteLine("hash=" & strMD5Hash)
+		End Using
+
+		Return strHashFilePath
+
+	End Function
+
 	Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
 		' Calculates the Sha-1 hash of a given file
 
@@ -647,7 +705,7 @@ Public Class clsGlobal
 
 		Catch ex As Exception
 			' Ignore errors here
-			Console.WriteLine("Error in clsAnalysisResources.FilesMatch: " & ex.Message)
+			Console.WriteLine("Error in clsGlobal.FilesMatch: " & ex.Message)
 		End Try
 
 		Return False
@@ -677,6 +735,135 @@ Public Class clsGlobal
 
 			Return strNewText
 		End If
+
+	End Function
+
+	''' <summary>
+	''' Looks for a .hashcheck file for the specified data file
+	''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+	''' Next compares the stored values to the actual values
+	''' Checks file size and file date, but does not compute the hash
+	''' </summary>
+	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strErrorMessage"></param>
+	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String) As Boolean
+		Return ValidateFileVsHashcheck(strDataFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=False, blnCheckSize:=True)
+	End Function
+
+	''' <summary>
+	''' Looks for a .hashcheck file for the specified data file
+	''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+	''' Next compares the stored values to the actual values
+	''' Checks file size, plus optionally date and hash
+	''' </summary>
+	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strErrorMessage"></param>
+	''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+	''' <param name="blnComputeHash"></param>
+	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean) As Boolean
+		Return ValidateFileVsHashcheck(strDataFilePath, strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize:=True)
+	End Function
+
+	''' <summary>
+	''' Looks for a .hashcheck file for the specified data file
+	''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+	''' Next compares the stored values to the actual values
+	''' </summary>
+	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strErrorMessage"></param>
+	''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+	''' <param name="blnComputeHash"></param>
+	''' <param name="blnCheckSize"></param>
+	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean, ByVal blnCheckSize As Boolean) As Boolean
+
+		Dim blnValidFile As Boolean = False
+		strErrorMessage = String.Empty
+
+		Dim lngExpectedFileSizeBytes As Int64 = 0
+		Dim strExpectedHash As String = String.Empty
+		Dim dtExpectedFileDate As System.DateTime = System.DateTime.MinValue
+
+		Try
+
+			Dim fiDataFile As IO.FileInfo = New IO.FileInfo(strDataFilePath)
+			Dim fiHashCheck As IO.FileInfo = New IO.FileInfo(fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
+
+			If Not fiDataFile.Exists Then
+				strErrorMessage = "Data file not found at " & fiDataFile.FullName
+				Return False
+			End If
+
+			If Not fiHashCheck.Exists Then
+				strErrorMessage = "Data file at " & fiDataFile.FullName & " does not have a corresponding .hashcheck file named " & fiHashCheck.Name
+				Return False
+			End If
+
+			' Read the details in the HashCheck file
+			Dim strLineIn As String
+			Dim strSplitLine As String()
+
+			Using srInfile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiHashCheck.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				While srInfile.Peek > -1
+					strLineIn = srInfile.ReadLine()
+
+					If Not String.IsNullOrWhiteSpace(strLineIn) AndAlso Not strLineIn.StartsWith("#"c) AndAlso strLineIn.Contains("="c) Then
+						strSplitLine = strLineIn.Split("="c)
+
+						If strSplitLine.Count >= 2 Then
+
+							' Set this to true for now
+							blnValidFile = True
+
+							Select Case strSplitLine(0).ToLower()
+								Case "size"
+									Int64.TryParse(strSplitLine(1), lngExpectedFileSizeBytes)
+								Case "modification_date_utc"
+									System.DateTime.TryParse(strSplitLine(1), dtExpectedFileDate)
+								Case "hash"
+									strExpectedHash = String.Copy(strSplitLine(1))
+
+							End Select
+						End If
+					End If
+
+				End While
+			End Using
+
+			If blnCheckDate Then
+				If Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2 Then
+					strErrorMessage = "File modification date mismatch: expecting " & dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC but actually " & fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC"
+					Return False
+				End If
+			End If
+
+			If blnCheckSize AndAlso fiDataFile.Length <> lngExpectedFileSizeBytes Then
+				strErrorMessage = "File size mismatch: expecting " & lngExpectedFileSizeBytes.ToString("#,##0") & " but computed " & fiDataFile.Length.ToString("#,##0")
+				Return False
+			End If
+
+			If blnComputeHash Then
+				' Compute the hash of the file
+				Dim strActualHash As String
+				strActualHash = clsGlobal.ComputeFileHashMD5(strDataFilePath)
+
+				If strActualHash <> strExpectedHash Then
+					strErrorMessage = "Hash mismatch: expecting " & strExpectedHash & " but computed " & strActualHash
+					Return False
+				End If
+			End If
+
+
+		Catch ex As Exception
+
+		End Try
+
+		Return blnValidFile
 
 	End Function
 

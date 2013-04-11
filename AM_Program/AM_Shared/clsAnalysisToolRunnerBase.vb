@@ -21,7 +21,7 @@ Public Class clsAnalysisToolRunnerBase
 
 #Region "Constants"
 	Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"
-	Protected Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
+	Public Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
 	Public Const PVM_RESET_ERROR_MESSAGE As String = "Error resetting PVM"
 #End Region
 
@@ -244,6 +244,123 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
+	''' Copies a file (typically a mzXML file) to a server cache folder
+	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2, based on the DatasetStoragePath job parameter
+	''' </summary>
+	''' <param name="strCacheFolderPath">Cache folder base path</param>
+	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional)</param>
+	''' <param name="strSourceFilePath">Path to the data file</param>
+	''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function CopyFileToServerCache(ByVal strCacheFolderPath As String, ByVal strSubfolderInTarget As String, ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
+
+		Dim blnSuccess As Boolean
+
+		Try
+
+			Dim diCacheFolder As IO.DirectoryInfo = New IO.DirectoryInfo(strCacheFolderPath)
+
+			If Not diCacheFolder.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & strCacheFolderPath)
+			Else
+
+				Dim diTargetFolder As IO.DirectoryInfo
+
+				' Define the target folder
+				If String.IsNullOrEmpty(strSubfolderInTarget) Then
+					diTargetFolder = diCacheFolder
+				Else
+					diTargetFolder = New IO.DirectoryInfo(IO.Path.Combine(diCacheFolder.FullName, strSubfolderInTarget))
+					If Not diTargetFolder.Exists Then diTargetFolder.Create()
+				End If
+
+				If String.IsNullOrEmpty(strDatasetYearQuarter) Then
+					' Determine the year_quarter text for this dataset
+					Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
+					If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+
+					strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
+				End If
+
+				If Not String.IsNullOrEmpty(strDatasetYearQuarter) Then
+					diTargetFolder = New IO.DirectoryInfo(IO.Path.Combine(diTargetFolder.FullName, strDatasetYearQuarter))
+					If Not diTargetFolder.Exists Then diTargetFolder.Create()
+				End If
+
+
+				' Create the .hashcheck file
+				Dim strHashcheckFilePath As String
+				strHashcheckFilePath = clsGlobal.CreateHashcheckFile(strSourceFilePath, blnComputeMD5Hash:=True)
+
+				If String.IsNullOrEmpty(strHashcheckFilePath) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: Hashcheck file was not created")
+					Return False
+				End If
+
+				Dim diTargetFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(diTargetFolder.FullName, IO.Path.GetFileName(strSourceFilePath)))
+
+				ResetTimestampForQueueWaitTimeLogging()
+				blnSuccess = m_FileTools.CopyFileUsingLocks(strSourceFilePath, diTargetFile.FullName, m_MachName, True)
+
+				If blnSuccess Then
+					' Copy over the .Hashcheck file
+					m_FileTools.CopyFile(strHashcheckFilePath, IO.Path.Combine(diTargetFile.DirectoryName, IO.Path.GetFileName(strHashcheckFilePath)), True)
+				End If
+
+				If blnSuccess AndAlso blnPurgeOldFilesIfNeeded Then
+					Dim intSpaceUsageThresholdGB As Integer = 300
+					PurgeOldServerCacheFiles(strCacheFolderPath, intSpaceUsageThresholdGB)
+				End If
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: " & ex.Message)
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
+
+	''' <summary>
+	''' Copies the .mzXML file to the MSXML_Cache
+	''' </summary>
+	''' <param name="strSourceFilePath"></param>
+	''' <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+	''' <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
+	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <returns>True if success; false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function CopyMzXMLFileToServerCache(ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal strMSXmlGeneratorName As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
+
+		Dim blnSuccess As Boolean = False
+
+		Try
+
+			Dim strMSXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
+
+			If String.IsNullOrEmpty(strMSXmlGeneratorName) Then
+				strMSXmlGeneratorName = m_jobParams.GetParam("MSXMLGenerator", String.Empty)
+
+				If Not String.IsNullOrEmpty(strMSXmlGeneratorName) Then
+					strMSXmlGeneratorName = IO.Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
+				End If
+			End If
+
+			blnSuccess = CopyFileToServerCache(strMSXMLCacheFolderPath, strMSXmlGeneratorName, strSourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded)
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyMzXMLFileToServerCache: " & ex.Message)
+			blnSuccess = False
+		End Try
+
+		Return blnSuccess
+
+	End Function
+
+	''' <summary>
 	''' Copies the files from the results folder to the transfer folder on the server
 	''' </summary>
 	''' <returns></returns>
@@ -319,8 +436,15 @@ Public Class clsAnalysisToolRunnerBase
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Now create the folder if it doesn't exist
-			TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
+			If m_Dataset.ToLower() = "Aggregation".ToLower() Then
+				' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
+				TargetFolderPath = String.Copy(TransferFolderPath)
+			Else
+				' Append the dataset name to the transfer folder path
+				TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
+			End If
+
+			' Create the target folder if it doesn't exist
 			Try
 				objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
 			Catch ex As Exception
@@ -1289,6 +1413,104 @@ Public Class clsAnalysisToolRunnerBase
 
 		End If
 	End Function
+
+	''' <summary>
+	''' Determines the space usage of data files in the cache folder
+	''' If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
+	''' </summary>
+	''' <param name="strCacheFolderPath">Path to the file cache</param>
+	''' <param name="intSpaceUsageThresholdGB">Maximum space usage (cannot be less than 1)</param>
+	''' <remarks></remarks>
+	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal intSpaceUsageThresholdGB As Integer)
+
+		Dim diCacheFolder As IO.DirectoryInfo
+		Dim lstDataFiles As Generic.SortedList(Of System.DateTime, IO.FileInfo) = New Generic.SortedList(Of System.DateTime, IO.FileInfo)
+
+		Dim dblTotalSizeMB As Double = 0
+
+		Dim dblSizeDeletedMB As Double = 0
+		Dim intFileDeleteCount As Integer = 0
+		Dim intFileDeleteErrorCount As Integer = 0
+
+		Dim dctErrorSummary As Generic.Dictionary(Of String, Integer) = New Generic.Dictionary(Of String, Integer)
+
+		If intSpaceUsageThresholdGB < 1 Then intSpaceUsageThresholdGB = 1
+
+		Try
+			diCacheFolder = New IO.DirectoryInfo(strCacheFolderPath)
+
+			If diCacheFolder.Exists Then
+				' Make a list of all of the files in diCacheFolder
+
+				For Each fiItem As IO.FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
+
+					If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
+						Dim strDataFilePath As String
+						strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
+
+						Dim fiDataFile As IO.FileInfo = New IO.FileInfo(strDataFilePath)
+
+						If fiDataFile.Exists Then
+							lstDataFiles.Add(fiDataFile.LastWriteTimeUtc, fiDataFile)
+
+							dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
+						End If
+					End If
+				Next
+			End If
+
+			If dblTotalSizeMB / 1024.0 > intSpaceUsageThresholdGB Then
+				' Purge files until the space usage falls below the threshold
+
+				For Each kvItem As Generic.KeyValuePair(Of System.DateTime, IO.FileInfo) In lstDataFiles
+
+					Try
+						Dim strHashcheckPath As String
+						Dim dblFileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
+
+						strHashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+						dblTotalSizeMB -= dblFileSizeMB
+
+						kvItem.Value.Delete()
+						IO.File.Delete(strHashcheckPath)
+
+						dblSizeDeletedMB += dblFileSizeMB
+						intFileDeleteCount += 1
+
+					Catch ex As Exception
+						' Keep track of the number of times we have an exception
+						intFileDeleteErrorCount += 1
+
+						Dim intOccurrences As Integer = 1
+						Dim strExceptionName As String = ex.GetType.ToString()
+						If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
+							dctErrorSummary(strExceptionName) = intOccurrences + 1
+						Else
+							dctErrorSummary.Add(strExceptionName, 1)
+						End If
+
+					End Try
+
+					If dblTotalSizeMB / 1024.0 < intSpaceUsageThresholdGB Then
+						Exit For
+					End If
+				Next
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath & ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
+
+				If intFileDeleteErrorCount > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
+					For Each kvItem As Generic.KeyValuePair(Of String, Integer) In dctErrorSummary
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
+					Next
+				End If
+
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeOldServerCacheFiles", ex)
+		End Try
+	End Sub
 
 	''' <summary>
 	''' Updates the dataset name to the final folder name in the transferFolderPath job parameter

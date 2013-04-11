@@ -395,6 +395,10 @@ Public Class clsAnalysisResults
 		If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
 		If MaxRetryCount < 1 Then MaxRetryCount = 1
 
+		If String.IsNullOrWhiteSpace(FolderPath) Then
+			Throw New System.IO.DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry")
+		End If
+
 		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
 			AttemptCount += 1
 
