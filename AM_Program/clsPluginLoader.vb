@@ -160,14 +160,14 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant".ToLower
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant, IToolRunner)
 
-			Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter".ToLower
-				myToolRunner = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter, IToolRunner)
+			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter".ToLower
+			'	myToolRunner = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter, IToolRunner)
 
-				'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator".ToLower()
-				'	myToolRunner = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator, IToolRunner)
+			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator, IToolRunner)
 
-				'Case "AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage".ToLower()
-				'	myToolRunner = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage, IToolRunner)
+			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage, IToolRunner)
 
 		End Select
 
@@ -261,14 +261,14 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant".ToLower
 			'	myModule = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant, IAnalysisResources)
 
-			Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter".ToLower
-				myModule = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter, IAnalysisResources)
+			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter".ToLower
+			'	myModule = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter, IAnalysisResources)
 
-				'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator".ToLower
-				'	myModule = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator, IAnalysisResources)
+			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator".ToLower
+			'	myModule = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator, IAnalysisResources)
 
-				'Case "AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage".ToLower
-				'	myModule = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage, IAnalysisResources)
+			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage".ToLower
+			'	myModule = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage, IAnalysisResources)
 
 		End Select
 

@@ -745,11 +745,12 @@ Public Class clsGlobal
 	''' Checks file size and file date, but does not compute the hash
 	''' </summary>
 	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
 	''' <param name="strErrorMessage"></param>
 	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
 	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String) As Boolean
-		Return ValidateFileVsHashcheck(strDataFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=False, blnCheckSize:=True)
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String) As Boolean
+		Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=False, blnCheckSize:=True)
 	End Function
 
 	''' <summary>
@@ -759,13 +760,14 @@ Public Class clsGlobal
 	''' Checks file size, plus optionally date and hash
 	''' </summary>
 	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
 	''' <param name="strErrorMessage"></param>
 	''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
 	''' <param name="blnComputeHash"></param>
 	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
 	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean) As Boolean
-		Return ValidateFileVsHashcheck(strDataFilePath, strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize:=True)
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean) As Boolean
+		Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize:=True)
 	End Function
 
 	''' <summary>
@@ -774,13 +776,14 @@ Public Class clsGlobal
 	''' Next compares the stored values to the actual values
 	''' </summary>
 	''' <param name="strDataFilePath">Data file to check.</param>
+	''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
 	''' <param name="strErrorMessage"></param>
 	''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
 	''' <param name="blnComputeHash"></param>
 	''' <param name="blnCheckSize"></param>
 	''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
 	''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean, ByVal blnCheckSize As Boolean) As Boolean
+	Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean, ByVal blnCheckSize As Boolean) As Boolean
 
 		Dim blnValidFile As Boolean = False
 		strErrorMessage = String.Empty
@@ -792,7 +795,9 @@ Public Class clsGlobal
 		Try
 
 			Dim fiDataFile As IO.FileInfo = New IO.FileInfo(strDataFilePath)
-			Dim fiHashCheck As IO.FileInfo = New IO.FileInfo(fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
+
+			If String.IsNullOrEmpty(strHashFilePath) Then strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+			Dim fiHashCheck As IO.FileInfo = New IO.FileInfo(strHashFilePath)
 
 			If Not fiDataFile.Exists Then
 				strErrorMessage = "Data file not found at " & fiDataFile.FullName
@@ -860,7 +865,7 @@ Public Class clsGlobal
 
 
 		Catch ex As Exception
-
+			Console.WriteLine("Error in ValidateFileVsHashcheck: " & ex.Message)
 		End Try
 
 		Return blnValidFile

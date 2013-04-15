@@ -1156,7 +1156,13 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function FindMZXmlFile() As String
+	''' <summary>
+	''' Looks for the .mzXML file for this dataset
+	''' </summary>
+	''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function FindMZXmlFile(ByRef strHashcheckFilePath As String) As String
 
 		' Finds this dataset's .mzXML file		
 		Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
@@ -1176,6 +1182,8 @@ Public MustInherit Class clsAnalysisResources
 		lstValuesToCheck.Add(93)			' MSXML_Gen_1_93_DatasetID,    CentroidMSXML=True;  MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML;
 		lstValuesToCheck.Add(126)			' MSXML_Gen_1_126_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML; ReAdW_Version=v2.1;
 		lstValuesToCheck.Add(39)			' MSXML_Gen_1_39_DatasetID,    CentroidMSXML=False; MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML;
+
+		strHashcheckFilePath = String.Empty
 
 		For Each intVersion As Integer In lstValuesToCheck
 
@@ -1231,7 +1239,7 @@ Public MustInherit Class clsAnalysisResources
 			Else
 				strMSXmlGeneratorName = IO.Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
 				strSubfolderToCheck = IO.Path.Combine(diCacheFolder.FullName, strMSXmlGeneratorName, strYearQuarter)
-			End If		
+			End If
 
 			strMatchedFile = FindFileInDirectoryTree(strSubfolderToCheck, MzXMLFilename)
 
@@ -1239,8 +1247,10 @@ Public MustInherit Class clsAnalysisResources
 				' Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
 
 				Dim strErrorMessage As String = String.Empty
+				strHashcheckFilePath = strMatchedFile & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
 
-				If clsGlobal.ValidateFileVsHashcheck(strMatchedFile, strErrorMessage) Then
+				If clsGlobal.ValidateFileVsHashcheck(strMatchedFile, strHashcheckFilePath, strErrorMessage) Then
+
 					Return strMatchedFile
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
@@ -2450,7 +2460,8 @@ Public MustInherit Class clsAnalysisResources
 		Dim blnSuccess As Boolean = False
 		Dim blnPrefixRequired As Boolean
 
-		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, String)
+		' The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
+		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
@@ -2461,8 +2472,9 @@ Public MustInherit Class clsAnalysisResources
 			lstDataPackagePeptideHitJobs.Clear()
 		End If
 
-		' The keys in this dictionary are udtJobInfo entries; the values will be the path to the mzXML file, or an empty string if the .Raw file needs to be retrieved
-		dctInstrumentDataToRetrieve = New Generic.Dictionary(Of udtDataPackageJobInfoType, String)
+		' The keys in this dictionary are udtJobInfo entries; the values will be the path to the mzXML file along with the path to the .hashcheck file
+		' The values will be empty strings if the .Raw file needs to be retrieved
+		dctInstrumentDataToRetrieve = New Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))
 
 		Try
 			lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(DataPackageID)
@@ -2590,20 +2602,23 @@ Public MustInherit Class clsAnalysisResources
 					Dim strMzXMLFilePath As String = String.Empty
 
 					' See if a .mzXML file already exists for this dataset
-					strMzXMLFilePath = FindMZXmlFile()
+					Dim strHashcheckFilePath As String = String.Empty
+
+					strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
 
 					If String.IsNullOrEmpty(strMzXMLFilePath) Then
 						' mzXML file not found
 						If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
 							' Will need to retrieve the .Raw file for this dataset
-							dctInstrumentDataToRetrieve.Add(udtJobInfo, String.Empty)
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
 						Else
 							m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 							Return False
 						End If
 					Else
-						dctInstrumentDataToRetrieve.Add(udtJobInfo, strMzXMLFilePath)
+
+						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
 					End If
 
 				End If
@@ -2630,7 +2645,7 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function RetrieveDataPackageMzXMLFiles(ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, String)) As Boolean
+	Protected Function RetrieveDataPackageMzXMLFiles(ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))) As Boolean
 
 		Dim blnSuccess As Boolean
 		Dim intCurrentJob As Integer
@@ -2650,9 +2665,10 @@ Public MustInherit Class clsAnalysisResources
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
 			' All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
-			For Each kvItem As Generic.KeyValuePair(Of udtDataPackageJobInfoType, String) In dctInstrumentDataToRetrieve
+			For Each kvItem As Generic.KeyValuePair(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String)) In dctInstrumentDataToRetrieve
 
-				Dim strMzXMLFilePath As String = kvItem.Value
+				Dim kvMzXMLFileInfo As Generic.KeyValuePair(Of String, String) = kvItem.Value
+				Dim strMzXMLFilePath As String = kvMzXMLFileInfo.Key
 				intCurrentJob = kvItem.Key.Job
 
 				' Skip this dataset if we already processed it
@@ -2667,7 +2683,7 @@ Public MustInherit Class clsAnalysisResources
 						blnSuccess = False
 					Else
 						' mzXML file exists; try to retrieve it
-						blnSuccess = RetrieveMZXmlFileUsingSourceFile(m_WorkingDir, False, strMzXMLFilePath)
+						blnSuccess = RetrieveMZXmlFileUsingSourceFile(m_WorkingDir, False, strMzXMLFilePath, kvMzXMLFileInfo.Value)
 					End If
 
 					If blnSuccess Then
@@ -2850,17 +2866,18 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveMZXmlFile(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean, ByRef SourceFilePath As String) As Boolean
 
-		SourceFilePath = FindMZXmlFile()
+		Dim strHashcheckFilePath As String = String.Empty
+		SourceFilePath = FindMZXmlFile(strHashcheckFilePath)
 
 		If String.IsNullOrEmpty(SourceFilePath) Then
 			Return False
 		Else
-			Return RetrieveMZXmlFileUsingSourceFile(WorkDir, CreateStoragePathInfoOnly, SourceFilePath)
+			Return RetrieveMZXmlFileUsingSourceFile(WorkDir, CreateStoragePathInfoOnly, SourceFilePath, strHashcheckFilePath)
 		End If
 
 	End Function
 
-	Protected Function RetrieveMZXmlFileUsingSourceFile(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal SourceFilePath As String) As Boolean
+	Protected Function RetrieveMZXmlFileUsingSourceFile(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal SourceFilePath As String, ByVal HashcheckFilePath As String) As Boolean
 
 		Dim fiSourceFile As IO.FileInfo
 
@@ -2868,6 +2885,23 @@ Public MustInherit Class clsAnalysisResources
 
 		If fiSourceFile.Exists Then
 			If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+
+				If Not String.IsNullOrEmpty(HashcheckFilePath) Then
+					Dim strTargetFilePath As String = IO.Path.Combine(WorkDir, fiSourceFile.Name)
+					Dim strErrorMessage As String = String.Empty
+
+					If Not clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, HashcheckFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=True) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MzXML file validation error in RetrieveMZXmlFileUsingSourceFile: " & strErrorMessage)
+
+						Try
+							IO.File.Delete(strTargetFilePath)
+						Catch ex As Exception
+							' Delete the local file to force it to be re-generated
+						End Try
+						Return False
+					End If
+
+				End If
 				Return True
 			End If
 		End If
