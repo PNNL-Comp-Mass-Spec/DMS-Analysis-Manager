@@ -281,22 +281,41 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected Function CreateMissingMzXMLFiles() As Boolean
 		Dim blnSuccess As Boolean
-		Dim lstDatasets As Generic.List(Of String)
 		Dim intDatasetsProcessed As Integer = 0
+		Dim strMSXMLCacheFolderPath As String
 
 		Try
 			m_progress = PROGRESS_PCT_CREATING_MISSING_MZXML_FILES
 			m_StatusTools.UpdateAndWrite(m_progress)
 
+			' We will copy the newly created MSXml files to the MSXML_Cache folder
+			strMSXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
+
+			Dim lstDatasets As Generic.List(Of String)
 			lstDatasets = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
 			If lstDatasets.Count = 0 Then
 				' Nothing to do
 				Return True
 			End If
 
+			Dim lstDatasetYearQuarter As Generic.List(Of String)
+			Dim dctDatasetYearQuarter As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
+
+			lstDatasetYearQuarter = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATASET_STORAGE_YEAR_QUARTER)
+			For Each strItem In lstDatasetYearQuarter
+				Dim intEqualsIndex = strItem.LastIndexOf("="c)				
+				If intEqualsIndex > 0 Then
+					If Not dctDatasetYearQuarter.ContainsKey(strItem.Substring(0, intEqualsIndex)) Then
+						dctDatasetYearQuarter.Add(strItem.Substring(0, intEqualsIndex), strItem.Substring(intEqualsIndex + 1))
+					End If
+				End If
+			Next
+
 			m_jobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt")
 
 			mMSXmlCreator = New AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+
+			Dim blnPurgeOldFilesIfNeeded As Boolean
 
 			For Each strDataset As String In lstDatasets
 
@@ -314,6 +333,26 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				If Not blnSuccess Then Exit For
 
 				intDatasetsProcessed += 1
+
+				If intDatasetsProcessed Mod 10 = 1 Then
+					blnPurgeOldFilesIfNeeded = True
+				Else
+					blnPurgeOldFilesIfNeeded = False
+				End If
+
+				Dim strDatasetYearQuarter As String = String.Empty
+				If Not dctDatasetYearQuarter.TryGetValue(strDataset, strDatasetYearQuarter) Then
+					strDatasetYearQuarter = String.Empty
+				End If
+
+				' Copy the .mzXML file to the cache
+				' Purge old files after copying the first file, plus every 10 files after that
+				Dim strSourceFilePath As String = IO.Path.Combine(m_WorkDir, strDataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+				Dim strMSXmlGeneratorName As String = IO.Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath)
+
+				CopyMzXMLFileToServerCache(strSourceFilePath, strDatasetYearQuarter, strMSXmlGeneratorName, blnPurgeOldFilesIfNeeded)
+
+				m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strSourceFilePath & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX))
 
 				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_CREATING_MISSING_MZXML_FILES, PROGRESS_PCT_CREATING_MSGF_REPORT_XML_FILES, intDatasetsProcessed, lstDatasets.Count)
 				m_StatusTools.UpdateAndWrite(m_progress)
@@ -945,9 +984,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim blnInsideMzDataDescription As Boolean
 		Dim blnSkipNode As Boolean
 
+		Dim lstAttributeOverride As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
+
 		Dim lstElementCloseDepths As Generic.Stack(Of Integer)
 
 		Dim eFileLocation As eMSGFReportXMLFileLocation = eMSGFReportXMLFileLocation.Header
+		Dim lstRecentElements As Collections.Generic.Queue(Of String) = New Collections.Generic.Queue(Of String)
+
 
 		Try
 			lstElementCloseDepths = New Generic.Stack(Of Integer)
@@ -988,6 +1031,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 							Case Xml.XmlNodeType.Element
 								' Start element
 
+								If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
+								lstRecentElements.Enqueue("Element " & objXmlReader.Name)
+
 								Do While lstElementCloseDepths.Count > 0 AndAlso lstElementCloseDepths.Peek > objXmlReader.Depth
 									Dim intPoppedVal As Integer
 									intPoppedVal = lstElementCloseDepths.Pop()
@@ -998,6 +1044,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 								eFileLocation = UpdateMSGFReportXMLFileLocation(eFileLocation, objXmlReader.Name, blnInsideMzDataDescription)
 
 								blnSkipNode = False
+								lstAttributeOverride.Clear()
+
 								Select Case objXmlReader.Name
 									Case "sourceFilePath"
 										' Update this element's value to contain strPseudoMsgfFilePath
@@ -1017,6 +1065,28 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 											' Write out the current job's Experiment Name
 											objXmlWriter.WriteElementString("sampleName", udtJobInfo.Experiment)
 											blnSkipNode = True
+										End If
+
+									Case "sampleDescription"
+										If eFileLocation = eMSGFReportXMLFileLocation.MzDataAdmin Then
+											' Override the comment attribute for this node
+											Dim strCommentOverride As String
+
+											If Not String.IsNullOrWhiteSpace(udtJobInfo.Experiment_Reason) Then
+												strCommentOverride = udtJobInfo.Experiment_Reason.TrimEnd()
+
+												If Not String.IsNullOrWhiteSpace(udtJobInfo.Experiment_Comment) Then
+													If strCommentOverride.EndsWith(".") Then
+														strCommentOverride &= " " & udtJobInfo.Experiment_Comment
+													Else
+														strCommentOverride &= ". " & udtJobInfo.Experiment_Comment
+													End If
+												End If
+											Else
+												strCommentOverride = udtJobInfo.Experiment_Comment
+											End If
+
+											lstAttributeOverride.Add("comment", strCommentOverride)
 										End If
 
 									Case "sourceFile"
@@ -1134,7 +1204,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 									If objXmlReader.HasAttributes() Then
 										objXmlReader.MoveToFirstAttribute()
 										Do
-											objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value)
+											Dim strAttributeOverride As String = String.Empty
+											If lstAttributeOverride.Count > 0 AndAlso lstAttributeOverride.TryGetValue(objXmlReader.Name, strAttributeOverride) Then
+												objXmlWriter.WriteAttributeString(objXmlReader.Name, strAttributeOverride)
+											Else
+												objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value)
+											End If
+
 										Loop While objXmlReader.MoveToNextAttribute()
 
 										lstElementCloseDepths.Push(objXmlReader.Depth)
@@ -1146,6 +1222,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 								End If
 
 							Case Xml.XmlNodeType.EndElement
+
+								If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
+								lstRecentElements.Enqueue("EndElement " & objXmlReader.Name)
 
 								Do While lstElementCloseDepths.Count > 0 AndAlso lstElementCloseDepths.Peek > objXmlReader.Depth + 1
 									Dim intPoppedVal As Integer
@@ -1165,6 +1244,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 								Loop
 
 							Case Xml.XmlNodeType.Text
+
+								If Not String.IsNullOrEmpty(objXmlReader.Value) Then
+									If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
+									If objXmlReader.Value.Length > 10 Then
+										lstRecentElements.Enqueue(objXmlReader.Value.Substring(0, 10))
+									Else
+										lstRecentElements.Enqueue(objXmlReader.Value)
+									End If
+								End If
+
 								objXmlWriter.WriteString(objXmlReader.Value)
 
 						End Select
@@ -1180,6 +1269,18 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Catch ex As Exception
 			m_message = "Exception in CreateMSGFReportXMLFile"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+
+			Dim strRecentElements As String = String.Empty
+			For Each strItem In lstRecentElements
+				If String.IsNullOrEmpty(strRecentElements) Then
+					strRecentElements = String.Copy(strItem)
+				Else
+					strRecentElements &= "; " & strItem
+				End If
+			Next
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strRecentElements)
+
 			Return String.Empty
 		End Try
 
@@ -1853,6 +1954,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	''' <summary>
 	''' Stores the tool version info in the database
 	''' </summary>
+	''' <param name="strPrideConverterProgLoc"></param>
+	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfo(ByVal strPrideConverterProgLoc As String) As Boolean
 

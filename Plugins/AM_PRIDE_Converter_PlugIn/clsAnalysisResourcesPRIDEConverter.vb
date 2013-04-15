@@ -7,6 +7,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	Public Const JOB_PARAM_DATASETS_MISSING_MZXML_FILES As String = "PackedParam_DatasetsMissingMzXMLFiles"
 	Public Const JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS As String = "PackedParam_DataPackagePeptideHitJobs"
+	Public Const JOB_PARAM_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
+
 	Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
 
 	Public Const DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME As String = "Template.msgf-report.xml"
@@ -57,6 +59,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType))
 
 		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
+		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)
 
 		Try
 			For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
@@ -66,12 +69,15 @@ Public Class clsAnalysisResourcesPRIDEConverter
 				If Not IO.File.Exists(strMzXmlFilePath) Then
 					If Not lstDatasets.Contains(udtJob.Dataset) Then
 						lstDatasets.Add(udtJob.Dataset)
+						lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & clsAnalysisResources.GetDatasetYearQuarter(udtJob.ServerStoragePath))
 					End If
 				End If
 			Next
 
 			If lstDatasets.Count > 0 Then
-				StorePackedJobParameterList(lstDatasets.ToList(), clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
+				StorePackedJobParameterList(lstDatasets.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
+
+				StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DATASET_STORAGE_YEAR_QUARTER)
 			End If
 
 		Catch ex As Exception
@@ -188,7 +194,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
 
 			' First look for the template file in the data package folder
-			Dim strDataPackagePath As String = m_jobParams.GetJobParameter("transferFolderPath", String.Empty)
+			Dim strDataPackagePath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
 			If String.IsNullOrEmpty(strDataPackagePath) Then
 				m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -254,7 +260,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Next
 
 		If lstDataPackageJobs.Count > 0 Then
-			StorePackedJobParameterList(lstDataPackageJobs.ToList(), clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
+			StorePackedJobParameterList(lstDataPackageJobs.ToList(), JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
 		End If
 
 	End Sub
@@ -268,9 +274,9 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	Protected Sub StorePackedJobParameterList(ByVal lstItems As Generic.List(Of String), ByVal strParameterName As String)
 		Dim sbPackedList As Text.StringBuilder = New Text.StringBuilder
 
-		For Each strDataset As String In lstItems
+		For Each strItem As String In lstItems
 			If sbPackedList.Length > 0 Then sbPackedList.Append(ControlChars.Tab)
-			sbPackedList.Append(strDataset)
+			sbPackedList.Append(strItem)
 		Next
 
 		m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, sbPackedList.ToString())

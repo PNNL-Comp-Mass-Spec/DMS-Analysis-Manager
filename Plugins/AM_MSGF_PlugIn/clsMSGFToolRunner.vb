@@ -165,7 +165,7 @@ Public Class clsMSGFRunner
 			blnProcessingError = False
 
 			If mUsingMSGFDB And eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-				' Don't actually run MSGF
+				' Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
 				' Simply copy the values from the MSGFDB result file
 
 				StoreToolVersionInfoMSGFDBResults()
@@ -844,6 +844,14 @@ Public Class clsMSGFRunner
 
 		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
+		Dim strMzXmlFilePath As String
+		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+
+		If System.IO.File.Exists(strMzXmlFilePath) Then
+			' File already exists; nothing to do
+			Return True
+		End If
+
 		mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
 		blnSuccess = mMSXmlCreator.CreateMZXMLFile()
 
@@ -853,6 +861,9 @@ Public Class clsMSGFRunner
 				m_message = "Unknown error creating the mzXML file"
 			End If
 		End If
+
+		Dim blnCopySuccess As Boolean
+		blnCopySuccess = CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, IO.Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
 
 		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
