@@ -69,14 +69,14 @@ namespace AnalysisManager_Ape_PlugIn
             switch (apeOperation.ToLower())
             {
                 case "runworkflow":
-                    blnSuccess = GetWorkflowFiles();
+					blnSuccess = GetWorkflowFiles();
                     break;
                 case "getimprovresults":
                     break;
                 case "getviperresults":
                     break;
                 case "getqrollupresults":
-                    blnSuccess = GetQRollupFiles();
+					blnSuccess = GetQRollupFiles();
                     break;
                 default:
                     // Future: throw an error
@@ -88,12 +88,12 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Ape Operations
 
-        private bool GetWorkflowFiles()
+		private bool GetWorkflowFiles()
         {
             bool blnSuccess = true;
 
             string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
-            string analysisType = m_jobParams.GetParam("AnalysisType");
+			string analysisType = m_jobParams.GetParam("AnalysisType");
 
 			string strStepInputFolderPath = Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName"));
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving SQlite database: " + System.IO.Path.Combine(strStepInputFolderPath, "Results.db3"));
@@ -110,15 +110,17 @@ namespace AnalysisManager_Ape_PlugIn
             // Retrieve the Workflow file name specified for this job
             if (string.IsNullOrEmpty(strApeWorkflowFileName))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Ape Workflow not defined in the job parameters for this job; unable to continue");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parameter ApeWorkflowName not defined in the job parameters for this job; unable to continue");
                 return false;
             }
 
-            string strApeWorkflowFileStoragePath = @"\\gigasax\DMS_Workflows\Ape\" + analysisType;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowFileStoragePath, strApeWorkflowFileName));
+			string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+			string strApeWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Ape", analysisType);
 
-            //Now copy the Ape workflow file to the working directory
-			if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowFileStoragePath, m_WorkingDir))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowDirectory, strApeWorkflowFileName));
+
+            // Now copy the Ape workflow file to the working directory
+			if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowDirectory, m_WorkingDir))
 			{
 				//Errors were reported in function call, so just return
 				return false;
@@ -127,12 +129,11 @@ namespace AnalysisManager_Ape_PlugIn
             return blnSuccess;
         }
 
-        private bool GetQRollupFiles()
+		private bool GetQRollupFiles()
         {
             bool blnSuccess = true;
 
             string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
-            string analysisType = m_jobParams.GetParam("AnalysisType");
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
             {
@@ -143,34 +144,6 @@ namespace AnalysisManager_Ape_PlugIn
             return blnSuccess;
         }
 
-
-        private bool GetImprovResults()
-        {
-            bool blnSuccess = true;
-
-            string analysisType = m_jobParams.GetParam("AnalysisType");
-
-            //// Retrieve the Ape Workflow file specified for this job
-            string strApeWorkflowFileName = m_jobParams.GetParam("ApeWorkflowName");
-            // Retrieve the Workflow file name specified for this job
-			if (string.IsNullOrEmpty(strApeWorkflowFileName))
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Ape Workflow not defined in the job parameters for this job; unable to continue");
-                return false;
-            }
-
-            string strApeWorkflowFileStoragePath = @"\\gigasax\DMS_Workflows\Ape\" + analysisType;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowFileStoragePath, strApeWorkflowFileName));
-
-            //Now copy the Ape workflow file to the working directory
-            if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowFileStoragePath, m_WorkingDir))
-            {
-                //Errors were reported in function call, so just return
-                return false;
-            }
-
-            return blnSuccess;
-        }
 
         #endregion
 

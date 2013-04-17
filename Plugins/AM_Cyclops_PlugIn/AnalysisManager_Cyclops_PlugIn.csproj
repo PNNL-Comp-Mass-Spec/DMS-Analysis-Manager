@@ -35,19 +35,23 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="Cyclops, Version=1.1.4851.26470, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\Cyclops.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
-    <Reference Include="Cyclops, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\Cyclops.dll</HintPath>
     </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="R.NET, Version=1.4.1.0, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="RDotNet, Version=1.5.0.0, Culture=neutral, PublicKeyToken=5f72f6e23c6920d4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\R.NET.dll</HintPath>
+      <HintPath>..\..\AM_Common\RDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="RDotNet.NativeLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=5f72f6e23c6920d4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\RDotNet.NativeLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,7 +71,9 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
-copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
+copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"
+copy "$(TargetDir)RDotNet*.dll" "$(ProjectDir)..\..\AM_Program\bin"
+copy "$(TargetDir)Cyclops.dll" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

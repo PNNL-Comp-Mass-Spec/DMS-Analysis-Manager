@@ -60,7 +60,8 @@ namespace AnalysisManager_Cyclops_PlugIn
                 string strFastaFilePath = Path.Combine(strOrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
 
-				Dictionary<string, string> d_Params = new Dictionary<string, string>();
+				Dictionary<string, string> d_Params = new Dictionary<string, string>(
+                    StringComparer.OrdinalIgnoreCase);
 				d_Params.Add("Job", m_jobParams.GetParam("Job"));
 				d_Params.Add("RDLL", RProgLocFromRegistry);
 				d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
@@ -77,9 +78,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				try
 				{
-					clsCyclopsModel cm = new clsCyclopsModel(d_Params);
-					cm.AssembleModulesFromXML();
-					blnSuccess = cm.Run();
+                    //clsCyclopsModel cm = new clsCyclopsModel(d_Params);
+                    //cm.AssembleModulesFromXML();
+                    //blnSuccess = cm.Run();
+
+                    CyclopsController cyclops = new CyclopsController(d_Params);
+                    cyclops.Run();
 
 					//Change the name of the log file for the local log file to the plug in log filename
 					LogFileName = m_mgrParams.GetParam("logfilename");
