@@ -292,6 +292,11 @@
 		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter"
 		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="results_cleanup" 
+		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisToolRunnerResultsCleanup" 
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -585,6 +590,11 @@
 		Tool="pride_converter" 
 		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter"
 		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="results_cleanup" 
+		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisResourcesResultsCleanup" 
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
 	/>
 
 </Resourcers>

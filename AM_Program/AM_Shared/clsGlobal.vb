@@ -50,33 +50,63 @@ Public Class clsGlobal
 
 	End Function
 
-	Public Shared Function CollapseLine(ByRef strSplitLine() As String) As String
-		Dim sbText As New System.Text.StringBuilder(1024)
+	''' <summary>
+	'''Examines intCount to determine which string to return
+	''' </summary>
+	''' <param name="intCount"></param>
+	''' <param name="strTextIfOneItem"></param>
+	''' <param name="strTextIfZeroOrMultiple"></param>
+	''' <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
+	''' <remarks></remarks>
+	Public Shared Function CheckPlural(ByVal intCount As Integer, ByVal strTextIfOneItem As String, ByVal strTextIfZeroOrMultiple As String) As String
 
-		If strSplitLine.Length > 0 Then
-			sbText.Append(strSplitLine(0))
-			For intIndex As Integer = 1 To strSplitLine.Length - 1
-				sbText.Append(ControlChars.Tab & strSplitLine(intIndex))
-			Next
+		If intCount = 1 Then
+			Return strTextIfOneItem
+		Else
+			Return strTextIfZeroOrMultiple
 		End If
-
-		Return sbText.ToString()
-	End Function
-
-	Public Shared Function CollapseList(lstFields As Generic.List(Of String)) As String
-		Dim sbText As New System.Text.StringBuilder
-
-		For Each item As String In lstFields
-			If sbText.Length > 0 Then sbText.Append(ControlChars.Tab)
-			sbText.Append(item)
-		Next
-
-		Return sbText.ToString()
 
 	End Function
 
 	''' <summary>
-	''' Returns the directory in which the entry assembly (typically the Program .exe file) residues 
+	''' Collapse an array of items to a tab-delimited list
+	''' </summary>
+	''' <param name="strItems"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function CollapseLine(ByRef strItems() As String) As String
+		If strItems Is Nothing OrElse strItems.Length = 0 Then
+			Return String.Empty
+		Else
+			Return CollapseList(strItems.ToList())
+		End If
+	End Function
+
+	''' <summary>
+	''' Collapse a list of items to a tab-delimited list
+	''' </summary>
+	''' <param name="lstFields"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function CollapseList(lstFields As Generic.List(Of String)) As String
+
+		If lstFields Is Nothing OrElse lstFields.Count = 0 Then
+			Return String.Empty
+		Else
+			Dim sbText As New System.Text.StringBuilder
+
+			For Each item As String In lstFields
+				If sbText.Length > 0 Then sbText.Append(ControlChars.Tab)
+				sbText.Append(item)
+			Next
+
+			Return sbText.ToString()
+		End If
+
+	End Function
+
+	''' <summary>
+	''' Returns the directory in which the entry assembly (typically the Program .exe file) resides 
 	''' </summary>
 	''' <returns>Full directory path</returns>
 	Public Shared Function GetAppFolderPath() As String
@@ -224,7 +254,13 @@ Public Class clsGlobal
 
 	End Function
 
-	Public Shared Function PossiblyQuotePath(strPath As String) As String
+	''' <summary>
+	''' Examines strPath to look for spaces
+	''' </summary>
+	''' <param name="strPath"></param>
+	''' <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
+	''' <remarks></remarks>
+	Public Shared Function PossiblyQuotePath(ByVal strPath As String) As String
 		If String.IsNullOrEmpty(strPath) Then
 			Return String.Empty
 		Else
@@ -244,6 +280,12 @@ Public Class clsGlobal
 		End If
 	End Function
 
+	''' <summary>
+	''' Converts a string value to a boolean equivalent
+	''' </summary>
+	''' <param name="Value"></param>
+	''' <returns></returns>
+	''' <remarks>Returns false if an exception</remarks>
 	Public Shared Function CBoolSafe(ByVal Value As String) As Boolean
 		Dim blnValue As Boolean = False
 
@@ -261,6 +303,13 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts a string value to a boolean equivalent
+	''' </summary>
+	''' <param name="Value"></param>
+	''' <param name="blnDefaultValue">Boolean value to return if Value is empty or an exception occurs</param>
+	''' <returns></returns>
+	''' <remarks>Returns false if an exception</remarks>
 	Public Shared Function CBoolSafe(ByVal Value As String, ByVal blnDefaultValue As Boolean) As Boolean
 		Dim blnValue As Boolean = False
 
@@ -278,7 +327,13 @@ Public Class clsGlobal
 
 	End Function
 
-
+	''' <summary>
+	''' Converts Value to an integer
+	''' </summary>
+	''' <param name="Value"></param>
+	''' <param name="intDefaultValue">Integer to return if Value is not numeric</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function CIntSafe(ByVal Value As String, ByVal intDefaultValue As Integer) As Integer
 		Dim intValue As Integer
 
@@ -296,6 +351,13 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts Value to an single (aka float)
+	''' </summary>
+	''' <param name="Value"></param>
+	''' <param name="sngDefaultValue">Single to return if Value is not numeric</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function CSngSafe(ByVal Value As String, ByVal sngDefaultValue As Single) As Single
 		Dim sngValue As Single
 
@@ -313,7 +375,6 @@ Public Class clsGlobal
 		Return sngValue
 
 	End Function
-
 
 	''' <summary>
 	''' Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
@@ -400,6 +461,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to a string, checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function DbCStr(ByVal InpObj As Object) As String
 
 		'If input object is DbNull, returns "", otherwise returns String representation of object
@@ -411,6 +478,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to a single, checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks>An exception will be thrown if the value is not numeric</remarks>
 	Public Shared Function DbCSng(ByVal InpObj As Object) As Single
 
 		'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
@@ -422,6 +495,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to a double, checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks>An exception will be thrown if the value is not numeric</remarks>
 	Public Shared Function DbCDbl(ByVal InpObj As Object) As Double
 
 		'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
@@ -433,6 +512,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to an integer (int32), checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks>An exception will be thrown if the value is not numeric</remarks>
 	Public Shared Function DbCInt(ByVal InpObj As Object) As Integer
 
 		'If input object is DbNull, returns 0, otherwise returns Integer representation of object
@@ -444,6 +529,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to a long integer (int64), checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks>An exception will be thrown if the value is not numeric</remarks>
 	Public Shared Function DbCLng(ByVal InpObj As Object) As Long
 
 		'If input object is DbNull, returns 0, otherwise returns Integer representation of object
@@ -455,6 +546,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Converts an database field value to a decimal, checking for null values
+	''' </summary>
+	''' <param name="InpObj"></param>
+	''' <returns></returns>
+	''' <remarks>An exception will be thrown if the value is not numeric</remarks>
 	Public Shared Function DbCDec(ByVal InpObj As Object) As Decimal
 
 		'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
@@ -572,6 +669,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Computes the MD5 hash for a file
+	''' </summary>
+	''' <param name="strPath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function ComputeFileHashMD5(ByVal strPath As String) As String
 		' Calculates the MD5 hash of a given file
 		' Code from Tim Hastings, at http://www.nonhostile.com/page000017.asp
@@ -648,6 +751,12 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Computes the Sha-1 hash for a file
+	''' </summary>
+	''' <param name="strPath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
 		' Calculates the Sha-1 hash of a given file
 
@@ -667,7 +776,6 @@ Public Class clsGlobal
 		Return ByteArrayToString(arrHash)
 
 	End Function
-
 
 	''' <summary>
 	''' Compares two files, byte-by-byte
@@ -712,6 +820,14 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Replaces text in a string, ignoring case
+	''' </summary>
+	''' <param name="strTextToSearch"></param>
+	''' <param name="strTextToFind"></param>
+	''' <param name="strReplacementText"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function ReplaceIgnoreCase(ByVal strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
 
 		Dim intCharIndex As Integer

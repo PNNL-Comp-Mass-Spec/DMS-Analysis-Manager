@@ -1826,6 +1826,33 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
+
+	''' <summary>
+	''' Uses Reflection to determine the version info for an assembly already loaded in memory
+	''' </summary>
+	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+	''' <param name="strAssemblyName">Assembly Name</param>
+	''' <returns>True if success; false if an error</returns>
+	''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
+	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String) As Boolean
+
+		Try
+			Dim oAssemblyName As System.Reflection.AssemblyName
+			oAssemblyName = System.Reflection.Assembly.Load(strAssemblyName).GetName
+
+			Dim strNameAndVersion As String
+			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & strAssemblyName & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
 	''' <summary>
 	''' Determines the version info for a .NET DLL using reflection
 	''' If reflection fails, then uses System.Diagnostics.FileVersionInfo
@@ -1874,6 +1901,13 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
+	''' <summary>
+	''' Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
+	''' </summary>
+	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+	''' <param name="strDLLFilePath">Path to the DLL</param>
+	''' <returns>True if success; false if an error</returns>
+	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 		Dim ioFileInfo As System.IO.FileInfo
 		Dim blnSuccess As Boolean
