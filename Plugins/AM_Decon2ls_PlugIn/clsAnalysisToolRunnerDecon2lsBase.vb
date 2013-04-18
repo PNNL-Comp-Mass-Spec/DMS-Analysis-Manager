@@ -686,45 +686,27 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of DMSDecon2LS
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("DMSDecon2LS").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+		' Lookup the version of DMSDecon2LS
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DMSDecon2LS") Then
 			Return False
-        End Try
+		End If
 
         ' Lookup the version of DeconEngine
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("DeconEngine").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for DeconTools.Backend: " & ex.Message)
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DeconEngine") Then
 			Return False
-        End Try
+		End If
 
-        ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		' Store paths to key DLLs in ioToolFiles
+		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
 		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DMSDecon2LS.dll")))
 		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DeconEngine.dll")))
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As System.Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
     End Function
 

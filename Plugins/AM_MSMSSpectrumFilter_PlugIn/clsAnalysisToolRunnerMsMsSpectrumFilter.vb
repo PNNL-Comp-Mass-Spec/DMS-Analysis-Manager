@@ -508,33 +508,15 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of the MSMSSpectrumFilterAM
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("MSMSSpectrumFilterAM").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MSMSSpectrumFilterAM: " & ex.Message)
+		' Lookup the version of the MSMSSpectrumFilterAM
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MSMSSpectrumFilterAM") Then
 			Return False
-        End Try
+		End If
 
-        ' Lookup the version of the MsMsDataFileReader
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-           oAssemblyName = System.Reflection.Assembly.Load("MsMsDataFileReader").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for MsMsDataFileReader: " & ex.Message)
+		' Lookup the version of the MsMsDataFileReader
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MsMsDataFileReader") Then
 			Return False
-        End Try
+		End If
 
         ' Store the path to MsMsDataFileReader.dll in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

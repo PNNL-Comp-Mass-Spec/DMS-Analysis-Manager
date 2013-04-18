@@ -951,19 +951,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of the Analysis Manager
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerInspResultsAssemblyPlugIn").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerInspResultsAssemblyPlugIn: " & ex.Message)
+		' Lookup the version of the Inspect Results Assembly Plugin
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerInspResultsAssemblyPlugIn") Then
 			Return False
-        End Try
+		End If
 
         ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))

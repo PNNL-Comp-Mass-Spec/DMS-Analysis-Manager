@@ -255,33 +255,15 @@ Public Class clsResultXferToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of the Analysis Manager
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerProg").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerProg: " & ex.Message)
+		' Lookup the version of the Analysis Manager
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerProg") Then
 			Return False
-        End Try
+		End If
 
-        ' Lookup the version of AnalysisManagerResultsXferPlugin
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerResultsXferPlugin").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerResultsXferPlugin: " & ex.Message)
+		' Lookup the version of AnalysisManagerResultsXferPlugin
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerResultsXferPlugin") Then
 			Return False
-        End Try
+		End If
 
         ' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

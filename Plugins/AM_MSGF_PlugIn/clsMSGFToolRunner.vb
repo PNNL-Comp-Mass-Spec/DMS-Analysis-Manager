@@ -2166,18 +2166,9 @@ Public Class clsMSGFRunner
 		End If
 
 		' Lookup the version of AnalysisManagerMSGFPlugin
-		Try
-			Dim oAssemblyName As System.Reflection.AssemblyName
-			oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerMSGFPlugin").GetName
-
-			Dim strNameAndVersion As String
-			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerMSGFPlugin: " & ex.Message)
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerMSGFPlugin") Then
 			Return False
-		End Try
+		End If
 
 		' Store the path to MSGFDB.jar in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)

@@ -1153,18 +1153,9 @@ Public Class clsExtractToolRunner
 			'Sequest result type
 
 			' Lookup the version of the PeptideFileExtractor
-			Try
-				Dim oAssemblyName As System.Reflection.AssemblyName
-				oAssemblyName = System.Reflection.Assembly.Load("PeptideFileExtractor").GetName
-
-				Dim strNameAndVersion As String
-				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-			Catch ex As System.Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideFileExtractor: " & ex.Message)
+			If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "PeptideFileExtractor") Then
 				Return False
-			End Try
+			End If
 
 			' Lookup the version of the PeptideProphetRunner
 

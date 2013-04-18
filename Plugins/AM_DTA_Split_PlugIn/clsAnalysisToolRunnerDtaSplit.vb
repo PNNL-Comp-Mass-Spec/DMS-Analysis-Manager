@@ -418,21 +418,12 @@ Public Class clsAnalysisToolRunnerDtaSplit
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Lookup the version of the AnalysisManagerDtaSplitPlugIn
-        Try
-            Dim oAssemblyName As System.Reflection.AssemblyName
-            oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerDtaSplitPlugIn").GetName
-
-            Dim strNameAndVersion As String
-            strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-        Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerDtaSplitPlugIn: " & ex.Message)
+		' Lookup the version of the AnalysisManagerDtaSplitPlugIn
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerDtaSplitPlugIn") Then
 			Return False
-        End Try
+		End If
 
-        ' Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles
+		' Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
 		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll")))
 

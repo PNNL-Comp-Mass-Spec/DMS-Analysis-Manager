@@ -725,17 +725,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		' Lookup the version of the Param file generator
-		Try
-			Dim oAssemblyName As System.Reflection.AssemblyName
-			oAssemblyName = System.Reflection.Assembly.Load("ParamFileGenerator").GetName
-
-			Dim strNameAndVersion As String
-			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for ParamFileGenerator: " & ex.Message)
-		End Try
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "ParamFileGenerator") Then
+			Return False
+		End If
 
 		' Lookup the version of Sequest using the .Out file
 		Try

@@ -292,18 +292,9 @@ Public Class clsAnalysisToolRunnerDataImport
 		End If
 
 		' Lookup the version of AnalysisManagerDataImportPlugIn
-		Try
-			Dim oAssemblyName As System.Reflection.AssemblyName
-			oAssemblyName = System.Reflection.Assembly.Load("AnalysisManagerDataImportPlugIn").GetName
-
-			Dim strNameAndVersion As String
-			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for AnalysisManagerDataImportPlugIn: " & ex.Message)
+		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerDataImportPlugIn") Then
 			Return False
-		End Try
+		End If
 
 		' Store the path to AnalysisManagerDataImportPlugIn.dll in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
