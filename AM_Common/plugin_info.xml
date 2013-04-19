@@ -218,6 +218,11 @@
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
 	/>
 	<ToolRunner 
+		Tool="msalign_histone" 
+		Class="AnalysisManagerMSAlignHistonePlugin.clsAnalysisToolRunnerMSAlignHistone" 
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" 
+	/>
+	<ToolRunner 
 		Tool="ape" 
 		Class="AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe"
 		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" 
@@ -286,6 +291,11 @@
 		Tool="pride_converter" 
 		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter"
 		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="results_cleanup" 
+		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisToolRunnerResultsCleanup" 
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
 	/>
 	
 </ToolRunners>
@@ -507,6 +517,11 @@
 		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" 
 	/>
 	<Resourcer 
+		Tool="msalign_histone" 
+		Class="AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone" 
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" 
+	/>
+	<Resourcer 
 		Tool="ape" 
 		Class="AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe"
 		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" 
@@ -575,6 +590,11 @@
 		Tool="pride_converter" 
 		Class="AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter"
 		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="results_cleanup" 
+		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisResourcesResultsCleanup" 
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
 	/>
 
 </Resourcers>

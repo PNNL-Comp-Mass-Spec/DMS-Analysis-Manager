@@ -10,7 +10,8 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisToolRunnerResultsCleanup
 	Inherits clsAnalysisToolRunnerBase
 
-#Region "Module Variables"
+#Region "Constants"
+	Protected Const RESULTS_DB3_FILE As String = "Results.db3"
 #End Region
 
 #Region "Methods"
@@ -107,6 +108,7 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 		Dim reStepNumber As Text.RegularExpressions.Regex
 		Dim reMatch As Text.RegularExpressions.Match
 
+		Dim intStepFolderCount As Integer = 0
 		Dim dctResultsFiles As Generic.Dictionary(Of Integer, IO.FileInfo)
 		Dim intStepNumber As Integer
 
@@ -117,13 +119,14 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 			' Look for Results.db3 files in the subfolders of the transfer folder
 			' Only process folders that start with the text "Step_"
 			For Each diSubfolder In diResultsFolder.GetDirectories("Step_*")
-				' Parse out the step number
+				intStepFolderCount += 1
 
+				' Parse out the step number
 				reMatch = reStepNumber.Match(diSubfolder.Name)
 
 				If reMatch.Success AndAlso Integer.TryParse(reMatch.Groups(1).Value, intStepNumber) Then
 					If Not dctResultsFiles.ContainsKey(intStepNumber) Then
-						For Each fiFile As IO.FileInfo In diSubfolder.GetFiles("Results.db3")
+						For Each fiFile As IO.FileInfo In diSubfolder.GetFiles(RESULTS_DB3_FILE)
 							dctResultsFiles.Add(intStepNumber, fiFile)
 							Exit For
 						Next
@@ -132,23 +135,35 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 			Next
 
 			If dctResultsFiles.Count > 1 Then
-				' Delete the Results.db3 files for the earlier steps
+				' Delete the Results.db3 files for the steps prior to intLastStep
 				Dim intLastStep As Integer = dctResultsFiles.Keys.Max
-				Dim intDuplicateFilesDeleted As Integer = 0
+				Dim intFileCountDeleted As Integer = 0
 
 				Dim lnqQuery = From item In dctResultsFiles Where item.Key < intLastStep
 				For Each item In lnqQuery
 					Try
 						item.Value.Delete()
-						intDuplicateFilesDeleted += 1
+						intFileCountDeleted += 1
 					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting extra Results.db3 file: " & ex.Message)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting extra " & RESULTS_DB3_FILE & " file: " & ex.Message)
 					End Try
 				Next
 
-				m_message = "Deleted " & intDuplicateFilesDeleted & " extra Results.db3 " & clsGlobal.CheckPlural(intDuplicateFilesDeleted, "file", "files")
+				m_EvalMessage = "Deleted " & intFileCountDeleted & " extra " & RESULTS_DB3_FILE & " " & clsGlobal.CheckPlural(intFileCountDeleted, "file", "files")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_EvalMessage & " from " & diResultsFolder.FullName)
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message & " from " & diResultsFolder.FullName)
+			ElseIf dctResultsFiles.Count = 1 Then
+				m_EvalMessage = "Results folder has just one " & RESULTS_DB3_FILE & " file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_EvalMessage)
+			Else
+				If intStepFolderCount > 0 Then
+					m_EvalMessage = "None of the Step_# folders has a " & RESULTS_DB3_FILE & " file"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+				Else
+					m_message = "Results folder does not have any Step_# folders"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diResultsFolder.FullName)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
 			End If
 
 		Catch ex As Exception

@@ -565,6 +565,7 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add("minCharge", "minCharge")		' Only used if the spectrum file doesn't have charge information
 		dctParamNames.Add("maxCharge", "maxCharge")		' Only used if the spectrum file doesn't have charge information
 		dctParamNames.Add("NumMatchesPerSpec", "n")
+		dctParamNames.Add("minNumPeaks", "minNumPeaks")	' Auto-added by this code if not defined
 
 		' The following are special cases; 
 		' do not add to dctParamNames
@@ -1422,6 +1423,12 @@ Public Class clsMSGFDBUtils
 		'End If
 
 		strMSGFDbCmdLineOptions = sbOptions.ToString()
+
+		' By default, MSGF+ filters out spectra with fewer than 20 data points
+		' Override this threshold to 5 data points
+		If strMSGFDbCmdLineOptions.ToLower().IndexOf("-minNumPeaks".ToLower()) < 0 Then
+			strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
+		End If
 
 		If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
 			' Make sure the .Fasta file is not a Decoy fasta
