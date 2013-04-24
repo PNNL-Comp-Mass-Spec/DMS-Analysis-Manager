@@ -78,17 +78,15 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				try
 				{
-                    //clsCyclopsModel cm = new clsCyclopsModel(d_Params);
-                    //cm.AssembleModulesFromXML();
-                    //blnSuccess = cm.Run();
 
                     CyclopsController cyclops = new CyclopsController(d_Params);
-                    cyclops.Run();
+					blnSuccess = cyclops.Run();
 
 					//Change the name of the log file for the local log file to the plug in log filename
 					LogFileName = m_mgrParams.GetParam("logfilename");
 					log4net.GlobalContext.Properties["LogName"] = LogFileName;
 					clsLogTools.ChangeLogFileName(LogFileName);
+
 				}
 				catch (Exception ex)
 				{

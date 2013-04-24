@@ -52,6 +52,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim FastaFileIsDecoy As Boolean
 
 		Dim blnUsingMzXML As Boolean
+		Dim blnUsingScanTypeFile As Boolean
 		Dim strAssumedScanType As String = String.Empty
 		Dim ResultsFileName As String
 
@@ -107,7 +108,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
 			mToolVersionWritten = False
 
-			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML)
+			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, blnUsingScanTypeFile)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			End If
@@ -123,8 +124,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return result
 			End If
 
+			Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+
 			' Read the MSGFDB Parameter File
-			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strMSGFDbCmdLineOptions)
+			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, blnUsingScanTypeFile, strInstrumentGroup, strMSGFDbCmdLineOptions)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
@@ -393,11 +396,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	Protected Function DetermineAssumedScanType(ByRef strAssumedScanType As String, ByRef blnUsingMzXML As Boolean) As IJobParams.CloseOutType
+	Protected Function DetermineAssumedScanType(ByRef strAssumedScanType As String, ByRef blnUsingMzXML As Boolean, ByRef blnUsingScanTypeFile As Boolean) As IJobParams.CloseOutType
 		Dim strScriptNameLCase As String
 		strAssumedScanType = String.Empty
 
 		strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower()
+		blnUsingScanTypeFile = False
 
 		If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfdb_bruker") Then
 			blnUsingMzXML = True
@@ -416,6 +420,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				If Not CreateScanTypeFile() Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
+				blnUsingScanTypeFile = True
 			End If
 
 		End If

@@ -156,9 +156,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_PRIDE_Converter_PlugIn\AnalysisManagerPRIDEConverterPlugIn.vbproj">
-      <Project>{A6C648E6-F0C4-4A76-9740-0DCF39973E84}</Project>
-      <Name>AnalysisManagerPRIDEConverterPlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_Cyclops_PlugIn\AnalysisManager_Cyclops_PlugIn.csproj">
+      <Project>{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}</Project>
+      <Name>AnalysisManager_Cyclops_PlugIn</Name>
     </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>

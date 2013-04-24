@@ -553,8 +553,8 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add("PMTolerance", "t")
 		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
 		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
-		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")
-		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
+		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")		' This setting is always set to 0 since we create a _ScanType.txt file that specifies the type of each scan (thus, the value in the parameter file is ignored)
+		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")			' This setting is auto-updated based on the instrument class for this dataset (thus, the value in the parameter file is ignored)
 		dctParamNames.Add("EnzymeID", "e")
 		dctParamNames.Add("C13", "c13")					' Used by MS-GFDB
 		dctParamNames.Add("IsotopeError", "ti")			' Used by MSGF+
@@ -1146,10 +1146,19 @@ Public Class clsMSGFDBUtils
 	''' <param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
 	''' <param name="FastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
 	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+	''' <param name="blnUsingScanTypeFile">Should be True when the calling function has created a ScanType file that lists the scan type for each scan</param>
+	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
 	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
 	''' <returns>Options string if success; empty string if an error</returns>
 	''' <remarks></remarks>
-	Public Function ParseMSGFDBParameterFile(ByVal FastaFileSizeKB As Single, ByVal FastaFileIsDecoy As Boolean, ByVal strAssumedScanType As String, ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+	Public Function ParseMSGFDBParameterFile(
+	  ByVal FastaFileSizeKB As Single,
+	  ByVal FastaFileIsDecoy As Boolean,
+	  ByVal strAssumedScanType As String,
+	  ByVal blnUsingScanTypeFile As Boolean,
+	  ByVal strInstrumentGroup As String,
+	  ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+
 		Const DEFINE_MAX_THREADS As Boolean = True
 		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
@@ -1176,7 +1185,6 @@ Public Class clsMSGFDBUtils
 
 		Dim strDatasetType As String
 		Dim blnHCD As Boolean = False
-		Dim blnHighResMSn As Boolean = False
 
 		Dim strSearchEngineName As String = "Unknown MSGF App"
 
@@ -1223,21 +1231,95 @@ Public Class clsMSGFDBUtils
 						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-							If Not String.IsNullOrWhiteSpace(strAssumedScanType) AndAlso IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
-								' Override FragmentationMethodID using strAssumedScanType
-								Select Case strAssumedScanType.ToUpper()
-									Case "CID"
-										strValue = "1"
-									Case "ETD"
-										strValue = "2"
-									Case "HCD"
-										strValue = "3"
-									Case Else
-										' Invalid string
-										mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-										ReportError(mErrorMessage)
-										Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-								End Select
+							If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+
+								If blnUsingScanTypeFile Then
+									' Override FragmentationMethodID to always be 0
+									strValue = "0"
+
+								ElseIf Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
+									' Override FragmentationMethodID using strAssumedScanType
+									Select Case strAssumedScanType.ToUpper()
+										Case "CID"
+											strValue = "1"
+										Case "ETD"
+											strValue = "2"
+										Case "HCD"
+											strValue = "3"
+										Case Else
+											' Invalid string
+											mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+											ReportError(mErrorMessage)
+											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+									End Select
+
+								End If
+
+							ElseIf IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
+								' Override Instrument ID based on the instrument class
+
+								' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
+								' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
+								' #  2 means TOF
+								' #  3 means Q-Exactive
+
+								If String.IsNullOrEmpty(strInstrumentGroup) Then strInstrumentGroup = "#Undefined#"
+								Dim strNewInstrumentID As String = String.Empty
+
+								' Thermo Instruments
+								If IsMatch(strInstrumentGroup, "LCQ") Then
+									strNewInstrumentID = "0"
+								ElseIf IsMatch(strInstrumentGroup, "LTQ") Then
+									strNewInstrumentID = "0"
+								ElseIf IsMatch(strInstrumentGroup, "LTQ-ETD") Then
+									strNewInstrumentID = "0"
+								ElseIf IsMatch(strInstrumentGroup, "LTQ-Prep") Then
+									strNewInstrumentID = "0"
+								ElseIf IsMatch(strInstrumentGroup, "Orbitrap") Then
+									strNewInstrumentID = "1"
+								ElseIf IsMatch(strInstrumentGroup, "VelosOrbi") Then
+									strNewInstrumentID = "1"
+								ElseIf IsMatch(strInstrumentGroup, "VelosPro") Then
+									strNewInstrumentID = "1"
+								ElseIf IsMatch(strInstrumentGroup, "LTQ_FT") Then
+									strNewInstrumentID = "1"
+								ElseIf IsMatch(strInstrumentGroup, "QExactive") Then
+									strNewInstrumentID = "3"
+								ElseIf IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument
+									strNewInstrumentID = "0"
+								ElseIf IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument
+									strNewInstrumentID = "1"
+								ElseIf IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument
+									strNewInstrumentID = "1"
+								Else
+									' Leave unchanged
+									strNewInstrumentID = strValue
+									If m_DebugLevel >= 1 Then
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Instrument group not recognized (" & strInstrumentGroup & "); will leave instrumentID as " & strValue)
+									End If
+
+								End If
+
+								If strNewInstrumentID <> strValue Then
+									If m_DebugLevel >= 1 Then
+										Dim strInstIDDescription As String = "??"
+										Select Case strNewInstrumentID
+											Case "0"
+												strInstIDDescription = "Low-res LCQ/LTQ"
+											Case "1"
+												strInstIDDescription = "High-res LTQ, e.g. Orbitrap"
+											Case "2"
+												strInstIDDescription = "TOF"
+											Case "3"
+												strInstIDDescription = "Q-Exactive"
+										End Select
+
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-updating instrument ID from " & strValue & " to " & strNewInstrumentID & " (" & strInstIDDescription & ") based on instrument group " & strInstrumentGroup)
+									End If
+
+									strValue = strNewInstrumentID
+								End If
+
 							End If
 
 							strArgumentSwitchOriginal = String.Copy(strArgumentSwitch)
@@ -1326,17 +1408,6 @@ Public Class clsMSGFDBUtils
 						ElseIf IsMatch(kvSetting.Key, "DynamicMod") Then
 							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
 								lstDynamicMods.Add(strValue)
-							End If
-						End If
-
-						If IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
-							If Integer.TryParse(strValue, intValue) Then
-								' 0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-								' 1 means High-res LTQ (Default for HCD).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
-								' 2 means TOF
-								If intValue = 1 Then
-									blnHighResMSn = True
-								End If
 							End If
 						End If
 

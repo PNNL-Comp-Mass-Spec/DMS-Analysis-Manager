@@ -79,88 +79,88 @@ Public Class clsPluginLoader
 		Dim myToolRunner As AnalysisManagerBase.IToolRunner = Nothing
 
 		Select Case className.ToLower()
-			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT".ToLower
+			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT, IToolRunner)
 
-			'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower
+			'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit, IToolRunner)
-			'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower
+			'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN".ToLower()
 			'   myToolRunner = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisToolRunnerIN, IToolRunner)
 
-			'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower
+			'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisToolRunnerInspResultsAssembly, IToolRunner)
 
-			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower
+			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC".ToLower
+			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsTIC".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisToolRunnerDecon2lsDeIsotope, IToolRunner)
-			'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower
+			'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisToolRunnerDTAtoDAT, IToolRunner)
 
-			'Case "AnalysisManagerExtractionPlugin.clsExtractToolRunner".ToLower
+			'Case "AnalysisManagerExtractionPlugin.clsExtractToolRunner".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerExtractionPlugin.clsExtractToolRunner, IToolRunner)
 
-			'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen".ToLower
+			'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerMsXmlGenPlugIn.clsAnalysisToolRunnerMSXMLGen, IToolRunner)
 
-			'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker".ToLower
+			'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisToolRunnerMSXMLBruker, IToolRunner)
 
-			'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower
+			'Case "MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter".ToLower()
 			'    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter, IToolRunner)
-			'Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower
+			'Case "AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisToolRunnerMASICFinnigan, IToolRunner)
-			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR".ToLower
+			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICR, IToolRunner)
-			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek".ToLower
+			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek, IToolRunner)
-			'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF".ToLower
+			'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF, IToolRunner)
-			'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower
+			'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisToolRunnerOM".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisToolRunnerOM, IToolRunner)
-			'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls".ToLower
+			'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls, IToolRunner)
-			'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower
+			'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery, IToolRunner)
-			'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML".ToLower
+			'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisToolRunnerPRIDEMzXML, IToolRunner)
-			'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator".ToLower
+			'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator".ToLower()
 			'    myToolRunner = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisToolRunnerPhosphoFdrAggregator, IToolRunner)
 
-			'Case "AnalysisManagerMSGFPlugin.clsMSGFRunner".ToLower
+			'Case "AnalysisManagerMSGFPlugin.clsMSGFRunner".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSGFPlugin.clsMSGFRunner, IToolRunner)
 
-			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower
+			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB, IToolRunner)
 
-			'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower
+			'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv, IToolRunner)
 
-			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower
+			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
 
-			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlignHistone".ToLower
+			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlignHistone".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisToolRunnerMSAlignHistone, IToolRunner)
 
-			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower
+			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
 
-			'Case "DTASpectraFileGen.clsDtaGenToolRunner".ToLower
+			'Case "DTASpectraFileGen.clsDtaGenToolRunner".ToLower()
 			'	myToolRunner = DirectCast(New DTASpectraFileGen.clsDtaGenToolRunner, IToolRunner)
 
 			'Case "AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisToolRunnerSeqCluster, IToolRunner)
 
-			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker".ToLower
+			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker, IToolRunner)
 
-			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch".ToLower
+			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerLipidMapSearchPlugIn.clsAnalysisToolRunnerLipidMapSearch, IToolRunner)
 
-			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant".ToLower
+			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisToolRunnerMSAlignQuant, IToolRunner)
 
-			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter".ToLower
+			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisToolRunnerPRIDEConverter, IToolRunner)
 
 			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisToolRunnerMultiAlignAggregator".ToLower()
@@ -168,6 +168,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisToolRunnerMage, IToolRunner)
+
+			'Case "AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops, IToolRunner)
 
 		End Select
 
@@ -179,96 +182,100 @@ Public Class clsPluginLoader
 		Dim myModule As AnalysisManagerBase.IAnalysisResources = Nothing
 
 		Select Case className.ToLower()
-			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower
+			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT, IAnalysisResources)
 
-			'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower
+			'Case "AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerDtaSplitPlugIn.clsAnalysisResourcesDtaSplit, IAnalysisResources)
-			'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower
+			'Case "AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN".ToLower()
 			'   myModule = DirectCast(New AnalysisManagerInSpecTPlugIn.clsAnalysisResourcesIN, IAnalysisResources)
 
-			'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower
+			'Case "AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerInspResultsAssemblyPlugIn.clsAnalysisResourcesInspResultsAssembly, IAnalysisResources)
 
-			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower
+			'Case "AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerDecon2lsPlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-			'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower
+			'Case "AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerMSClusterDTAtoDATPlugIn.clsAnalysisResourcesDTAtoDAT, IAnalysisResources)
 
-			'Case "AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction".ToLower
+			'Case "AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction, IAnalysisResources)
 
-			'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen".ToLower
+			'Case "AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerMsXmlGenPlugIn.clsAnalysisResourcesMSXMLGen, IAnalysisResources)
 
-			'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXmlBruker".ToLower
+			'Case "AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXmlBruker".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerMsXmlBrukerPlugIn.clsAnalysisResourcesMSXMLBruker, IAnalysisResources)
 
-			'Case "MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter".ToLower
+			'Case "MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter".ToLower()
 			'    myToolRunner = DirectCast(New MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter, IAnalysisResources)
-			'Case "AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC".ToLower
+			'Case "AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerMasicPlugin.clsAnalysisResourcesMASIC, IAnalysisResources)
-			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls".ToLower
+			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls, IAnalysisResources)
-			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek".ToLower
+			'Case "AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesLTQ_FTPek, IAnalysisResources)
-			'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF".ToLower
+			'Case "AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF, IAnalysisResources)
-			'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower
+			'Case "AnalysisManagerOMSSAPlugIn.clsAnalysisResourcesOM".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerOMSSAPlugin.clsAnalysisResourcesOM, IAnalysisResources)
-			'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower
+			'Case "AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls, IAnalysisResources)
-			'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower
+			'Case "AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerDtaRefineryPlugIn.clsAnalysisResourcesDtaRefinery, IAnalysisResources)
-			'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML".ToLower
+			'Case "AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerPRIDEMzXMLPlugIn.clsAnalysisResourcesPRIDEMzXML, IAnalysisResources)
 
-			'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator".ToLower
+			'Case "AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator".ToLower()
 			'    myModule = DirectCast(New AnalysisManagerPhospho_FDR_AggregatorPlugIn.clsAnalysisResourcesPhosphoFdrAggregator, IAnalysisResources)
 
-			'Case "AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF".ToLower
+			'Case "AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF, IAnalysisResources)
 
-			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower
+			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB, IAnalysisResources)
 
-			'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()
+			'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()()
 			'	myModule = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisResourcesMSDeconv, IAnalysisResources)
 
-			'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()
+			'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()()
 			'	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
 
-			'Case "AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone".ToLower()
+			'Case "AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone".ToLower()()
 			'	myModule = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisResourcesMSAlignHistone, IAnalysisResources)
 
-			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower
+			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)
 
-			'Case "DTASpectraFileGen.clsDtaGenResources".ToLower
+			'Case "DTASpectraFileGen.clsDtaGenResources".ToLower()
 			'	myModule = DirectCast(New DTASpectraFileGen.clsDtaGenResources, IAnalysisResources)
 
-			'Case "AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq".ToLower()
+			'Case "AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq".ToLower()()
 			'	myModule = DirectCast(New AnalysisManagerSequestPlugin.clsAnalysisResourcesSeq, IAnalysisResources)
 
-			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker".ToLower
+			'Case "AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker, IAnalysisResources)
 
-			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch".ToLower
+			'Case "AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerLipidMapSearchPlugIn.clsAnalysisResourcesLipidMapSearch, IAnalysisResources)
 
-			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant".ToLower
+			'Case "AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMSAlignQuantPlugIn.clsAnalysisResourcesMSAlignQuant, IAnalysisResources)
 
-			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter".ToLower
+			'Case "AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerPRIDEConverterPlugIn.clsAnalysisResourcesPRIDEConverter, IAnalysisResources)
 
-			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator".ToLower
+			'Case "AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMultiAlign_AggregatorPlugIn.clsAnalysisResourcesMultiAlignAggregator, IAnalysisResources)
 
-			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage".ToLower
+			'Case "AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage".ToLower()
 			'	myModule = DirectCast(New AnalysisManager_Mage_PlugIn.clsAnalysisResourcesMage, IAnalysisResources)
+
+			'Case "AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops".ToLower()
+			'	myModule = DirectCast(New AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops, IAnalysisResources)
+
 
 		End Select
 

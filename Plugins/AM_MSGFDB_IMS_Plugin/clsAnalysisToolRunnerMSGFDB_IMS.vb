@@ -69,6 +69,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 		Dim FastaFileIsDecoy As Boolean
 
 		Dim strAssumedScanType As String = String.Empty
+		Dim blnUsingScanTypeFile As Boolean
+
 		Dim ResultsFileName As String
 
 		Try
@@ -132,6 +134,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			mToolVersionWritten = False
 
 			strAssumedScanType = "HCD"
+			blnUsingScanTypeFile = False
 
 			' Initialize mMSGFDBUtils
 			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
@@ -144,8 +147,10 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 				Return result
 			End If
 
+			Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+
 			' Read the MSGFDB Parameter File	
-			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strMSGFDbCmdLineOptions)
+			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, blnUsingScanTypeFile, strInstrumentGroup, strMSGFDbCmdLineOptions)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then

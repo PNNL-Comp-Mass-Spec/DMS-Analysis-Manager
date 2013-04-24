@@ -1791,7 +1791,28 @@ Public MustInherit Class clsAnalysisResources
 				mFreeMemoryPerformanceCounter.ReadOnly = True
 			End If
 
-			sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+			Dim intIterations As Integer = 0
+			sngFreeMemory = 0
+			Do While sngFreeMemory = 0 AndAlso intIterations <= 3
+				sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+				If sngFreeMemory = 0 Then
+					' You sometimes have to call .NextValue() several times before it returns a useful number
+					' Wait 1 second and then try again
+					System.Threading.Thread.Sleep(1000)
+				End If
+				intIterations += 1
+			Loop
+
+			If sngFreeMemory = 0 Then
+
+				If System.DateTime.Now().Hour = 15 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Performance monitor reports 0 MB available; using alternate method: Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm)")
+				End If
+
+				' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
+				sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+
+			End If
 
 		Catch ex As Exception
 			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
