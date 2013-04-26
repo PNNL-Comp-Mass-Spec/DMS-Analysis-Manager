@@ -56,7 +56,9 @@ Public Class clsMSGFDBUtils
 	Protected mMSGFDbVersion As String = String.Empty
 	Protected mErrorMessage As String = String.Empty
 	Protected mConsoleOutputErrorMsg As String = String.Empty
+
 	Protected mContinuumSpectraSkipped As Integer
+	Protected mSpectraSearched As Integer
 
 	Protected mPhosphorylationSearch As Boolean
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
@@ -101,6 +103,12 @@ Public Class clsMSGFDBUtils
 		End Get
 	End Property
 
+	Public ReadOnly Property SpectraSearched As Integer
+		Get
+			Return mSpectraSearched
+		End Get
+	End Property
+
 #Region "Methods"
 
 	Public Sub New(oMgrParams As AnalysisManagerBase.IMgrParams, oJobParams As AnalysisManagerBase.IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
@@ -115,6 +123,7 @@ Public Class clsMSGFDBUtils
 		mMSGFDbVersion = String.Empty
 		mConsoleOutputErrorMsg = String.Empty
 		mContinuumSpectraSkipped = 0
+		mSpectraSearched = 0
 
 	End Sub
 
@@ -240,7 +249,7 @@ Public Class clsMSGFDBUtils
 			End If
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+				ReportMessage(JavaProgLoc & " " & CmdStr)
 			End If
 
 			Dim objCreateTSV As clsRunDosProgram
@@ -554,7 +563,7 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
 		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
 		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")		' This setting is always set to 0 since we create a _ScanType.txt file that specifies the type of each scan (thus, the value in the parameter file is ignored)
-		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")			' This setting is auto-updated based on the instrument class for this dataset (thus, the value in the parameter file is ignored)
+		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")			' This setting is auto-updated based on the instrument class for this dataset, plus also the scan types listed in the _ScanType.txt file (thus, the value in the parameter file is typically ignored)
 		dctParamNames.Add("EnzymeID", "e")
 		dctParamNames.Add("C13", "c13")					' Used by MS-GFDB
 		dctParamNames.Add("IsotopeError", "ti")			' Used by MSGF+
@@ -640,7 +649,7 @@ Public Class clsMSGFDBUtils
 					strLineIn = srParamFile.ReadLine()
 
 					kvSetting = GetKeyValueSetting(strLineIn)
-				
+
 					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso IsMatch(kvSetting.Key, strSettingToFind) Then
 						Return kvSetting.Value
 					End If
@@ -706,14 +715,14 @@ Public Class clsMSGFDBUtils
 			If strTDASetting.Trim() = "0" Then
 				FastaFileIsDecoy = True
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing large FASTA file with forward-only search; auto switching to -tda 0")
+					ReportMessage("Processing large FASTA file with forward-only search; auto switching to -tda 0")
 				End If
 			End If
 
 		End If
 
 		If m_DebugLevel >= 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create Suffix Array files")
+			ReportMessage("Indexing Fasta file to create Suffix Array files")
 		End If
 
 		' Look for the suffix array files that should exist for the fasta file
@@ -762,6 +771,104 @@ Public Class clsMSGFDBUtils
 	End Function
 
 	''' <summary>
+	''' Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
+	''' </summary>
+	''' <param name="strScanTypeFilePath"></param>
+	''' <param name="lstLowResMSn">Low Res MSn spectra</param>
+	''' <param name="lstHighResMSn">High Res MSn spectra (but not HCD)</param>
+	''' <param name="lstHCDMSn">HCD Spectra</param>
+	''' <param name="lstOther">Spectra that are not MSn</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Function LoadScanTypeFile(ByVal strScanTypeFilePath As String,
+	  ByRef lstLowResMSn As Generic.Dictionary(Of Integer, String),
+	  ByRef lstHighResMSn As Generic.Dictionary(Of Integer, String),
+	  ByRef lstHCDMSn As Generic.Dictionary(Of Integer, String),
+	  ByRef lstOther As Generic.Dictionary(Of Integer, String)) As Boolean
+
+		Dim strLineIn As String
+		Dim intScanNumberColIndex As Integer = -1
+		Dim intScanTypeNameColIndex As Integer = -1
+
+		Try
+			If Not IO.File.Exists(strScanTypeFilePath) Then
+				mErrorMessage = "ScanType file not found: " & strScanTypeFilePath				
+				Return False
+			End If
+
+			lstLowResMSn = New Generic.Dictionary(Of Integer, String)
+			lstHighResMSn = New Generic.Dictionary(Of Integer, String)
+			lstHCDMSn = New Generic.Dictionary(Of Integer, String)
+			lstOther = New Generic.Dictionary(Of Integer, String)
+
+			Using srScanTypeFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strScanTypeFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				While srScanTypeFile.Peek > -1
+					strLineIn = srScanTypeFile.ReadLine()
+
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+						Dim lstColumns As Generic.List(Of String)
+						lstColumns = strLineIn.Split(ControlChars.Tab).ToList()
+
+						If intScanNumberColIndex < 0 Then
+							' Parse the header line to define the mapping
+							' Expected headers are ScanNumber   ScanTypeName   ScanType
+							intScanNumberColIndex = lstColumns.IndexOf("ScanNumber")
+							intScanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName")
+
+						ElseIf intScanNumberColIndex >= 0 Then
+							Dim intScanNumber As Integer
+							Dim strScanType As String
+							Dim strScanTypeLCase As String
+
+							If Integer.TryParse(lstColumns(intScanNumberColIndex), intScanNumber) Then
+								If intScanTypeNameColIndex >= 0 Then
+									strScanType = lstColumns(intScanTypeNameColIndex)
+									strScanTypeLCase = strScanType.ToLower()
+
+									If strScanTypeLCase.Contains("hcd") Then
+										lstHCDMSn.Add(intScanNumber, strScanType)
+
+									ElseIf strScanTypeLCase.Contains("hmsn") Then
+										lstHighResMSn.Add(intScanNumber, strScanType)
+
+									ElseIf strScanTypeLCase.Contains("msn") Then
+										' Not HCD and doesn't contain HMSn; assume low-res
+										lstLowResMSn.Add(intScanNumber, strScanType)
+
+									ElseIf strScanTypeLCase.Contains("cid") OrElse strScanTypeLCase.Contains("etd") Then
+										' The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
+										' This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
+										' We'll assume low res
+										lstLowResMSn.Add(intScanNumber, strScanType)
+
+									Else
+										' Does not contain MSn or HCD
+										' Likely SRM or MS1
+										lstOther.Add(intScanNumber, strScanType)
+									End If
+
+								End If
+							End If
+						End If
+
+					End If
+
+				End While
+			End Using
+
+		Catch ex As Exception
+			mErrorMessage = "Exception in LoadScanTypeFile"
+			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
 	''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
 	''' </summary>
 	''' <returns>Percent Complete (value between 0 and 100)</returns>
@@ -796,9 +903,14 @@ Public Class clsMSGFDBUtils
 		' Computing EFDRs finished(elapsed time: 0.78 sec)
 		' MS-GFDB complete (total elapsed time: 699.69 sec)
 
-		Static reExtractThreadCount As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Using (\d+) thread", _
-		  Text.RegularExpressions.RegexOptions.Compiled Or _
+		Static reExtractThreadCount As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Using (\d+) thread",
+		  Text.RegularExpressions.RegexOptions.Compiled Or
 		  Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+		Static reSpectraSearched As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Spectrum.+\(total: *(\d+)\)",
+		  Text.RegularExpressions.RegexOptions.Compiled Or
+		  Text.RegularExpressions.RegexOptions.IgnoreCase)
+
 		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
 
 		Dim strConsoleOutputFilePath As String = "??"
@@ -834,6 +946,7 @@ Public Class clsMSGFDBUtils
 
 			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
 			mContinuumSpectraSkipped = 0
+			mSpectraSearched = 0
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
@@ -896,6 +1009,15 @@ Public Class clsMSGFDBUtils
 
 							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
 								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+							End If
+
+						ElseIf strLineIn.StartsWith("Spectrum") Then
+							' Extract out the number of spectra that MSGF+ will actually search
+
+							oMatch = reSpectraSearched.Match(strLineIn)
+
+							If oMatch.Success Then
+								Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
 							End If
 
 						ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
@@ -1146,7 +1268,7 @@ Public Class clsMSGFDBUtils
 	''' <param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
 	''' <param name="FastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
 	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-	''' <param name="blnUsingScanTypeFile">Should be True when the calling function has created a ScanType file that lists the scan type for each scan</param>
+	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
 	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
 	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
 	''' <returns>Options string if success; empty string if an error</returns>
@@ -1155,7 +1277,7 @@ Public Class clsMSGFDBUtils
 	  ByVal FastaFileSizeKB As Single,
 	  ByVal FastaFileIsDecoy As Boolean,
 	  ByVal strAssumedScanType As String,
-	  ByVal blnUsingScanTypeFile As Boolean,
+	  ByVal strScanTypeFilePath As String,
 	  ByVal strInstrumentGroup As String,
 	  ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
@@ -1233,7 +1355,7 @@ Public Class clsMSGFDBUtils
 
 							If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 
-								If blnUsingScanTypeFile Then
+								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
 									' Override FragmentationMethodID to always be 0
 									strValue = "0"
 
@@ -1256,68 +1378,115 @@ Public Class clsMSGFDBUtils
 								End If
 
 							ElseIf IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
-								' Override Instrument ID based on the instrument class
 
-								' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-								' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
-								' #  2 means TOF
-								' #  3 means Q-Exactive
+								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
+									' Override Instrument ID based on the instrument class and scan types in the _ScanType file
 
-								If String.IsNullOrEmpty(strInstrumentGroup) Then strInstrumentGroup = "#Undefined#"
-								Dim strNewInstrumentID As String = String.Empty
+									' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
+									' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
+									' #  2 means TOF
+									' #  3 means Q-Exactive
 
-								' Thermo Instruments
-								If IsMatch(strInstrumentGroup, "LCQ") Then
-									strNewInstrumentID = "0"
-								ElseIf IsMatch(strInstrumentGroup, "LTQ") Then
-									strNewInstrumentID = "0"
-								ElseIf IsMatch(strInstrumentGroup, "LTQ-ETD") Then
-									strNewInstrumentID = "0"
-								ElseIf IsMatch(strInstrumentGroup, "LTQ-Prep") Then
-									strNewInstrumentID = "0"
-								ElseIf IsMatch(strInstrumentGroup, "Orbitrap") Then
-									strNewInstrumentID = "1"
-								ElseIf IsMatch(strInstrumentGroup, "VelosOrbi") Then
-									strNewInstrumentID = "1"
-								ElseIf IsMatch(strInstrumentGroup, "VelosPro") Then
-									strNewInstrumentID = "1"
-								ElseIf IsMatch(strInstrumentGroup, "LTQ_FT") Then
-									strNewInstrumentID = "1"
-								ElseIf IsMatch(strInstrumentGroup, "QExactive") Then
-									strNewInstrumentID = "3"
-								ElseIf IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument
-									strNewInstrumentID = "0"
-								ElseIf IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument
-									strNewInstrumentID = "1"
-								ElseIf IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument
-									strNewInstrumentID = "1"
-								Else
-									' Leave unchanged
-									strNewInstrumentID = strValue
-									If m_DebugLevel >= 1 Then
-										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Instrument group not recognized (" & strInstrumentGroup & "); will leave instrumentID as " & strValue)
+									If String.IsNullOrEmpty(strInstrumentGroup) Then strInstrumentGroup = "#Undefined#"
+									Dim strNewInstrumentID As String = String.Empty
+									Dim strAutoSwitchReason As String = String.Empty
+
+									' Thermo Instruments
+									If IsMatch(strInstrumentGroup, "QExactive") Then
+										strNewInstrumentID = "3"
+										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
+
+									ElseIf IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
+										strNewInstrumentID = "0"
+										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
+
+									ElseIf IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
+										strNewInstrumentID = "1"
+										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
+
+									ElseIf IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
+										strNewInstrumentID = "1"
+										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
+
+									Else
+										' If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
+
+										' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
+
+										' Count the number of High res CID or ETD spectra
+										' Count HCD spectra separtely since MSGF+ has a special scoring model for HCD spectra
+
+										Dim lstLowResMSn As Generic.Dictionary(Of Integer, String) = Nothing
+										Dim lstHighResMSn As Generic.Dictionary(Of Integer, String) = Nothing
+										Dim lstHCDMSn As Generic.Dictionary(Of Integer, String) = Nothing
+										Dim lstOther As Generic.Dictionary(Of Integer, String) = Nothing
+										Dim blnSuccess As Boolean
+
+										blnSuccess = LoadScanTypeFile(strScanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
+
+										If Not blnSuccess Then
+											If String.IsNullOrEmpty(mErrorMessage) Then
+												mErrorMessage = "LoadScanTypeFile returned false for " & IO.Path.GetFileName(strScanTypeFilePath)
+												ReportError(mErrorMessage)
+											End If
+											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+										ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
+											mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & IO.Path.GetFileName(strScanTypeFilePath)
+											ReportError(mErrorMessage)
+											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+										Else
+											Dim dblFractionHiRes As Double = 0
+
+											If lstHighResMSn.Count > 0 Then
+												dblFractionHiRes = lstHighResMSn.Count / (lstLowResMSn.Count + lstHighResMSn.Count)
+											End If
+
+											If dblFractionHiRes > 0.1 Then
+												' At least 10% of the spectra are HMSn
+												strNewInstrumentID = "1"
+												strAutoSwitchReason = "since " & (dblFractionHiRes * 100).ToString("0") & "% of the spectra are HMSn"
+
+											Else
+												If lstLowResMSn.Count = 0 And lstHCDMSn.Count > 0 Then
+													' All of the spectra are HCD
+													strNewInstrumentID = "1"
+													strAutoSwitchReason = "since all of the spectra are HCD"
+												Else
+													strNewInstrumentID = "0"
+													If lstHCDMSn.Count = 0 And lstHighResMSn.Count = 0 Then
+														strAutoSwitchReason = "since all of the spectra are low res MSn"
+													Else
+														strAutoSwitchReason = "since there is a mix of low res and high res spectra"
+													End If
+												End If
+
+											End If
+
+										End If
+
 									End If
 
-								End If
+									If Not String.IsNullOrEmpty(strNewInstrumentID) AndAlso strNewInstrumentID <> strValue Then
+										If m_DebugLevel >= 1 Then
+											Dim strInstIDDescription As String = "??"
+											Select Case strNewInstrumentID
+												Case "0"
+													strInstIDDescription = "Low-res MSn"
+												Case "1"
+													strInstIDDescription = "High-res MSn"
+												Case "2"
+													strInstIDDescription = "TOF"
+												Case "3"
+													strInstIDDescription = "Q-Exactive"
+											End Select
 
-								If strNewInstrumentID <> strValue Then
-									If m_DebugLevel >= 1 Then
-										Dim strInstIDDescription As String = "??"
-										Select Case strNewInstrumentID
-											Case "0"
-												strInstIDDescription = "Low-res LCQ/LTQ"
-											Case "1"
-												strInstIDDescription = "High-res LTQ, e.g. Orbitrap"
-											Case "2"
-												strInstIDDescription = "TOF"
-											Case "3"
-												strInstIDDescription = "Q-Exactive"
-										End Select
+											ReportMessage("Auto-updating instrument ID from " & strValue & " to " & strNewInstrumentID & " (" & strInstIDDescription & ") " & strAutoSwitchReason)
+										End If
 
-										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-updating instrument ID from " & strValue & " to " & strNewInstrumentID & " (" & strInstIDDescription & ") based on instrument group " & strInstrumentGroup)
+										strValue = strNewInstrumentID
 									End If
-
-									strValue = strNewInstrumentID
 								End If
 
 							End If
@@ -1328,11 +1497,11 @@ Public Class clsMSGFDBUtils
 
 							If String.IsNullOrEmpty(strArgumentSwitch) Then
 								If m_DebugLevel >= 1 And Not IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
+									ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
 								End If
 							ElseIf String.IsNullOrEmpty(strValue) Then
 								If m_DebugLevel >= 1 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Skipping switch " & strArgumentSwitch & " since the value is empty")
+									ReportWarning("Skipping switch " & strArgumentSwitch & " since the value is empty")
 								End If
 							Else
 								sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)

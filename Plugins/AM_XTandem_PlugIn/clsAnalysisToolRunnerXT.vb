@@ -37,6 +37,7 @@ Public Class clsAnalysisToolRunnerXT
 
     Protected mToolVersionWritten As Boolean
     Protected mXTandemVersion As String = String.Empty
+	Protected mXTandemResultsCount As Integer				' This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
 
 #End Region
 
@@ -51,6 +52,7 @@ Public Class clsAnalysisToolRunnerXT
         Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
         Dim blnSuccess As Boolean
+		Dim blnNoResults As Boolean
 
         'Do the base class stuff
         If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -59,7 +61,9 @@ Public Class clsAnalysisToolRunnerXT
 
         ' Note: we will store the XTandem version info in the database after the first line is written to file XTandem_ConsoleOutput.txt
         mToolVersionWritten = False
-        mXTandemVersion = String.Empty
+		mXTandemVersion = String.Empty
+		mXTandemResultsCount = -1
+		blnNoResults = False
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -109,11 +113,11 @@ Public Class clsAnalysisToolRunnerXT
 
         blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True)
 
+		' Parse the console output file one more time to determine the number of peptides found
+		ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
+
         If Not mToolVersionWritten Then
-            If String.IsNullOrWhiteSpace(mXTandemVersion) Then
-                ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
-            End If
-            mToolVersionWritten = StoreToolVersionInfo()
+			mToolVersionWritten = StoreToolVersionInfo()
         End If
 
         If Not blnSuccess Then
@@ -134,6 +138,16 @@ Public Class clsAnalysisToolRunnerXT
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End If
+
+		If mXTandemResultsCount < 0 Then
+			m_message = "X!Tandem did not report a ""Valid models"" count"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			blnNoResults = True
+		ElseIf mXTandemResultsCount = 0 Then
+			m_message = "No results above threshold"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			blnNoResults = True			
+		End If
 
         'Stop the job timer
         m_StopTime = System.DateTime.UtcNow
@@ -176,7 +190,12 @@ Public Class clsAnalysisToolRunnerXT
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+		If blnNoResults Then
+			Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'ZipResult
+		End If
+
 
     End Function
 
@@ -285,6 +304,9 @@ Public Class clsAnalysisToolRunnerXT
     ''' <remarks></remarks>
     Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
+		Dim reExtraceValue As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("= *(\d+)", Text.RegularExpressions.RegexOptions.Compiled)
+		Dim reMatch As Text.RegularExpressions.Match
+
         Try
 
             If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
@@ -351,7 +373,12 @@ Public Class clsAnalysisToolRunnerXT
                         ElseIf strLineIn.StartsWith("Estimated false positives") Then
                             m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
 
-                        End If
+						ElseIf strLineIn.StartsWith("Valid models") Then
+							reMatch = reExtraceValue.Match(strLineIn)
+							If reMatch.Success Then
+								Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
+							End If
+						End If
                     End If
                 End If
             Loop

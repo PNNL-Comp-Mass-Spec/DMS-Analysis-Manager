@@ -91,7 +91,7 @@ Public Class clsAnalysisResourcesMSGFDB
 					' Open the ScanStats file and read the header line to see if column ScanTypeName is present
 					Dim blnScanTypeColumnFound As Boolean
 					Dim strScanStatsFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
-					blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeColumn(strScanStatsFilePath)
+					blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsFilePath)
 
 					If Not blnScanTypeColumnFound Then
 						' We also have to retrieve the _ScanStatsEx.txt file
@@ -136,7 +136,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	End Function
 
-	Protected Function ValidateScanStatsFileHasScanTypeColumn(ByVal strScanStatsFilePath As String) As Boolean
+	Protected Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
 
 		Dim blnScanTypeColumnFound As Boolean = False
 

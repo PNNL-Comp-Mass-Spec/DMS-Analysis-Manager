@@ -45,6 +45,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Dim result As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
+		Dim blnTooManySkippedSpectra As Boolean = False
 		Dim blnSuccess As Boolean
 
 		Dim FastaFilePath As String = String.Empty
@@ -52,7 +53,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim FastaFileIsDecoy As Boolean
 
 		Dim blnUsingMzXML As Boolean
-		Dim blnUsingScanTypeFile As Boolean
+		Dim strScanTypeFilePath As String = String.Empty
 		Dim strAssumedScanType As String = String.Empty
 		Dim ResultsFileName As String
 
@@ -108,7 +109,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
 			mToolVersionWritten = False
 
-			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, blnUsingScanTypeFile)
+			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, strScanTypeFilePath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			End If
@@ -127,7 +128,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
 
 			' Read the MSGFDB Parameter File
-			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, blnUsingScanTypeFile, strInstrumentGroup, strMSGFDbCmdLineOptions)
+			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strMSGFDbCmdLineOptions)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
@@ -243,8 +244,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 						blnProcessingError = True
 					Else
-						m_EvalMessage = strSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+						' Compute the fraction of all potential spectra that were skipped
+						Dim dblFractionSkipped As Double = 0
+						Dim strPercentSkipped As String
+
+						dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
+						strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
+
+						If dblFractionSkipped > 0.2 Then
+							m_message = strSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							blnTooManySkippedSpectra = True
+						Else
+							m_EvalMessage = strSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+						End If
+						
 					End If
 
 				End If
@@ -308,7 +323,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+		If blnTooManySkippedSpectra Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
+
 
 	End Function
 
@@ -372,15 +392,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Sub
 
-	Protected Function CreateScanTypeFile() As Boolean
+	Protected Function CreateScanTypeFile(ByRef strScanTypeFilePath As String) As Boolean
 
 		Dim objScanTypeFileCreator As clsScanTypeFileCreator
 		objScanTypeFileCreator = New clsScanTypeFileCreator(m_WorkDir, m_Dataset)
+
+		strScanTypeFilePath = String.Empty
 
 		If objScanTypeFileCreator.CreateScanTypeFile() Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Created ScanType file: " & System.IO.Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
 			End If
+			strScanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath
 			Return True
 		Else
 			Dim strErrorMessage = "Error creating scan type file: " & objScanTypeFileCreator.ErrorMessage
@@ -396,12 +419,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	Protected Function DetermineAssumedScanType(ByRef strAssumedScanType As String, ByRef blnUsingMzXML As Boolean, ByRef blnUsingScanTypeFile As Boolean) As IJobParams.CloseOutType
+	Protected Function DetermineAssumedScanType(ByRef strAssumedScanType As String, ByRef blnUsingMzXML As Boolean, ByRef strScanTypeFilePath As String) As IJobParams.CloseOutType
 		Dim strScriptNameLCase As String
 		strAssumedScanType = String.Empty
 
 		strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower()
-		blnUsingScanTypeFile = False
+		strScanTypeFilePath = String.Empty
 
 		If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfdb_bruker") Then
 			blnUsingMzXML = True
@@ -417,10 +440,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If String.IsNullOrWhiteSpace(strAssumedScanType) Then
 				' Create the ScanType file (lists scan type for each scan number)
-				If Not CreateScanTypeFile() Then
+				If Not CreateScanTypeFile(strScanTypeFilePath) Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-				blnUsingScanTypeFile = True
+				End If				
 			End If
 
 		End If
