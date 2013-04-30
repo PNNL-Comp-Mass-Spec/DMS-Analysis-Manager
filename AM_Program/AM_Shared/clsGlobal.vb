@@ -855,6 +855,23 @@ Public Class clsGlobal
 	End Function
 
 	''' <summary>
+	''' Returns True if the computer name is Pub-1000 or higher
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function UsingVirtualMachineOnPIC() As Boolean
+		Dim rePub1000 As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Pub-1\d{3,}", Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+		If rePub1000.IsMatch(Environment.MachineName) Then
+			' The Memory performance counters are not available on Windows instances running under VMWare on PIC
+			Return True
+		Else
+			Return False
+		End If
+
+	End Function
+
+	''' <summary>
 	''' Looks for a .hashcheck file for the specified data file
 	''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
 	''' Next compares the stored values to the actual values

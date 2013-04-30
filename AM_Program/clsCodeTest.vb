@@ -140,6 +140,38 @@ Public Class clsCodeTest
 
 	'End Function
 
+	Public Sub PerformanceCounterTest()
+		Try
+			' Note that the Memory and Processor performance monitor categories are not 
+			' available on Windows instances running under VMWare on PIC
+			'Console.WriteLine("Performance monitor categories")
+			'Dim perfCats As PerformanceCounterCategory() = PerformanceCounterCategory.GetCategories()
+			'For Each category As PerformanceCounterCategory In perfCats.OrderBy(Function(c) c.CategoryName)
+			'	Console.WriteLine("Category Name: {0}", category.CategoryName)
+			'Next
+			'Console.WriteLine()
+
+
+			Dim mCPUUsagePerformanceCounter As System.Diagnostics.PerformanceCounter
+			Dim mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+
+			mCPUUsagePerformanceCounter = New System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
+			mCPUUsagePerformanceCounter.ReadOnly = True
+
+			mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+			mFreeMemoryPerformanceCounter.ReadOnly = True
+
+		Catch ex As Exception
+			Console.WriteLine()
+			Console.WriteLine("Error in PerformanceCounterTest: " & ex.Message)
+			Console.WriteLine(ex.StackTrace)
+			Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
+			If rePub1000.IsMatch(Environment.MachineName) Then
+				Console.WriteLine("This is a known issue with Windows instances running under VMWare on PIC")
+			End If
+		End Try
+	End Sub
+
 	Public Sub TestArchiveFileStart()
 		Dim strParamFilePath As String
 		Dim strTargetFolderPath As String
@@ -1538,41 +1570,74 @@ Public Class clsCodeTest
 		' The following reports various memory stats
 		' However, it doesn't report the available physical memory
 
-		'Dim winQuery As System.Management.ObjectQuery
-		'Dim searcher As System.Management.ManagementObjectSearcher
+		'Try
 
-		'winQuery = New System.Management.ObjectQuery("SELECT * FROM Win32_LogicalMemoryConfiguration")
+		'	Dim winQuery As System.Management.ObjectQuery
+		'	Dim searcher As System.Management.ManagementObjectSearcher
 
-		'searcher = New System.Management.ManagementObjectSearcher(winQuery)
+		'	winQuery = New System.Management.ObjectQuery("SELECT * FROM Win32_LogicalMemoryConfiguration")
 
-		'For Each item As System.Management.ManagementObject In searcher.Get()
-		'    Console.WriteLine("Total Space = " & item("TotalPageFileSpace").ToString)
-		'    Console.WriteLine("Total Physical Memory = " & item("TotalPhysicalMemory").ToString)
-		'    Console.WriteLine("Total Virtual Memory = " & item("TotalVirtualMemory").ToString)
-		'    Console.WriteLine("Available Virtual Memory = " & item("AvailableVirtualMemory").ToString)
-		'Next
+		'	searcher = New System.Management.ManagementObjectSearcher(winQuery)
 
+		'	For Each item As System.Management.ManagementObject In searcher.Get()
+		'		Console.WriteLine("Total Space = " & item("TotalPageFileSpace").ToString)
+		'		Console.WriteLine("Total Physical Memory = " & item("TotalPhysicalMemory").ToString)
+		'		Console.WriteLine("Total Virtual Memory = " & item("TotalVirtualMemory").ToString)
+		'		Console.WriteLine("Available Virtual Memory = " & item("AvailableVirtualMemory").ToString)
+		'	Next
+		'Catch ex As Exception
+		'	Console.WriteLine()
+		'	Console.WriteLine("Error in SystemMemoryUsage (A): " & ex.Message)
+		'	Console.WriteLine(ex.StackTrace)
+
+		'End Try
 
 		Dim mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
-		Dim sngFreeMemory As Single
+		Dim sngFreeMemoryMB As Single
 
 		Try
 			mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
 			mFreeMemoryPerformanceCounter.ReadOnly = True
 
-			sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+			sngFreeMemoryMB = mFreeMemoryPerformanceCounter.NextValue()
 
 			Console.WriteLine()
-			Console.WriteLine("Available memory (MB) = " & sngFreeMemory.ToString)
+			Console.WriteLine("Available memory (MB) = " & sngFreeMemoryMB.ToString)
 
 		Catch ex As Exception
-			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group 
-			' in "Local Users and Groups" on the machine showing this error.  Alternatively, add the user to the "Administrators" group.  
-			' In either case, you will need to reboot the computer for the change to take effect
-			If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+
+
+			Console.WriteLine()
+			Console.WriteLine("Error in SystemMemoryUsage (C): " & ex.Message)
+			Console.WriteLine(ex.StackTrace)
+
+
+			Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
+			If rePub1000.IsMatch(Environment.MachineName) Then
+				' The Memory performance counters are not available on Windows instances running under VMWare on PIC
+			Else
+
+				' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+				' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group 
+				' in "Local Users and Groups" on the machine showing this error.  Alternatively, add the user to the "Administrators" group.  
+				' In either case, you will need to reboot the computer for the change to take effect
+				If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+				End If
 			End If
+
+			Try
+				Dim oInfo As Microsoft.VisualBasic.Devices.ComputerInfo
+				oInfo = New Microsoft.VisualBasic.Devices.ComputerInfo
+
+				sngFreeMemoryMB = CSng(oInfo.AvailablePhysicalMemory / 1024.0 / 1024.0)
+				Console.WriteLine("Available memory from VB: " & sngFreeMemoryMB & " MB")
+
+			Catch ex2 As Exception
+				Console.WriteLine()
+				Console.WriteLine("Error in SystemMemoryUsage using Microsoft.VisualBasic.Devices.ComputerInfo: " & ex2.Message)
+				Console.WriteLine(ex2.StackTrace)
+			End Try
 
 		End Try
 

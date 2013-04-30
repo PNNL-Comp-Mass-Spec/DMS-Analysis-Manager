@@ -201,7 +201,8 @@ Public Class clsMemoryUsageLogger
 			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strLogFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
 
 				If Not m_PerfCountersIntitialized Then
-					InitializePerfCounters()
+					Dim msgErrors As String
+					msgErrors = InitializePerfCounters()
 					m_PerfCountersIntitialized = True
 				End If
 

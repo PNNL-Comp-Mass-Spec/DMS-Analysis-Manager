@@ -97,7 +97,10 @@ Module modMain
 
 						'objTest.TestProgRunnerIDPicker()
 
-						objTest.TestProteinDBExport("c:\dms_temp_org")
+						'objTest.TestProteinDBExport("c:\dms_temp_org")
+
+						objTest.PerformanceCounterTest()
+						objTest.SystemMemoryUsage()
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

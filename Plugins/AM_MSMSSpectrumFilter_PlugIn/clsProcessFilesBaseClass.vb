@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
 	Public Sub New()
-		mFileDate = "February 19, 2013"
+		mFileDate = "April 22, 2013"
 		mErrorCode = eProcessFilesErrorCodes.NoError
 		mProgressStepDescription = String.Empty
 
@@ -59,6 +59,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 	Protected mFileDate As String
 	Protected mAbortProcessing As Boolean
+	Protected mIgnoreErrorsWhenUsingWildcardMatching As Boolean
 
 	Protected mLogMessagesToFile As Boolean
 	Protected mLogFilePath As String
@@ -91,6 +92,21 @@ Public MustInherit Class clsProcessFilesBaseClass
 		End Get
 		Set(ByVal Value As Boolean)
 			mAbortProcessing = Value
+		End Set
+	End Property
+
+	''' <summary>
+	''' This option applies when processing files matched with a wildcard
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Property IgnoreErrorsWhenUsingWildcardMatching As Boolean
+		Get
+			Return mIgnoreErrorsWhenUsingWildcardMatching
+		End Get
+		Set(value As Boolean)
+			mIgnoreErrorsWhenUsingWildcardMatching = value
 		End Set
 	End Property
 
@@ -208,6 +224,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 		Catch ex As Exception
 			HandleException("Error cleaning up the file paths", ex)
+			Return False
 		End Try
 
 		Return blnSuccess
@@ -238,6 +255,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 		Catch ex As Exception
 			HandleException("Error cleaning up the file paths", ex)
+			Return False
 		End Try
 
 		Return blnSuccess
@@ -540,6 +558,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 				' Error creating the log file; set mLogMessagesToFile to false so we don't repeatedly try to create it
 				mLogMessagesToFile = False
 				HandleException("Error opening log file", ex)
+				' Note: do not exit this function if an exception occurs
 			End Try
 
 		End If
@@ -627,7 +646,11 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 					blnSuccess = ProcessFile(ioFileMatch.FullName, strOutputFolderPath, strParameterFilePath, blnResetErrorCode)
 
-					If Not blnSuccess OrElse mAbortProcessing Then Exit For
+					If mAbortProcessing Then
+						Exit For
+					ElseIf Not blnSuccess AndAlso Not mIgnoreErrorsWhenUsingWildcardMatching Then
+						Exit For
+					End If
 					If intMatchCount Mod 100 = 0 Then Console.Write(".")
 
 				Next ioFileMatch
@@ -650,6 +673,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 		Catch ex As Exception
 			HandleException("Error in ProcessFilesWildcard", ex)
+			Return False
 		End Try
 
 		Return blnSuccess
@@ -787,7 +811,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 
 		Catch ex As Exception
 			HandleException("Error in ProcessFilesAndRecurseFolders", ex)
-			blnSuccess = False
+			Return False
 		End Try
 
 		Return blnSuccess

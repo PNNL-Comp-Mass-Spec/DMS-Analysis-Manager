@@ -511,12 +511,14 @@ Public Class clsStatusFile
 	End Function
 
 	Private Sub InitializePerformanceCounters()
+		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
+
 		Try
 			mCPUUsagePerformanceCounter = New System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
 			mCPUUsagePerformanceCounter.ReadOnly = True
 		Catch ex As Exception
 			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-			If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
 			End If
 		End Try
@@ -529,7 +531,7 @@ Public Class clsStatusFile
 			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
 			' Alternatively, add the user to the "Administrators" group.
 			' In either case, you will need to reboot the computer for the change to take effect
-			If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
 			End If
 
@@ -542,7 +544,7 @@ Public Class clsStatusFile
 	''' <returns>Value between 0 and 100</returns>
 	''' <remarks>This is CPU usage for all running applications, not just this application</remarks>
 	Private Function GetCPUUtilization() As Single
-		Dim sngCPUUtilization As Single
+		Dim sngCPUUtilization As Single = 0
 
 		Try
 			If Not mCPUUsagePerformanceCounter Is Nothing Then
@@ -562,12 +564,17 @@ Public Class clsStatusFile
 	''' <returns>Amount of free memory, in MB</returns>
 	''' <remarks></remarks>
 	Public Function GetFreeMemoryMB() As Single
-		Dim sngFreeMemory As Single
+		Dim sngFreeMemory As Single = 0
 
 		Try
 			If Not mFreeMemoryPerformanceCounter Is Nothing Then
 				sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
 			End If
+
+			If sngFreeMemory = 0 Then
+				sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+			End If
+
 		Catch ex As Exception
 			' Ignore errors here
 		End Try

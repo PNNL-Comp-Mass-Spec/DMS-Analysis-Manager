@@ -375,8 +375,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		' Write the statistics to the summary file
 		m_SummaryFile.Add(Environment.NewLine & "Cluster node count: ".PadRight(24) & mSequestNodeProcessingStats.NumNodeMachines.ToString)
 		m_SummaryFile.Add("Sequest process count: ".PadRight(24) & mSequestNodeProcessingStats.NumSlaveProcesses.ToString)
-		m_SummaryFile.Add("Searched file count: ".PadRight(24) & mSequestNodeProcessingStats.SearchedFileCount.ToString("0,000"))
-		m_SummaryFile.Add("Total search time: ".PadRight(24) & mSequestNodeProcessingStats.TotalSearchTimeSeconds.ToString("0,000") & " secs")
+		m_SummaryFile.Add("Searched file count: ".PadRight(24) & mSequestNodeProcessingStats.SearchedFileCount.ToString("#,##0"))
+		m_SummaryFile.Add("Total search time: ".PadRight(24) & mSequestNodeProcessingStats.TotalSearchTimeSeconds.ToString("#,##0") & " secs")
 		m_SummaryFile.Add("Average search time: ".PadRight(24) & mSequestNodeProcessingStats.AvgSearchTime.ToString("##0.000") & " secs/spectrum")
 
 	End Sub

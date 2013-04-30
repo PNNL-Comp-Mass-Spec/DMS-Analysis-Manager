@@ -1157,6 +1157,226 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Determines the full path to the dataset file
+	''' Returns a folder path for data that is stored in folders (e.g. .D folders)
+	''' For instruments with multiple data folders, returns the path to the first folder
+	''' For instrument with multiple zipped data files, returns the dataset folder path
+	''' </summary>
+	''' <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+	''' <returns>The full path to the dataset file or folder</returns>
+	''' <remarks></remarks>
+	Protected Function FindDatasetFileOrFolder(ByRef blnIsFolder As Boolean) As String
+
+		Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
+		Dim eRawDataType As eRawDataTypeConstants
+		Dim strFileOrFolderPath As String = String.Empty
+
+		blnIsFolder = False
+
+		eRawDataType = GetRawDataType(RawDataType)
+		Select Case eRawDataType
+			Case eRawDataTypeConstants.AgilentDFolder			'Agilent ion trap data
+
+				If StoragePath.ToLower.Contains("Agilent_SL1".ToLower) OrElse _
+				   StoragePath.ToLower.Contains("Agilent_XCT1".ToLower) Then
+					' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
+					'  we would pre-process the data beforehand to create MGF files
+					' The following call can be used to retrieve the files
+					strFileOrFolderPath = FindMGFFile()
+				Else
+					' DeconTools_V2 now supports reading the .D files directly
+					' Call RetrieveDotDFolder() to copy the folder and all subfolders
+					strFileOrFolderPath = FindDotDFolder()
+					blnIsFolder = True
+				End If
+
+			Case eRawDataTypeConstants.AgilentQStarWiffFile			'Agilent/QSTAR TOF data
+				strFileOrFolderPath = FindDatasetFile(DOT_WIFF_EXTENSION)
+
+			Case eRawDataTypeConstants.ZippedSFolders			'FTICR data
+				strFileOrFolderPath = FindSFolders()
+				blnIsFolder = True
+
+			Case eRawDataTypeConstants.ThermoRawFile			'Finnigan ion trap/LTQ-FT data
+				strFileOrFolderPath = FindDatasetFile(DOT_RAW_EXTENSION)
+
+			Case eRawDataTypeConstants.MicromassRawFolder			'Micromass QTOF data
+				strFileOrFolderPath = FindDotRawFolder()
+				blnIsFolder = True
+
+			Case eRawDataTypeConstants.UIMF			'IMS UIMF data
+				strFileOrFolderPath = FindDatasetFile(DOT_UIMF_EXTENSION)
+
+			Case eRawDataTypeConstants.mzXML
+				strFileOrFolderPath = FindDatasetFile(DOT_MZXML_EXTENSION)
+
+			Case eRawDataTypeConstants.mzML
+				strFileOrFolderPath = FindDatasetFile(DOT_MZML_EXTENSION)
+
+			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
+				' Call RetrieveDotDFolder() to copy the folder and all subfolders
+
+				' Both the MSXml step tool and DeconTools require the .Baf file
+				' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
+				Dim blnSkipBAFFiles As Boolean
+				blnSkipBAFFiles = False
+
+				strFileOrFolderPath = FindDotDFolder()
+				blnIsFolder = True
+
+			Case eRawDataTypeConstants.BrukerMALDIImaging
+				strFileOrFolderPath = FindBrukerMALDIImagingFolders()
+				blnIsFolder = True
+
+		End Select
+
+		Return strFileOrFolderPath
+
+	End Function
+
+	''' <summary>
+	''' Finds the dataset folder containing Bruker Maldi imaging .zip files
+	''' </summary>
+	''' <returns>The full path to the dataset folder</returns>
+	''' <remarks></remarks>
+	Public Function FindBrukerMALDIImagingFolders() As String
+
+		Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
+
+		' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
+		' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+
+		Dim DSFolderPath As String
+		DSFolderPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+		If String.IsNullOrEmpty(DSFolderPath) Then Return String.Empty
+
+		Return DSFolderPath
+
+	End Function
+
+
+	''' <summary>
+	''' Finds a file named DatasetName.FileExtension
+	''' </summary>
+	''' <param name="FileExtension"></param>
+	''' <returns>The full path to the folder; an empty string if no match</returns>
+	''' <remarks></remarks>
+	Protected Function FindDatasetFile(ByVal FileExtension As String) As String
+
+		If Not FileExtension.StartsWith(".") Then
+			FileExtension = "." + FileExtension
+		End If
+
+		Dim DataFileName As String = m_DatasetName + FileExtension
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
+
+		If Not String.IsNullOrEmpty(DSFolderPath) Then
+			Return IO.Path.Combine(DSFolderPath, DataFileName)
+		Else
+			Return String.Empty
+		End If
+
+	End Function
+
+	''' <summary>
+	''' Finds a .Raw folder below the dataset folder
+	''' </summary>
+	''' <returns>The full path to the folder; an empty string if no match</returns>
+	''' <remarks></remarks>
+	Protected Function FindDotDFolder() As String
+		Return FindDotXFolder(DOT_D_EXTENSION)
+	End Function
+
+	''' <summary>
+	''' Finds a .D folder below the dataset folder
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function FindDotRawFolder() As String
+		Return FindDotXFolder(DOT_RAW_EXTENSION)
+	End Function
+
+	''' <summary>
+	''' Finds a subfolder (typically Dataset.D or Dataset.Raw) below the dataset folder
+	''' </summary>
+	''' <param name="FolderExtension"></param>
+	''' <returns>The full path to the folder; an empty string if no match</returns>
+	''' <remarks></remarks>
+	Protected Function FindDotXFolder(ByVal FolderExtension As String) As String
+
+		If Not FolderExtension.StartsWith(".") Then
+			FolderExtension = "." + FolderExtension
+		End If
+
+		Dim FileNameToFind As String = String.Empty
+		Dim FolderExtensionWildcard As String = "*" + FolderExtension
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard)
+
+		Dim diDatasetFolder As IO.DirectoryInfo = New IO.DirectoryInfo(ServerPath)
+
+		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
+		For Each diSubFolder As IO.DirectoryInfo In diDatasetFolder.GetDirectories(FolderExtensionWildcard)
+			Return diSubFolder.FullName
+		Next
+
+		' No match found
+		Return String.Empty
+
+	End Function
+
+	''' <summary>
+	''' Finds the dataset folder containing either a 0.ser subfolder or containing zipped S-folders
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function FindSFolders() As String
+
+		' First Check for the existence of a 0.ser Folder
+		Dim FileNameToFind As String = String.Empty
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER)
+
+		If Not String.IsNullOrEmpty(DSFolderPath) Then
+			Return IO.Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER)
+		End If
+
+		' The 0.ser folder does not exist; look for zipped s-folders
+		DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip")
+
+		Return DSFolderPath
+
+	End Function
+
+	''' <summary>
+	''' Finds the best .mgf file for the current dataset
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function FindMGFFile() As String
+
+		' Data files are in a subfolder off of the main dataset folder
+		' Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
+
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION)
+
+		Dim diServerFolder As IO.DirectoryInfo = New IO.DirectoryInfo(ServerPath)
+
+		'Get a list of the subfolders in the dataset folder		
+		'Go through the folders looking for a file with a ".mgf" extension
+		For Each diSubFolder As IO.DirectoryInfo In diServerFolder.GetDirectories()
+
+			For Each fiFile As IO.FileInfo In diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION)
+				' Return the first .mgf file that was found
+				Return fiFile.FullName
+			Next
+		Next
+
+		' No match was found
+		Return String.Empty
+
+	End Function
+
+	''' <summary>
 	''' Looks for the .mzXML file for this dataset
 	''' </summary>
 	''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
@@ -1783,7 +2003,8 @@ Public MustInherit Class clsAnalysisResources
 
 		Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
 
-		Dim sngFreeMemory As Single
+		Dim sngFreeMemory As Single = 0
+		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
 		Try
 			If mFreeMemoryPerformanceCounter Is Nothing Then
@@ -1803,24 +2024,36 @@ Public MustInherit Class clsAnalysisResources
 				intIterations += 1
 			Loop
 
-			If sngFreeMemory = 0 Then
-
-				If System.DateTime.Now().Hour = 15 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Performance monitor reports 0 MB available; using alternate method: Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm)")
-				End If
-
-				' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
-				sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
-
-			End If
-
 		Catch ex As Exception
 			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
 			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
 			' Alternatively, add the user to the "Administrators" group.
 			' In either case, you will need to reboot the computer for the change to take effect
-			If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " + ex.Message)
+			End If
+		End Try
+
+		Try
+
+			If sngFreeMemory = 0 Then
+				' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
+
+				If blnVirtualMachineOnPIC Then
+					' The Memory performance counters are not available on Windows instances running under VMWare on PIC
+				Else
+					If System.DateTime.Now().Hour = 15 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Performance monitor reports 0 MB available; using alternate method: Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm)")
+					End If
+				End If
+
+				sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+
+			End If
+
+		Catch ex As Exception
+			If System.DateTime.Now().Hour = 15 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining available memory using Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm): " + ex.Message)
 			End If
 		End Try
 
@@ -2439,7 +2672,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		Catch ex As System.Exception
 			strMsg = "Exception calling LoadDataPackageJobInfo"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; " & strMsg, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
 			Return lstDataPackagePeptideHitJobs
 		End Try
 
@@ -2465,6 +2698,7 @@ Public MustInherit Class clsAnalysisResources
 
 	''' <summary>
 	''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
+	''' Also creates a batch file that can be manually run to retrieve the instrument data files
 	''' </summary>
 	''' <param name="blnRetrieveMzXMLFile">Set to True to retrieve the mzXML file (will create it from the .Raw file if the mzXML file wasn't found)</param>
 	''' <param name="lstDataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
@@ -2485,6 +2719,9 @@ Public MustInherit Class clsAnalysisResources
 		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
+
+		' Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw ."
+		Dim lstRawFileRetrievalCommands As Generic.Dictionary(Of Integer, String) = New Generic.Dictionary(Of Integer, String)
 
 		' This list tracks the info for the jobs associated with this aggregation job's data package
 		If lstDataPackagePeptideHitJobs Is Nothing Then
@@ -2632,7 +2869,7 @@ Public MustInherit Class clsAnalysisResources
 						If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
 							' Will need to retrieve the .Raw file for this dataset
 							dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
-						Else
+						ElseIf blnRetrieveMzXMLFile Then
 							m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 							Return False
@@ -2642,20 +2879,45 @@ Public MustInherit Class clsAnalysisResources
 						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
 					End If
 
+					Dim blnIsFolder As Boolean = False
+					Dim strRawFilePath As String
+					strRawFilePath = FindDatasetFileOrFolder(blnIsFolder)
+
+					If Not String.IsNullOrEmpty(strRawFilePath) Then
+						If Not lstRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
+							Dim strCopyCommand As String
+							If blnIsFolder Then
+								strCopyCommand = "xcopy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
+							Else
+								strCopyCommand = "copy " & strRawFilePath & " ."
+							End If
+							lstRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
+						End If
+					End If
+
 				End If
 
 			Next
 
-
 			' Restore the dataset and job info for this aggregation job
 			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
+
+			If lstRawFileRetrievalCommands.Count > 0 Then
+				' Create a batch file with commands for retrieve the dataset files
+				Dim strBatchFilePath As String
+				strBatchFilePath = IO.Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
+				Using swOutfile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strBatchFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+					For Each item As String In lstRawFileRetrievalCommands.Keys
+						swOutfile.WriteLine(item)
+					Next
+				End Using
+			End If
 
 			If blnRetrieveMzXMLFile Then
 				blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve)
 			Else
 				blnSuccess = True
 			End If
-
 
 		Catch ex As System.Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
@@ -2803,10 +3065,19 @@ Public MustInherit Class clsAnalysisResources
 	ByVal FileExtension As String, _
 	ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DataFileName As String = m_DatasetName + FileExtension
-		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
+		Dim DatasetFilePath As String = FindDatasetFile(FileExtension)
+		If String.IsNullOrEmpty(DatasetFilePath) Then
+			Return False
+		End If
 
-		If CopyFileToWorkDir(DataFileName, DSFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+		Dim fiDatasetFile As IO.FileInfo = New IO.FileInfo(DatasetFilePath)
+		If Not fiDatasetFile.Exists Then
+			m_message = "Source dataset file file not found"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiDatasetFile.FullName)
+			Return False
+		End If
+
+		If CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 			Return True
 		Else
 			Return False
@@ -2825,52 +3096,49 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal GetCdfAlso As Boolean, _
 	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		'Data files are in a subfolder off of the main dataset folder
-		'Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
+		Dim strMGFFilePath As String
+		Dim fiMGFFile As IO.FileInfo
 
-		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION)
+		strMGFFilePath = FindMGFFile()
 
-		Dim DSFolders() As String
-		Dim DSFiles() As String = Nothing
-		Dim DumFolder As String
-		Dim FileFound As Boolean = False
-		Dim DataFolderPath As String = ""
+		If String.IsNullOrEmpty(strMGFFilePath) Then
+			m_message = "Source mgf file not found using FindMGFFile"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
 
-		'Get a list of the subfolders in the dataset folder
-		DSFolders = IO.Directory.GetDirectories(ServerPath)
-		'Go through the folders looking for a file with a ".mgf" extension
-		For Each DumFolder In DSFolders
-			If FileFound Then Exit For
-			DSFiles = IO.Directory.GetFiles(DumFolder, "*" + DOT_MGF_EXTENSION)
-			If DSFiles.GetLength(0) = 1 Then
-				'Correct folder has been found
-				DataFolderPath = DumFolder
-				FileFound = True
-				Exit For
-			End If
-		Next DumFolder
+		fiMGFFile = New IO.FileInfo(strMGFFilePath)
+		If Not fiMGFFile.Exists Then
+			m_message = "Source mgf file not found"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiMGFFile.FullName)
+			Return False
+		End If
 
-		'Exit if no data file was found
-		If Not FileFound Then Return False
 
 		'Do the copy
-		If Not CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
+		If Not CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
 
 		'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
 		If Not GetCdfAlso Then Return True
 
-		DSFiles = IO.Directory.GetFiles(DataFolderPath, "*" + DOT_CDF_EXTENSION)
-		If DSFiles.GetLength(0) <> 1 Then
-			'Incorrect number of .cdf files found
-			Return False
-		End If
+		For Each fiCDFFile As IO.FileInfo In fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION)
+			'Copy the .cdf file that was found
+			If CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then
+				Return True
+			Else
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "Error obtaining CDF file from " & fiCDFFile.FullName
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				End If
+				Return False
+			End If
+		Next
 
-		'Copy the .cdf file that was found
-		If CopyFileToWorkDirWithRename(DSFiles(0), DataFolderPath, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then
-			Return True
-		Else
-			Return False
-		End If
+		' CDF file not found
+		m_message = "CDF File not found"
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+
+		Return False
 
 	End Function
 
@@ -3138,6 +3406,10 @@ Public MustInherit Class clsAnalysisResources
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving spectra file(s)")
 
+		Dim blnIsFolder As Boolean = False
+		Dim strDatasetFileOrFolder As String
+		strDatasetFileOrFolder = FindDatasetFileOrFolder(blnIsFolder)
+
 		eRawDataType = GetRawDataType(RawDataType)
 		Select Case eRawDataType
 			Case eRawDataTypeConstants.AgilentDFolder			'Agilent ion trap data
@@ -3233,7 +3505,6 @@ Public MustInherit Class clsAnalysisResources
 		Return RetrieveDotXFolder(WorkDir, DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, New List(Of String))
 	End Function
 
-
 	''' <summary>
 	''' Retrieves a folder with a name like Dataset.D or Dataset.Raw
 	''' </summary>
@@ -3248,38 +3519,36 @@ Public MustInherit Class clsAnalysisResources
 
 		'Copies a data folder ending in FolderExtension to the working directory
 
-		If Not FolderExtension.StartsWith(".") Then
-			FolderExtension = "." + FolderExtension
-		End If
-		Dim FolderExtensionWildcard As String = "*" + FolderExtension
-
-		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", FolderExtensionWildcard)
-		Dim DestFolderPath As String
-
 		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-		Dim RemFolders() As String = IO.Directory.GetDirectories(ServerPath, FolderExtensionWildcard)
-		If RemFolders.GetLength(0) <> 1 Then Return False
-
-		'Set up the file paths
-		Dim DSFolderPath As String = IO.Path.Combine(ServerPath, RemFolders(0))
+		Dim DSFolderPath As String = FindDotXFolder(FolderExtension)
+		If String.IsNullOrEmpty(DSFolderPath) Then Return False
 
 		'Do the copy
 		Try
-			DestFolderPath = IO.Path.Combine(WorkDir, m_DatasetName + FolderExtension)
+			Dim diSourceFolder As IO.DirectoryInfo
+			Dim DestFolderPath As String
+
+			diSourceFolder = New IO.DirectoryInfo(DSFolderPath)
+			If Not diSourceFolder.Exists Then
+				m_message = "Source dataset folder not found"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diSourceFolder.FullName)
+			End If
+
+			DestFolderPath = IO.Path.Combine(WorkDir, diSourceFolder.Name)
 
 			If CreateStoragePathInfoOnly Then
-				If Not IO.Directory.Exists(DSFolderPath) Then
-					m_message = "Source folder not found: " + DSFolderPath
+				If Not diSourceFolder.Exists Then
+					m_message = "Source folder not found: " + diSourceFolder.FullName
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					Return False
 				Else
-					CreateStoragePathInfoFile(DSFolderPath, DestFolderPath)
+					CreateStoragePathInfoFile(diSourceFolder.FullName, DestFolderPath)
 				End If
 			Else
 				' Copy the directory and all subdirectories
 				' Skip any files defined by objFileNamesToSkip
 				ResetTimestampForQueueWaitTimeLogging()
-				m_FileTools.CopyDirectory(DSFolderPath, DestFolderPath, objFileNamesToSkip)
+				m_FileTools.CopyDirectory(diSourceFolder.FullName, DestFolderPath, objFileNamesToSkip)
 			End If
 
 		Catch ex As Exception
@@ -3302,8 +3571,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="UnzipOverNetwork"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Public Function RetrieveBrukerMALDIImagingFolders(ByVal WorkDir As String, _
-	  ByVal UnzipOverNetwork As Boolean) As Boolean
+	Public Function RetrieveBrukerMALDIImagingFolders(ByVal WorkDir As String, ByVal UnzipOverNetwork As Boolean) As Boolean
 
 		Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
