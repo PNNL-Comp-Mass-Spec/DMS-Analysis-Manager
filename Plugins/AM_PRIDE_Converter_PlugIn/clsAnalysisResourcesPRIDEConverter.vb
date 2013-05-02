@@ -7,7 +7,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	Public Const JOB_PARAM_DATASETS_MISSING_MZXML_FILES As String = "PackedParam_DatasetsMissingMzXMLFiles"
 	Public Const JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS As String = "PackedParam_DataPackagePeptideHitJobs"
-	Public Const JOB_PARAM_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
+	Public Const JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
 
 	Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
 
@@ -21,9 +21,17 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		' Check whether we are only creating the .msgf files
 		Dim blnCreateMSGFReportFilesOnly As Boolean = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
-		Dim blnRetrieveMzXMLFiles As Boolean = Not blnCreateMSGFReportFilesOnly
+		Dim udtOptions As udtDataPackageRetrievalOptionsType
 
-		If Not blnCreateMSGFReportFilesOnly Then
+		udtOptions.CreateJobPathFiles = True
+		udtOptions.RetrieveMzXMLFile = Not Not blnCreateMSGFReportFilesOnly
+		udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
+		udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
+
+		If blnCreateMSGFReportFilesOnly Then
+			udtOptions.RetrieveDTAFiles = False
+			udtOptions.RetrieveMZidFiles = False
+		Else
 			If Not RetrieveMSGFReportTemplateFile() Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
@@ -32,7 +40,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		' Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
 		' In addition, obtain the .mzXML file or .Raw file for each dataset
 		' The .mzXML file will be used to create the Pride XML file, which is required for a "complete" submission
-		If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(blnRetrieveMzXMLFiles, lstDataPackagePeptideHitJobs) Then
+		If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
@@ -41,9 +49,9 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
 		End If
 
-		If blnRetrieveMzXMLFiles Then
+		If udtOptions.RetrieveMzXMLFile Then
 			' Use lstDataPackagePeptideHitJobs to look for any datasets for which we will need to create a .mzXML file
-			FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs)
+			FindMissingMzXmlFiles(udtOptions, lstDataPackagePeptideHitJobs)
 		End If
 
 		StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
@@ -54,10 +62,13 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	''' <summary>
 	''' Find datasets that do not have a .mzXML file
+	''' Datasets that need to have .mzXML files created will be added to the packed job parameters, storing the dataset names in "PackedParam_DatasetsMissingMzXMLFiles"
+	''' and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
 	''' </summary>
+	''' <param name="udtOptions">File retrieval options</param>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType))
+	Protected Sub FindMissingMzXmlFiles(ByVal udtOptions As udtDataPackageRetrievalOptionsType, ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType))
 
 		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
 		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)
@@ -68,17 +79,22 @@ Public Class clsAnalysisResourcesPRIDEConverter
 				strMzXmlFilePath = IO.Path.Combine(m_WorkingDir, udtJob.Dataset & DOT_MZXML_EXTENSION)
 
 				If Not IO.File.Exists(strMzXmlFilePath) Then
-					If Not lstDatasets.Contains(udtJob.Dataset) Then
-						lstDatasets.Add(udtJob.Dataset)
-						lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & clsAnalysisResources.GetDatasetYearQuarter(udtJob.ServerStoragePath))
+
+					' Look for a StoragePathInfo file
+					strMzXmlFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
+					If Not IO.File.Exists(strMzXmlFilePath) Then
+						If Not lstDatasets.Contains(udtJob.Dataset) Then
+							lstDatasets.Add(udtJob.Dataset)
+							lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & clsAnalysisResources.GetDatasetYearQuarter(udtJob.ServerStoragePath))
+						End If
 					End If
+
 				End If
 			Next
 
 			If lstDatasets.Count > 0 Then
 				StorePackedJobParameterList(lstDatasets.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
-
-				StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DATASET_STORAGE_YEAR_QUARTER)
+				StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
 			End If
 
 		Catch ex As Exception
@@ -127,7 +143,6 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 			' Cache the current dataset and job info
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-
 
 			For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
 
@@ -266,20 +281,4 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	End Sub
 
-	''' <summary>
-	''' Convert a string list to a packed job parameter
-	''' </summary>
-	''' <param name="lstItems"></param>
-	''' <param name="strParameterName"></param>
-	''' <remarks></remarks>
-	Protected Sub StorePackedJobParameterList(ByVal lstItems As Generic.List(Of String), ByVal strParameterName As String)
-		Dim sbPackedList As Text.StringBuilder = New Text.StringBuilder
-
-		For Each strItem As String In lstItems
-			If sbPackedList.Length > 0 Then sbPackedList.Append(ControlChars.Tab)
-			sbPackedList.Append(strItem)
-		Next
-
-		m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, sbPackedList.ToString())
-	End Sub
 End Class

@@ -105,7 +105,7 @@ Public MustInherit Class clsMSXmlGen
 		Dim CmdStr As String
 
 		Dim msXmlFormat As String = "mzXML"
-		mSourceFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+		mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 
 		Dim blnSuccess As Boolean
 
@@ -118,10 +118,10 @@ Public MustInherit Class clsMSXmlGen
 				msXmlFormat = "mzML"
 		End Select
 
-		CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mProgramPath))
+		CmdRunner = New clsRunDosProgram(IO.Path.GetDirectoryName(mProgramPath))
 
 		' Verify that program file exists
-		If Not System.IO.File.Exists(mProgramPath) Then
+		If Not IO.File.Exists(mProgramPath) Then
 			mErrorMessage = "Cannot find MSXmlGenerator exe program file: " & mProgramPath
 			Return False
 		End If
@@ -147,27 +147,27 @@ Public MustInherit Class clsMSXmlGen
 			.EchoOutputToConsole = True
 
 			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
+			.ConsoleOutputFilePath = IO.Path.Combine(mWorkDir, IO.Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
 
 			.WorkDir = mWorkDir
 		End With
 
-		blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, System.IO.Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode)
+		blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, IO.Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode)
 
 		If Not blnSuccess Then
 			If CmdRunner.ExitCode <> 0 Then
-				mErrorMessage = System.IO.Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
+				mErrorMessage = IO.Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
 				blnSuccess = False
 			Else
-				mErrorMessage = "Call to " & System.IO.Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
+				mErrorMessage = "Call to " & IO.Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
 				blnSuccess = True
 			End If
 		Else
 			' Make sure the output file was created and is non-zero
 			Dim strOutputFilePath As String
-			strOutputFilePath = System.IO.Path.ChangeExtension(mSourceFilePath, msXmlFormat)
+			strOutputFilePath = IO.Path.ChangeExtension(mSourceFilePath, msXmlFormat)
 
-			If Not System.IO.File.Exists(strOutputFilePath) Then
+			If Not IO.File.Exists(strOutputFilePath) Then
 				mErrorMessage = "Output file not found: " & strOutputFilePath
 				blnSuccess = False
 			End If
@@ -180,8 +180,8 @@ Public MustInherit Class clsMSXmlGen
 
 	Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As System.DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
 
-		Dim strSourceFilePath As String = System.IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-		Dim strMsXmlFilePath As String = System.IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		Dim strSourceFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+		Dim strMsXmlFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
 		LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMsXmlFilePath)
 
@@ -193,21 +193,21 @@ Public MustInherit Class clsMSXmlGen
 			' Save some stats to the log
 
 			Dim strMessage As String
-			Dim ioFileInfo As System.IO.FileInfo
+			Dim ioFileInfo As IO.FileInfo
 			Dim dblSourceFileSizeMB As Double, dblMsXmlSizeMB As Double
 			Dim dblTotalMinutes As Double
 
-			Dim strSourceFileExtension As String = System.IO.Path.GetExtension(strSourceFilePath)
-			Dim strTargetFileExtension As String = System.IO.Path.GetExtension(strMsXmlFilePath)
+			Dim strSourceFileExtension As String = IO.Path.GetExtension(strSourceFilePath)
+			Dim strTargetFileExtension As String = IO.Path.GetExtension(strMsXmlFilePath)
 
 			dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
 
-			ioFileInfo = New System.IO.FileInfo(strSourceFilePath)
+			ioFileInfo = New IO.FileInfo(strSourceFilePath)
 			If ioFileInfo.Exists Then
 				dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
 			End If
 
-			ioFileInfo = New System.IO.FileInfo(strMsXmlFilePath)
+			ioFileInfo = New IO.FileInfo(strMsXmlFilePath)
 			If ioFileInfo.Exists Then
 				dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024
 			End If

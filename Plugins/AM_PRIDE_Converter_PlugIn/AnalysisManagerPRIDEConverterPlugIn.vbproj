@@ -59,6 +59,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
     </Reference>
+    <Reference Include="DTAtoMGF">
+      <HintPath>..\..\AM_Common\DTAtoMGF.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader, Version=1.1.4682.28334, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
@@ -88,6 +91,8 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesPRIDEConverter.vb" />
     <Compile Include="clsAnalysisToolRunnerPRIDEConverter.vb" />
+    <Compile Include="clsPXFileInfo.vb" />
+    <Compile Include="clsPXFileInfoBase.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

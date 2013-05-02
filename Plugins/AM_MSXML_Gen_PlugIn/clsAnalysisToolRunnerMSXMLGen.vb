@@ -164,7 +164,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 		mMSXmlGen.DebugLevel = m_DebugLevel
 
-		If Not System.IO.File.Exists(mMSXmlGeneratorAppPath) Then
+		If Not IO.File.Exists(mMSXmlGeneratorAppPath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
@@ -200,7 +200,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		End If
 
 		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		Dim ioToolFiles As New System.Collections.Generic.List(Of IO.FileInfo)
 
 		' Determine the path to the XML Generator
 		Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe
@@ -214,7 +214,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		ElseIf msXmlGenerator.ToLower().Contains("msconvert") Then
 			' MSConvert
 			Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-			mMSXmlGeneratorAppPath = System.IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
+			mMSXmlGeneratorAppPath = IO.Path.Combine(ProteoWizardDir, msXmlGenerator)
 
 		Else
 			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
@@ -222,7 +222,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		End If
 
 		If Not String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
-			ioToolFiles.Add(New System.IO.FileInfo(mMSXmlGeneratorAppPath))
+			ioToolFiles.Add(New IO.FileInfo(mMSXmlGeneratorAppPath))
 		Else
 			' Invalid value for ProgramPath
 			m_message = "MSXMLGenerator program path is empty"
