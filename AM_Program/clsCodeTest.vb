@@ -714,6 +714,18 @@ Public Class clsCodeTest
 		Return blnSuccess
 	End Function
 
+	Public Function TestIonicZipTools() As Boolean
+		Dim oIonicZipTools As clsIonicZipTools
+
+		oIonicZipTools = New clsIonicZipTools(1, "E:\DMS_WorkDir")
+
+		oIonicZipTools.UnzipFile("E:\DMS_WorkDir\Temp.zip", "E:\DMS_WorkDir", "*.png")
+		For Each item In oIonicZipTools.MostRecentUnzippedFiles
+			Console.WriteLine(item.Key & " - " & item.Value)
+		Next
+
+	End Function
+
 	Public Function TestMALDIDataUnzip(ByVal strSourceDatasetFolder As String) As Boolean
 
 		Dim intDebugLevel As Integer = 2

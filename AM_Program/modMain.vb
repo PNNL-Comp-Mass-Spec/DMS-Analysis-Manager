@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "April 10, 2013"
+	Public Const PROGRAM_DATE As String = "May 1, 2013"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -99,8 +99,11 @@ Module modMain
 
 						'objTest.TestProteinDBExport("c:\dms_temp_org")
 
-						objTest.PerformanceCounterTest()
-						objTest.SystemMemoryUsage()
+						'objTest.PerformanceCounterTest()
+						'objTest.SystemMemoryUsage()
+
+						objTest.TestIonicZipTools()
+
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

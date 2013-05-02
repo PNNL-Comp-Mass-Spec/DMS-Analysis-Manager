@@ -90,18 +90,31 @@ Public Class clsGlobal
 	''' <remarks></remarks>
 	Public Shared Function CollapseList(lstFields As Generic.List(Of String)) As String
 
-		If lstFields Is Nothing OrElse lstFields.Count = 0 Then
-			Return String.Empty
+		Return FlattenList(lstFields, ControlChars.Tab)
+
+	End Function
+
+	''' <summary>
+	''' Flatten a list of items into a single string, with items separated by chDelimiter
+	''' </summary>
+	''' <param name="lstItems"></param>
+	''' <param name="chDelimiter"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function FlattenList(ByVal lstItems As Generic.List(Of String), ByVal chDelimiter As Char) As String
+
+		Dim sbText As System.Text.StringBuilder = New System.Text.StringBuilder()
+
+		If lstItems Is Nothing OrElse lstItems.Count = 0 Then
+			' Nothing to do
 		Else
-			Dim sbText As New System.Text.StringBuilder
-
-			For Each item As String In lstFields
-				If sbText.Length > 0 Then sbText.Append(ControlChars.Tab)
-				sbText.Append(item)
+			sbText.Append(lstItems.Item(0).Replace(chDelimiter, " "c))
+			For intIndex As Integer = 1 To lstItems.Count - 1
+				sbText.Append(chDelimiter & lstItems(intIndex).Replace(chDelimiter, " "c))
 			Next
-
-			Return sbText.ToString()
 		End If
+
+		Return sbText.ToString
 
 	End Function
 

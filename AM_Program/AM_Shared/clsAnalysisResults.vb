@@ -63,90 +63,29 @@ Public Class clsAnalysisResults
 		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 	End Sub
 
-
-	'' <summary>
-	'' Copies the results folder to the transfer directory
-	'' Note: This sub is no longer used by the analysis tool manager
-	'' </summary>
-	'' <param name="ResultsFolderName">Name of results folder</param>
-	'' <returns>CloseOutType enum indicating success or failure</returns>
-	'' <remarks></remarks>
-	'Public Function DeliverResults(ByVal ResultsFolderName As String) As IJobParams.CloseOutType
-
-	'    Dim XferDir As String = m_jobParams.GetParam("transferFolderPath")
-	'    Dim WorkDir As String = m_mgrParams.GetParam("workdir")
-	'    Dim ResultsFolderPath As String
-
-	'    ResultsFolderPath = System.IO.Path.Combine(WorkDir, ResultsFolderName)
-
-	'    'Verify the results folder exists
-	'    If Not System.IO.Directory.Exists(ResultsFolderPath) Then
-	'        m_logger.PostEntry("Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job"), _
-	'            ILogger.logMsgType.logError, LOG_DATABASE)
-	'        m_message = "Results folder not found"
-	'        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-	'    End If
-
-	'    'Verify xfer directory exists
-	'    If Not System.IO.Directory.Exists(XferDir) Then
-	'        m_logger.PostEntry("Transfer folder not found, job " & m_jobParams.GetParam("StepParameters", "Job"), _
-	'            ILogger.logMsgType.logError, LOG_DATABASE)
-	'        m_message = "Transfer folder not found"
-	'        CopyFailedResultsToArchiveFolder(ResultsFolderPath)
-	'        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-	'    End If
-
-	'    'Append machine name to xfer directory, if specified, and create directory if it doesn't exist
-	'    Dim blnAppendManagerName As Boolean = True
-	'    blnAppendManagerName = CBoolSafe(m_mgrParams.GetParam("AppendMgrNameToXferFolder"), True)
-
-	'    If blnAppendManagerName Then
-	'        XferDir = System.IO.Path.Combine(XferDir, m_mgrParams.GetParam("MgrName"))
-	'    End If
-
-	'    If Not System.IO.Directory.Exists(XferDir) Then
-	'        Try
-	'            System.IO.Directory.CreateDirectory(XferDir)
-	'        Catch err As Exception
-	'            m_logger.PostError("Unable to create server results folder, job " & m_jobParams.GetParam("StepParameters", "Job"), _
-	'                    err, LOG_DATABASE)
-	'            m_message = "Unable to create server results folder"
-	'            CopyFailedResultsToArchiveFolder(ResultsFolderPath)
-	'            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-	'        End Try
-	'    End If
-
-	'    'Copy results folder to xfer directory
-	'    Try
-	'        CopyDirectory(ResultsFolderPath, System.IO.Path.Combine(XferDir, ResultsFolderName), True, DEFAULT_RETRY_COUNT, False)
-	'    Catch err As Exception
-	'        m_logger.PostError("Error copying results folder, job " & m_jobParams.GetParam("StepParameters", "Job"), err, LOG_DATABASE)
-	'        m_message = "Unable to create server results folder"
-	'        CopyFailedResultsToArchiveFolder(ResultsFolderPath)
-	'        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-	'    End Try
-
-	'    'Everything must be OK if we got to here
-	'    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	'End Function
-
-	''' <summary>Copies a source directory to the destination directory. Allows overwriting.</summary>
-	''' <remarks>The last parameter specifies whether the files already present in the
-	''' destination directory will be overwritten
-	''' - Note: requires Imports System.IO
-	''' - Usage: CopyDirectory("C:\Misc", "D:\MiscBackup")
-	'''
-	''' Original code obtained from vb2themax.com
-	''' </remarks>
+	''' <summary>
+	''' Copies a source directory to the destination directory. Allows overwriting.
+	''' </summary>
 	''' <param name="SourcePath">The source directory path.</param>
 	''' <param name="DestPath">The destination directory path.</param>
-	''' <param name="Overwrite">true if the destination file can be overwritten; otherwise, false.</param>
+	''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
+	''' <remarks></remarks>
+	Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestPath As String, ByVal Overwrite As Boolean)
+		CopyDirectory(SourcePath, DestPath, Overwrite, MaxRetryCount:=DEFAULT_RETRY_COUNT, ContinueOnError:=True)
+	End Sub
+
+	''' <summary>
+	''' Copies a source directory to the destination directory. Allows overwriting.
+	''' </summary>
+	''' <param name="SourcePath">The source directory path.</param>
+	''' <param name="DestPath">The destination directory path.</param>
+	''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
 	''' <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
 	''' <param name="ContinueOnError">When true, then will continue copying even if an error occurs</param>
+	''' <remarks></remarks>
 	Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestPath As String, _
-			ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer, _
-			ByVal ContinueOnError As Boolean)
+	  ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer, _
+	  ByVal ContinueOnError As Boolean)
 
 		Dim diSourceDir As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(SourcePath)
 		Dim diDestDir As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(DestPath)
@@ -154,7 +93,7 @@ Public Class clsAnalysisResults
 		Dim strTargetPath As String
 		Dim strMessage As String
 
-		' the source directory must exist, otherwise throw an exception
+		' The source directory must exist, otherwise throw an exception
 		If Not FolderExistsWithRetry(diSourceDir.FullName, 3, 3) Then
 			strMessage = "Source directory does not exist: " + diSourceDir.FullName
 			If ContinueOnError Then
@@ -164,7 +103,7 @@ Public Class clsAnalysisResults
 				Throw New System.IO.DirectoryNotFoundException(strMessage)
 			End If
 		Else
-			' if destination SubDir's parent SubDir does not exist throw an exception
+			' If destination SubDir's parent SubDir does not exist throw an exception
 			If Not FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1) Then
 				strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName
 				If ContinueOnError Then
@@ -179,21 +118,21 @@ Public Class clsAnalysisResults
 				CreateFolderWithRetry(DestPath, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
 			End If
 
-			' copy all the files of the current directory
+			' Copy all the files of the current directory
 			Dim ChildFile As System.IO.FileInfo
 			For Each ChildFile In diSourceDir.GetFiles()
 				Try
 					strTargetPath = System.IO.Path.Combine(diDestDir.FullName, ChildFile.Name)
 					If Overwrite Then
 						CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
-							  True, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
+						   True, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
 
 					Else
 						' Only copy if the file does not yet exist
 						' We are not throwing an error if the file exists in the target
 						If Not System.IO.File.Exists(strTargetPath) Then
 							CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
-								  False, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
+							   False, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
 						End If
 					End If
 
@@ -206,12 +145,12 @@ Public Class clsAnalysisResults
 				End Try
 			Next
 
-			' copy all the sub-directories by recursively calling this same routine
+			' Copy all the sub-directories by recursively calling this same routine
 			Dim SubDir As System.IO.DirectoryInfo
 			For Each SubDir In diSourceDir.GetDirectories()
 				CopyDirectory(SubDir.FullName, _
-					 System.IO.Path.Combine(diDestDir.FullName, SubDir.Name), _
-					 Overwrite, MaxRetryCount, ContinueOnError)
+				  System.IO.Path.Combine(diDestDir.FullName, SubDir.Name), _
+				  Overwrite, MaxRetryCount, ContinueOnError)
 			Next
 		End If
 
@@ -223,19 +162,19 @@ Public Class clsAnalysisResults
 	End Sub
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, _
-			ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+	  ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
-			ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+	  ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
 		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
-			ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-			ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+	  ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+	  ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
 		Dim AttemptCount As Integer = 0
 		Dim blnSuccess As Boolean = False
@@ -379,14 +318,14 @@ Public Class clsAnalysisResults
 	End Sub
 
 	Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
-			 ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
 		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
 	Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
-			 ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-			 ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+	   ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
 		Dim AttemptCount As Integer = 0
 		Dim blnSuccess As Boolean = False
@@ -480,14 +419,14 @@ Public Class clsAnalysisResults
 	End Function
 
 	Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
-			 ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
+	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
 		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
 		Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Function
 
 	Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
-			 ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-			 ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
+	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
+	   ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
 
 		Dim AttemptCount As Integer = 0
 		Dim blnSuccess As Boolean = False

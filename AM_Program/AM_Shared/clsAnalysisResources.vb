@@ -98,6 +98,8 @@ Public MustInherit Class clsAnalysisResources
 	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 	Public Const BRUKER_SER_FILE As String = "ser"
 
+	Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
+
 	Public Enum eRawDataTypeConstants
 		Unknown = 0
 		ThermoRawFile = 1
@@ -121,6 +123,8 @@ Public MustInherit Class clsAnalysisResources
 		Public Job As Integer
 		Public Dataset As String
 		Public DatasetID As Integer
+		Public Instrument As String
+		Public InstrumentGroup As String
 		Public Experiment As String
 		Public Experiment_Reason As String
 		Public Experiment_Comment As String
@@ -139,6 +143,30 @@ Public MustInherit Class clsAnalysisResources
 		Public DatasetFolderName As String
 		Public SharedResultsFolder As String
 		Public RawDataType As String
+	End Structure
+
+	Public Structure udtDataPackageRetrievalOptionsType
+		''' <summary>
+		''' Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
+		''' Example filename: FilePathInfo_Job950000.txt
+		''' </summary>
+		''' <remarks>No files are actually retrieved when this is set to True</remarks>
+		Public CreateJobPathFiles As Boolean
+		''' <summary>
+		''' Set to true to obtain the mzXML file for the dataset associated with this job
+		''' </summary>
+		''' <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
+		Public RetrieveMzXMLFile As Boolean
+		''' <summary>
+		''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
+		''' </summary>
+		''' <remarks></remarks>
+		Public RetrieveDTAFiles As Boolean
+		''' <summary>
+		''' Set to True to obtain MSGF+ .mzID files
+		''' </summary>
+		''' <remarks></remarks>
+		Public RetrieveMZidFiles As Boolean
 	End Structure
 #End Region
 
@@ -260,6 +288,22 @@ Public MustInherit Class clsAnalysisResources
 	End Sub
 
 	Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
+
+	''' <summary>
+	''' Appends file specified file path to the JobInfo file for the given Job
+	''' </summary>
+	''' <param name="intJob"></param>
+	''' <param name="strFilePath"></param>
+	''' <remarks></remarks>
+	Protected Sub AppendToJobInfoFile(ByVal intJob As Integer, ByVal strFilePath As String)
+
+		Dim strJobInfoFilePath As String = GetJobInfoFilePath(intJob)
+
+		Using swJobInfoFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strJobInfoFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+			swJobInfoFile.WriteLine(strFilePath)
+		End Using
+
+	End Sub
 
 	''' <summary>
 	''' Copies the zipped s-folders to the working directory
@@ -1935,7 +1979,11 @@ Public MustInherit Class clsAnalysisResources
 			.Job = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
 			.Dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
 			.DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
-			.Experiment = String.Empty
+
+			.Instrument = m_jobParams.GetJobParameter("JobParameters", "Instrument", String.Empty)
+			.InstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+
+			.Experiment = m_jobParams.GetJobParameter("JobParameters", "Experiment", String.Empty)
 			.Experiment_Reason = String.Empty
 			.Experiment_Comment = String.Empty
 
@@ -2061,6 +2109,13 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Protected Function GetJobInfoFilePath(ByVal intJob As Integer) As String
+		Return IO.Path.Combine(m_WorkingDir, "JobInfoFile_Job" & intJob & ".txt")
+	End Function
+
+	Public Shared Function GetJobInfoFilePath(ByVal intJob As Integer, ByVal strWorkDirPath As String) As String
+		Return IO.Path.Combine(strWorkDirPath, "JobInfoFile_Job" & intJob & ".txt")
+	End Function
 
 	''' <summary>
 	''' Converts the given timespan to the total days, hours, minutes, or seconds as a string
@@ -2187,7 +2242,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
 
-		SqlStr.Append(" SELECT Job, Dataset, DatasetID, Experiment, Experiment_Reason, Experiment_Comment,")
+		SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, Experiment, Experiment_Reason, Experiment_Comment,")
 		SqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
 		SqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
 		SqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
@@ -2241,6 +2296,8 @@ Public MustInherit Class clsAnalysisResources
 					.Job = clsGlobal.DbCInt(CurRow("Job"))
 					.Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
 					.DatasetID = clsGlobal.DbCInt(CurRow("DatasetID"))
+					.Instrument = clsGlobal.DbCStr(CurRow("Instrument"))
+					.InstrumentGroup = clsGlobal.DbCStr(CurRow("InstrumentGroup"))
 					.Experiment = clsGlobal.DbCStr(CurRow("Experiment"))
 					.Experiment_Reason = clsGlobal.DbCStr(CurRow("Experiment_Reason"))
 					.Experiment_Comment = clsGlobal.DbCStr(CurRow("Experiment_Comment"))
@@ -2335,6 +2392,9 @@ Public MustInherit Class clsAnalysisResources
 			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", .Dataset)
 			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", .DatasetID.ToString())
 
+			m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", .Instrument)
+			m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", .InstrumentGroup)
+
 			m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", .Tool)
 			m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", .ResultType)
 			m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", .SettingsFileName)
@@ -2364,6 +2424,26 @@ Public MustInherit Class clsAnalysisResources
 			m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", .RawDataType)
 
 		End With
+
+		Return True
+
+	End Function
+
+	Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
+		Try
+			Dim fiFileToRename As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(SourceFolderPath, SourceFilename))
+			Dim strFilePathWithPrefix As String = IO.Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
+
+			Threading.Thread.Sleep(100)
+			fiFileToRename.MoveTo(strFilePathWithPrefix)
+
+			m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strFilePathWithPrefix))
+
+		Catch ex As Exception
+			m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & intJob & " (data package has multiple jobs for the same dataset)"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
 
 		Return True
 
@@ -2700,28 +2780,32 @@ Public MustInherit Class clsAnalysisResources
 	''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
 	''' Also creates a batch file that can be manually run to retrieve the instrument data files
 	''' </summary>
-	''' <param name="blnRetrieveMzXMLFile">Set to True to retrieve the mzXML file (will create it from the .Raw file if the mzXML file wasn't found)</param>
+	''' <param name="udtOptions">File retrieval options</param>
 	''' <param name="lstDataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
-	''' <returns></returns>
+	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(ByVal blnRetrieveMzXMLFile As Boolean, ByRef lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)) As Boolean
+	Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
+	  ByVal udtOptions As udtDataPackageRetrievalOptionsType,
+	  ByRef lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)) As Boolean
 
 		Dim SourceFolderPath As String = "??"
 		Dim SourceFilename As String = "??"
-		Dim TargetFolderPath As String
 		Dim DataPackageID As Integer = 0
 
 		Dim blnFileCopied As Boolean
 		Dim blnSuccess As Boolean = False
-		Dim blnPrefixRequired As Boolean
 
-		' The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
+		' The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
+		' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
 		Dim dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
 		' Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw ."
-		Dim lstRawFileRetrievalCommands As Generic.Dictionary(Of Integer, String) = New Generic.Dictionary(Of Integer, String)
+		Dim dctRawFileRetrievalCommands As Generic.Dictionary(Of Integer, String) = New Generic.Dictionary(Of Integer, String)
+
+		' Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
+		Dim dctDatasetRawFilePaths As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
 
 		' This list tracks the info for the jobs associated with this aggregation job's data package
 		If lstDataPackagePeptideHitJobs Is Nothing Then
@@ -2730,8 +2814,8 @@ Public MustInherit Class clsAnalysisResources
 			lstDataPackagePeptideHitJobs.Clear()
 		End If
 
-		' The keys in this dictionary are udtJobInfo entries; the values will be the path to the mzXML file along with the path to the .hashcheck file
-		' The values will be empty strings if the .Raw file needs to be retrieved
+		' The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
+		' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
 		dctInstrumentDataToRetrieve = New Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))
 
 		Try
@@ -2765,11 +2849,16 @@ Public MustInherit Class clsAnalysisResources
 
 				If udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PeptideHit ResultType not recognized for job " & udtJobInfo.Job & ": " & udtJobInfo.ResultType.ToString())
+
 				Else
+
+					Dim LocalFolderPath As String
 					Dim lstFilesToGet As Generic.List(Of String) = New Generic.List(Of String)
 					Dim strSynopsisFileName As String
 					Dim strSynopsisMSGFFileName As String
 					Dim eLogMsgTypeIfNotFound As clsLogTools.LogLevels
+					Dim strMZidFilename As String = String.Empty
+					Dim blnPrefixRequired As Boolean
 
 					strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset)
 					lstFilesToGet.Add(strSynopsisFileName)
@@ -2782,32 +2871,41 @@ Public MustInherit Class clsAnalysisResources
 					strSynopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(strSynopsisFileName)
 					lstFilesToGet.Add(strSynopsisMSGFFileName)
 
+					If udtOptions.RetrieveMZidFiles AndAlso udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+						' Retrieve MSGF+ .mzID files
+						strMZidFilename = m_DatasetName & "_msgfplus.zip"
+						lstFilesToGet.Add(strMZidFilename)
+					End If
+
 					SourceFolderPath = String.Empty
+
+					' Check whether a synopsis file by this name has already been copied locally
+					' If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
+					If IO.File.Exists(IO.Path.Combine(m_WorkingDir, strSynopsisFileName)) Then
+						blnPrefixRequired = True
+
+						LocalFolderPath = IO.Path.Combine(m_WorkingDir, "FileRename")
+						If Not IO.Directory.Exists(LocalFolderPath) Then
+							IO.Directory.CreateDirectory(LocalFolderPath)
+						End If
+
+					Else
+						blnPrefixRequired = False
+						LocalFolderPath = String.Copy(m_WorkingDir)
+					End If
+
+
+					Dim swJobInfoFile As IO.StreamWriter = Nothing
+					If udtOptions.CreateJobPathFiles Then
+						Dim strJobInfoFilePath As String = GetJobInfoFilePath(udtJobInfo.Job)
+						swJobInfoFile = New IO.StreamWriter(New IO.FileStream(strJobInfoFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+					End If
 
 					For Each SourceFilename In lstFilesToGet
 
 						If String.IsNullOrEmpty(SourceFolderPath) Then
 							' Only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
 							SourceFolderPath = FindDataFile(SourceFilename)
-						End If
-
-						If SourceFilename = strSynopsisFileName Then
-							' Check whether a synopsis file by this name has already been copied locally
-							' If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-							If IO.File.Exists(IO.Path.Combine(m_WorkingDir, SourceFilename)) Then
-								blnPrefixRequired = True
-							Else
-								blnPrefixRequired = False
-							End If
-						End If
-
-						If blnPrefixRequired Then
-							TargetFolderPath = IO.Path.Combine(m_WorkingDir, "FileRename")
-							If Not IO.Directory.Exists(TargetFolderPath) Then
-								IO.Directory.CreateDirectory(TargetFolderPath)
-							End If
-						Else
-							TargetFolderPath = String.Copy(m_WorkingDir)
 						End If
 
 						If SourceFilename = strSynopsisMSGFFileName Then
@@ -2817,104 +2915,150 @@ Public MustInherit Class clsAnalysisResources
 							eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
 						End If
 
-						blnFileCopied = CopyFileToWorkDir(SourceFilename, SourceFolderPath, TargetFolderPath, eLogMsgTypeIfNotFound)
-
-						If Not blnFileCopied Then
-
-							If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
-								m_message = "CopyFileToWorkDir returned False for " + SourceFilename + " using folder " + SourceFolderPath
-								If m_DebugLevel >= 1 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						If udtOptions.CreateJobPathFiles Then
+							Dim strSourceFilePath As String = IO.Path.Combine(SourceFolderPath, SourceFilename)
+							If IO.File.Exists(strSourceFilePath) Then
+								swJobInfoFile.WriteLine(strSourceFilePath)
+							Else
+								If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
+									m_message = "Required PHRP file not found: " & SourceFilename
+									If m_DebugLevel >= 1 Then
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Required PHRP file not found: " & strSourceFilePath)
+									End If
+									Return False
 								End If
-								Return False
 							End If
 
 						Else
-							If m_DebugLevel > 1 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + SourceFilename + " from folder " + SourceFolderPath)
-							End If
+							blnFileCopied = CopyFileToWorkDir(SourceFilename, SourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
 
-							If blnPrefixRequired Then
-								Try
-									Dim fiFileToRename As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(TargetFolderPath, SourceFilename))
-									Dim strFilePathWithPrefix As String = IO.Path.Combine(m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_" & fiFileToRename.Name)
+							If Not blnFileCopied Then
 
-									Threading.Thread.Sleep(100)
-									fiFileToRename.MoveTo(strFilePathWithPrefix)
-
-									m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strFilePathWithPrefix))
-
-								Catch ex As Exception
-									m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & udtJobInfo.Job & " (data package has multiple jobs for the same dataset)"
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+								If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
+									m_message = "CopyFileToWorkDir returned False for " + SourceFilename + " using folder " + SourceFolderPath
+									If m_DebugLevel >= 1 Then
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+									End If
 									Return False
-								End Try
+								End If
 
 							Else
-								m_jobParams.AddResultFileToSkip(SourceFilename)
+								If m_DebugLevel > 1 Then
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + SourceFilename + " from folder " + SourceFolderPath)
+								End If
+
+								If blnPrefixRequired Then
+									If Not RenameDuplicatePHRPFile(LocalFolderPath, SourceFilename, m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_", udtJobInfo.Job) Then
+										Return False
+									End If
+								Else
+									m_jobParams.AddResultFileToSkip(SourceFilename)
+								End If
 							End If
 						End If
 
-					Next
+					Next SourceFilename	' in lstFilesToGet
 
-					Dim strMzXMLFilePath As String = String.Empty
+					If udtOptions.RetrieveDTAFiles Then
+						If udtOptions.CreateJobPathFiles Then
+							' Find the CDTA file
+							Dim strErrorMessage As String = String.Empty
+							Dim SourceCDTAFilePath As String
+							SourceCDTAFilePath = FindCDTAFile(strErrorMessage)
 
-					' See if a .mzXML file already exists for this dataset
-					Dim strHashcheckFilePath As String = String.Empty
-
-					strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
-
-					If String.IsNullOrEmpty(strMzXMLFilePath) Then
-						' mzXML file not found
-						If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
-							' Will need to retrieve the .Raw file for this dataset
-							dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
-						ElseIf blnRetrieveMzXMLFile Then
-							m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-							Return False
+							If String.IsNullOrEmpty(SourceCDTAFilePath) Then
+								m_message = strErrorMessage
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+								Return False
+							Else
+								swJobInfoFile.WriteLine(SourceCDTAFilePath)								
+							End If
+						Else
+							If Not RetrieveDtaFiles(False) Then
+								'Errors were reported in function call, so just return
+								Return False
+							End If
 						End If
-					Else
-
-						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
 					End If
 
-					Dim blnIsFolder As Boolean = False
-					Dim strRawFilePath As String
-					strRawFilePath = FindDatasetFileOrFolder(blnIsFolder)
+					If udtOptions.CreateJobPathFiles Then
+						swJobInfoFile.Close()
+					Else
+						If Not String.IsNullOrEmpty(strMZidFilename) Then
+							' Unzip the MZId file
+							m_IonicZipTools.UnzipFile(IO.Path.Combine(m_WorkingDir, strMZidFilename))
 
-					If Not String.IsNullOrEmpty(strRawFilePath) Then
-						If Not lstRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
-							Dim strCopyCommand As String
-							If blnIsFolder Then
-								strCopyCommand = "xcopy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
-							Else
-								strCopyCommand = "copy " & strRawFilePath & " ."
+							If blnPrefixRequired Then
+								If Not RenameDuplicatePHRPFile(m_WorkingDir, m_DatasetName & "_msgfplus.mzid", m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_", udtJobInfo.Job) Then
+									Return False
+								End If
 							End If
-							lstRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
 						End If
 					End If
 
 				End If
 
-			Next
+				' See if a .mzXML file already exists for this dataset
+				Dim strMzXMLFilePath As String = String.Empty
+				Dim strHashcheckFilePath As String = String.Empty
+
+				strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
+
+				If String.IsNullOrEmpty(strMzXMLFilePath) Then
+					' mzXML file not found
+					If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
+						' Will need to retrieve the .Raw file for this dataset
+						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
+					ElseIf udtOptions.RetrieveMzXMLFile Then
+						m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return False
+					End If
+				Else
+					dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
+				End If
+
+				Dim blnIsFolder As Boolean = False
+				Dim strRawFilePath As String
+				strRawFilePath = FindDatasetFileOrFolder(blnIsFolder)
+
+				If Not String.IsNullOrEmpty(strRawFilePath) Then
+					If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
+						Dim strCopyCommand As String
+						If blnIsFolder Then
+							strCopyCommand = "xcopy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
+						Else
+							strCopyCommand = "copy " & strRawFilePath & " ."
+						End If
+						dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
+						dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath)
+					End If
+				End If
+
+			Next udtJobInfo		' in lstDataPackagePeptideHitJobs
 
 			' Restore the dataset and job info for this aggregation job
 			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
 
-			If lstRawFileRetrievalCommands.Count > 0 Then
+			If dctRawFileRetrievalCommands.Count > 0 Then
 				' Create a batch file with commands for retrieve the dataset files
 				Dim strBatchFilePath As String
 				strBatchFilePath = IO.Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
 				Using swOutfile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strBatchFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-					For Each item As String In lstRawFileRetrievalCommands.Keys
+					For Each item As String In dctRawFileRetrievalCommands.Keys
 						swOutfile.WriteLine(item)
 					Next
 				End Using
+
+				' Store the dataset paths in a Packed Job Parameter
+				StorePackedJobParameterDictionary(dctDatasetRawFilePaths, JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
+
 			End If
 
-			If blnRetrieveMzXMLFile Then
-				blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve)
+			If udtOptions.RetrieveMzXMLFile Then
+				' All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
+				' If udtOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
+				blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions)
 			Else
 				blnSuccess = True
 			End If
@@ -2928,9 +3072,20 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function RetrieveDataPackageMzXMLFiles(ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String))) As Boolean
+	''' <summary>
+	''' Retrieve the .mzXML files for the jobs in dctInstrumentDataToRetrieve
+	''' </summary>
+	''' <param name="dctInstrumentDataToRetrieve">The keys in this dictionary are JobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any); the KeyValuePair will have empty strings if the .Raw file needs to be retrieved</param>
+	''' <param name="udtOptions">File retrieval options</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>If udtOptions.CreateJobPathFiles is True, then will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
+	Protected Function RetrieveDataPackageMzXMLFiles(
+	  ByVal dctInstrumentDataToRetrieve As Generic.Dictionary(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String)),
+	  ByVal udtOptions As udtDataPackageRetrievalOptionsType) As Boolean
 
 		Dim blnSuccess As Boolean
+		Dim CreateStoragePathInfoOnly As Boolean
+
 		Dim intCurrentJob As Integer
 		Dim lstDatasetsProcessed As Generic.SortedSet(Of String)
 
@@ -2942,19 +3097,27 @@ Public MustInherit Class clsAnalysisResources
 			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
 			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
 
+			If udtOptions.CreateJobPathFiles Then
+				CreateStoragePathInfoOnly = True
+			Else
+				CreateStoragePathInfoOnly = False
+			End If
+
 			lstDatasetsProcessed = New Generic.SortedSet(Of String)
 
 			' Cache the current dataset and job info
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
-			' All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
 			For Each kvItem As Generic.KeyValuePair(Of udtDataPackageJobInfoType, Generic.KeyValuePair(Of String, String)) In dctInstrumentDataToRetrieve
 
+				' The key in kvMzXMLFileInfo is the path to the .mzXML file
+				' The value in kvMzXMLFileInfo is the path to the .hashcheck file
 				Dim kvMzXMLFileInfo As Generic.KeyValuePair(Of String, String) = kvItem.Value
 				Dim strMzXMLFilePath As String = kvMzXMLFileInfo.Key
+				Dim strHashcheckFilePath As String = kvMzXMLFileInfo.Value
+
 				intCurrentJob = kvItem.Key.Job
 
-				' Skip this dataset if we already processed it
 				If Not lstDatasetsProcessed.Contains(kvItem.Key.Dataset) Then
 
 					If Not OverrideCurrentDatasetAndJobInfo(kvItem.Key) Then
@@ -2963,30 +3126,39 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If String.IsNullOrEmpty(strMzXMLFilePath) Then
+						' The .mzXML file was not found; we will need to obtain the .Raw file
 						blnSuccess = False
 					Else
-						' mzXML file exists; try to retrieve it
-						blnSuccess = RetrieveMZXmlFileUsingSourceFile(m_WorkingDir, False, strMzXMLFilePath, kvMzXMLFileInfo.Value)
+						' mzXML file exists; either retrieve it or create a StoragePathInfo file
+						blnSuccess = RetrieveMZXmlFileUsingSourceFile(m_WorkingDir, CreateStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath)
 					End If
 
 					If blnSuccess Then
 						' .mzXML file found and copied locally
 						If m_DebugLevel >= 1 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied .mzXML file for job " & intCurrentJob & ": " & strMzXMLFilePath)
+							If udtOptions.CreateJobPathFiles Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, ".mzXML file found for job " & intCurrentJob & " at " & strMzXMLFilePath)
+							Else
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied .mzXML file for job " & intCurrentJob & " from " & strMzXMLFilePath)
+							End If
+
 						End If
 					Else
 						' .mzXML file not found
-						' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-						If Not RetrieveSpectra(kvItem.Key.RawDataType, m_WorkingDir) Then
+						' Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
+
+						If Not RetrieveSpectra(kvItem.Key.RawDataType, m_WorkingDir, CreateStoragePathInfoOnly) Then
 							m_message = "Error occurred retrieving instrument data file for job " & intCurrentJob
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "RetrieveDataPackageMzXMLFiles, " & m_message)
 							Return False
 						End If
+
 					End If
 
 					lstDatasetsProcessed.Add(kvItem.Key.Dataset)
 				End If
-			Next
+
+			Next kvItem
 
 			' Restore the dataset and job info for this aggregation job
 			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
@@ -3041,17 +3213,6 @@ Public MustInherit Class clsAnalysisResources
 
 		Return True
 
-	End Function
-
-	''' <summary>
-	''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
-	''' </summary>
-	''' <param name="RawDataType">Type of data to copy</param>
-	''' <param name="WorkDir">Destination directory for copy</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
-	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal WorkDir As String) As Boolean
-		Return RetrieveSpectra(RawDataType, WorkDir, False)
 	End Function
 
 	''' <summary>
@@ -3175,18 +3336,47 @@ Public MustInherit Class clsAnalysisResources
 		If fiSourceFile.Exists Then
 			If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 
-				If Not String.IsNullOrEmpty(HashcheckFilePath) Then
-					Dim strTargetFilePath As String = IO.Path.Combine(WorkDir, fiSourceFile.Name)
+				If Not String.IsNullOrEmpty(HashcheckFilePath) AndAlso IO.File.Exists(HashcheckFilePath) Then
+					Dim strTargetFilePath As String
 					Dim strErrorMessage As String = String.Empty
+					Dim blnComputeHash As Boolean
 
-					If Not clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, HashcheckFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=True) Then
+					If CreateStoragePathInfoOnly Then
+						strTargetFilePath = fiSourceFile.FullName
+						' Don't compute the hash, since we're accessing the file over the network
+						blnComputeHash = False
+					Else
+						strTargetFilePath = IO.Path.Combine(WorkDir, fiSourceFile.Name)
+						blnComputeHash = True
+					End If
+
+					If Not clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, HashcheckFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=blnComputeHash) Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MzXML file validation error in RetrieveMZXmlFileUsingSourceFile: " & strErrorMessage)
 
 						Try
-							IO.File.Delete(strTargetFilePath)
+							If CreateStoragePathInfoOnly Then
+								' Delete the local StoragePathInfo file
+								Dim strStoragePathInfoFile As String = IO.Path.Combine(m_WorkingDir, fiSourceFile.Name & STORAGE_PATH_INFO_FILE_SUFFIX)
+								If IO.File.Exists(strStoragePathInfoFile) Then
+									IO.File.Delete(strStoragePathInfoFile)
+								End If
+							Else
+								' Delete the local file to force it to be re-generated
+								IO.File.Delete(strTargetFilePath)
+							End If
+
 						Catch ex As Exception
-							' Delete the local file to force it to be re-generated
+							' Ignore errors here
 						End Try
+
+						Try
+							' Delete the remote mzXML since it is invalid
+							fiSourceFile.Delete()
+
+						Catch ex As Exception
+
+						End Try
+
 						Return False
 					End If
 
@@ -3387,6 +3577,16 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
+	''' </summary>
+	''' <param name="RawDataType">Type of data to copy</param>
+	''' <param name="WorkDir">Destination directory for copy</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal WorkDir As String) As Boolean
+		Return RetrieveSpectra(RawDataType, WorkDir, False)
+	End Function
 
 	''' <summary>
 	''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
@@ -3406,10 +3606,6 @@ Public MustInherit Class clsAnalysisResources
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving spectra file(s)")
 
-		Dim blnIsFolder As Boolean = False
-		Dim strDatasetFileOrFolder As String
-		strDatasetFileOrFolder = FindDatasetFileOrFolder(blnIsFolder)
-
 		eRawDataType = GetRawDataType(RawDataType)
 		Select Case eRawDataType
 			Case eRawDataTypeConstants.AgilentDFolder			'Agilent ion trap data
@@ -3419,7 +3615,7 @@ Public MustInherit Class clsAnalysisResources
 					' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
 					'  we would pre-process the data beforehand to create MGF files
 					' The following call can be used to retrieve the files
-					blnSuccess = RetrieveMgfFile(WorkDir, True, CreateStoragePathInfoOnly)
+					blnSuccess = RetrieveMgfFile(WorkDir, GetCdfAlso:=True, CreateStoragePathInfoOnly:=CreateStoragePathInfoOnly)
 				Else
 					' DeconTools_V2 now supports reading the .D files directly
 					' Call RetrieveDotDFolder() to copy the folder and all subfolders
@@ -4081,6 +4277,48 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Finds the _DTA.txt file for this dataset
+	''' </summary>
+	''' <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
+	''' <remarks></remarks>
+	Public Function FindCDTAFile(ByRef strErrorMessage As String) As String
+
+		Dim SourceFileName As String
+		Dim SourceFolderPath As String
+
+		strErrorMessage = String.Empty
+
+		'Retrieve zipped DTA file
+		SourceFileName = m_DatasetName + "_dta.zip"
+		SourceFolderPath = FindDataFile(SourceFileName)
+
+		If String.IsNullOrEmpty(SourceFolderPath) Then
+			' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
+
+			SourceFileName = IO.Path.GetFileName(m_DatasetName + "_dta.txt")
+			SourceFolderPath = FindDataFile(SourceFileName)
+
+			If String.IsNullOrEmpty(SourceFolderPath) Then
+				' No folder found containing the zipped DTA files; return False
+				' (the FindDataFile procedure should have already logged an error)
+				strErrorMessage = "Could not find " + SourceFileName + " using FindDataFile"
+				Return String.Empty
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: could not find the _dta.zip file, but was able to find " + SourceFileName + " in folder " + SourceFolderPath)
+
+				' Return the path to the _dta.txt file
+				Return IO.Path.Combine(SourceFolderPath, SourceFileName)
+
+			End If
+
+		Else
+			' Return the path to the _dta.zip file
+			Return IO.Path.Combine(SourceFolderPath, SourceFileName)
+		End If
+
+	End Function
+
+	''' <summary>
 	''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
 	''' </summary>
 	''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
@@ -4088,56 +4326,50 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Public Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
 
-		Dim SourceFileName As String
-		Dim SourceFolderPath As String
+		Dim TargetZipFilePath As String = IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
+		Dim TargetCDTAFilePath As String = IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
 
-		'Retrieve zipped DTA file
-		SourceFileName = m_DatasetName + "_dta.zip"
-		SourceFolderPath = FindDataFile(SourceFileName)
+		If Not IO.File.Exists(TargetCDTAFilePath) And Not IO.File.Exists(TargetZipFilePath) Then
 
-		If SourceFolderPath = "" Then
-			' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
+			Dim SourceFilePath As String
+			Dim strErrorMessage As String = String.Empty
 
-			SourceFileName = m_DatasetName + "_dta.txt"
-			SourceFolderPath = FindDataFile(SourceFileName)
+			' Find the CDTA file
+			SourceFilePath = FindCDTAFile(strErrorMessage)
 
-			If SourceFolderPath = "" Then
-				' No folder found containing the zipped DTA files; return False
-				' (the FindDataFile procedure should have already logged an error)
-				m_message = "Could not find " + SourceFileName
+			If String.IsNullOrEmpty(SourceFilePath) Then
+				m_message = strErrorMessage
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: could not find the _dta.zip file, but was able to find " + SourceFileName + " in folder " + SourceFolderPath)
-
-				'Copy the _dta.txt file
-				If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + SourceFileName + " using folder " + SourceFolderPath)
-					End If
-					m_message = "Error copying " + SourceFileName
-					Return False
-				End If
-
 			End If
 
-		Else
+			Dim fiSourceFile As IO.FileInfo = New IO.FileInfo(SourceFilePath)
 
-			'Copy the _dta.zip file
-			If Not CopyFileToWorkDir(SourceFileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + SourceFileName + " using folder " + SourceFolderPath)
+			' Copy the file locally
+			If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+				m_message = "Error copying " + fiSourceFile.Name
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName)
 				End If
-				m_message = "Error copying " + SourceFileName
 				Return False
 			Else
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + SourceFileName + " from folder " + SourceFolderPath)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
 				End If
 			End If
+		End If
 
-			'Unzip concatenated DTA file
+		If Not IO.File.Exists(TargetCDTAFilePath) Then
+
+			If Not IO.File.Exists(TargetZipFilePath) Then
+				m_message = IO.Path.GetFileName(TargetZipFilePath) & " not found in the working directory"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; cannot unzip in RetrieveDtaFiles")
+				Return False
+			End If
+
+			' Unzip concatenated DTA file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-			If UnzipFileStart(IO.Path.Combine(m_WorkingDir, SourceFileName), m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
+			If UnzipFileStart(TargetZipFilePath, m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
 				End If
@@ -4150,21 +4382,30 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			Try
-				IO.File.Delete(IO.Path.Combine(m_WorkingDir, SourceFileName))
+				IO.File.Delete(TargetZipFilePath)
 			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting the _DTA.zip file: " + ex.Message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting the _DTA.zip file: " + ex.Message)
 			End Try
 
 		End If
 
-		'Unconcatenate DTA file if needed
+		' Unconcatenate DTA file if needed
+		' This is only required for Sequest
 		If UnConcatenate Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file")
 
 			Dim fiSourceFile As IO.FileInfo
-			fiSourceFile = New IO.FileInfo(IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt"))
+			fiSourceFile = New IO.FileInfo(TargetCDTAFilePath)
 
 			If Not fiSourceFile.Exists Then
+				' Source file not found; are the .DTA files already in the work directory?
+				Dim diWorkDir As IO.DirectoryInfo = New IO.DirectoryInfo(m_WorkingDir)
+				If diWorkDir.GetFiles(m_DatasetName & "*.dta").Count > 0 Then
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "_dta.txt file not found, but .dta files exist; assuming everything is OK")
+					End If
+					Return True
+				End If
 				m_message = "_DTA.txt file not found after unzipping"
 				Return False
 			ElseIf fiSourceFile.Length = 0 Then
@@ -4306,6 +4547,43 @@ Public MustInherit Class clsAnalysisResources
 		End Select
 
 	End Function
+
+	''' <summary>
+	''' Converts the dictionary items to a list of key/value pairs separated by an equals sign
+	''' Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
+	''' </summary>
+	''' <param name="dctItems">Dictionary items to store as a packed job parameter</param>
+	''' <param name="strParameterName">Packed job parameter name</param>
+	''' <remarks></remarks>
+	Protected Sub StorePackedJobParameterDictionary(ByVal dctItems As Generic.Dictionary(Of String, String), ByVal strParameterName As String)
+
+		Dim lstItems As Generic.List(Of String) = New Generic.List(Of String)
+
+		For Each item As Generic.KeyValuePair(Of String, String) In dctItems
+			lstItems.Add(item.Key & "=" & item.Value)
+		Next
+
+		StorePackedJobParameterList(lstItems, strParameterName)
+
+	End Sub
+
+	''' <summary>
+	''' Convert a string list to a packed job parameter (items are separated by tab characters)
+	''' </summary>
+	''' <param name="lstItems">List items to store as a packed job parameter</param>
+	''' <param name="strParameterName">Packed job parameter name</param>
+	''' <remarks></remarks>
+	Protected Sub StorePackedJobParameterList(ByVal lstItems As Generic.List(Of String), ByVal strParameterName As String)
+		Dim sbPackedList As Text.StringBuilder = New Text.StringBuilder
+
+		For Each strItem As String In lstItems
+			If sbPackedList.Length > 0 Then sbPackedList.Append(ControlChars.Tab)
+			sbPackedList.Append(strItem)
+		Next
+
+		m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, sbPackedList.ToString())
+
+	End Sub
 
 	''' <summary>
 	''' Unzips all files in the specified Zip file

@@ -7,7 +7,12 @@ Public Class clsIonicZipTools
     Protected m_DebugLevel As Integer
     Protected m_WorkDir As String = String.Empty
 
-    Protected m_MostRecentZipFilePath As String = String.Empty
+	Protected m_MostRecentZipFilePath As String = String.Empty
+
+	' This variable tracks the files most recently unzipped
+	' Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
+	Protected m_MostRecentUnzippedFiles As Generic.List(Of Generic.KeyValuePair(Of String, String)) = New Generic.List(Of Generic.KeyValuePair(Of String, String))
+
     Protected m_Message As String = String.Empty
 
 #Region "Properties"
@@ -31,7 +36,20 @@ Public Class clsIonicZipTools
         Get
             Return m_MostRecentZipFilePath
         End Get
-    End Property
+	End Property
+
+	''' <summary>
+	''' Returns the files most recently unzipped
+	''' Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public ReadOnly Property MostRecentUnzippedFiles() As Generic.List(Of Generic.KeyValuePair(Of String, String))
+		Get
+			Return m_MostRecentUnzippedFiles
+		End Get
+	End Property
 #End Region
 
     Public Sub New(ByVal DebugLevel As Integer, ByVal WorkDir As String)
@@ -171,6 +189,7 @@ Public Class clsIonicZipTools
 
         m_Message = String.Empty
         m_MostRecentZipFilePath = String.Copy(ZipFilePath)
+		m_MostRecentUnzippedFiles.Clear()
 
         Try
             fiFile = New System.IO.FileInfo(ZipFilePath)
@@ -189,14 +208,27 @@ Public Class clsIonicZipTools
             dtStartTime = System.DateTime.UtcNow
 
             If String.IsNullOrEmpty(FileFilter) Then
-                objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
+				objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
+
+				For Each objItem As Ionic.Zip.ZipEntry In objZipper.Entries
+					If Not objItem.IsDirectory Then
+						' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+						Dim fiUnzippedItem As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, IO.Path.DirectorySeparatorChar)))
+						m_MostRecentUnzippedFiles.Add(New Generic.KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
+					End If
+				Next
             Else
 				Dim objEntries As Generic.ICollection(Of Ionic.Zip.ZipEntry)
                 objEntries = objZipper.SelectEntries(FileFilter)
 
                 For Each objItem As Ionic.Zip.ZipEntry In objEntries
-                    objItem.Extract(TargetDirectory, eOverwriteBehavior)
-                Next
+					objItem.Extract(TargetDirectory, eOverwriteBehavior)
+					If Not objItem.IsDirectory Then
+						' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+						Dim fiUnzippedItem As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, IO.Path.DirectorySeparatorChar)))
+						m_MostRecentUnzippedFiles.Add(New Generic.KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
+					End If
+				Next
             End If
 
             dtEndTime = System.DateTime.UtcNow

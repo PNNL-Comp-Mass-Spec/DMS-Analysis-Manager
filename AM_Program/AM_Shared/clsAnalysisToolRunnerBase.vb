@@ -367,10 +367,9 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
 
-		Dim SourceFolderPath As String = String.Empty
-		Dim TransferFolderPath As String = String.Empty
-		Dim TargetFolderPath As String = String.Empty
 		Dim ResultsFolderName As String = String.Empty
+		Dim SourceFolderPath As String = String.Empty
+		Dim TargetFolderPath As String = String.Empty
 
 		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
@@ -384,13 +383,13 @@ Public Class clsAnalysisToolRunnerBase
 		Dim blnIncreaseHoldoffOnEachRetry As Boolean = True
 
 		Try
+
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
 
 			ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
 			If String.IsNullOrEmpty(ResultsFolderName) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
 				m_message = "Results folder not found"
-				'TODO: Handle errors
 				' Without a source folder; there isn't much we can do
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -401,72 +400,24 @@ Public Class clsAnalysisToolRunnerBase
 			If Not System.IO.Directory.Exists(SourceFolderPath) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
 				m_message = "Results folder not found"
-				'TODO: Handle errors
 				' Without a source folder; there isn't much we can do
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
-
-			' Verify transfer directory exists
-			' First make sure TransferFolderPath is defined
-			If String.IsNullOrEmpty(TransferFolderPath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
-				m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+			TargetFolderPath = CreateRemoteTransferFolder(objAnalysisResults)
+			If String.IsNullOrEmpty(TargetFolderPath) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
-
-			' Now verify transfer directory exists
-			Try
-				objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-				m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-
-			'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
-			' First make sure "DatasetNum" is defined
-			If String.IsNullOrEmpty(m_Dataset) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-				m_message = "Dataset name is undefined"
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			If m_Dataset.ToLower() = "Aggregation".ToLower() Then
-				' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
-				TargetFolderPath = String.Copy(TransferFolderPath)
-			Else
-				' Append the dataset name to the transfer folder path
-				TargetFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
-			End If
-
-			' Create the target folder if it doesn't exist
-			Try
-				objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-				m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-
-			' Now append the output folder name to TargetFolderPath
-			TargetFolderPath = System.IO.Path.Combine(TargetFolderPath, ResultsFolderName)
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
 			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory")
-			If SourceFolderPath.Length > 0 Then
+			If Not String.IsNullOrEmpty(SourceFolderPath) Then
 				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
 			End If
 
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
-
 
 		' Copy results folder to xfer folder
 		' Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
@@ -477,8 +428,8 @@ Public Class clsAnalysisToolRunnerBase
 
 			' Copy the files and subfolders
 			eResult = CopyResultsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
-			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
-			 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+			  objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+			  intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
 			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
@@ -625,6 +576,77 @@ Public Class clsAnalysisToolRunnerBase
 		Next
 
 		Return eResult
+
+	End Function
+
+	''' <summary>
+	''' Determines the path to the remote transfer folder
+	''' Creates the folder if it does not exist
+	''' </summary>
+	''' <returns>The full path to the remote transfer folder; an empty string if an error</returns>
+	''' <remarks></remarks>
+	Protected Function CreateRemoteTransferFolder(ByVal objAnalysisResults As clsAnalysisResults) As String
+
+		Dim strRemoteTransferFolderPath As String = String.Empty
+		Dim ResultsFolderName As String
+		Dim TransferFolderPath As String
+
+		ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
+		If String.IsNullOrEmpty(ResultsFolderName) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+			m_message = "Results folder not found"
+			' Without a source folder; there isn't much we can do
+			Return String.Empty
+		End If
+
+		TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
+
+		' Verify transfer directory exists
+		' First make sure TransferFolderPath is defined
+		If String.IsNullOrEmpty(TransferFolderPath) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+			m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
+			Return String.Empty
+		End If
+
+		' Now verify transfer directory exists
+		Try
+			objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TransferFolderPath) & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TransferFolderPath))
+			Return String.Empty
+		End Try
+
+		'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
+		' First make sure "DatasetNum" is defined
+		If String.IsNullOrEmpty(m_Dataset) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+			m_message = "Dataset name is undefined"
+			Return String.Empty
+		End If
+
+		If m_Dataset.ToLower() = "Aggregation".ToLower() Then
+			' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
+			strRemoteTransferFolderPath = String.Copy(TransferFolderPath)
+		Else
+			' Append the dataset name to the transfer folder path
+			strRemoteTransferFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
+		End If
+
+		' Create the target folder if it doesn't exist
+		Try
+			objAnalysisResults.CreateFolderWithRetry(strRemoteTransferFolderPath, MaxRetryCount:=5, RetryHoldoffSeconds:=20, blnIncreaseHoldoffOnEachRetry:=True)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(strRemoteTransferFolderPath) & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(strRemoteTransferFolderPath))
+			Return String.Empty
+		End Try
+
+		' Now append the output folder name to strRemoteTransferFolderPath
+		strRemoteTransferFolderPath = System.IO.Path.Combine(strRemoteTransferFolderPath, ResultsFolderName)
+
+		Return strRemoteTransferFolderPath
 
 	End Function
 
