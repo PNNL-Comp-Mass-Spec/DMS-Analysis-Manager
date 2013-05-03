@@ -99,6 +99,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const BRUKER_SER_FILE As String = "ser"
 
 	Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
+	Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
 
 	Public Enum eRawDataTypeConstants
 		Unknown = 0
@@ -854,6 +855,7 @@ Public MustInherit Class clsAnalysisResources
 		If strFilesToDelete.Count > 0 Then
 			' Call the garbage collector, then try to delete the first queued file
 			' Note, do not call WaitForPendingFinalizers since that could block this thread
+			' Thus, do not use PRISM.Processes.clsProgRunner.GarbageCollectNow
 			GC.Collect()
 
 			Try
@@ -1866,7 +1868,9 @@ Public MustInherit Class clsAnalysisResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated ScanStats file using " + strInputFilePath)
 			End If
 
-			System.Threading.Thread.Sleep(500)
+			System.Threading.Thread.Sleep(125)
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
 			Try
 				IO.File.Delete(strInputFilePath)
 			Catch ex As Exception
@@ -2110,11 +2114,11 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	Protected Function GetJobInfoFilePath(ByVal intJob As Integer) As String
-		Return IO.Path.Combine(m_WorkingDir, "JobInfoFile_Job" & intJob & ".txt")
+		Return GetJobInfoFilePath(intJob, m_WorkingDir)
 	End Function
 
 	Public Shared Function GetJobInfoFilePath(ByVal intJob As Integer, ByVal strWorkDirPath As String) As String
-		Return IO.Path.Combine(strWorkDirPath, "JobInfoFile_Job" & intJob & ".txt")
+		Return IO.Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX & intJob & ".txt")
 	End Function
 
 	''' <summary>
@@ -2909,9 +2913,10 @@ Public MustInherit Class clsAnalysisResources
 						End If
 
 						If SourceFilename = strSynopsisMSGFFileName Then
-							' It's OK if the MSGF file doesn't exist
+							' It's OK if the MSGF file doesn't exist, we'll just log a debug message
 							eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
 						Else
+							' This file must exist; log an error if it's not found
 							eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
 						End If
 
@@ -3028,7 +3033,7 @@ Public MustInherit Class clsAnalysisResources
 						If blnIsFolder Then
 							strCopyCommand = "xcopy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
 						Else
-							strCopyCommand = "copy " & strRawFilePath & " ."
+							strCopyCommand = "xcopy " & strRawFilePath & " ."
 						End If
 						dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
 						dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath)
@@ -3045,7 +3050,7 @@ Public MustInherit Class clsAnalysisResources
 				Dim strBatchFilePath As String
 				strBatchFilePath = IO.Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
 				Using swOutfile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strBatchFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-					For Each item As String In dctRawFileRetrievalCommands.Keys
+					For Each item As String In dctRawFileRetrievalCommands.Values
 						swOutfile.WriteLine(item)
 					Next
 				End Using
@@ -3370,11 +3375,12 @@ Public MustInherit Class clsAnalysisResources
 						End Try
 
 						Try
-							' Delete the remote mzXML since it is invalid
-							fiSourceFile.Delete()
-
+							' Delete the remote mzXML file only if we computed the hash and we had a hash mismatch
+							If blnComputeHash Then
+								fiSourceFile.Delete()
+							End If
 						Catch ex As Exception
-
+							' Ignore errors here
 						End Try
 
 						Return False
@@ -4147,6 +4153,9 @@ Public MustInherit Class clsAnalysisResources
 				End Try
 			Next
 
+			System.Threading.Thread.Sleep(125)
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
 			'Delete all s*.zip files in working directory
 			For Each ZipFile In ZipFiles
 				Try
@@ -4382,6 +4391,9 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			Try
+				System.Threading.Thread.Sleep(125)
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
 				IO.File.Delete(TargetZipFilePath)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting the _DTA.zip file: " + ex.Message)
@@ -4574,14 +4586,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="strParameterName">Packed job parameter name</param>
 	''' <remarks></remarks>
 	Protected Sub StorePackedJobParameterList(ByVal lstItems As Generic.List(Of String), ByVal strParameterName As String)
-		Dim sbPackedList As Text.StringBuilder = New Text.StringBuilder
 
-		For Each strItem As String In lstItems
-			If sbPackedList.Length > 0 Then sbPackedList.Append(ControlChars.Tab)
-			sbPackedList.Append(strItem)
-		Next
-
-		m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, sbPackedList.ToString())
+		m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, clsGlobal.FlattenList(lstItems, ControlChars.Tab))
 
 	End Sub
 
@@ -4819,6 +4825,9 @@ Public MustInherit Class clsAnalysisResources
 					fiUpdatedFile.MoveTo(strSourceFilePath)
 
 					If blnDeleteSourceFileIfUpdated Then
+						System.Threading.Thread.Sleep(125)
+						PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
 						fiOriginalFile.Delete()
 					End If
 
@@ -4830,6 +4839,9 @@ Public MustInherit Class clsAnalysisResources
 			Else
 				' No changes were made; nothing to update
 				' However, delete the new file we created
+				System.Threading.Thread.Sleep(125)
+				PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
 				fiUpdatedFile.Delete()
 				blnSuccess = True
 			End If

@@ -24,7 +24,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Dim udtOptions As udtDataPackageRetrievalOptionsType
 
 		udtOptions.CreateJobPathFiles = True
-		udtOptions.RetrieveMzXMLFile = Not Not blnCreateMSGFReportFilesOnly
+		udtOptions.RetrieveMzXMLFile = Not blnCreateMSGFReportFilesOnly
 		udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
 		udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
 
@@ -252,6 +252,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 			' Assure that the MSGF Report Template file job parameter is up-to-date
 			m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, strTemplateFileName)
+
+			m_jobParams.AddResultFileToSkip(strTemplateFileName)
 
 		Catch ex As Exception
 			m_message = "Exception in RetrieveMSGFReportTemplateFile"

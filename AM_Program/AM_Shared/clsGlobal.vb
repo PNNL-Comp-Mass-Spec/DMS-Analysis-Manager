@@ -986,16 +986,17 @@ Public Class clsGlobal
 				End While
 			End Using
 
-			If blnCheckDate Then
+			If blnCheckSize AndAlso fiDataFile.Length <> lngExpectedFileSizeBytes Then
+				strErrorMessage = "File size mismatch: expecting " & lngExpectedFileSizeBytes.ToString("#,##0") & " but computed " & fiDataFile.Length.ToString("#,##0")
+				Return False
+			End If
+
+			' Only compare dates if we are not comparing hash values
+			If Not blnComputeHash AndAlso blnCheckDate Then
 				If Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2 Then
 					strErrorMessage = "File modification date mismatch: expecting " & dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC but actually " & fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC"
 					Return False
 				End If
-			End If
-
-			If blnCheckSize AndAlso fiDataFile.Length <> lngExpectedFileSizeBytes Then
-				strErrorMessage = "File size mismatch: expecting " & lngExpectedFileSizeBytes.ToString("#,##0") & " but computed " & fiDataFile.Length.ToString("#,##0")
-				Return False
 			End If
 
 			If blnComputeHash Then
