@@ -19,18 +19,27 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Dim lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)
 		lstDataPackagePeptideHitJobs = New Generic.List(Of udtDataPackageJobInfoType)
 
+		Dim blnCreatePrideXMLFiles As Boolean = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
+
 		' Check whether we are only creating the .msgf files
 		Dim blnCreateMSGFReportFilesOnly As Boolean = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
 		Dim udtOptions As udtDataPackageRetrievalOptionsType
 
 		udtOptions.CreateJobPathFiles = True
-		udtOptions.RetrieveMzXMLFile = Not blnCreateMSGFReportFilesOnly
+
+		If blnCreatePrideXMLFiles And Not blnCreateMSGFReportFilesOnly Then
+			udtOptions.RetrieveMzXMLFile = True
+		Else
+			udtOptions.RetrieveMzXMLFile = False
+		End If
+
 		udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
 		udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
 
 		If blnCreateMSGFReportFilesOnly Then
 			udtOptions.RetrieveDTAFiles = False
 			udtOptions.RetrieveMZidFiles = False
+			blnCreatePrideXMLFiles = False
 		Else
 			If Not RetrieveMSGFReportTemplateFile() Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -38,8 +47,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		End If
 
 		' Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
-		' In addition, obtain the .mzXML file or .Raw file for each dataset
-		' The .mzXML file will be used to create the Pride XML file, which is required for a "complete" submission
+		' Possibly also obtain the .mzXML file or .Raw file for each dataset
+		' The .mzXML file is required if we are creating Pride XML files (which are required for a "complete" submission, though as of May 2013 Attila Csordas no longer wants these files)
 		If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If

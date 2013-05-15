@@ -35,6 +35,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected mCreateMSGFReportFilesOnly As Boolean
 	Protected mCreateMGFFiles As Boolean
+	Protected mCreatePrideXMLFiles As Boolean
+
 	Protected mProcessMzIdFiles As Boolean
 
 	Protected mPreviousDatasetName As String = String.Empty
@@ -68,6 +70,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	' Values are the specific instrument names
 	Protected mInstrumentGroupsStored As Generic.Dictionary(Of String, Generic.List(Of String))
 	Protected mSearchToolsUsed As Generic.SortedSet(Of String)
+
+	' Keys in this dictionary are Unimod accession names (e.g. UNIMOD:35)
+	' Values are CvParam data for the modification
+	Protected mModificationsUsed As Generic.Dictionary(Of String, udtCvParamInfoType)
 
 	' Keys in this dictionary are _dta.txt file names
 	' Values contain info on each file
@@ -121,6 +127,25 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Public MGFFilePath As String
 		Public MzIDFilePath As String
 		Public PrideXmlFilePath As String
+	End Structure
+
+	Protected Structure udtCvParamInfoType
+		Public Accession As String
+		Public CvRef As String
+		Public Value As String
+		Public Name As String
+		Public unitCvRef As String
+		Public unitName As String
+		Public unitAccession As String
+		Public Sub Clear()
+			Accession = String.Empty
+			CvRef = String.Empty
+			Value = String.Empty
+			Name = String.Empty
+			unitCvRef = String.Empty
+			unitName = String.Empty
+			unitAccession = String.Empty
+		End Sub
 	End Structure
 
 	Protected Enum eMSGFReportXMLFileLocation
@@ -409,17 +434,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return False
 			End If
 
-			If intRawFileID > 0 Then
-				If Not DefinePxFileMapping(intPeakfileID, intRawFileID) Then
-					Return False
+			If intPrideXMLFileID = 0 Then
+				' Pride XML file was not created
+				If intRawFileID > 0 AndAlso String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
+					' Only associate Peak files with .Raw files if we do not have a .MzId file
+					If Not DefinePxFileMapping(intPeakfileID, intRawFileID) Then
+						Return False
+					End If
 				End If
-			End If
-
-			If intPrideXMLFileID > 0 Then
+			Else
+				' Pride XML file was created
 				If Not DefinePxFileMapping(intPrideXMLFileID, intPeakfileID) Then
 					Return False
 				End If
 			End If
+
 		End If
 
 		Dim intMzIdFileID As Integer = 0
@@ -431,17 +460,27 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return False
 			End If
 
-			If intPeakfileID > 0 Then
-				If Not DefinePxFileMapping(intMzIdFileID, intPeakfileID) Then
-					Return False
+			If intPrideXMLFileID = 0 Then
+				' Pride XML file was not created
+				If intPeakfileID > 0 Then
+					If Not DefinePxFileMapping(intMzIdFileID, intPeakfileID) Then
+						Return False
+					End If
 				End If
-			End If
 
-			If intPrideXMLFileID > 0 Then
+				If intRawFileID > 0 Then
+					If Not DefinePxFileMapping(intMzIdFileID, intRawFileID) Then
+						Return False
+					End If
+				End If
+
+			Else
+				' Pride XML file was created
 				If Not DefinePxFileMapping(intPrideXMLFileID, intMzIdFileID) Then
 					Return False
 				End If
 			End If
+
 		End If
 
 		Return True
@@ -1762,8 +1801,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					objXmlWriter.WriteElementString("End", "0")
 					objXmlWriter.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString())
 
-					' ToDo: Write out details of dynamic mods
-					'       Will need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
+					' Possible ToDo: Write out details of dynamic mods
+					'                Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
+					'                However, since we're now submitting .mzID files to PRIDE and not .msgf-report.xml files, this update is not necessary
 					'
 					' XML format:
 					' <ModificationItem>
@@ -2110,6 +2150,20 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Sub
 
+	Protected Sub WritePXMods(ByVal swPXFile As IO.StreamWriter)
+
+		If mModificationsUsed.Count = 0 Then
+			WritePXHeader(swPXFile, "modification", "[PRIDE,PRIDE:0000398,No PTMs are included in the dataset,]")
+		Else
+			' Write out each modification, for example:
+			' modification	[UNIMOD,UNIMOD:35,Oxidation,]
+			For Each item In mModificationsUsed
+				WritePXHeader(swPXFile, "modification", "[" & item.Value.CvRef & "," & item.Value.Accession & "," & item.Value.Name & "," & item.Value.Value & "]")
+			Next
+		End If
+
+	End Sub
+
 	Protected Function CreatePXSubmissionFile() As Boolean
 
 		Const TBD As String = "******* UPDATE ****** "
@@ -2126,7 +2180,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		Try
 
-			strPXFilePath = IO.Path.Combine(m_WorkDir, "PX_Submission_" & System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm") & ".txt")
+			strPXFilePath = IO.Path.Combine(m_WorkDir, "PX_Submission_" & System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm") & ".px")
 
 			intPrideXmlFilesCreated = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Result)
 			intRawFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Raw)
@@ -2199,6 +2253,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				WritePXHeader(swPXFile, "name", "Matthew Monroe")
 				WritePXHeader(swPXFile, "email", "matthew.monroe@pnnl.gov")
 				WritePXHeader(swPXFile, "affiliation", "Pacific Northwest National Laboratory")
+				WritePXHeader(swPXFile, "pride_login", "alchemistmatt")
+
 				WritePXHeader(swPXFile, "title", TBD & "Journal Article Title")
 				WritePXHeader(swPXFile, "description", TBD & "Summary sentence")
 				WritePXHeader(swPXFile, "keywords", TBD)
@@ -2216,17 +2272,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 						strComment &= "search tools " & clsGlobal.FlattenList((From item In mSearchToolsUsed Where item <> mSearchToolsUsed.Last Order By item).ToList, ","c) & " and " & mSearchToolsUsed.Last
 					End If
 
-					strComment &= "; the output format is not supported by the PRIDE Converter"
-
 					WritePXHeader(swPXFile, "comment", TBD & strComment)
 				End If
 
-				' ToDo: Auto-lookup the NEWT values using the Ontology_Lookup database
+				' ToDo: Auto-lookup the NEWT values using DMS:
+				' Example query:
+				'	SELECT NEWT_ID, NEWT_Name, Name AS DMS_Name FROM V_Organism_Export WHERE Name = 'Shewanella_sp_MR-7'
+
 				WritePXHeader(swPXFile, "species", TBD & "[NEWT,10090,Mus musculus (Mouse),]")
 
 				WritePXInstruments(swPXFile)
 
-				WritePXHeader(swPXFile, "pride_login", "alchemistmatt")
+				WritePXMods(swPXFile)
+
+				' Add a blank line
+				swPXFile.WriteLine()
 
 				' Write the header row for the files
 				WritePXLine(swPXFile, New Generic.List(Of String) From {"FMH", "file_id", "file_type", "file_path", "file_mapping"})
@@ -2239,8 +2299,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 					lstFileInfoCols.Add("FME")
 					lstFileInfoCols.Add(item.Key.ToString)
-					lstFileInfoCols.Add(CInt(item.Value.PXFileType).ToString())
-					lstFileInfoCols.Add(item.Value.Filename)
+					lstFileInfoCols.Add(PXFileTypeName(item.Value.PXFileType))
+					lstFileInfoCols.Add(IO.Path.Combine("D:\Upload", m_ResFolderName, item.Value.Filename))
 
 					Dim strFileMappings As Generic.List(Of String) = New Generic.List(Of String)
 					For Each mapID In item.Value.FileMappings
@@ -2430,6 +2490,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	Protected Function InitializeOptions() As udtFilterThresholdsType
 
 		' Update the processing options
+		mCreatePrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
+
 		mCreateMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
 		mCreateMGFFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
 		mProcessMzIdFiles = m_jobParams.GetJobParameter("IncludeMzIdFiles", True)
@@ -2437,6 +2499,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If mCreateMSGFReportFilesOnly Then
 			mCreateMGFFiles = False
 			mProcessMzIdFiles = False
+			mCreatePrideXMLFiles = False
 		End If
 
 		mCachedOrgDBName = String.Empty
@@ -2461,6 +2524,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		mFilterThresholdsUsed = New udtFilterThresholdsType
 		mInstrumentGroupsStored = New Generic.Dictionary(Of String, Generic.List(Of String))
 		mSearchToolsUsed = New Generic.SortedSet(Of String)
+
+		mModificationsUsed = New Generic.Dictionary(Of String, udtCvParamInfoType)(StringComparer.CurrentCultureIgnoreCase)
 
 		' Determine the filter thresholds
 		Dim udtFilterThresholds As udtFilterThresholdsType
@@ -2643,7 +2708,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			' Retrieve the dataset files for this dataset
 			mPreviousDatasetName = strDataset
 
-			If Not mCreateMSGFReportFilesOnly Then
+			If mCreatePrideXMLFiles And Not mCreateMSGFReportFilesOnly Then
 				' Create the .mzXML files if it is missing
 				blnSuccess = CreateMzXMLFileIfMissing(intJob, strDataset, objAnalysisResults, dctDatasetRawFilePaths)
 				If Not blnSuccess Then
@@ -2690,22 +2755,26 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		End If
 
-		' Create the .msgf-report.xml file for this job
-		Dim strPrideReportXMLFilePath As String = String.Empty
-		blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, strPrideReportXMLFilePath)
-		If Not blnSuccess Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		AddToListIfNew(mPreviousDatasetFilesToDelete, strPrideReportXMLFilePath)
-
 		udtResultFiles.PrideXmlFilePath = String.Empty
-		If Not mCreateMSGFReportFilesOnly Then
-			' Create the .msgf-Pride.xml file for this job
-			blnSuccess = CreatePrideXMLFile(intJob, strDataset, strPrideReportXMLFilePath, udtResultFiles.PrideXmlFilePath)
+		If mCreatePrideXMLFiles Then
+
+			' Create the .msgf-report.xml file for this job
+			Dim strPrideReportXMLFilePath As String = String.Empty
+			blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, strPrideReportXMLFilePath)
 			If Not blnSuccess Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			AddToListIfNew(mPreviousDatasetFilesToDelete, strPrideReportXMLFilePath)
+
+			If Not mCreateMSGFReportFilesOnly Then
+				' Create the .msgf-Pride.xml file for this job
+				blnSuccess = CreatePrideXMLFile(intJob, strDataset, strPrideReportXMLFilePath, udtResultFiles.PrideXmlFilePath)
+				If Not blnSuccess Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+			End If
+
 		End If
 
 		blnSuccess = AppendToPXFileInfo(intJob, strDataset, dctDatasetRawFilePaths, udtResultFiles)
@@ -2716,6 +2785,68 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+	End Function
+
+	Protected Function ReadWriteCvParam(ByVal objXmlReader As Xml.XmlTextReader, ByVal objXmlWriter As Xml.XmlTextWriter, ByRef lstElementCloseDepths As Generic.Stack(Of Integer)) As udtCvParamInfoType
+
+		Dim udtCvParam As udtCvParamInfoType = New udtCvParamInfoType
+		udtCvParam.Clear()
+
+		objXmlWriter.WriteStartElement(objXmlReader.Name)
+
+		If objXmlReader.HasAttributes() Then
+			objXmlReader.MoveToFirstAttribute()
+			Do
+				objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value)
+
+				Select Case objXmlReader.Name
+					Case "accession"
+						udtCvParam.Accession = objXmlReader.Value
+
+					Case "cvRef"
+						udtCvParam.CvRef = objXmlReader.Value
+
+					Case "name"
+						udtCvParam.Name = objXmlReader.Value
+
+					Case "value"
+						udtCvParam.Value = objXmlReader.Value
+
+					Case "unitCvRef"
+						udtCvParam.unitCvRef = objXmlReader.Value
+
+					Case "unitName"
+						udtCvParam.unitName = objXmlReader.Value
+
+					Case "unitAccession"
+						udtCvParam.unitAccession = objXmlReader.Value
+
+				End Select
+			Loop While objXmlReader.MoveToNextAttribute()
+
+			lstElementCloseDepths.Push(objXmlReader.Depth)
+
+		ElseIf objXmlReader.IsEmptyElement Then
+			objXmlWriter.WriteEndElement()
+		End If
+
+		Return udtCvParam
+
+	End Function
+
+	Protected Function PXFileTypeName(ePXFileType As clsPXFileInfo.ePXFileType) As String
+		Select Case ePXFileType
+			Case clsPXFileInfoBase.ePXFileType.Result
+				Return "result"
+			Case clsPXFileInfoBase.ePXFileType.Raw
+				Return "raw"
+			Case clsPXFileInfoBase.ePXFileType.Search
+				Return "search"
+			Case clsPXFileInfoBase.ePXFileType.Peak
+				Return "peak"
+			Case Else
+				Return "other"
+		End Select
 	End Function
 
 	Protected Function RetrievePHRPFiles(ByVal intJob As Integer, ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults) As Boolean
@@ -3093,7 +3224,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	''' <remarks></remarks>
 	Private Function UpdateMzIdFile(ByVal intJob As Integer, ByVal strDataset As String, ByVal blnCreatedMGFFiles As Boolean, ByRef strMzIDFilePath As String) As Boolean
 
+		Dim blnNodeWritten As Boolean
 		Dim blnSkipNode As Boolean
+		Dim blnReadModAccession As Boolean = False
 
 		Dim lstAttributeOverride As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
 
@@ -3176,7 +3309,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 									eFileLocation = UpdateMZidXMLFileLocation(eFileLocation, objXmlReader.Name)
 
+									blnNodeWritten = False
 									blnSkipNode = False
+
 									lstAttributeOverride.Clear()
 
 									Select Case objXmlReader.Name
@@ -3226,6 +3361,26 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 												blnSkipNode = True
 											End If
 
+										Case "SearchModification"
+											If eFileLocation = eMzIDXMLFileLocation.AnalysisProtocolCollection Then
+												' The next cvParam entry that we read should have the Unimod accession
+												blnReadModAccession = True
+											End If
+
+										Case "cvParam"
+											If blnReadModAccession Then
+												Dim udtModInfo As udtCvParamInfoType
+												udtModInfo = ReadWriteCvParam(objXmlReader, objXmlWriter, lstElementCloseDepths)
+
+												If Not String.IsNullOrEmpty(udtModInfo.Accession) Then
+													If Not mModificationsUsed.ContainsKey(udtModInfo.Accession) Then
+														mModificationsUsed.Add(udtModInfo.Accession, udtModInfo)
+													End If
+												End If
+
+												blnNodeWritten = True
+												blnReadModAccession = False
+											End If
 									End Select
 
 
@@ -3236,7 +3391,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 											objXmlReader.Skip()
 										End If
 
-									Else
+									ElseIf Not blnNodeWritten Then
 										' Copy this element from the source file to the target file
 
 										objXmlWriter.WriteStartElement(objXmlReader.Name)
@@ -3278,6 +3433,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 										Dim intPoppedVal As Integer
 										intPoppedVal = lstElementCloseDepths.Pop()
 									Loop
+
+									If objXmlReader.Name = "SearchModification" Then
+										blnReadModAccession = False
+									End If
 
 								Case Xml.XmlNodeType.Text
 

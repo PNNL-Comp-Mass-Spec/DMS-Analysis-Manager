@@ -3003,26 +3003,28 @@ Public MustInherit Class clsAnalysisResources
 
 				End If
 
-				' See if a .mzXML file already exists for this dataset
-				Dim strMzXMLFilePath As String = String.Empty
-				Dim strHashcheckFilePath As String = String.Empty
+				If udtOptions.RetrieveMzXMLFile Then
+					' See if a .mzXML file already exists for this dataset
+					Dim strMzXMLFilePath As String = String.Empty
+					Dim strHashcheckFilePath As String = String.Empty
 
-				strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
+					strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
 
-				If String.IsNullOrEmpty(strMzXMLFilePath) Then
-					' mzXML file not found
-					If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
-						' Will need to retrieve the .Raw file for this dataset
-						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
-					ElseIf udtOptions.RetrieveMzXMLFile Then
-						m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						Return False
+					If String.IsNullOrEmpty(strMzXMLFilePath) Then
+						' mzXML file not found
+						If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
+							' Will need to retrieve the .Raw file for this dataset
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty))
+						ElseIf udtOptions.RetrieveMzXMLFile Then
+							m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							Return False
+						End If
+					Else
+						dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
 					End If
-				Else
-					dctInstrumentDataToRetrieve.Add(udtJobInfo, New Generic.KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
 				End If
-
+			
 				Dim blnIsFolder As Boolean = False
 				Dim strRawFilePath As String
 				strRawFilePath = FindDatasetFileOrFolder(blnIsFolder)
