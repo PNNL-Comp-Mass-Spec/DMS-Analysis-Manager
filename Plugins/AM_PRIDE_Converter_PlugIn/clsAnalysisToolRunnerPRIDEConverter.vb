@@ -71,6 +71,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	Protected mInstrumentGroupsStored As Generic.Dictionary(Of String, Generic.List(Of String))
 	Protected mSearchToolsUsed As Generic.SortedSet(Of String)
 
+	' Keys in this dictionary are NEWT IDs
+	' Values are the NEWT name for the given ID
+	Protected mExperimentNEWTInfo As Generic.Dictionary(Of Integer, String)
+
 	' Keys in this dictionary are Unimod accession names (e.g. UNIMOD:35)
 	' Values are CvParam data for the modification
 	Protected mModificationsUsed As Generic.Dictionary(Of String, udtCvParamInfoType)
@@ -198,6 +202,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEConverter.RunTool(): Enter")
 			End If
 
+			Dim udtFilterThresholds As udtFilterThresholdsType
+
+			' Initialize the class-wide variables
+			udtFilterThresholds = InitializeOptions()
+
 			' Verify that program files exist
 			If Not DefineProgramPaths() Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -218,11 +227,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			If Not LookupDataPackagePeptideHitJobs() Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
-
-			Dim udtFilterThresholds As udtFilterThresholdsType
-
-			' Initialize the class-wide variables
-			udtFilterThresholds = InitializeOptions()
 
 			' The clsAnalysisResults object is used to copy files to/from this computer
 			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
@@ -315,6 +319,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
 
 	End Function
+
+	Protected Sub AddNewtInfo(ByVal intNEWTID As Integer, strNEWTName As String)
+		If Not mExperimentNEWTInfo.ContainsKey(intNEWTID) Then
+			mExperimentNEWTInfo.Add(intNEWTID, strNEWTName)
+		End If
+	End Sub
 
 	Protected Function AddPxFileToMasterList(ByVal strFilePath As String, ByVal intJob As Integer) As Integer
 
@@ -1558,17 +1568,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 											blnInstrumentDetailsAutoDefined = WriteXMLInstrumentInfo(objXmlWriter, udtJobInfo.InstrumentGroup)
 
-											Dim lstInstruments As Generic.List(Of String) = Nothing
-
-											If mInstrumentGroupsStored.TryGetValue(udtJobInfo.InstrumentGroup, lstInstruments) Then
-												If Not lstInstruments.Contains(udtJobInfo.Instrument) Then
-													lstInstruments.Add(udtJobInfo.Instrument)
-												End If
-											Else
-												lstInstruments = New Generic.List(Of String) From {udtJobInfo.Instrument}
-												mInstrumentGroupsStored.Add(udtJobInfo.InstrumentGroup, lstInstruments)
-											End If
-
 										End If
 
 									Case "source", "analyzerList", "detector"
@@ -2176,9 +2175,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim strSubmissionType As String
 		Dim strFilterText As String = String.Empty
 
+		Dim dctParameters As Generic.Dictionary(Of String, String)
 		Dim strPXFilePath As String
 
 		Try
+
+			' Read the PX_Submission_Template.px file
+			dctParameters = ReadTemplatePXSubmissionFile()
 
 			strPXFilePath = IO.Path.Combine(m_WorkDir, "PX_Submission_" & System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm") & ".px")
 
@@ -2250,15 +2253,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 			Using swPXFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strPXFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-				WritePXHeader(swPXFile, "name", "Matthew Monroe")
-				WritePXHeader(swPXFile, "email", "matthew.monroe@pnnl.gov")
-				WritePXHeader(swPXFile, "affiliation", "Pacific Northwest National Laboratory")
-				WritePXHeader(swPXFile, "pride_login", "alchemistmatt")
+				WritePXHeader(swPXFile, "name", "Matthew Monroe", dctParameters)
+				WritePXHeader(swPXFile, "email", "matthew.monroe@pnnl.gov", dctParameters)
+				WritePXHeader(swPXFile, "affiliation", "Pacific Northwest National Laboratory", dctParameters)
+				WritePXHeader(swPXFile, "pride_login", "alchemistmatt", dctParameters)
 
-				WritePXHeader(swPXFile, "title", TBD & "Journal Article Title")
-				WritePXHeader(swPXFile, "description", TBD & "Summary sentence")
-				WritePXHeader(swPXFile, "keywords", TBD)
-				WritePXHeader(swPXFile, "type", strSubmissionType)
+				WritePXHeader(swPXFile, "title", TBD & "Journal Article Title", dctParameters)
+				WritePXHeader(swPXFile, "description", TBD & "Summary sentence", dctParameters)
+				WritePXHeader(swPXFile, "keywords", TBD, dctParameters)
+				WritePXHeader(swPXFile, "type", strSubmissionType, dctParameters)
 
 				If strSubmissionType = "SUPPORTED" Then
 					WritePXHeader(swPXFile, "comment", strFilterText)
@@ -2272,16 +2275,24 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 						strComment &= "search tools " & clsGlobal.FlattenList((From item In mSearchToolsUsed Where item <> mSearchToolsUsed.Last Order By item).ToList, ","c) & " and " & mSearchToolsUsed.Last
 					End If
 
-					WritePXHeader(swPXFile, "comment", TBD & strComment)
+					WritePXHeader(swPXFile, "comment", strComment)
 				End If
 
-				' ToDo: Auto-lookup the NEWT values using DMS:
-				' Example query:
-				'	SELECT NEWT_ID, NEWT_Name, Name AS DMS_Name FROM V_Organism_Export WHERE Name = 'Shewanella_sp_MR-7'
+				If mExperimentNEWTInfo.Count = 0 Then
+					' None of the data package jobs had valid NEWT info
+					WritePXHeader(swPXFile, "species", TBD & "[NEWT,10090,Mus musculus (Mouse),]", dctParameters)
+				Else
+					' NEWT info is defined; write it out
+					For Each item In mExperimentNEWTInfo
+						WritePXHeader(swPXFile, "species", "[NEWT," & item.Key & "," & item.Value & ",]")
+					Next
+				End If
 
-				WritePXHeader(swPXFile, "species", TBD & "[NEWT,10090,Mus musculus (Mouse),]")
-
-				WritePXInstruments(swPXFile)
+				If mInstrumentGroupsStored.Count > 0 Then
+					WritePXInstruments(swPXFile)
+				Else
+					WritePXHeader(swPXFile, "instrument", "[MS," & "MS:1000449" & "," & "LTQ Orbitrap" & ",]", dctParameters)
+				End If
 
 				WritePXMods(swPXFile)
 
@@ -2524,6 +2535,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		mFilterThresholdsUsed = New udtFilterThresholdsType
 		mInstrumentGroupsStored = New Generic.Dictionary(Of String, Generic.List(Of String))
 		mSearchToolsUsed = New Generic.SortedSet(Of String)
+		mExperimentNEWTInfo = New Generic.Dictionary(Of Integer, String)
 
 		mModificationsUsed = New Generic.Dictionary(Of String, udtCvParamInfoType)(StringComparer.CurrentCultureIgnoreCase)
 
@@ -2723,7 +2735,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			mSearchToolsUsed.Add(kvJobInfo.Value.Tool)
 		End If
 
-		' Retrieve the PHRP files for this job
+		' Update the cached NEWT info
+		AddNewtInfo(kvJobInfo.Value.Experiment_NEWT_ID, kvJobInfo.Value.Experiment_NEWT_Name)
+
+		' Retrieve the PHRP files, MSGF+ results, and _dta.txt file for this job
 		blnSuccess = RetrievePHRPFiles(intJob, strDataset, objAnalysisResults)
 		If Not blnSuccess Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -2755,6 +2770,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 		End If
 
+		' Store the instrument group and instrument name
+		StoreInstrumentInfo(kvJobInfo.Value)
+
 		udtResultFiles.PrideXmlFilePath = String.Empty
 		If mCreatePrideXMLFiles Then
 
@@ -2784,6 +2802,73 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
+
+	End Function
+
+	Protected Function PXFileTypeName(ePXFileType As clsPXFileInfo.ePXFileType) As String
+		Select Case ePXFileType
+			Case clsPXFileInfoBase.ePXFileType.Result
+				Return "result"
+			Case clsPXFileInfoBase.ePXFileType.Raw
+				Return "raw"
+			Case clsPXFileInfoBase.ePXFileType.Search
+				Return "search"
+			Case clsPXFileInfoBase.ePXFileType.Peak
+				Return "peak"
+			Case Else
+				Return "other"
+		End Select
+	End Function
+
+	''' <summary>
+	''' Reads the template PX Submission file
+	''' Caches the keys and values for the method lines (which start with MTD)
+	''' </summary>
+	''' <returns>Dictionary of keys and values</returns>
+	''' <remarks></remarks>
+	Protected Function ReadTemplatePXSubmissionFile() As Generic.Dictionary(Of String, String)
+
+		Dim strTemplateFileName As String
+		Dim strTemplateFilePath As String
+		Dim strLineIn As String
+
+		Dim dctParameters As Generic.Dictionary(Of String, String)
+		dctParameters = New Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+
+		Try
+			strTemplateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=False)
+			strTemplateFilePath = IO.Path.Combine(m_WorkDir, strTemplateFileName)
+
+			If IO.File.Exists(strTemplateFilePath) Then
+				Using srTemplateFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strTemplateFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+					While srTemplateFile.Peek > -1
+						strLineIn = srTemplateFile.ReadLine
+
+						If Not String.IsNullOrEmpty(strLineIn) Then
+							If strLineIn.StartsWith("MTD") Then
+
+								Dim lstColumns As Generic.List(Of String)
+								lstColumns = strLineIn.Split(New Char() {ControlChars.Tab}, 3).ToList()
+
+								If lstColumns.Count >= 3 AndAlso Not String.IsNullOrEmpty(lstColumns(1)) Then
+									If Not dctParameters.ContainsKey(lstColumns(1)) Then
+										dctParameters.Add(lstColumns(1), lstColumns(2))
+									End If
+								End If
+
+							End If
+						End If
+					End While
+				End Using
+			End If
+
+		Catch ex As Exception
+			m_message = "Error in ReadTemplatePX"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return dctParameters
+		End Try
+
+		Return dctParameters
 
 	End Function
 
@@ -2834,21 +2919,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Function PXFileTypeName(ePXFileType As clsPXFileInfo.ePXFileType) As String
-		Select Case ePXFileType
-			Case clsPXFileInfoBase.ePXFileType.Result
-				Return "result"
-			Case clsPXFileInfoBase.ePXFileType.Raw
-				Return "raw"
-			Case clsPXFileInfoBase.ePXFileType.Search
-				Return "search"
-			Case clsPXFileInfoBase.ePXFileType.Peak
-				Return "peak"
-			Case Else
-				Return "other"
-		End Select
-	End Function
-
 	Protected Function RetrievePHRPFiles(ByVal intJob As Integer, ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults) As Boolean
 		Dim strJobInfoFilePath As String
 		Dim lstFilesToCopy As Generic.List(Of String) = New Generic.List(Of String)
@@ -2869,9 +2939,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Loop
 			End Using
 
+			' Retrieve the files
+			' If the same dataset has multiple jobs then we might overwrite existing files; 
+			'   that's OK since results files that we care about will have been auto-renamed based on the call to JobFileRenameRequired
+
 			For Each strSourceFilePath As String In lstFilesToCopy
+
+				Dim strSourceFileName As String = IO.Path.GetFileName(strSourceFilePath)
+
 				Dim strTargetFilePath As String
-				strTargetFilePath = IO.Path.Combine(m_WorkDir, IO.Path.GetFileName(strSourceFilePath))
+				strTargetFilePath = IO.Path.Combine(m_WorkDir, strSourceFileName)
 
 				objAnalysisResults.CopyFileWithRetry(strSourceFilePath, strTargetFilePath, True)
 
@@ -2884,15 +2961,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				If fiLocalFile.Extension.ToLower() = ".zip" Then
 					' Need to unzip the file
-					m_IonicZipTools.UnzipFile(fiLocalFile.FullName)
+					m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir)
 
 					For Each kvUnzippedFile In m_IonicZipTools.MostRecentUnzippedFiles
 						AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value)
 					Next
-
 				End If
 
 				AddToListIfNew(mPreviousDatasetFilesToDelete, fiLocalFile.FullName)
+
 			Next
 
 		Catch ex As Exception
@@ -3022,6 +3099,20 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Return blnSuccess
 
 	End Function
+
+	Protected Sub StoreInstrumentInfo(ByVal udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType)
+
+		Dim lstInstruments As Generic.List(Of String) = Nothing
+		If mInstrumentGroupsStored.TryGetValue(udtJobInfo.InstrumentGroup, lstInstruments) Then
+			If Not lstInstruments.Contains(udtJobInfo.Instrument) Then
+				lstInstruments.Add(udtJobInfo.Instrument)
+			End If
+		Else
+			lstInstruments = New Generic.List(Of String) From {udtJobInfo.Instrument}
+			mInstrumentGroupsStored.Add(udtJobInfo.InstrumentGroup, lstInstruments)
+		End If
+
+	End Sub
 
 	Protected Function UpdateMSGFReportXMLFileLocation(ByVal eFileLocation As eMSGFReportXMLFileLocation, ByVal strElementName As String, ByVal blnInsideMzDataDescription As Boolean) As eMSGFReportXMLFileLocation
 
@@ -3181,30 +3272,40 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		fiPrideConverter = New System.IO.FileInfo(strPrideConverterProgLoc)
-		If Not fiPrideConverter.Exists Then
-			Try
-				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-				Return False
-			End Try
-
-			Return False
-		End If
-
-		' Run the PRIDE Converter using the -version switch to determine its version
-		strToolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName)
-
 		' Store paths to key files in ioToolFiles
 		Dim ioToolFiles As New Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(fiPrideConverter)
+
+		If mCreatePrideXMLFiles Then
+			fiPrideConverter = New System.IO.FileInfo(strPrideConverterProgLoc)
+			If Not fiPrideConverter.Exists Then
+				Try
+					strToolVersionInfo = "Unknown"
+					Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+				Catch ex As Exception
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+					Return False
+				End Try
+
+				Return False
+			End If
+
+			' Run the PRIDE Converter using the -version switch to determine its version
+			strToolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName)
+
+			ioToolFiles.Add(fiPrideConverter)
+		Else
+
+			' Lookup the version of the AnalysisManagerPrideConverter plugin
+			If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerPRIDEConverterPlugIn", blnIncludeRevision:=False) Then
+				Return False
+			End If
+
+		End If
 
 		ioToolFiles.Add(New System.IO.FileInfo(mMSXmlGeneratorAppPath))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex)
 			Return False
@@ -3521,6 +3622,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Sub
 
 	Protected Sub WritePXHeader(ByVal swPXFile As IO.StreamWriter, ByVal strType As String, ByVal strValue As String)
+		WritePXHeader(swPXFile, strType, strValue, New Generic.Dictionary(Of String, String))
+	End Sub
+
+	Protected Sub WritePXHeader(ByVal swPXFile As IO.StreamWriter, ByVal strType As String, ByVal strValue As String, ByVal dctParameters As Generic.Dictionary(Of String, String))
+		Dim strValueOverride As String = String.Empty
+
+		If dctParameters.TryGetValue(strType, strValueOverride) Then
+			strValue = strValueOverride
+		End If
 
 		WritePXLine(swPXFile, New Generic.List(Of String) From {"MTD", strType, strValue})
 
@@ -3574,7 +3684,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector")
 
-			Case "LCQ"				
+			Case "LCQ"
 				blnIsLCQ = True
 
 			Case "LTQ", "LTQ-ETD", "LTQ-Prep", "VelosPro"

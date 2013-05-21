@@ -1848,7 +1848,6 @@ Public Class clsAnalysisToolRunnerBase
 
 	End Function
 
-
 	''' <summary>
 	''' Uses Reflection to determine the version info for an assembly already loaded in memory
 	''' </summary>
@@ -1857,13 +1856,30 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
 	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String) As Boolean
+		Return StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, strAssemblyName, blnIncludeRevision:=True)
+	End Function
+
+	''' <summary>
+	''' Uses Reflection to determine the version info for an assembly already loaded in memory
+	''' </summary>
+	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+	''' <param name="strAssemblyName">Assembly Name</param>
+	''' <param name="blnIncludeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
+	''' <returns>True if success; false if an error</returns>
+	''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
+	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String, ByVal blnIncludeRevision As Boolean) As Boolean
 
 		Try
 			Dim oAssemblyName As System.Reflection.AssemblyName
 			oAssemblyName = System.Reflection.Assembly.Load(strAssemblyName).GetName
 
 			Dim strNameAndVersion As String
-			strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+			If blnIncludeRevision Then
+				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+			Else
+				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.Major & "." & oAssemblyName.Version.Minor & "." & oAssemblyName.Version.Build
+			End If
+
 			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
 		Catch ex As Exception

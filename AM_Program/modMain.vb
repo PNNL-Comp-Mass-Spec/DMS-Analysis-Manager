@@ -102,8 +102,9 @@ Module modMain
 						'objTest.PerformanceCounterTest()
 						'objTest.SystemMemoryUsage()
 
-						objTest.TestIonicZipTools()
+						' objTest.TestIonicZipTools()
 
+						objTest.RemoveSparseSpectra()
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

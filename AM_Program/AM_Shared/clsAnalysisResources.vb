@@ -129,6 +129,9 @@ Public MustInherit Class clsAnalysisResources
 		Public Experiment As String
 		Public Experiment_Reason As String
 		Public Experiment_Comment As String
+		Public Experiment_Organism As String
+		Public Experiment_NEWT_ID As Integer		' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+		Public Experiment_NEWT_Name As String		' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
 		Public Tool As String
 		Public ResultType As String
 		Public PeptideHitResultType As clsPHRPReader.ePeptideHitResultType
@@ -168,6 +171,11 @@ Public MustInherit Class clsAnalysisResources
 		''' </summary>
 		''' <remarks></remarks>
 		Public RetrieveMZidFiles As Boolean
+		''' <summary>
+		''' Set to True to obtain the _syn.txt file and related PHRP files
+		''' </summary>
+		''' <remarks></remarks>
+		Public RetrievePHRPFiles As Boolean
 	End Structure
 #End Region
 
@@ -192,6 +200,8 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_IonicZipTools As clsIonicZipTools
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+
+	Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
 
 	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
 	Private m_LockQueueWaitTimeStart As System.DateTime = System.DateTime.UtcNow
@@ -258,9 +268,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <summary>
 	''' Constructor
 	''' </summary>
-	''' <remarks>Does nothing at present</remarks>
+	''' <remarks></remarks>
 	Public Sub New()
-
+		m_CDTAUtilities = New clsCDTAUtilities
 	End Sub
 
 	''' <summary>
@@ -1990,6 +2000,9 @@ Public MustInherit Class clsAnalysisResources
 			.Experiment = m_jobParams.GetJobParameter("JobParameters", "Experiment", String.Empty)
 			.Experiment_Reason = String.Empty
 			.Experiment_Comment = String.Empty
+			.Experiment_Organism = String.Empty
+			.Experiment_NEWT_ID = 0
+			.Experiment_NEWT_Name = String.Empty
 
 			.Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", String.Empty)
 			.ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", String.Empty)
@@ -2246,7 +2259,8 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
 
-		SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, Experiment, Experiment_Reason, Experiment_Comment,")
+		SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
+		SqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
 		SqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
 		SqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
 		SqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
@@ -2305,6 +2319,9 @@ Public MustInherit Class clsAnalysisResources
 					.Experiment = clsGlobal.DbCStr(CurRow("Experiment"))
 					.Experiment_Reason = clsGlobal.DbCStr(CurRow("Experiment_Reason"))
 					.Experiment_Comment = clsGlobal.DbCStr(CurRow("Experiment_Comment"))
+					.Experiment_Organism = clsGlobal.DbCStr(CurRow("Organism"))
+					.Experiment_NEWT_ID = clsGlobal.DbCInt(CurRow("Experiment_NEWT_ID"))
+					.Experiment_NEWT_Name = clsGlobal.DbCStr(CurRow("Experiment_NEWT_Name"))
 					.Tool = clsGlobal.DbCStr(CurRow("Tool"))
 					.ResultType = clsGlobal.DbCStr(CurRow("ResultType"))
 					.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(.ResultType)
@@ -2865,15 +2882,18 @@ Public MustInherit Class clsAnalysisResources
 					Dim blnPrefixRequired As Boolean
 
 					strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset)
-					lstFilesToGet.Add(strSynopsisFileName)
-
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-					lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-
 					strSynopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(strSynopsisFileName)
-					lstFilesToGet.Add(strSynopsisMSGFFileName)
+
+					If udtOptions.RetrievePHRPFiles Then
+						lstFilesToGet.Add(strSynopsisFileName)
+
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+
+						lstFilesToGet.Add(strSynopsisMSGFFileName)
+					End If
 
 					If udtOptions.RetrieveMZidFiles AndAlso udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 						' Retrieve MSGF+ .mzID files
@@ -4693,6 +4713,24 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
+	''' </summary>
+	''' <param name="strWorkDir">Folder with the CDTA file</param>
+	''' <param name="strInputFileName">CDTA filename</param>
+	''' <returns>True if success; false if an error</returns>
+	Protected Function ValidateCDTAFileRemoveSparseSpectra(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
+		Dim blnSuccess As Boolean
+
+		blnSuccess = m_CDTAUtilities.RemoveSparseSpectra(strWorkDir, strInputFileName)
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+			m_message = "m_CDTAUtilities.RemoveSparseSpectra returned False"
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	''' <summary>
 	''' Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
 	''' </summary>
 	''' <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
@@ -4700,163 +4738,37 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
 	''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
 	''' <returns>True if success; false if an error</returns>
-	Public Function ValidateCDTAFileScanAndCSTags(ByVal strSourceFilePath As String, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByRef strOutputFilePath As String) As Boolean
+	Protected Function ValidateCDTAFileScanAndCSTags(ByVal strSourceFilePath As String, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByRef strOutputFilePath As String) As Boolean
 
-		Dim strOutputFilePathTemp As String
-		Dim strLineIn As String
-		Dim strDTAHeader As String
+		Dim blnSuccess As Boolean
 
-		Dim intScanNumberStart As Integer
-		Dim intScanNumberEnd As Integer
-		Dim intScanCount As Integer
-		Dim intCharge As Integer
-
-		Dim blnValidScanInfo As Boolean = False
-		Dim blnParentIonLineIsNext As Boolean = False
-		Dim blnParentIonLineUpdated As Boolean = False
-
-		Dim blnSuccess As Boolean = False
-
-		' We use the DtaTextFileReader to parse out the scan and charge from the header line
-		Dim objReader As MSDataFileReader.clsDtaTextFileReader
-
-		Dim fiOriginalFile As IO.FileInfo
-		Dim fiUpdatedFile As IO.FileInfo
-
-		Try
-
-			If String.IsNullOrEmpty(strSourceFilePath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: strSourceFilePath is empty")
-				Return False
-			End If
-
-			fiOriginalFile = New IO.FileInfo(strSourceFilePath)
-			If Not fiOriginalFile.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: source file not found: " + strSourceFilePath)
-				Return False
-			End If
-
-			If blnReplaceSourceFile Then
-				strOutputFilePathTemp = strSourceFilePath + ".tmp"
-			Else
-				' strOutputFilePath must contain a valid file path
-				If String.IsNullOrEmpty(strOutputFilePath) Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ValidateCDTAFileScanAndCSTags: variable strOutputFilePath must define a file path when blnReplaceSourceFile=False")
-					Return False
-				End If
-				strOutputFilePathTemp = strOutputFilePath
-			End If
-
-			fiUpdatedFile = New IO.FileInfo(strOutputFilePathTemp)
-
-			objReader = New MSDataFileReader.clsDtaTextFileReader(False)
-
-			' Open the input file
-			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiOriginalFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-
-				' Create the output file
-				Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(fiUpdatedFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-					Do While srInFile.Peek > -1
-						strLineIn = srInFile.ReadLine()
-
-						If String.IsNullOrEmpty(strLineIn) Then
-							swOutFile.WriteLine()
-						Else
-							If strLineIn.StartsWith("="c) Then
-								' Parse the DTA header line, for example:
-								' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
-
-								' Remove the leading and trailing characters, then extract the scan and charge
-								strDTAHeader = strLineIn.Trim(New Char() {"="c, " "c, ControlChars.Quote})
-								blnValidScanInfo = objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
-
-								blnParentIonLineIsNext = True
-
-							ElseIf blnParentIonLineIsNext Then
-								' strLineIn contains the parent ion line text
-
-								' Construct the parent ion line to write out
-								' Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
-								' Next contains the charge state, then scan= and cs= tags, for example:
-								' 447.34573 1   scan=3 cs=1
-
-								If Not strLineIn.Contains("scan=") Then
-									' Append scan=x to the parent ion line
-									strLineIn = strLineIn.Trim() + "   scan=" + intScanNumberStart.ToString()
-									blnParentIonLineUpdated = True
-								End If
-
-								If Not strLineIn.Contains("cs=") Then
-									' Append cs=y to the parent ion line
-									strLineIn = strLineIn.Trim() + " cs=" + intCharge.ToString()
-									blnParentIonLineUpdated = True
-								End If
-
-								blnParentIonLineIsNext = False
-
-							End If
-
-							swOutFile.WriteLine(strLineIn)
-
-						End If
-					Loop
-
-				End Using
-			End Using
-
-			If blnParentIonLineUpdated Then
-				System.Threading.Thread.Sleep(100)
-
-				If blnReplaceSourceFile Then
-					' Replace the original file with the new one
-					Dim strOldFilePath As String
-					Dim intAddon As Integer = 0
-
-					Do
-						strOldFilePath = fiOriginalFile.FullName + ".old"
-						If intAddon > 0 Then
-							strOldFilePath &= intAddon.ToString()
-						End If
-						intAddon += 1
-					Loop While IO.File.Exists(strOldFilePath)
-
-					fiOriginalFile.MoveTo(strOldFilePath)
-					System.Threading.Thread.Sleep(100)
-
-					fiUpdatedFile.MoveTo(strSourceFilePath)
-
-					If blnDeleteSourceFileIfUpdated Then
-						System.Threading.Thread.Sleep(125)
-						PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-						fiOriginalFile.Delete()
-					End If
-
-					blnSuccess = True
-				Else
-					' Directly wrote to the output file; nothing to rename
-					blnSuccess = True
-				End If
-			Else
-				' No changes were made; nothing to update
-				' However, delete the new file we created
-				System.Threading.Thread.Sleep(125)
-				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-				fiUpdatedFile.Delete()
-				blnSuccess = True
-			End If
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateCDTAFileScanAndCSTags: " + ex.Message)
-			Return False
-		End Try
+		blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath)
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+			m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False"
+		End If
 
 		Return blnSuccess
 
 	End Function
 
+	''' <summary>
+	''' Condenses CDTA files that are over 2 GB in size
+	''' </summary>
+	''' <param name="strWorkDir"></param>
+	''' <param name="strInputFileName"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function ValidateCDTAFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
+		Dim blnSuccess As Boolean
+
+		blnSuccess = m_CDTAUtilities.ValidateCDTAFileSize(strWorkDir, strInputFileName)
+		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+			m_message = "m_CDTAUtilities.ValidateCDTAFileSize returned False"
+		End If
+
+		Return blnSuccess
+
+	End Function
 
 	''' <summary>
 	''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column
@@ -5005,6 +4917,36 @@ Public MustInherit Class clsAnalysisResources
 
 #Region "Event Handlers"
 
+	Private Sub m_CDTAUtilities_ErrorEvent(ByVal ErrorMessage As String) Handles m_CDTAUtilities.ErrorEvent
+		m_message = ErrorMessage
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage)
+	End Sub
+
+	Private Sub m_CDTAUtilities_InfoEvent(ByVal Message As String, ByVal DebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
+		If m_DebugLevel >= DebugLevel Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, Message)
+		End If
+	End Sub
+
+	Private Sub m_CDTAUtilities_ProgressEvent(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_CDTAUtilities.ProgressEvent
+
+		Static dtLastUpdateTime As System.DateTime
+
+		If m_DebugLevel >= 1 Then
+			If m_DebugLevel = 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+			   m_DebugLevel > 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+				dtLastUpdateTime = System.DateTime.UtcNow
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & percentComplete.ToString("0.00") & "% complete")
+			End If
+		End If
+
+	End Sub
+
+	Private Sub m_CDTAUtilities_WarningEvent(ByVal Message As String) Handles m_CDTAUtilities.WarningEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
+	End Sub
+
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
 
 		If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
@@ -5015,6 +4957,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 	End Sub
+
 #End Region
 
 End Class

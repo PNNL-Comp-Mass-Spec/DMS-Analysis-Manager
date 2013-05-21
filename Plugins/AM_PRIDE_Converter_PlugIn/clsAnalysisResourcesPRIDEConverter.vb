@@ -10,9 +10,13 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	Public Const JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
 
 	Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
+	Public Const JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PXSubmissionFileTemplate"
 
 	Public Const DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME As String = "Template.msgf-report.xml"
 	Public Const MSGF_REPORT_FILE_SUFFIX As String = "msgf-report.xml"
+
+	Public Const DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PX_Submission_Template.px"
+	Public Const PX_SUBMISSION_FILE_SUFFIX As String = ".px"
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -33,6 +37,12 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			udtOptions.RetrieveMzXMLFile = False
 		End If
 
+		If blnCreatePrideXMLFiles Then
+			udtOptions.RetrievePHRPFiles = True
+		Else
+			udtOptions.retrievePHRPFiles = False
+		End If
+
 		udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
 		udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
 
@@ -42,6 +52,10 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			blnCreatePrideXMLFiles = False
 		Else
 			If Not RetrieveMSGFReportTemplateFile() Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+
+			If Not RetrievePXSubmissionTemplateFile() Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 		End If
@@ -131,6 +145,22 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Return strTemplateFileName
 
 	End Function
+
+	Public Shared Function GetPXSubmissionTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
+
+		Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, String.Empty)
+
+		If String.IsNullOrEmpty(strTemplateFileName) Then
+			If WarnIfJobParamMissing Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
+			End If
+			strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
+		End If
+
+		Return strTemplateFileName
+
+	End Function
+
 
 	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)) As Boolean
 
@@ -240,7 +270,6 @@ Public Class clsAnalysisResourcesPRIDEConverter
 				End If
 			End If
 
-
 			If fiFiles.Count > 0 Then
 				' Template file found in the data package; copy it locally
 				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName, m_WorkingDir) Then
@@ -266,6 +295,67 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		Catch ex As Exception
 			m_message = "Exception in RetrieveMSGFReportTemplateFile"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	Protected Function RetrievePXSubmissionTemplateFile() As Boolean
+
+		' Retrieve the template PX Submission file
+		' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
+
+		Dim strTemplateFileName As String
+		Dim diDataPackageFolder As IO.DirectoryInfo
+		Dim fiFiles As Generic.List(Of IO.FileInfo)
+
+		Try
+			strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
+
+			' First look for the template file in the data package folder
+			Dim strDataPackagePath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
+			If String.IsNullOrEmpty(strDataPackagePath) Then
+				m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			diDataPackageFolder = New IO.DirectoryInfo(strDataPackagePath)
+			fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
+
+			If fiFiles.Count = 0 Then
+				' File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
+				fiFiles = diDataPackageFolder.GetFiles("*" & PX_SUBMISSION_FILE_SUFFIX).ToList()
+			End If
+
+			If fiFiles.Count > 0 Then
+				' Template file found in the data package; copy it locally
+				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName, m_WorkingDir) Then
+					Return False
+				Else
+					strTemplateFileName = fiFiles(0).Name
+				End If
+			Else
+				Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+				strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
+
+				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, m_WorkingDir) Then
+					Return False
+				End If
+			End If
+
+			' Assure that the PX Submission Template file job parameter is up-to-date
+			m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, strTemplateFileName)
+
+			m_jobParams.AddResultFileToSkip(strTemplateFileName)
+
+		Catch ex As Exception
+			m_message = "Exception in RetrievePXSubmissionTemplateFile"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
 			Return False
 		End Try

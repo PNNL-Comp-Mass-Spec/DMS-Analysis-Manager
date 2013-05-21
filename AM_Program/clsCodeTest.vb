@@ -1736,6 +1736,14 @@ Public Class clsCodeTest
 
 	End Function
 
+	Public Sub RemoveSparseSpectra()
+
+		Dim oCDTAUtilities As clsCDTAUtilities = New clsCDTAUtilities
+
+		oCDTAUtilities.RemoveSparseSpectra("e:\dms_workdir", "ALZ_VP2P101_C_SCX_02_7Dec08_Draco_08-10-29_dta.txt")
+
+	End Sub
+
 	Public Function ValidateSequestNodeCount(ByVal strLogFilePath As String, ByVal blnLogToConsole As Boolean) As Boolean
 		Const ERROR_CODE_A As Integer = 2
 		Const ERROR_CODE_B As Integer = 4
