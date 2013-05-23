@@ -426,7 +426,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower()
 		strScanTypeFilePath = String.Empty
 
-		If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfdb_bruker") Then
+		If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfplus_bruker") Then
 			blnUsingMzXML = True
 		Else
 			blnUsingMzXML = False
@@ -442,7 +442,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				' Create the ScanType file (lists scan type for each scan number)
 				If Not CreateScanTypeFile(strScanTypeFilePath) Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If				
+				End If
 			End If
 
 		End If

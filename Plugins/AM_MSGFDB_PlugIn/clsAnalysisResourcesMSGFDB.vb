@@ -41,7 +41,7 @@ Public Class clsAnalysisResourcesMSGFDB
 		' The ToolName job parameter holds the name of the job script we are executing
 		Dim strScriptName As String = m_jobParams.GetParam("ToolName")
 
-		If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfdb_bruker") Then
+		If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfplus_bruker") Then
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
 
