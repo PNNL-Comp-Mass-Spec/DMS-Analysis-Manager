@@ -126,7 +126,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
 		If CentroidMSXML Then
 			CentroidMS1 = True
-			CentroidMS1 = True
+			CentroidMS2 = True
 		Else
 			CentroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
 			CentroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
