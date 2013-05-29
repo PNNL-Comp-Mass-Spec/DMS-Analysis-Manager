@@ -60,10 +60,6 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="AnalysisManagerMsXmlGenPlugIn, Version=1.0.4658.27326, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\AnalysisManagerMsXmlGenPlugIn.dll</HintPath>
-    </Reference>
     <Reference Include="MsMsDataFileReader">
       <HintPath>..\..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
@@ -112,6 +108,12 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj">
+      <Project>{02D682E5-F70F-4C46-BAC8-1C18920FFF22}</Project>
+      <Name>AnalysisManagerMSXMLGenPlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

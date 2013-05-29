@@ -259,9 +259,11 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             End If
 
             If Not m_ErrorMessage Is Nothing AndAlso m_ErrorMessage.Length > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " & m_ErrorMessage)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " & m_ErrorMessage)
+				If String.IsNullOrEmpty(m_message) Then m_message = m_ErrorMessage
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank")
+				If String.IsNullOrEmpty(m_message) Then m_message = "Unknown error running MASIC"
             End If
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         Else
