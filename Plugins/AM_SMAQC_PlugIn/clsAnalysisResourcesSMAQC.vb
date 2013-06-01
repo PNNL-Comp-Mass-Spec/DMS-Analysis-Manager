@@ -39,16 +39,25 @@ Public Class clsAnalysisResourcesSMAQC
 		Dim strMASICResultsFolderName As String = String.Empty
 		strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name")
 
-		m_JobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
-		m_JobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
-		m_JobParams.AddResultFileExtensionToSkip("_SICstats.txt")
+		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)		' _ScanStats.txt
+		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)		' _ScanStatsEx.txt
+		m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
+
+		Dim lstNonCriticalFileSuffixes As Generic.List(Of String)
+		lstNonCriticalFileSuffixes = New Generic.List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
 
 		If String.IsNullOrEmpty(strMASICResultsFolderName) Then
 			If m_DebugLevel >= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files by searching for any valid MASIC folder")
 			End If
 
-			Return RetrieveScanAndSICStatsFiles(m_WorkingDir, RetrieveSICStatsFile:=True, CreateStoragePathInfoOnly:=CreateStoragePathInfoFile)
+			Return RetrieveScanAndSICStatsFiles(
+			  m_WorkingDir,
+			  RetrieveSICStatsFile:=True,
+			  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
+			  RetrieveScanStatsFile:=True,
+			  RetrieveScanStatsExFile:=True,
+			  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
 		Else
 			If m_DebugLevel >= 2 Then
@@ -77,7 +86,14 @@ Public Class clsAnalysisResourcesSMAQC
 						m_message = "Unable to find MASIC results folder " & strMASICResultsFolderName
 					Else
 
-						Return RetrieveScanAndSICStatsFiles(m_WorkingDir, diMASICFolderInfo.FullName, True, CreateStoragePathInfoFile, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
+						Return RetrieveScanAndSICStatsFiles(
+						  m_WorkingDir,
+						  diMASICFolderInfo.FullName,
+						  RetrieveSICStatsFile:=True,
+						  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
+						  RetrieveScanStatsFile:=True,
+						  RetrieveScanStatsExFile:=True,
+						  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
 					End If
 				End If
@@ -90,7 +106,7 @@ Public Class clsAnalysisResourcesSMAQC
 
 	Protected Function RetrieveXTandemFiles(ByVal strDatasetName As String) As Boolean
 
-		Dim lstFileNamesToGet As New System.Collections.Generic.List(Of String)
+		Dim lstFileNamesToGet As New Generic.List(Of String)
 
 		m_JobParams.AddResultFileExtensionToSkip("_xt.txt")
 

@@ -3436,6 +3436,16 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Looks for this dataset's ScanStats files (previously created by MASIC)
+	''' Looks for the files in any SIC folder that exists for the dataset
+	''' </summary>
+	''' <param name="WorkDir"></param>
+	''' <param name="CreateStoragePathInfoOnly"></param>
+	''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
+	''' <remarks></remarks>
 	Protected Function RetrieveScanStatsFiles(ByVal WorkDir As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
 		Dim RetrieveSICStatsFile As Boolean = False
@@ -3450,13 +3460,53 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="WorkDir">Working directory</param>
 	''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-	''' <returns></returns>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
 	End Function
 
-	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+	''' <summary>
+	''' Looks for this dataset's MASIC results files
+	''' Looks for the files in any SIC folder that exists for the dataset
+	''' </summary>
+	''' <param name="WorkDir">Working directory</param>
+	''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+	''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveScanAndSICStatsFiles(
+	  ByVal WorkDir As String,
+	  ByVal RetrieveSICStatsFile As Boolean,
+	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal RetrieveScanStatsFile As Boolean,
+	  ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+
+		Dim lstNonCriticalFileSuffixes As Generic.List(Of String) = New Generic.List(Of String)
+		Return RetrieveScanAndSICStatsFiles(WorkDir, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+
+	End Function
+
+	''' <summary>
+	''' Looks for this dataset's MASIC results files
+	''' Looks for the files in any SIC folder that exists for the dataset
+	''' </summary>
+	''' <param name="WorkDir">Working directory</param>
+	''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+	''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveScanAndSICStatsFiles(
+	  ByVal WorkDir As String,
+	  ByVal RetrieveSICStatsFile As Boolean,
+	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal RetrieveScanStatsFile As Boolean,
+	  ByVal RetrieveScanStatsExFile As Boolean,
+	  ByVal lstNonCriticalFileSuffixes As Generic.List(Of String)) As Boolean
 
 		Dim ServerPath As String
 		Dim ScanStatsFilename As String
@@ -3503,7 +3553,7 @@ Public MustInherit Class clsAnalysisResources
 					If String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
 						m_message = "MASIC ScanStats file not found below " + diFolderInfo.FullName
 					Else
-						Return RetrieveScanAndSICStatsFiles(WorkDir, IO.Path.GetDirectoryName(strNewestScanStatsFilePath), RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile)
+						Return RetrieveScanAndSICStatsFiles(WorkDir, IO.Path.GetDirectoryName(strNewestScanStatsFilePath), RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 					End If
 				End If
 			End If
@@ -3518,15 +3568,49 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
-	''' 
+	''' Retrieves the MASIC results for this dataset using the specified folder
 	''' </summary>
 	''' <param name="WorkDir">Working directory</param>
 	''' <param name="MASICResultsFolderPath">Source folder to copy files from</param>
 	''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-	''' <returns></returns>
+	''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveScanAndSICStatsFiles(ByVal WorkDir As String, ByVal MASICResultsFolderPath As String, ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+	Protected Function RetrieveScanAndSICStatsFiles(
+	  ByVal WorkDir As String,
+	  ByVal MASICResultsFolderPath As String,
+	  ByVal RetrieveSICStatsFile As Boolean,
+	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal RetrieveScanStatsFile As Boolean,
+	  ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+
+		Dim lstNonCriticalFileSuffixes As Generic.List(Of String) = New Generic.List(Of String)
+
+		Return RetrieveScanAndSICStatsFiles(WorkDir, MASICResultsFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
+	End Function
+
+	''' <summary>
+	''' Retrieves the MASIC results for this dataset using the specified folder
+	''' </summary>
+	''' <param name="WorkDir">Working directory</param>
+	''' <param name="MASICResultsFolderPath">Source folder to copy files from</param>
+	''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+	''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+	''' <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
+	''' <returns>True if the file was found and retrieved, otherwise False</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveScanAndSICStatsFiles(
+	  ByVal WorkDir As String,
+	  ByVal MASICResultsFolderPath As String,
+	  ByVal RetrieveSICStatsFile As Boolean,
+	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal RetrieveScanStatsFile As Boolean,
+	  ByVal RetrieveScanStatsExFile As Boolean,
+	  ByVal lstNonCriticalFileSuffixes As Generic.List(Of String)) As Boolean
 
 		Dim MaxCopyAttempts As Integer = 2
 
@@ -3553,8 +3637,13 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
-						m_message = SCAN_STATS_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
-						Return False
+						Dim blnIgnoreFile As Boolean
+						blnIgnoreFile = SafeToIgnore(diSourceFile.Name, lstNonCriticalFileSuffixes)
+
+						If Not blnIgnoreFile Then
+							m_message = SCAN_STATS_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
+							Return False
+						End If
 					End If
 				End If
 
@@ -3567,8 +3656,13 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
-						m_message = SCAN_STATS_EX_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
-						Return False
+						Dim blnIgnoreFile As Boolean
+						blnIgnoreFile = SafeToIgnore(diSourceFile.Name, lstNonCriticalFileSuffixes)
+
+						If Not blnIgnoreFile Then
+							m_message = SCAN_STATS_EX_FILE_SUFFIX + " file not found at " + diSourceFile.Directory.FullName
+							Return False
+						End If						
 					End If
 				End If
 
@@ -3583,11 +3677,15 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If Not CopyFileToWorkDir(diSourceFile.Name, diSourceFile.Directory.FullName, WorkDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
-						m_message = "_SICStats.txt file not found at " + diSourceFile.Directory.FullName
-						Return False
+						Dim blnIgnoreFile As Boolean
+						blnIgnoreFile = SafeToIgnore(diSourceFile.Name, lstNonCriticalFileSuffixes)
+
+						If Not blnIgnoreFile Then
+							m_message = "_SICStats.txt file not found at " + diSourceFile.Directory.FullName
+							Return False
+						End If
 					End If
 				End If
-
 
 				' All files successfully copied
 				Return True
@@ -4522,6 +4620,31 @@ Public MustInherit Class clsAnalysisResources
 		Dim OutputFile As String = IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
 
 		Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
+
+	End Function
+
+	''' <summary>
+	''' Returns True if the filename ends with any of the suffixes in lstNonCriticalFileSuffixes
+	''' </summary>
+	''' <param name="strFileName"></param>
+	''' <param name="lstNonCriticalFileSuffixes"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function SafeToIgnore(ByVal strFileName As String, ByVal lstNonCriticalFileSuffixes As Generic.List(Of String)) As Boolean
+
+		If Not lstNonCriticalFileSuffixes Is Nothing Then
+
+			strFileName = strFileName.ToLower()
+			For Each strSuffix As String In lstNonCriticalFileSuffixes
+				If strFileName.EndsWith(strSuffix.ToLower()) Then
+					' It's OK that this file is missing
+					Return True
+				End If
+			Next
+
+		End If
+
+		Return False
 
 	End Function
 
