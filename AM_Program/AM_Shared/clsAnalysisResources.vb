@@ -2947,6 +2947,9 @@ Public MustInherit Class clsAnalysisResources
 							Else
 								If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
 									m_message = "Required PHRP file not found: " & SourceFilename
+									If SourceFilename.ToLower().EndsWith("_msgfplus.zip") Then
+										m_message &= "; Confirm job used MSGF+ and not MSGFDB"
+									End If
 									If m_DebugLevel >= 1 Then
 										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Required PHRP file not found: " & strSourceFilePath)
 									End If

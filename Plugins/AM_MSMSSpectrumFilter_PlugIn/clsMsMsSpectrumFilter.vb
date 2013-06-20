@@ -136,7 +136,7 @@ Public Class clsMsMsSpectrumFilter
     'Protected Const SCANSTATS_COL_DATASET As String = "Dataset"
     Protected Const SCANSTATS_COL_SCAN_NUM As String = "ScanNumber"
     Protected Const SCANSTATS_COL_SCAN_TYPE As String = "ScanType"
-    Protected Const SCANSTATS_COL_SCAN_TYPE_NAME As String = "ScanTypeName"
+	Public Const SCANSTATS_COL_SCAN_TYPE_NAME As String = "ScanTypeName"
 
     ' Column names in the ScanStatsEx file that we need to read; other columns are ignored
     Protected Const SCANSTATS_COL_ION_INJECTION_TIME As String = "Ion Injection Time (ms)"
@@ -3364,11 +3364,6 @@ Public Class clsMsMsSpectrumFilter
 
 	End Function
 
-	Private Function GetAppFolderPath() As String
-		' Could use Application.StartupPath, but .GetExecutingAssembly is better
-		Return System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-	End Function
-
 	Public Shared Function GetBaseDatasetNameFromFileName(ByVal strFilePath As String) As String
 		' Examines strFilePath
 		' Looks for and removes _dta.txt or _fht.txt from the end
@@ -4958,8 +4953,8 @@ Public Class clsMsMsSpectrumFilter
         Dim strScanTypeFilter As String = String.Empty
         Dim strCollisionModeFilter As String = String.Empty
 
-        Dim reScanTypeFilter As System.Text.RegularExpressions.Regex
-        Dim reCollisionModeFilter As System.Text.RegularExpressions.Regex
+		Dim reScanTypeFilter As System.Text.RegularExpressions.Regex = Nothing
+		Dim reCollisionModeFilter As System.Text.RegularExpressions.Regex = Nothing
 
         Try
             ReDim udtIonMatchStats.IonIntensitiesNormalized(SearchMassSpecsClass.SEARCH_MASS_CODE_COUNT - 1)

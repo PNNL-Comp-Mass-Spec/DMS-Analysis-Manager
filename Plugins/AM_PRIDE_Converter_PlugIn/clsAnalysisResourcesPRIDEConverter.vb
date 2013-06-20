@@ -51,8 +51,10 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			udtOptions.RetrieveMZidFiles = False
 			blnCreatePrideXMLFiles = False
 		Else
-			If Not RetrieveMSGFReportTemplateFile() Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			If blnCreatePrideXMLFiles Then
+				If Not RetrieveMSGFReportTemplateFile() Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+				End If
 			End If
 
 			If Not RetrievePXSubmissionTemplateFile() Then
@@ -282,6 +284,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 				strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF Report template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
+
+				If String.IsNullOrEmpty(strParamFileStoragePath) Then strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
 
 				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, m_WorkingDir) Then
 					Return False

@@ -35,6 +35,7 @@ Public Class clsDtaGenResources
 			End If
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return IJobParams.CloseOutType.CLOSEOUT_NO_SETTINGS_FILE
 		End If
 
 		If Not GetParameterFiles(eDtaGeneratorType) Then

@@ -430,7 +430,7 @@ Public Class clsProgRunnerThreaded
     ''' </summary>
     Private Sub Start()
 
-        Dim srConsoleError As System.IO.StreamReader
+		Dim srConsoleError As System.IO.StreamReader = Nothing
         Dim blnStandardOutputRedirected As Boolean
 
         ' set up parameters for external process

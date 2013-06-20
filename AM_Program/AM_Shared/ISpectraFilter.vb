@@ -18,10 +18,11 @@ Public Interface ISpectraFilter
 #Region "Enums"
 	Enum ProcessResults
 		'Return values for MakeProcess and Abort functions
-		SFILT_SUCCESS = 0					  'Operation succeeded
-		SFILT_FAILURE = -1				  'Operation failed
-		SFILT_NO_FILES_CREATED = -2	  'Spectra filter operation didn't fail, but no output files were created
-		SFILT_ABORTED = -3				  'Spectra filter operation aborted
+		SFILT_SUCCESS = 0				 ' Operation succeeded
+		SFILT_FAILURE = -1				 ' Operation failed
+		SFILT_NO_FILES_CREATED = -2		 ' Spectra filter operation didn't fail, but no output files were created
+		SFILT_ABORTED = -3				 ' Spectra filter operation aborted
+		SFILT_NO_SPECTRA_ALTERED = -4	 ' Spectra filter did not alter any spectra
 	End Enum
 
 	Enum ProcessStatus
