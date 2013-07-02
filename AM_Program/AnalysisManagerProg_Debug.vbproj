@@ -156,6 +156,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Plugins\AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.vbproj">
+      <Project>{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}</Project>
+      <Name>AnalysisManagerSMAQCPlugIn</Name>
+    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

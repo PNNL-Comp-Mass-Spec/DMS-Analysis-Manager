@@ -83,9 +83,10 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         private void Intialize(IJobParams jobParms, IMgrParams mgrParms) {
             this.mJP = new JobParameters(jobParms);
             this.mMP = new ManagerParameters(mgrParms);
-            this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
+
+            this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName", "Results") + ".db3";
             this.mWorkingDir = mMP.RequireMgrParam("workdir");
-			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, e.g. "_LCMSFeatures.txt" or "_isos.csv"
+			this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, can be "_LCMSFeatures.txt" or "_isos.csv"
             this.mParamFilename = mJP.RequireJobParam("ParmFileName");
             this.mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
             this.mJobNum = mJP.RequireJobParam("Job");
@@ -133,7 +134,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             String CmdStr;
 
             if (mDebugLevel > 4) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMultiAlignAggregator.RunTool(): Enter");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
             }
 
 			if (String.IsNullOrWhiteSpace(sMultiAlignConsolePath))
@@ -869,6 +870,16 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return val;
             }
 
+			public string RequireJobParam(string paramName, string defaultValue)
+			{
+				string val = mJobParms.GetParam(paramName);
+				if (string.IsNullOrWhiteSpace(val))
+				{
+					mJobParms.AddAdditionalParameter("JobParameters", paramName, defaultValue);
+					return defaultValue;
+				}
+				return val;
+			}
             public string GetJobParam(string paramName) {
                 return mJobParms.GetParam(paramName);
             }

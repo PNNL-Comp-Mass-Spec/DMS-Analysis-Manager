@@ -375,8 +375,9 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		' <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 		' <SMAQC_Results>
-		'   <Dataset>Shew119-01_17july02_earth_0402-10_4-20</Dataset>
-		'   <Job>780000</Job>
+		'   <Dataset>QC_Shew_13_04_2e_45min_pt1_26Jun13_Leopard_13-06-32_g</Dataset>
+		'   <Job>958305</Job>
+		'   <PSM_Source_Job>958303</PSM_Source_Job>
 		'   <Measurements>
 		'     <Measurement Name="C_1A">0.002028</Measurement>
 		'     <Measurement Name="C_1B">0.00583</Measurement>
@@ -392,12 +393,15 @@ Public Class clsAnalysisToolRunnerSMAQC
 		Dim sbXML As New System.Text.StringBuilder
 		strXMLResults = String.Empty
 
+		Dim strPSMSourceJob As String = m_jobParams.GetParam("SourceJob")
+
 		Try
 			sbXML.Append("<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>")
 			sbXML.Append("<SMAQC_Results>")
 
 			sbXML.Append("<Dataset>" & m_Dataset & "</Dataset>")
 			sbXML.Append("<Job>" & m_JobNum & "</Job>")
+			sbXML.Append("<PSM_Source_Job>" & strPSMSourceJob & "</PSM_Source_Job>")
 
 			sbXML.Append("<Measurements>")
 
@@ -779,7 +783,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 				If blnSuccess Then
 					' Store the results in the database
 					blnSuccess = PostSMAQCResultsToDB(strXMLResults)
-
 				End If
 
 			End If

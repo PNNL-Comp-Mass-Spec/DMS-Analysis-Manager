@@ -11,7 +11,7 @@ Option Strict On
 Public MustInherit Class clsProcessFilesBaseClass
 
 	Public Sub New()
-		mFileDate = "April 22, 2013"
+		mFileDate = "June 28, 2013"
 		mErrorCode = eProcessFilesErrorCodes.NoError
 		mProgressStepDescription = String.Empty
 
@@ -522,7 +522,7 @@ Public MustInherit Class clsProcessFilesBaseClass
 				Try
 					If mLogFolderPath Is Nothing Then mLogFolderPath = String.Empty
 
-					If mLogFolderPath.Length = 0 Then
+					If String.IsNullOrWhiteSpace(mLogFolderPath) Then
 						' Log folder is undefined; use mOutputFolderPath if it is defined
 						If Not mOutputFolderPath Is Nothing AndAlso mOutputFolderPath.Length > 0 Then
 							mLogFolderPath = String.Copy(mOutputFolderPath)

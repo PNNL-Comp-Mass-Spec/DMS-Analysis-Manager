@@ -25,7 +25,7 @@ Option Strict On
 ' this computer software.
 
 '
-' Last modified January 17, 2013
+' Last modified June 28, 2013
 
 Imports System.Collections.Generic
 
@@ -259,7 +259,7 @@ Public Class clsParseCommandLine
 				Console.WriteLine()
 			End If
 
-			If strCmdLine Is Nothing OrElse strCmdLine.Length = 0 Then
+			If String.IsNullOrWhiteSpace(strCmdLine) Then
 				Return False
 			ElseIf strCmdLine.IndexOf(chSwitchStartChar & "?") > 0 Or strCmdLine.ToLower.IndexOf(chSwitchStartChar & "help") > 0 Then
 				mShowHelp = True
