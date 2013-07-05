@@ -58,10 +58,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	' Keys in this dictionary are filenames
 	' Values contain info on each file
+	' Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
+	' However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
 	Protected mPxMasterFileList As Generic.Dictionary(Of String, clsPXFileInfoBase)
 
 	' Keys in this dictionary are PXFileIDs
 	' Values contain info on each file, including the PXFileType and the FileIDs that map to this file (empty list if no mapped files)
+	' Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
+	' However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
 	Protected mPxResultFiles As Generic.Dictionary(Of Integer, clsPXFileInfo)
 
 	Protected mFilterThresholdsUsed As udtFilterThresholdsType
@@ -326,7 +330,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		End If
 	End Sub
 
-	Protected Function AddPxFileToMasterList(ByVal strFilePath As String, ByVal intJob As Integer) As Integer
+	Protected Function AddPxFileToMasterList(ByVal strFilePath As String, ByVal intJob As Integer, ByVal strDataset As String) As Integer
 
 		Dim fiFile As IO.FileInfo = New IO.FileInfo(strFilePath)
 
@@ -335,7 +339,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			' File already exists
 			Return oPXFileInfo.FileID
 		Else
-			oPXFileInfo = New clsPXFileInfoBase(fiFile.Name)
+			Dim strFilename As String = CheckFilenameCase(fiFile, strDataset)
+
+			oPXFileInfo = New clsPXFileInfoBase(strFilename)
 
 			oPXFileInfo.FileID = mPxMasterFileList.Count + 1
 			oPXFileInfo.Job = intJob
@@ -355,7 +361,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Function AddPxResultFile(ByVal intFileID As Integer, eFileType As clsPXFileInfoBase.ePXFileType, ByVal strFilePath As String) As Boolean
+	Protected Function AddPxResultFile(ByVal intFileID As Integer, eFileType As clsPXFileInfoBase.ePXFileType, ByVal strFilePath As String, ByVal strDataset As String) As Boolean
 
 		Dim fiFile As IO.FileInfo = New IO.FileInfo(strFilePath)
 
@@ -380,7 +386,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return False
 			End If
 
-			oPXFileInfo = New clsPXFileInfo(fiFile.Name)
+			Dim strFilename As String = CheckFilenameCase(fiFile, strDataset)
+
+			oPXFileInfo = New clsPXFileInfo(strFilename)
 			oPXFileInfo.Update(oMasterPXFileInfo)
 			oPXFileInfo.PXFileType = eFileType
 
@@ -412,8 +420,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If Not String.IsNullOrEmpty(udtResultFiles.PrideXmlFilePath) Then
 			AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.PrideXmlFilePath)
 
-			intPrideXMLFileID = AddPxFileToMasterList(udtResultFiles.PrideXmlFilePath, intJob)
-			If Not AddPxResultFile(intPrideXMLFileID, clsPXFileInfoBase.ePXFileType.Result, udtResultFiles.PrideXmlFilePath) Then
+			intPrideXMLFileID = AddPxFileToMasterList(udtResultFiles.PrideXmlFilePath, intJob, strDataset)
+			If Not AddPxResultFile(intPrideXMLFileID, clsPXFileInfoBase.ePXFileType.Result, udtResultFiles.PrideXmlFilePath, strDataset) Then
 				Return False
 			End If
 		End If
@@ -422,8 +430,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim strDatasetRawFilePath As String = String.Empty
 		If dctDatasetRawFilePaths.TryGetValue(strDataset, strDatasetRawFilePath) Then
 			If Not String.IsNullOrEmpty(strDatasetRawFilePath) Then
-				intRawFileID = AddPxFileToMasterList(strDatasetRawFilePath, intJob)
-				If Not AddPxResultFile(intRawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath) Then
+				intRawFileID = AddPxFileToMasterList(strDatasetRawFilePath, intJob, strDataset)
+				If Not AddPxResultFile(intRawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, strDataset) Then
 					Return False
 				End If
 
@@ -439,8 +447,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If Not String.IsNullOrEmpty(udtResultFiles.MGFFilePath) Then
 			AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.MGFFilePath)
 
-			intPeakfileID = AddPxFileToMasterList(udtResultFiles.MGFFilePath, intJob)
-			If Not AddPxResultFile(intPeakfileID, clsPXFileInfoBase.ePXFileType.Peak, udtResultFiles.MGFFilePath) Then
+			intPeakfileID = AddPxFileToMasterList(udtResultFiles.MGFFilePath, intJob, strDataset)
+			If Not AddPxResultFile(intPeakfileID, clsPXFileInfoBase.ePXFileType.Peak, udtResultFiles.MGFFilePath, strDataset) Then
 				Return False
 			End If
 
@@ -465,8 +473,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If Not String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
 			AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.MzIDFilePath)
 
-			intMzIdFileID = AddPxFileToMasterList(udtResultFiles.MzIDFilePath, intJob)
-			If Not AddPxResultFile(intMzIdFileID, clsPXFileInfoBase.ePXFileType.Search, udtResultFiles.MzIDFilePath) Then
+			intMzIdFileID = AddPxFileToMasterList(udtResultFiles.MzIDFilePath, intJob, strDataset)
+			If Not AddPxResultFile(intMzIdFileID, clsPXFileInfoBase.ePXFileType.Search, udtResultFiles.MzIDFilePath, strDataset) Then
 				Return False
 			End If
 
@@ -494,6 +502,32 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		End If
 
 		Return True
+
+	End Function
+
+	Protected Function CheckFilenameCase(ByVal fiFile As IO.FileInfo, ByVal strDataset As String) As String
+
+		Dim strFilename As String = fiFile.Name
+
+
+		If Not String.IsNullOrEmpty(fiFile.Extension) Then
+			Dim strFileBaseName As String = System.IO.Path.GetFileNameWithoutExtension(fiFile.Name)
+
+			If strFileBaseName.ToLower().StartsWith(strDataset.ToLower()) Then
+				If Not strFileBaseName.StartsWith(strDataset) Then
+					' Case-mismatch; fix it
+					If strFileBaseName.Length = strDataset.Length Then
+						strFileBaseName = strDataset
+					Else
+						strFileBaseName = strDataset & strFileBaseName.Substring(strDataset.Length)
+					End If
+				End If
+			End If
+
+			strFilename = strFileBaseName & fiFile.Extension.ToLower()
+		End If
+
+		Return strFilename
 
 	End Function
 
@@ -564,7 +598,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					Return False
 				End If
 			Else
-				oFileInfo = New clsPXFileInfoBase(fiCDTAFile.Name)
+
+				Dim strFilename As String = CheckFilenameCase(fiCDTAFile, strDataset)
+
+				oFileInfo = New clsPXFileInfoBase(strFilename)
 
 				' File ID doesn't matter; just use 0
 				oFileInfo.FileID = 0

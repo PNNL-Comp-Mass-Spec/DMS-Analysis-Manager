@@ -2822,7 +2822,8 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
-		' Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw ."
+		' Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw Dataset.raw"
+		' Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
 		Dim dctRawFileRetrievalCommands As Generic.Dictionary(Of Integer, String) = New Generic.Dictionary(Of Integer, String)
 
 		' Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
@@ -3056,9 +3057,11 @@ Public MustInherit Class clsAnalysisResources
 					If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
 						Dim strCopyCommand As String
 						If blnIsFolder Then
-							strCopyCommand = "xcopy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
+							strCopyCommand = "copy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
 						Else
-							strCopyCommand = "xcopy " & strRawFilePath & " ."
+							' Make sure the case of the filename matches the case of the dataset name
+							' Also, make sure the extension is lowercase
+							strCopyCommand = "copy " & strRawFilePath & " " & udtJobInfo.Dataset & System.IO.Path.GetExtension(strRawFilePath).ToLower()
 						End If
 						dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
 						dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath)
