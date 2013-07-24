@@ -26,7 +26,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected Const OUT_FILE_APPEND_INTERVAL_SECONDS As Integer = 30
 	Protected Const OUT_FILE_APPEND_HOLDOFF_SECONDS As Integer = 30
 	Protected Const STALE_NODE_THRESHOLD_MINUTES As Integer = 5
-	Protected Const MAX_NODE_RESPAWN_ATTEMPTS As Integer = 4
+	Protected Const MAX_NODE_RESPAWN_ATTEMPTS As Integer = 6
 #End Region
 
 #Region "Structures"
@@ -55,6 +55,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	' For each, will append the data to the _out.txt.tmp file, delete the corresponding DTA file, and remove from mOutFileCandidates
 	Protected mOutFileCandidates As Queue(Of KeyValuePair(Of String, System.DateTime)) = New Queue(Of KeyValuePair(Of String, System.DateTime))
 	Protected mOutFileCandidateInfo As Dictionary(Of String, System.DateTime) = New Dictionary(Of String, System.DateTime)
+
+	Protected mLastOutFileStoreTime As System.DateTime
+	Protected mSequestAppearsStalled As Boolean
+	Protected mAbortSinceSequestIsStalled As Boolean
 
 	Protected mSequestVersionInfoStored As Boolean
 
@@ -126,8 +130,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		mSequestVersionInfoStored = False
 		mTempJobParamsCopied = False
+
 		mLastTempFileCopyTime = System.DateTime.UtcNow
 		mLastActiveNodeLogTime = System.DateTime.UtcNow
+		mLastOutFileStoreTime = System.DateTime.UtcNow
+		mSequestAppearsStalled = False
+		mAbortSinceSequestIsStalled = False
 
 		mTransferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
 		mTransferFolderPath = System.IO.Path.Combine(mTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
@@ -194,11 +202,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 			mSequestSearchEndTime = System.DateTime.UtcNow
 
-			If blnSuccess And Not mResetPVM Then
+			If blnSuccess And Not mResetPVM And Not mAbortSinceSequestIsStalled Then
 				intDTACountRemaining = 0
 			Else
 
-				If Not mResetPVM Then
+				If Not mResetPVM And Not mAbortSinceSequestIsStalled Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... CmdRunner returned false; ExitCode = " & m_CmdRunner.ExitCode)
 				End If
 
@@ -209,29 +217,20 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 					blnSuccess = False
 					If mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS And mNodeCountActiveErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS Then
-						Dim intPVMRetriesRemaining As Integer = 4
-						Do While intPVMRetriesRemaining > 0
-							blnSuccess = ResetPVM()
-							If blnSuccess Then
-								Exit Do
-							Else
-								intPVMRetriesRemaining -= 1
-								If intPVMRetriesRemaining > 0 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try " & intPVMRetriesRemaining & " more time" & CheckForPlurality(intPVMRetriesRemaining))
-								End If
-							End If
-						Loop
+						Dim intMaxPVMResetAttempts As Integer = 4
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Resetting PVM in MakeOUTFiles")
+						blnSuccess = ResetPVMWithRetry(intMaxPVMResetAttempts)
+
 					End If
 
 					If Not blnSuccess Then
+						' Log message "Error resetting PVM; disabling manager locally"
 						m_message = PVM_RESET_ERROR_MESSAGE
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, PVM_RESET_ERROR_MESSAGE & "; disabling manager locally")
 						m_NeedToAbortProcessing = True
 						blnProcessingError = True
 						Exit Do
-					Else
-						UpdateSequestNodeProcessingStats(False)
-						RenameSequestLogFile()
 					End If
 
 				Else
@@ -362,7 +361,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
 		End If
 
-		If mResetPVM Then m_CmdRunner.AbortProgramNow(False)
+		If mResetPVM Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mResetPVM = True")
+			m_CmdRunner.AbortProgramNow(False)
+		ElseIf mAbortSinceSequestIsStalled Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mAbortSinceSequestIsStalled = True")
+			m_CmdRunner.AbortProgramNow(False)
+		End If
 
 	End Sub
 
@@ -393,6 +398,73 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error in CacheNewOutFiles: " & ex.Message)
+		End Try
+	End Sub
+
+	Protected Sub CheckForStalledSequest()
+
+		Const SEQUEST_STALLED_WAIT_TIME_MINUTES As Integer = 30
+
+		Try
+			Dim dblMinutesSinceLastOutFileStored As Double = System.DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes
+
+			If dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES Then
+
+				Dim blnResetPVM As Boolean = False
+
+				If mSequestAppearsStalled Then
+					If dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES * 2 Then
+						' We already reset SEQUEST once, and another 30 minutes has elapsed
+						' Examine the number of .dta files that remain
+						Dim intDTAsRemaining As Integer = GetDTAFileCountRemaining()
+
+						If intDTAsRemaining <= CInt(m_DtaCount * 0.999) Then
+
+							' Just a handful of DTA files remain; assume they're corrupt
+							Dim diWorkDir As System.IO.DirectoryInfo
+							diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest is stalled, and " & intDTAsRemaining & " .DTA file" & CheckForPlurality(intDTAsRemaining) & " remain; assuming they are corrupt and deleting them")
+							m_EvalMessage = "Sequest is stalled, but only " & intDTAsRemaining & " .DTA file" & CheckForPlurality(intDTAsRemaining) & " remain"
+
+							For Each fiFile As IO.FileInfo In diWorkDir.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly).ToList()
+								fiFile.Delete()
+							Next
+
+						Else
+							' Too many DTAs remain unprocessed and Sequest is stalled
+							' Abort the job
+
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Sequest is stalled, and " & intDTAsRemaining & " .DTA files remain; aborting processing")
+							m_message = "Sequest is stalled and too many .DTA files are un-processed"
+							mAbortSinceSequestIsStalled = True
+
+						End If
+
+						blnResetPVM = True
+
+					End If
+				Else
+					' Sequest appears stalled
+					' Reset PVM, then wait another 30 minutes
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest has not created a new .out file in the last " & SEQUEST_STALLED_WAIT_TIME_MINUTES & " minutes; will Reset PVM then wait another " & SEQUEST_STALLED_WAIT_TIME_MINUTES & " minutes")
+
+					blnResetPVM = True
+
+					mSequestAppearsStalled = True
+
+				End If
+
+				If blnResetPVM Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Setting mResetPVM to True in CheckForStalledSequest")
+					mResetPVM = True
+				End If
+
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error in CheckForStalledSequest: " & ex.Message)
 		End Try
 	End Sub
 
@@ -751,6 +823,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 							Try
 								Dim fiOutFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, objEntry.Key))
 								AppendOutFile(fiOutFile, swTargetFile)
+								mLastOutFileStoreTime = System.DateTime.UtcNow()
+								mSequestAppearsStalled = False
 							Catch ex As Exception
 								Console.WriteLine("Warning, exception appending out file: " & ex.Message)
 								blnAppendSuccess = False
@@ -839,6 +913,33 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		End Try
 
 	End Sub
+
+	Protected Function ResetPVMWithRetry(ByVal intMaxPVMResetAttempts As Integer) As Boolean
+
+		Dim blnSuccess As Boolean
+
+		If intMaxPVMResetAttempts < 1 Then intMaxPVMResetAttempts = 1
+
+		Do While intMaxPVMResetAttempts > 0
+			blnSuccess = ResetPVM()
+			If blnSuccess Then
+				Exit Do
+			Else
+				intMaxPVMResetAttempts -= 1
+				If intMaxPVMResetAttempts > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... Error resetting PVM; will try " & intMaxPVMResetAttempts & " more time" & CheckForPlurality(intMaxPVMResetAttempts))
+				End If
+			End If
+		Loop
+
+		If blnSuccess Then
+			UpdateSequestNodeProcessingStats(False)
+			RenameSequestLogFile()
+		End If
+
+		Return blnSuccess
+
+	End Function
 
 	Protected Function ResetPVM() As Boolean
 
@@ -1338,6 +1439,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
 	Protected Sub mOutFileAppenderTime_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
 		ProcessCandidateOutFiles(False)
+		CheckForStalledSequest()
 	End Sub
 
 	Private Sub m_UtilityRunner_Timeout() Handles m_UtilityRunner.Timeout

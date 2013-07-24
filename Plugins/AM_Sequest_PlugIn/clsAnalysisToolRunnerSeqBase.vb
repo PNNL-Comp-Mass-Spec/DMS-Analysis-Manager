@@ -171,6 +171,12 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 	End Function
 
+	''' <summary>
+	''' Appends the given .out file to the target file
+	''' </summary>
+	''' <param name="fiSourceOutFile"></param>
+	''' <param name="swTargetFile"></param>
+	''' <remarks></remarks>
 	Protected Sub AppendOutFile(ByVal fiSourceOutFile As System.IO.FileInfo, ByRef swTargetFile As System.IO.StreamWriter)
 
 		Const hdrLeft As String = "=================================== " & """"
