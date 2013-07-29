@@ -894,10 +894,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Dim intValue As Integer
 
 		' This dictionary tracks the number of DTAs processed per node on each host
+		' Head node rates are ignored when computing medians and reporting warnings since the head nodes typically process far fewer DTAs than the slave nodes
 		Dim dctHostProcessingRate As Dictionary(Of String, Single)
-
-		' This array is used to compute a median
-		Dim sngHostProcessingRateSorted() As Single
 
 		Dim blnShowDetailedRates As Boolean
 
@@ -1079,16 +1077,14 @@ Public Class clsAnalysisToolRunnerSeqBase
 				' When comparing hosts, we need to scale by the number of active nodes on each host
 				' We'll populate intHostProcessingRate() with the number of DTAs processed per node on each host
 
-				Const LOW_THRESHOLD_MULTIPLIER As Single = 0.33
-				Const HIGH_THRESHOLD_MULTIPLIER As Single = 2
+				Const LOW_THRESHOLD_MULTIPLIER As Single = 0.25
+				Const HIGH_THRESHOLD_MULTIPLIER As Single = 4
 
 				Dim intNodeCountThisHost As Integer
-				Dim intIndex As Integer
 
 				Dim sngProcessingRate As Single
 				Dim sngProcessingRateMedian As Single
 
-				Dim intMidpoint As Integer
 				Dim sngThresholdRate As Single
 				Dim intWarningCount As Integer
 
@@ -1101,74 +1097,61 @@ Public Class clsAnalysisToolRunnerSeqBase
 					dctHostProcessingRate.Add(objItem.Key, sngProcessingRate)
 				Next
 
+				' Determine the median number of spectra processed (ignoring the head nodes)
+				Dim lstRatesFiltered As List(Of Single) = (From item In dctHostProcessingRate Where Not item.Key.ToLower().Contains("seqcluster") Select item.Value).ToList()
+				sngProcessingRateMedian = ComputeMedian(lstRatesFiltered)
 
-				' Determine the median number of spectra processed
+				' Only show warnings if sngProcessingRateMedian is at least 10; otherwise, we don't have enough sampling statistics
+				If sngProcessingRateMedian >= 10 Then
 
-				ReDim sngHostProcessingRateSorted(dctHostProcessingRate.Count - 1)
+					' Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
+					intWarningCount = 0
+					sngThresholdRate = CSng(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-				intIndex = 0
-				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
-					sngHostProcessingRateSorted(intIndex) = objItem.Value
-					intIndex += 1
-				Next
+					For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
+						If objItem.Value < sngThresholdRate AndAlso Not objItem.Key.ToLower().Contains("seqcluster") Then
+							intWarningCount = +1
+						End If
+					Next
 
-				' Now sort sngHostProcessingRateSorted
-				Array.Sort(sngHostProcessingRateSorted, 0, sngHostProcessingRateSorted.Length)
+					If intWarningCount > 0 Then
+						strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed fewer than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & LOW_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
+						If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
 
-				If sngHostProcessingRateSorted.Length <= 2 Then
-					intMidpoint = 0
-				Else
-					intMidpoint = CInt(Math.Floor(sngHostProcessingRateSorted.Length / 2))
-				End If
-
-				sngProcessingRateMedian = sngHostProcessingRateSorted(intMidpoint)
-
-				' Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
-				intWarningCount = 0
-				sngThresholdRate = CSng(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
-
-				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
-					If objItem.Value < sngThresholdRate Then
-						intWarningCount = +1
+						m_EvalMessage &= "; " & strProcessingMsg
+						m_EvalCode = m_EvalCode Or ERROR_CODE_D
+						blnShowDetailedRates = True
 					End If
-				Next
 
-				If intWarningCount > 0 Then
-					strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed fewer than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & LOW_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
-					If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+					' Count the number of nodes that had a processing rate more than HIGH_THRESHOLD_MULTIPLIER times the median value 
+					' When comparing hosts, have to scale by the number of active nodes on each host
+					intWarningCount = 0
+					sngThresholdRate = CSng(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
 
-					m_EvalMessage &= "; " & strProcessingMsg
-					m_EvalCode = m_EvalCode Or ERROR_CODE_D
-					blnShowDetailedRates = True
-				End If
+					For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
+						If objItem.Value > sngThresholdRate AndAlso Not objItem.Key.ToLower().Contains("seqcluster") Then
+							intWarningCount = +1
+						End If
+					Next
 
-				' Count the number of nodes that had a processing rate more than HIGH_THRESHOLD_MULTIPLIER times the median value 
-				' When comparing hosts, have to scale by the number of active nodes on each host
-				intWarningCount = 0
-				sngThresholdRate = CSng(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian)
+					If intWarningCount > 0 Then
+						strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed more than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & HIGH_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
+						If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
 
-				For Each objItem As KeyValuePair(Of String, Single) In dctHostProcessingRate
-					If objItem.Value > sngThresholdRate Then
-						intWarningCount = +1
+						m_EvalMessage &= "; " & strProcessingMsg
+						m_EvalCode = m_EvalCode Or ERROR_CODE_E
+						blnShowDetailedRates = True
 					End If
-				Next
-
-				If intWarningCount > 0 Then
-					strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed more than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & HIGH_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
-					If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-
-					m_EvalMessage &= "; " & strProcessingMsg
-					m_EvalCode = m_EvalCode Or ERROR_CODE_E
-					blnShowDetailedRates = True
 				End If
 
 				If m_DebugLevel >= 2 OrElse blnShowDetailedRates Then
 					' Log the number of DTAs processed by each host
 
-					For Each objItem As KeyValuePair(Of String, Integer) In dctHostCounts
+					Dim qHosts = From item In dctHostCounts Select item Order By item.Key
 
+					For Each objItem In qHosts
 						intNodeCountThisHost = 0
 						dctHostNodeCount.TryGetValue(objItem.Key, intNodeCountThisHost)
 						If intNodeCountThisHost < 1 Then intNodeCountThisHost = 1
@@ -1224,6 +1207,22 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Else
 			Return "s"
 		End If
+	End Function
+
+	Protected Function ComputeMedian(ByVal lstValues As List(Of Single)) As Single
+
+		Dim intMidpoint As Integer
+
+		If lstValues.Count = 0 Then Return 0
+
+		If lstValues.Count <= 2 Then
+			intMidpoint = 0
+		Else
+			intMidpoint = CInt(Math.Floor(lstValues.Count / 2))
+		End If
+
+		Return (From item In lstValues Order By item).ToList().Item(intMidpoint)
+
 	End Function
 
 	''' <summary>
