@@ -1212,16 +1212,23 @@ Public Class clsAnalysisToolRunnerSeqBase
 	Protected Function ComputeMedian(ByVal lstValues As List(Of Single)) As Single
 
 		Dim intMidpoint As Integer
+		Dim lstSortedValues As List(Of Single) = (From item In lstValues Order By item).ToList()
 
-		If lstValues.Count = 0 Then Return 0
-
-		If lstValues.Count <= 2 Then
-			intMidpoint = 0
+		If lstSortedValues.Count = 0 Then
+			Return 0
+		ElseIf lstSortedValues.Count = 1 Then
+			Return lstSortedValues.Item(0)
 		Else
-			intMidpoint = CInt(Math.Floor(lstValues.Count / 2))
-		End If
+			intMidpoint = CInt(Math.Floor(lstSortedValues.Count / 2))
 
-		Return (From item In lstValues Order By item).ToList().Item(intMidpoint)
+			If lstSortedValues.Count Mod 2 = 0 Then
+				' Even number of values; return the average of the values around the midpoint
+				Return (lstSortedValues.Item(intMidpoint) + lstSortedValues.Item(intMidpoint - 1)) / 2.0!
+			Else
+				' Odd number of values
+				Return lstSortedValues.Item(intMidpoint)
+			End If
+		End If
 
 	End Function
 

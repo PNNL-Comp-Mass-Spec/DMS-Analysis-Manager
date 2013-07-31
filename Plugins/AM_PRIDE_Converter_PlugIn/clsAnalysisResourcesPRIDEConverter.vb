@@ -10,7 +10,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	Public Const JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
 
 	Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
-	Public Const JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PXSubmissionFileTemplate"
+	Public Const JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PXSubmissionTemplate"
 
 	Public Const DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME As String = "Template.msgf-report.xml"
 	Public Const MSGF_REPORT_FILE_SUFFIX As String = "msgf-report.xml"
@@ -153,10 +153,10 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, String.Empty)
 
 		If String.IsNullOrEmpty(strTemplateFileName) Then
+			strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
 			If WarnIfJobParamMissing Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
 			End If
-			strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
 		End If
 
 		Return strTemplateFileName

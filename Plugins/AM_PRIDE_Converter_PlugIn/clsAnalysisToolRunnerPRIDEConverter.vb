@@ -2297,6 +2297,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				WritePXHeader(swPXFile, "title", TBD & "Journal Article Title", dctParameters)
 				WritePXHeader(swPXFile, "description", TBD & "Summary sentence", dctParameters)
+
+				If dctParameters.ContainsKey("pubmed") Then
+					WritePXHeader(swPXFile, "pubmed", TBD, dctParameters)
+				End If
+
 				WritePXHeader(swPXFile, "keywords", TBD, dctParameters)
 				WritePXHeader(swPXFile, "type", strSubmissionType, dctParameters)
 
