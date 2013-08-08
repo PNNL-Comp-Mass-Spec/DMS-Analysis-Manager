@@ -70,7 +70,14 @@ namespace AnalysisManager_Ape_PlugIn
 
             string apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
             string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
-            string apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorflowStepList"));
+            string apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
+
+			if (string.IsNullOrEmpty(apeWorkflowStepList))
+			{
+				// The job parameter originally was missing the "k" in workflow; try that version instead
+				apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorflowStepList"));
+			}
+
             //New code
             bool apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
 

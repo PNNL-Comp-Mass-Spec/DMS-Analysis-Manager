@@ -15,8 +15,9 @@ Public Class clsAnalysisToolRunnerSMAQC
 	Protected Const PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES As Single = 5
 	Protected Const PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES As Single = 10
 	Protected Const PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS As Single = 15
-	Protected Const PROGRESS_PCT_SMAQC_SAVING_RESULTS As Single = 95
-	Protected Const PROGRESS_PCT_SMAQC_COMPLETE As Single = 98
+	Protected Const PROGRESS_PCT_SMAQC_SAVING_RESULTS As Single = 88
+	Protected Const PROGRESS_PCT_SMAQC_COMPLETE As Single = 90
+	Protected Const PROGRESS_PCT_RUNNING_LLRC As Single = 95
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
 	Protected Const STORE_SMAQC_RESULTS_SP_NAME As String = "StoreSMAQCResults"
@@ -125,7 +126,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 				' Write the console output to a text file
 				System.Threading.Thread.Sleep(250)
 
-				Dim swConsoleOutputfile As New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Dim swConsoleOutputfile = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 				swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
 				swConsoleOutputfile.Close()
 			End If
@@ -159,6 +160,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "SMAQC Search Complete")
 				End If
+
 			End If
 
 			If Not blnProcessingError Then
@@ -169,6 +171,20 @@ Public Class clsAnalysisToolRunnerSMAQC
 					End If
 					blnProcessingError = True
 				End If
+			End If
+
+			If Not blnProcessingError Then
+				Dim blnSuccessLLRC As Boolean
+
+				blnSuccessLLRC = ComputeLLRC()
+
+				If Not blnSuccessLLRC Then
+					' Do not treat this as a fatal error
+					If String.IsNullOrEmpty(m_EvalMessage) Then
+						m_EvalMessage = "Unknown error computing QCDM using LLRC"
+					End If
+				End If
+
 			End If
 
 			' Rename the SMAQC log file to remove the datestamp
@@ -229,6 +245,44 @@ Public Class clsAnalysisToolRunnerSMAQC
 		End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+
+	End Function
+
+	Protected Function ComputeLLRC() As Boolean
+		Dim blnSuccess As Boolean
+
+		Dim lstDatasetIDs = New List(Of Integer)
+
+		Dim intDatasetID As Integer
+		intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
+
+		If intDatasetID < 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job parameter DatasetID is missing; cannot compute LLRC")
+			Return False
+		End If
+
+		lstDatasetIDs.Add(intDatasetID)
+
+		Dim oLLRC = New LLRC.LLRCWrapper()
+		oLLRC.PostToDB = True
+		oLLRC.WorkingDirectory = m_WorkDir
+
+		' Add result files to skip
+		m_jobParams.AddResultFileExtensionToSkip(".Rdata")
+		m_jobParams.AddResultFileExtensionToSkip(".Rout")
+		m_jobParams.AddResultFileExtensionToSkip(".r")
+		m_jobParams.AddResultFileExtensionToSkip(".bat")
+		m_jobParams.AddResultFileToSkip("data.csv")
+		m_jobParams.AddResultFileToSkip("TestingDataset.csv")
+
+		blnSuccess = oLLRC.ProcessDatasets(lstDatasetIDs)
+
+		If Not blnSuccess Then
+			m_EvalMessage = "Error running LLRC: " & oLLRC.ErrorMessage
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+		End If
+
+		Return blnSuccess
 
 	End Function
 
@@ -294,14 +348,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 		While RetryCount > 0
 			Try
 
-				Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
-					Dim dbCmd As System.Data.SqlClient.SqlCommand
-					dbCmd = New System.Data.SqlClient.SqlCommand(SqlStr, Cn)
+				Using Cn = New System.Data.SqlClient.SqlConnection(ConnectionString)
+					Dim dbCmd = New System.Data.SqlClient.SqlCommand(SqlStr, Cn)
 
 					Cn.Open()
 
-					Dim objResult As Object
-					objResult = dbCmd.ExecuteScalar()
+					Dim objResult = dbCmd.ExecuteScalar()
 
 					If Not objResult Is Nothing Then
 						InstrumentID = CType(objResult, Int32)
@@ -364,7 +416,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		End If
 
 		' Copy the results folder to the Archive folder
-		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+		Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 		objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
 	End Sub
@@ -405,7 +457,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			sbXML.Append("<Measurements>")
 
-			For Each kvResult As KeyValuePair(Of String, String) In lstResults
+			For Each kvResult In lstResults
 				sbXML.Append("<Measurement Name=""" & kvResult.Key & """>" & kvResult.Value & "</Measurement>")
 			Next
 
@@ -448,7 +500,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4C, 27.18
 
 		' The measurments are returned via this list
-		Dim lstResults As New List(Of KeyValuePair(Of String, String))
+		Dim lstResults = New List(Of KeyValuePair(Of String, String))
 
 		If Not System.IO.File.Exists(ResultsFilePath) Then
 			m_message = "SMAQC Results file not found"
@@ -466,7 +518,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		Dim blnMeasurementsFound As Boolean
 		Dim blnHeadersFound As Boolean
 
-		Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+		Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			Do While srInFile.Peek() > -1
 				strLineIn = srInFile.ReadLine()
@@ -726,9 +778,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End With
 
 
-			Dim objAnalysisTask As clsAnalysisJob
-
-			objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
+			Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
 			'Execute the SP (retry the call up to 4 times)
 			Dim ResCode As Integer
@@ -862,7 +912,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New List(Of System.IO.FileInfo)
+		Dim ioToolFiles = New List(Of System.IO.FileInfo)
 		ioToolFiles.Add(ioSMAQC)
 
 		Try

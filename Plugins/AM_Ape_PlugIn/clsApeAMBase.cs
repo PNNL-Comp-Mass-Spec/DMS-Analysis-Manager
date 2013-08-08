@@ -87,11 +87,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string GetJobParam(string paramName, string defaultValue)
         {
-            string val = mJobParms.GetParam(paramName);
-			if (string.IsNullOrEmpty(val))
-				val = defaultValue;
-
-            return val;
+			return mJobParms.GetJobParameter(paramName, defaultValue);
         }
 
 

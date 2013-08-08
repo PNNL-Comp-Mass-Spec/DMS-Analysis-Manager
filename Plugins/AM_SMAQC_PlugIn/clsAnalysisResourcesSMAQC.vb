@@ -26,7 +26,38 @@ Public Class clsAnalysisResourcesSMAQC
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
+		' Retrieve the LLRC .RData files
+		If Not RetrieveLLRCFiles() Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function RetrieveLLRCFiles() As Boolean
+
+		Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
+		Dim lstFilesToCopy As List(Of String) = New List(Of String)
+
+		lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA)
+		lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS)
+
+		For Each strFileName As String In lstFilesToCopy
+			Dim fiSourceFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(strLLRCRunnerProgLoc, strFileName))
+
+			If Not fiSourceFile.Exists Then
+				m_message = "LLRC RData file not found: " & fiSourceFile.FullName
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			Else
+				fiSourceFile.CopyTo(IO.Path.Combine(m_WorkingDir, fiSourceFile.Name))
+				m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
+			End If
+
+		Next
+
+		Return True
 
 	End Function
 
@@ -41,8 +72,8 @@ Public Class clsAnalysisResourcesSMAQC
 		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)		' _ScanStatsEx.txt
 		m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
 
-		Dim lstNonCriticalFileSuffixes As Generic.List(Of String)
-		lstNonCriticalFileSuffixes = New Generic.List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
+		Dim lstNonCriticalFileSuffixes As List(Of String)
+		lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
 
 		If String.IsNullOrEmpty(strMASICResultsFolderName) Then
 			If m_DebugLevel >= 2 Then
@@ -104,7 +135,7 @@ Public Class clsAnalysisResourcesSMAQC
 
 	Protected Function RetrievePHRPFiles() As Boolean
 
-		Dim lstFileNamesToGet As New Generic.List(Of String)
+		Dim lstFileNamesToGet As New List(Of String)
 		Dim ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType
 
 		' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters

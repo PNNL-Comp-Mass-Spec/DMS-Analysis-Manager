@@ -1509,7 +1509,7 @@ Public MustInherit Class clsAnalysisResources
 			Dim strMatchedFile As String
 			Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
 
-			Dim strMSXmlGeneratorName As String = m_jobParams.GetParam("MSXMLGenerator", String.Empty)
+			Dim strMSXmlGeneratorName As String = m_jobParams.GetJobParameter("MSXMLGenerator", String.Empty)
 			If String.IsNullOrWhiteSpace(strMSXmlGeneratorName) Then
 				strSubfolderToCheck = diCacheFolder.FullName
 			Else

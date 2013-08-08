@@ -342,7 +342,7 @@ Public Class clsAnalysisToolRunnerBase
 			Dim strMSXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
 
 			If String.IsNullOrEmpty(strMSXmlGeneratorName) Then
-				strMSXmlGeneratorName = m_jobParams.GetParam("MSXMLGenerator", String.Empty)
+				strMSXmlGeneratorName = m_jobParams.GetJobParameter("MSXMLGenerator", String.Empty)
 
 				If Not String.IsNullOrEmpty(strMSXmlGeneratorName) Then
 					strMSXmlGeneratorName = IO.Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)

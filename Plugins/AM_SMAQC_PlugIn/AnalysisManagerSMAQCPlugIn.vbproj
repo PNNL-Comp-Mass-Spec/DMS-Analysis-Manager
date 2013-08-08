@@ -55,6 +55,9 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="LLRC">
+      <HintPath>..\..\AM_Common\LLRC.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader, Version=1.1.4911.25626, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>

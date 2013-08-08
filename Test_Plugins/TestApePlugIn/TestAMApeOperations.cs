@@ -78,7 +78,7 @@ namespace TestApePlugIn {
                 {"SharedResultsFolders", ""},
                 {"StepOutputFolderName", "Step_2_APE"},
                 {"StepInputFolderName", "Step_1_Mage"},
-                {"ApeWorflowStepList", "Create Indexes"},//, Compile Datasets Calculate 10 Percent FDR"}, //1-10,11-68,69-123"}Create Indexes, Compile Datasets, Calculate 10 Percent FDR, Calculate 5 Percent FDR, Calculate 1 Percent FDR, Calculate 0pt1 Percent FDR
+                {"ApeWorkflowStepList", "Create Indexes"},//, Compile Datasets Calculate 10 Percent FDR"}, //1-10,11-68,69-123"}Create Indexes, Compile Datasets, Calculate 10 Percent FDR, Calculate 5 Percent FDR, Calculate 1 Percent FDR, Calculate 0pt1 Percent FDR
                 {"ApeCompactDatabase", "True"},
                 {"ApeWorkflowName", "20111121_APE_MSGF_CS_Tryp_SpectralCount_WF.xml"},
                 {"ResultsBaseName", "Results"}
