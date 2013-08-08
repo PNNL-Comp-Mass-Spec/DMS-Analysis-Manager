@@ -19,7 +19,7 @@ Public Class clsCompassXportRunner
         mzData = 1
         mzML = 2
         JCAMP = 3
-        CMD = 4
+		CSV = 4
     End Enum
 #End Region
 
@@ -175,8 +175,8 @@ Public Class clsCompassXportRunner
                 Return "mzML"
             Case MSXMLOutputTypeConstants.JCAMP
                 Return "JCAMP"
-            Case MSXMLOutputTypeConstants.CMD
-                Return "CMD"
+			Case MSXMLOutputTypeConstants.CSV
+				Return "CSV"
             Case Else
                 ' Includes MSXMLOutputTypeConstants.Invalid
                 Return ""
@@ -193,8 +193,8 @@ Public Class clsCompassXportRunner
                 Return MSXMLOutputTypeConstants.mzML
             Case "jcamp"
                 Return MSXMLOutputTypeConstants.JCAMP
-            Case "cmd"
-                Return MSXMLOutputTypeConstants.CMD
+			Case "csv"
+				Return MSXMLOutputTypeConstants.CSV
             Case Else
                 Return MSXMLOutputTypeConstants.Invalid
         End Select
