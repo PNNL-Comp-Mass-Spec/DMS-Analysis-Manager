@@ -263,6 +263,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		lstDatasetIDs.Add(intDatasetID)
 
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LLRC to compute QCDM")
+
 		Dim oLLRC = New LLRC.LLRCWrapper()
 		oLLRC.PostToDB = True
 		oLLRC.WorkingDirectory = m_WorkDir
@@ -280,38 +282,13 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If Not blnSuccess Then
 			m_EvalMessage = "Error running LLRC: " & oLLRC.ErrorMessage
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+		ElseIf m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "LLRC Succeeded")
 		End If
 
 		Return blnSuccess
 
 	End Function
-
-	' No longer needed
-	''Protected Function CopySMAQCRuntimeFiles(ByVal strSourceFolder As String) As Boolean
-
-	''	Dim lstSourceFileNames As New List(Of String)
-
-	''	Try
-	''		lstSourceFileNames.Add("config.xml")
-	''		lstSourceFileNames.Add("SMAQC.s3db")
-
-	''		For Each strSourceFileName In lstSourceFileNames
-	''			Dim strSourcePath As String
-	''			strSourcePath = System.IO.Path.Combine(strSourceFolder, strSourceFileName)
-	''			System.IO.File.Copy(strSourcePath, System.IO.Path.Combine(m_WorkDir, strSourceFileName), True)
-
-	''			m_jobParams.AddResultFileToSkip(strSourceFileName)
-	''		Next
-
-	''	Catch ex As Exception
-	''		m_message = "Error copying SMAQC runtime files"
-	''		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-	''		Return False
-	''	End Try	
-
-	''	Return True
-
-	''End Function
 
 	''' <summary>
 	''' Looks up the InstrumentID for the dataset associated with this job
@@ -909,6 +886,10 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		' Lookup the version of the SMAQC application
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioSMAQC.FullName)
+		If Not blnSuccess Then Return False
+
+		' Lookup the version of LLRC
+		blnSuccess = MyBase.StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "LLRC")
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles

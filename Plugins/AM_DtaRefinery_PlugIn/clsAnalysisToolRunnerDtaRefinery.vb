@@ -137,6 +137,20 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 		If Not ValidateDTARefineryLogFile() Then
 			result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
 		Else
+			Dim blnPostResultsToDB As Boolean = True
+			Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB)
+			Dim blnSuccess As Boolean
+
+			Dim intDatasetID As Integer = m_jobParams.GetJobParameter("DatasetID", 0)
+			Dim intJob As Integer
+			Integer.TryParse(m_JobNum, intJob)
+
+			blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(m_Dataset, intDatasetID, intJob)
+
+			If Not blnSuccess Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error parsing DTA refinery log file to extract mass error stats, job " & m_JobNum)
+			End If
+
 			'Zip the output file
 			result = ZipMainOutputFile()
 		End If
@@ -255,47 +269,48 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' <remarks></remarks>
     Public Function ValidateDTARefineryLogFile() As Boolean
 
-        Dim ioSourceFile As System.IO.FileInfo
-        Dim srSourceFile As System.IO.StreamReader
+		Dim fiSourceFile As System.IO.FileInfo
+		Dim srSourceFile As System.IO.StreamReader
 
-        Dim strLineIn As String
+		Dim strLineIn As String
 
-        Try
+		Try
 
-            ioSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
-            If Not ioSourceFile.Exists Then
-                m_message = "DtaRefinery Log file not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (" & ioSourceFile.Name & ")")
-                Return False
-            End If
+			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
+			If Not fiSourceFile.Exists Then
+				m_message = "DtaRefinery Log file not found"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (" & fiSourceFile.Name & ")")
+				Return False
+			End If
 
-            srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(ioSourceFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(fiSourceFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-            Do While srSourceFile.Peek > -1
-                strLineIn = srSourceFile.ReadLine()
+			Do While srSourceFile.Peek > -1
+				strLineIn = srSourceFile.ReadLine()
 
-                If strLineIn.StartsWith("number of spectra identified less than 2") Then
-                    If srSourceFile.Peek > -1 Then
-                        strLineIn = srSourceFile.ReadLine()
-                        If strLineIn.StartsWith("stop processing") Then
-                            m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset"
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                            Return False
-                        End If
-                    End If
+				If strLineIn.StartsWith("number of spectra identified less than 2") Then
+					If srSourceFile.Peek > -1 Then
+						strLineIn = srSourceFile.ReadLine()
+						If strLineIn.StartsWith("stop processing") Then
+							m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+							Return False
+						End If
+					End If
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly")
 
-                End If
-            Loop
+				End If
 
-            srSourceFile.Close()
+			Loop
 
-        Catch ex As Exception
-            m_message = "Exception in ValidateDTARefineryLogFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
+			srSourceFile.Close()
+
+		Catch ex As Exception
+			m_message = "Exception in ValidateDTARefineryLogFile"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return False
+		End Try
 
         Return True
 
