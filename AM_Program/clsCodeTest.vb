@@ -27,6 +27,13 @@ Public Class clsCodeTest
 
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450				' 7.5 minutes
 
+	Protected Structure udtPSMJobInfoType
+		Public Dataset As String
+		Public DatasetID As Integer
+		Public Job As Integer
+		Public DtaRefineryDataFolderPath As String
+	End Structure
+
 	Public Sub New()
 		Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
 		Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
@@ -171,6 +178,88 @@ Public Class clsCodeTest
 			End If
 		End Try
 	End Sub
+
+	Public Sub ProcessDtaRefineryLogFiles()
+		'ProcessDtaRefineryLogFiles(968057, 968057)
+		'ProcessDtaRefineryLogFiles(968061, 968061)
+		'ProcessDtaRefineryLogFiles(968094, 968094)
+		'ProcessDtaRefineryLogFiles(968102, 968102)
+		'ProcessDtaRefineryLogFiles(968106, 968106)
+
+		'ProcessDtaRefineryLogFiles(968049, 968049)
+		'ProcessDtaRefineryLogFiles(968053, 968053)
+		'ProcessDtaRefineryLogFiles(968098, 968098)
+		ProcessDtaRefineryLogFiles(968470, 968470)
+		ProcessDtaRefineryLogFiles(968482, 968482)
+
+	End Sub
+
+	Public Function ProcessDtaRefineryLogFiles(ByVal intJobStart As Integer, ByVal intJobEnd As Integer) As Boolean
+		' Query the Pipeline DB to find jobs that ran DTA Refinery
+
+		' Dim strSql As String = "SELECT JSH.Dataset, J.Dataset_ID, JSH.Job, JSH.Output_Folder, DFP.Dataset_Folder_Path" &
+		'   " FROM DMS_Pipeline.dbo.V_Job_Steps_History JSH INNER JOIN" &
+		'   "      DMS_Pipeline.dbo.T_Jobs J ON JSH.Job = J.Job INNER JOIN" &
+		'   "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
+		'   " WHERE (JSH.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JSH.Tool = 'DTA_Refinery') AND (JSH.Most_Recent_Entry = 1) AND (JSH.State = 5)"
+
+		Dim strSql As String = "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" &
+	" FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" &
+	"      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" &
+	"      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
+	" WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
+
+		Dim strConnectionString As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+
+		Dim Dt As DataTable = Nothing
+
+		Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(strConnectionString)
+			Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(strSql, Cn)
+				Using Ds As DataSet = New DataSet
+					Da.Fill(Ds)
+					Dt = Ds.Tables(0)
+				End Using  'Ds
+			End Using  'Da
+		End Using  'Cn
+
+		If Dt.Rows.Count < 1 Then
+			' No data was returned
+			Console.WriteLine("DTA_Refinery jobs were not found for job range " & intJobStart & " - " & intJobEnd)
+			Return False
+		End If
+
+		Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
+		Dim blnPostResultsToDB As Boolean = True
+
+		' Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
+		'Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB)
+		
+		For Each CurRow As DataRow In Dt.Rows
+			Dim udtPSMJob As udtPSMJobInfoType = New udtPSMJobInfoType
+
+			With udtPSMJob
+				.Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
+				.DatasetID = clsGlobal.DbCInt(CurRow("Dataset_ID"))
+				.Job = clsGlobal.DbCInt(CurRow("Job"))
+				.DtaRefineryDataFolderPath = IO.Path.Combine(clsGlobal.DbCStr(CurRow("Dataset_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
+			End With
+
+			If Not IO.Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
+				udtPSMJob.DtaRefineryDataFolderPath = IO.Path.Combine(clsGlobal.DbCStr(CurRow("Transfer_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
+			End If
+
+			If IO.Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
+				Console.WriteLine("Processing " & udtPSMJob.DtaRefineryDataFolderPath)
+				'oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
+			Else
+				Console.WriteLine("Skipping " & udtPSMJob.DtaRefineryDataFolderPath)
+			End If
+
+		Next
+
+		Return True
+
+	End Function
 
 	Public Sub TestArchiveFileStart()
 		Dim strParamFilePath As String

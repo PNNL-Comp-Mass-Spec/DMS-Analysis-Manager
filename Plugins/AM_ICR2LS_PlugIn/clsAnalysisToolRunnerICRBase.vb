@@ -427,10 +427,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 strArguments &= " /M:TIC /T:1"
             Case ICR2LSProcessingModeConstants.SFoldersPEK
                 strArguments &= " /M:PEK /T:2"
-            Case ICR2LSProcessingModeConstants.SFoldersPEK
-                strArguments &= " /M:PEK /T:2"
-            Case ICR2LSProcessingModeConstants.SFoldersTIC
-                strArguments &= " /M:TIC /T:2"
+			Case ICR2LSProcessingModeConstants.SFoldersTIC
+				strArguments &= " /M:TIC /T:2"
             Case ICR2LSProcessingModeConstants.SerFolderPEK, ICR2LSProcessingModeConstants.SerFilePEK
                 strArguments &= " /M:PEK /T:0"
             Case ICR2LSProcessingModeConstants.SerFolderTIC, ICR2LSProcessingModeConstants.SerFileTIC

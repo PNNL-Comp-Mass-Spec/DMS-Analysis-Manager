@@ -1,4 +1,5 @@
 ﻿Imports AnalysisManagerBase
+Imports System.Text
 
 ''' <summary>
 ''' This class reads a DTA_Refinery log file to extract the paren ion mass error information
@@ -66,6 +67,10 @@ Public Class clsDtaRefLogMassErrorExtractor
 	End Function
 
 	Public Function ParseDTARefineryLogFile(ByVal strDatasetName As String, ByVal intDatasetID As Integer, ByVal intPSMJob As Integer) As Boolean
+		Return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, m_WorkDir)
+	End Function
+
+	Public Function ParseDTARefineryLogFile(ByVal strDatasetName As String, ByVal intDatasetID As Integer, ByVal intPSMJob As Integer, ByVal strWorkDirPath As String) As Boolean
 
 		Dim fiSourceFile As System.IO.FileInfo
 
@@ -74,8 +79,8 @@ Public Class clsDtaRefLogMassErrorExtractor
 
 		Dim udtMassErrorInfo As udtMassErrorInfoType
 
-		Dim reMassError = New Text.RegularExpressions.Regex("Robust estimate[ \t]+([^\t ]+)", Text.RegularExpressions.RegexOptions.Compiled)
-		Dim reMatch As Text.RegularExpressions.Match
+		Dim reMassError = New RegularExpressions.Regex("Robust estimate[ \t]+([^\t ]+)", RegularExpressions.RegexOptions.Compiled)
+		Dim reMatch As RegularExpressions.Match
 
 		Dim strLineIn As String
 
@@ -88,7 +93,7 @@ Public Class clsDtaRefLogMassErrorExtractor
 			udtMassErrorInfo.MassErrorPPM = Double.MinValue
 			udtMassErrorInfo.MassErrorPPMRefined = Double.MinValue
 
-			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, strDatasetName & "_dta_DtaRefineryLog.txt"))
+			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(strWorkDirPath, strDatasetName & "_dta_DtaRefineryLog.txt"))
 			If Not fiSourceFile.Exists Then
 				mErrorMessage = "DtaRefinery Log file not found"
 				Return False

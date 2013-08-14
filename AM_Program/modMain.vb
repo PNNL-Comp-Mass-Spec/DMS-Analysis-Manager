@@ -23,7 +23,7 @@
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "May 1, 2013"
+	Public Const PROGRAM_DATE As String = "August 13, 2013"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -104,7 +104,9 @@ Module modMain
 
 						' objTest.TestIonicZipTools()
 
-						objTest.RemoveSparseSpectra()
+						'objTest.RemoveSparseSpectra()
+
+						objTest.ProcessDtaRefineryLogFiles()
 
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))

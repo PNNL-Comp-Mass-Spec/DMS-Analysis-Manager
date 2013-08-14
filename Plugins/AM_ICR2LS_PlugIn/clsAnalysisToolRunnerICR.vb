@@ -53,6 +53,7 @@ Public Class clsAnalysisToolRunnerICR
 		Dim OutFileNamePath As String
 		Dim ParamFilePath As String
 		Dim RawDataType As String
+		Dim blnBrukerFT As Boolean
 		Dim DatasetFolderPathBase As String
 
 		Dim blnSuccess As Boolean
@@ -106,21 +107,29 @@ Public Class clsAnalysisToolRunnerICR
 
 		If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
 			DatasetFolderPathBase = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".d")
+			blnBrukerFT = True
 		Else
 			DatasetFolderPathBase = String.Copy(m_WorkDir)
+			blnBrukerFT = False
 		End If
 
 		' Look for a ser file in the working directory
 		SerFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(DatasetFolderPathBase, blnIsFolder)
 
 		If String.IsNullOrEmpty(SerFileOrFolderPath) Then
-
 			' Did not find a ser file or 0.ser folder
-			' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-			'  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
 
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Did not find a ser file or 0.ser folder; assuming we are processing zipped s-folders")
+			If blnBrukerFT Then
+				m_message = "ser file not found; unable to process with ICR-2LS"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+				'  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Did not find a ser file or 0.ser folder; assuming we are processing zipped s-folders")
+				End If
 			End If
 		Else
 			If m_DebugLevel >= 1 Then

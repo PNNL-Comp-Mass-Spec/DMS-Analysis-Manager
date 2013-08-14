@@ -96,6 +96,7 @@
     <Compile Include="clsCleanupMgrErrors.vb" />
     <Compile Include="clsCodeTest.vb" />
     <Compile Include="clsCodeTestAM.vb" />
+    <Compile Include="clsDtaRefLogMassErrorExtractor.vb" />
     <Compile Include="clsMainProcess.vb" />
     <Compile Include="clsParseCommandLine.vb" />
     <Compile Include="clsPluginLoader.vb" />
