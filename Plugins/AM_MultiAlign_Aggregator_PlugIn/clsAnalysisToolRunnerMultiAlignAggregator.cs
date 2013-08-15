@@ -1,22 +1,24 @@
 ﻿using AnalysisManagerBase;
 using log4net;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
-   public class clsAnalysisToolRunnerMultiAlignAggregator : clsAnalysisToolRunnerBase
-   {
-	   protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
-       protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
+	public class clsAnalysisToolRunnerMultiAlignAggregator : clsAnalysisToolRunnerBase
+	{
+		protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
+		protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
 
-	   protected string m_CurrentMultiAlignTask = string.Empty;
-	   protected System.DateTime m_LastStatusUpdateTime;
+		protected string m_CurrentMultiAlignTask = string.Empty;
+		protected System.DateTime m_LastStatusUpdateTime;
 
-       public override IJobParams.CloseOutType RunTool()
-       {
-			try 
+		public override IJobParams.CloseOutType RunTool()
+		{
+			try
 			{
 
 				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
@@ -39,14 +41,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
-				
+
 				// Store the MultiAlign version info in the database
 				if (!StoreToolVersionInfo(progLoc))
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining MultiAlign version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-                }
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					m_message = "Error determining MultiAlign version";
+					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+				}
 
 				m_CurrentMultiAlignTask = "Running MultiAlign";
 				m_LastStatusUpdateTime = System.DateTime.UtcNow;
@@ -55,13 +57,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentMultiAlignTask);
 
 				// Change the name of the log file for the local log file to the plugin log filename
-                String LogFileName = System.IO.Path.Combine(m_WorkDir, "MultiAlign_Log");
-                log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                clsLogTools.ChangeLogFileName(LogFileName);
+				String LogFileName = Path.Combine(m_WorkDir, "MultiAlign_Log");
+				log4net.GlobalContext.Properties["LogName"] = LogFileName;
+				clsLogTools.ChangeLogFileName(LogFileName);
 
 				try
 				{
-                    m_progress = PROGRESS_PCT_MULTIALIGN_START;
+					m_progress = PROGRESS_PCT_MULTIALIGN_START;
 					blnSuccess = RunMultiAlign(progLoc);
 				}
 				catch (System.Exception ex)
@@ -132,12 +134,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 					return result;
 				}
 
-                // Move the Plots folder to the result files folder
-                System.IO.DirectoryInfo diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
+				// Move the Plots folder to the result files folder
+				DirectoryInfo diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
-                if (diPlotsFolder.Exists)
-                {
-                    string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+				if (diPlotsFolder.Exists)
+				{
+					string strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
 
 					try
 					{
@@ -148,20 +150,22 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
 						m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
 					}
-					
-                }
 
-                result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+					// Zip up (then delete) the PNG files in the plots folder
+					ZipPlotsFolder(diPlotsFolder);
+				}
+
+				result = CopyResultsFolderToServer();
+				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+					return result;
+				}
 
 			}
 			catch (System.Exception ex)
 			{
-                m_message = "Error in MultiAlignPlugin->RunTool";
+				m_message = "Error in MultiAlignPlugin->RunTool";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
 				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
@@ -169,116 +173,117 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
 			return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
-        }
+		}
 
-       /// <summary>
-       /// Run the MultiAlign pipeline(s) listed in "MultiAlignOperations" parameter
-       /// </summary>
-	   protected bool RunMultiAlign(string sMultiAlignConsolePath)
-       {
-		   bool bSuccess;
+		/// <summary>
+		/// Run the MultiAlign pipeline(s) listed in "MultiAlignOperations" parameter
+		/// </summary>
+		protected bool RunMultiAlign(string sMultiAlignConsolePath)
+		{
+			bool bSuccess;
 
-		   try
-		   {
-			   clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
-			   bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
+			try
+			{
+				clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
+				bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
 
-			   if (!bSuccess)
-			   {
-				   if (!string.IsNullOrWhiteSpace(oMultiAlignMage.Message))
-					   m_message = oMultiAlignMage.Message;
-				   else
-					   m_message = "Unknown error running MultiAlign";
-			   }
+				if (!bSuccess)
+				{
+					if (!string.IsNullOrWhiteSpace(oMultiAlignMage.Message))
+						m_message = oMultiAlignMage.Message;
+					else
+						m_message = "Unknown error running MultiAlign";
+				}
 
-		   }
-		   catch (Exception ex)
-		   {
-			   m_message = "Unknown error running MultiAlign: " + ex.Message;
-			   clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
-			   return false;
-		   }
+			}
+			catch (Exception ex)
+			{
+				m_message = "Unknown error running MultiAlign: " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+				return false;
+			}
 
 			return bSuccess;
 
-       }
+		}
 
-       /// <summary>
-       /// 
-       /// </summary>
-       protected void CopyFailedResultsToArchiveFolder()
-        {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+		/// <summary>
+		/// 
+		/// </summary>
+		protected void CopyFailedResultsToArchiveFolder()
+		{
+			IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+			string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+			if (string.IsNullOrEmpty(strFailedResultsFolderPath))
+				strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
+			// Bump up the debug level if less than 2
+			if (m_DebugLevel < 2)
+				m_DebugLevel = 2;
 
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+			// Try to save whatever files are in the work directory
+			string strFolderPathToArchive = null;
+			strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
 				try
 				{
-					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-					System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+					File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
+					File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
 				}
 				catch
 				{
 					// Ignore errors here
 				}
 		    */
-			
-		   // Make the results folder
-            result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
 
-            // Copy the results folder to the Archive folder
-            clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+			// Make the results folder
+			result = MakeResultsFolder();
+			if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+			{
+				// Move the result files into the result folder
+				result = MoveResultFiles();
+				if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// Move was a success; update strFolderPathToArchive
+					strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+				}
+			}
 
-        }
+			// Copy the results folder to the Archive folder
+			clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+
+		}
 
 
-        /// <summary>
-        /// Stores the tool version info in the database
-        /// </summary>
-        /// <remarks></remarks>
+		/// <summary>
+		/// Stores the tool version info in the database
+		/// </summary>
+		/// <remarks></remarks>
 		protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
 		{
 
 			string strToolVersionInfo = string.Empty;
-			System.IO.FileInfo ioMultiAlignInfo;
+			FileInfo ioMultiAlignInfo;
 			bool blnSuccess;
 
-            if (m_DebugLevel >= 2) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-            }
+			if (m_DebugLevel >= 2)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+			}
 
-			ioMultiAlignInfo = new System.IO.FileInfo(strMultiAlignProgLoc);
+			ioMultiAlignInfo = new FileInfo(strMultiAlignProgLoc);
 			if (!ioMultiAlignInfo.Exists)
 			{
 				try
 				{
 					strToolVersionInfo = "Unknown";
-					base.SetStepTaskToolVersion(strToolVersionInfo, new System.Collections.Generic.List<System.IO.FileInfo>());
+					base.SetStepTaskToolVersion(strToolVersionInfo, new System.Collections.Generic.List<FileInfo>());
 				}
 				catch (Exception ex)
 				{
@@ -295,22 +300,22 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				return false;
 
 			// Lookup the version of MultiAlignEngine (in the MultiAlign folder)
-			string strMultiAlignEngineDllLoc = System.IO.Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
+			string strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
 			blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
 			if (!blnSuccess)
 				return false;
 
 			// Lookup the version of MultiAlignCore (in the MultiAlign folder)
-			string strMultiAlignCoreDllLoc = System.IO.Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
+			string strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
 			blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
 			if (!blnSuccess)
 				return false;
 
 			// Store paths to key DLLs in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignProgLoc));
-			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignEngineDllLoc));
-			ioToolFiles.Add(new System.IO.FileInfo(strMultiAlignCoreDllLoc));
+			System.Collections.Generic.List<FileInfo> ioToolFiles = new System.Collections.Generic.List<FileInfo>();
+			ioToolFiles.Add(new FileInfo(strMultiAlignProgLoc));
+			ioToolFiles.Add(new FileInfo(strMultiAlignEngineDllLoc));
+			ioToolFiles.Add(new FileInfo(strMultiAlignCoreDllLoc));
 
 			try
 			{
@@ -322,9 +327,103 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				return false;
 			}
 
-        }
+		}
 
-    }
+		/// <summary>
+		/// Zip the files in the plots folder if there are over 50 files
+		/// </summary>
+		/// <param name="diPlotsFolder"></param>
+		/// <returns></returns>
+		private bool ZipPlotsFolder(DirectoryInfo diPlotsFolder)
+		{
+			return ZipPlotsFolder(diPlotsFolder, 50);
+		}
+
+		/// <summary>
+		/// Zip the files in the plots folder if there are over fileCountThreshold files
+		/// </summary>
+		/// <param name="diPlotsFolder"></param>
+		/// <returns></returns>
+		private bool ZipPlotsFolder(DirectoryInfo diPlotsFolder, int fileCountThreshold)
+		{
+
+			try
+			{
+				if (fileCountThreshold < 10)
+					fileCountThreshold = 10;
+
+				diPlotsFolder.Refresh();
+				if (diPlotsFolder.Exists)
+				{
+					int pngFileCount = diPlotsFolder.GetFiles("*.png").Count();
+
+					if (pngFileCount == 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "No .PNG files were found in the Plots folder");
+						return true;
+					}
+					else if (pngFileCount == 1)
+					{
+						if (m_DebugLevel >= 2)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Only 1 .PNG file exists in the Plots folder; file will not be zipped");
+						return true;
+					}
+					else if (pngFileCount < fileCountThreshold)
+					{
+						if (m_DebugLevel >= 2)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Only " + pngFileCount + " .PNG files exist in the Plots folder; files will not be zipped");
+						return true;
+					}
+
+					string strZipFilePath = Path.Combine(diPlotsFolder.FullName, "PlotFiles.zip");
+
+					bool success = m_IonicZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
+
+					if (!success)
+					{
+						string Msg = "Error zipping the plot files";
+						if (!string.IsNullOrEmpty(m_IonicZipTools.Message))
+							Msg += ": " + m_IonicZipTools.Message;
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+						m_message = clsGlobal.AppendToComment(m_message, Msg);
+						return false;
+					}
+
+					// Delete the PNG files in the plots folder
+					int errorCount = 0;
+					foreach (var fiFile in diPlotsFolder.GetFiles("*.png"))
+					{
+						try
+						{
+							fiFile.Delete();
+						}
+						catch (Exception ex)
+						{
+							errorCount++;
+							if (errorCount < 10)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting file " + fiFile.Name + ": " + ex.Message);
+							else if (errorCount == 10)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Over 10 exceptions deleting plot files; additional exceptions will not be logged");
+						}
+
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+				string Msg = "Exception zipping plot files, job " + m_JobNum + ": " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+				m_message = clsGlobal.AppendToComment(m_message, "Error zipping the plot files");
+				return false;
+			}
+
+			return true;
+
+		}
+
+	}
 }
-    
-    
+
+
