@@ -289,6 +289,7 @@ Public Class clsAnalysisToolRunnerBase
 					If Not diTargetFolder.Exists Then diTargetFolder.Create()
 				End If
 
+				m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
 
 				' Create the .hashcheck file
 				Dim strHashcheckFilePath As String
