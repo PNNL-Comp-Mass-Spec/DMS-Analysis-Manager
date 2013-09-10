@@ -22,15 +22,14 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
-
-        'Retrieve the dta files (but do not unconcatenate)
-        If Not RetrieveDtaFiles(False) Then
+		' Retrieve the _DTA.txt file
+		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+        If Not RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Add the _dta.txt file to the list of extensions to delete after the tool finishes
+		' Add the _dta.txt file to the list of extensions to delete after the tool finishes
         m_JobParams.AddResultFileExtensionToSkip(m_jobParams.GetParam("DatasetNum") & "_dta.txt") 'Unzipped, concatenated DTA
 
         ' Add the _Dta.zip file to the list of files to move to the results folder
@@ -88,7 +87,6 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 			' Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
 			' However, if the _ScanStats.txt file does not have column ScanTypeName, then we will need the .raw file
 
-
 			Dim blnIsFolder As Boolean = False
 			Dim strDatasetFileOrFolderPath As String
 			Dim diDatasetFolder As IO.DirectoryInfo
@@ -96,7 +94,7 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 
 			strDatasetFileOrFolderPath = FindDatasetFileOrFolder(blnIsFolder)
 
-			If Not String.IsNullOrEmpty(strDatasetFileOrFolderPath) Then
+			If Not String.IsNullOrEmpty(strDatasetFileOrFolderPath) And Not strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
 				If blnIsFolder Then
 					diDatasetFolder = New IO.DirectoryInfo(strDatasetFileOrFolderPath)
@@ -129,7 +127,7 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 						CreateStoragePathInfoOnly = False
 				End Select
 
-				If Not RetrieveSpectra(RawDataType, strWorkDir, CreateStoragePathInfoOnly) Then
+				If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
@@ -148,6 +146,10 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 
 			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
 			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'All finished

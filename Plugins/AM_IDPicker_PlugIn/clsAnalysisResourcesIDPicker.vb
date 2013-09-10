@@ -62,6 +62,10 @@ Public Class clsAnalysisResourcesIDPicker
 			End If
 		End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		'Retrieve the Fasta file
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
@@ -123,7 +127,7 @@ Public Class clsAnalysisResourcesIDPicker
 					'Errors were reported in function call, so just return
 					eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 					Return False
-				End If		
+				End If
 			End If
 
 			m_jobParams.AddResultFileToSkip(kvEntry.Key)
@@ -146,6 +150,10 @@ Public Class clsAnalysisResourcesIDPicker
 
 		Next
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return False
+		End If
+
 		If eResultType = clsPHRPReader.ePeptideHitResultType.XTandem Then
 			' X!Tandem requires a few additional parameter files
 			lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(System.IO.Path.Combine(m_WorkingDir, strSearchEngineParamFileName))
@@ -159,6 +167,10 @@ Public Class clsAnalysisResourcesIDPicker
 
 				m_jobParams.AddResultFileToSkip(strFileName)
 			Next
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return False
 		End If
 
 		For Each item As Collections.Generic.KeyValuePair(Of String, String) In mInputFileRenames
@@ -229,7 +241,7 @@ Public Class clsAnalysisResourcesIDPicker
 	''' <remarks></remarks>
 	Protected Function RetrieveMASICFiles(ByVal strDatasetName As String) As Boolean
 
-		If Not RetrieveScanStatsFiles(m_WorkingDir, False) Then
+		If Not RetrieveScanStatsFiles(False) Then
 			' _ScanStats.txt file not found
 			' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
 			If Not GenerateScanStatsFile() Then

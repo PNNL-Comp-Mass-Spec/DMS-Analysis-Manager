@@ -10,6 +10,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports PHRPReader
+Imports System.IO
 
 Public Class clsAnalysisResourcesMSGF
 	Inherits clsAnalysisResources
@@ -22,6 +23,11 @@ Public Class clsAnalysisResourcesMSGF
 	Public Const PHRP_MOD_DEFS_SUFFIX As String = "_ModDefs.txt"
 #End Region
 
+#Region "Module variables"
+	' Keys are the original file name, values are the new name
+	Protected m_PendingFileRenames As Dictionary(Of String, String)
+#End Region
+
 #Region "Methods"
 	''' <summary>
 	''' Gets all files needed by MSGF
@@ -31,6 +37,8 @@ Public Class clsAnalysisResourcesMSGF
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim eResult As IJobParams.CloseOutType
+
+		m_PendingFileRenames = New Dictionary(Of String, String)
 
 		' Make sure the machine has enough free memory to run MSGF
 		If Not ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF") Then
@@ -64,7 +72,6 @@ Public Class clsAnalysisResourcesMSGF
 		Dim blnMGFInstrumentData As Boolean
 
 		Dim FileToGet As String
-		Dim SynFileSizeBytes As Int64
 		Dim strMzXMLFilePath As String = String.Empty
 
 		Dim blnSuccess As Boolean = False
@@ -151,19 +158,13 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
-		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName)
-		SynFileSizeBytes = 0
+		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName)		
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			m_jobParams.AddResultFileToSkip(FileToGet)
-
-			Dim ioSynFile As System.IO.FileInfo = New System.IO.FileInfo(FileToGet)
-			If ioSynFile.Exists Then
-				SynFileSizeBytes = ioSynFile.Length
-			End If
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _fht.txt file
@@ -196,6 +197,16 @@ Public Class clsAnalysisResourcesMSGF
 			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		Dim SynFileSizeBytes As Int64 = 0
+		Dim ioSynFile As FileInfo = New FileInfo(FileToGet)
+		If ioSynFile.Exists Then
+			SynFileSizeBytes = ioSynFile.Length
+		End If
+
 		If Not blnOnlyCopyFHTandSYNfiles Then
 			' Get the ModSummary.txt file        
 			FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, DatasetName)
@@ -207,17 +218,13 @@ Public Class clsAnalysisResourcesMSGF
 				If SynFileSizeBytes = 0 Then
 					' If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
 					Dim strModDefsFile As String
-					Dim strTargetFile As String = System.IO.Path.Combine(m_WorkingDir, FileToGet)
+					Dim strTargetFile As String = Path.Combine(m_WorkingDir, FileToGet)
 
-					strModDefsFile = System.IO.Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & PHRP_MOD_DEFS_SUFFIX
+					strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & PHRP_MOD_DEFS_SUFFIX
 
-					If FindAndRetrieveMiscFiles(strModDefsFile, False) Then
+					If Not FindAndRetrieveMiscFiles(strModDefsFile, False) Then
 						' Rename the file to end in _ModSummary.txt
-						strModDefsFile = System.IO.Path.Combine(m_WorkingDir, strModDefsFile)
-
-						System.IO.File.Copy(strModDefsFile, strTargetFile, True)
-						System.Threading.Thread.Sleep(100)
-						System.IO.File.Delete(strModDefsFile)
+						m_PendingFileRenames.Add(strModDefsFile, strTargetFile)
 					Else
 						'Errors were reported in function call, so just return
 						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
@@ -293,7 +300,7 @@ Public Class clsAnalysisResourcesMSGF
 		ElseIf Not blnOnlyCopyFHTandSYNfiles Then
 
 			' See if a .mzXML file already exists for this dataset
-			blnSuccess = RetrieveMZXmlFile(m_WorkingDir, False, strMzXMLFilePath)
+			blnSuccess = RetrieveMZXmlFile(False, strMzXMLFilePath)
 
 			' Make sure we don't move the .mzXML file into the results folder
 			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
@@ -306,17 +313,28 @@ Public Class clsAnalysisResourcesMSGF
 			Else
 				' .mzXML file not found
 				' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-				If RetrieveSpectra(RawDataType, m_WorkingDir) Then
+				If RetrieveSpectra(RawDataType) Then
 					m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)			' Raw file
-					m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' mzXML file
+					m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)		' mzXML file
 				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
 			End If
 
 		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		For Each entry In m_PendingFileRenames
+			Dim sourceFile As New FileInfo(IO.Path.Combine(m_WorkingDir, entry.Key))
+			If sourceFile.Exists Then
+				sourceFile.MoveTo(IO.Path.Combine(m_WorkingDir, entry.Value))
+			End If
+		Next
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -326,8 +344,8 @@ Public Class clsAnalysisResourcesMSGF
 		Dim strFilePath As String
 
 		Try
-			strFilePath = System.IO.Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+			strFilePath = Path.Combine(m_WorkingDir, FileName)
+			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
 				swOutfile.WriteLine("Result_ID" & ControlChars.Tab & "Unique_Seq_ID")
 			End Using
 		Catch ex As Exception
@@ -343,8 +361,8 @@ Public Class clsAnalysisResourcesMSGF
 		Dim strFilePath As String
 
 		Try
-			strFilePath = System.IO.Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+			strFilePath = Path.Combine(m_WorkingDir, FileName)
+			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
 				swOutfile.WriteLine("Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" & ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" & ControlChars.Tab & "Protein_Intensity_Log(I)")
 			End Using
 		Catch ex As Exception

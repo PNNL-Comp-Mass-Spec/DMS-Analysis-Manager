@@ -15,11 +15,9 @@ Public Class clsAnalysisResourcesDecon2ls
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
 
         'Get input data file
-		If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+		If Not RetrieveSpectra(strRawDataType) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -30,11 +28,14 @@ Public Class clsAnalysisResourcesDecon2ls
 		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
         'Retrieve param file
         If Not RetrieveFile( _
            m_jobParams.GetParam("ParmFileName"), _
-           m_jobParams.GetParam("ParmFileStoragePath"), _
-           m_mgrParams.GetParam("workdir")) _
+           m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 

@@ -48,7 +48,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-
 		If CreateMZXMLFile() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If

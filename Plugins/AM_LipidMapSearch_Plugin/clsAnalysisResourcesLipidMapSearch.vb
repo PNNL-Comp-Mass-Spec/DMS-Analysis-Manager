@@ -13,7 +13,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
-		If Not RetrieveFile(strParamFileName, strParamFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
@@ -29,6 +29,10 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		' Potentially retrieve the .Raw file and _Peaks.txt file for the second dataset to be used by this job
 		If Not RetrieveSecondDatasetFiles() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -195,8 +199,17 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		If Not CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, clsLogTools.LogLevels.INFO) Then
 			' Raw file not found on the storage server; try the archive
 			If Not CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-				' Raw file still not found; abort processing
-				Return False
+				' Raw file still not found; try MyEMSL
+
+				Dim DSFolderPath As String = FindValidFolder(strDatasetName, strFileToFind)
+				If DSFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+					' Queue this file for download
+					m_MyEMSLDatasetInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileID)
+				Else
+					' Raw file still not found; abort processing
+					Return False
+				End If
+				
 			End If
 		End If
 
@@ -205,30 +218,30 @@ Public Class clsAnalysisResourcesLipidMapSearch
 
 		m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX)
 
-		If False Then
+		'If False Then
 
-			' Copy the _Peaks.txt file
-			' For jobs run after August 23, 2012, this file will be zipped
+		'	' Copy the _Peaks.txt file
+		'	' For jobs run after August 23, 2012, this file will be zipped
 
-			Dim blnUnzipPeaksFile As Boolean = False
-			strFileToFind = IO.Path.ChangeExtension(strDatasetName & DECONTOOLS_PEAKS_FILE_SUFFIX, "zip")
+		'	Dim blnUnzipPeaksFile As Boolean = False
+		'	strFileToFind = IO.Path.ChangeExtension(strDatasetName & DECONTOOLS_PEAKS_FILE_SUFFIX, "zip")
 
-			If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPath, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
-				blnUnzipPeaksFile = True
-			Else
-				' _Peaks.zip file not found on the storage server; try the archive
-				If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPathArchive, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
-					blnUnzipPeaksFile = True
-				Else
-					' _Peaks.zip file still not found; this is OK, since LipidTools.exe can generate it using the .Raw file
-				End If
-			End If
+		'	If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPath, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
+		'		blnUnzipPeaksFile = True
+		'	Else
+		'		' _Peaks.zip file not found on the storage server; try the archive
+		'		If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPathArchive, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
+		'			blnUnzipPeaksFile = True
+		'		Else
+		'			' _Peaks.zip file still not found; this is OK, since LipidTools.exe can generate it using the .Raw file
+		'		End If
+		'	End If
 
-			If blnUnzipPeaksFile Then
-				m_jobParams.AddResultFileToSkip(strFileToFind)
-				UnzipFileStart(IO.Path.Combine(m_WorkingDir, strFileToFind), m_WorkingDir, "RetrieveDatasetAndPeaksFile", False)
-			End If
-		End If
+		'	If blnUnzipPeaksFile Then
+		'		m_jobParams.AddResultFileToSkip(strFileToFind)
+		'		UnzipFileStart(IO.Path.Combine(m_WorkingDir, strFileToFind), m_WorkingDir, "RetrieveDatasetAndPeaksFile", False)
+		'	End If
+		'End If
 
 		Return True
 

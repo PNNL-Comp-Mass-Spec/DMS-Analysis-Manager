@@ -22,6 +22,7 @@ Public Class clsAnalysisResourcesSeq
 	'	3) Retrieves zipped DTA files
 	'   4) Retrieves _out.txt.tmp file (if it exists)
 	'*********************************************************************************************************
+
 #Region "Methods"
 
 	Protected Sub ArchiveSequestParamFile()
@@ -511,7 +512,6 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim LocOrgDBFolder As String
 		Dim eExistingOutFileResult As IJobParams.CloseOutType
-		Dim blnDeconcatenate As Boolean
 
 		' Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
 		LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
@@ -520,8 +520,7 @@ Public Class clsAnalysisResourcesSeq
 		' Retrieve param file
 		If Not RetrieveGeneratedParamFile( _
 		  m_jobParams.GetParam("ParmFileName"), _
-		  m_jobParams.GetParam("ParmFileStoragePath"), _
-		  m_WorkingDir) _
+		  m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		' Make sure the Sequest parameter file is present in the parameter file storage path
@@ -535,10 +534,10 @@ Public Class clsAnalysisResourcesSeq
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		' Retrieve unzipped _dta.txt file
-		' Always skip deconcatenation since clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile will do that
-		blnDeconcatenate = False
-		If Not RetrieveDtaFiles(blnDeconcatenate) Then
+		' Retrieve the _DTA.txt file
+		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+		' The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
+		If Not RetrieveDtaFiles() Then
 			' Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If

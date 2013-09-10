@@ -264,11 +264,7 @@ Public Class clsAnalysisToolRunnerIN
 			'         '    strInputSpectra = String.Copy(mzXMLFilename)
 			''Else
 
-            If clsAnalysisResourcesIN.DECONCATENATE_DTA_TXT_FILE Then
-                strInputSpectra = String.Copy(m_WorkDir)
-            Else
-                strInputSpectra = String.Copy(mInspectConcatenatedDtaFilePath)
-            End If
+            strInputSpectra = String.Copy(mInspectConcatenatedDtaFilePath)
             'End If
 
             If m_DebugLevel >= 3 Then

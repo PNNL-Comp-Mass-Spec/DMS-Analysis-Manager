@@ -12,7 +12,7 @@ Public Class clsAnalysisResourcesSMAQC
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
-		If Not RetrieveFile(strParamFileName, strParamFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
@@ -29,6 +29,10 @@ Public Class clsAnalysisResourcesSMAQC
 		' Retrieve the LLRC .RData files
 		If Not RetrieveLLRCFiles() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -81,7 +85,6 @@ Public Class clsAnalysisResourcesSMAQC
 			End If
 
 			Return RetrieveScanAndSICStatsFiles(
-			  m_WorkingDir,
 			  RetrieveSICStatsFile:=True,
 			  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
 			  RetrieveScanStatsFile:=True,
@@ -100,6 +103,12 @@ Public Class clsAnalysisResourcesSMAQC
 				m_message = "Dataset folder path not defined"
 			Else
 
+				If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
+					m_message = "MASIC Files only exist in MyEMSL; current code does not support downloading them (see clsAnalysisResourcesSMAQC.RetrieveMASICFiles)"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return False
+				End If
+
 				Dim diFolderInfo As System.IO.DirectoryInfo
 				Dim diMASICFolderInfo As System.IO.DirectoryInfo
 				diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
@@ -116,7 +125,6 @@ Public Class clsAnalysisResourcesSMAQC
 					Else
 
 						Return RetrieveScanAndSICStatsFiles(
-						  m_WorkingDir,
 						  diMASICFolderInfo.FullName,
 						  RetrieveSICStatsFile:=True,
 						  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,

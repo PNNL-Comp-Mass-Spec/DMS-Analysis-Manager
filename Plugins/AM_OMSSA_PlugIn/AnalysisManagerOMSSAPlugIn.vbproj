@@ -94,6 +94,9 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+    </Reference>
     <Reference Include="DtaTextConverter, Version=1.1.3862.32418, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\DtaTextConverter.dll</HintPath>

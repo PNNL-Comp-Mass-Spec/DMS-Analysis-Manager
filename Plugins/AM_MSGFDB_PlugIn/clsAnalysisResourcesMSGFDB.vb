@@ -32,8 +32,7 @@ Public Class clsAnalysisResourcesMSGFDB
 		'  WHERE Param_File_Name = 'ParamFileName'
 		If Not RetrieveGeneratedParamFile( _
 		   m_jobParams.GetParam("ParmFileName"), _
-		   m_jobParams.GetParam("ParmFileStoragePath"), _
-		   m_WorkingDir) _
+		   m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -57,10 +56,14 @@ Public Class clsAnalysisResourcesMSGFDB
 			End If
 			m_jobParams.AddResultFileToSkip(FileToGet)
 
+			If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 		Else
 			' Retrieve the _DTA.txt file
-			' Retrieve unzipped dta files (do not de-concatenate since MSGFDB uses the _Dta.txt file directly)
-			If Not RetrieveDtaFiles(False) Then
+			' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+			If Not RetrieveDtaFiles() Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -83,7 +86,11 @@ Public Class clsAnalysisResourcesMSGFDB
 			Else
 				' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 				Dim blnSuccess As Boolean
-				blnSuccess = RetrieveScanStatsFiles(m_WorkingDir, CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
+				blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
+
+				If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
 
 				If blnSuccess Then
 					' Open the ScanStats file and read the header line to see if column ScanTypeName is present
@@ -93,7 +100,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
 					If Not blnScanTypeColumnFound Then
 						' We also have to retrieve the _ScanStatsEx.txt file
-						blnSuccess = RetrieveScanStatsFiles(m_WorkingDir, CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
+						blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
 					End If
 
 				End If
@@ -110,6 +117,10 @@ Public Class clsAnalysisResourcesMSGFDB
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
 					End If
 				End If
+			End If
+
+			If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' If the _dta.txt file is over 2 GB in size, then condense it

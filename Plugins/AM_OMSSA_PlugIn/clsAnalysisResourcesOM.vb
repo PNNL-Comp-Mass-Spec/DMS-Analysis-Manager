@@ -27,11 +27,10 @@ Public Class clsAnalysisResourcesOM
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         'Retrieve param file
-        If Not RetrieveFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_WorkingDir) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		If Not RetrieveFile( _
+		  m_jobParams.GetParam("ParmFileName"), _
+		  m_jobParams.GetParam("ParmFileStoragePath")) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'convert the .fasta file to OMSSA format using formatdb.exe
         blnSuccess = ConvertOMSSAFastaFile()
@@ -45,16 +44,16 @@ Public Class clsAnalysisResourcesOM
         'Stored in same location as parameter file
         '         m_jobParams.GetParam("SettingsFileName"), _
         If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         m_WorkingDir) _
+         m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         m_JobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
 
-        'Retrieve unzipped dta files (do not unconcatenate since we will convert the _DTA.txt file to a _DTA.xml file, which OMSSA will read)
-        If Not RetrieveDtaFiles(False) Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		' Retrieve the _DTA.txt file
+		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+		If Not RetrieveDtaFiles() Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         blnSuccess = ConvertDtaToXml()
         If Not blnSuccess Then

@@ -21,8 +21,7 @@ Public Class clsAnalysisResourcesPRIDEMzXML
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting PRIDE MzXML Input file")
 
         If Not RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), _
-         m_jobParams.GetParam("transferFolderPath"), _
-         m_mgrParams.GetParam("workdir")) _
+         m_jobParams.GetParam("transferFolderPath")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"))

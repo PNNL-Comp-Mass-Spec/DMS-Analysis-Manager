@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -96,6 +96,9 @@
   <ItemGroup>
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="MascotGenericFileToDTA">
       <HintPath>..\..\AM_Common\MascotGenericFileToDTA.dll</HintPath>

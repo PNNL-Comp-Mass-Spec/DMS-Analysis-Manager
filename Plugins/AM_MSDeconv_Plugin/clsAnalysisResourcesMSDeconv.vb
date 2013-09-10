@@ -36,6 +36,10 @@ Public Class clsAnalysisResourcesMSDeconv
 		End If
 		m_jobParams.AddResultFileToSkip(FileToGet)
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		' Make sure we don't move the .mzXML file into the results folder
 		m_JobParams.AddResultFileExtensionToSkip(".mzXML")
 

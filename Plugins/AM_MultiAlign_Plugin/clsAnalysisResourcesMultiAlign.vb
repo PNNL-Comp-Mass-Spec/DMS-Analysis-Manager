@@ -61,6 +61,10 @@ Public Class clsAnalysisResourcesMultiAlign
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
         ' Build the MultiAlign input text file
         Dim blnSuccess As Boolean
         blnSuccess = BuildMultiAlignInputTextFile(strInputFileExtension)

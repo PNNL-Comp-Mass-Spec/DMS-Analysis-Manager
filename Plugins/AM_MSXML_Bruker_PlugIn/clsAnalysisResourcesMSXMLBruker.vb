@@ -36,10 +36,14 @@ Public Class clsAnalysisResourcesMSXMLBruker
 
 		End Select
 
-        If Not RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If Not RetrieveSpectra(strRawDataType) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

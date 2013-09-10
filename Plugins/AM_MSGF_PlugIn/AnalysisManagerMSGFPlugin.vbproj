@@ -15,7 +15,7 @@
     <OptionExplicit>On</OptionExplicit>
     <OptionCompare>Binary</OptionCompare>
     <OptionStrict>On</OptionStrict>
-    <OptionInfer>Off</OptionInfer>
+    <OptionInfer>On</OptionInfer>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -60,8 +60,14 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+    </Reference>
     <Reference Include="MsMsDataFileReader">
       <HintPath>..\..\AM_Common\MsMsDataFileReader.dll</HintPath>
+    </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>

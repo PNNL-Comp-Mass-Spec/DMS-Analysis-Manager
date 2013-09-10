@@ -54,7 +54,7 @@ Public Class clsDtaGenResources
 			End If
 		Else
 			'Get input data file
-			If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+			If Not RetrieveSpectra(strRawDataType) Then
 				If String.IsNullOrEmpty(m_message) Then
 					m_message = "Error retrieving instrument data file"
 				End If
@@ -62,6 +62,10 @@ Public Class clsDtaGenResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -90,7 +94,7 @@ Public Class clsDtaGenResources
 				Return False
 			End If
 
-			If Not RetrieveFile(strParamFileName, strParamFileStoragePath, m_WorkingDir) Then
+			If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
 				Return False
 			End If
 

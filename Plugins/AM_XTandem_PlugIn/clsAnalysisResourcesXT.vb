@@ -25,14 +25,14 @@ Public Class clsAnalysisResourcesXT
         strWorkDir = m_mgrParams.GetParam("workdir")
 
         'Retrieve param file
-        If Not RetrieveGeneratedParamFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         strWorkDir) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		If Not RetrieveGeneratedParamFile( _
+		 m_jobParams.GetParam("ParmFileName"), _
+		 m_jobParams.GetParam("ParmFileStoragePath")) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-        'Retrieve unzipped dta files (do not unconcatenate since X!Tandem uses the _Dta.txt file directly)
-        If Not RetrieveDtaFiles(False) Then
+		' Retrieve the _DTA.txt file
+		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+        If Not RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -66,7 +66,8 @@ Public Class clsAnalysisResourcesXT
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		End If
+
         result = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
             Dim Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
@@ -80,6 +81,10 @@ Public Class clsAnalysisResourcesXT
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         ' set up taxonomy file to reference the organism DB file (fasta)
         result = MakeTaxonomyFile()

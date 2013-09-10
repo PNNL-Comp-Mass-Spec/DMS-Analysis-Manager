@@ -25,6 +25,9 @@ Public Class clsAnalysisResourcesExtraction
 
 #Region "Module variables"
 	Protected mRetrieveOrganismDB As Boolean
+
+	' Keys are the original file name, values are the new name
+	Protected m_PendingFileRenames As Dictionary(Of String, String)
 #End Region
 
 #Region "Events"
@@ -44,6 +47,7 @@ Public Class clsAnalysisResourcesExtraction
 		' Set this to true for now
 		' It will be changed to False if processing MSGFDB results and the _PepToProtMap.txt file is successfully retrieved
 		mRetrieveOrganismDB = True
+		m_PendingFileRenames = New Dictionary(Of String, String)
 
 		Dim strResultType As String = m_jobParams.GetParam("ResultType")
 
@@ -56,6 +60,17 @@ Public Class clsAnalysisResourcesExtraction
 		If RetrieveMiscFiles(strResultType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		For Each entry In m_PendingFileRenames
+			Dim sourceFile As New FileInfo(IO.Path.Combine(m_WorkingDir, entry.Key))
+			If sourceFile.Exists Then
+				sourceFile.MoveTo(IO.Path.Combine(m_WorkingDir, entry.Value))
+			End If			
+		Next
 
 		If mRetrieveOrganismDB Then
 			' Retrieve the Fasta file; required to create the _ProteinMods.txt file
@@ -116,21 +131,6 @@ Public Class clsAnalysisResourcesExtraction
 	End Function
 
 	Private Function GetSequestFiles() As IJobParams.CloseOutType
-		Dim ExtractionSkipsCDTAFile As Boolean
-
-		ExtractionSkipsCDTAFile = m_jobParams.GetJobParameter("ExtractionSkipsCDTAFile", False)
-
-		If ExtractionSkipsCDTAFile Then
-			' Do not grab the _Dta.txt file
-		Else
-			' As of 1/26/2011 the peptide file extractor no longer needs the concatenated .dta file,
-			' so we're no longer copying it
-
-			''If Not RetrieveDtaFiles(False) Then
-			''	'Errors were reported in function call, so just return
-			''	Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-			''End If
-		End If
 
 		'Get the concatenated .out file
 		If Not RetrieveOutFiles(False) Then
@@ -268,22 +268,26 @@ Public Class clsAnalysisResourcesExtraction
 			SourceFolderPath = FindDataFile(FileToGet, False, False)
 
 			If Not String.IsNullOrEmpty(SourceFolderPath) Then
-				' Examine the date of the TSV file
-				' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
 
-				Dim fiTSVFile As System.IO.FileInfo
-				fiTSVFile = New System.IO.FileInfo(IO.Path.Combine(SourceFolderPath, FileToGet))
-				If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
-					' File is recent; grab it
-					If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
-						' File copy failed; that's OK; we'll grab the _msgfplus.zip file
-					Else
-						blnSkipMSGFResultsZipFileCopy = True
-						m_jobParams.AddResultFileToSkip(FileToGet)
+				If Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+					' Examine the date of the TSV file
+					' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
+
+					Dim fiTSVFile As System.IO.FileInfo
+					fiTSVFile = New System.IO.FileInfo(IO.Path.Combine(SourceFolderPath, FileToGet))
+					If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
+						' File is recent; grab it
+						If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
+							' File copy failed; that's OK; we'll grab the _msgfplus.zip file
+						Else
+							blnSkipMSGFResultsZipFileCopy = True
+							m_jobParams.AddResultFileToSkip(FileToGet)
+						End If
 					End If
+
+					m_jobParams.AddServerFileToDelete(fiTSVFile.FullName)
 				End If
 
-				m_jobParams.AddServerFileToDelete(fiTSVFile.FullName)
 			End If
 		End If
 
@@ -341,6 +345,7 @@ Public Class clsAnalysisResourcesExtraction
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
+
 	' Deprecated function
 	'
 	' <summary>
@@ -390,6 +395,7 @@ Public Class clsAnalysisResourcesExtraction
 
 	'End Function
 
+
 	''' <summary>
 	''' Retrieves misc files (i.e., ModDefs) needed for extraction
 	''' </summary>
@@ -417,8 +423,7 @@ Public Class clsAnalysisResourcesExtraction
 
 			blnSuccess = RetrieveGeneratedParamFile( _
 			 strParamFileName, _
-			 m_jobParams.GetParam("ParmFileStoragePath"), _
-			 m_WorkingDir)
+			 m_jobParams.GetParam("ParmFileStoragePath"))
 
 			If Not blnSuccess Then
 				m_message = "Error retrieving parameter file and ModDefs.txt file"
@@ -484,7 +489,7 @@ Public Class clsAnalysisResourcesExtraction
 			blnSuccess = FindAndRetrieveMiscFiles(strToolVersionFile, False, False)
 
 			If blnSuccess AndAlso Not String.IsNullOrEmpty(strToolVersionFileNewName) Then
-				IO.File.Move(IO.Path.Combine(m_WorkingDir, strToolVersionFile), IO.Path.Combine(m_WorkingDir, strToolVersionFileNewName))
+				m_PendingFileRenames.Add(strToolVersionFile, strToolVersionFileNewName)
 
 				strToolVersionFile = strToolVersionFileNewName
 			End If

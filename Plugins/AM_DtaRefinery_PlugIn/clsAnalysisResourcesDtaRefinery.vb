@@ -24,9 +24,8 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         'Retrieve param file
 		If Not RetrieveGeneratedParamFile( _
-		 m_jobParams.GetParam("ParmFileName"), _
-		 m_jobParams.GetParam("ParmFileStoragePath"), _
-		 m_WorkingDir) _
+		  m_jobParams.GetParam("ParmFileName"), _
+		  m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         Dim strParamFileStoragePathKeyName As String
@@ -41,23 +40,24 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
-		If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        'Retrieve unzipped dta files (do not unconcatenate since DTA Refinery reads the _DTA.txt file)
-        If Not RetrieveDtaFiles(False) Then
+		' Retrieve the _DTA.txt file
+		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+		If Not RetrieveDtaFiles() Then
 			' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
 		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
@@ -81,6 +81,10 @@ Public Class clsAnalysisResourcesDtaRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
         'Add all the extensions of the files to delete after run
         'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_DEFAULT_INPUT_FILE)
         'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_TAXONOMY_LIST_FILE)
@@ -91,7 +95,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 
 		m_jobParams.AddResultFileToKeep(m_DatasetName & "_dta.zip")
 
-        ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
+		' Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         strErrorMessage = String.Empty
         result = UpdateParameterFile(strErrorMessage)
         If Not result Then
@@ -108,6 +112,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         Dim strFileNameToFind As String
         Dim SourceFolderPath As String
+		Dim DeconMSnFilePathLocal As String = String.Empty
 
 		Try
 			strFileNameToFind = m_DatasetName & "_DeconMSn_log.txt"
@@ -127,9 +132,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 					End If
 					' Ignore the error and continue
 				Else
-					If Not ValidateDeconMSnLogFile(System.IO.Path.Combine(m_WorkingDir, strFileNameToFind)) Then
-						Return False
-					End If
+					DeconMSnFilePathLocal = System.IO.Path.Combine(m_WorkingDir, strFileNameToFind)
 				End If
 			End If
 
@@ -153,8 +156,18 @@ Public Class clsAnalysisResourcesDtaRefinery
 				End If
 			End If
 
+			If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+				Return False
+			End If
+
+			If Not String.IsNullOrEmpty(DeconMSnFilePathLocal) Then
+				If Not ValidateDeconMSnLogFile(DeconMSnFilePathLocal) Then
+					Return False
+				End If
+			End If			
+
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsAnalysisResourcesXT.RetrieveDtaFiles: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveDeconMSnLogFiles: " & ex.Message)
 			Return False
 		End Try
 

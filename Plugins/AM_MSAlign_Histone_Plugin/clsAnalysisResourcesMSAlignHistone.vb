@@ -27,8 +27,7 @@ Public Class clsAnalysisResourcesMSAlignHistone
 		' Retrieve param file
 		If Not RetrieveFile( _
 		   m_jobParams.GetParam("ParmFileName"), _
-		   m_jobParams.GetParam("ParmFileStoragePath"), _
-		   m_mgrParams.GetParam("workdir")) _
+		   m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		' Retrieve Fasta file
@@ -42,6 +41,10 @@ Public Class clsAnalysisResourcesMSAlignHistone
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 		m_jobParams.AddResultFileToSkip(FileToGet)
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

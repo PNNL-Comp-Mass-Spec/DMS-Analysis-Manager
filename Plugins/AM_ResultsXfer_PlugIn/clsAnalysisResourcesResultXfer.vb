@@ -13,22 +13,6 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesResultXfer
 	Inherits clsAnalysisResources
 
-	'*********************************************************************************************************
-	'Inherited class for obtaining resources necessary to perform analysis results transfer
-	'*********************************************************************************************************
-
-#Region "Constants"
-#End Region
-
-#Region "Module variables"
-#End Region
-
-#Region "Events"
-#End Region
-
-#Region "Properties"
-#End Region
-
 #Region "Methods"
 	''' <summary>
 	''' Obtains resources necessary for performing analysis results transfer

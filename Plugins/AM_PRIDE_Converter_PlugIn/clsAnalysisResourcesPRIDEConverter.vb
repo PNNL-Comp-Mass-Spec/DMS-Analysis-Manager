@@ -79,6 +79,10 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			FindMissingMzXmlFiles(udtOptions, lstDataPackagePeptideHitJobs)
 		End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -274,7 +278,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 			If fiFiles.Count > 0 Then
 				' Template file found in the data package; copy it locally
-				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName, m_WorkingDir) Then
+				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
 					Return False
 				Else
 					strTemplateFileName = fiFiles(0).Name
@@ -287,7 +291,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 				If String.IsNullOrEmpty(strParamFileStoragePath) Then strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
 
-				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, m_WorkingDir) Then
+				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath) Then
 					Return False
 				End If
 			End If
@@ -337,7 +341,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 			If fiFiles.Count > 0 Then
 				' Template file found in the data package; copy it locally
-				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName, m_WorkingDir) Then
+				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
 					Return False
 				Else
 					strTemplateFileName = fiFiles(0).Name
@@ -348,7 +352,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
 
-				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, m_WorkingDir) Then
+				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath) Then
 					Return False
 				End If
 			End If

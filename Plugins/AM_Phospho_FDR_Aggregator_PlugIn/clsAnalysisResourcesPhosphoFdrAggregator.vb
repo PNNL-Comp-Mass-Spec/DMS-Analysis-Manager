@@ -27,8 +27,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
         If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
             If Not RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath"), _
-                                m_mgrParams.GetParam("workdir")) _
+                                m_jobParams.GetParam("transferFolderPath")) _
             Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -36,8 +35,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")) Then
             If Not RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath"), _
-                                m_mgrParams.GetParam("workdir")) _
+                                m_jobParams.GetParam("transferFolderPath")) _
             Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -45,8 +43,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")) Then
             If Not RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath"), _
-                                m_mgrParams.GetParam("workdir")) _
+                                m_jobParams.GetParam("transferFolderPath")) _
             Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If

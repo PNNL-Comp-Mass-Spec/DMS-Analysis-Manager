@@ -37,7 +37,7 @@ Public Class clsAnalysisResourcesProSightQuant
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
 
-		If Not RetrieveFile(strParamFileName, strParamFileStoragePath, m_WorkingDir) Then
+		If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
@@ -56,7 +56,11 @@ Public Class clsAnalysisResourcesProSightQuant
 
 		Select Case strRawDataType.ToLower
 			Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_BRUKER_FT_FOLDER
-				If RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
+				If RetrieveSpectra(strRawDataType) Then
+
+					If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
 
 					' Confirm that the .Raw or .D folder was actually copied locally
 					If strRawDataType.ToLower() = RAW_DATA_TYPE_DOT_RAW_FILES Then
@@ -84,6 +88,10 @@ Public Class clsAnalysisResourcesProSightQuant
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_DOT_RAW_FILES & " or " & RAW_DATA_TYPE_BRUKER_FT_FOLDER)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Select
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

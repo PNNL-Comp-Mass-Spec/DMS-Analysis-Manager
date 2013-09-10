@@ -37,12 +37,11 @@ Public Class clsAnalysisResourcesXTHPC
 		'Retrieve param file
 		If Not RetrieveGeneratedParamFile( _
 		 m_jobParams.GetParam("ParmFileName"), _
-		 m_jobParams.GetParam("ParmFileStoragePath"), _
-		 m_mgrParams.GetParam("workdir")) _
+		 m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		'Retrieve unzipped dta files (do not unconcatenate since X!Tandem uses the _Dta.txt file directly)
-		If Not RetrieveDtaFiles(False) Then
+		' Retrieve the _DTA.txt file
+		If Not RetrieveDtaFiles() Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -73,6 +72,10 @@ Public Class clsAnalysisResourcesXTHPC
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		' set up taxonomy file to reference the organism DB file (fasta)
 		result = MakeTaxonomyFile()
 		If Not result Then
@@ -98,7 +101,6 @@ Public Class clsAnalysisResourcesXTHPC
 
 		' set up taxonomy file to reference the organsim DB file (fasta)
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
 		Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
 		Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
@@ -107,9 +109,9 @@ Public Class clsAnalysisResourcesXTHPC
 		'edit base taxonomy file into actual
 		Try
 			' Create an instance of StreamWriter to write to a file.
-			Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkingDir, TAXONOMY_FILENAME))
+			Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_WorkingDir, TAXONOMY_FILENAME))
 			' Create an instance of StreamReader to read from a file.
-			Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkingDir, "taxonomy_base.xml"))
+			Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkingDir, "taxonomy_base.xml"))
 			Dim strOut As String
 			' Read and display the lines from the file until the end 
 			' of the file is reached.
@@ -129,7 +131,7 @@ Public Class clsAnalysisResourcesXTHPC
 		End Try
 
 		'get rid of base file
-		System.IO.File.Delete(System.IO.Path.Combine(WorkingDir, "taxonomy_base.xml"))
+		System.IO.File.Delete(System.IO.Path.Combine(m_WorkingDir, "taxonomy_base.xml"))
 
 		Return result
 	End Function
@@ -149,15 +151,14 @@ Public Class clsAnalysisResourcesXTHPC
 		Dim i As Integer
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Try
 			intNumClonedSteps = CInt(m_jobParams.GetParam("NumberOfClonedSteps"))
 
 			For i = 1 To intNumClonedSteps
-				Input_Filename = System.IO.Path.Combine(WorkingDir, INPUT_FILE_PREFIX & i & ".xml")
-				Msub_Filename = System.IO.Path.Combine(WorkingDir, "X-Tandem_Job" & JobNum & "_" & i & ".msub")
-				Start_Filename = System.IO.Path.Combine(WorkingDir, "StartXT_Job" & JobNum & "_" & i)
-				Put_CmdFile = System.IO.Path.Combine(WorkingDir, "PutCmds_Job" & JobNum & "_" & i)
+				Input_Filename = System.IO.Path.Combine(m_WorkingDir, INPUT_FILE_PREFIX & i & ".xml")
+				Msub_Filename = System.IO.Path.Combine(m_WorkingDir, "X-Tandem_Job" & JobNum & "_" & i & ".msub")
+				Start_Filename = System.IO.Path.Combine(m_WorkingDir, "StartXT_Job" & JobNum & "_" & i)
+				Put_CmdFile = System.IO.Path.Combine(m_WorkingDir, "PutCmds_Job" & JobNum & "_" & i)
 				m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Put_CmdFile))
 				MakeInputFile(Input_Filename, CStr(i))
 				MakeMSubFile(Msub_Filename, CStr(i))
@@ -165,29 +166,29 @@ Public Class clsAnalysisResourcesXTHPC
 				MakePutFilesCmdFile(Put_CmdFile, Msub_Filename, CStr(i))
 			Next
 
-			Get_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateFastaFileList.txt")
+			Get_FastaFileList_CmdFile = System.IO.Path.Combine(m_WorkingDir, "CreateFastaFileList.txt")
 			MakeListFastaFilesCmdFile(Get_FastaFileList_CmdFile, JobNum)
 			m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Get_FastaFileList_CmdFile))
 			m_jobParams.AddResultFileExtensionToSkip("fastafiles.txt")
 
-			Create_FastaFileList_CmdFile = System.IO.Path.Combine(WorkingDir, "GetFastaFileList.txt")
+			Create_FastaFileList_CmdFile = System.IO.Path.Combine(m_WorkingDir, "GetFastaFileList.txt")
 			MakeGetFastaFilesListCmdFile(Create_FastaFileList_CmdFile, JobNum)
 			m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Create_FastaFileList_CmdFile))
 
-			CreateDir_CmdFile = System.IO.Path.Combine(WorkingDir, "CreateDir_Job" & JobNum)
+			CreateDir_CmdFile = System.IO.Path.Combine(m_WorkingDir, "CreateDir_Job" & JobNum)
 			MakeCreateDirectorysCmdFile(CreateDir_CmdFile)
 			m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(CreateDir_CmdFile))
 
-			RemoveDir_CmdFile = System.IO.Path.Combine(WorkingDir, "Remove_Job" & JobNum)
+			RemoveDir_CmdFile = System.IO.Path.Combine(m_WorkingDir, "Remove_Job" & JobNum)
 			MakeRemoveDirectorysCmdFile(RemoveDir_CmdFile)
 			m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(RemoveDir_CmdFile))
 
-			Put_CmdFastaFile = System.IO.Path.Combine(WorkingDir, "PutFasta_Job" & JobNum)
+			Put_CmdFastaFile = System.IO.Path.Combine(m_WorkingDir, "PutFasta_Job" & JobNum)
 			MakePutFastaCmdFile(Put_CmdFastaFile)
 			m_jobParams.AddResultFileExtensionToSkip(System.IO.Path.GetFileName(Put_CmdFastaFile))
 
 			'get rid of base file
-			System.IO.File.Delete(System.IO.Path.Combine(WorkingDir, "input_base.txt"))
+			System.IO.File.Delete(System.IO.Path.Combine(m_WorkingDir, "input_base.txt"))
 
 		Catch E As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clxAnalysisResourcesXT.MakeInputFiles, Error occurred while creating input file(s)" & E.Message)
@@ -202,9 +203,8 @@ Public Class clsAnalysisResourcesXTHPC
 
 		' set up input to reference spectra file, taxonomy file, and parameter file
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
-		Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
+		Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 		Dim SpectrumFilePath As String = m_jobParams.GetParam("datasetNum") & "_" & File_Index & "_dta.txt"
 		Dim OutputFilePath As String = m_jobParams.GetParam("datasetNum") & "_" & File_Index & "_xt.xml"
 
@@ -216,7 +216,7 @@ Public Class clsAnalysisResourcesXTHPC
 			' Create an instance of StreamWriter to write to a file.
 			Dim swOut As System.IO.StreamWriter = New System.IO.StreamWriter(inputFilename)
 			' Create an instance of StreamReader to read from a file.
-			Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(WorkingDir, "input_base.txt"))
+			Dim inputBase As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkingDir, "input_base.txt"))
 			Dim paramFile As System.IO.StreamReader = New System.IO.StreamReader(ParamFilePath)
 			Dim paramLine As String
 			Dim strOut As String
@@ -261,10 +261,9 @@ Public Class clsAnalysisResourcesXTHPC
 	''' <summary>
 	''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
 	''' </summary>
-	''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
 	''' <returns>TRUE for success, FALSE for error</returns>
 	''' <remarks></remarks>
-	Public Shadows Function RetrieveDtaFiles(ByVal UnConcatenate As Boolean) As Boolean
+	Public Shadows Function RetrieveDtaFiles() As Boolean
 
 		'Retrieve zipped DTA file
 		Dim DtaResultFileName As String
@@ -275,13 +274,7 @@ Public Class clsAnalysisResourcesXTHPC
 		Dim i As Integer
 		Dim DtaResultFolderName As String
 
-		Dim WorkingDir As String
-		Dim DatasetName As String
-
 		Try
-			WorkingDir = m_mgrParams.GetParam("WorkDir")
-			DatasetName = m_jobParams.GetParam("DatasetNum")
-
 
 			strNumCloneSteps = m_jobParams.GetParam("ParallelInspect", "NumberOfClonedSteps")
 
@@ -305,7 +298,7 @@ Public Class clsAnalysisResourcesXTHPC
 			' Normally the DTA_Split tool will have been run before this step tool
 			' Even if NumberOfClonedSteps is 1, the output file will be named Dataset_1_dta.txt
 			' Thus, we'll first look for that file
-			DtaResultFileName = DatasetName & "_1_dta.txt"
+			DtaResultFileName = m_DatasetName & "_1_dta.txt"
 			DtaResultFolderName = FindDataFile(DtaResultFileName)
 
 			If DtaResultFolderName = "" Then
@@ -315,7 +308,7 @@ Public Class clsAnalysisResourcesXTHPC
 				End If
 
 				' If the DTA_Split tool was not run first, then we should look for a _dta.zip file
-				DtaResultFileName = DatasetName & "_dta.zip"
+				DtaResultFileName = m_DatasetName & "_dta.zip"
 				DtaResultFolderName = FindDataFile(DtaResultFileName)
 
 				If DtaResultFolderName = "" Then
@@ -327,7 +320,7 @@ Public Class clsAnalysisResourcesXTHPC
 					Return False
 				Else
 
-					Return RetrieveZippedDtaFile(WorkingDir, DatasetName, DtaResultFolderName, DtaResultFileName)
+					Return RetrieveZippedDtaFile(DtaResultFolderName, DtaResultFileName)
 				End If
 			End If
 
@@ -339,10 +332,10 @@ Public Class clsAnalysisResourcesXTHPC
 
 			For i = 1 To intNumClonedSteps
 
-				DtaResultFileName = DatasetName & "_" & i.ToString & "_dta.txt"
+				DtaResultFileName = m_DatasetName & "_" & i.ToString & "_dta.txt"
 
 				'Copy the file
-				If Not CopyFileToWorkDir(DtaResultFileName, DtaResultFolderName, WorkingDir) Then
+				If Not CopyFileToWorkDir(DtaResultFileName, DtaResultFolderName, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
 					If m_DebugLevel >= 3 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & DtaResultFileName & " using folder " & DtaResultFolderName)
@@ -351,7 +344,7 @@ Public Class clsAnalysisResourcesXTHPC
 				End If
 
 				' If the _dta.txt file is over 2 GB in size, then condense it
-				If Not ValidateDTATextFileSize(WorkingDir, DtaResultFileName) Then
+				If Not ValidateDTATextFileSize(m_WorkingDir, DtaResultFileName) Then
 					'Errors were reported in function call, so just return
 					Return False
 				End If
@@ -359,7 +352,7 @@ Public Class clsAnalysisResourcesXTHPC
 
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsAnalysisResourcesXT.RetrieveDtaFiles: " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsAnalysisResourcesXTHPC.RetrieveDtaFiles: " & ex.Message)
 			Return False
 		End Try
 
@@ -368,16 +361,12 @@ Public Class clsAnalysisResourcesXTHPC
 	End Function
 
 	''' <summary>
-	''' Copies file DtaResultFileName from SourceFolderPath to WorkingDir
+	''' Copies file DtaResultFileName from SourceFolderPath to m_WorkingDir
 	''' </summary>
-	''' <param name="WorkingDir"></param>
-	''' <param name="DatasetName"></param>
 	''' <param name="SourceFolderPath"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveZippedDtaFile(ByVal WorkingDir As String, _
-											 ByVal DatasetName As String, _
-											 ByVal SourceFolderPath As String, _
+	Protected Function RetrieveZippedDtaFile(ByVal SourceFolderPath As String, _
 											 ByVal ZippedDTAFileName As String) As Boolean
 
 		Dim fiDTAFile As System.IO.FileInfo
@@ -386,31 +375,42 @@ Public Class clsAnalysisResourcesXTHPC
 		Dim result As Boolean
 
 		Try
-			'Copy the file
-			If Not CopyFileToWorkDir(ZippedDTAFileName, SourceFolderPath, WorkingDir) Then
-				' Error copying file (error will have already been logged)
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & ZippedDTAFileName & " using folder " & SourceFolderPath)
+			If SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+				If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+					End If
+				Else
+					Return False
 				End If
-				Return False
+			Else
+				
+				'Copy the file
+				If Not CopyFileToWorkDir(ZippedDTAFileName, SourceFolderPath, m_WorkingDir) Then
+					' Error copying file (error will have already been logged)
+					If m_DebugLevel >= 3 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & ZippedDTAFileName & " using folder " & SourceFolderPath)
+					End If
+					Return False
+				End If
 			End If
-
+			
 			' Unzip the file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-			If UnzipFileStart(System.IO.Path.Combine(WorkingDir, ZippedDTAFileName), WorkingDir, "clsAnalysisResourcesXTHPC.RetrieveZippedDtaFile", False) Then
+			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, ZippedDTAFileName), m_WorkingDir, "clsAnalysisResourcesXTHPC.RetrieveZippedDtaFile", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
 				End If
 			End If
 
 			' Rename the file to end in _1_dta.txt
-			fiDTAFile = New System.IO.FileInfo(System.IO.Path.Combine(WorkingDir, DatasetName & "_dta.txt"))
+			fiDTAFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt"))
 
-			strNewPath = System.IO.Path.Combine(WorkingDir, DatasetName & "_1_dta.txt")
+			strNewPath = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_1_dta.txt")
 			fiDTAFile.MoveTo(strNewPath)
 
 			' If the _dta.txt file is over 2 GB in size, then condense it
-			If Not ValidateDTATextFileSize(WorkingDir, System.IO.Path.GetFileName(strNewPath)) Then
+			If Not ValidateDTATextFileSize(m_WorkingDir, System.IO.Path.GetFileName(strNewPath)) Then
 				'Errors were reported in function call, so just return
 				Return False
 			End If
@@ -428,8 +428,6 @@ Public Class clsAnalysisResourcesXTHPC
 
 	Protected Function MakeStartFile(ByVal inputFilename As String, ByVal MsubFilename As String, ByVal File_Index As String) As Boolean
 		Dim result As Boolean = True
-
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 
@@ -483,8 +481,6 @@ Public Class clsAnalysisResourcesXTHPC
 	Protected Function MakeCreateDirectorysCmdFile(ByVal inputFilename As String) As Boolean
 		Dim result As Boolean = True
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 
 		Dim intNumClonedSteps As Integer
@@ -520,8 +516,6 @@ Public Class clsAnalysisResourcesXTHPC
 	Protected Function MakePutFilesCmdFile(ByVal inputFilename As String, ByVal MsubFilename As String, ByVal File_Index As String) As Boolean
 		Dim result As Boolean = True
 
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
-
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 
 		Try
@@ -530,25 +524,25 @@ Public Class clsAnalysisResourcesXTHPC
 
 			WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & JobNum & "_" & File_Index & "/")
 
-			WriteUnix(swOut, "put " & WorkingDir & "\Input_Part" & File_Index & ".xml")
+			WriteUnix(swOut, "put " & m_WorkingDir & "\Input_Part" & File_Index & ".xml")
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & m_jobParams.GetParam("DatasetNum") & "_" & File_Index & "_dta.txt")
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & m_jobParams.GetParam("DatasetNum") & "_" & File_Index & "_dta.txt")
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & TAXONOMY_FILENAME)
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & TAXONOMY_FILENAME)
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & DEFAULT_INPUT)
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & DEFAULT_INPUT)
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & MASS_CORRECTION_TAGS_FILENAME)
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & MASS_CORRECTION_TAGS_FILENAME)
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & m_jobParams.GetParam("ParmFileName"))
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & m_jobParams.GetParam("ParmFileName"))
 
-			WriteUnix(swOut, "put " & WorkingDir & "\" & System.IO.Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & MOD_DEFS_FILE_SUFFIX)
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & System.IO.Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & MOD_DEFS_FILE_SUFFIX)
 
 			WriteUnix(swOut, "cd " & clsAnalysisXTHPCGlobals.HPC_ROOT_DIRECTORY & "Job" & JobNum & "_msub" & File_Index & "/")
 
-			WriteUnix(swOut, "put " & WorkingDir & "\StartXT_Job" & JobNum & "_" & File_Index)
+			WriteUnix(swOut, "put " & m_WorkingDir & "\StartXT_Job" & JobNum & "_" & File_Index)
 
-			WriteUnix(swOut, "put " & WorkingDir & "\X-Tandem_Job" & JobNum & "_" & File_Index & ".msub")
+			WriteUnix(swOut, "put " & m_WorkingDir & "\X-Tandem_Job" & JobNum & "_" & File_Index & ".msub")
 
 			swOut.Close()
 
@@ -595,7 +589,6 @@ Public Class clsAnalysisResourcesXTHPC
 		Const PPN_VALUE As Integer = 8
 
 		Dim result As Boolean = True
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 		Dim HPCNodeCount As String = m_jobParams.GetParam("HPCNodeCount")
 		Dim HPCMaxHours As String = m_jobParams.GetParam("HPCMaxHours")
@@ -767,8 +760,6 @@ Public Class clsAnalysisResourcesXTHPC
 
 	Protected Function MakeRemoveDirectorysCmdFile(ByVal inputFilename As String) As Boolean
 		Dim result As Boolean = True
-
-		Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
 
 		Dim JobNum As String = m_jobParams.GetParam("Job")
 

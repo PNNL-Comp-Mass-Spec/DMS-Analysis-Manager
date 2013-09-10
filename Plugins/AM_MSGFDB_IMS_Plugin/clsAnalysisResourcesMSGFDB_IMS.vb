@@ -42,20 +42,23 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 		'  WHERE Param_File_Name = 'ParamFileName'
 		If Not RetrieveGeneratedParamFile( _
 		   m_jobParams.GetParam("ParmFileName"), _
-		   m_jobParams.GetParam("ParmFileStoragePath"), _
-		   m_mgrParams.GetParam("workdir")) _
+		   m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		' Get the UIMF file for this dataset
-		If Not RetrieveSpectra(strRawDataType, m_WorkingDir) Then
+		If Not RetrieveSpectra(strRawDataType) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		If Not RetrieveDeconToolsResults() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		'Add all the extensions of the files to delete after run

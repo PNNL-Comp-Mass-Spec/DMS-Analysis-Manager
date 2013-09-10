@@ -26,7 +26,7 @@ Public Class clsAnalysisResourcesLCMSFF
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
         ' Retrieve Decon2LS _scans.csv file for this dataset
-        ' The LCMSFeature Finder doesn't actually use the _scans.csv file, but want to be sure it's present in the results folder
+		' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
         strFileToGet = m_jobParams.GetParam("DatasetNum") & SCANS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
@@ -70,20 +70,24 @@ Public Class clsAnalysisResourcesLCMSFF
 
 
             ' IMS data; need to get the .UIMF file
-            If Not RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            Else
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
-                End If
-            End If
+			If Not RetrieveSpectra(strRawDataType) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
+				End If
+			End If
 
             m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
 
         End If
 
-        ' Could add an extension of a file to delete, like this:
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' Could add an extension of a file to delete, like this:
         ''m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         ' Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path

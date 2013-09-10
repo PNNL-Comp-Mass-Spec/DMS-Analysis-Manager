@@ -15,8 +15,6 @@ Public Class clsAnalysisResourcesMASIC
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
-
         ' Get input data file
         Dim CreateStoragePathInfoOnly As Boolean = False
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
@@ -40,10 +38,14 @@ Public Class clsAnalysisResourcesMASIC
                 CreateStoragePathInfoOnly = False
         End Select
 
-        If Not RetrieveSpectra(RawDataType, strWorkDir, CreateStoragePathInfoOnly) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         ' Add additional extensions to delete after the tool finishes
         m_JobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
@@ -59,11 +61,10 @@ Public Class clsAnalysisResourcesMASIC
         m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
 
         'Retrieve param file
-        If Not RetrieveFile( _
-         m_jobParams.GetParam("ParmFileName"), _
-         m_jobParams.GetParam("ParmFileStoragePath"), _
-         strWorkDir) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		If Not RetrieveFile( _
+		  m_jobParams.GetParam("ParmFileName"), _
+		  m_jobParams.GetParam("ParmFileStoragePath")) _
+		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

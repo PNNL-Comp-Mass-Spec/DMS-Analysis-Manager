@@ -15,7 +15,7 @@
     <OptionExplicit>On</OptionExplicit>
     <OptionCompare>Binary</OptionCompare>
     <OptionStrict>On</OptionStrict>
-    <OptionInfer>Off</OptionInfer>
+    <OptionInfer>On</OptionInfer>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -60,6 +60,9 @@
   <ItemGroup>
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PeptideFileExtractor, Version=1.0.2203.29736, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>

@@ -5,13 +5,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Cyclops_Plu
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Debug|x86.Build.0 = Debug|Any CPU
-		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Release|x86.ActiveCfg = Release|Any CPU
+		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

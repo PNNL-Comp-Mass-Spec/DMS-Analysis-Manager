@@ -20,7 +20,7 @@ Public Class clsAnalysisResourcesMSXMLGen
 
         Select Case strRawDataType.ToLower
 			Case RAW_DATA_TYPE_DOT_RAW_FILES
-				If RetrieveSpectra(strRawDataType, m_mgrParams.GetParam("workdir")) Then
+				If RetrieveSpectra(strRawDataType) Then
 					m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)  'Raw file
 				Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
@@ -32,6 +32,9 @@ Public Class clsAnalysisResourcesMSXMLGen
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Select
 
+		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

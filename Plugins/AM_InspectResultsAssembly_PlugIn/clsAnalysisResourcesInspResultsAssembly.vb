@@ -29,12 +29,11 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 		'Retrieve param file
 		If Not RetrieveGeneratedParamFile( _
 		 m_jobParams.GetParam("ParmFileName"), _
-		 m_jobParams.GetParam("ParmFileStoragePath"), _
-		 m_WorkingDir) _
+		 m_jobParams.GetParam("ParmFileStoragePath")) _
 		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		' Retrieve the Inspect Input Params file
-		If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName, m_WorkingDir) Then
+		If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -43,14 +42,14 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 		If [String].IsNullOrEmpty(numClonedSteps) Then
 			' This is not a parallelized job
 			' Retrieve the zipped Inspect result file
-			If Not RetrieveFile(zippedResultName, transferFolderName, m_WorkingDir) Then
+			If Not RetrieveFile(zippedResultName, transferFolderName) Then
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
 				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			'Unzip Inspect result file
+			' Unzip Inspect result file
 			If m_DebugLevel >= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file")
 			End If
@@ -60,8 +59,8 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 				End If
 			End If
 
-			' Rtrieve the Inspect search log file
-			If Not RetrieveFile(searchLogResultName, transferFolderName, m_WorkingDir) Then
+			' Retrieve the Inspect search log file
+			If Not RetrieveFile(searchLogResultName, transferFolderName) Then
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
 				End If
