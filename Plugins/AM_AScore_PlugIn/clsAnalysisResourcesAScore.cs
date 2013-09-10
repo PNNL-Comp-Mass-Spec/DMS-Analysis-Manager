@@ -76,6 +76,10 @@ namespace AnalysisManager_AScore_PlugIn
                     // Future: throw an error
                     break;
             }
+
+			if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+				return false;
+			
             return blnSuccess;
         }
 
@@ -103,7 +107,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
             {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), m_jobParams.GetParam("transferFolderPath"), m_mgrParams.GetParam("workdir")))
+                if (!RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), m_jobParams.GetParam("transferFolderPath")))
                 {
                     return false;
                 }
@@ -113,7 +117,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")))
             {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), m_jobParams.GetParam("transferFolderPath"), m_mgrParams.GetParam("workdir")))
+                if (!RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), m_jobParams.GetParam("transferFolderPath")))
                 {
                     return false;
                 }
@@ -123,7 +127,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")))
             {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), m_jobParams.GetParam("transferFolderPath"), m_mgrParams.GetParam("workdir")))
+                if (!RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), m_jobParams.GetParam("transferFolderPath")))
                 {
                     return false;
                 }
