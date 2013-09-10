@@ -86,14 +86,14 @@ Public Interface IStatusFile
 	''' Writes out a new status file, indicating that the manager is still alive
 	''' </summary>
 	''' <remarks></remarks>
-	Overloads Sub WriteStatusFile()
+	Sub WriteStatusFile()
 
 	''' <summary>
 	''' Writes the status file
 	''' </summary>
 	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	''' <remarks></remarks>
-	Overloads Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean)
+	Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean)
 
 	''' <summary>
 	''' 
@@ -103,10 +103,10 @@ Public Interface IStatusFile
 	''' <param name="MostRecentJobInfo"></param>
 	''' <param name="ForceLogToBrokerDB"></param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateClose(ByVal ManagerIdleMessage As String, _
-									ByRef RecentErrorMessages() As String, _
-									ByVal MostRecentJobInfo As String, _
-									ByVal ForceLogToBrokerDB As Boolean)
+	Sub UpdateClose(ByVal ManagerIdleMessage As String, _
+		 ByRef RecentErrorMessages() As String, _
+		 ByVal MostRecentJobInfo As String, _
+		 ByVal ForceLogToBrokerDB As Boolean)
 
 
 	''' <summary>
@@ -114,7 +114,7 @@ Public Interface IStatusFile
 	''' </summary>
 	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateAndWrite(ByVal PercentComplete As Single)
+	Sub UpdateAndWrite(ByVal PercentComplete As Single)
 
 	''' <summary>
 	''' Update the current status
@@ -122,7 +122,7 @@ Public Interface IStatusFile
 	''' <param name="mgrStatus">Job status code</param>
 	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateAndWrite(ByVal mgrStatus As EnumMgrStatus, ByVal taskStatus As EnumTaskStatus, ByVal taskDetailStatus As EnumTaskStatusDetail, ByVal PercentComplete As Single)
+	Sub UpdateAndWrite(ByVal mgrStatus As EnumMgrStatus, ByVal taskStatus As EnumTaskStatus, ByVal taskDetailStatus As EnumTaskStatusDetail, ByVal PercentComplete As Single)
 
 	'''' <summary>
 	'''' Update the current status
@@ -131,7 +131,7 @@ Public Interface IStatusFile
 	'''' <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
 	'''' <param name="DTACount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
 	'''' <remarks></remarks>
-	Overloads Sub UpdateAndWrite(ByVal Status As EnumTaskStatus, ByVal PercentComplete As Single, ByVal SpectrumCount As Integer)
+	Sub UpdateAndWrite(ByVal Status As EnumTaskStatus, ByVal PercentComplete As Single, ByVal SpectrumCount As Integer)
 
 	'''' <summary>
 	'''' Updates status file
@@ -144,16 +144,17 @@ Public Interface IStatusFile
 	'''' <param name="MostRecentJobInfo">Information on the job that started most recently</param>
 	'''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	'''' <remarks></remarks>
-	Overloads Sub UpdateAndWrite(ByVal mgrStatus As EnumMgrStatus, ByVal taskStatus As EnumTaskStatus, ByVal taskDetailStatus As EnumTaskStatusDetail, _
-								 ByVal PercentComplete As Single, ByVal DTACount As Integer, _
-								 ByVal MostRecentLogMessage As String, ByVal MostRecentErrorMessage As String, _
-								 ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+	Sub UpdateAndWrite(
+	  ByVal mgrStatus As EnumMgrStatus, ByVal taskStatus As EnumTaskStatus, ByVal taskDetailStatus As EnumTaskStatusDetail, _
+	  ByVal PercentComplete As Single, ByVal DTACount As Integer, _
+	  ByVal MostRecentLogMessage As String, ByVal MostRecentErrorMessage As String, _
+	  ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
 
 	''' <summary>
 	''' Logs to the status file that the manager is idle
 	''' </summary>
 	''' <remarks></remarks>
-	Overloads Sub UpdateIdle()
+	Sub UpdateIdle()
 
 	''' <summary>
 	''' Logs to the status file that the manager is idle
@@ -161,7 +162,7 @@ Public Interface IStatusFile
 	''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
 	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean)
+	Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean)
 
 	''' <summary>
 	''' Logs to the status file that the manager is idle
@@ -171,7 +172,7 @@ Public Interface IStatusFile
 	''' <param name="MostRecentJobInfo">Information on the job that started most recently</param>
 	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal IdleErrorMessage As String, ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+	Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal IdleErrorMessage As String, ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
 
 	''' <summary>
 	''' Logs to the status file that the manager is idle
@@ -181,21 +182,21 @@ Public Interface IStatusFile
 	''' <param name="MostRecentJobInfo">Information on the job that started most recently</param>
 	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+	Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
 
 
 	''' <summary>
 	''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
 	''' </summary>
 	''' <remarks></remarks>
-	Overloads Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus)
+	Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus)
 
 	''' <summary>
 	''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
 	''' </summary>
 	''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String)
+	Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String)
 
 	''' <summary>
 	''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
@@ -205,13 +206,13 @@ Public Interface IStatusFile
 	''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
 	''' <param name="MostRecentJobInfo">Information on the job that started most recently</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String)
+	Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String)
 
 	''' <summary>
 	''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
 	''' </summary>
 	''' <remarks></remarks>
-	Overloads Sub UpdateFlagFileExists()
+	Sub UpdateFlagFileExists()
 
 	''' <summary>
 	''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
@@ -219,7 +220,7 @@ Public Interface IStatusFile
 	''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
 	''' <param name="MostRecentJobInfo">Information on the job that started most recently</param>
 	''' <remarks></remarks>
-	Overloads Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String)
+	Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal MostRecentJobInfo As String)
 
 #End Region
 

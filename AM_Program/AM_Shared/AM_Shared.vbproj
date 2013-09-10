@@ -75,6 +75,9 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+    </Reference>
     <Reference Include="ParamFileGenerator">
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
@@ -121,6 +124,7 @@
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />
+    <Compile Include="clsMyEMSLDatasetInfo.vb" />
     <Compile Include="clsProteowizardTools.vb" />
     <Compile Include="clsRunDosProgram.vb" />
     <Compile Include="clsScanStatsGenerator.vb" />

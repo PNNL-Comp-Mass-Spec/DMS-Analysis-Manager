@@ -850,7 +850,7 @@ Public Class clsCodeTest
 
 		objResources.Setup(m_mgrParams, objJobParams)
 
-		blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders("E:\DMS_WorkDir", True)
+		blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders(True)
 
 		'blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
