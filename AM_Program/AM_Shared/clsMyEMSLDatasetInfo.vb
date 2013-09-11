@@ -27,7 +27,7 @@ Public Class clsMyEMSLDatasetInfo
 	Public Structure udtMyEMSLFileInfoType
 		Public FileID As Int64					' Will be 0 if this is a folder
 		Public IsFolder As Boolean
-		Public RelativeFilePath As String
+		Public FileInfo As MyEMSLReader.ArchivedFileInfo
 	End Structure
 
 #Region "Properties"
@@ -193,6 +193,10 @@ Public Class clsMyEMSLDatasetInfo
 			Return lstMatches
 		End If
 
+		If mArchivedFiles.Count = 0 Then
+			Return lstMatches
+		End If
+
 		Dim reFile As Regex = GetFileSearchRegEx(fileName)
 		Dim reFolder As Regex
 
@@ -229,10 +233,11 @@ Public Class clsMyEMSLDatasetInfo
 				End If
 
 				If isMatch Then
-					Dim udtMatch As udtMyEMSLFileInfoType
+					Dim udtMatch = New udtMyEMSLFileInfoType
+
 					udtMatch.FileID = archivedFile.FileID
 					udtMatch.IsFolder = False
-					udtMatch.RelativeFilePath = String.Copy(archivedFile.RelativePathWindows)
+					udtMatch.FileInfo = archivedFile
 
 					lstMatches.Add(udtMatch)
 				End If
@@ -283,10 +288,10 @@ Public Class clsMyEMSLDatasetInfo
 				Throw New ArgumentOutOfRangeException("Forward slash not found in the relative file path; this code should not be reached")
 			End If
 
-			Dim udtMatch As udtMyEMSLFileInfoType
+			Dim udtMatch = New udtMyEMSLFileInfoType
 			udtMatch.FileID = 0
 			udtMatch.IsFolder = True
-			udtMatch.RelativeFilePath = relativeFolderPath
+			udtMatch.FileInfo = New MyEMSLReader.ArchivedFileInfo(mDatasetName, folderName, relativeFolderPath)
 
 			lstMatches.Add(udtMatch)
 

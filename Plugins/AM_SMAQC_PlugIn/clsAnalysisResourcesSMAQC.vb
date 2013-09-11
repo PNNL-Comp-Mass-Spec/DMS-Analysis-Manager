@@ -104,9 +104,16 @@ Public Class clsAnalysisResourcesSMAQC
 			Else
 
 				If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
-					m_message = "MASIC Files only exist in MyEMSL; current code does not support downloading them (see clsAnalysisResourcesSMAQC.RetrieveMASICFiles)"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					Return False
+
+					Dim BestSICFolderPath = IO.Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName)
+
+					Return RetrieveScanAndSICStatsFiles(
+					  BestSICFolderPath,
+					  RetrieveSICStatsFile:=True,
+					  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
+					  RetrieveScanStatsFile:=True,
+					  RetrieveScanStatsExFile:=True,
+					  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 				End If
 
 				Dim diFolderInfo As System.IO.DirectoryInfo

@@ -16,6 +16,8 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         Dim SplitString As String()
         Dim FileNameExt As String()
 
+		' Lookup the file processing options, for example:
+		' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
         SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
         For Each row As String In SplitString
             FileNameExt = row.Split(":"c)
