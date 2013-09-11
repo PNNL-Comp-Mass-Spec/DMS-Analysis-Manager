@@ -309,7 +309,7 @@ Public MustInherit Class clsAnalysisResources
 		ResetTimestampForQueueWaitTimeLogging()
 		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 
-		m_MyEMSLDatasetInfo = New clsMyEMSLDatasetInfo(m_DatasetName)
+		m_MyEMSLDatasetInfo = New clsMyEMSLDatasetInfo(m_DatasetName, False)
 		m_RecentlyFoundMyEMSLFiles = New List(Of clsMyEMSLDatasetInfo.udtMyEMSLFileInfoType)
 	End Sub
 
@@ -1137,7 +1137,7 @@ Public MustInherit Class clsAnalysisResources
 			' Now search for FileToFind in each folder in FoldersToSearch
 			For Each TempDir In FoldersToSearch
 				Try
-					Dim diFolderToCheck = New FileInfo(TempDir)
+					Dim diFolderToCheck = New DirectoryInfo(TempDir)
 
 					If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
 
@@ -4063,7 +4063,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RetrieveSICFileUNC(ByVal strFileToFind As String, ByVal MASICResultsFolderPath As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal MaxCopyAttempts As Integer, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
-		Dim fiSourceFile = New IO.FileInfo(IO.Path.Combine(MASICResultsFolderPath, m_DatasetName + SCAN_STATS_FILE_SUFFIX))
+		Dim fiSourceFile = New IO.FileInfo(IO.Path.Combine(MASICResultsFolderPath, strFileToFind))
 
 		If m_DebugLevel >= 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying MASIC results file: " + fiSourceFile.FullName)

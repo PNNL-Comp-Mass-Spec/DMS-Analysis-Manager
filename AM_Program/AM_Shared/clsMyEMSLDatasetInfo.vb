@@ -32,12 +32,6 @@ Public Class clsMyEMSLDatasetInfo
 
 #Region "Properties"
 
-	Public ReadOnly Property ArchivedFiles As List(Of MyEMSLReader.ArchivedFileInfo)
-		Get
-			Return mArchivedFiles
-		End Get
-	End Property
-
 	Public ReadOnly Property DatasetID As Integer
 		Get
 			Return mDatasetID
@@ -81,6 +75,16 @@ Public Class clsMyEMSLDatasetInfo
 	''' <param name="datasetName"></param>
 	''' <remarks></remarks>
 	Public Sub New(ByVal datasetName As String)
+		Me.New(datasetName, True)
+	End Sub
+
+	''' <summary>
+	''' Constructor
+	''' </summary>
+	''' <param name="datasetName"></param>
+	''' <param name="refreshInfoNow">True to query MyEMSL for this dataset's files immediately</param>
+	''' <remarks></remarks>
+	Public Sub New(ByVal datasetName As String, ByVal refreshInfoNow As Boolean)
 
 		mDatasetName = String.Empty
 		mDatasetID = 0
@@ -94,7 +98,13 @@ Public Class clsMyEMSLDatasetInfo
 		mFilesToDownload = New Dictionary(Of Int64, Boolean)
 		mLastProgressWriteTime = System.DateTime.UtcNow
 
-		RefreshInfo(datasetName)
+		mErrorMessages.Clear()		
+
+		If refreshInfoNow Then
+			RefreshInfo()
+		Else
+			mCacheDate = System.DateTime.UtcNow.Subtract(New TimeSpan(1, 1, 1, 1))
+		End If
 	End Sub
 
 	Public Sub AddFileToDownloadQueue(ByVal myEMSLFileID As Int64)
