@@ -28,6 +28,11 @@ Public Class clsMyEMSLDatasetInfo
 		Public FileID As Int64					' Will be 0 if this is a folder
 		Public IsFolder As Boolean
 		Public FileInfo As MyEMSLReader.ArchivedFileInfo
+
+		Public Overrides Function ToString() As String
+			Return "FileID " & FileID & "; " & FileInfo.ToString()
+		End Function
+
 	End Structure
 
 #Region "Properties"
@@ -216,7 +221,6 @@ Public Class clsMyEMSLDatasetInfo
 
 		For Each archivedFile In mArchivedFiles
 			If reFile.IsMatch(archivedFile.Filename) Then
-				Dim fiFile = New FileInfo(archivedFile.RelativePathWindows)
 				Dim isMatch As Boolean = True
 
 				If String.IsNullOrEmpty(subFolderName) Then
@@ -227,15 +231,15 @@ Public Class clsMyEMSLDatasetInfo
 					End If
 				Else
 					' Require a subfolder match
-					isMatch = reFolder.IsMatch(fiFile.Directory.Name)
-					If recurse And Not isMatch Then
-						' Need to test all of the folders for a match to the specified folder
+					isMatch = False
+					If archivedFile.RelativePathWindows.Contains("\") Then						
 						Dim pathParts As List(Of String) = archivedFile.RelativePathWindows.Split("\"c).ToList()
-						For Each pathPart In pathParts
-							If reFolder.IsMatch(pathPart) Then
+						For pathIndex = pathParts.Count - 2 To 0 Step -1
+							If reFolder.IsMatch(pathParts(pathIndex)) Then
 								isMatch = True
 								Exit For
 							End If
+							If Not recurse Then Exit For
 						Next
 					End If
 				End If
@@ -269,6 +273,7 @@ Public Class clsMyEMSLDatasetInfo
 		RefreshInfoIfStale()
 
 		Dim lstMatches As New List(Of udtMyEMSLFileInfoType)
+		Dim lstMatchPaths As New SortedSet(Of String)
 
 		If String.IsNullOrEmpty(folderName) Then
 			Return lstMatches
@@ -277,7 +282,7 @@ Public Class clsMyEMSLDatasetInfo
 		Dim reFolder As Regex = GetFileSearchRegEx(folderName)
 
 		For Each archivedFile In mArchivedFiles
-			If archivedFile.RelativePathWindows.IndexOf("\") < 0 Then
+			If archivedFile.RelativePathWindows.IndexOf("\") <= 0 Then
 				Continue For
 			End If
 
@@ -296,13 +301,31 @@ Public Class clsMyEMSLDatasetInfo
 				Throw New ArgumentOutOfRangeException("Forward slash not found in the relative file path; this code should not be reached")
 			End If
 
+			If lstMatchPaths.Contains(relativeFolderPath) Then
+				Continue For
+			End If
+
+			lstMatchPaths.Add(relativeFolderPath)
+
 			Dim udtMatch = New udtMyEMSLFileInfoType
 			udtMatch.FileID = 0
 			udtMatch.IsFolder = True
-			udtMatch.FileInfo = New MyEMSLReader.ArchivedFileInfo(mDatasetName, folderName, relativeFolderPath)
 
-			lstMatches.Add(udtMatch)
+			Dim pathParts As List(Of String) = relativeFolderPath.Split("\"c).ToList()
+			Dim subDirPath As String = String.Empty
 
+			If pathParts.Count > 1 Then
+				subDirPath = pathParts(0)
+				For pathIndex = 1 To pathParts.Count - 2
+					subDirPath = subDirPath & "\" & pathParts(pathIndex)
+				Next
+				relativeFolderPath = pathParts.Last()
+				subDirPath = subDirPath.TrimEnd("\"c)
+			End If
+
+			udtMatch.FileInfo = New MyEMSLReader.ArchivedFileInfo(mDatasetName, relativeFolderPath, subDirPath)
+
+			lstMatches.Add(udtMatch)			
 		Next
 
 		Return lstMatches
@@ -334,6 +357,7 @@ Public Class clsMyEMSLDatasetInfo
 				mDownloadedFiles = mDownloader.DownloadedFiles()
 
 				For Each file In mFilesToDownload
+					' Unzip any files where .Value = True
 					If file.Value Then
 						' Unzip this file if it exists and ends in .zip
 
@@ -349,7 +373,7 @@ Public Class clsMyEMSLDatasetInfo
 									ionicZipTools.UnzipFile(fiFileToUnzip.FullName, downloadFolderPath)
 
 								End If
-								
+
 								Exit For
 							End If
 						Next

@@ -1726,13 +1726,12 @@ Public MustInherit Class clsAnalysisResources
 						blnValidFolder = FindValidFolderMyEMSL(DSName, FileNameToFind, FolderNameToFind, False, recurseMyEMSL)
 					Else
 						blnValidFolder = FindValidFolderUNC(pathToCheck, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound)
+					End If
 
-						If blnValidFolder Then
-							strBestPath = String.Copy(pathToCheck)
-						Else
-							blnFileNotFoundEncountered = True
-						End If
-
+					If blnValidFolder Then
+						strBestPath = String.Copy(pathToCheck)
+					Else
+						blnFileNotFoundEncountered = True
 					End If
 
 					If blnValidFolder Then Exit For
@@ -1807,14 +1806,9 @@ Public MustInherit Class clsAnalysisResources
 			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileNameToFind, String.Empty, Recurse)
 		Else
 			' First look for the subfolder
-			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(String.Empty, FolderNameToFind, Recurse)
-
-			If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
-				' Subfolder found; now look for the file
-				If Not String.IsNullOrEmpty(FileNameToFind) Then
-					m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileNameToFind, String.Empty, Recurse)
-				End If
-			End If
+			' If there are multiple matching subfolders, then choose the newest one
+			' The entries in m_RecentlyFoundMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
+			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileNameToFind, FolderNameToFind, Recurse)
 		End If
 
 		If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
