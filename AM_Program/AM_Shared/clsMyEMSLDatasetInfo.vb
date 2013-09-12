@@ -56,12 +56,24 @@ Public Class clsMyEMSLDatasetInfo
 		End Get
 	End Property
 
+	''' <summary>
+	''' List of error messages
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks>The messages are cleared by when these functions are called: ProcessDownloadQueue and RefreshInfo</remarks>
 	Public ReadOnly Property ErrorMessages As List(Of String)
 		Get
 			Return mErrorMessages
 		End Get
 	End Property
 
+	''' <summary>
+	''' MyEMSL IDs of files queued to be downloaded
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public ReadOnly Property FilesToDownload As Dictionary(Of Int64, Boolean)
 		Get
 			Return mFilesToDownload
@@ -75,16 +87,6 @@ Public Class clsMyEMSLDatasetInfo
 	''' <param name="datasetName"></param>
 	''' <remarks></remarks>
 	Public Sub New(ByVal datasetName As String)
-		Me.New(datasetName, True)
-	End Sub
-
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="datasetName"></param>
-	''' <param name="refreshInfoNow">True to query MyEMSL for this dataset's files immediately</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal datasetName As String, ByVal refreshInfoNow As Boolean)
 
 		mDatasetName = String.Empty
 		mDatasetID = 0
@@ -98,13 +100,9 @@ Public Class clsMyEMSLDatasetInfo
 		mFilesToDownload = New Dictionary(Of Int64, Boolean)
 		mLastProgressWriteTime = System.DateTime.UtcNow
 
-		mErrorMessages.Clear()		
+		mErrorMessages.Clear()
 
-		If refreshInfoNow Then
-			RefreshInfo()
-		Else
-			mCacheDate = System.DateTime.UtcNow.Subtract(New TimeSpan(1, 1, 1, 1))
-		End If
+		UpdateDatasetName(datasetName)
 	End Sub
 
 	Public Sub AddFileToDownloadQueue(ByVal myEMSLFileID As Int64)
@@ -365,7 +363,7 @@ Public Class clsMyEMSLDatasetInfo
 			Return success
 
 		Catch ex As Exception
-			mErrorMessages.Add("Error in RefreshInfo: " & ex.Message)
+			mErrorMessages.Add("Error in ProcessDownloadQueue: " & ex.Message)
 			Return False
 		End Try
 
@@ -392,8 +390,7 @@ Public Class clsMyEMSLDatasetInfo
 			mErrorMessages.Clear()
 
 			If strDatasetName <> mDatasetName Then
-				mDatasetName = strDatasetName
-				mDatasetID = 0
+				UpdateDatasetName(strDatasetName)
 			End If
 
 			mArchivedFiles = mReader.FindFilesByDatasetName(mDatasetName)
@@ -407,7 +404,7 @@ Public Class clsMyEMSLDatasetInfo
 				End If
 			End If
 
-			mDatasetID = mArchivedFiles.First.DatasetID
+			mDatasetID = mArchivedFiles.First().DatasetID
 
 			Return True
 
@@ -424,12 +421,24 @@ Public Class clsMyEMSLDatasetInfo
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
 	Protected Function RefreshInfoIfStale() As Boolean
-		If System.DateTime.UtcNow.Subtract(mCacheDate).TotalMinutes > 5 Then
+		If System.DateTime.UtcNow.Subtract(mCacheDate).TotalMinutes >= 5 Then
 			Return RefreshInfo()
 		Else
 			Return True
 		End If
 	End Function
+
+	Public Sub UpdateDatasetName(ByVal datasetName As String)
+		If datasetName <> mDatasetName Then
+			mDatasetName = datasetName
+			mDatasetID = 0
+			mArchivedFiles.Clear()
+
+			Dim oneDay = New TimeSpan(1, 0, 0, 0)
+			mCacheDate = System.DateTime.UtcNow.Subtract(oneDay)
+
+		End If
+	End Sub
 
 #Region "Event handlers"
 	Private Sub mReader_ErrorEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles mReader.ErrorEvent

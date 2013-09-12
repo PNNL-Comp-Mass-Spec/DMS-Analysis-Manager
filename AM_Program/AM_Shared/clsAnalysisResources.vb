@@ -309,7 +309,7 @@ Public MustInherit Class clsAnalysisResources
 		ResetTimestampForQueueWaitTimeLogging()
 		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 
-		m_MyEMSLDatasetInfo = New clsMyEMSLDatasetInfo(m_DatasetName, False)
+		m_MyEMSLDatasetInfo = New clsMyEMSLDatasetInfo(m_DatasetName)
 		m_RecentlyFoundMyEMSLFiles = New List(Of clsMyEMSLDatasetInfo.udtMyEMSLFileInfoType)
 	End Sub
 
@@ -1142,7 +1142,7 @@ Public MustInherit Class clsAnalysisResources
 					If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
 
 						If m_MyEMSLDatasetInfo.DatasetName <> m_DatasetName Then
-							m_MyEMSLDatasetInfo.RefreshInfo(m_DatasetName)
+							m_MyEMSLDatasetInfo.UpdateDatasetName(m_DatasetName)
 						End If
 
 						Dim recurseMyEMSL As Boolean = False
@@ -1799,7 +1799,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		If m_MyEMSLDatasetInfo.DatasetName <> DSName Then
-			m_MyEMSLDatasetInfo.RefreshInfo(DSName)
+			m_MyEMSLDatasetInfo.UpdateDatasetName(DSName)
 		End If
 
 		If String.IsNullOrEmpty(FolderNameToFind) Then
