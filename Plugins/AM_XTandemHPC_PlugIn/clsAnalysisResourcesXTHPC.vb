@@ -205,8 +205,8 @@ Public Class clsAnalysisResourcesXTHPC
 
 		Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
 		Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
-		Dim SpectrumFilePath As String = m_jobParams.GetParam("datasetNum") & "_" & File_Index & "_dta.txt"
-		Dim OutputFilePath As String = m_jobParams.GetParam("datasetNum") & "_" & File_Index & "_xt.xml"
+		Dim SpectrumFilePath As String = m_DatasetName & "_" & File_Index & "_dta.txt"
+		Dim OutputFilePath As String = m_DatasetName & "_" & File_Index & "_xt.xml"
 
 		'make input file
 		'start by adding the contents of the parameter file.
@@ -367,7 +367,7 @@ Public Class clsAnalysisResourcesXTHPC
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function RetrieveZippedDtaFile(ByVal SourceFolderPath As String, _
-											 ByVal ZippedDTAFileName As String) As Boolean
+			   ByVal ZippedDTAFileName As String) As Boolean
 
 		Dim fiDTAFile As System.IO.FileInfo
 		Dim strNewPath As String
@@ -384,7 +384,7 @@ Public Class clsAnalysisResourcesXTHPC
 					Return False
 				End If
 			Else
-				
+
 				'Copy the file
 				If Not CopyFileToWorkDir(ZippedDTAFileName, SourceFolderPath, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
@@ -394,7 +394,7 @@ Public Class clsAnalysisResourcesXTHPC
 					Return False
 				End If
 			End If
-			
+
 			' Unzip the file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
 			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, ZippedDTAFileName), m_WorkingDir, "clsAnalysisResourcesXTHPC.RetrieveZippedDtaFile", False) Then
@@ -526,7 +526,7 @@ Public Class clsAnalysisResourcesXTHPC
 
 			WriteUnix(swOut, "put " & m_WorkingDir & "\Input_Part" & File_Index & ".xml")
 
-			WriteUnix(swOut, "put " & m_WorkingDir & "\" & m_jobParams.GetParam("DatasetNum") & "_" & File_Index & "_dta.txt")
+			WriteUnix(swOut, "put " & m_WorkingDir & "\" & m_DatasetName & "_" & File_Index & "_dta.txt")
 
 			WriteUnix(swOut, "put " & m_WorkingDir & "\" & TAXONOMY_FILENAME)
 

@@ -46,8 +46,7 @@ Public Class clsAnalysisResourcesDtaImport
                 'TODO: Handle errors
             End If
 
-            Dim strDataset As String = m_jobParams.GetParam("DatasetNum")
-            Dim zipFileName As String = strDataset & "_dta.zip"
+			Dim zipFileName As String = m_DatasetName & "_dta.zip"
             Dim fileEntries As String() = Directory.GetFiles(SourceFolderNamePath, zipFileName)
 
             ' Process the list of files found in the directory.
@@ -69,7 +68,7 @@ Public Class clsAnalysisResourcesDtaImport
                 End If
             Next fileName
 
-            Dim txtFileName As String = strDataset & "_dta.txt"
+			Dim txtFileName As String = m_DatasetName & "_dta.txt"
             fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName)
             If fileEntries.Length < 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA text file in the zip file was named incorrectly or not valid: " & Path.Combine(SourceFolderNamePath, txtFileName))

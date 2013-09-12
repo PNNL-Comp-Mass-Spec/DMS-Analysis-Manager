@@ -16,9 +16,8 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 		Dim numClonedSteps As String
 
-		Dim DatasetName As String = m_jobParams.GetParam("datasetNum")
-		Dim transferFolderName As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
-		Dim zippedResultName As String = DatasetName & "_inspect.zip"
+		Dim transferFolderName As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_DatasetName)
+		Dim zippedResultName As String = m_DatasetName & "_inspect.zip"
 		Dim searchLogResultName As String = "InspectSearchLog.txt"
 
 		transferFolderName = System.IO.Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))

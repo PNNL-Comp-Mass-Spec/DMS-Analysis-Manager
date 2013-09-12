@@ -39,7 +39,7 @@ Public Class clsAnalysisResourcesXT
 
 		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
 		' X!Tandem uses this information to determine the scan number
-		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & "_dta.txt")
+		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 		Dim blnReplaceSourceFile As Boolean = True
 		Dim blnDeleteSourceFileIfUpdated As Boolean = True
 
@@ -55,10 +55,10 @@ Public Class clsAnalysisResourcesXT
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
 
-        If Not ValidateDTATextFileSize(strWorkDir, m_jobParams.GetParam("datasetNum") & "_dta.txt") Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If Not ValidateDTATextFileSize(strWorkDir, m_DatasetName & "_dta.txt") Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         Dim parmfilestore As String = m_jobParams.GetParam("ParmFileStoragePath")
         result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
@@ -156,9 +156,9 @@ Public Class clsAnalysisResourcesXT
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
         Dim ParamFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
-        Dim SpectrumFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_dta.txt")
+		Dim SpectrumFilePath As String = System.IO.Path.Combine(WorkingDir, m_DatasetName & "_dta.txt")
         Dim TaxonomyFilePath As String = System.IO.Path.Combine(WorkingDir, "taxonomy.xml")
-        Dim OutputFilePath As String = System.IO.Path.Combine(WorkingDir, m_jobParams.GetParam("datasetNum") & "_xt.xml")
+		Dim OutputFilePath As String = System.IO.Path.Combine(WorkingDir, m_DatasetName & "_xt.xml")
 
         'make input file
         'start by adding the contents of the parameter file.

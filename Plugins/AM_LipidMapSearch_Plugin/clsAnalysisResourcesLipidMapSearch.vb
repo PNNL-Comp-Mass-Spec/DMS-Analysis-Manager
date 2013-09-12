@@ -59,9 +59,6 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		' SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 		' SourceJob2FolderPathArchive   = "\\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-		Dim strDatasetName As String
-		strDatasetName = m_jobParams.GetParam("DatasetNum")
-
 		Dim strDeconToolsFolderName As String
 		strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName")
 
@@ -93,14 +90,14 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			Return False
 		End If
 
-		strDatasetFolder = System.IO.Path.Combine(strDatasetFolder, strDatasetName)
-		strDatasetFolderArchive = System.IO.Path.Combine(strDatasetFolderArchive, strDatasetName)
+		strDatasetFolder = System.IO.Path.Combine(strDatasetFolder, m_DatasetName)
+		strDatasetFolderArchive = System.IO.Path.Combine(strDatasetFolderArchive, m_DatasetName)
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file")
 		End If
 
-		Return RetrieveDatasetAndPeaksFile(strDatasetName, strDatasetFolder, strDatasetFolderArchive, strDeconToolsFolderName)
+		Return RetrieveDatasetAndPeaksFile(m_DatasetName, strDatasetFolder, strDatasetFolderArchive, strDeconToolsFolderName)
 
 	End Function
 

@@ -66,19 +66,16 @@ Public Class clsAnalysisResourcesMSGF
 
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
-		Dim DatasetName As String
 		Dim RawDataType As String
 		Dim eRawDataType As eRawDataTypeConstants
 		Dim blnMGFInstrumentData As Boolean
 
 		Dim FileToGet As String
 		Dim strMzXMLFilePath As String = String.Empty
+		Dim strSynFilePath As String = String.Empty
 
 		Dim blnSuccess As Boolean = False
 		Dim blnOnlyCopyFHTandSYNfiles As Boolean
-
-		' Cache the dataset name
-		DatasetName = m_jobParams.GetParam("DatasetNum")
 
 		' Make sure the ResultType is valid
 		eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
@@ -158,17 +155,18 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
-		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName)		
+		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 			End If
 			m_jobParams.AddResultFileToSkip(FileToGet)
+			strSynFilePath = Path.Combine(m_WorkingDir, FileToGet)
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _fht.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
@@ -178,7 +176,7 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _ResultToSeqMap.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
@@ -188,7 +186,7 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _SeqToProteinMap.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
@@ -202,14 +200,14 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		Dim SynFileSizeBytes As Int64 = 0
-		Dim ioSynFile As FileInfo = New FileInfo(FileToGet)
+		Dim ioSynFile As FileInfo = New FileInfo(strSynFilePath)
 		If ioSynFile.Exists Then
 			SynFileSizeBytes = ioSynFile.Length
 		End If
 
 		If Not blnOnlyCopyFHTandSYNfiles Then
 			' Get the ModSummary.txt file        
-			FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, DatasetName)
+			FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, m_DatasetName)
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				' _ModSummary.txt file not found
 				' This will happen if the synopsis file is empty
@@ -240,7 +238,7 @@ Public Class clsAnalysisResourcesMSGF
 		' Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
 		' clsMSGFResultsSummarizer also uses these files
 
-		FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
 				m_jobParams.AddResultFileToSkip(FileToGet)
@@ -259,7 +257,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		End If
 
-		FileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
 				m_jobParams.AddResultFileToSkip(FileToGet)
@@ -277,7 +275,7 @@ Public Class clsAnalysisResourcesMSGF
 			End If
 		End If
 
-		FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, DatasetName)
+		FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
 				m_jobParams.AddResultFileToSkip(FileToGet)

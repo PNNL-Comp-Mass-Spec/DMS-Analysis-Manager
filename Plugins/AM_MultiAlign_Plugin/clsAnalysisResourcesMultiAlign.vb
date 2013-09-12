@@ -28,7 +28,10 @@ Public Class clsAnalysisResourcesMultiAlign
 
         SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
         For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
+			FileNameExt = row.Split(":"c)
+			If FileNameExt.Length < 3 Then
+				Throw New InvalidOperationException("Malformed target job specification; must have three columns separated by two colons: " & row)
+			End If
             If FileNameExt(2) = "nocopy" Then
                 m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
             End If
@@ -36,7 +39,7 @@ Public Class clsAnalysisResourcesMultiAlign
         Next
 
         ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & strInputFileExtension
+		strFileToGet = m_DatasetName & strInputFileExtension
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -86,7 +89,7 @@ Public Class clsAnalysisResourcesMultiAlign
         Dim swOutFile As System.IO.StreamWriter
 
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & strInputFileExtension)
+		Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & strInputFileExtension)
 
         Dim blnInputFileDefined As Boolean
         Dim blnOutputDirectoryDefined As Boolean

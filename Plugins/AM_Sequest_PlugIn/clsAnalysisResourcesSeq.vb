@@ -137,7 +137,6 @@ Public Class clsAnalysisResourcesSeq
 		Dim strTransferFolderPath As String
 		Dim strConcatenatedTempFilePath As String
 
-		Dim strDataset As String
 		Dim strJob As String
 
 		Dim strFileNameToCompare As String
@@ -153,7 +152,6 @@ Public Class clsAnalysisResourcesSeq
 
 		Try
 
-			strDataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
 			strJob = m_jobParams.GetParam("Job")
 			strTransferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
 
@@ -180,7 +178,7 @@ Public Class clsAnalysisResourcesSeq
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 
-			strConcatenatedTempFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, strDataset & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
+			strConcatenatedTempFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
 
 			ioTempOutFile = New System.IO.FileInfo(strConcatenatedTempFilePath)
 			If Not ioTempOutFile.Exists Then

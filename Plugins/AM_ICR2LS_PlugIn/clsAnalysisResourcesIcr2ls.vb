@@ -32,7 +32,6 @@ Public Class clsAnalysisResourcesIcr2ls
 
 	Protected Function GetBrukerSerFile() As Boolean
 
-		Dim DatasetName As String
 		Dim RawDataType As String
 
 		Dim strLocalDatasetFolderPath As String
@@ -41,14 +40,13 @@ Public Class clsAnalysisResourcesIcr2ls
 
 		Dim blnIsFolder As Boolean
 
-		DatasetName = m_jobParams.GetParam("DatasetNum")
 		RawDataType = m_jobParams.GetParam("RawDataType")
 
 		strRemoteDatasetFolderPath = System.IO.Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))
 
 		If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-			strLocalDatasetFolderPath = System.IO.Path.Combine(m_WorkingDir, DatasetName & ".d")
-			strRemoteDatasetFolderPath = System.IO.Path.Combine(strRemoteDatasetFolderPath, DatasetName & ".d")
+			strLocalDatasetFolderPath = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & ".d")
+			strRemoteDatasetFolderPath = System.IO.Path.Combine(strRemoteDatasetFolderPath, m_DatasetName & ".d")
 		Else
 			strLocalDatasetFolderPath = String.Copy(m_WorkingDir)
 		End If

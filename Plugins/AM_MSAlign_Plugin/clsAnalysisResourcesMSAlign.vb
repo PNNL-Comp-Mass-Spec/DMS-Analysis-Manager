@@ -35,7 +35,7 @@ Public Class clsAnalysisResourcesMSAlign
 
 		' Retrieve the MSAlign file
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
-		FileToGet = m_jobParams.GetParam("DatasetNum") & MSDECONV_MSALIGN_FILE_SUFFIX
+		FileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
 		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND

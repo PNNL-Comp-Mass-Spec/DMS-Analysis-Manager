@@ -37,7 +37,7 @@ Public Class clsAnalysisResourcesMSAlignQuant
 
 		' Retrieve the MSAlign results for this job
 		Dim strMSAlignResultsTable As String
-		strMSAlignResultsTable = m_jobParams.GetParam("DatasetNum") & MSALIGN_RESULT_TABLE_SUFFIX
+		strMSAlignResultsTable = m_DatasetName & MSALIGN_RESULT_TABLE_SUFFIX
 		If Not FindAndRetrieveMiscFiles(strMSAlignResultsTable, False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND

@@ -30,14 +30,14 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         End If
 
 		' Add the _dta.txt file to the list of extensions to delete after the tool finishes
-        m_JobParams.AddResultFileExtensionToSkip(m_jobParams.GetParam("DatasetNum") & "_dta.txt") 'Unzipped, concatenated DTA
+		m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & "_dta.txt") 'Unzipped, concatenated DTA
 
         ' Add the _Dta.zip file to the list of files to move to the results folder
         ' Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
         m_jobParams.AddResultFileToKeep("_dta.zip") 'Zipped DTA
 
 
-        ' Look at the job parameterse
+		' Look at the job parameters
         ' If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
         '  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
         '       This is essentially a job-depending-on a job

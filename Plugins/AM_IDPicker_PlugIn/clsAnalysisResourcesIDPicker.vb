@@ -16,7 +16,6 @@ Public Class clsAnalysisResourcesIDPicker
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim strDatasetName As String
 		Dim RawDataType As String
 		Dim eRawDataType As eRawDataTypeConstants
 		Dim blnMGFInstrumentData As Boolean
@@ -35,13 +34,12 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-		strDatasetName = m_jobParams.GetParam("DatasetNum")
 		RawDataType = m_jobParams.GetParam("RawDataType")
 		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
 		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		' Retrieve the PSM result files, PHRP files, and MSGF file
-		If Not GetInputFiles(strDatasetName, strParamFileName, eReturnCode) Then
+		If Not GetInputFiles(m_DatasetName, strParamFileName, eReturnCode) Then
 			If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Return eReturnCode
 		End If
@@ -54,7 +52,7 @@ Public Class clsAnalysisResourcesIDPicker
 		If Not blnMGFInstrumentData Then
 			' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 			If eRawDataType = eRawDataTypeConstants.ThermoRawFile Or eRawDataType = eRawDataTypeConstants.UIMF Then
-				If Not RetrieveMASICFiles(strDatasetName) Then
+				If Not RetrieveMASICFiles(m_DatasetName) Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 				End If
 			Else

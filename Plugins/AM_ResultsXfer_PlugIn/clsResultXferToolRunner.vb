@@ -81,23 +81,22 @@ Public Class clsResultXferToolRunner
 
 		Dim Msg As String = ""
 
-		' If there are no more folders in the dataset folder in the xfer directory, then delete the folder
+		' If there are no more folders or files in the dataset folder in the xfer directory, then delete the folder
 		' Note that another manager might be simultaneously examining this folder to see if it's empty
 		' If that manager deletes this folder first, then an exception could occur in this manager
 		' Thus, we will log any exceptions that occur, but we won't treat them as a job failure
 
 		Try
-			Dim DSFolderPath As String = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetNum"))
-			Dim FoundFolders() As String = System.IO.Directory.GetDirectories(DSFolderPath)
+			Dim diTransferFolder = New IO.DirectoryInfo(IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset))			
 
-			If FoundFolders.Count = 0 Then
+			If diTransferFolder.Exists andalso diTransferFolder.GetFileSystemInfos("*", IO.SearchOption.AllDirectories).Length = 0 Then
 				' Dataset folder in transfer folder is empty; delete it
 				Try
 					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting empty dataset folder in transfer directory: " & DSFolderPath)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting empty dataset folder in transfer directory: " & diTransferFolder.FullName)
 					End If
 
-					System.IO.Directory.Delete(DSFolderPath)
+					diTransferFolder.Delete()
 				Catch ex As Exception
 					' Log this exception, but don't treat it is a job failure
 					Msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " & _
@@ -106,7 +105,7 @@ Public Class clsResultXferToolRunner
 				End Try
 			Else
 				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder in transfer directory still has subfolders; will not delete folder: " & DSFolderPath)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder in transfer directory still has files/folders; will not delete: " & diTransferFolder.FullName)
 				End If
 			End If
 

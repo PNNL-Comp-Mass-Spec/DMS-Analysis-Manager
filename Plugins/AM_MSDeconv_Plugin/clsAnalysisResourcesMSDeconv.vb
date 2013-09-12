@@ -29,7 +29,7 @@ Public Class clsAnalysisResourcesMSDeconv
 		' Instead, use FindAndRetrieveMiscFiles 
 
 		' Note that capitalization matters for the extension; it must be .mzXML
-		FileToGet = m_jobParams.GetParam("DatasetNum") & ".mzXML"
+		FileToGet = m_DatasetName & ".mzXML"
 		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND

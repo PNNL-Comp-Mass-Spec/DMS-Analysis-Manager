@@ -27,14 +27,14 @@ Public Class clsAnalysisResourcesLCMSFF
 
         ' Retrieve Decon2LS _scans.csv file for this dataset
 		' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & SCANS_FILE_SUFFIX
+		strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Retrieve Decon2LS _isos.csv files for this dataset
-        strFileToGet = m_jobParams.GetParam("DatasetNum") & ISOS_FILE_SUFFIX
+		strFileToGet = m_DatasetName & ISOS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -135,7 +135,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         Dim SrcFilePath As String = System.IO.Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
         Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
-        Dim IsosFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DatasetNum") & ISOS_FILE_SUFFIX)
+		Dim IsosFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
 
         Dim strLineIn As String
         Dim strLineInLCase As String
