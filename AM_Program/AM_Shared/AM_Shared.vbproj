@@ -124,7 +124,6 @@
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />
-    <Compile Include="clsMyEMSLDatasetInfo.vb" />
     <Compile Include="clsProteowizardTools.vb" />
     <Compile Include="clsRunDosProgram.vb" />
     <Compile Include="clsScanStatsGenerator.vb" />
