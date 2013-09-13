@@ -329,8 +329,7 @@ Public MustInherit Class clsAnalysisResources
 			Dim fileInfo As MyEMSLReader.ArchivedFileInfo = Nothing
 
 			If GetCachedArchivedFileInfo(myEMSLFileID, fileInfo) Then
-				m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(myEMSLFileID, fileInfo)
-
+				m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo)
 				Return True
 			Else
 				m_message = "Cached ArchiveFileInfo does not contain MyEMSL File ID " & myEMSLFileID
@@ -1164,8 +1163,7 @@ Public MustInherit Class clsAnalysisResources
 							m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
 						End If
 
-						Dim recurseMyEMSL As Boolean = False
-						m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurseMyEMSL)
+						m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
 
 						If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
 							FileFound = True
@@ -1315,8 +1313,8 @@ Public MustInherit Class clsAnalysisResources
 		Select Case eRawDataType
 			Case eRawDataTypeConstants.AgilentDFolder			'Agilent ion trap data
 
-				If StoragePath.ToLower.Contains("Agilent_SL1".ToLower) OrElse _
-				   StoragePath.ToLower.Contains("Agilent_XCT1".ToLower) Then
+				If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse _
+				   StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()) Then
 					' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
 					'  we would pre-process the data beforehand to create MGF files
 					' The following call can be used to retrieve the files
@@ -1565,7 +1563,7 @@ Public MustInherit Class clsAnalysisResources
 
 				For Each udtArchivedFile In m_RecentlyFoundMyEMSLFiles
 					Dim fiArchivedFile As New FileInfo(udtArchivedFile.FileInfo.RelativePathWindows)
-					If fiArchivedFile.Name.ToLower() = MzXMLFilename.ToLower() Then
+					If String.Equals(fiArchivedFile.Name, MzXMLFilename, StringComparison.CurrentCultureIgnoreCase) Then
 						myEmslFileID = udtArchivedFile.FileID
 						Exit For
 					End If
@@ -1815,7 +1813,6 @@ Public MustInherit Class clsAnalysisResources
 			Dim Msg As String = "clsAnalysisResources.FindValidFolderMyEMSL, querying MyEMSL for this dataset's files"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
-
 
 		If (Not m_MyEMSLDatasetListInfo.ContainsDataset(DSName)) Then
 			m_MyEMSLDatasetListInfo.AddDataset(DSName)
@@ -2598,7 +2595,7 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		If udtDataPackageJobInfo.Dataset.ToLower() = "Aggregation".ToLower() Then
+		If String.Equals(udtDataPackageJobInfo.Dataset, "Aggregation", StringComparison.CurrentCultureIgnoreCase) Then
 			blnAggregationJob = True
 		End If
 
@@ -2871,7 +2868,7 @@ Public MustInherit Class clsAnalysisResources
 
 					Try
 
-						If SplitString(0).ToLower() = udtItem.Value.Tool.ToLower() Then
+						If String.Equals(SplitString(0), udtItem.Value.Tool, StringComparison.CurrentCultureIgnoreCase) Then
 							SourceFolderPath = FindDataFile(SourceFilename)
 							If String.IsNullOrEmpty(SourceFolderPath) Then
 								m_message = "Could not find a valid folder with file " & SourceFilename
@@ -2968,13 +2965,13 @@ Public MustInherit Class clsAnalysisResources
 					ext = IO.Path.GetExtension(SourceFilename)
 					filenameNoExt = IO.Path.GetFileNameWithoutExtension(SourceFilename)
 
-					If filterValue.ToLower.Contains("_hcd") Then
+					If filterValue.ToLower().Contains("_hcd") Then
 						newFilename = filenameNoExt + "_hcd" + ext
 
-					ElseIf filterValue.ToLower.Contains("_etd") Then
+					ElseIf filterValue.ToLower().Contains("_etd") Then
 						newFilename = filenameNoExt + "_etd" + ext
 
-					ElseIf filterValue.ToLower.Contains("_cid") Then
+					ElseIf filterValue.ToLower().Contains("_cid") Then
 						newFilename = filenameNoExt + "_cid" + ext
 
 					Else
@@ -3007,7 +3004,7 @@ Public MustInherit Class clsAnalysisResources
 						End If
 					End If
 
-					If SaveMode.ToLower = "nocopy" Then
+					If SaveMode.ToLower() = "nocopy" Then
 						m_jobParams.AddResultFileExtensionToSkip(newFilename)
 					End If
 
@@ -3591,10 +3588,7 @@ Public MustInherit Class clsAnalysisResources
 
 		If (DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG)) Then
 			' Queue this file for download
-
-			Dim fileInfo = m_RecentlyFoundMyEMSLFiles.First()
-			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo.FileID, fileInfo.FileInfo)
-
+			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo)
 			Return True
 		End If
 
@@ -3875,8 +3869,8 @@ Public MustInherit Class clsAnalysisResources
 						Continue For
 					End If
 
-					If myEmslFile.FileInfo.Filename.ToLower() = ScanStatsFilename.ToLower() AndAlso
-					   myEmslFile.FileInfo.TransactionID > BestScanStatsFileTransactionID Then
+					If String.Equals(myEmslFile.FileInfo.Filename, ScanStatsFilename, StringComparison.CurrentCultureIgnoreCase) AndAlso
+					  myEmslFile.FileInfo.TransactionID > BestScanStatsFileTransactionID Then
 						Dim fiScanStatsFile = New FileInfo(myEmslFile.FileInfo.RelativePathWindows)
 						BestSICFolderName = fiScanStatsFile.Directory.Name
 						BestScanStatsFileTransactionID = myEmslFile.FileInfo.TransactionID
@@ -4062,15 +4056,14 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RetrieveSICFileMyEMSL(ByVal strFileToFind As String, ByVal strSICFolderName As String, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
-		m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(strFileToFind, strSICFolderName, m_DatasetName, False)
+		m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(strFileToFind, strSICFolderName, m_DatasetName, recurse:=False)
 
 		If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Found MASIC results file in MyEMSL, " & Path.Combine(strSICFolderName, strFileToFind))
 			End If
 
-			Dim firstFile = m_RecentlyFoundMyEMSLFiles.First()
-			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(firstFile.FileID, firstFile.FileInfo)
+			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo)
 
 		Else
 			Dim blnIgnoreFile As Boolean
@@ -4330,14 +4323,14 @@ Public MustInherit Class clsAnalysisResources
 				End If
 
 				For Each diSubFolder As IO.DirectoryInfo In diCachedDataFolder.GetDirectories()
-					If diSubFolder.Name.ToLower <> m_DatasetName.ToLower Then
+					If Not String.Equals(diSubFolder.Name, m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
 						' Delete this directory
 						Try
 							If m_DebugLevel >= 2 Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
 							End If
 
-							If m_mgrParams.GetParam("MgrName").ToLower.Contains("monroe") Then
+							If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Skipping delete since this is a development computer")
 							Else
 								diSubFolder.Delete(True)
@@ -4353,7 +4346,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Delete any .mis files that do not start with this dataset's name
 				For Each fiFile As IO.FileInfo In diCachedDataFolder.GetFiles("*.mis")
-					If IO.Path.GetFileNameWithoutExtension(fiFile.Name).ToLower <> m_DatasetName.ToLower Then
+					If Not String.Equals(IO.Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
 						fiFile.Delete()
 					End If
 				Next
@@ -4394,7 +4387,7 @@ Public MustInherit Class clsAnalysisResources
 					' We'll copy the first file in MisFiles(0)
 					' Log a warning if we will be renaming the file
 
-					If IO.Path.GetFileName(MisFiles(0)).ToLower <> IO.Path.GetFileName(strImagingSeqFilePathFinal).ToLower() Then
+					If Not String.Equals(IO.Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal, StringComparison.CurrentCultureIgnoreCase) Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Note: Renaming .mis file (ImagingSequence file) from " + IO.Path.GetFileName(MisFiles(0)) + " to " + IO.Path.GetFileName(strImagingSeqFilePathFinal))
 					End If
 
@@ -5040,7 +5033,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim strToolNameLCase As String
 
-		strToolNameLCase = ToolName.ToLower
+		strToolNameLCase = ToolName.ToLower()
 
 		'Converts the setup file entry for the Bioworks version to a parameter type compatible with the
 		'	parameter file generator dll
@@ -5171,7 +5164,7 @@ Public MustInherit Class clsAnalysisResources
 			' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
 			If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
 				If strExternalUnzipperFilePath.Length > 0 AndAlso _
-				   strExternalUnzipperFilePath.ToLower <> "na" Then
+				   strExternalUnzipperFilePath.ToLower() <> "na" Then
 					If IO.File.Exists(strExternalUnzipperFilePath) Then
 						blnUseExternalUnzipper = True
 					End If
