@@ -213,7 +213,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
 
-	Protected WithEvents m_MyEMSLDatasetInfo As MyEMSLReader.DatasetInfo
+	Protected WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
 	Protected m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 
 	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
@@ -312,11 +312,39 @@ Public MustInherit Class clsAnalysisResources
 		ResetTimestampForQueueWaitTimeLogging()
 		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
 
-		m_MyEMSLDatasetInfo = New MyEMSLReader.DatasetInfo(m_DatasetName)
+		m_MyEMSLDatasetListInfo = New MyEMSLReader.DatasetListInfo()
+		m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
+
 		m_RecentlyFoundMyEMSLFiles = New List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 	End Sub
 
 	Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
+
+	Protected Function AddFileToMyEMSLDownloadQueue(ByVal encodedFilePath As String) As Boolean
+
+		Dim myEMSLFileID As Int64 = MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(encodedFilePath)
+
+		If myEMSLFileID > 0 Then
+
+			Dim fileInfo As MyEMSLReader.ArchivedFileInfo = Nothing
+
+			If GetCachedArchivedFileInfo(myEMSLFileID, fileInfo) Then
+				m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(myEMSLFileID, fileInfo)
+
+				Return True
+			Else
+				m_message = "Cached ArchiveFileInfo does not contain MyEMSL File ID " & myEMSLFileID
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+		Else
+			m_message = "MyEMSL File ID not found in path: " & encodedFilePath
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
+
+	End Function
 
 	''' <summary>
 	''' Appends file specified file path to the JobInfo file for the given Job
@@ -547,13 +575,7 @@ Public MustInherit Class clsAnalysisResources
 		Try
 
 			If InpFolder.StartsWith(MYEMSL_PATH_FLAG) Then
-				Dim myEMSLFileID As Int64 = MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(InpFolder)
-				If myEMSLFileID > 0 Then
-					m_MyEMSLDatasetInfo.AddFileToDownloadQueue(myEMSLFileID)
-					Return True
-				Else
-					Return False
-				End If
+				Return AddFileToMyEMSLDownloadQueue(InpFolder)
 			End If
 
 			SourceFile = IO.Path.Combine(InpFolder, InpFile)
@@ -1009,13 +1031,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		If FolderName.StartsWith(MYEMSL_PATH_FLAG) Then
-			Dim myEMSLFileID As Int64 = MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(FolderName)
-			If myEMSLFileID > 0 Then
-				m_MyEMSLDatasetInfo.AddFileToDownloadQueue(myEMSLFileID, Unzip)
-				Return True
-			Else
-				Return False
-			End If
+			Return AddFileToMyEMSLDownloadQueue(FolderName)
 		End If
 
 		' Copy the file
@@ -1144,12 +1160,12 @@ Public MustInherit Class clsAnalysisResources
 
 					If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
 
-						If m_MyEMSLDatasetInfo.DatasetName <> m_DatasetName Then
-							m_MyEMSLDatasetInfo.UpdateDatasetName(m_DatasetName)
+						If (Not m_MyEMSLDatasetListInfo.ContainsDataset(m_DatasetName)) Then
+							m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
 						End If
 
 						Dim recurseMyEMSL As Boolean = False
-						m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileToFind, diFolderToCheck.Name, recurseMyEMSL)
+						m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurseMyEMSL)
 
 						If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
 							FileFound = True
@@ -1800,18 +1816,19 @@ Public MustInherit Class clsAnalysisResources
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 
-		If m_MyEMSLDatasetInfo.DatasetName <> DSName Then
-			m_MyEMSLDatasetInfo.UpdateDatasetName(DSName)
+
+		If (Not m_MyEMSLDatasetListInfo.ContainsDataset(DSName)) Then
+			m_MyEMSLDatasetListInfo.AddDataset(DSName)
 		End If
 
 		If String.IsNullOrEmpty(FolderNameToFind) Then
 			' Simply look for the file
-			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileNameToFind, String.Empty, Recurse)
+			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileNameToFind, String.Empty, DSName, Recurse)
 		Else
 			' First look for the subfolder
 			' If there are multiple matching subfolders, then choose the newest one
 			' The entries in m_RecentlyFoundMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
-			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(FileNameToFind, FolderNameToFind, Recurse)
+			m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileNameToFind, FolderNameToFind, DSName, Recurse)
 		End If
 
 		If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
@@ -2173,6 +2190,24 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		Return blnApplySectionFilter
+
+	End Function
+
+	Protected Function GetCachedArchivedFileInfo(ByVal myEMSLFileID As Int64, ByRef fileInfoOut As MyEMSLReader.ArchivedFileInfo) As Boolean
+
+		fileInfoOut = Nothing
+
+		Dim fileInfoMatch = (
+		  From item In m_RecentlyFoundMyEMSLFiles
+		  Where item.FileID = myEMSLFileID
+		  Select item.FileInfo).ToList()
+
+		If fileInfoMatch.Count = 0 Then
+			Return False
+		Else
+			fileInfoOut = fileInfoMatch.First()
+			Return True
+		End If
 
 	End Function
 
@@ -2643,21 +2678,17 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function ProcessMyEMSLDownloadQueue(ByVal downloadFolderPath As String, ByVal folderLayout As MyEMSLReader.Downloader.DownloadFolderLayout) As Boolean
 
-		If m_MyEMSLDatasetInfo.FilesToDownload.Count = 0 Then
+		If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
 			' Nothing to download; that's OK
 			Return True
 		End If
 
-		Dim success = m_MyEMSLDatasetInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout)
+		Dim success = m_MyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout)
 
 		If Not success Then
-			If m_MyEMSLDatasetInfo.ErrorMessages.Count > 0 Then
-				m_message = "Error in ProcessMyEMSLDownloadQueue: " & m_MyEMSLDatasetInfo.ErrorMessages.First()
+			If m_MyEMSLDatasetListInfo.ErrorMessages.Count > 0 Then
+				m_message = "Error in ProcessMyEMSLDownloadQueue: " & m_MyEMSLDatasetListInfo.ErrorMessages.First()
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-
-				For index As Integer = 1 To m_MyEMSLDatasetInfo.ErrorMessages.Count - 1
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MyEMSLDatasetInfo.ErrorMessages(index))
-				Next
 			Else
 				m_message = "Unknown error in ProcessMyEMSLDownloadQueue"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -3117,7 +3148,7 @@ Public MustInherit Class clsAnalysisResources
 		Try
 
 			' Make sure the MyEMSL download queue is empty
-			If m_MyEMSLDatasetInfo.FilesToDownload.Count > 0 Then
+			If m_MyEMSLDatasetListInfo.FilesToDownload.Count > 0 Then
 				If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 					Return False
 				End If
@@ -3252,7 +3283,7 @@ Public MustInherit Class clsAnalysisResources
 
 					Next SourceFilename	' in lstFilesToGet
 
-					If m_MyEMSLDatasetInfo.FilesToDownload.Count > 0 Then
+					If m_MyEMSLDatasetListInfo.FilesToDownload.Count > 0 Then
 						' Some of the files were found in MyEMSL; download them now
 						If Not ProcessMyEMSLDownloadQueue(LocalFolderPath, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 							Return False
@@ -3560,7 +3591,10 @@ Public MustInherit Class clsAnalysisResources
 
 		If (DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG)) Then
 			' Queue this file for download
-			m_MyEMSLDatasetInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileID)
+
+			Dim fileInfo = m_RecentlyFoundMyEMSLFiles.First()
+			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo.FileID, fileInfo.FileInfo)
+
 			Return True
 		End If
 
@@ -3661,16 +3695,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim fiSourceFile As IO.FileInfo
 
 		If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-			Dim myEMSLFileID As Int64 = MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(SourceFilePath)
-
-			If myEMSLFileID > 0 Then
-				m_MyEMSLDatasetInfo.AddFileToDownloadQueue(myEMSLFileID)
-				Return True
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not extract the MyEMSL FileID for the MzXML file specified by " + SourceFilePath)
-				Return False
-			End If
-
+			Return AddFileToMyEMSLDownloadQueue(SourceFilePath)
 		End If
 
 		fiSourceFile = New IO.FileInfo(SourceFilePath)
@@ -4037,13 +4062,16 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RetrieveSICFileMyEMSL(ByVal strFileToFind As String, ByVal strSICFolderName As String, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
-		m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetInfo.FindFiles(strFileToFind, strSICFolderName, False)
+		m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(strFileToFind, strSICFolderName, m_DatasetName, False)
 
 		If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Found MASIC results file in MyEMSL, " & Path.Combine(strSICFolderName, strFileToFind))
 			End If
-			m_MyEMSLDatasetInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileID)
+
+			Dim firstFile = m_RecentlyFoundMyEMSLFiles.First()
+			m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(firstFile.FileID, firstFile.FileInfo)
+
 		Else
 			Dim blnIgnoreFile As Boolean
 			blnIgnoreFile = SafeToIgnore(strFileToFind, lstNonCriticalFileSuffixes)
@@ -4849,7 +4877,7 @@ Public MustInherit Class clsAnalysisResources
 			If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
 				If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
 					End If
 				Else
 					Return False
@@ -5437,23 +5465,23 @@ Public MustInherit Class clsAnalysisResources
 
 #End Region
 
-	Private Sub m_MyEMSLDatasetInfo_ErrorEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles m_MyEMSLDatasetInfo.ErrorEvent
+	Private Sub m_MyEMSLDatasetListInfo_ErrorEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles m_MyEMSLDatasetListInfo.ErrorEvent
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message)
 	End Sub
 
-	Private Sub m_MyEMSLDatasetInfo_MessageEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles m_MyEMSLDatasetInfo.MessageEvent
+	Private Sub m_MyEMSLDatasetListInfo_MessageEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles m_MyEMSLDatasetListInfo.MessageEvent
 		Console.WriteLine(e.Message)
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
 	End Sub
 
-	Private Sub m_MyEMSLDatasetInfo_ProgressEvent(sender As Object, e As MyEMSLReader.ProgressEventArgs) Handles m_MyEMSLDatasetInfo.ProgressEvent
+	Private Sub m_MyEMSLDatasetListInfo_ProgressEvent(sender As Object, e As MyEMSLReader.ProgressEventArgs) Handles m_MyEMSLDatasetListInfo.ProgressEvent
 		If System.DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2 Then
 			m_LastMyEMSLProgressWriteTime = System.DateTime.UtcNow
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MyEMSL downloader: " & e.PercentComplete & "% complete")
 		End If
 	End Sub
 
-	Private Sub m_MyEMSLDatasetInfo_FileDownloadedEvent(sender As Object, e As MyEMSLReader.FileDownloadedEventArgs) Handles m_MyEMSLDatasetInfo.FileDownloadedEvent
+	Private Sub m_MyEMSLDatasetListInfo_FileDownloadedEvent(sender As Object, e As MyEMSLReader.FileDownloadedEventArgs) Handles m_MyEMSLDatasetListInfo.FileDownloadedEvent
 
 		If e.UnzipRequired Then
 			Dim fiFileToUnzip = New FileInfo(Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename))
@@ -5466,7 +5494,7 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
-	
+
 
 End Class
 

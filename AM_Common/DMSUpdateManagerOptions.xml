@@ -2,7 +2,7 @@
 <sections>
   <section name="DMSUpdateManager">
     <item key="OverwriteNewerFiles" value="False" />
-    <item key="SourceFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerDistribution" />
+    <item key="SourceFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerDistribution_NewDecon2LS" />
     <item key="TargetFolderPath" value="." />
     <item key="CopySubdirectoriesToParentFolder" value="True" />
     <item key="RebootCommandFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerReboot" />
