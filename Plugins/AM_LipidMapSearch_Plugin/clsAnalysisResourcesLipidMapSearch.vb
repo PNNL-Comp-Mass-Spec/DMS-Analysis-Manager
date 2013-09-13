@@ -201,7 +201,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
 				Dim DSFolderPath As String = FindValidFolder(strDatasetName, strFileToFind)
 				If DSFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 					' Queue this file for download
-					m_MyEMSLDatasetInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileID)
+					m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo)
 				Else
 					' Raw file still not found; abort processing
 					Return False
