@@ -41,7 +41,7 @@ namespace AnalysisManager_IDM_Plugin
 
 					try
 					{
-						var sqLiteUtils = new SqLiteUtilities();
+						var sqLiteUtils = new AnalysisManagerBase.clsSqLiteUtilities();
 
 						if (m_DebugLevel >= 1)
 						{
