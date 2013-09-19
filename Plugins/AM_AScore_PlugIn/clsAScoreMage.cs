@@ -378,7 +378,7 @@ namespace AnalysisManager_AScore_PlugIn
 			}
 
 			// process the job described by the fields in the input vals object
-			protected override bool CheckFilter(ref object[] vals)
+			protected override bool CheckFilter(ref string[] vals)
 			{
 
 				try
@@ -389,15 +389,15 @@ namespace AnalysisManager_AScore_PlugIn
 					ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
 
 					// copy DTA file for current job to working directory
-					string resultsFolderPath = vals[resultsFldrIdx].ToString();
-					string paramFileNameForPSMTool = vals[paramFileIdx].ToString();
+					string resultsFolderPath = vals[resultsFldrIdx];
+					string paramFileNameForPSMTool = vals[paramFileIdx];
 					string dtaFilePath;
 					if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
 					{
 						return false;
 					}
 
-					string settingsFileName = vals[settingsFileIdx].ToString();
+					string settingsFileName = vals[settingsFileIdx];
 					string findFragmentation = (paramFileNameForPSMTool + settingsFileName).ToLower();
 					if (findFragmentation.Contains("hcd"))
 					{
@@ -702,23 +702,12 @@ namespace AnalysisManager_AScore_PlugIn
 
 
 			// Build Mage source module containing one job to process
-			private BaseModule MakeJobSourceModule(string[] jobFieldNames, object[] jobFields)
+			private BaseModule MakeJobSourceModule(string[] jobFieldNames, string[] jobFields)
 			{
 				DataGenerator currentJob = new DataGenerator();
 				currentJob.AddAdHocRow = jobFieldNames;
-				currentJob.AddAdHocRow = ConvertObjectArrayToStringArray(jobFields);
+				currentJob.AddAdHocRow = jobFields;
 				return currentJob;
-			}
-
-			// Convert array of objects to array of strings
-			private static string[] ConvertObjectArrayToStringArray(object[] row)
-			{
-				List<string> obj = new List<string>();
-				foreach (object fld in row)
-				{
-					obj.Add(fld.ToString());
-				}
-				return obj.ToArray();
 			}
 
 
