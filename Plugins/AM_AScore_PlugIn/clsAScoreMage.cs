@@ -160,7 +160,7 @@ namespace AnalysisManager_AScore_PlugIn
 			ascoreModule.WorkingDir = mWorkingDir;
 			ascoreModule.ResultsDBFileName = mResultsDBFileName;
 			ascoreModule.strExternalUnzipperFilePath = mStrExternalUnzipperFilePath;
-			ascoreModule.paramFilename = mParamFilename;
+			ascoreModule.ascoreParamFileName = mParamFilename;
 			ascoreModule.searchType = mSearchType;
 			ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule).RunRoot(null);
 		}
@@ -342,7 +342,7 @@ namespace AnalysisManager_AScore_PlugIn
 			public string ResultsDBFileName { get; set; }
 			public string strExternalUnzipperFilePath { get; set; }
 			public string searchType { get; set; }
-			public string paramFilename { get; set; }
+			public string ascoreParamFileName { get; set; }
 
 			#endregion
 
@@ -390,7 +390,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 					// copy DTA file for current job to working directory
 					string resultsFolderPath = vals[resultsFldrIdx].ToString();
-					string paramFileName = vals[paramFileIdx].ToString();
+					string paramFileNameForPSMTool = vals[paramFileIdx].ToString();
 					string dtaFilePath;
 					if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
 					{
@@ -398,7 +398,7 @@ namespace AnalysisManager_AScore_PlugIn
 					}
 
 					string settingsFileName = vals[settingsFileIdx].ToString();
-					string findFragmentation = (paramFileName + settingsFileName).ToLower();
+					string findFragmentation = (paramFileNameForPSMTool + settingsFileName).ToLower();
 					if (findFragmentation.Contains("hcd"))
 					{
 						fragtype = "hcd";
@@ -419,15 +419,28 @@ namespace AnalysisManager_AScore_PlugIn
 					// TODO: make the call to AScore
 					string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
 					string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-					string paramFile = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(paramFilename) + "_" + fragtype + ".xml"); //paramFileName);
+					string paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
 
-					if (!File.Exists(paramFile))
+					if (!File.Exists(paramFileToUse))
 					{
-						Console.WriteLine("This type of parameter file does not exist");
-						return false;
+						Console.WriteLine("Parameter file not found: " + paramFileToUse);
+
+						string paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
+						if (Path.GetExtension(paramFileToUse2).Length == 0)
+							paramFileToUse2 += ".xml";
+
+						if (File.Exists(paramFileToUse2))
+						{
+							Console.WriteLine(" ... will instead use: " + paramFileToUse2);
+							paramFileToUse = paramFileToUse2;
+						}
+						else
+						{
+							return false;
+						}
 					}
 
-					ParameterFileManager paramManager = new ParameterFileManager(paramFile);
+					ParameterFileManager paramManager = new ParameterFileManager(paramFileToUse);
 					DtaManager dtaManager = new DtaManager(dtaFile);
 					DatasetManager datasetManager;
 
@@ -585,8 +598,8 @@ namespace AnalysisManager_AScore_PlugIn
 
 					try
 					{
-						// Delay 1 seconds then perform garage collection to force the Unzip tool to release the file handle
-						System.Threading.Thread.Sleep(2000);
+						// Delay 1 second then perform garage collection to force the Unzip tool to release the file handle
+						System.Threading.Thread.Sleep(1000);
 						PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 						clsAnalysisToolRunnerBase.DeleteFileWithRetries(zippedDTAResultsFilePath, intDebugLevel:1, MaxRetryCount:2);
