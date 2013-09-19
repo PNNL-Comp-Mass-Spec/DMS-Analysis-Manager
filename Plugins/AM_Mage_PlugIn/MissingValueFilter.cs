@@ -18,9 +18,10 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         // handle a data row - make sure alias field has an appropriate value
-        protected override bool CheckFilter(ref object[] vals) {
+        protected override bool CheckFilter(ref string[] vals) 
+		{
 
-            var val = vals[_fillColIdx].ToString();
+            var val = vals[_fillColIdx];
             if (string.IsNullOrEmpty(val)) {
                 vals[_fillColIdx] = _rememberedFillValue;
             } else {
@@ -28,7 +29,7 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
             if (OutputColumnDefs != null) {
-                object[] outRow = MapDataRow(vals);
+				string[] outRow = MapDataRow(vals);
                 vals = outRow;
             }
             return true;

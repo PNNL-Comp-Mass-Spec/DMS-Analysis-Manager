@@ -29,10 +29,11 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         // handle a data row - make sure alias field has an appropriate value
-        protected override bool CheckFilter(ref object[] vals) {
+		protected override bool CheckFilter(ref string[] vals)
+		{
             if (OutputColumnDefs != null) {
-                object[] outRow = MapDataRow(vals);
-                string dataset = outRow[_datasetIdx].ToString();
+				string[] outRow = MapDataRow(vals);
+                string dataset = outRow[_datasetIdx];
                 outRow[_aliasColIdx] = LookupAlias(dataset);
                 vals = outRow;
             }
@@ -82,8 +83,8 @@ namespace AnalysisManager_Mage_PlugIn {
             // get non-duplicate set of dataset names
             var uniqueNameSet = new HashSet<string>();
             int dIdx = factorsObj.ColumnIndex["Dataset"];
-            foreach (Object[] row in factorsObj.Rows) {
-                uniqueNameSet.Add(row[dIdx].ToString());
+            foreach (string[] row in factorsObj.Rows) {
+                uniqueNameSet.Add(row[dIdx]);
             }
 
             // build alias lookup table for names
