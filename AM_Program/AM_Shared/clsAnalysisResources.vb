@@ -27,7 +27,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
-	Protected Const MYEMSL_PATH_FLAG As String = "\\MyEMSL"
+	Public Const MYEMSL_PATH_FLAG As String = "\\MyEMSL"
 
 	' Define the maximum file size to process using IonicZip; 
 	'  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip

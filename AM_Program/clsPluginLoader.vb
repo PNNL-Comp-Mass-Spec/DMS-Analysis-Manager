@@ -68,11 +68,8 @@ Public Class clsPluginLoader
 
 	End Sub
 
-	''' <summary>
-	''' Set the following to True if debugging
-	''' </summary>
-	''' <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
-	Private Const PLUGIN_DEBUG_MODE_ENABLED As Boolean = True
+
+#If PLUGIN_DEBUG_MODE_ENABLED Then
 
 	Private Function DebugModeGetToolRunner(ByVal className As String) As AnalysisManagerBase.IToolRunner
 
@@ -171,6 +168,12 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops, IToolRunner)
+
+			'Case "AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManager_Cyclops_PlugIn.clsAnalysisToolRunnerCyclops, IToolRunner)
+
+			Case "AnalysisManager_AScore_PlugIn.clsAnalysisToolRunnerAScore".ToLower()
+				myToolRunner = DirectCast(New AnalysisManager_AScore_PlugIn.clsAnalysisToolRunnerAScore, IToolRunner)
 
 		End Select
 
@@ -276,12 +279,15 @@ Public Class clsPluginLoader
 			'Case "AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops".ToLower()
 			'	myModule = DirectCast(New AnalysisManager_Cyclops_PlugIn.clsAnalysisResourcesCyclops, IAnalysisResources)
 
+			Case "AnalysisManager_AScore_PlugIn.clsAnalysisResourcesAScore".ToLower()
+				myModule = DirectCast(New AnalysisManager_AScore_PlugIn.clsAnalysisResourcesAScore, IAnalysisResources)
 
 		End Select
 
 		Return myModule
 
 	End Function
+#End If
 
 	''' <summary>
 	''' Retrieves data for specified plugin from plugin info config file
@@ -367,12 +373,12 @@ Public Class clsPluginLoader
 		Dim e As Exception
 		If GetPluginInfo(xpath, className, assyName) Then
 
-			If PLUGIN_DEBUG_MODE_ENABLED Then
-				myToolRunner = DebugModeGetToolRunner(className)
-				If Not myToolRunner Is Nothing Then
-					Return myToolRunner
-				End If
+#If PLUGIN_DEBUG_MODE_ENABLED Then
+			myToolRunner = DebugModeGetToolRunner(className)
+			If Not myToolRunner Is Nothing Then
+				Return myToolRunner
 			End If
+#End If
 
 			Dim obj As Object = LoadObject(className, assyName)
 			If Not obj Is Nothing Then
@@ -404,12 +410,12 @@ Public Class clsPluginLoader
 
 		If GetPluginInfo(xpath, className, assyName) Then
 
-			If PLUGIN_DEBUG_MODE_ENABLED Then
-				myModule = DebugModeGetAnalysisResources(className)
-				If Not myModule Is Nothing Then
-					Return myModule
-				End If
+#If PLUGIN_DEBUG_MODE_ENABLED Then
+			myModule = DebugModeGetAnalysisResources(className)
+			If Not myModule Is Nothing Then
+				Return myModule
 			End If
+#End If
 
 			Dim obj As Object = LoadObject(className, assyName)
 			If Not obj Is Nothing Then
