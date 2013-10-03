@@ -1,9 +1,10 @@
 ﻿using System.IO;
+using System.Threading;
 using AnalysisManagerBase;
 using System;
 using log4net;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using PRISM.Processes;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -13,7 +14,7 @@ namespace AnalysisManager_AScore_PlugIn
 	   protected const float PROGRESS_PCT_ASCORE_DONE = 99;
 
 	   protected string m_CurrentAScoreTask = string.Empty;
-	   protected System.DateTime m_LastStatusUpdateTime;
+	   protected DateTime m_LastStatusUpdateTime;
 
        public override IJobParams.CloseOutType RunTool()
        {
@@ -39,14 +40,14 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 
 				m_CurrentAScoreTask = "Running AScore";
-				m_LastStatusUpdateTime = System.DateTime.UtcNow;
+				m_LastStatusUpdateTime = DateTime.UtcNow;
 				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentAScoreTask);
 
 				//Change the name of the log file for the local log file to the plugin log filename
                 String LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
-                log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
 
 				try
@@ -57,7 +58,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 					// Change the name of the log file back to the analysis manager log file
                     LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                    GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
 					if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message)) {
@@ -68,7 +69,7 @@ namespace AnalysisManager_AScore_PlugIn
 				{
 					// Change the name of the log file back to the analysis manager log file
                     LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
+                    GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running AScore: " + ex.Message);
@@ -77,7 +78,7 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 
 				//Stop the job timer
-				m_StopTime = System.DateTime.UtcNow;
+				m_StopTime = DateTime.UtcNow;
 				m_progress = PROGRESS_PCT_ASCORE_DONE;
 
 				//Add the current job data to the summary file
@@ -88,8 +89,8 @@ namespace AnalysisManager_AScore_PlugIn
 
 				//Make sure objects are released
 				//2 second delay
-				System.Threading.Thread.Sleep(2000);
-				PRISM.Processes.clsProgRunner.GarbageCollectNow();
+				Thread.Sleep(2000);
+				clsProgRunner.GarbageCollectNow();
 
 				if (!blnSuccess)
 				{
@@ -143,8 +144,8 @@ namespace AnalysisManager_AScore_PlugIn
        protected bool RunAScore()
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
-           clsAScoreMage dvas = new clsAScoreMage(m_jobParams, m_mgrParams);
-           return dvas.Run();
+           var ascoreMage = new clsAScoreMage(m_jobParams, m_mgrParams, m_IonicZipTools);
+		   return ascoreMage.Run();
            
        }
        
@@ -189,7 +190,7 @@ namespace AnalysisManager_AScore_PlugIn
                 if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
                 }
             }
 
@@ -207,7 +208,7 @@ namespace AnalysisManager_AScore_PlugIn
 	   {
 		   string strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-		   System.IO.FileInfo fiIDMdll = new System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
+		   FileInfo fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
 
 		   return StoreToolVersionInfoDLL(fiIDMdll.FullName);
 	   }
@@ -230,8 +231,8 @@ namespace AnalysisManager_AScore_PlugIn
 			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAScoreDLLPath);
 
 			// Store paths to key files in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strAScoreDLLPath));
+			List<FileInfo> ioToolFiles = new List<FileInfo>();
+			ioToolFiles.Add(new FileInfo(strAScoreDLLPath));
 				
             try
             {

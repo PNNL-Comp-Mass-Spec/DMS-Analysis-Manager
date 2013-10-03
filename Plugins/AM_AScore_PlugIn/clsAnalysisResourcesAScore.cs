@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using AnalysisManagerBase;
+using MyEMSLReader;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -11,12 +10,12 @@ namespace AnalysisManager_AScore_PlugIn
         //public static string AppFilePath = "";
         protected const string ASCORE_INPUT_FILE = "AScoreBatch.xml";
 
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+        public override IJobParams.CloseOutType GetResources()
         {
-            bool blnSuccess = true;
+            // bool blnSuccess = true;
 			//  blnSuccess = RunAScoreGetResources();
-
-            if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+			//
+            // if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
             if (m_DebugLevel > 2)
             {
@@ -77,7 +76,7 @@ namespace AnalysisManager_AScore_PlugIn
                     break;
             }
 
-			if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+			if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
 				return false;
 			
             return blnSuccess;
@@ -155,7 +154,7 @@ namespace AnalysisManager_AScore_PlugIn
             string DatasetFileName = null;
             string DatasetID = null;
             string WorkDir = m_mgrParams.GetParam("workdir");
-            System.IO.StreamWriter inputFile = new System.IO.StreamWriter(System.IO.Path.Combine(WorkDir, ASCORE_INPUT_FILE));
+            StreamWriter inputFile = new StreamWriter(Path.Combine(WorkDir, ASCORE_INPUT_FILE));
 
             try
             {
@@ -166,10 +165,10 @@ namespace AnalysisManager_AScore_PlugIn
                 inputFile.WriteLine("  </settings>");
 
                 //update list of files to be deleted after run
-                DatasetFiles = System.IO.Directory.GetFiles(WorkDir, "*_syn*.txt");
+                DatasetFiles = Directory.GetFiles(WorkDir, "*_syn*.txt");
                 foreach (string Dataset in DatasetFiles)
                 {
-                    DatasetFileName = System.IO.Path.GetFileName(Dataset);
+                    DatasetFileName = Path.GetFileName(Dataset);
 
                     // Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
                     //  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
@@ -189,21 +188,21 @@ namespace AnalysisManager_AScore_PlugIn
 
                     if (string.IsNullOrEmpty(DatasetType) || DatasetType == "_cid")
                     {
-                        inputFile.WriteLine("    <param_file>" + System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) + "</param_file>");
+                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) + "</param_file>");
                     }
                     else if (DatasetType == "_hcd")
                     {
-                        inputFile.WriteLine("    <param_file>" + System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) + "</param_file>");
+                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) + "</param_file>");
                     }
                     else if (DatasetType == "_etd")
                     {
-                        inputFile.WriteLine("    <param_file>" + System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) + "</param_file>");
+                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) + "</param_file>");
                     }
                     inputFile.WriteLine("    <output_path>" + WorkDir + "</output_path>");
-                    inputFile.WriteLine("    <dta_file>" + System.IO.Path.Combine(WorkDir, DatasetName + "_dta" + DatasetType + ".txt") + "</dta_file>");
-                    inputFile.WriteLine("    <fht_file>" + System.IO.Path.Combine(WorkDir, DatasetName + "_fht" + DatasetType + ".txt") + "</fht_file>");
-                    inputFile.WriteLine("    <syn_file>" + System.IO.Path.Combine(WorkDir, DatasetName + "_syn" + DatasetType + ".txt") + "</syn_file>");
-                    inputFile.WriteLine("    <scan_stats_file>" + System.IO.Path.Combine(WorkDir, DatasetName + "_ScanStatsEx" + ".txt") + "</scan_stats_file>");
+                    inputFile.WriteLine("    <dta_file>" + Path.Combine(WorkDir, DatasetName + "_dta" + DatasetType + ".txt") + "</dta_file>");
+                    inputFile.WriteLine("    <fht_file>" + Path.Combine(WorkDir, DatasetName + "_fht" + DatasetType + ".txt") + "</fht_file>");
+                    inputFile.WriteLine("    <syn_file>" + Path.Combine(WorkDir, DatasetName + "_syn" + DatasetType + ".txt") + "</syn_file>");
+                    inputFile.WriteLine("    <scan_stats_file>" + Path.Combine(WorkDir, DatasetName + "_ScanStatsEx" + ".txt") + "</scan_stats_file>");
                     inputFile.WriteLine("    <dataset_id>" + DatasetID + "</dataset_id>");
                     inputFile.WriteLine("  </run>");
                 }

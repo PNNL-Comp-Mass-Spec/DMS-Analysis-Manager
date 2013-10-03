@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.IO;
+using System.Threading;
+using System.Xml;
 using AnalysisManagerBase;
+using AScore_DLL;
 using Mage;
 using MageExtExtractionFilters;
 using AScore_DLL.Managers;
 using AScore_DLL.Managers.DatasetManagers;
-using PRISM;
-using Ionic;
+using MyEMSLReader;
+using PRISM.Processes;
+using MessageEventArgs = AScore_DLL.MessageEventArgs;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -21,22 +25,34 @@ namespace AnalysisManager_AScore_PlugIn
 
 		protected string mResultsDBFileName = "";
 		protected string mWorkingDir;
+
 		protected JobParameters mJP;
 		protected ManagerParameters mMP;
 		protected static clsIonicZipTools m_IonicZipTools;
 		protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
 		protected static string mMessage = "";
-		protected string mStrExternalUnzipperFilePath = null;
+
 		protected string mSearchType = "";
 		protected string mParamFilename = "";
+
+		protected clsIonicZipTools mIonicZipTools;
+
+		protected static DatasetListInfo mMyEMSLDatasetInfo;
 
 		#endregion
 
 		#region Constructors
 
-		public clsAScoreMage(IJobParams jobParms, IMgrParams mgrParms)
+		public clsAScoreMage(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
 		{
-			Intialize(jobParms, mgrParms);
+			Intialize(jobParms, mgrParms, ionicZipTools);
+
+			if (mMyEMSLDatasetInfo == null)
+			{
+				mMyEMSLDatasetInfo = new DatasetListInfo();
+				mMyEMSLDatasetInfo.ErrorEvent += new MessageEventHandler(mReader_ErrorEvent);
+				mMyEMSLDatasetInfo.MessageEvent += new MessageEventHandler(mReader_MessageEvent);
+			}
 		}
 
 		#endregion
@@ -48,17 +64,21 @@ namespace AnalysisManager_AScore_PlugIn
 		/// </summary>
 		/// <param name="jobParms"></param>
 		/// <param name="mgrParms"></param>
-		private void Intialize(IJobParams jobParms, IMgrParams mgrParms)
+		/// <param name="ionicZipTools"></param>
+		private void Intialize(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
 		{
-			this.mJP = new JobParameters(jobParms);
-			this.mMP = new ManagerParameters(mgrParms);
-			this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
-			this.mWorkingDir = mMP.RequireMgrParam("workdir");
-			this.mStrExternalUnzipperFilePath = mMP.RequireMgrParam("zipprogram");
-			this.mSearchType = mJP.RequireJobParam("AScoreSearchType");
-			if (this.mSearchType == "msgfdb")
-				this.mSearchType = "msgfplus";
-			this.mParamFilename = mJP.GetJobParam("AScoreParamFilename");
+			mJP = new JobParameters(jobParms);
+			mMP = new ManagerParameters(mgrParms);
+			mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
+			mWorkingDir = mMP.RequireMgrParam("workdir");
+
+			mSearchType = mJP.RequireJobParam("AScoreSearchType");
+
+			if (mSearchType == "msgfdb")
+				mSearchType = "msgfplus";
+			mParamFilename = mJP.GetJobParam("AScoreParamFilename");
+
+			mIonicZipTools = ionicZipTools;
 		}
 
 		#endregion
@@ -91,19 +111,18 @@ namespace AnalysisManager_AScore_PlugIn
 
 		#endregion
 
-
 		#region Mage Pipelines and Utilities
 
 		private bool GetAScoreParameterFile()
 		{
 
-
 			if (string.IsNullOrEmpty(mParamFilename))
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
+				return false;
 			}
 
-			string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
+			const string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
 			string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
 			if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
 			{
@@ -111,23 +130,25 @@ namespace AnalysisManager_AScore_PlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
 			}
 
-			IEnumerable<string> ms = Directory.EnumerateFiles(strMAParameterFileStoragePath, mParamFilename + "*.xml");
-
 			//Find all parameter files that match the base name and copy to working directory
-			if (ms.Count() == 0)
+			var diParamFileFolder = new DirectoryInfo(strMAParameterFileStoragePath);
+			var fiParamFiles = diParamFileFolder.GetFiles(mParamFilename + "*.xml").ToList();
+
+			if (fiParamFiles.Count == 0)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No parameter files present");
 				return false;
 			}
-			foreach (string pfile in ms)
+
+			foreach (var fiFile in fiParamFiles)
 			{
 				try
 				{
-					File.Copy(pfile, Path.Combine(mWorkingDir, Path.GetFileName(pfile)));
+					fiFile.CopyTo(Path.Combine(mWorkingDir, fiFile.Name));
 				}
-				catch
+				catch (Exception ex)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parameter file already written");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying parameter file: " + ex.Message);
 				}
 			}
 
@@ -142,9 +163,9 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <returns></returns>
 		private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
 		{
-			string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+			const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
 			string connStr = mMP.RequireMgrParam("ConnectionString");
-			string sql = string.Format(sqlTemplate, new string[] { dataPackageID, tool });
+			string sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
 			SimpleSink jobList = GetListOfItemsFromDB(sql, connStr);
 			return jobList;
 		}
@@ -155,13 +176,17 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <param name="jobsToProcess"></param>
 		private void ApplyAScoreToJobs(SimpleSink jobsToProcess)
 		{
-			MageAScore ascoreModule = new MageAScore();
+			var ascoreModule = new MageAScore();
+			ascoreModule.WarningMessageUpdated += new EventHandler<MageStatusEventArgs>(ascoreModule_WarningMessageUpdated);
+
 			ascoreModule.ExtractionParms = GetExtractionParametersFromJobParameters();
 			ascoreModule.WorkingDir = mWorkingDir;
 			ascoreModule.ResultsDBFileName = mResultsDBFileName;
-			ascoreModule.strExternalUnzipperFilePath = mStrExternalUnzipperFilePath;
 			ascoreModule.ascoreParamFileName = mParamFilename;
 			ascoreModule.searchType = mSearchType;
+
+			ascoreModule.Initialize(mIonicZipTools);
+
 			ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule).RunRoot(null);
 		}
 
@@ -172,11 +197,11 @@ namespace AnalysisManager_AScore_PlugIn
 		private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
 		{
 			// get selected list of reporter ion files from list of jobs
-			string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+			const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
 			SimpleSink fileList = GetListOfFilesFromFolderList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
 
 			// make module to import contents of each file in list
-			MageFileImport importer = new MageFileImport();
+			var importer = new MageFileImport();
 			importer.DBTableName = tableName;
 			importer.DBFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
 			importer.ImportColumnList = "Dataset_ID|+|text, *";
@@ -188,10 +213,11 @@ namespace AnalysisManager_AScore_PlugIn
 		/// Get a list of items using a database query
 		/// </summary>
 		/// <param name="sql">Query to use a source of jobs</param>
+		/// <param name="connectionString"></param>
 		/// <returns>A Mage module containing list of jobs</returns>
 		public static SimpleSink GetListOfItemsFromDB(string sql, string connectionString)
 		{
-			SimpleSink itemList = new SimpleSink();
+			var itemList = new SimpleSink();
 			MSSQLReader reader = MakeDBReaderModule(sql, connectionString);
 			ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
 			pipeline.RunRoot(null);
@@ -202,12 +228,14 @@ namespace AnalysisManager_AScore_PlugIn
 		/// Create a new MSSQLReader module to do a specific query
 		/// </summary>
 		/// <param name="sql">Query to use</param>
+		/// <param name="connectionString"></param>
 		/// <returns></returns>
 		public static MSSQLReader MakeDBReaderModule(String sql, string connectionString)
 		{
-			MSSQLReader reader = new MSSQLReader();
-			reader.ConnectionString = connectionString;
-			reader.SQLText = sql;
+			var reader = new MSSQLReader
+			{
+				ConnectionString = connectionString, SQLText = sql
+			};
 			return reader;
 		}
 
@@ -220,18 +248,20 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <returns>Mage object containing list of files</returns>
 		public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
 		{
-			SimpleSink sinkObject = new SimpleSink();
+			var sinkObject = new SimpleSink();
 
 			// create file filter module and initialize it
-			FileListFilter fileFilter = new FileListFilter();
-			fileFilter.FileNameSelector = fileNameSelector;
-			fileFilter.SourceFolderColumnName = "Folder";
-			fileFilter.FileColumnName = "Name";
-			fileFilter.OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns;
-			fileFilter.FileSelectorMode = "RegEx";
-			fileFilter.IncludeFilesOrFolders = "File";
-			fileFilter.RecursiveSearch = "No";
-			fileFilter.SubfolderSearchName = "*";
+			var fileFilter = new FileListFilter
+			{
+				FileNameSelector = fileNameSelector,
+				SourceFolderColumnName = "Folder",
+				FileColumnName = "Name",
+				OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns,
+				FileSelectorMode = "RegEx",
+				IncludeFilesOrFolders = "File",
+				RecursiveSearch = "No",
+				SubfolderSearchName = "*"
+			};
 
 			// build, wire, and run pipeline
 			ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
@@ -246,10 +276,12 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
 		public static void ImportFileToSQLite(string inputFilePath, string dbFilePath, string dbTableName)
 		{
-			DelimitedFileReader reader = new DelimitedFileReader();
-			reader.FilePath = inputFilePath;
+			var reader = new DelimitedFileReader
+			{
+				FilePath = inputFilePath
+			};
 
-			SQLiteWriter writer = new SQLiteWriter();
+			var writer = new SQLiteWriter();
 			string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
 			writer.DbPath = dbFilePath;
 			writer.TableName = tableName;
@@ -268,14 +300,16 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <param name="context">Mage context (dictionary to supply lookup values for new output columns)</param>
 		public static void ImportFileToSQLiteWithColumnMods(string inputFilePath, string dbFilePath, string dbTableName, string outputColumnList, Dictionary<string, string> context)
 		{
-			DelimitedFileReader reader = new DelimitedFileReader();
-			reader.FilePath = inputFilePath;
+			var reader = new DelimitedFileReader
+			{
+				FilePath = inputFilePath
+			};
 
 			BaseModule filter = new NullFilter();
 			filter.OutputColumnList = outputColumnList;
 			filter.SetContext(context);
 
-			SQLiteWriter writer = new SQLiteWriter();
+			var writer = new SQLiteWriter();
 			string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
 			writer.DbPath = dbFilePath;
 			writer.TableName = tableName;
@@ -288,7 +322,7 @@ namespace AnalysisManager_AScore_PlugIn
 		/// </summary>
 		protected ExtractionType GetExtractionParametersFromJobParameters()
 		{
-			ExtractionType extractionParms = new ExtractionType();
+			var extractionParms = new ExtractionType();
 
 			// extractionType should be 'Sequest First Hits' or 'MSGF+ First Hits'
 			// Legacy jobs may have 'MSGFDB First Hits'
@@ -309,11 +343,28 @@ namespace AnalysisManager_AScore_PlugIn
 
 		#endregion
 
+		#region Event Handlers
+
+		void ascoreModule_WarningMessageUpdated(object sender, MageStatusEventArgs e)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore error: " + e.Message);
+		}
+
+		void mReader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
+		}
+
+		void mReader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSL Reader error: " + e.Message);
+		}
+
+		#endregion
+
 		// ------------------------------------------------------------------------------
 		#region Mage AScore class
-		//TODO: I have implemented the mzXML accessor for msgfdb data, now need to add functionality
-		//to look for mzxml files to copy filfe.
-
+		//TODO: I have implemented the mzXML accessor for msgfdb data, now need to add functionality to look for mzxml files to copy filfe.
 
 		/// <summary>
 		/// This is a Mage module that does AScore processing 
@@ -330,7 +381,10 @@ namespace AnalysisManager_AScore_PlugIn
 			protected int toolIdx;
 			protected int paramFileIdx;
 			protected int resultsFldrIdx;
+			protected int datasetNameIdx;
 			protected int settingsFileIdx;
+
+			protected clsIonicZipTools mIonicZipTools;
 
 			#endregion
 
@@ -340,7 +394,6 @@ namespace AnalysisManager_AScore_PlugIn
 			public string ExtractedResultsFileName { get; set; }
 			public string WorkingDir { get; set; }
 			public string ResultsDBFileName { get; set; }
-			public string strExternalUnzipperFilePath { get; set; }
 			public string searchType { get; set; }
 			public string ascoreParamFileName { get; set; }
 
@@ -354,6 +407,11 @@ namespace AnalysisManager_AScore_PlugIn
 				ExtractedResultsFileName = "extracted_results.txt";
 			}
 
+			public void Initialize(clsIonicZipTools ionicZipTools)
+			{
+				mIonicZipTools = ionicZipTools;
+			}
+
 			#endregion
 
 			#region Overrides of Mage ContentFilter
@@ -362,17 +420,13 @@ namespace AnalysisManager_AScore_PlugIn
 			protected override void ColumnDefsFinished()
 			{
 				// get array of column names
-				List<string> cols = new List<string>();
-				foreach (MageColumnDef colDef in this.InputColumnDefs)
-				{
-					cols.Add(colDef.Name);
-				}
-				jobFieldNames = cols.ToArray();
+				jobFieldNames = InputColumnDefs.Select(colDef => colDef.Name).ToArray();
 
 				// set up column indexes
 				toolIdx = InputColumnPos["Tool"];
 				paramFileIdx = InputColumnPos["Parameter_File"];
 				resultsFldrIdx = InputColumnPos["Folder"];
+				datasetNameIdx = InputColumnPos["Dataset"];
 				settingsFileIdx = InputColumnPos["Settings_File"];
 
 			}
@@ -391,8 +445,10 @@ namespace AnalysisManager_AScore_PlugIn
 					// copy DTA file for current job to working directory
 					string resultsFolderPath = vals[resultsFldrIdx];
 					string paramFileNameForPSMTool = vals[paramFileIdx];
-					string dtaFilePath;
-					if ((dtaFilePath = CopyDTAResults(resultsFolderPath)) == null)
+					string datasetName = vals[datasetNameIdx];
+
+					string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath);
+					if (string.IsNullOrEmpty(dtaFilePath))
 					{
 						return false;
 					}
@@ -413,7 +469,7 @@ namespace AnalysisManager_AScore_PlugIn
 					}
 
 					// process extracted results file and DTA file with AScore
-					string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
+					const string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
 					string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
 					// TODO: make the call to AScore
@@ -440,8 +496,8 @@ namespace AnalysisManager_AScore_PlugIn
 						}
 					}
 
-					ParameterFileManager paramManager = new ParameterFileManager(paramFileToUse);
-					DtaManager dtaManager = new DtaManager(dtaFile);
+					var paramManager = new ParameterFileManager(paramFileToUse);
+					var dtaManager = new DtaManager(dtaFile);
 					DatasetManager datasetManager;
 
 					switch (searchType)
@@ -464,41 +520,57 @@ namespace AnalysisManager_AScore_PlugIn
 							return false;
 					}
 
-					AScore_DLL.Algorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
+					var ascoreAlgorithm = new Algorithm();
+
+					// Attach the eventes
+					ascoreAlgorithm.ErrorEvent += new MessageEventBase.MessageEventHandler(ascoreAlgorithm_ErrorEvent);
+					ascoreAlgorithm.WarningEvent += new MessageEventBase.MessageEventHandler(ascoreAlgorithm_WarningEvent);
+					ascoreAlgorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
+					
+					Console.WriteLine();
 
 					// load AScore results into SQLite database
 					string tableName = "t_results"; // TODO: how do we name table
 					string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-					clsAScoreMage.ImportFileToSQLite(fhtFile, dbFilePath, tableName);
+					ImportFileToSQLite(fhtFile, dbFilePath, tableName);
 					tableName = "t_results_ascore";
-					clsAScoreMage.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
+					ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
 
 					dtaManager.Abort();
-					if (System.IO.File.Exists(ascoreOutputFilePath))
+					if (File.Exists(ascoreOutputFilePath))
 					{
-						File.Delete(ascoreOutputFilePath);
+						try
+						{
+							clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, intDebugLevel: 1, MaxRetryCount: 2);
+						}
+						catch (Exception ex)
+						{
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + "; may lead to duplicate values in Results.db3");
+						}
+						
 					}
+
 					// Delete extracted_results file and DTA file
-					if (System.IO.File.Exists(fhtFile))
+					if (File.Exists(fhtFile))
+					{
 						File.Delete(fhtFile);
-					if (System.IO.File.Exists(dtaFilePath))
+					}
+
+					if (File.Exists(dtaFilePath))
 					{
 						File.Delete(dtaFilePath);
 					}
-					// optionally delete AScore results file
-					// TODO: do the deletions
-
 
 					return true;
 				}
-				catch (Exception e)
+				catch (Exception ex)
 				{
-					Console.WriteLine(e.Message);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAScoreMage.CheckFilter: " + ex.Message);
+					Console.WriteLine(ex.Message);
 					return false;
 				}
 
 			}
-
 
 			#endregion
 
@@ -508,14 +580,13 @@ namespace AnalysisManager_AScore_PlugIn
 			private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName)
 			{
 				// search job results folders for list of results files to process and accumulate into buffer module
-				SimpleSink fileList = new SimpleSink();
+				var fileList = new SimpleSink();
 				ProcessingPipeline plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
 				plof.RunRoot(null);
 
 				// add job metadata to results database via a Mage pipeline
-				DestinationType resultsDB;
 				string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
-				resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
+				var resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
 				ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB).RunRoot(null);
 
 				// add file metadata to results database via a Mage pipeline
@@ -524,7 +595,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 				// extract contents of files
 				//DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
-				DestinationType destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
+				var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
 				ProcessingPipeline pefc = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
 				pefc.RunRoot(null);
 			}
@@ -534,117 +605,232 @@ namespace AnalysisManager_AScore_PlugIn
 			#region MageAScore Utility Methods
 
 			// look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
-			private string CopyDTAResults(string resultsFolderPath)
+			private string CopyDTAResults(string datasetName, string resultsFolderPath)
 			{
-				string dtaResultsFilename = ""; //"dta_results.zip";
-				string zippedDTAResultsFilePath = ""; // Path.Combine(WorkingDir, dtaResultsFilename);
-				string unzippedDTAResultsFileName = ""; // "dta_results.txt";
-				string unzippedDTAResultsFilePath = Path.Combine(WorkingDir, unzippedDTAResultsFileName);
-				string[] files = Directory.GetFiles(resultsFolderPath, "*_dta.zip");
-				if (files.Length > 0) //check if the dta is in the search tool's directory
+				string dtaZipPathLocal;
+
+				var diResultsFolder = new DirectoryInfo(resultsFolderPath);
+
+				if (resultsFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
 				{
-					dtaResultsFilename = Path.GetFileName(files[0]);
+					// Need to retrieve the _DTA.zip file from MyEMSL
+
+					dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, diResultsFolder);				
 				}
 				else
 				{
-					string jobPFile = string.Empty;
-					files = null;
-					files = Directory.GetFiles(resultsFolderPath, "JobParameters_*.xml");//find the appropriate dta directory
-					if (files.Length > 0)
-					{
-						jobPFile = System.IO.Path.GetFullPath(files[0]);
-					}
-					string DTAfolderName = null;
-					ReadJobParametersFile(jobPFile, ref DTAfolderName);
-					if (DTAfolderName != null)
-					{
-						files = null;
-
-						string DTAdirectory = Path.Combine(Directory.GetParent(resultsFolderPath).FullName, DTAfolderName);
-						if (Directory.Exists(DTAdirectory))
-						{
-							files = Directory.GetFiles(DTAdirectory, "*_dta.zip");
-							if (files.Length > 0)
-							{
-								dtaResultsFilename = Path.GetFileName(files[0]);
-							}
-						}
-					}
+					dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder);					
 				}
-				if (dtaResultsFilename == string.Empty)//if we have changed the string from empty we have found the correct dta
+
+				// If we have changed the string from empty we have found the correct _dta.zip file
+				if (string.IsNullOrEmpty(dtaZipPathLocal))
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found");
 					return null;
 				}
 
-				zippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename);
-				unzippedDTAResultsFilePath = Path.Combine(WorkingDir, dtaResultsFilename.Replace(".zip", ".txt"));
-				if (File.Exists(files[0]))
+				try
 				{
-					try
-					{
-						// Copy the DTA file locally, overwriting if it already exists
-						// Unzip the file
-						File.Copy(files[0], zippedDTAResultsFilePath, true);
-						if (UnzipFileStart(zippedDTAResultsFilePath, WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", false))
-						{
-						}
-					}
-					catch (Exception ex)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying and unzipping _DTA.zip file: " + ex.Message);
-						return null;
-					}
-
-					try
-					{
-						// Delay 1 second then perform garage collection to force the Unzip tool to release the file handle
-						System.Threading.Thread.Sleep(1000);
-						PRISM.Processes.clsProgRunner.GarbageCollectNow();
-
-						clsAnalysisToolRunnerBase.DeleteFileWithRetries(zippedDTAResultsFilePath, intDebugLevel:1, MaxRetryCount:2);
-					}
-					catch (Exception ex)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete _dta.zip file: " + ex.Message);
-					}
-
+					// Unzip the file
+					mIonicZipTools.UnzipFile(dtaZipPathLocal);
 				}
-				return unzippedDTAResultsFilePath;
-			}
-
-
-			private void ReadJobParametersFile(string JobParameterFilePath, ref string DTAGenFolderName)
-			{
-				System.Xml.XmlDocument oXmlDoc = default(System.Xml.XmlDocument);
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying and unzipping _DTA.zip file: " + ex.Message);
+					return null;
+				}
 
 				try
 				{
-					oXmlDoc = new System.Xml.XmlDocument();
-					oXmlDoc.Load(JobParameterFilePath);
+					// Perform garage collection to force the Unzip tool to release the file handle
+					Thread.Sleep(250);
+					clsProgRunner.GarbageCollectNow();
+
+					clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, intDebugLevel: 1, MaxRetryCount: 2);
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete _dta.zip file: " + ex.Message);
+				}
+
+				string unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
+				return unzippedDtaResultsFilePath;
+			}
+
+			protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder)
+			{
+				mMyEMSLDatasetInfo.AddDataset(datasetName);
+				var lstArchiveFiles = mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
+
+				if (lstArchiveFiles.Count == 0)
+				{
+					// Look for the JobParameters file
+					lstArchiveFiles = mMyEMSLDatasetInfo.FindFiles("JobParameters_*.xml", diResultsFolder.Name, datasetName);
+					if (lstArchiveFiles.Count == 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+						                     "JobParameters XML file not found in folder " + diResultsFolder.FullName +
+						                     "; unable to determine the DTA folder");
+						return null;
+					}
+
+					mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+
+					if (!mMyEMSLDatasetInfo.ProcessDownloadQueue(Path.GetTempPath(), Downloader.DownloadFolderLayout.FlatNoSubfolders))
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+						                     "Error downloading the JobParameters XML file from MyEMSL");
+						return null;
+					}
+
+					string jobParamFile = Path.Combine(Path.GetTempPath(), lstArchiveFiles.First().FileInfo.Filename);
+
+					string dtaFolderName = ReadJobParametersFile(jobParamFile);
+
+					try
+					{
+						File.Delete(jobParamFile);
+					}
+						// ReSharper disable once EmptyGeneralCatchClause
+					catch
+					{
+						// Ignore errors here
+					}
+
+					if (string.IsNullOrEmpty(dtaFolderName))
+					{
+						return null;
+					}
+
+					mMyEMSLDatasetInfo.ClearDownloadQueue();
+					lstArchiveFiles = mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaFolderName, datasetName);
+
+					if (lstArchiveFiles.Count == 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+						                     "DTA file not found in folder " + dtaFolderName + " in MyEMSL");
+						return null;
+					}
+				}
+
+				mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+
+				if (!mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+					                     "Error downloading the _DTA.zip file from MyEMSL");
+					return null;
+				}
+
+				string dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
+
+				return dtaZipPathLocal;
+			}
+
+
+			protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder)
+			{
+				// Check if the dta is in the search tool's directory					
+				string dtaZipSourceFilePath;
+				
+				var lstFiles = diResultsFolder.GetFiles("*_dta.zip").ToList();
+				if (lstFiles.Count > 0)
+				{
+					dtaZipSourceFilePath = lstFiles.First().FullName;
+				}
+				else
+				{
+					// File not found
+					// Examine the JobParameters file to determine the appropriate dta directory
+
+					lstFiles = diResultsFolder.GetFiles("JobParameters_*.xml").ToList();
+					if (lstFiles.Count == 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+											 "JobParameters XML file not found in folder " + diResultsFolder.FullName +
+											 "; unable to determine the DTA folder");
+						return null;
+					}
+
+					string jobParamFile = lstFiles.First().FullName;
+
+					string dtaFolderName = ReadJobParametersFile(jobParamFile);
+
+					if (string.IsNullOrEmpty(dtaFolderName))
+					{
+						// Error has already been logged
+						return null;
+					}
+
+					if (diResultsFolder.Parent == null || !diResultsFolder.Parent.Exists)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+											 "DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
+						return null;
+					}
+
+					var diAlternateDtaFolder = new DirectoryInfo(Path.Combine(diResultsFolder.Parent.FullName, dtaFolderName));
+					if (!diAlternateDtaFolder.Exists)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+											 "DTA directory not found: " + diAlternateDtaFolder.FullName);
+						return null;
+					}
+
+					lstFiles = diAlternateDtaFolder.GetFiles("*_dta.zip").ToList();
+					if (lstFiles.Count == 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+											 "DTA file not found in folder " + diAlternateDtaFolder.FullName);
+						return null;
+					}
+
+					dtaZipSourceFilePath = lstFiles.First().FullName;
+				}
+
+				var fiDtaZipRemote = new FileInfo(dtaZipSourceFilePath);
+				string dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
+
+				// Copy the DTA file locally, overwriting if it already exists
+				fiDtaZipRemote.CopyTo(dtaZipPathLocal, true);
+
+				return dtaZipPathLocal;
+			}
+
+			private string ReadJobParametersFile(string jobParameterFilePath)
+			{
+				string dtaFolderName = string.Empty;
+
+				try
+				{
+					var oXmlDoc = new XmlDocument();
+					oXmlDoc.Load(jobParameterFilePath);
 
 					string folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
 					List<string> folders = folderVals.Split(',').ToList();
-					DTAGenFolderName = folders[folders.Count - 1]; //this is the default folder if all else fails
+					dtaFolderName = folders.Last(); //this is the default folder if all else fails
 					if (folders.Count > 1)
 					{
-						folders.RemoveAll(entries => entries.Contains("DTA_Gen"));//I love lambda expressions
-						if (folders.Count == 1)
+						folders.RemoveAll(entries => entries.Contains("DTA_Gen"));	//I love lambda expressions
+						if (folders.Count > 0)
 						{
-							DTAGenFolderName = folders[0];
-						}
-						else if (folders.Count > 1)
-						{
-							DTAGenFolderName = folders[folders.Count - 1];
+							dtaFolderName = folders.Last();
 						}
 					}
 				}
 				catch (Exception ex)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory via job parameter SharedResultsFolders: " + ex.Message);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders: " + ex.Message);
 				}
 
-				DTAGenFolderName = DTAGenFolderName.Trim();
+				if (string.IsNullOrWhiteSpace(dtaFolderName))
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders");
+					return string.Empty;
+				}
+				else
+					return dtaFolderName.Trim();
+
 			}
 
 			/// <summary>
@@ -653,9 +839,9 @@ namespace AnalysisManager_AScore_PlugIn
 			/// <param name="sectionName">The name of the section.</param>
 			/// <param name="keyName">The name of the key.</param>
 			///<return>The function returns the name of the "value" attribute.</return>
-			private string GetIniValue(System.Xml.XmlDocument oXmlDoc, string sectionName, string keyName)
+			private string GetIniValue(XmlDocument oXmlDoc, string sectionName, string keyName)
 			{
-				System.Xml.XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
+				XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
 				if (N != null)
 				{
 					return (N.Attributes.GetNamedItem("value").Value);
@@ -670,15 +856,15 @@ namespace AnalysisManager_AScore_PlugIn
 			/// <param name="sectionName">The name of the section.</param>
 			/// <param name="keyName">The name of the key.</param>
 			/// <return>The function returns a XML element.</return>
-			private System.Xml.XmlElement GetItem(System.Xml.XmlDocument oXmlDoc, string sectionName, string keyName)
+			private XmlElement GetItem(XmlDocument oXmlDoc, string sectionName, string keyName)
 			{
-				System.Xml.XmlElement section = default(System.Xml.XmlElement);
+				XmlElement section = default(XmlElement);
 				if (!string.IsNullOrEmpty(keyName))
 				{
 					section = GetSection(oXmlDoc, sectionName);
 					if (section != null)
 					{
-						return (System.Xml.XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
+						return (XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
 					}
 				}
 				return null;
@@ -689,117 +875,41 @@ namespace AnalysisManager_AScore_PlugIn
 			/// </summary>
 			/// <param name="sectionName">The name of a section.</param>
 			/// <return>The function returns a section as XmlElement.</return>
-			private System.Xml.XmlElement GetSection(System.Xml.XmlDocument oXmlDoc, string sectionName)
+			private XmlElement GetSection(XmlDocument oXmlDoc, string sectionName)
 			{
 				if (!string.IsNullOrEmpty(sectionName))
 				{
-					return (System.Xml.XmlElement)oXmlDoc.SelectSingleNode("//section[@name='" + sectionName + "']");
+					return (XmlElement)oXmlDoc.SelectSingleNode("//section[@name='" + sectionName + "']");
 				}
 				return null;
 			}
 
 
-
-
 			// Build Mage source module containing one job to process
 			private BaseModule MakeJobSourceModule(string[] jobFieldNames, string[] jobFields)
 			{
-				DataGenerator currentJob = new DataGenerator();
-				currentJob.AddAdHocRow = jobFieldNames;
+				var currentJob = new DataGenerator
+				{
+					AddAdHocRow = jobFieldNames
+				};
 				currentJob.AddAdHocRow = jobFields;
 				return currentJob;
 			}
 
 
-			private bool UnzipFileStart(string ZipFilePath, string OutFolderPath, string CallingFunctionName, bool ForceExternalZipProgramUse)
+			#endregion
+
+			#region "Event handlers"
+
+			void ascoreAlgorithm_WarningEvent(object sender, MessageEventArgs e)
 			{
-
-				System.IO.FileInfo fiFileInfo = null;
-				float sngFileSizeMB = 0;
-
-				bool blnUseExternalUnzipper = false;
-				bool blnSuccess = false;
-
-				string strUnzipperName = string.Empty;
-
-				DateTime dtStartTime = default(DateTime);
-				DateTime dtEndTime = default(DateTime);
-				m_IonicZipTools = new clsIonicZipTools(1, WorkingDir);
-
-				try
-				{
-					if (ZipFilePath == null)
-						ZipFilePath = string.Empty;
-
-					if (strExternalUnzipperFilePath == null)
-						strExternalUnzipperFilePath = string.Empty;
-
-					fiFileInfo = new System.IO.FileInfo(ZipFilePath);
-					sngFileSizeMB = Convert.ToSingle(fiFileInfo.Length / 1024.0 / 1024);
-
-					// Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
-					// However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-					if (ForceExternalZipProgramUse || sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
-					{
-						if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na")
-						{
-							if (System.IO.File.Exists(strExternalUnzipperFilePath))
-							{
-								blnUseExternalUnzipper = true;
-							}
-						}
-
-						if (!blnUseExternalUnzipper)
-						{
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip");
-						}
-					}
-
-					if (blnUseExternalUnzipper)
-					{
-						strUnzipperName = System.IO.Path.GetFileName(strExternalUnzipperFilePath);
-
-						PRISM.Files.ZipTools UnZipper = new PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath);
-
-						dtStartTime = DateTime.UtcNow;
-						blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath);
-						dtEndTime = DateTime.UtcNow;
-
-						if (blnSuccess)
-						{
-							m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, strUnzipperName);
-						}
-						else
-						{
-							mMessage = "Error unzipping " + System.IO.Path.GetFileName(ZipFilePath) + " using " + strUnzipperName;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + mMessage);
-							UnZipper = null;
-						}
-					}
-					else
-					{
-						// Use Ionic.Zip
-						strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
-						blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath);
-					}
-
-				}
-				catch (Exception ex)
-				{
-					mMessage = "Exception while unzipping '" + ZipFilePath + "'";
-					if (!string.IsNullOrEmpty(strUnzipperName))
-						mMessage += " using " + strUnzipperName;
-
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex));
-					blnSuccess = false;
-				}
-
-				return blnSuccess;
-
+				OnWarningMessage(new MageStatusEventArgs(e.Message));
 			}
 
-
-
+			void ascoreAlgorithm_ErrorEvent(object sender, MessageEventArgs e)
+			{
+				OnWarningMessage(new MageStatusEventArgs(e.Message));
+			}
 			#endregion
 		}
 
@@ -845,11 +955,11 @@ namespace AnalysisManager_AScore_PlugIn
 			{
 				if (string.IsNullOrEmpty(ImportColumnList))
 				{
-					clsAScoreMage.ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
+					ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
 				}
 				else
 				{
-					clsAScoreMage.ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, this.ImportColumnList, context);
+					ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, ImportColumnList, context);
 				}
 			}
 
