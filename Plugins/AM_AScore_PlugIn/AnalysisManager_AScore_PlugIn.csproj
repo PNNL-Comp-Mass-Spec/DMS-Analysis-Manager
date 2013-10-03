@@ -78,6 +78,10 @@
     <Compile Include="clsAnalysisResourcesAScore.cs" />
     <Compile Include="clsAnalysisToolRunnerAScore.cs" />
     <Compile Include="clsAScoreMage.cs" />
+    <Compile Include="JobParameters.cs" />
+    <Compile Include="MageAScoreModule.cs" />
+    <Compile Include="MageFileImport.cs" />
+    <Compile Include="ManagerParameters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

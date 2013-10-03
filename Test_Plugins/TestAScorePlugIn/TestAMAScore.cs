@@ -9,14 +9,12 @@ namespace TestAScorePlugIn {
     class TestAMAScore {
 
         //-------------------------------- PHOSPHO
-        string mWorkDir;
-        string mLogFilename;
         /// <summary>
         /// 
         /// </summary>
         public void Test_RunAScore()
         {
-			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+			var dctJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -39,7 +37,7 @@ namespace TestAScorePlugIn {
                 { "AScoreSearchType", "sequest" }
             };
 
-			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+			var dctMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "AScoreprogloc", @"C:\ToolsApplications\AScore\AScore_Console.exe" },
                 { "workdir", @"C:\DMS_WorkDir" },
@@ -50,24 +48,25 @@ namespace TestAScorePlugIn {
                 { "StepTool_ParamFileStoragePath_AScore", @"\\gigasax\DMS_Parameter_Files\AScore"}
 
             };
-            MgrParamsStub m_mgrParams = new MgrParamsStub(mMgrParms);
-            JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
+            var mgrParams = new MgrParamsStub(dctMgrParms);
+            var jobParams = new JobParamsStub(dctJobParms);
+			
+            string workDir = mgrParams.GetParam("workdir");
+            string logFilenameSaved = mgrParams.GetParam("logfilename");
 
-            mWorkDir = m_mgrParams.GetParam("workdir");
-            mLogFilename = m_mgrParams.GetParam("logfilename");
+			var ionicZipTools = new clsIonicZipTools(1, workDir);
 
             //Change the name of the log file for the local log file to the plugin log filename
-            String LogFileName = Path.Combine(mWorkDir, "AScore_Log"); //m_WorkDir, "AScore_Log");
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+			String logFileName = Path.Combine(workDir, "AScore_Log");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileName(logFileName);
 
-            clsAScoreMage dvas = new clsAScoreMage(m_jobParams, m_mgrParams);
-            dvas.Run();
+			var ascoreMage = new clsAScoreMagePipeline(jobParams, mgrParams, ionicZipTools);
+			ascoreMage.Run();
 
             // Change the name of the log file back to the analysis manager log file
-            LogFileName = mLogFilename;
-            log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+			log4net.GlobalContext.Properties["LogName"] = logFilenameSaved;
+			clsLogTools.ChangeLogFileName(logFilenameSaved);
 
         }
 

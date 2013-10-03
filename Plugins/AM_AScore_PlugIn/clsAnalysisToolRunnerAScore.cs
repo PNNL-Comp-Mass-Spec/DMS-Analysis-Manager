@@ -144,7 +144,7 @@ namespace AnalysisManager_AScore_PlugIn
        protected bool RunAScore()
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
-           var ascoreMage = new clsAScoreMage(m_jobParams, m_mgrParams, m_IonicZipTools);
+           var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_IonicZipTools);
 		   return ascoreMage.Run();
            
        }
