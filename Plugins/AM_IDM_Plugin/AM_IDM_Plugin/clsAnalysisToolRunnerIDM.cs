@@ -92,6 +92,8 @@ namespace AnalysisManager_IDM_Plugin
 						// Attach the progress event
 						idm.ProgressChanged += InterfenceDetectorProgressHandler;
 
+						idm.WorkDir = m_WorkDir;
+
 						success = idm.Run(m_WorkDir, "Results.db3");
 
 						//Change the name of the log file for the local log file to the plug in log filename
