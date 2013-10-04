@@ -12,7 +12,7 @@ namespace AnalysisManager_IDM_Plugin
         #endregion
 
         #region Methods
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+        public override IJobParams.CloseOutType GetResources()
         {
 
             try
@@ -23,7 +23,6 @@ namespace AnalysisManager_IDM_Plugin
 				}
 
                 string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
-                string analysisType = m_jobParams.GetParam("AnalysisType");
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
                 {
@@ -35,7 +34,7 @@ namespace AnalysisManager_IDM_Plugin
 
 				if (useExistingIDMResults)
 				{
-					FileInfo fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepOutputFolderName"), "Results.db3"));
+					var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepOutputFolderName"), "Results.db3"));
 					if (fiIDMResultsDB.Exists)
 					{
 						string targetFilePath = Path.Combine(m_WorkingDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);

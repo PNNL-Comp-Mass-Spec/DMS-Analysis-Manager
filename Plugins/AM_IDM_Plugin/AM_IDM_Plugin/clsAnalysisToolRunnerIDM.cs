@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Threading;
 using AnalysisManagerBase;
 using log4net;
 using InterDetect;
+using PRISM.Processes;
 
 namespace AnalysisManager_IDM_Plugin
 {
@@ -15,7 +16,7 @@ namespace AnalysisManager_IDM_Plugin
 		#endregion
 
 		#region Members
-		protected System.DateTime mLastProgressUpdate;
+		protected DateTime mLastProgressUpdate;
 		#endregion
 
 		#region Methods
@@ -23,17 +24,16 @@ namespace AnalysisManager_IDM_Plugin
 		{
 			try
 			{
-				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 				bool success = false;
 				bool skipIDM = false;
 
 				//Do the base class stuff
-				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
-				FileInfo fiIDMResultsDB = new FileInfo(Path.Combine(m_WorkDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME));
+				var fiIDMResultsDB = new FileInfo(Path.Combine(m_WorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
 				if (fiIDMResultsDB.Exists)
 				{
 					// Existing results file was copied to the working directory
@@ -41,15 +41,14 @@ namespace AnalysisManager_IDM_Plugin
 
 					try
 					{
-						var sqLiteUtils = new AnalysisManagerBase.clsSqLiteUtilities();
+						var sqLiteUtils = new clsSqLiteUtilities();
 
 						if (m_DebugLevel >= 1)
 						{
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
 						}
 
-						bool appendToExistingDB = true;
-						success = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB);
+						success = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB: true);
 
 						if (success)
 							skipIDM = true;
@@ -70,7 +69,7 @@ namespace AnalysisManager_IDM_Plugin
 					// Store the Version info in the database
 					StoreToolVersionInfo();
 
-					mLastProgressUpdate = System.DateTime.UtcNow;
+					mLastProgressUpdate = DateTime.UtcNow;
 					m_progress = 0;
 					m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
@@ -82,29 +81,29 @@ namespace AnalysisManager_IDM_Plugin
 
 					//Change the name of the log file for the local log file to the plug in log filename
 					String LogFileName = Path.Combine(m_WorkDir, "IDM_Log");
-					log4net.GlobalContext.Properties["LogName"] = LogFileName;
+					GlobalContext.Properties["LogName"] = LogFileName;
 					clsLogTools.ChangeLogFileName(LogFileName);
 
 					try
 					{
 						// Create in instance of IDM and run the tool
-						InterferenceDetector idm = new InterferenceDetector();
+						var idm = new InterferenceDetector();
 
 						// Attach the progress event
-						idm.ProgressChanged += new InterferenceDetector.ProgressChangedHandler(InterfenceDetectorProgressHandler);
+						idm.ProgressChanged += InterfenceDetectorProgressHandler;
 
 						success = idm.Run(m_WorkDir, "Results.db3");
 
 						//Change the name of the log file for the local log file to the plug in log filename
 						LogFileName = m_mgrParams.GetParam("logfilename");
-						log4net.GlobalContext.Properties["LogName"] = LogFileName;
+						GlobalContext.Properties["LogName"] = LogFileName;
 						clsLogTools.ChangeLogFileName(LogFileName);
 					}
 					catch (Exception ex)
 					{
 						//Change the name of the log file for the local log file to the plug in log filename
 						LogFileName = m_mgrParams.GetParam("logfilename");
-						log4net.GlobalContext.Properties["LogName"] = LogFileName;
+						GlobalContext.Properties["LogName"] = LogFileName;
 						clsLogTools.ChangeLogFileName(LogFileName);
 
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running IDM: " + ex.Message);
@@ -113,7 +112,7 @@ namespace AnalysisManager_IDM_Plugin
 				}
 
 				//Stop the job timer
-				m_StopTime = System.DateTime.UtcNow;
+				m_StopTime = DateTime.UtcNow;
 				m_progress = 100;
 
 				//Add the current job data to the summary file
@@ -124,8 +123,8 @@ namespace AnalysisManager_IDM_Plugin
 
 				//Make sure objects are released
 				//2 second delay
-				System.Threading.Thread.Sleep(2000);
-				PRISM.Processes.clsProgRunner.GarbageCollectNow();
+				Thread.Sleep(2000);
+				clsProgRunner.GarbageCollectNow();
 
 				if (!success)
 				{
@@ -139,7 +138,7 @@ namespace AnalysisManager_IDM_Plugin
 				m_Dataset = m_jobParams.GetParam("OutputFolderName");
 				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				result = MakeResultsFolder();
+				IJobParams.CloseOutType result = MakeResultsFolder();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -173,8 +172,6 @@ namespace AnalysisManager_IDM_Plugin
 
 		protected void CopyFailedResultsToArchiveFolder()
 		{
-			IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
 			string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
 			if (string.IsNullOrEmpty(strFailedResultsFolderPath))
 				strFailedResultsFolderPath = "??Not Defined??";
@@ -186,8 +183,7 @@ namespace AnalysisManager_IDM_Plugin
 				m_DebugLevel = 2;
 
 			// Try to save whatever files are in the work directory
-			string strFolderPathToArchive;
-			strFolderPathToArchive = string.Copy(m_WorkDir);
+			string strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
@@ -203,7 +199,7 @@ namespace AnalysisManager_IDM_Plugin
 			*/
 
 			// Make the results folder
-			result = MakeResultsFolder();
+			IJobParams.CloseOutType result = MakeResultsFolder();
 			if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 			{
 				// Move the result files into the result folder
@@ -211,12 +207,12 @@ namespace AnalysisManager_IDM_Plugin
 				if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// Move was a success; update strFolderPathToArchive
-					strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+					strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
 				}
 			}
 
 			// Copy the results folder to the Archive folder
-			clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+			var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
 			objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
 		}		
@@ -226,9 +222,9 @@ namespace AnalysisManager_IDM_Plugin
 
 			m_progress = e.Value;
 
-			if (System.DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalMinutes >= 1)
+			if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalMinutes >= 1)
 			{
-				mLastProgressUpdate = System.DateTime.UtcNow;
+				mLastProgressUpdate = DateTime.UtcNow;
 				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 			}
 
@@ -243,7 +239,7 @@ namespace AnalysisManager_IDM_Plugin
 		{
 			string strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-			System.IO.FileInfo fiIDMdll = new System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "InterDetect.dll"));
+			var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "InterDetect.dll"));
 
 			return StoreToolVersionInfoDLL(fiIDMdll.FullName);
 		}
@@ -259,15 +255,17 @@ namespace AnalysisManager_IDM_Plugin
 			}
 
 			// Lookup the version of the DLL
-			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strIDMdllPath);
+			StoreToolVersionInfoOneFile(ref strToolVersionInfo, strIDMdllPath);
 
 			// Store paths to key files in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strIDMdllPath));
+			var ioToolFiles = new List<FileInfo>
+			{
+				new FileInfo(strIDMdllPath)
+			};
 
 			try
 			{
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
 			}
 			catch (Exception ex)
 			{
