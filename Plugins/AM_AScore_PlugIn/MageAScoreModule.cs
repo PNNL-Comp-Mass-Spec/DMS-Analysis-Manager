@@ -193,7 +193,7 @@ namespace AnalysisManager_AScore_PlugIn
 					}
 					catch (Exception ex)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + "; may lead to duplicate values in Results.db3");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + " (" + ex.Message + "); may lead to duplicate values in Results.db3");
 					}
 
 				}
