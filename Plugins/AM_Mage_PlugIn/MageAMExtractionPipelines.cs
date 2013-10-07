@@ -56,7 +56,7 @@ namespace AnalysisManager_Mage_PlugIn {
             ResultsDestination = new DestinationType();
 
             // extraction and filtering parameters
-            String extractionType = RequireJobParam("ExtractionType"); //"Sequest First Hits"
+			String extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
 
 			try
 			{
