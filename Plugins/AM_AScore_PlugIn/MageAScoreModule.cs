@@ -180,10 +180,8 @@ namespace AnalysisManager_AScore_PlugIn
 				Console.WriteLine();
 
 				// load AScore results into SQLite database
-				string tableName = "t_results"; // TODO: how do we name table
+				string tableName = "t_results_ascore"; // TODO: how do we name table
 				string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-				clsAScoreMagePipeline.ImportFileToSQLite(fhtFile, dbFilePath, tableName);
-				tableName = "t_results_ascore";
 				clsAScoreMagePipeline.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
 
 				dtaManager.Abort();
