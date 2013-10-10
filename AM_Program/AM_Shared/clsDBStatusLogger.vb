@@ -50,7 +50,7 @@ Public Class clsDBStatusLogger
 	Private Const SP_NAME_UPDATE_MANAGER_STATUS As String = "UpdateManagerAndTaskStatus"
 
 	'Status file name and location
-	Private m_DBConnectionString As String
+	Private ReadOnly m_DBConnectionString As String
 
 	' The minimum interval between updating the manager status in the database
 	Private m_DBStatusUpdateIntervalMinutes As Single = 1

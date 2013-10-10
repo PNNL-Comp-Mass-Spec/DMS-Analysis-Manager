@@ -32,18 +32,16 @@ Module modMain
 	Public Function Main() As Integer
 		' Returns 0 if no error, error code if an error
 
-		Dim objDMSMain As AnalysisManagerProg.clsMainProcess
+		Dim objDMSMain As clsMainProcess
 
 		Dim intReturnCode As Integer
 		Dim objParseCommandLine As New clsParseCommandLine
-		Dim blnProceed As Boolean
 
 		intReturnCode = 0
 		mCodeTestMode = False
 		mTraceMode = False
 
 		Try
-			blnProceed = False
 
 			' Look for /T or /Test on the command line
 			' If present, this means "code test mode" is enabled
@@ -51,7 +49,7 @@ Module modMain
 			' Other valid switches are /I, /T, /Test, /Trace, /EL, /Q, and /?
 			'
 			If objParseCommandLine.ParseCommandLine Then
-				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+				SetOptionsUsingCommandLineParameters(objParseCommandLine)
 			End If
 
 			If objParseCommandLine.NeedToShowHelp Then
@@ -112,11 +110,11 @@ Module modMain
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
 					End Try
 				ElseIf mCreateWindowsEventLog Then
-					AnalysisManagerProg.clsMainProcess.CreateAnalysisManagerEventLog()
+					clsMainProcess.CreateAnalysisManagerEventLog()
 				Else
 					' Initiate automated analysis
 					If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
-					objDMSMain = New AnalysisManagerProg.clsMainProcess(mTraceMode)
+					objDMSMain = New clsMainProcess(mTraceMode)
 					objDMSMain.Main()
 					intReturnCode = 0
 
@@ -181,7 +179,7 @@ Module modMain
 	End Function
 
     Private Sub ShowErrorMessage(ByVal strMessage As String)
-        Dim strSeparator As String = "------------------------------------------------------------------------------"
+		Const strSeparator As String = "------------------------------------------------------------------------------"
 
         Console.WriteLine()
         Console.WriteLine(strSeparator)
@@ -192,8 +190,8 @@ Module modMain
 		WriteToErrorStream(strMessage)
     End Sub
 
-	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As List(Of String))
-		Dim strSeparator As String = "------------------------------------------------------------------------------"
+	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As IEnumerable(Of String))
+		Const strSeparator As String = "------------------------------------------------------------------------------"
 		Dim strMessage As String
 
 		Console.WriteLine()
@@ -220,7 +218,7 @@ Module modMain
 			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " [/EL] [/T] [/Trace] [/Q]")
 			Console.WriteLine()
 
-			Console.WriteLine("Use /EL to create the Windows Event Log named '" & AnalysisManagerProg.clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
+			Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
 			Console.WriteLine()
 			Console.WriteLine("Use /T or /Test to start the program in code test mode.")
 			Console.WriteLine()
@@ -270,7 +268,7 @@ Module modMain
 	End Sub
 
 	Public Sub ShowTraceMessage(ByVal strMessage As String)
-		AnalysisManagerProg.clsMainProcess.ShowTraceMessage(strMessage)
+		clsMainProcess.ShowTraceMessage(strMessage)
 	End Sub
 End Module
 

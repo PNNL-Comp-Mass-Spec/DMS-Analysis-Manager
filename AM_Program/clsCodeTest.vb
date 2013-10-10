@@ -42,7 +42,7 @@ Public Class clsCodeTest
 		Dim lstMgrSettings As Generic.Dictionary(Of String, String)
 
 		Try
-			lstMgrSettings = AnalysisManagerProg.clsMainProcess.LoadMgrSettingsFromFile()
+			lstMgrSettings = clsMainProcess.LoadMgrSettingsFromFile()
 
 			m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath())
 
@@ -544,16 +544,15 @@ Public Class clsCodeTest
 		Throw New System.IO.PathTooLongException
 	End Sub
 
-	Public Function TestUncat(ByVal rootFileName As String, ByVal strResultsFolder As String) As Boolean
+	Public Sub TestUncat(ByVal rootFileName As String, ByVal strResultsFolder As String)
 		Console.WriteLine("Splitting concatenated DTA file")
 
 		Dim FileSplitter As New clsSplitCattedFiles()
 		FileSplitter.SplitCattedDTAsOnly(rootFileName, strResultsFolder)
 
 		Console.WriteLine("Completed splitting concatenated DTA file")
-
-
-	End Function
+		
+	End Sub
 
 	Public Sub TestDTASplit()
 		''Dim intDebugLevel As Integer = 2
@@ -647,8 +646,6 @@ Public Class clsCodeTest
 	   ByVal strProteinCollectionList As String, _
 	   ByVal strProteinOptions As String) As Boolean
 
-		Dim HashString As String = String.Empty
-
 		'Instantiate fasta tool if not already done
 		If m_FastaTools Is Nothing Then
 			If m_FastaToolsCnStr = "" Then
@@ -671,9 +668,9 @@ Public Class clsCodeTest
 		m_FastaGenTimeOut = False
 		Try
 			m_FastaTimer.Start()
-			HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder)
+			Dim HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder)
 		Catch ex As Exception
-			Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: ", ex.Message)
+			Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: " & ex.Message)
 			Return False
 		End Try
 
@@ -803,7 +800,7 @@ Public Class clsCodeTest
 		Return blnSuccess
 	End Function
 
-	Public Function TestIonicZipTools() As Boolean
+	Public Sub TestIonicZipTools()
 		Dim oIonicZipTools As clsIonicZipTools
 
 		oIonicZipTools = New clsIonicZipTools(1, "E:\DMS_WorkDir")
@@ -813,7 +810,7 @@ Public Class clsCodeTest
 			Console.WriteLine(item.Key & " - " & item.Value)
 		Next
 
-	End Function
+	End Sub
 
 	Public Function TestMALDIDataUnzip(ByVal strSourceDatasetFolder As String) As Boolean
 
@@ -1007,6 +1004,7 @@ Public Class clsCodeTest
 			End If
 		End If
 
+		Return True
 
 	End Function
 
@@ -1331,7 +1329,7 @@ Public Class clsCodeTest
 	  ByVal strDatasetName As String, _
 	  ByVal strInputFolderName As String) As IJobParams.CloseOutType
 
-		Const m_DebugLevel As Integer = 3
+		m_DebugLevel = 3
 
 		Dim Msg As String
 		Dim FolderToMove As String
@@ -1412,6 +1410,8 @@ Public Class clsCodeTest
 			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 
@@ -1519,7 +1519,7 @@ Public Class clsCodeTest
 	Protected Sub FindAndReplace(ByRef lineText As String, ByRef strOldValue As String, ByRef strNewValue As String)
 		Dim intMatchIndex As Integer
 
-		intMatchIndex = lineText.IndexOf(strOldValue)
+		intMatchIndex = lineText.IndexOf(strOldValue, System.StringComparison.Ordinal)
 
 		If intMatchIndex > 0 Then
 			lineText = lineText.Substring(0, intMatchIndex) + strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
@@ -2200,7 +2200,7 @@ Public Class clsCodeTest
 		Inherits clsAnalysisResources
 
 		Public Overrides Function GetResources() As IJobParams.CloseOutType
-
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End Function
 	End Class
 

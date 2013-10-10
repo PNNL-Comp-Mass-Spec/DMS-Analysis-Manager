@@ -261,7 +261,7 @@ Public Class clsParseCommandLine
 
 			If String.IsNullOrWhiteSpace(strCmdLine) Then
 				Return False
-			ElseIf strCmdLine.IndexOf(chSwitchStartChar & "?") > 0 Or strCmdLine.ToLower.IndexOf(chSwitchStartChar & "help") > 0 Then
+			ElseIf strCmdLine.Contains(chSwitchStartChar & "?") Or strCmdLine.ToLower().Contains(chSwitchStartChar & "help") Then
 				mShowHelp = True
 				Return False
 			End If

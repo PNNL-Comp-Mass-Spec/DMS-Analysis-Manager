@@ -82,7 +82,7 @@ Public Class clsAnalysisMgrSettings
 			RetVal = MyCmd.ExecuteNonQuery
 
 		Catch ex As System.Exception
-			Dim strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
+			Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
 		End Try
 
@@ -368,11 +368,10 @@ Public Class clsAnalysisMgrSettings
 		'   FROM V_Pipeline_Step_Tools_Detail_Report
 		'   WHERE ISNULL([Param File Storage Path], '') <> ''
 		'
-		Dim SqlStr As String = _
-		  " SELECT '" & clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "' + Name AS ParameterName, " & _
-		  " [Param File Storage Path] AS ParameterValue" & _
-		  " FROM V_Pipeline_Step_Tools_Detail_Report" & _
-		  " WHERE ISNULL([Param File Storage Path], '') <> ''"
+		Const SqlStr As String = " SELECT '" & clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "' + Name AS ParameterName, " & _
+								 " [Param File Storage Path] AS ParameterValue" & _
+								 " FROM V_Pipeline_Step_Tools_Detail_Report" & _
+								 " WHERE ISNULL([Param File Storage Path], '') <> ''"
 
 		Dim Dt As DataTable = Nothing
 		Dim blnsuccess As Boolean = False
@@ -518,12 +517,12 @@ Public Class clsAnalysisMgrSettings
 	''' <summary>
 	''' Writes an error message to application log or manager local log
 	''' </summary>
-	''' <param name="ErrMsg">Message to write</param>
+	''' <param name="Message">Message to write</param>
 	''' <remarks></remarks>
-	Private Sub WriteErrorMsg(ByVal ErrMsg As String)
+	Private Sub WriteErrorMsg(ByVal Message As String)
 
-		WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, ErrMsg)
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+		WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, Message)
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
 
 	End Sub
 
@@ -590,7 +589,7 @@ Public Class clsAnalysisMgrSettings
 
 	End Function
 
-	Protected Sub WriteToEmergencyLog(ByVal SourceName As String, ByVal LogName As String, ByVal ErrMsg As String)
+	Protected Sub WriteToEmergencyLog(ByVal SourceName As String, ByVal LogName As String, ByVal Message As String)
 		' Post a message to the the Windows application event log named LogName
 		' If the application log does not exist yet, we will try to create it
 		' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
@@ -619,7 +618,7 @@ Public Class clsAnalysisMgrSettings
 			' Leave this as the default
 		End Try
 
-		EventLog.WriteEntry(SourceName, ErrMsg, EventLogEntryType.Error)
+		EventLog.WriteEntry(SourceName, Message, EventLogEntryType.Error)
 
 	End Sub
 

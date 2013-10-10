@@ -217,10 +217,10 @@ Public Class clsGlobal
 						strCurrentFunction = objMatch.Groups(1).Value
 					Else
 						' Look for the word " in "
-						intIndex = strLine.ToLower.IndexOf(" in ")
+						intIndex = strLine.ToLower().IndexOf(" in ", System.StringComparison.Ordinal)
 						If intIndex = 0 Then
 							' " in" not found; look for the first space after startIndex 4
-							intIndex = strLine.IndexOf(" ", 4)
+							intIndex = strLine.IndexOf(" ", 4, System.StringComparison.Ordinal)
 						End If
 						If intIndex = 0 Then
 							' Space not found; use the entire string
@@ -844,7 +844,7 @@ Public Class clsGlobal
 	Public Shared Function ReplaceIgnoreCase(ByVal strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
 
 		Dim intCharIndex As Integer
-		intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower())
+		intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), System.StringComparison.Ordinal)
 
 		If intCharIndex < 0 Then
 			Return strTextToSearch

@@ -22,7 +22,7 @@ Public Class clsSqLiteUtilities
 	''' <returns>True if success, false if a problem</returns>
 	''' <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
 	Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String) As Boolean
-		Dim appendToExistingDB As Boolean = True
+		Const appendToExistingDB As Boolean = True
 		Dim tablesToSkip = New List(Of String)()
 		Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
 	End Function

@@ -141,7 +141,6 @@ Public Class clsSplitCattedFiles
 		Dim fileCounter As Integer = 0
 		Dim fileName As String = String.Empty
 
-		Dim strFileType As String = String.Empty
 		Dim resultsFolder As String = System.IO.Path.GetDirectoryName(filePath)
 
 		Dim fiSourceFile As System.IO.FileInfo
@@ -166,11 +165,6 @@ Public Class clsSplitCattedFiles
 
 					If objFileSepMatch.Success Then
 						objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
-						If objFileNameParts.Success Then
-							strFileType = objFileNameParts.Groups("filetype").Value
-						Else
-							strFileType = String.Empty
-						End If
 
 						If fileCounter > 0 Then
 							' Process the data stored in queue fileText, saving to file fileName
@@ -230,8 +224,6 @@ Public Class clsSplitCattedFiles
 	 ByVal resultsFolder As String, _
 	 ByRef lstFilesToSkip As Generic.SortedSet(Of String))
 
-		Dim filetype As String = System.IO.Path.GetExtension(exportFileName).TrimStart("."c)
-
 		Dim lineCounter As Integer = 0
 
 		If lstFilesToSkip.Contains(exportFileName) Then
@@ -278,8 +270,6 @@ Public Class clsSplitCattedFiles
 		Dim s As String
 		Dim outFileCount As Integer = 0
 
-		Dim lineEndCharCount As Integer = LineEndCharacterCount(fi)
-
 		Dim r As New Regex("^===*", RegexOptions.Compiled)
 		If fi.Exists Then
 
@@ -309,7 +299,6 @@ Public Class clsSplitCattedFiles
 		Dim tr As System.IO.TextReader
 		Dim testcode As Integer
 		Dim testcode2 As Integer
-		Dim counter As Long
 		Dim endCount As Integer = 1			' Initially assume a one-byte line terminator
 
 		If (fi.Exists) Then

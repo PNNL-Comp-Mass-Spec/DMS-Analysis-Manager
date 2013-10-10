@@ -10,6 +10,7 @@
 
 Option Strict On
 
+Imports log4net.Appender
 Imports log4net
 
 'This assembly attribute tells Log4Net where to find the config file
@@ -40,8 +41,8 @@ Public Class clsLogTools
 #Region "Module variables"
 	Private Shared ReadOnly m_FileLogger As ILog = LogManager.GetLogger("FileLogger")
 	Private Shared ReadOnly m_DbLogger As ILog = LogManager.GetLogger("DbLogger")
-    Private Shared ReadOnly m_SysLogger As ILog = LogManager.GetLogger("SysLogger")
-    Private Shared m_MostRecentErrorMessage As String = String.Empty
+	Private Shared ReadOnly m_SysLogger As ILog = LogManager.GetLogger("SysLogger")
+	Private Shared m_MostRecentErrorMessage As String = String.Empty
 #End Region
 
 #Region "Properties"
@@ -52,15 +53,15 @@ Public Class clsLogTools
 	''' <remarks></remarks>
 	Public Shared ReadOnly Property FileLogDebugEnabled() As Boolean
 		Get
-            Return m_FileLogger.IsDebugEnabled
+			Return m_FileLogger.IsDebugEnabled
 		End Get
-    End Property
+	End Property
 
-    Public Shared ReadOnly Property MostRecentErrorMessage() As String
-        Get
-            Return m_MostRecentErrorMessage
-        End Get
-    End Property
+	Public Shared ReadOnly Property MostRecentErrorMessage() As String
+		Get
+			Return m_MostRecentErrorMessage
+		End Get
+	End Property
 #End Region
 
 #Region "Methods"
@@ -77,9 +78,9 @@ Public Class clsLogTools
 
 		'Establish which logger will be used
 		Select Case LoggerType
-            Case LoggerTypes.LogDb
-                ' Note that the Logging.config should have the DbLogger logging to both the database and the rolling file
-                MyLogger = m_DbLogger
+			Case LoggerTypes.LogDb
+				' Note that the Logging.config should have the DbLogger logging to both the database and the rolling file
+				MyLogger = m_DbLogger
 			Case LoggerTypes.LogFile
 				MyLogger = m_FileLogger
 			Case LoggerTypes.LogSystem
@@ -102,11 +103,11 @@ Public Class clsLogTools
 				If MyLogger.IsWarnEnabled Then MyLogger.Warn(InpMsg)
 			Case Else
 				Throw New Exception("Invalid log level specified")
-        End Select
+		End Select
 
-        If LogLevel <= LogLevels.ERROR Then
-            m_MostRecentErrorMessage = InpMsg
-        End If
+		If LogLevel <= LogLevels.ERROR Then
+			m_MostRecentErrorMessage = InpMsg
+		End If
 	End Sub
 
 	''' <summary>
@@ -159,7 +160,7 @@ Public Class clsLogTools
 	Public Shared Sub ChangeLogFileName(ByVal FileName As String)
 
 		'Get a list of appenders
-		Dim AppendList As List(Of Appender.IAppender) = FindAppenders("RollingFileAppender")
+		Dim AppendList As IEnumerable(Of IAppender) = FindAppenders("RollingFileAppender")
 		If AppendList Is Nothing Then
 			WriteLog(LoggerTypes.LogSystem, LogLevels.WARN, "Unable to change file name. No appender found")
 			Return
@@ -184,7 +185,7 @@ Public Class clsLogTools
 	''' <param name="AppendName">Name of appender to find</param>
 	''' <returns>List(IAppender) objects if found; NOTHING otherwise</returns>
 	''' <remarks></remarks>
-	Private Shared Function FindAppenders(ByVal AppendName As String) As List(Of Appender.IAppender)
+	Private Shared Function FindAppenders(ByVal AppendName As String) As IEnumerable(Of IAppender)
 
 		'Get a list of the current loggers
 		Dim LoggerList() As ILog = LogManager.GetCurrentLoggers()
@@ -226,13 +227,13 @@ Public Class clsLogTools
 		SetFileLogLevel(Lvl)
 
 	End Sub
-    '%date [%thread] %-5level %logger [%property{NDC}] - %message%newline"
+	'%date [%thread] %-5level %logger [%property{NDC}] - %message%newline"
 
-    ''' <summary>
-    ''' Sets file logging level based on enumeration (Overloaded)
-    ''' </summary>
-    ''' <param name="InpLevel">LogLevels value defining level (Debug is most verbose)</param>
-    ''' <remarks></remarks>
+	''' <summary>
+	''' Sets file logging level based on enumeration (Overloaded)
+	''' </summary>
+	''' <param name="InpLevel">LogLevels value defining level (Debug is most verbose)</param>
+	''' <remarks></remarks>
 	Public Shared Sub SetFileLogLevel(ByVal InpLevel As LogLevels)
 
 		Dim LogRepo As Repository.Hierarchy.Logger = DirectCast(m_FileLogger.Logger, Repository.Hierarchy.Logger)

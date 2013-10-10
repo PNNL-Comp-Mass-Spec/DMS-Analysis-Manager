@@ -288,13 +288,13 @@ Public Class clsRunDosProgram
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks>Ignores the result code reported by the program</remarks>
 	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String) As Boolean
-		Dim UseResCode As Boolean = False
-		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode)
+		Const useResCode As Boolean = False
+		Return RunProgram(ProgNameLoc, CmdLine, ProgName, useResCode)
 	End Function
 
 	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean) As Boolean
-		Dim MaxRuntimeSeconds As Integer = 0
-		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode, MaxRuntimeSeconds)
+		Const maxRuntime As Integer = 0
+		Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode, maxRuntime)
 	End Function
 
 	''' <summary>
@@ -304,10 +304,10 @@ Public Class clsRunDosProgram
 	''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
 	''' <param name="ProgName">The name of the program to use for the Window title</param>
 	''' <param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
-	''' <param name="MaxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxRuntimeSeconds</param>
+	''' <param name="MaxSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxSeconds</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks>MaxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean, ByVal MaxRuntimeSeconds As Integer) As Boolean
+	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean, ByVal MaxSeconds As Integer) As Boolean
 
 		Dim dtStartTime As System.DateTime
 		Dim blnRuntimeExceeded As Boolean
@@ -316,10 +316,10 @@ Public Class clsRunDosProgram
 		' Require a minimum monitoring interval of 250 mseconds
 		If m_MonitorInterval < 250 Then m_MonitorInterval = 250
 
-		If MaxRuntimeSeconds > 0 AndAlso MaxRuntimeSeconds < 15 Then
-			MaxRuntimeSeconds = 15
+		If MaxSeconds > 0 AndAlso MaxSeconds < 15 Then
+			MaxSeconds = 15
 		End If
-		m_MaxRuntimeSeconds = MaxRuntimeSeconds
+		m_MaxRuntimeSeconds = MaxSeconds
 
 		' Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
 		' Also necessary to avoid problems caching the console output

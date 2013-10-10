@@ -18,8 +18,7 @@ Public Class clsSummaryFile
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-	Private m_lines As New Generic.List(Of String)
-	Private m_FolderNamePath As String
+	Private m_lines As New Generic.List(Of String)	
 #End Region
 
 #Region "Methods"

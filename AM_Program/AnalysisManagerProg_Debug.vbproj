@@ -62,6 +62,9 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mage">
+      <HintPath>..\AM_Common\Mage.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM, Version=2.1.4520.23090, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PRISM.dll</HintPath>
@@ -75,6 +78,9 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="ThermoRawFileReaderDLL">
+      <HintPath>..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -157,9 +163,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_AScore_PlugIn\AnalysisManager_AScore_PlugIn.csproj">
-      <Project>{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}</Project>
-      <Name>AnalysisManager_AScore_PlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj">
+      <Project>{02D682E5-F70F-4C46-BAC8-1C18920FFF22}</Project>
+      <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>

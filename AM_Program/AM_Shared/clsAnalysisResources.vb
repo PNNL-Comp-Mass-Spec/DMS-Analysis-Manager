@@ -251,11 +251,7 @@ Public MustInherit Class clsAnalysisResources
 		Static dtLastLogTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
 		Static dblFractionDoneSaved As Double = -1
 
-		Dim blnForcelog As Boolean = False
-
-		If m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT) Then
-			blnForcelog = True
-		End If
+		Dim blnForcelog = m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT)
 
 		If m_DebugLevel >= 3 OrElse blnForcelog Then
 			' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
@@ -1354,8 +1350,6 @@ Public MustInherit Class clsAnalysisResources
 
 				' Both the MSXml step tool and DeconTools require the .Baf file
 				' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
-				Dim blnSkipBAFFiles As Boolean
-				blnSkipBAFFiles = False
 
 				strFileOrFolderPath = FindDotDFolder()
 				blnIsFolder = True
@@ -1541,8 +1535,6 @@ Public MustInherit Class clsAnalysisResources
 		strHashcheckFilePath = String.Empty
 
 		For Each intVersion As Integer In lstValuesToCheck
-
-			Dim SourceFilePath As String = String.Empty
 
 			Dim MSXmlFoldername As String
 			MSXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID
@@ -2302,9 +2294,9 @@ Public MustInherit Class clsAnalysisResources
 
 			Dim intIterations As Integer = 0
 			sngFreeMemory = 0
-			Do While sngFreeMemory = 0 AndAlso intIterations <= 3
+			Do While sngFreeMemory < Single.Epsilon AndAlso intIterations <= 3
 				sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
-				If sngFreeMemory = 0 Then
+				If sngFreeMemory < Single.Epsilon Then
 					' You sometimes have to call .NextValue() several times before it returns a useful number
 					' Wait 1 second and then try again
 					System.Threading.Thread.Sleep(1000)
@@ -2324,7 +2316,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Try
 
-			If sngFreeMemory = 0 Then
+			If sngFreeMemory < Single.Epsilon Then
 				' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
 
 				If blnVirtualMachineOnPIC Then
@@ -5420,9 +5412,9 @@ Public MustInherit Class clsAnalysisResources
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage)
 	End Sub
 
-	Private Sub m_CDTAUtilities_InfoEvent(ByVal Message As String, ByVal DebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
+	Private Sub m_CDTAUtilities_InfoEvent(ByVal strMessage As String, ByVal DebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
 		If m_DebugLevel >= DebugLevel Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
 		End If
 	End Sub
 
@@ -5441,8 +5433,8 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
-	Private Sub m_CDTAUtilities_WarningEvent(ByVal Message As String) Handles m_CDTAUtilities.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
+	Private Sub m_CDTAUtilities_WarningEvent(ByVal strMessage As String) Handles m_CDTAUtilities.WarningEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
 	End Sub
 
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue

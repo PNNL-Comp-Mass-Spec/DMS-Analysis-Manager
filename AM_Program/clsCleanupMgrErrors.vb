@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsCleanupMgrErrors
 
@@ -36,9 +37,9 @@ Public Class clsCleanupMgrErrors
 #End Region
 
 	Public Sub New(ByVal strMgrConfigDBConnectionString As String, _
-		  ByVal strManagerName As String, _
-		  ByVal strMgrFolderPath As String, _
-		  ByVal strWorkingDirPath As String)
+	   ByVal strManagerName As String, _
+	   ByVal strMgrFolderPath As String, _
+	   ByVal strWorkingDirPath As String)
 
 		If strMgrConfigDBConnectionString Is Nothing OrElse strMgrConfigDBConnectionString.Length = 0 Then
 			Throw New Exception("Manager config DB connection string is not defined")
@@ -167,39 +168,72 @@ Public Class clsCleanupMgrErrors
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		System.Threading.Thread.Sleep(HoldoffMilliseconds)
 
+		' Delete all of the files and folders in the work directory
 		diWorkFolder = New System.IO.DirectoryInfo(WorkDir)
+		If Not DeleteFilesWithRetry(diWorkFolder) Then
+			Return False
+		Else
+			Return True
+		End If
+		
+	End Function
+
+	Protected Shared Function DeleteFilesWithRetry(ByVal diWorkFolder As DirectoryInfo) As Boolean
+
+		Dim failedDeleteCount = 0
 
 		'Delete the files
 		Try
-			For Each fiFile As System.IO.FileInfo In diWorkFolder.GetFiles()
+			For Each fiFile In diWorkFolder.GetFiles()
 				Try
 					fiFile.Delete()
 				Catch ex As Exception
 					' Make sure the readonly bit is not set
-					' The manager will try to delete the file the next time is starts
-					fiFile.Attributes = fiFile.Attributes And (Not System.IO.FileAttributes.ReadOnly)
+					If (fiFile.IsReadOnly) Then
+						Dim attributes = fiFile.Attributes
+						fiFile.Attributes = attributes And (Not FileAttributes.ReadOnly)
+
+						Try
+							' Retry the delete
+							fiFile.Delete()
+						Catch ex2 As Exception
+							Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex2.Message
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+							Console.WriteLine(strFailureMessage)
+							failedDeleteCount += 1
+						End Try
+					End If
 				End Try
 			Next
-		Catch Ex As Exception
-			strFailureMessage = "Error deleting files in working directory"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ClearWorkDir(), " & strFailureMessage & " " & WorkDir, Ex)
-			Console.WriteLine(strFailureMessage & ": " & Ex.Message)
-			Return False
-		End Try
 
-		'Delete the sub directories
-		Try
-			For Each diSubDirectory As System.IO.DirectoryInfo In diWorkFolder.GetDirectories
-				diSubDirectory.Delete(True)
+			'Delete the sub directories
+			For Each diSubDirectory In diWorkFolder.GetDirectories
+				If DeleteFilesWithRetry(diSubDirectory) Then
+					' Remove the folder if it is empty
+					diSubDirectory.Refresh()
+					If diSubDirectory.GetFileSystemInfos().Count = 0 Then
+						diSubDirectory.Delete()
+					End If
+				Else
+					Dim strFailureMessage = "Error deleting working directory subfolder " & diSubDirectory.FullName
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+					Console.WriteLine(strFailureMessage)
+					failedDeleteCount += 1
+				End If
 			Next
-		Catch Ex As Exception
-			strFailureMessage = "Error deleting subfolder " & strCurrentSubfolder
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage & " in working directory", Ex)
-			Console.WriteLine(strFailureMessage & ": " & Ex.Message)
+
+		Catch ex As Exception
+			Dim strFailureMessage As String = "Error deleting files/folders in " & diWorkFolder.FullName
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage, ex)
+			Console.WriteLine(strFailureMessage & ": " & ex.Message)
 			Return False
 		End Try
 
-		Return True
+		If failedDeleteCount = 0 Then
+			Return True
+		Else
+			Return False
+		End If
 
 	End Function
 

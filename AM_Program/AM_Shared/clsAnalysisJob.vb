@@ -533,7 +533,6 @@ Public Class clsAnalysisJob
 		Dim MyCmd As New SqlCommand
 		Dim Outcome As clsDBTask.RequestTaskResult = RequestTaskResult.NoTaskFound
 		Dim RetVal As Integer
-		Dim Dt As New DataTable
 		Dim paramXml As String
 
 		Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()

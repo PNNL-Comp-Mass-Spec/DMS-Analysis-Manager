@@ -140,7 +140,7 @@ Public Class clsAnalysisResults
 					If ContinueOnError Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory", ex)
 					Else
-						Throw ex
+						Throw
 					End If
 				End Try
 			Next

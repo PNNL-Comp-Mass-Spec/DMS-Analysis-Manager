@@ -63,7 +63,7 @@ Public Class clsCodeTestAM
 
 		strSubFolderPath = System.IO.Path.Combine(strSubFolderPath, "MoreStuff")
 		System.IO.Directory.CreateDirectory(strSubFolderPath)
-		CreateTestFiles(strSubFolderPath, 5, "Stuff")
+		blnProcessingError = CreateTestFiles(strSubFolderPath, 5, "Stuff")
 
 
 		'Stop the job timer
@@ -128,7 +128,7 @@ Public Class clsCodeTestAM
 
 	End Function
 
-	Private Sub CreateTestFiles(ByVal strFolderPath As String, ByVal intFilesToCreate As Integer, ByVal strFileNameBase As String)
+	Private Function CreateTestFiles(ByVal strFolderPath As String, ByVal intFilesToCreate As Integer, ByVal strFileNameBase As String) As Boolean
 
 		Dim swOutFile As System.IO.StreamWriter
 		Dim objRand As System.Random = New System.Random()
@@ -144,7 +144,9 @@ Public Class clsCodeTestAM
 			System.Threading.Thread.Sleep(50)
 		Next
 
-	End Sub
+		Return True
+
+	End Function
 #End Region
 
 End Class
