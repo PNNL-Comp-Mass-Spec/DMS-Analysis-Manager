@@ -85,7 +85,7 @@ Public Class clsMSXMLCreator
 		oProgRunner = New clsRunDosProgram(m_WorkDir)
 
 		'Set up command
-		CmdStr = " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) & " --mzXML -o " & m_WorkDir
+		CmdStr = " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) & " --32 --mzXML -o " & m_WorkDir
 
 		If m_DebugLevel > 0 Then
 			ReportDebugInfo(ProgLoc & " " & CmdStr)
@@ -167,16 +167,24 @@ Public Class clsMSXMLCreator
 			Return False
 		End If
 
-
 		If m_DebugLevel >= 2 Then
 			ReportDebugInfo("Creating the .mzXML file for " & m_Dataset)
 		End If
+
+		Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
 
 		If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
 			' ReadW
 			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML)
+			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML)
+
+			If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
+				m_ErrorMessage = "ReadW can only be used with .Raw files, not with " & rawDataType
+				ReportError(m_ErrorMessage)
+				Return False
+			End If
 
 		ElseIf strMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
 			' MSConvert
@@ -193,7 +201,7 @@ Public Class clsMSXMLCreator
 				CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 			End If
 
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
 
 		Else
 			m_ErrorMessage = "Unsupported XmlGenerator: " & strMSXmlGeneratorExe

@@ -15,6 +15,7 @@ Public MustInherit Class clsMSXmlGen
 	Protected mWorkDir As String
 	Protected mProgramPath As String
 	Protected mDatasetName As String
+	Protected mRawDataType As clsAnalysisResources.eRawDataTypeConstants
 	Protected mSourceFilePath As String = String.Empty
 	Protected mOutputType As MSXMLOutputTypeConstants
 
@@ -61,15 +62,17 @@ Public MustInherit Class clsMSXmlGen
 #End Region
 
 
-	Public Sub New(ByVal WorkDir As String, _
-	   ByVal ProgramPath As String, _
-	   ByVal DatasetName As String, _
-	   ByVal eOutputType As MSXMLOutputTypeConstants, _
-	   ByVal CentroidMSXML As Boolean)
+	Public Sub New(ByVal WorkDir As String,
+	ByVal ProgramPath As String,
+	ByVal DatasetName As String,
+	ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+	ByVal eOutputType As MSXMLOutputTypeConstants,
+	ByVal CentroidMSXML As Boolean)
 
 		mWorkDir = WorkDir
 		mProgramPath = ProgramPath
 		mDatasetName = DatasetName
+		mRawDataType = RawDataType
 		mOutputType = eOutputType
 		mCentroidMS1 = CentroidMSXML
 		mCentroidMS2 = CentroidMSXML
@@ -77,16 +80,18 @@ Public MustInherit Class clsMSXmlGen
 		mErrorMessage = String.Empty
 	End Sub
 
-	Public Sub New(ByVal WorkDir As String, _
-	   ByVal ProgramPath As String, _
-	   ByVal DatasetName As String, _
-	   ByVal eOutputType As MSXMLOutputTypeConstants, _
-	   ByVal CentroidMS1 As Boolean, _
-	   ByVal CentroidMS2 As Boolean)
+	Public Sub New(ByVal WorkDir As String,
+	  ByVal ProgramPath As String,
+	  ByVal DatasetName As String,
+	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal CentroidMS1 As Boolean,
+	  ByVal CentroidMS2 As Boolean)
 
 		mWorkDir = WorkDir
 		mProgramPath = ProgramPath
 		mDatasetName = DatasetName
+		mRawDataType = RawDataType
 		mOutputType = eOutputType
 		mCentroidMS1 = CentroidMS1
 		mCentroidMS2 = CentroidMS2
@@ -105,7 +110,16 @@ Public MustInherit Class clsMSXmlGen
 		Dim CmdStr As String
 
 		Dim msXmlFormat As String = "mzXML"
-		mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+
+		Select Case mRawDataType
+			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+				mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
+				mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+			Case Else
+				Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
+		End Select
+
 
 		Dim blnSuccess As Boolean
 

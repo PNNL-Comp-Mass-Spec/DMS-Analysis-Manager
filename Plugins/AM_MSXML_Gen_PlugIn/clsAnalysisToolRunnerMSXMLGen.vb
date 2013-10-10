@@ -144,17 +144,26 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
+
 		' Determine the program path and Instantiate the processing class
 		If msXmlGenerator.ToLower.Contains("readw") Then
 			' ReadW
 			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMS1 Or CentroidMS2)
+			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMS1 Or CentroidMS2)
+
+			If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
+				m_message = "ReadW can only be used with .Raw files, not with " & rawDataType
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
 		ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
 			' MSConvert
 
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eOutputType, CentroidMS1, CentroidMS2, CentroidPeakCountToRetain)
+			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMS1, CentroidMS2, CentroidPeakCountToRetain)
 
 		Else
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unsupported XmlGenerator: " & msXmlGenerator)

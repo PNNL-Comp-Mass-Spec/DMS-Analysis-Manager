@@ -20,14 +20,15 @@ Public Class clsMSXmlGenMSConvert
 
 #Region "Methods"
 
-	Public Sub New(ByVal WorkDir As String, _
-	   ByVal MSConvertProgramPath As String, _
-	   ByVal DatasetName As String, _
-	   ByVal eOutputType As MSXMLOutputTypeConstants, _
-	   ByVal CentroidMSXML As Boolean, _
-	   ByVal CentroidPeakCountToRetain As Integer)
+	Public Sub New(ByVal WorkDir As String,
+	  ByVal MSConvertProgramPath As String,
+	  ByVal DatasetName As String,
+	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal CentroidMSXML As Boolean,
+	  ByVal CentroidPeakCountToRetain As Integer)
 
-		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, eOutputType, CentroidMSXML)
+		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML)
 
 		mCentroidPeakCountToRetain = CentroidPeakCountToRetain
 
@@ -35,15 +36,16 @@ Public Class clsMSXmlGenMSConvert
 
 	End Sub
 
-	Public Sub New(ByVal WorkDir As String, _
-	   ByVal MSConvertProgramPath As String, _
-	   ByVal DatasetName As String, _
-	   ByVal eOutputType As MSXMLOutputTypeConstants, _
-	   ByVal CentroidMS1 As Boolean, _
-	   ByVal CentroidMS2 As Boolean, _
-	   ByVal CentroidPeakCountToRetain As Integer)
+	Public Sub New(ByVal WorkDir As String,
+	  ByVal MSConvertProgramPath As String,
+	  ByVal DatasetName As String,
+	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal CentroidMS1 As Boolean,
+	  ByVal CentroidMS2 As Boolean,
+	  ByVal CentroidPeakCountToRetain As Integer)
 
-		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, eOutputType, CentroidMS1, CentroidMS2)
+		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMS1, CentroidMS2)
 
 		mCentroidPeakCountToRetain = CentroidPeakCountToRetain
 
