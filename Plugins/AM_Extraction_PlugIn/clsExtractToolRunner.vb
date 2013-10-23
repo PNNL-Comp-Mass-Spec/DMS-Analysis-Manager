@@ -1194,7 +1194,20 @@ Public Class clsExtractToolRunner
 
 			blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, strSearchEngineParamFileName)
 			If Not blnSuccess Then
-				m_message = oValidator.ErrorMessage
+				Dim toolName As String = m_jobParams.GetJobParameter("ToolName", "")
+
+				If toolName.ToLower().StartsWith("inspect") Then
+					' Ignore this error for inspect if running an unrestricted search
+					Dim paramFileName As String = m_jobParams.GetJobParameter("ParmFileName", "")
+					If paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0 Then
+						blnSuccess = True
+					End If
+				End If
+
+				If Not blnSuccess Then
+					m_message = oValidator.ErrorMessage
+				End If
+
 			End If
 
 		Catch ex As Exception

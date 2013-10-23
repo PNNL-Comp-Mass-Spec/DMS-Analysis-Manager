@@ -163,10 +163,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj">
-      <Project>{02D682E5-F70F-4C46-BAC8-1C18920FFF22}</Project>
-      <Name>AnalysisManagerMSXMLGenPlugIn</Name>
-    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

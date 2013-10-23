@@ -75,7 +75,7 @@ Public Class clsParseCommandLine
     ''' <param name="objParameterList">Parameter list</param>
     ''' <returns>True if any of the parameters are not present in strParameterList()</returns>
 	Public Function InvalidParametersPresent(ByVal objParameterList As List(Of String)) As Boolean
-		Dim blnCaseSensitive As Boolean = False
+		Const blnCaseSensitive As Boolean = False
 		Return InvalidParametersPresent(objParameterList, blnCaseSensitive)
 	End Function
 
@@ -85,7 +85,7 @@ Public Class clsParseCommandLine
     ''' <param name="strParameterList">Parameter list</param>
     ''' <returns>True if any of the parameters are not present in strParameterList()</returns>
     Public Function InvalidParametersPresent(ByVal strParameterList() As String) As Boolean
-    	Dim blnCaseSensitive As Boolean = False
+		Const blnCaseSensitive As Boolean = False
         Return InvalidParametersPresent(strParameterList, blnCaseSensitive)
     End Function
 
@@ -114,7 +114,7 @@ Public Class clsParseCommandLine
 	End Function
 
 	Public Function InvalidParameters(ByVal lstValidParameters As List(Of String)) As List(Of String)
-		Dim blnCaseSensitive As Boolean = False
+		Const blnCaseSensitive As Boolean = False
 		Return InvalidParameters(lstValidParameters, blnCaseSensitive)
 	End Function
 
@@ -155,7 +155,7 @@ Public Class clsParseCommandLine
 	''' <returns>True if present, otherwise false</returns>
 	Public Function IsParameterPresent(strParameterName As String) As Boolean
 		Dim strValue As String = String.Empty
-		Dim blnCaseSensitive As Boolean = False
+		Const blnCaseSensitive As Boolean = False
 		Return RetrieveValueForParameter(strParameterName, strValue, blnCaseSensitive)
 	End Function
 
@@ -261,7 +261,7 @@ Public Class clsParseCommandLine
 
 			If String.IsNullOrWhiteSpace(strCmdLine) Then
 				Return False
-			ElseIf strCmdLine.IndexOf(chSwitchStartChar & "?") > 0 Or strCmdLine.ToLower.IndexOf(chSwitchStartChar & "help") > 0 Then
+			ElseIf strCmdLine.IndexOf(chSwitchStartChar & "?") > 0 Or strCmdLine.ToLower().IndexOf(chSwitchStartChar & "help") > 0 Then
 				mShowHelp = True
 				Return False
 			End If
