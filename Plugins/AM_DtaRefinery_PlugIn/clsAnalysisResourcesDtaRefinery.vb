@@ -110,47 +110,43 @@ Public Class clsAnalysisResourcesDtaRefinery
 
     Protected Function RetrieveDeconMSnLogFiles()  As Boolean
 
-        Dim strFileNameToFind As String
-        Dim SourceFolderPath As String
-		Dim DeconMSnFilePathLocal As String = String.Empty
+		Dim sourceFolderPath As String
 
 		Try
-			strFileNameToFind = m_DatasetName & "_DeconMSn_log.txt"
-			SourceFolderPath = FindDataFile(strFileNameToFind)
+			Dim deconMSnLogFileName = m_DatasetName & "_DeconMSn_log.txt"
+			sourceFolderPath = FindDataFile(deconMSnLogFileName)
 
-			If SourceFolderPath = "" Then
+			If String.IsNullOrWhiteSpace(sourceFolderPath) Then
 				' Could not find the file (error will have already been logged)
 				' We'll continue on, but log a warning
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Log file named " & strFileNameToFind)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Log file named " & deconMSnLogFileName)
 				End If
 			Else
-				If Not CopyFileToWorkDir(strFileNameToFind, SourceFolderPath, m_WorkingDir) Then
+				If Not CopyFileToWorkDir(deconMSnLogFileName, sourceFolderPath, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
 					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileNameToFind & " using folder " & SourceFolderPath)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & deconMSnLogFileName & " using folder " & sourceFolderPath)
 					End If
-					' Ignore the error and continue
-				Else
-					DeconMSnFilePathLocal = System.IO.Path.Combine(m_WorkingDir, strFileNameToFind)
+					' Ignore the error and continue				
 				End If
 			End If
 
 
-			strFileNameToFind = m_DatasetName & "_profile.txt"
-			SourceFolderPath = FindDataFile(strFileNameToFind)
+			Dim deconMSnProfileFileName = m_DatasetName & "_profile.txt"
+			sourceFolderPath = FindDataFile(deconMSnProfileFileName)
 
-			If SourceFolderPath = "" Then
+			If String.IsNullOrWhiteSpace(sourceFolderPath) Then
 				' Could not find the file (error will have already been logged)
 				' We'll continue on, but log a warning
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Profile file named " & strFileNameToFind)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Profile file named " & deconMSnProfileFileName)
 				End If
 			Else
-				If Not CopyFileToWorkDir(strFileNameToFind, SourceFolderPath, m_WorkingDir) Then
+				If Not CopyFileToWorkDir(deconMSnProfileFileName, sourceFolderPath, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
 					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & strFileNameToFind & " using folder " & SourceFolderPath)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " & deconMSnProfileFileName & " using folder " & sourceFolderPath)
 					End If
 					' Ignore the error and continue
 				End If
@@ -160,11 +156,15 @@ Public Class clsAnalysisResourcesDtaRefinery
 				Return False
 			End If
 
-			If Not String.IsNullOrEmpty(DeconMSnFilePathLocal) Then
-				If Not ValidateDeconMSnLogFile(DeconMSnFilePathLocal) Then
+			If Not String.IsNullOrWhiteSpace(deconMSnLogFileName) Then
+				If Not ValidateDeconMSnLogFile(IO.Path.Combine(m_WorkingDir, deconMSnLogFileName)) Then
 					Return False
 				End If
-			End If			
+			End If
+
+			DeleteFileIfNoData(deconMSnLogFileName, "DeconMSn Log file")
+
+			DeleteFileIfNoData(deconMSnProfileFileName, "DeconMSn Profile file")
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveDeconMSnLogFiles: " & ex.Message)
@@ -175,91 +175,109 @@ Public Class clsAnalysisResourcesDtaRefinery
 
     End Function
 
-    Protected Function UpdateParameterFile(ByRef strErrorMessage As String) As Boolean
-        'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, 
-		        Dim XTandemExePath As String
+	Protected Sub DeleteFileIfNoData(ByVal fileName As String, ByVal fileDescription As String)
+
+		Dim strErrorMessage As String = String.Empty
+		Dim strFilePathToCheck As String
+
+		If Not String.IsNullOrWhiteSpace(fileName) Then
+			strFilePathToCheck = IO.Path.Combine(m_WorkingDir, fileName)
+			If Not ValidateFileHasData(strFilePathToCheck, fileDescription, strErrorMessage) Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, fileDescription & " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity")
+				End If
+
+				IO.File.Delete(strFilePathToCheck)
+			End If
+		End If
+
+	End Sub
+
+	Protected Function UpdateParameterFile(ByRef strErrorMessage As String) As Boolean
+		'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, 
+		Dim XTandemExePath As String
 		Dim XtandemDefaultInput As String = System.IO.Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE)
 		Dim XtandemTaxonomyList As String = System.IO.Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE)
 		Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
-        Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
+		Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
 
-        Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-        Dim result As Boolean = True
-        Dim fiTemplateFile As System.IO.FileInfo
-        Dim objTemplate As System.Xml.XmlDocument
-        strErrorMessage = String.Empty
+		Dim result As Boolean = True
+		Dim fiTemplateFile As System.IO.FileInfo
+		Dim objTemplate As System.Xml.XmlDocument
+		strErrorMessage = String.Empty
 
-        Try
-            fiTemplateFile = New System.IO.FileInfo(ParamFilePath)
+		Try
+			fiTemplateFile = New System.IO.FileInfo(ParamFilePath)
 
-            If Not fiTemplateFile.Exists Then
-                strErrorMessage = "File not found: " & fiTemplateFile.FullName
-                Return False
-            End If
+			If Not fiTemplateFile.Exists Then
+				strErrorMessage = "File not found: " & fiTemplateFile.FullName
+				Return False
+			End If
 
-            ' Open the template XML file
-            objTemplate = New System.Xml.XmlDocument
-            objTemplate.PreserveWhitespace = True
-            Try
-                objTemplate.Load(fiTemplateFile.FullName)
-            Catch ex As Exception
-                strErrorMessage = "Error loading file " & fiTemplateFile.Name & ": " & ex.Message
-                Return False
-            End Try
+			' Open the template XML file
+			objTemplate = New System.Xml.XmlDocument
+			objTemplate.PreserveWhitespace = True
+			Try
+				objTemplate.Load(fiTemplateFile.FullName)
+			Catch ex As Exception
+				strErrorMessage = "Error loading file " & fiTemplateFile.Name & ": " & ex.Message
+				Return False
+			End Try
 
-            ' Now override the values for xtandem parameters file
-            Try
-                Dim par As System.Xml.XmlNode
-                Dim root As System.Xml.XmlElement = objTemplate.DocumentElement
+			' Now override the values for xtandem parameters file
+			Try
+				Dim par As System.Xml.XmlNode
+				Dim root As System.Xml.XmlElement = objTemplate.DocumentElement
 
-                XTandemExePath = System.IO.Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
-                par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']")
-                par.InnerXml = XTandemExePath
+				XTandemExePath = System.IO.Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
+				par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']")
+				par.InnerXml = XTandemExePath
 
-                par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']")
-                par.InnerXml = XtandemDefaultInput
+				par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']")
+				par.InnerXml = XtandemDefaultInput
 
-                par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']")
-                par.InnerXml = XtandemTaxonomyList
+				par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']")
+				par.InnerXml = XtandemTaxonomyList
 
-            Catch ex As Exception
-                strErrorMessage = "Error updating the MSInFile nodes: " & ex.Message
-                Return False
-            End Try
+			Catch ex As Exception
+				strErrorMessage = "Error updating the MSInFile nodes: " & ex.Message
+				Return False
+			End Try
 
-            ' Write out the new file
-            objTemplate.Save(ParamFilePath)
+			' Write out the new file
+			objTemplate.Save(ParamFilePath)
 
-        Catch ex As Exception
-            strErrorMessage = "Error: " & ex.Message
-            Return False
-        End Try
+		Catch ex As Exception
+			strErrorMessage = "Error: " & ex.Message
+			Return False
+		End Try
 
-        Return True
+		Return True
 
-    End Function
+	End Function
 
-    Private Function ValidateDeconMSnLogFile(ByVal strFilePath As String) As Boolean
+	Private Function ValidateDeconMSnLogFile(ByVal strFilePath As String) As Boolean
 
-        Dim oValidator As New clsDeconMSnLogFileValidator()
-        Dim blnSuccess As Boolean
+		Dim oValidator As New clsDeconMSnLogFileValidator()
+		Dim blnSuccess As Boolean
 
-        blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath)
-        If Not blnSuccess Then
-            If String.IsNullOrEmpty(oValidator.ErrorMessage) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDeconMSnLogFileValidator.ValidateFile returned false")
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, oValidator.ErrorMessage)
-            End If
-            Return False
-        Else
-            If oValidator.FileUpdated Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsDeconMSnLogFileValidator.ValidateFile updated one or more rows in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1")
-            End If
-        End If
+		blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath)
+		If Not blnSuccess Then
+			If String.IsNullOrEmpty(oValidator.ErrorMessage) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDeconMSnLogFileValidator.ValidateFile returned false")
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, oValidator.ErrorMessage)
+			End If
+			Return False
+		Else
+			If oValidator.FileUpdated Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsDeconMSnLogFileValidator.ValidateFile updated one or more rows in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1")
+			End If
+		End If
 
-        Return True
-    End Function
+		Return True
+	End Function
 
 End Class
