@@ -11,6 +11,10 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Threading
+Imports System.Text.RegularExpressions
+
 
 Public Class clsDtaGenThermoRaw
 	Inherits clsDtaGen
@@ -27,13 +31,14 @@ Public Class clsDtaGenThermoRaw
 #Region "Module variables"
 	Protected m_NumScans As Integer
 	Protected WithEvents m_RunProgTool As clsRunDosProgram
-	Private m_thThread As System.Threading.Thread
+	Private m_thThread As Thread
 
 	Protected m_MaxScanInFile As Integer
 	Private m_RunningExtractMSn As Boolean
 	Protected m_InstrumentFileName As String = String.Empty
 
-	Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
+	Private WithEvents mDTAWatcher As FileSystemWatcher
+	Private WithEvents mDeconMSnProgressWatcher As FileSystemWatcher
 
 #End Region
 
@@ -97,7 +102,7 @@ Public Class clsDtaGenThermoRaw
 		'Make the DTA files (the process runs in a separate thread)
 		Try
 			If USE_THREADING Then
-				m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
+				m_thThread = New Thread(AddressOf MakeDTAFilesThreaded)
 				m_thThread.Start()
 				m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
 			Else
@@ -129,10 +134,10 @@ Public Class clsDtaGenThermoRaw
 
 		If strDTAGenProgram.ToLower() = EXTRACT_MSN_FILENAME.ToLower() Then
 			' Extract_MSn uses the lcqdtaloc folder path
-			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("lcqdtaloc", ""), strDTAGenProgram)
+			strDTAToolPath = Path.Combine(m_MgrParams.GetParam("lcqdtaloc", ""), strDTAGenProgram)
 		Else
 			' DeconMSn uses the XcalDLLPath
-			strDTAToolPath = System.IO.Path.Combine(m_MgrParams.GetParam("XcalDLLPath", ""), strDTAGenProgram)
+			strDTAToolPath = Path.Combine(m_MgrParams.GetParam("XcalDLLPath", ""), strDTAGenProgram)
 		End If
 
 		Return strDTAToolPath
@@ -165,12 +170,12 @@ Public Class clsDtaGenThermoRaw
 
 		m_JobParams.AddResultFileToSkip(DSName & strExtension)
 
-		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
+		If File.Exists(Path.Combine(WorkDir, DSName & strExtension)) Then
 			m_ErrMsg = String.Empty
 			Return True
 		Else
 			strExtension = clsAnalysisResources.DOT_MGF_EXTENSION
-			If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & strExtension)) Then
+			If File.Exists(Path.Combine(WorkDir, DSName & strExtension)) Then
 				m_ErrMsg = String.Empty
 				Return True
 			Else
@@ -248,7 +253,7 @@ Public Class clsDtaGenThermoRaw
 
 		XRawFile = Nothing
 		'Pause and garbage collect to allow release of file lock on .raw file
-		System.Threading.Thread.Sleep(3000)		' 3 second delay
+		Thread.Sleep(3000)		' 3 second delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		Return NumScans
@@ -305,6 +310,8 @@ Public Class clsDtaGenThermoRaw
 		Const LOOPING_CHUNK_SIZE As Integer = 25000
 
 		'Makes DTA files using extract_msn.exe or DeconMSn.exe
+		' Warning: do not centroid spectra using DeconMSn since the masses reported when centroiding are not properly calibrated and thus could be off by 0.3 m/z or more
+
 		Dim CmdStr As String
 		Dim strInstrumentDataFilePath As String
 
@@ -317,23 +324,22 @@ Public Class clsDtaGenThermoRaw
 		Dim IonCount As String
 		Dim CreateDefaultCharges As Boolean = True
 		Dim ExplicitChargeStart As Short			' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
-		Dim ExplicitChargeEnd As Short			' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
+		Dim ExplicitChargeEnd As Short				' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
 
 		Dim LocCharge As Short
 		Dim LocScanStart As Integer
 		Dim LocScanStop As Integer
-		Dim OutDirParam As String = " -P"		'Output directory parameter, dependent on xcalibur version
 
 		'DAC debugging
-		System.Threading.Thread.CurrentThread.Name = "MakeDTAFiles"
+		Thread.CurrentThread.Name = "MakeDTAFiles"
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating DTA files using " + System.IO.Path.GetFileName(m_DtaToolNameLoc))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating DTA files using " + Path.GetFileName(m_DtaToolNameLoc))
 		End If
 
 		'Get the parameters from the various parameter dictionaries
 
-		strInstrumentDataFilePath = System.IO.Path.Combine(m_WorkDir, m_InstrumentFileName)
+		strInstrumentDataFilePath = Path.Combine(m_WorkDir, m_InstrumentFileName)
 
 		'Note: Defaults are used if certain parameters are not present in m_JobParams
 
@@ -354,11 +360,11 @@ Public Class clsDtaGenThermoRaw
 
 		'Get the maximum number of scans in the file
 		Dim RawFile As String = String.Copy(strInstrumentDataFilePath)
-		If System.IO.Path.GetExtension(strInstrumentDataFilePath).ToLower() <> clsAnalysisResources.DOT_RAW_EXTENSION Then
-			RawFile = System.IO.Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION)
+		If Path.GetExtension(strInstrumentDataFilePath).ToLower() <> clsAnalysisResources.DOT_RAW_EXTENSION Then
+			RawFile = Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION)
 		End If
 
-		If System.IO.File.Exists(RawFile) Then
+		If File.Exists(RawFile) Then
 			m_MaxScanInFile = GetMaxScan(RawFile)
 		Else
 			m_MaxScanInFile = 0
@@ -400,14 +406,25 @@ Public Class clsDtaGenThermoRaw
 
 		m_RunningExtractMSn = m_DtaToolNameLoc.ToLower.Contains(EXTRACT_MSN_FILENAME.ToLower)
 
-		' Setup a FileSystemWatcher to watch for new .Dta files being created
-		' We can compare the scan number of new .Dta files to the m_MaxScanInFile value to determine % complete
-		mDTAWatcher = New System.IO.FileSystemWatcher(m_WorkDir, "*.dta")
+		If m_RunningExtractMSn Then
+			' Setup a FileSystemWatcher to watch for new .Dta files being created
+			' We can compare the scan number of new .Dta files to the m_MaxScanInFile value to determine % complete
+			mDTAWatcher = New FileSystemWatcher(m_WorkDir, "*.dta")
 
-		mDTAWatcher.IncludeSubdirectories = False
-		mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
+			mDTAWatcher.IncludeSubdirectories = False
+			mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
 
-		mDTAWatcher.EnableRaisingEvents = True
+			mDTAWatcher.EnableRaisingEvents = True
+		Else
+			' Running DeconMSn; it directly creates a _dta.txt file and we need to instead monitor the _DeconMSn_progress.txt file
+			' Setup a FileSystemWatcher to watch for changes to this file
+			mDeconMSnProgressWatcher = New FileSystemWatcher(m_WorkDir, m_Dataset & "_DeconMSn_progress.txt")
+
+			mDeconMSnProgressWatcher.IncludeSubdirectories = False
+			mDeconMSnProgressWatcher.NotifyFilter = IO.NotifyFilters.LastWrite
+
+			mDeconMSnProgressWatcher.EnableRaisingEvents = True
+		End If
 
 		Do While LocCharge <= ExplicitChargeEnd And Not m_AbortRequested
 			If LocCharge = 0 And CreateDefaultCharges OrElse LocCharge > 0 Then
@@ -452,7 +469,12 @@ Public Class clsDtaGenThermoRaw
 					End If
 
 					CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
-					CmdStr &= " -D" & m_WorkDir & " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_InstrumentFileName))
+					CmdStr &= " -D" & m_WorkDir
+
+					If Not m_RunningExtractMSn Then
+						CmdStr &= " -XCDTA -Progress"
+					End If
+					CmdStr &= " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(m_WorkDir, m_InstrumentFileName))
 
 					If m_DebugLevel >= 1 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & CmdStr)
@@ -470,25 +492,25 @@ Public Class clsDtaGenThermoRaw
 							.EchoOutputToConsole = True
 
 							.WriteConsoleOutputToFile = False
-							.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "DeconMSn_ConsoleOutput.txt")
+							.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "DeconMSn_ConsoleOutput.txt")
 
 							' Need to set the working directory as the same folder as DeconMSn; otherwise, may crash
-							.WorkDir = System.IO.Path.GetDirectoryName(m_DtaToolNameLoc)
+							.WorkDir = Path.GetDirectoryName(m_DtaToolNameLoc)
 						End If
 
 					End With
 
 					If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
 						' .RunProgram returned False
-						LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+						LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
 
-						m_ErrMsg = "Error running " & System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
+						m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
 						Return False
 					End If
 
 					If m_DebugLevel >= 2 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " _
-						 & System.Threading.Thread.CurrentThread.Name)
+						 & Thread.CurrentThread.Name)
 					End If
 
 					'Update loopy parameters
@@ -516,22 +538,28 @@ Public Class clsDtaGenThermoRaw
 			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
 		End If
 
-		' Disable the DTA watcher
-		mDTAWatcher.EnableRaisingEvents = False
+		' Disable the watchers
+		If Not mDTAWatcher Is Nothing Then
+			mDTAWatcher.EnableRaisingEvents = False
+		End If
+
+		If Not mDeconMSnProgressWatcher Is Nothing Then
+			mDeconMSnProgressWatcher.EnableRaisingEvents = False
+		End If
 
 		'DAC debugging
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " _
-			  & System.Threading.Thread.CurrentThread.Name)
+			  & Thread.CurrentThread.Name)
 		End If
 
 		'We got this far, everything must have worked
 		If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-			LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
+			LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
 			Return False
 
 		ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-			LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
+			LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
 			Return False
 
 		Else
@@ -541,8 +569,37 @@ Public Class clsDtaGenThermoRaw
 	End Function
 
 	Protected Overridable Sub MonitorProgress()
-		Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
-		m_SpectraFileCount = FileList.GetLength(0)		
+		Dim FileList() As String = Directory.GetFiles(m_WorkDir, "*.dta")
+		m_SpectraFileCount = FileList.GetLength(0)
+	End Sub
+
+	Private Sub UpdateDeconMSnProgress(ByVal progressFilePath As String)
+		Dim reNumber = New Regex("(\d+)")
+
+		Try
+			Using swProgress = New StreamReader(New FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+				Do While swProgress.Peek > -1
+					Dim strLineIn = swProgress.ReadLine()
+					If strLineIn.StartsWith("Percent complete") Then
+
+						Dim reMatch = reNumber.Match(strLineIn)
+						If reMatch.Success() Then
+							Single.TryParse(reMatch.Groups(1).Value, m_Progress)
+						End If
+
+					End If
+
+					If strLineIn.StartsWith("Number of MSn scans processed") Then
+						Dim reMatch = reNumber.Match(strLineIn)
+						If reMatch.Success() Then
+							Integer.TryParse(reMatch.Groups(1).Value, m_SpectraFileCount)
+						End If
+					End If
+				Loop
+			End Using
+		Catch ex As Exception
+			' Ignore errors here
+		End Try
 	End Sub
 
 	Private Sub UpdateDTAProgress(ByVal DTAFileName As String)
@@ -553,8 +610,8 @@ Public Class clsDtaGenThermoRaw
 
 		If reDTAFile Is Nothing Then
 			reDTAFile = New System.Text.RegularExpressions.Regex("(\d+)\.\d+\.\d+\.dta$", _
-							System.Text.RegularExpressions.RegexOptions.Compiled Or _
-							System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			 System.Text.RegularExpressions.RegexOptions.Compiled Or _
+			 System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 		End If
 
 		Try
@@ -578,13 +635,26 @@ Public Class clsDtaGenThermoRaw
 	''' <remarks></remarks>
 	Private Function VerifyDtaCreation() As Boolean
 
-		'Verify at least one .dta file has been created
-		If CountDtaFiles() < 1 Then
-			m_ErrMsg = "No dta files created"
-			Return False
+		If m_RunningExtractMSn Then
+			' Verify at least one .dta file has been created
+			'Returns the number of dta files in the working directory
+			Dim FileList() As String = Directory.GetFiles(m_WorkDir, "*.dta")
+
+			If FileList.GetLength(0) < 1 Then
+				m_ErrMsg = "No dta files created"
+				Return False
+			End If
 		Else
-			Return True
+			' Verify that the _dta.txt file was created
+			Dim FileList() As String = Directory.GetFiles(m_WorkDir, m_Dataset & "_dta.txt")
+
+			If FileList.GetLength(0) = 0 Then
+				m_ErrMsg = "_dta.txt file was not created"
+				Return False
+			End If
 		End If
+
+		Return True
 
 	End Function
 
@@ -620,10 +690,13 @@ Public Class clsDtaGenThermoRaw
 
 	End Sub
 
-	Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mDTAWatcher.Created
+	Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mDTAWatcher.Created
 		UpdateDTAProgress(e.Name)
 	End Sub
 
 #End Region
 
+	Private Sub mDeconMSnProgressWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mDeconMSnProgressWatcher.Changed
+		UpdateDeconMSnProgress(e.FullPath)
+	End Sub
 End Class

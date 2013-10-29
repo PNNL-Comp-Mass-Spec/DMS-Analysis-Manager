@@ -77,25 +77,23 @@ Public Class clsDtaGenToolRunner
 		'Add all the extensions of the files to delete after run
 		m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX) ' Unzipped, concatenated DTA
 		m_jobParams.AddResultFileExtensionToSkip(".dta")	 ' DTA files
+		m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt")
 
 		'Add any files that are an exception to the captured files to delete list
 		m_jobParams.AddResultFileToKeep("lcq_dta.txt")
 
 		result = MakeResultsFolder()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then			
 			Return result
 		End If
 
 		result = MoveResultFiles()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
 			Return result
 		End If
 
 		result = CopyResultsFolderToServer()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'    'TODO: What do we do here?
 			Return result
 		End If
 
@@ -221,7 +219,7 @@ Public Class clsDtaGenToolRunner
 							Return eDTAGeneratorConstants.ExtractMSn
 
 						Case clsDtaGenThermoRaw.DECONMSN_FILENAME.ToLower()
-							blnConcatenateDTAs = True
+							blnConcatenateDTAs = False
 							Return eDTAGeneratorConstants.DeconMSn
 
 						Case Else

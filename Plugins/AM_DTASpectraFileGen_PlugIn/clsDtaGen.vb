@@ -189,14 +189,6 @@ Public MustInherit Class clsDtaGen
 
 	End Function
 
-	Protected Function CountDtaFiles() As Integer
-
-		'Returns the number of dta files in the working directory
-		Dim FileList() As String = System.IO.Directory.GetFiles(m_WorkDir, "*.dta")
-		Return FileList.GetLength(0)
-
-	End Function
-
 	Protected Function DeleteNonDosFiles() As Boolean
 
 		'extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This

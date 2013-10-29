@@ -6,7 +6,7 @@
 ' Uses DeconConsole.exe to create a .MGF file from a .Raw file or .mzXML file or .mzML file
 ' Next, converts the .MGF file to a _DTA.txt file
 '
-' Note that DeconConsole is the re-implementation of the legacy DeconMSn program
+' Note that DeconConsole is the re-implementation of the legacy DeconMSn program (and is thus DeconMSn v3)
 '*********************************************************************************************************
 
 Option Strict On

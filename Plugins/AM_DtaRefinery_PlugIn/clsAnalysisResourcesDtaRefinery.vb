@@ -122,6 +122,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Log file named " & deconMSnLogFileName)
 				End If
+				deconMSnLogFileName = String.Empty
 			Else
 				If Not CopyFileToWorkDir(deconMSnLogFileName, sourceFolderPath, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
@@ -142,6 +143,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the DeconMSn Profile file named " & deconMSnProfileFileName)
 				End If
+				deconMSnProfileFileName = String.Empty
 			Else
 				If Not CopyFileToWorkDir(deconMSnProfileFileName, sourceFolderPath, m_WorkingDir) Then
 					' Error copying file (error will have already been logged)
