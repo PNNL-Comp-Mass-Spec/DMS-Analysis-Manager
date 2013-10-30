@@ -2,6 +2,8 @@
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Security.AccessControl
+Imports System.Security.Permissions
 
 Public Class clsCleanupMgrErrors
 
@@ -202,6 +204,11 @@ Public Class clsCleanupMgrErrors
 							Console.WriteLine(strFailureMessage)
 							failedDeleteCount += 1
 						End Try
+					Else
+						Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex.Message
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+						Console.WriteLine(strFailureMessage)
+						failedDeleteCount += 1
 					End If
 				End Try
 			Next
@@ -212,7 +219,54 @@ Public Class clsCleanupMgrErrors
 					' Remove the folder if it is empty
 					diSubDirectory.Refresh()
 					If diSubDirectory.GetFileSystemInfos().Count = 0 Then
-						diSubDirectory.Delete()
+						Try
+							diSubDirectory.Delete()
+						Catch ex As IOException
+							' Try re-applying the permissions							
+
+							Dim FolderAcl As New DirectorySecurity
+							Dim currentUser = Environment.UserDomainName & "\" & Environment.UserName
+
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "IOException deleting " & diSubDirectory.FullName & "; will try granting modify access to user " & currentUser)
+							FolderAcl.AddAccessRule(New FileSystemAccessRule(currentUser, FileSystemRights.Modify, InheritanceFlags.ContainerInherit Or InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow))
+
+							Try
+								' To remove existing permissions, use this: FolderAcl.SetAccessRuleProtection(True, False) 
+
+								' Add the new access rule
+								diSubDirectory.SetAccessControl(FolderAcl)
+
+								' Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
+								diSubDirectory.Refresh()
+								Dim attributes = diSubDirectory.Attributes
+								If ((attributes And FileAttributes.ReadOnly) = FileAttributes.ReadOnly) Then
+									diSubDirectory.Attributes = attributes And (Not FileAttributes.ReadOnly)
+								End If
+
+								Try
+									' Retry the delete
+									diSubDirectory.Delete()
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updated permissions, then successfully deleted the folder")
+								Catch ex3 As Exception
+									Dim strFailureMessage As String = "Error deleting folder " & diSubDirectory.FullName & ": " & ex3.Message
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+									Console.WriteLine(strFailureMessage)
+									failedDeleteCount += 1
+								End Try
+
+							Catch ex2 As Exception
+								Dim strFailureMessage As String = "Error updating permissions for folder " & diSubDirectory.FullName & ": " & ex2.Message
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+								Console.WriteLine(strFailureMessage)
+								failedDeleteCount += 1
+							End Try
+							
+						Catch ex As Exception							
+							Dim strFailureMessage As String = "Error deleting folder " & diSubDirectory.FullName & ": " & ex.Message
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+							Console.WriteLine(strFailureMessage)
+							failedDeleteCount += 1
+						End Try				
 					End If
 				Else
 					Dim strFailureMessage = "Error deleting working directory subfolder " & diSubDirectory.FullName
