@@ -1,9 +1,6 @@
 ﻿using System.IO;
 using AnalysisManagerBase;
 using System;
-using log4net;
-using System.Collections.Generic;
-using System.Data.SqlClient;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -13,19 +10,18 @@ namespace AnalysisManager_Ape_PlugIn
 	   protected const float PROGRESS_PCT_APE_DONE = 99;
 
 	   protected string m_CurrentApeTask = string.Empty;
-	   protected System.DateTime m_LastStatusUpdateTime;
+	   protected DateTime m_LastStatusUpdateTime;
 
        public override IJobParams.CloseOutType RunTool()
        {
 			try 
 			{
 
-				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
-				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-				bool blnSuccess = false;
+				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
+				bool blnSuccess;
 
 				//Do the base class stuff
-				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
@@ -39,7 +35,7 @@ namespace AnalysisManager_Ape_PlugIn
                 }
 
 				m_CurrentApeTask = "Running Ape";
-				m_LastStatusUpdateTime = System.DateTime.UtcNow;
+				m_LastStatusUpdateTime = DateTime.UtcNow;
 				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentApeTask);
@@ -80,7 +76,7 @@ namespace AnalysisManager_Ape_PlugIn
 				}
 
 				//Stop the job timer
-				m_StopTime = System.DateTime.UtcNow;
+				m_StopTime = DateTime.UtcNow;
 				m_progress = PROGRESS_PCT_APE_DONE;
 
 				//Add the current job data to the summary file
@@ -106,7 +102,7 @@ namespace AnalysisManager_Ape_PlugIn
 				m_Dataset = m_jobParams.GetParam("OutputFolderName");
 				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				result = MakeResultsFolder();
+				IJobParams.CloseOutType result = MakeResultsFolder();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -147,7 +143,7 @@ namespace AnalysisManager_Ape_PlugIn
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
            string apeOperations = m_jobParams.GetParam("ApeOperations");
-           clsApeAMOperations ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
+           var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
            bool bSuccess = ops.RunApeOperations(apeOperations);
 
 		   if (!bSuccess)
@@ -160,9 +156,7 @@ namespace AnalysisManager_Ape_PlugIn
 
        protected void CopyFailedResultsToArchiveFolder()
         {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+	       string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -173,8 +167,7 @@ namespace AnalysisManager_Ape_PlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+	       string strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
@@ -190,7 +183,7 @@ namespace AnalysisManager_Ape_PlugIn
 		    */
 			
 		   // Make the results folder
-            result = MakeResultsFolder();
+            IJobParams.CloseOutType result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
@@ -198,12 +191,12 @@ namespace AnalysisManager_Ape_PlugIn
                 if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
                 }
             }
 
             // Copy the results folder to the Archive folder
-            clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
@@ -226,8 +219,7 @@ namespace AnalysisManager_Ape_PlugIn
 			{
 				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Ape").GetName();
 
-				string strNameAndVersion = null;
-				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+				string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
 				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
 			}
 			catch (Exception ex)
@@ -237,8 +229,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
 			// Store paths to key DLLs
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo("Ape.dll"));
+			var ioToolFiles = new System.Collections.Generic.List<FileInfo>();
+			ioToolFiles.Add(new FileInfo("Ape.dll"));
 
             try
             {

@@ -1,5 +1,4 @@
-﻿using System;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -37,7 +36,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Run a list of Ape operations
         /// </summary>
-        /// <param name="mageOperations"></param>
+		/// <param name="apeOperations"></param>
         /// <returns></returns>
         public bool RunApeOperations(string apeOperations) {
             bool ok = false;
@@ -57,18 +56,18 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             // Note: case statements must be lowercase
             switch (apeOperation.ToLower())
             {
                 case "runworkflow":
-                    clsApeAMRunWorkflow apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
+                    var apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
 
                     // Attach the progress event handler
-                    apeWfObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+                    apeWfObj.ProgressChanged += ApeProgressChanged;
 
-                    blnSuccess = apeWfObj.RunWorkflow(m_jobParams.GetParam("DataPackageID"));
+                    blnSuccess = apeWfObj.RunWorkflow();
 
 					if (!blnSuccess)
 						mErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
@@ -76,10 +75,10 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getimprovresults":
-                    clsApeAMGetImprovResults apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
+                    var apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
 
                     // Attach the progress event handler
-                    apeImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+                    apeImpObj.ProgressChanged += ApeProgressChanged;
 
                     blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
 
@@ -89,10 +88,10 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getqrollupresults":
-                    clsApeAMGetQRollupResults apeQImpObj = new clsApeAMGetQRollupResults(m_jobParams, m_mgrParams);
+                    var apeQImpObj = new clsApeAMGetQRollupResults(m_jobParams, m_mgrParams);
 
                     // Attach the progress event handler
-                    apeQImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+                    apeQImpObj.ProgressChanged += ApeProgressChanged;
 
                     blnSuccess = apeQImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
 
@@ -102,10 +101,10 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getviperresults":
-                    clsApeAMGetViperResults apeVImpObj = new clsApeAMGetViperResults(m_jobParams, m_mgrParams);
+                    var apeVImpObj = new clsApeAMGetViperResults(m_jobParams, m_mgrParams);
 
                     // Attach the progress event handler
-                    apeVImpObj.ProgressChanged += new clsApeAMBase.ProgressChangedEventHandler(ApeProgressChanged);
+                    apeVImpObj.ProgressChanged += ApeProgressChanged;
 
                     blnSuccess = apeVImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
 

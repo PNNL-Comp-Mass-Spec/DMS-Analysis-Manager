@@ -10,11 +10,6 @@ namespace AnalysisManager_Ape_PlugIn
     {
 
         #region Member Variables
-   
-        /// <summary>
-        /// The parameters for the running a workflow
-        /// </summary>
-        private static bool _shouldExit = false;
 
 		#endregion
 
@@ -53,18 +48,14 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (success)
                     {
-                        //m_message = "Ape successfully ran workflow" + GetJobParam("ApeWorkflowName");
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
                     {
-                        if (!_shouldExit)
-                        {
-                            //m_message = "Error running Ape";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape");
-                            blnSuccess = false;
-                        }
+	                    mErrorMessage = "Error running Ape in GetQRollupResultsAll";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+                        blnSuccess = false;
                     }
                 }
 
@@ -84,7 +75,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            List<string> paramList = new List<string>();
+            var paramList = new List<string>();
             paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
             paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
             paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Experiments;sqldbtype.tinyint");

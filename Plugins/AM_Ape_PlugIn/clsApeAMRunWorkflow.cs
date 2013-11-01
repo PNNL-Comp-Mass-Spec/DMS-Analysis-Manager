@@ -1,76 +1,56 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMRunWorkflow : clsApeAMBase
-    {
-        #region Member Variables
-   
-        /// <summary>
-        /// The parameters for the running a workflow
-        /// </summary>
-        private static bool _shouldExit = false;
+	class clsApeAMRunWorkflow : clsApeAMBase
+	{
+		#region Member Variables
 
-        #endregion
+		#endregion
 
-            #region Constructors 
+		#region Constructors
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        /// <param name="monitor"></param>
-        public clsApeAMRunWorkflow(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
-        {           
-        }
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="jobParms"></param>
+		/// <param name="mgrParms"></param>
+		public clsApeAMRunWorkflow(IJobParams jobParms, IMgrParams mgrParms)
+			: base(jobParms, mgrParms)
+		{
+		}
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        /// Setup and run Ape pipeline according to job parameters
-        /// </summary>
-        public bool RunWorkflow(String dataPackageID)
-        {
-            bool blnSuccess = true;
-            blnSuccess = RunWorkflowAll();
-            return blnSuccess;
-        }
+		public bool RunWorkflow()
+		{
+			bool blnSuccess = true;
+			var progressHandler = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+			{
+				Console.WriteLine(msg);
 
-        protected bool RunWorkflowAll()
-        {
-            bool blnSuccess = true;
-			Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
-            {
-                Console.WriteLine(msg);
+				if (done)
+				{
+					if (success)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
+						blnSuccess = true;
+					}
+					else
+					{
+						mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+						blnSuccess = false;
+					}
+				}
 
-                if (done)
-                {
-                    if (success)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully ran workflow" + GetJobParam("ApeWorkflowName"));
-                        blnSuccess = true;
-                    }
-                    else
-                    {
-                        if (!_shouldExit)
-                        {
-							mErrorMessage = "Error running Ape";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
-                            blnSuccess = false;
-                        }
-                    }
-                }
+			});
 
-            });
-
-            string apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
-            string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
-            string apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
+			string apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
+			string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
+			string apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
 
 			if (string.IsNullOrEmpty(apeWorkflowStepList))
 			{
@@ -78,14 +58,52 @@ namespace AnalysisManager_Ape_PlugIn
 				apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorflowStepList"));
 			}
 
-            //New code
-            bool apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
+			// Check whether we should compact the database
+			bool apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
 
-			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-			Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, mHandle);
+			Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
+			Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, progressHandler);
 
-            return blnSuccess;
-                    
-        }
-    }
+			if (!blnSuccess)
+			{
+				if (string.IsNullOrEmpty(mErrorMessage))
+					mErrorMessage = "Ape.SqlServerToSQLite.StartWorkflow returned false";
+			}
+			else
+			{				
+				// Add the protein parsimony tables
+				blnSuccess = StartProteinParsimony(apeDatabase);
+				
+			}
+
+			return blnSuccess;
+
+		}
+
+		private bool StartProteinParsimony(string apeDatabase)
+		{
+			const string SOURCE_TABLE = "T_Row_Metadata";
+
+			bool success;
+			try
+			{				
+				var parsimonyRunner = new SetCover.Runner();
+
+				var fiDatabase = new FileInfo(apeDatabase);
+				if (fiDatabase.Directory == null)
+					throw new IOException("Error determining the parent folder path for the Ape database");
+
+				// Add the protein parsimony tables
+				success = parsimonyRunner.RunAlgorithm(fiDatabase.Directory.FullName, fiDatabase.Name, SOURCE_TABLE);
+
+			}
+			catch (Exception ex)
+			{
+				mErrorMessage = "Error adding the parsimony tables: " + ex.Message;
+				success = false;
+			}
+
+			return success;
+		}
+	}
 }

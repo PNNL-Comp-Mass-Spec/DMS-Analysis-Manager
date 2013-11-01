@@ -10,11 +10,6 @@ namespace AnalysisManager_Ape_PlugIn
     {
 
         #region Member Variables
-   
-        /// <summary>
-        /// The parameters for the running a workflow
-        /// </summary>
-        private static bool _shouldExit = false;
 
 		#endregion
 
@@ -53,18 +48,14 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (success)
                     {
-                        //m_message = "Ape successfully ran workflow" + GetJobParam("ApeWorkflowName");
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
                     {
-                        if (!_shouldExit)
-                        {
-							mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
-                            blnSuccess = false;
-                        }
+						mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+                        blnSuccess = false;
                     }
                 }
 
