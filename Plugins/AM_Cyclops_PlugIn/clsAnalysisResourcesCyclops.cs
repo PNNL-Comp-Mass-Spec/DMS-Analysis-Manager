@@ -9,7 +9,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 		public static string AppFilePath = "";
 
-		public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+		public override IJobParams.CloseOutType GetResources()
 		{
 
 			try
@@ -20,7 +20,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
 				}
 
-				System.IO.DirectoryInfo dirLocalRScriptFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkingDir, "R_Scripts"));
+				var dirLocalRScriptFolder = new DirectoryInfo(Path.Combine(m_WorkingDir, "R_Scripts"));
 
 				if (!dirLocalRScriptFolder.Exists)
 				{
@@ -36,8 +36,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 					//Errors were reported in function call, so just return
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
-
-				string strInputFileExtension = string.Empty;
 
 				// Retrieve the Cyclops Workflow file specified for this job
 				string strCyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
@@ -75,10 +73,8 @@ namespace AnalysisManager_Cyclops_PlugIn
 					}
 				}
 
-				System.IO.DirectoryInfo diRemoteRScriptFolder;
-
 				string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
-				diRemoteRScriptFolder = new System.IO.DirectoryInfo(Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", "RScript"));
+				var diRemoteRScriptFolder = new DirectoryInfo(Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", "RScript"));
 
 				if (!diRemoteRScriptFolder.Exists)
 				{
@@ -90,7 +86,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				if (m_DebugLevel >= 2)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Copying FROM: " + diRemoteRScriptFolder.FullName);
 
-				foreach (System.IO.FileInfo diRFile in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
+				foreach (FileInfo diRFile in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
 				{
 
 					if (m_DebugLevel >= 3)
@@ -101,7 +97,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				string strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
 
 				// Now copy the Cyclops workflow file to the working directory
 				if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))

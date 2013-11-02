@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System;
 using AnalysisManagerBase;
-using log4net;
 
 using Cyclops;
 
@@ -18,12 +17,10 @@ namespace AnalysisManager_Cyclops_PlugIn
         {
 			try 
 			{
-			
-				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-				bool blnSuccess = false;
+				bool blnSuccess;
 
 				//Do the base class stuff
-				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
@@ -56,20 +53,17 @@ namespace AnalysisManager_Cyclops_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
-                string strOrgDbDir = m_jobParams.GetParam("orgdbdir");
-                string strFastaFilePath = Path.Combine(strOrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
-
-
-				Dictionary<string, string> d_Params = new Dictionary<string, string>(
-                    StringComparer.OrdinalIgnoreCase);
-				d_Params.Add("Job", m_jobParams.GetParam("Job"));
-				d_Params.Add("RDLL", RProgLocFromRegistry);
-				d_Params.Add("CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName"));
-				d_Params.Add("workDir", m_WorkDir);
-				d_Params.Add("Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor"));
-				d_Params.Add("Fixed_Effect", m_jobParams.GetParam("Fixed_Effect"));
-                d_Params.Add("RunProteinProphet", m_jobParams.GetParam("RunProteinProphet"));
-                d_Params.Add("orgdbdir", m_mgrParams.GetParam("orgdbdir"));
+				var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+				{
+					{"Job", m_jobParams.GetParam("Job")},
+					{"RDLL", RProgLocFromRegistry},
+					{"CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName")},
+					{"workDir", m_WorkDir},
+					{"Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor")},
+					{"Fixed_Effect", m_jobParams.GetParam("Fixed_Effect")},
+					{"RunProteinProphet", m_jobParams.GetParam("RunProteinProphet")},
+					{"orgdbdir", m_mgrParams.GetParam("orgdbdir")}
+				};
 
 				//Change the name of the log file for the local log file to the plug in log filename
 				String LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
@@ -79,7 +73,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				try
 				{
 
-                    CyclopsController cyclops = new CyclopsController(d_Params);
+                    var cyclops = new CyclopsController(d_Params);
 					blnSuccess = cyclops.Run();
 
 					//Change the name of the log file for the local log file to the plug in log filename
@@ -100,7 +94,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}
   
 				//Stop the job timer
-				m_StopTime = System.DateTime.UtcNow;
+				m_StopTime = DateTime.UtcNow;
 				m_progress = PROGRESS_PCT_CYCLOPS_DONE;
 
 				//Add the current job data to the summary file
@@ -126,7 +120,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				m_Dataset = m_jobParams.GetParam("OutputFolderName");
 				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				result = MakeResultsFolder();
+				IJobParams.CloseOutType result = MakeResultsFolder();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -141,8 +135,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}
 				
 				// Move the Plots folder to the result files folder
-				DirectoryInfo diPlotsFolder = default(DirectoryInfo);
-				diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+				var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
 				if (diPlotsFolder.Exists) 
 				{
@@ -169,9 +162,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         protected void CopyFailedResultsToArchiveFolder()
         {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+	        string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -182,8 +173,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+	        string strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
@@ -199,7 +189,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 		    */
 
             // Make the results folder
-            result = MakeResultsFolder();
+            IJobParams.CloseOutType result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
@@ -212,7 +202,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
 
             // Copy the results folder to the Archive folder
-            clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
@@ -234,8 +224,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 			try {
 				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
 
-				string strNameAndVersion;
-				strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+				string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
 				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
 			} catch (Exception ex) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
@@ -243,7 +232,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 			}
 
 			// Store paths to key DLLs
-			System.Collections.Generic.List<FileInfo> ioToolFiles = new System.Collections.Generic.List<FileInfo>();
+			var ioToolFiles = new List<FileInfo>();
 			ioToolFiles.Add(new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll")));
 
 			try {
@@ -267,22 +256,22 @@ namespace AnalysisManager_Cyclops_PlugIn
 			Microsoft.Win32.RegistryKey regRCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY);
             if (regRCore == null)
             {
-				throw new System.ApplicationException("Registry key is not found: " + RCORE_SUBKEY);
+				throw new ApplicationException("Registry key is not found: " + RCORE_SUBKEY);
             }
-            bool is64Bit = System.Environment.Is64BitProcess;
+            bool is64Bit = Environment.Is64BitProcess;
 			string sRSubKey = is64Bit ? "R64" : "R";
 			Microsoft.Win32.RegistryKey regR = regRCore.OpenSubKey(sRSubKey);
             if (regR == null)
             {
-                throw new System.ApplicationException("Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey);
+                throw new ApplicationException("Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey);
             }
-            System.Version currentVersion = new System.Version((string)regR.GetValue("Current Version"));
-            string installPath = (string)regR.GetValue("InstallPath");
+            var currentVersion = new Version((string)regR.GetValue("Current Version"));
+            var installPath = (string)regR.GetValue("InstallPath");
             string bin = Path.Combine(installPath, "bin");
 
             // Up to 2.11.x, DLLs are installed in R_HOME\bin.
             // From 2.12.0, DLLs are installed in the one level deeper directory.
-			if (currentVersion < new System.Version(2, 12))
+			if (currentVersion < new Version(2, 12))
 				return bin;
 			else
 				return Path.Combine(bin, is64Bit ? "x64" : "i386");
