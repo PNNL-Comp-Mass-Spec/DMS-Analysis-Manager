@@ -11,7 +11,6 @@ Option Strict On
 
 Imports PHRPReader
 Imports System.IO
-Imports System.Collections.Generic
 
 Public MustInherit Class clsAnalysisResources
 	Implements IAnalysisResources
@@ -203,10 +202,10 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_FastaToolsCnStr As String = ""
 	Protected m_FastaFileName As String = ""
 	Protected m_FastaGenTimeOut As Boolean = False
-	Protected m_FastaGenStartTime As DateTime = System.DateTime.UtcNow
+	Protected m_FastaGenStartTime As DateTime = DateTime.UtcNow
 
 	Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
-	Protected WithEvents m_FastaTimer As System.Timers.Timer
+	Protected WithEvents m_FastaTimer As Timers.Timer
 	Protected m_IonicZipTools As clsIonicZipTools
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
@@ -216,10 +215,10 @@ Public MustInherit Class clsAnalysisResources
 	Protected WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
 	Protected m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 
-	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
-	Private m_LockQueueWaitTimeStart As System.DateTime = System.DateTime.UtcNow
+	Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
+	Private m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 
-	Private m_LastMyEMSLProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+	Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
 
 #End Region
 
@@ -248,7 +247,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
 		Const MINIMUM_LOG_INTERVAL_SEC As Integer = 10
-		Static dtLastLogTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
+		Static dtLastLogTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 		Static dblFractionDoneSaved As Double = -1
 
 		Dim blnForcelog = m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT)
@@ -256,9 +255,9 @@ Public MustInherit Class clsAnalysisResources
 		If m_DebugLevel >= 3 OrElse blnForcelog Then
 			' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
 			If blnForcelog OrElse _
-			   System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+			   DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
 			   fractionDone - dblFractionDoneSaved >= 0.25 Then
-				dtLastLogTime = System.DateTime.UtcNow
+				dtLastLogTime = DateTime.UtcNow
 				dblFractionDoneSaved = fractionDone
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg)
 			End If
@@ -266,9 +265,9 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
-	Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
+	Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
 
-		If System.DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
+		If DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
 			m_FastaGenTimeOut = True	  'Set the timeout flag so an error will be reported
 			m_GenerationComplete = True		'Set the completion flag so the fasta generation wait loop will exit
 		End If
@@ -457,7 +456,7 @@ Public MustInherit Class clsAnalysisResources
 					Return False
 				End If
 
-				System.Threading.Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000)	   'Wait several seconds before retrying
+				Threading.Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000)	   'Wait several seconds before retrying
 			End Try
 		End While
 
@@ -776,7 +775,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
-		m_FastaTimer = New System.Timers.Timer
+		m_FastaTimer = New Timers.Timer
 		m_FastaTimer.Interval = 5000
 		m_FastaTimer.AutoReset = True
 
@@ -784,7 +783,7 @@ Public MustInherit Class clsAnalysisResources
 		'   Since it does not spawn a new thread, the while loop after this Try block won't actually get reached while m_FastaTools.ExportFASTAFile is running
 		'   Furthermore, even if m_FastaTimer_Elapsed sets m_FastaGenTimeOut to True, this won't do any good since m_FastaTools.ExportFASTAFile will still be running
 		m_FastaGenTimeOut = False
-		m_FastaGenStartTime = System.DateTime.UtcNow
+		m_FastaGenStartTime = DateTime.UtcNow
 		Try
 			m_FastaTimer.Start()
 			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
@@ -796,7 +795,7 @@ Public MustInherit Class clsAnalysisResources
 
 		' Wait for fasta creation to finish
 		While Not (m_GenerationComplete Or m_FastaGenTimeOut)
-			System.Threading.Thread.Sleep(2000)
+			Threading.Thread.Sleep(2000)
 		End While
 
 		m_FastaTimer.Stop()
@@ -814,6 +813,10 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
+		Dim fiFastaFile As IO.FileInfo
+		Dim strFastaFileMsg As String
+		fiFastaFile = New IO.FileInfo(IO.Path.Combine(DestFolder, m_FastaFileName))
+
 		If m_DebugLevel >= 1 Then
 			' Log the name of the .Fasta file we're using
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fasta generation complete, using database: " + m_FastaFileName)
@@ -821,12 +824,9 @@ Public MustInherit Class clsAnalysisResources
 			If m_DebugLevel >= 2 Then
 				' Also log the file creation and modification dates
 				Try
-					Dim fiFastaFile As IO.FileInfo
-					Dim strFastaFileMsg As String
-					fiFastaFile = New IO.FileInfo(IO.Path.Combine(DestFolder, m_FastaFileName))
 
-					strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(System.DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
-					strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(System.DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
+					strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
+					strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
 					strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
@@ -837,7 +837,17 @@ Public MustInherit Class clsAnalysisResources
 
 		End If
 
-		'If we got to here, everything worked OK
+		' Create/Update the .LastUsed file for the newly created Fasta File
+		Dim lastUsedFilePath = fiFastaFile.FullName & ".LastUsed"
+		Try
+			Using swLastUsedFile = New StreamWriter(New FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+				swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+			End Using
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
+		End Try
+
+		' If we got to here, everything worked OK
 		Return True
 
 	End Function
@@ -897,6 +907,21 @@ Public MustInherit Class clsAnalysisResources
 
 		Return True
 
+	End Function
+
+	''' <summary>
+	''' Given two dates, returns the most recent date
+	''' </summary>
+	''' <param name="date1"></param>
+	''' <param name="date2"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Shared Function DateMax(ByVal date1 As Date, ByVal date2 As Date) As Date
+		If date1 > date2 Then
+			Return date1
+		Else
+			Return date2
+		End If
 	End Function
 
 	''' <summary>
@@ -975,7 +1000,7 @@ Public MustInherit Class clsAnalysisResources
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, ErrMsg)
 				End If
 				RetryCount -= 1
-				System.Threading.Thread.Sleep(New System.TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
+				Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
 			End If
 		End While
 
@@ -1998,7 +2023,7 @@ Public MustInherit Class clsAnalysisResources
 				If RetryCount <= 0 Then
 					Return False
 				Else
-					System.Threading.Thread.Sleep(New System.TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
+					Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
 				End If
 			End If
 		End While
@@ -2075,7 +2100,7 @@ Public MustInherit Class clsAnalysisResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated ScanStats file using " + strInputFilePath)
 			End If
 
-			System.Threading.Thread.Sleep(125)
+			Threading.Thread.Sleep(125)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			Try
@@ -2109,15 +2134,15 @@ Public MustInherit Class clsAnalysisResources
 	  ByRef X As Integer, _
 	  ByRef Y As Integer) As Boolean
 
-		Static reRegExRXY As System.Text.RegularExpressions.Regex
-		Static reRegExRX As System.Text.RegularExpressions.Regex
+		Static reRegExRXY As Text.RegularExpressions.Regex
+		Static reRegExRX As Text.RegularExpressions.Regex
 
-		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim reMatch As Text.RegularExpressions.Match
 		Dim blnSuccess As Boolean
 
 		If reRegExRXY Is Nothing Then
-			reRegExRXY = New System.Text.RegularExpressions.Regex("R(\d+)X(\d+)Y(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-			reRegExRX = New System.Text.RegularExpressions.Regex("R(\d+)X(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			reRegExRXY = New Text.RegularExpressions.Regex("R(\d+)X(\d+)Y(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+			reRegExRX = New Text.RegularExpressions.Regex("R(\d+)X(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 		End If
 
 		' Try to match names like R00X438Y093
@@ -2258,8 +2283,8 @@ Public MustInherit Class clsAnalysisResources
 
 		' Split strFolderPath on the path separator
 		Dim lstFolders As List(Of String)
-		Dim reYearQuarter As System.Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("[0-9]{4}_[0-9]{1,2}", Text.RegularExpressions.RegexOptions.Compiled)
-		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim reYearQuarter As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("[0-9]{4}_[0-9]{1,2}", Text.RegularExpressions.RegexOptions.Compiled)
+		Dim reMatch As Text.RegularExpressions.Match
 
 		lstFolders = strFolderPath.Split(IO.Path.DirectorySeparatorChar).ToList()
 		lstFolders.Reverse()
@@ -2281,14 +2306,14 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>Free memory, in MB</returns>
 	Public Shared Function GetFreeMemoryMB() As Single
 
-		Static mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+		Static mFreeMemoryPerformanceCounter As Diagnostics.PerformanceCounter
 
 		Dim sngFreeMemory As Single = 0
 		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
 		Try
 			If mFreeMemoryPerformanceCounter Is Nothing Then
-				mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+				mFreeMemoryPerformanceCounter = New Diagnostics.PerformanceCounter("Memory", "Available MBytes")
 				mFreeMemoryPerformanceCounter.ReadOnly = True
 			End If
 
@@ -2299,7 +2324,7 @@ Public MustInherit Class clsAnalysisResources
 				If sngFreeMemory < Single.Epsilon Then
 					' You sometimes have to call .NextValue() several times before it returns a useful number
 					' Wait 1 second and then try again
-					System.Threading.Thread.Sleep(1000)
+					Threading.Thread.Sleep(1000)
 				End If
 				intIterations += 1
 			Loop
@@ -2309,7 +2334,7 @@ Public MustInherit Class clsAnalysisResources
 			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
 			' Alternatively, add the user to the "Administrators" group.
 			' In either case, you will need to reboot the computer for the change to take effect
-			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " + ex.Message)
 			End If
 		End Try
@@ -2322,7 +2347,7 @@ Public MustInherit Class clsAnalysisResources
 				If blnVirtualMachineOnPIC Then
 					' The Memory performance counters are not available on Windows instances running under VMWare on PIC
 				Else
-					If System.DateTime.Now().Hour = 15 Then
+					If DateTime.Now().Hour = 15 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Performance monitor reports 0 MB available; using alternate method: Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm)")
 					End If
 				End If
@@ -2332,7 +2357,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 		Catch ex As Exception
-			If System.DateTime.Now().Hour = 15 Then
+			If DateTime.Now().Hour = 15 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining available memory using Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm): " + ex.Message)
 			End If
 		End Try
@@ -2355,7 +2380,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="dtInterval">Timespan to convert</param>
 	''' <returns>Timespan length in human readable form</returns>
 	''' <remarks></remarks>
-	Protected Function GetHumanReadableTimeInterval(ByVal dtInterval As System.TimeSpan) As String
+	Protected Function GetHumanReadableTimeInterval(ByVal dtInterval As TimeSpan) As String
 
 		If dtInterval.TotalDays >= 1 Then
 			' Report Days
@@ -2409,13 +2434,13 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As System.DateTime, ByRef dtLastLockQueueWaitTimeLog As System.DateTime) As Boolean
+	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
 
 		Dim intWaitTimeLogIntervalSeconds As Integer = 30
 
-		If dtLockQueueWaitTimeStart = System.DateTime.MinValue Then dtLockQueueWaitTimeStart = System.DateTime.UtcNow()
+		If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = DateTime.UtcNow()
 
-		Select Case System.DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
+		Select Case DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
 			Case Is >= 30
 				intWaitTimeLogIntervalSeconds = 240
 			Case Is >= 15
@@ -2426,7 +2451,7 @@ Public MustInherit Class clsAnalysisResources
 				intWaitTimeLogIntervalSeconds = 30
 		End Select
 
-		If System.DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
+		If DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
 			Return True
 		Else
 			Return False
@@ -2488,8 +2513,8 @@ Public MustInherit Class clsAnalysisResources
 		'Get a table to hold the results of the query
 		While RetryCount > 0
 			Try
-				Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
-					Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
+				Using Cn As Data.SqlClient.SqlConnection = New Data.SqlClient.SqlConnection(ConnectionString)
+					Using Da As Data.SqlClient.SqlDataAdapter = New Data.SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
 						Using Ds As DataSet = New DataSet
 							Da.Fill(Ds)
 							Dt = Ds.Tables(0)
@@ -2497,12 +2522,12 @@ Public MustInherit Class clsAnalysisResources
 					End Using  'Da
 				End Using  'Cn
 				Exit While
-			Catch ex As System.Exception
+			Catch ex As Exception
 				RetryCount -= 1S
 				strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
 				strMsg &= ", RetryCount = " + RetryCount.ToString
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-				System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
+				Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
 			End Try
 		End While
 
@@ -2689,6 +2714,128 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
+	''' </summary>
+	''' <param name="localOrgDbFolder"></param>
+	''' <param name="freeSpaceThresholdPercent">Value between 0 and 100</param>
+	''' <remarks>Minimum allowed value for freeSpaceThresholdPercent is 1; maximum allowed value is 50</remarks>
+	Protected Sub PurgeFastaFilesIfLowFreeSpace(ByVal localOrgDbFolder As String, ByVal freeSpaceThresholdPercent As Integer)
+
+		If freeSpaceThresholdPercent < 1 Then freeSpaceThresholdPercent = 1
+		If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
+
+		Try
+			Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
+			If diOrgDbFolder.FullName.Length <= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
+				Exit Sub
+			End If
+
+			Dim driveLetter = diOrgDbFolder.FullName.Substring(0, 2)
+			If (Not driveLetter.EndsWith(":")) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Orb DB folder path does not have a colon; cannot query drive free space: " & diOrgDbFolder.FullName)
+				Exit Sub
+			End If
+
+			Dim driveInfo = New DriveInfo(driveLetter)
+			Dim percentFreeSpace As Double = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+
+			If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+				If m_DebugLevel >= 2 Then
+					Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
+				End If
+				Exit Sub
+			End If
+
+			Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
+
+			For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
+				If Not dctFastaFiles.ContainsKey(fiFile) Then
+					Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
+
+					' Look for a .hashcheck file
+					Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
+					If lstHashCheckfiles.Count > 0 Then
+						dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
+					End If
+
+					' Look for a .LastUsed file
+					Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
+					If lstLastUsedFiles.Count > 0 Then
+						dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
+
+						Try
+							' Read the date stored in the file
+							Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+								If srLastUsedfile.Peek > -1 Then
+									Dim strLastUseDate = srLastUsedfile.ReadLine()
+									Dim dtLastUsedActual As DateTime
+									If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
+										dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
+									End If
+								End If
+							End Using
+						Catch ex As Exception
+							' Ignore errors here
+						End Try
+
+					End If
+					dctFastaFiles.Add(fiFile, dtLastUsed)
+				End If
+			Next
+
+			Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
+
+			For Each fiFileToPurge In lstFastaFilesByLastUse
+				' Abort this process if the LastUsed date of this file is less than 5 days old
+				Dim dtLastUsed As DateTime
+				If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
+					If DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "All fasta files in " & localOrgDbFolder & " are less than 5 days old; will not purge any more files to free disk space")
+						Exit For
+					End If
+				End If
+
+				' Delete all files associated with this fasta file
+				Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
+
+				Dim lstFilesToDelete = New List(Of FileInfo)
+				lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & lstFilesToDelete.Count & " files associated with " & fiFileToPurge.FullName)
+				End If
+
+				Try
+					For Each fiFileToDelete In lstFilesToDelete
+						fiFileToDelete.Delete()
+					Next
+				Catch ex As Exception
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
+				End Try
+
+				' Re-check the disk free space
+				percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+				Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+
+				If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
+					End If
+					Exit Sub
+				ElseIf m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
+				End If
+
+			Next
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
+		End Try
+	End Sub
+
 	Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
 		Try
 			Dim fiFileToRename As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(SourceFolderPath, SourceFilename))
@@ -2710,8 +2857,8 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
-		m_LockQueueWaitTimeStart = System.DateTime.UtcNow
+		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+		m_LockQueueWaitTimeStart = DateTime.UtcNow
 	End Sub
 
 	''' <summary>
@@ -2834,7 +2981,7 @@ Public MustInherit Class clsAnalysisResources
 				m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
 				Return False
 			End If
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
 			Return False
 		End Try
@@ -2932,7 +3079,7 @@ Public MustInherit Class clsAnalysisResources
 
 			blnSuccess = True
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAnalysisResources.RetrieveAggregateFiles", ex)
 			blnSuccess = False
 		End Try
@@ -2985,7 +3132,7 @@ Public MustInherit Class clsAnalysisResources
 									strExceptionMsg = String.Copy(ex.Message)
 									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " + fi.Name + " in folder " + m_WorkingDir + "; will retry after garbage collection")
 									PRISM.Processes.clsProgRunner.GarbageCollectNow()
-									System.Threading.Thread.Sleep(1000)
+									Threading.Thread.Sleep(1000)
 								End If
 							End Try
 						Loop While Not blnSuccess And intRetryCount <= 1
@@ -3048,7 +3195,7 @@ Public MustInherit Class clsAnalysisResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
 				Return lstDataPackagePeptideHitJobs
 			End If
-		Catch ex As System.Exception
+		Catch ex As Exception
 			strMsg = "Exception calling LoadDataPackageJobInfo"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
 			Return lstDataPackagePeptideHitJobs
@@ -3065,7 +3212,7 @@ Public MustInherit Class clsAnalysisResources
 
 			Next
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			strMsg = "Exception determining data package jobs for this aggregation job"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
 		End Try
@@ -3128,7 +3275,7 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			m_message = "Exception calling RetrieveDataPackagePeptideHitJobInfo"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; " & m_message, ex)
 			Return False
@@ -3394,7 +3541,7 @@ Public MustInherit Class clsAnalysisResources
 				blnSuccess = True
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
 			blnSuccess = False
 		End Try
@@ -3514,7 +3661,7 @@ Public MustInherit Class clsAnalysisResources
 
 			blnSuccess = True
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
 			blnSuccess = False
 		End Try
@@ -3890,7 +4037,7 @@ Public MustInherit Class clsAnalysisResources
 					Else
 						' MASIC Results Folder Found
 						' If more than one folder, then use the folder with the newest _ScanStats.txt file						
-						Dim dtNewestScanStatsFileDate As System.DateTime
+						Dim dtNewestScanStatsFileDate As DateTime
 						Dim strNewestScanStatsFilePath As String = String.Empty
 
 						For Each diSubFolder As IO.DirectoryInfo In diSubfolders
@@ -4515,7 +4662,7 @@ Public MustInherit Class clsAnalysisResources
 
 
 			If Not UnzipOverNetwork Then
-				Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
+				Dim dtStartTime As DateTime = DateTime.UtcNow
 
 				Do While strFilesToDelete.Count > 0
 					' Try to process the files remaining in queue strFilesToDelete
@@ -4523,13 +4670,13 @@ Public MustInherit Class clsAnalysisResources
 					DeleteQueuedFiles(strFilesToDelete, String.Empty)
 
 					If strFilesToDelete.Count > 0 Then
-						If System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
+						If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
 							' Stop trying to delete files; it's not worth continuing to try
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete all of the files in queue strFilesToDelete; Queue Length = " + strFilesToDelete.Count.ToString() + "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
 							Exit Do
 						End If
 
-						System.Threading.Thread.Sleep(500)
+						Threading.Thread.Sleep(500)
 					End If
 				Loop
 
@@ -4653,7 +4800,7 @@ Public MustInherit Class clsAnalysisResources
 				End Try
 			Next
 
-			System.Threading.Thread.Sleep(125)
+			Threading.Thread.Sleep(125)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			'Delete all s*.zip files in working directory
@@ -4703,6 +4850,9 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
+		' Delete old fasta files and suffix array files if getting low on disk space
+		Const freeSpaceThresholdPercent As Integer = 20
+		PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
 
 		'We got to here OK, so return
 		Return True
@@ -4711,7 +4861,7 @@ Public MustInherit Class clsAnalysisResources
 
 	''' <summary>
 	''' Overrides base class version of the function to creates a Sequest params file compatible 
-	'''	with the Bioworks version on this system. Uses ParamFileGenerator dll provided by Ken Auberry
+	'''	with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
 	''' </summary>
 	''' <param name="ParamFileName">Name of param file to be created</param>
 	''' <param name="ParamFilePath">Param file storage path</param>
@@ -4904,13 +5054,13 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			' Delete the _DTA.zip file to free up some disk space
-			System.Threading.Thread.Sleep(100)
+			Threading.Thread.Sleep(100)
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting the _DTA.zip file")
 			End If
 
 			Try
-				System.Threading.Thread.Sleep(125)
+				Threading.Thread.Sleep(125)
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 				IO.File.Delete(TargetZipFilePath)
@@ -5420,12 +5570,12 @@ Public MustInherit Class clsAnalysisResources
 
 	Private Sub m_CDTAUtilities_ProgressEvent(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_CDTAUtilities.ProgressEvent
 
-		Static dtLastUpdateTime As System.DateTime
+		Static dtLastUpdateTime As DateTime
 
 		If m_DebugLevel >= 1 Then
-			If m_DebugLevel = 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
-			   m_DebugLevel > 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
-				dtLastUpdateTime = System.DateTime.UtcNow
+			If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+			   m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+				dtLastUpdateTime = DateTime.UtcNow
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & percentComplete.ToString("0.00") & "% complete")
 			End If
@@ -5440,7 +5590,7 @@ Public MustInherit Class clsAnalysisResources
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
 
 		If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			m_LastLockQueueWaitTimeLog = DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
 			End If
@@ -5460,8 +5610,8 @@ Public MustInherit Class clsAnalysisResources
 	End Sub
 
 	Private Sub m_MyEMSLDatasetListInfo_ProgressEvent(sender As Object, e As MyEMSLReader.ProgressEventArgs) Handles m_MyEMSLDatasetListInfo.ProgressEvent
-		If System.DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2 Then
-			m_LastMyEMSLProgressWriteTime = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2 Then
+			m_LastMyEMSLProgressWriteTime = DateTime.UtcNow
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MyEMSL downloader: " & e.PercentComplete & "% complete")
 		End If
 	End Sub

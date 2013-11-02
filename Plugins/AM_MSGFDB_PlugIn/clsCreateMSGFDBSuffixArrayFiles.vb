@@ -28,44 +28,47 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		mMgrName = strManagerName
 	End Sub
 
-	Protected Function CopyExistingIndexFilesFromRemote(ByVal fiFastaFile As IO.FileInfo, ByVal strMSGFPlusIndexFilesFolderPathBase As String, ByVal blnCheckForLockFile As Boolean, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single) As IJobParams.CloseOutType
+	Protected Function CopyExistingIndexFilesFromRemote(
+	  ByVal fiFastaFile As FileInfo,
+	  ByVal strRemoteIndexFolderPath As String,
+	  ByVal blnCheckForLockFile As Boolean,
+	  ByVal intDebugLevel As Integer,
+	  ByVal sngMaxWaitTimeHours As Single) As IJobParams.CloseOutType
 
 		Dim blnSuccess As Boolean = False
 
 		Try
-			Dim strRemoteIndexFolderPath As String
-			strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase)
 
-			Dim diRemoteIndexFolderPath As IO.DirectoryInfo
-			diRemoteIndexFolderPath = New IO.DirectoryInfo(strRemoteIndexFolderPath)
+			Dim diRemoteIndexFolderPath As DirectoryInfo
+			diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
 			If diRemoteIndexFolderPath.Exists Then
 
 				If blnCheckForLockFile Then
 					' Look for an existing lock file
-					Dim fiRemoteLockFile As IO.FileInfo
-					fiRemoteLockFile = New IO.FileInfo(IO.Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
+					Dim fiRemoteLockFile As FileInfo
+					fiRemoteLockFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
 
 					WaitForExistingLockfile(fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
 
 				End If
 
 				' Look for the .MSGFPlusIndexFileInfo file for this fasta file
-				Dim fiMSGFPlusIndexFileInfo As IO.FileInfo
-				fiMSGFPlusIndexFileInfo = New IO.FileInfo(IO.Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
+				Dim fiMSGFPlusIndexFileInfo As FileInfo
+				fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
 
 				If fiMSGFPlusIndexFileInfo.Exists Then
 					' Read the filenames in the file
 					' There should be 3 columns: FileName, FileSize, and FileDateUTC
 					' When looking for existing files we only require that the filesize match; FileDateUTC is not used
 
-					Dim dctFilesToCopy As Generic.Dictionary(Of String, Int64)
-					dctFilesToCopy = New Generic.Dictionary(Of String, Int64)
+					Dim dctFilesToCopy As Dictionary(Of String, Int64)
+					dctFilesToCopy = New Dictionary(Of String, Int64)
 
-					Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+					Using srInFile As StreamReader = New StreamReader(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 						Dim strLineIn As String
-						Dim lstData As Generic.List(Of String)
+						Dim lstData As List(Of String)
 
 						Do While srInFile.Peek > 0
 							strLineIn = srInFile.ReadLine()
@@ -99,13 +102,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 						oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
-						For Each entry As Generic.KeyValuePair(Of String, Int64) In dctFilesToCopy
-							Dim fiSourceFile As IO.FileInfo
+						For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+							Dim fiSourceFile As FileInfo
 							Dim strTargetFilePath As String
 
-							fiSourceFile = New IO.FileInfo(IO.Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+							fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
 
-							strTargetFilePath = IO.Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
+							strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
 							oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
 						Next
 
@@ -129,16 +132,16 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	End Function
 
-	Protected Function CopyIndexFilesToRemote(ByVal fiFastaFile As IO.FileInfo, ByVal strMSGFPlusIndexFilesFolderPathBase As String, ByVal intDebugLevel As Integer) As Boolean
+	Protected Function CopyIndexFilesToRemote(
+	  ByVal fiFastaFile As FileInfo,
+	  ByVal strRemoteIndexFolderPath As String,
+	  ByVal intDebugLevel As Integer) As Boolean
 
 		Dim blnSuccess As Boolean = False
 
 		Try
-			Dim strRemoteIndexFolderPath As String
-			strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase)
-
-			Dim diRemoteIndexFolderPath As IO.DirectoryInfo
-			diRemoteIndexFolderPath = New IO.DirectoryInfo(strRemoteIndexFolderPath)
+			Dim diRemoteIndexFolderPath As DirectoryInfo
+			diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
 			If Not diRemoteIndexFolderPath.Parent.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSGF+ index files folder not found: " & diRemoteIndexFolderPath.Parent.FullName)
@@ -150,14 +153,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				diRemoteIndexFolderPath.Create()
 			End If
 
-			Dim dctFilesToCopy As Generic.Dictionary(Of String, Int64)
-			dctFilesToCopy = New Generic.Dictionary(Of String, Int64)
+			Dim dctFilesToCopy As Dictionary(Of String, Int64)
+			dctFilesToCopy = New Dictionary(Of String, Int64)
 
-			Dim lstFileInfo As Generic.List(Of String)
-			lstFileInfo = New Generic.List(Of String)
+			Dim lstFileInfo As List(Of String)
+			lstFileInfo = New List(Of String)
 
 			' Find the index files for fiFastaFile
-			For Each fiSourceFile As IO.FileInfo In fiFastaFile.Directory.GetFiles(IO.Path.GetFileNameWithoutExtension(fiFastaFile.Name) & ".*")
+			For Each fiSourceFile As FileInfo In fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) & ".*")
 				If fiSourceFile.FullName <> fiFastaFile.FullName Then
 					If fiSourceFile.Extension <> ".hashcheck" Then
 						dctFilesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length)
@@ -172,12 +175,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
-			For Each entry As Generic.KeyValuePair(Of String, Int64) In dctFilesToCopy
+			For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
 				Dim strSourceFilePath As String
 				Dim strTargetFilePath As String
 
-				strSourceFilePath = IO.Path.Combine(fiFastaFile.Directory.FullName, entry.Key)
-				strTargetFilePath = IO.Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key)
+				strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key)
+				strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key)
 
 				blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, strManager)
 				If Not blnSuccess Then
@@ -190,10 +193,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			If blnSuccess Then
 
 				' Create the .MSGFPlusIndexFileInfo file for this fasta file
-				Dim fiMSGFPlusIndexFileInfo As IO.FileInfo
-				fiMSGFPlusIndexFileInfo = New IO.FileInfo(IO.Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
+				Dim fiMSGFPlusIndexFileInfo As FileInfo
+				fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
 
-				Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					For Each entry As String In lstFileInfo
 						swOutFile.WriteLine(entry)
@@ -226,6 +229,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' <param name="strFASTAFilePath">Input/output parameter; will get updated if running Legacy MSGFDB</param>
 	''' <param name="blnFastaFileIsDecoy">When True, then only creates the forward-based index files.  When False, then creates both the forward and reverse index files</param>
 	''' <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
+	''' <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">Folder path from which to copy (or store) the index files for Legacy DBs (.fasta files not created from the protein sequences database)</param>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Function CreateSuffixArrayFiles(
@@ -236,7 +240,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal MSGFDBProgLoc As String,
 	  ByRef strFASTAFilePath As String,
 	  ByVal blnFastaFileIsDecoy As Boolean,
-	  ByVal strMSGFPlusIndexFilesFolderPathBase As String) As IJobParams.CloseOutType
+	  ByVal strMSGFPlusIndexFilesFolderPathBase As String,
+	  ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String) As IJobParams.CloseOutType
 
 		Const MAX_WAITTIME_HOURS As Single = 1.0
 
@@ -245,7 +250,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Dim fiLockFile As FileInfo
 		Dim dbSarrayFilename As String
 
-		Dim sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
+		Const sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
 
 		Dim blnMSGFPlus As Boolean
 		Dim strCurrentTask As String = "Initializing"
@@ -291,8 +296,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				fiFastaFile = New FileInfo(strFASTAFilePath)
 			End If
 
-			'  Look for existing suffix array files that 
-
+			'  Look for existing suffix array files 
 			strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
 			fiLockFile = New FileInfo(Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock"))
@@ -365,11 +369,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			' This dictionary contains file suffixes to look for
 			' Keys will be "True" if the file exists and false if it does not exist
-			Dim lstFilesToFind As Generic.List(Of String)
-			Dim lstExistingFiles As Generic.List(Of String)
+			Dim lstFilesToFind As List(Of String)
+			Dim lstExistingFiles As List(Of String)
 
-			lstFilesToFind = New Generic.List(Of String)
-			lstExistingFiles = New Generic.List(Of String)
+			lstFilesToFind = New List(Of String)
+			lstExistingFiles = New List(Of String)
 
 			If Not blnReindexingRequired Then
 
@@ -399,31 +403,34 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			If blnReindexingRequired Then
 
 				' Index files are missing or out of date
-				' Copy them from strMSGFPlusIndexFilesFolderPathBase if possible
+				' Copy them from strMSGFPlusIndexFilesFolderPathBase or strMSGFPlusIndexFilesFolderPathLegacyDB if possible
 				' Otherwise, create new index files
+
+				Dim strRemoteIndexFolderPath As String
+				strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase, strMSGFPlusIndexFilesFolderPathLegacyDB)
 
 				Dim blnCheckForLockFile As Boolean
 
 				blnCheckForLockFile = True
-				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strMSGFPlusIndexFilesFolderPathBase, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
+				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
 
 				If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					' Files did not exist, or an error occurred while copying them
 
 					' Create a remote lock file
 
-					Dim fiRemoteLockFile As System.IO.FileInfo = Nothing
+					Dim fiRemoteLockFile As FileInfo = Nothing
 					Dim blnRemoteLockFileCreated As Boolean
 
 					strCurrentTask = "Create the remote lock file"
-					blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase, fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
+					blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strRemoteIndexFolderPath, fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
 
 					If blnRemoteLockFileCreated Then
 						' Lock file successfully created
 						' If this manager ended up waiting while another manager was indexing the files, then we should once again try to copy the files locally
 
 						blnCheckForLockFile = False
-						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strMSGFPlusIndexFilesFolderPathBase, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
+						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
 
 						If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 							' Existing files were copied; this manager does not need to re-create them
@@ -435,7 +442,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						eResult = CreateSuffixArrayFilesWork(strLogFileDir, intDebugLevel, JobNum, fiFastaFile, fiLockFile, JavaProgLoc, MSGFDBProgLoc, blnFastaFileIsDecoy, blnMSGFPlus, dbSarrayFilename)
 
 						If blnRemoteLockFileCreated AndAlso eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-							CopyIndexFilesToRemote(fiFastaFile, strMSGFPlusIndexFilesFolderPathBase, intDebugLevel)
+							CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel)
 						End If
 
 					End If
@@ -547,10 +554,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			' Delete any existing index files (BuildSA throws an error if they exist)
 			strCurrentTask = "Delete any existing files"
 
-			Dim lstExistingFiles As Generic.List(Of String)
+			Dim lstExistingFiles As List(Of String)
 			Dim strOutputNameBase As String = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
-			lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, New Generic.List(Of String), String.Empty, String.Empty)
+			lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, New List(Of String), String.Empty, String.Empty)
 
 			For Each strFileToDelete In lstExistingFiles
 				File.Delete(Path.Combine(fiFastaFile.DirectoryName, strFileToDelete))
@@ -646,24 +653,28 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	End Function
 
-	Protected Function CreateRemoteSuffixArrayLockFile(ByVal strFastaFileName As String, ByVal strMSGFPlusIndexFilesFolderPathBase As String, ByRef fiRemoteLockFile As System.IO.FileInfo, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single) As Boolean
+	Protected Function CreateRemoteSuffixArrayLockFile(
+	  ByVal strFastaFileName As String,
+	  ByVal strRemoteIndexFolderPath As String,
+	  ByRef fiRemoteLockFile As FileInfo,
+	  ByVal intDebugLevel As Integer,
+	  ByVal sngMaxWaitTimeHours As Single) As Boolean
 
+		' ReSharper disable once RedundantAssignment
 		Dim strCurrentTask As String = "Initializing"
 
-		Dim strRemoteIndexFolderPath As String
-		strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(strFastaFileName, strMSGFPlusIndexFilesFolderPathBase)
-
+		' ReSharper disable once RedundantAssignment
 		strCurrentTask = "Looking for folder " & strRemoteIndexFolderPath
 
-		Dim diRemoteIndexFolderPath As IO.DirectoryInfo
-		diRemoteIndexFolderPath = New IO.DirectoryInfo(strRemoteIndexFolderPath)
+		Dim diRemoteIndexFolderPath As DirectoryInfo
+		diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
 		If Not diRemoteIndexFolderPath.Parent.Exists Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot read/write MSGF+ index files from remote share; folder not found; " & diRemoteIndexFolderPath.FullName)
 			Return False
 		End If
 
-		fiRemoteLockFile = New IO.FileInfo(IO.Path.Combine(diRemoteIndexFolderPath.FullName, strFastaFileName & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
+		fiRemoteLockFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, strFastaFileName & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
 
 		strCurrentTask = "Looking for lock file " & fiRemoteLockFile.FullName
 		WaitForExistingLockfile(fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
@@ -680,7 +691,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating remote MSGF+ suffix array lock file at " & diRemoteIndexFolderPath.FullName & "; " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating remote MSGF+ suffix array lock file at " & diRemoteIndexFolderPath.FullName & "; " & strCurrentTask & "; " & ex.Message)
 			Return False
 		End Try
 
@@ -700,12 +711,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		End Try
 	End Sub
 
-	Protected Function DetermineRemoteMSGFPlusIndexFilesFolderPath(ByVal strFastaFileName As String, ByVal strMSGFPlusIndexFilesFolderPathBase As String) As String
+	Protected Function DetermineRemoteMSGFPlusIndexFilesFolderPath(
+	  ByVal strFastaFileName As String,
+	  ByVal strMSGFPlusIndexFilesFolderPathBase As String,
+	  ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String) As String
 
 		Dim reExtractNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("^ID_(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 		Dim reMatch As Text.RegularExpressions.Match
 
-		Dim strRemoteIndexFolderPath As String = "Other"
+		Dim strRemoteIndexFolderPath As String = String.Empty
 
 		' DMS-generated fasta files will have a name of the form ID_003949_3D6802EE.fasta
 		' Parse out the number (003949 in this case)
@@ -716,12 +730,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			If Integer.TryParse(reMatch.Groups.Item(1).Value, intGeneratedFastaFileNumber) Then
 				' Round down to the nearest 1000
 				' Thus, 003949 will round to 3000
-				strRemoteIndexFolderPath = (Math.Floor(intGeneratedFastaFileNumber / 1000.0) * 1000).ToString("0")
+				Dim strFolderName = (Math.Floor(intGeneratedFastaFileNumber / 1000.0) * 1000).ToString("0")
+				strRemoteIndexFolderPath = Path.Combine(strMSGFPlusIndexFilesFolderPathBase, strFolderName)
 			End If
 		End If
 
-		strRemoteIndexFolderPath = Path.Combine(strMSGFPlusIndexFilesFolderPathBase, strRemoteIndexFolderPath)
-
+		If String.IsNullOrEmpty(strRemoteIndexFolderPath) Then
+			strRemoteIndexFolderPath = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
+		End If
+		
 		Return strRemoteIndexFolderPath
 
 	End Function
@@ -743,15 +760,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal blnMSGFPlus As Boolean,
 	  ByVal strOutputNameBase As String,
 	  ByVal strFolderPathToSearch As String,
-	  ByRef lstFilesToFind As Generic.List(Of String),
+	  ByRef lstFilesToFind As List(Of String),
 	  ByRef strExistingFiles As String,
-	  ByRef strMissingFiles As String) As Generic.List(Of String)
+	  ByRef strMissingFiles As String) As List(Of String)
 
-		Dim lstExistingFiles As Generic.List(Of String)
-		lstExistingFiles = New Generic.List(Of String)
+		Dim lstExistingFiles As List(Of String)
+		lstExistingFiles = New List(Of String)
 
 		If lstFilesToFind Is Nothing Then
-			lstFilesToFind = New Generic.List(Of String)
+			lstFilesToFind = New List(Of String)
 		Else
 			lstFilesToFind.Clear()
 		End If
@@ -819,7 +836,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Dim fiJarFile As FileInfo
 		fiJarFile = New FileInfo(MSGFDBJarFilePath)
 
-		If fiJarFile.Name.ToLower() = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME.ToLower() Then
+		If fiJarFile.Name.ToLower() = clsMSGFDBUtils.MSGFDB_JAR_NAME.ToLower() Then
 			Return False
 		Else
 			Return True
@@ -834,11 +851,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' <param name="dctFilesToCopy">Dictionary with filenames and file sizes</param>
 	''' <returns>True if all files are found and are the right size</returns>
 	''' <remarks></remarks>
-	Protected Function ValidateFiles(ByVal strFolderPathToCheck As String, ByVal dctFilesToCopy As Generic.Dictionary(Of String, Int64)) As Boolean
+	Protected Function ValidateFiles(ByVal strFolderPathToCheck As String, ByVal dctFilesToCopy As Dictionary(Of String, Int64)) As Boolean
 
-		For Each entry As Generic.KeyValuePair(Of String, Int64) In dctFilesToCopy
-			Dim fiSourceFile As IO.FileInfo
-			fiSourceFile = New IO.FileInfo(IO.Path.Combine(strFolderPathToCheck, entry.Key))
+		For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+			Dim fiSourceFile As FileInfo
+			fiSourceFile = New FileInfo(Path.Combine(strFolderPathToCheck, entry.Key))
 
 			If Not fiSourceFile.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file not found: " & fiSourceFile.FullName)
@@ -853,7 +870,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	End Function
 
-	Protected Sub WaitForExistingLockfile(ByVal fiLockFile As IO.FileInfo, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single)
+	Protected Sub WaitForExistingLockfile(ByVal fiLockFile As FileInfo, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single)
 
 		' Check to see if another Analysis Manager is already creating the indexed DB files
 		If fiLockFile.Exists AndAlso System.DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then

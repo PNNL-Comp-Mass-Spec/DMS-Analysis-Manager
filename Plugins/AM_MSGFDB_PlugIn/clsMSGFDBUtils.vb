@@ -730,11 +730,18 @@ Public Class clsMSGFDBUtils
 		' 
 		Dim intIteration As Integer = 1
 		Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
+		Dim strMSGFPlusIndexFilesFolderPathLegacyDB As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
 
 		Do While intIteration <= 2
 
 			' Note that FastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
-			result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, JavaProgLoc, MSGFDbProgLoc, FastaFilePath, FastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath)
+			result = objIndexedDBCreator.CreateSuffixArrayFiles(
+			  m_WorkDir, m_DebugLevel, m_JobNum,
+			  JavaProgLoc, MSGFDbProgLoc,
+			  FastaFilePath, FastaFileIsDecoy,
+			  strMSGFPlusIndexFilesFolderPath,
+			  strMSGFPlusIndexFilesFolderPathLegacyDB)
+
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Exit Do
 			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And intIteration >= 2) Then
