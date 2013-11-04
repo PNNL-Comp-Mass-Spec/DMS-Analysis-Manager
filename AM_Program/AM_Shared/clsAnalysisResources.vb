@@ -2744,9 +2744,14 @@ Public MustInherit Class clsAnalysisResources
 			If (percentFreeSpace >= freeSpaceThresholdPercent) Then
 				If m_DebugLevel >= 2 Then
 					Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
 				End If
 				Exit Sub
+			End If
+
+			If m_DebugLevel >= 1 Then
+				Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is " & freeSpaceThresholdPercent & "% of the total space; purge required since less than threshold of " & freeSpaceThresholdPercent & "%")
 			End If
 
 			Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
@@ -2805,7 +2810,11 @@ Public MustInherit Class clsAnalysisResources
 				lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
 
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & lstFilesToDelete.Count & " files associated with " & fiFileToPurge.FullName)
+					Dim fileText = lstFilesToDelete.Count & " file"
+					If lstFilesToDelete.Count <> 1 Then
+						fileText &= "s"
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
 				End If
 
 				Try
@@ -2822,11 +2831,11 @@ Public MustInherit Class clsAnalysisResources
 
 				If (percentFreeSpace >= freeSpaceThresholdPercent) Then
 					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
 					End If
 					Exit Sub
 				ElseIf m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
 				End If
 
 			Next
