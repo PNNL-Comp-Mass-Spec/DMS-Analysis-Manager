@@ -11,6 +11,7 @@ Option Strict On
 
 Imports PHRPReader
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public MustInherit Class clsAnalysisResources
 	Implements IAnalysisResources
@@ -240,7 +241,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
-		m_FastaFileName = IO.Path.GetFileName(FullOutputPath)	  'Get the name of the fasta file that was generated
+		m_FastaFileName = Path.GetFileName(FullOutputPath)	  'Get the name of the fasta file that was generated
 		m_GenerationComplete = True		'Set the completion flag
 
 	End Sub
@@ -350,7 +351,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim strJobInfoFilePath As String = GetJobInfoFilePath(intJob)
 
-		Using swJobInfoFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strJobInfoFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+		Using swJobInfoFile As StreamWriter = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 			swJobInfoFile.WriteLine(strFilePath)
 		End Using
 
@@ -370,10 +371,10 @@ Public MustInherit Class clsAnalysisResources
 		Dim DestFilePath As String
 
 		'Verify dataset folder exists
-		If Not IO.Directory.Exists(DSFolderPath) Then Return False
+		If Not Directory.Exists(DSFolderPath) Then Return False
 
 		'Get a listing of the zip files to process
-		ZipFiles = IO.Directory.GetFiles(DSFolderPath, "s*.zip")
+		ZipFiles = Directory.GetFiles(DSFolderPath, "s*.zip")
 		If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
 
 		'copy each of the s*.zip files to the working directory
@@ -383,7 +384,7 @@ Public MustInherit Class clsAnalysisResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " + ZipFilePath + " to work directory")
 			End If
 
-			DestFilePath = IO.Path.Combine(m_WorkingDir, IO.Path.GetFileName(ZipFilePath))
+			DestFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFilePath))
 
 			If CreateStoragePathInfoOnly Then
 				If Not CreateStoragePathInfoFile(ZipFilePath, DestFilePath) Then
@@ -451,7 +452,7 @@ Public MustInherit Class clsAnalysisResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 				RetryCount -= 1
 
-				If Not Overwrite AndAlso IO.File.Exists(DestFilePath) Then
+				If Not Overwrite AndAlso File.Exists(DestFilePath) Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Tried to overwrite an existing file when Overwrite = False: " + DestFilePath)
 					Return False
 				End If
@@ -572,8 +573,8 @@ Public MustInherit Class clsAnalysisResources
 				Return AddFileToMyEMSLDownloadQueue(InpFolder)
 			End If
 
-			SourceFile = IO.Path.Combine(InpFolder, InpFile)
-			DestFilePath = IO.Path.Combine(OutDir, InpFile)
+			SourceFile = Path.Combine(InpFolder, InpFile)
+			DestFilePath = Path.Combine(OutDir, InpFile)
 
 			'Verify source file exists
 			If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
@@ -684,7 +685,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim DestFilePath As String = String.Empty
 
 		Try
-			SourceFile = IO.Path.Combine(InpFolder, InpFile)
+			SourceFile = Path.Combine(InpFolder, InpFile)
 
 			'Verify source file exists
 			If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
@@ -693,9 +694,9 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-			Dim Fi As New IO.FileInfo(SourceFile)
+			Dim Fi As New FileInfo(SourceFile)
 			Dim TargetName As String = m_DatasetName + Fi.Extension
-			DestFilePath = IO.Path.Combine(OutDir, TargetName)
+			DestFilePath = Path.Combine(OutDir, TargetName)
 
 			If CreateStoragePathInfoOnly Then
 				' Create a storage path info file
@@ -754,20 +755,42 @@ Public MustInherit Class clsAnalysisResources
 		'Initialize fasta generation state variables
 		m_GenerationStarted = False
 		m_GenerationComplete = False
+		m_FastaFileName = String.Empty
 
 		'Set up variables for fasta creation call
 		Dim LegacyFasta As String = m_jobParams.GetParam("LegacyFastaFileName")
 		Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
 		Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
+		Dim usingLegacyFasta = False
 
 		If Not String.IsNullOrWhiteSpace(CollectionList) AndAlso Not CollectionList.ToLower() = "na" Then
 			OrgDBDescription = "Protein collection: " + CollectionList + " with options " + CreationOpts
 		ElseIf Not String.IsNullOrWhiteSpace(LegacyFasta) AndAlso Not LegacyFasta.ToLower() = "na" Then
 			OrgDBDescription = "Legacy DB: " + LegacyFasta
+			usingLegacyFasta = True
 		Else
 			m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateFastaFile: " + m_message)
 			Return False
+		End If
+
+		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+
+		If splitFastaEnabled Then
+
+			If Not usingLegacyFasta Then
+				m_message = "Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName			
+			LegacyFasta = GetSplitFastaFileName(m_jobParams, m_message)
+
+			If String.IsNullOrEmpty(LegacyFasta) Then
+				' The error should have already been logged
+				Return False
+			End If
 		End If
 
 		If m_DebugLevel >= 2 Then
@@ -813,9 +836,16 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		Dim fiFastaFile As IO.FileInfo
+		If String.IsNullOrEmpty(m_FastaFileName) Then
+			' Fasta generator never raised event FileGenerationCompleted
+			m_message = "m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + OrgDBDescription
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return False
+		End If
+
+		Dim fiFastaFile As FileInfo
 		Dim strFastaFileMsg As String
-		fiFastaFile = New IO.FileInfo(IO.Path.Combine(DestFolder, m_FastaFileName))
+		fiFastaFile = New FileInfo(Path.Combine(DestFolder, m_FastaFileName))
 
 		If m_DebugLevel >= 1 Then
 			' Log the name of the .Fasta file we're using
@@ -883,7 +913,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function CreateStoragePathInfoFile(ByVal SourceFilePath As String, ByVal DestFilePath As String) As Boolean
 
-		Dim swOutFile As IO.StreamWriter
+		Dim swOutFile As StreamWriter
 		Dim strInfoFilePath As String = String.Empty
 
 		Try
@@ -893,7 +923,7 @@ Public MustInherit Class clsAnalysisResources
 
 			strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX
 
-			swOutFile = New IO.StreamWriter(New IO.FileStream(strInfoFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			swOutFile = New StreamWriter(New FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 			swOutFile.WriteLine(SourceFilePath)
 			swOutFile.Close()
@@ -943,7 +973,7 @@ Public MustInherit Class clsAnalysisResources
 				Dim strFileToDelete As String
 				strFileToDelete = strFilesToDelete.Peek()
 
-				IO.File.Delete(strFileToDelete)
+				File.Delete(strFileToDelete)
 
 				' If we get here, then the delete succeeded, so we can dequeue the file
 				strFilesToDelete.Dequeue()
@@ -990,7 +1020,7 @@ Public MustInherit Class clsAnalysisResources
 		If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
 		While RetryCount > 0
-			If IO.File.Exists(FileName) Then
+			If File.Exists(FileName) Then
 				Return True
 			Else
 				If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
@@ -1063,7 +1093,7 @@ Public MustInherit Class clsAnalysisResources
 		If Not Unzip Then Return True
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " + FileName)
-		If UnzipFileStart(IO.Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
+		If UnzipFileStart(Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " + FileName)
 			End If
@@ -1197,7 +1227,7 @@ Public MustInherit Class clsAnalysisResources
 					Else
 
 						If diFolderToCheck.Exists Then
-							If IO.File.Exists(IO.Path.Combine(TempDir, FileToFind)) Then
+							If File.Exists(Path.Combine(TempDir, FileToFind)) Then
 								FileFound = True
 								Exit For
 							End If
@@ -1249,9 +1279,9 @@ Public MustInherit Class clsAnalysisResources
 	   ByVal strInputFolderName As String) As String
 		Dim strTargetFolderPath As String
 
-		strTargetFolderPath = IO.Path.Combine(strParentFolderPath, strDatasetFolderName)
+		strTargetFolderPath = Path.Combine(strParentFolderPath, strDatasetFolderName)
 		If Not String.IsNullOrEmpty(strInputFolderName) Then
-			strTargetFolderPath = IO.Path.Combine(strTargetFolderPath, strInputFolderName)
+			strTargetFolderPath = Path.Combine(strTargetFolderPath, strInputFolderName)
 		End If
 
 		Return strTargetFolderPath
@@ -1280,13 +1310,13 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>Full path to the file, if found; empty string if no match</returns>
 	''' <remarks></remarks>
 	Public Shared Function FindFileInDirectoryTree(ByVal strFolderPath As String, ByVal strFileName As String, ByVal lstFolderNamesToSkip As SortedSet(Of String)) As String
-		Dim ioFolder As IO.DirectoryInfo
-		Dim ioFile As IO.FileSystemInfo
-		Dim ioSubFolder As IO.FileSystemInfo
+		Dim ioFolder As DirectoryInfo
+		Dim ioFile As FileSystemInfo
+		Dim ioSubFolder As FileSystemInfo
 
 		Dim strFilePathMatch As String = String.Empty
 
-		ioFolder = New IO.DirectoryInfo(strFolderPath)
+		ioFolder = New DirectoryInfo(strFolderPath)
 
 		If ioFolder.Exists Then
 			' Examine the files for this folder
@@ -1426,7 +1456,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
 
 		If Not String.IsNullOrEmpty(DSFolderPath) Then
-			Return IO.Path.Combine(DSFolderPath, DataFileName)
+			Return Path.Combine(DSFolderPath, DataFileName)
 		Else
 			Return String.Empty
 		End If
@@ -1467,10 +1497,10 @@ Public MustInherit Class clsAnalysisResources
 		Dim FolderExtensionWildcard As String = "*" + FolderExtension
 		Dim ServerPath As String = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard)
 
-		Dim diDatasetFolder As IO.DirectoryInfo = New IO.DirectoryInfo(ServerPath)
+		Dim diDatasetFolder As DirectoryInfo = New DirectoryInfo(ServerPath)
 
 		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-		For Each diSubFolder As IO.DirectoryInfo In diDatasetFolder.GetDirectories(FolderExtensionWildcard)
+		For Each diSubFolder As DirectoryInfo In diDatasetFolder.GetDirectories(FolderExtensionWildcard)
 			Return diSubFolder.FullName
 		Next
 
@@ -1491,7 +1521,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER)
 
 		If Not String.IsNullOrEmpty(DSFolderPath) Then
-			Return IO.Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER)
+			Return Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER)
 		End If
 
 		' The 0.ser folder does not exist; look for zipped s-folders
@@ -1513,13 +1543,13 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION)
 
-		Dim diServerFolder As IO.DirectoryInfo = New IO.DirectoryInfo(ServerPath)
+		Dim diServerFolder As DirectoryInfo = New DirectoryInfo(ServerPath)
 
 		'Get a list of the subfolders in the dataset folder		
 		'Go through the folders looking for a file with a ".mgf" extension
-		For Each diSubFolder As IO.DirectoryInfo In diServerFolder.GetDirectories()
+		For Each diSubFolder As DirectoryInfo In diServerFolder.GetDirectories()
 
-			For Each fiFile As IO.FileInfo In diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION)
+			For Each fiFile As FileInfo In diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION)
 				' Return the first .mgf file that was found
 				Return fiFile.FullName
 			Next
@@ -1587,22 +1617,22 @@ Public MustInherit Class clsAnalysisResources
 				Next
 
 				If myEmslFileID > 0 Then
-					Return IO.Path.Combine(ServerPath, MSXmlFoldername, MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID))
+					Return Path.Combine(ServerPath, MSXmlFoldername, MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID))
 				End If
 			Else
 
 				' Due to quirks with how FindValidFolder behaves, we need to confirm that the mzXML file actually exists
-				Dim diFolderInfo As IO.DirectoryInfo
-				diFolderInfo = New IO.DirectoryInfo(ServerPath)
+				Dim diFolderInfo As DirectoryInfo
+				diFolderInfo = New DirectoryInfo(ServerPath)
 
 				If diFolderInfo.Exists Then
 
 					'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-					Dim diSubfolders() As IO.DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
+					Dim diSubfolders() As DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
 					If diSubfolders.Length > 0 Then
 
 						' MSXmlFolder found; return the path to the file     
-						Return IO.Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
+						Return Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
 
 					End If
 
@@ -1615,7 +1645,7 @@ Public MustInherit Class clsAnalysisResources
 		' If we get here, then no match was found
 		' Lookup the MSXML cache path (typically \\proto-6\MSXML_Cache\ )
 		Dim strMSXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
-		Dim diCacheFolder As IO.DirectoryInfo = New IO.DirectoryInfo(strMSXMLCacheFolderPath)
+		Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(strMSXMLCacheFolderPath)
 
 		If diCacheFolder.Exists Then
 			' Look for the file in folders in the MSXML file cache
@@ -1631,8 +1661,8 @@ Public MustInherit Class clsAnalysisResources
 			If String.IsNullOrWhiteSpace(strMSXmlGeneratorName) Then
 				strSubfolderToCheck = diCacheFolder.FullName
 			Else
-				strMSXmlGeneratorName = IO.Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
-				strSubfolderToCheck = IO.Path.Combine(diCacheFolder.FullName, strMSXmlGeneratorName, strYearQuarter)
+				strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
+				strSubfolderToCheck = Path.Combine(diCacheFolder.FullName, strMSXmlGeneratorName, strYearQuarter)
 			End If
 
 			strMatchedFile = FindFileInDirectoryTree(strSubfolderToCheck, MzXMLFilename)
@@ -1740,10 +1770,10 @@ Public MustInherit Class clsAnalysisResources
 			If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
 			If FolderNameToFind Is Nothing Then FolderNameToFind = String.Empty
 
-			lstPathsToCheck.Add(IO.Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName))
+			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName))
 			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
-			lstPathsToCheck.Add(IO.Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName))
-			lstPathsToCheck.Add(IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName))
+			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName))
+			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName))
 
 			blnFileNotFoundEncountered = False
 
@@ -1907,7 +1937,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Wildcard in the name
 				' Look for any files matching FileNameToFind
-				Dim objFolderInfo = New IO.DirectoryInfo(PathToCheck)
+				Dim objFolderInfo = New DirectoryInfo(PathToCheck)
 
 				If objFolderInfo.GetFiles(FileNameToFind).Length = 0 Then
 					blnValidFolder = False
@@ -1920,7 +1950,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Look for file FileNameToFind in this folder
 				' Note: Using a 1 second holdoff between retries
-				If Not FileExistsWithRetry(IO.Path.Combine(PathToCheck, FileNameToFind), 1, clsLogTools.LogLevels.WARN) Then
+				If Not FileExistsWithRetry(Path.Combine(PathToCheck, FileNameToFind), 1, clsLogTools.LogLevels.WARN) Then
 					blnValidFolder = False
 				End If
 			End If
@@ -1936,7 +1966,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Wildcard in the name
 				' Look for any folders matching FolderNameToFind
-				Dim objFolderInfo = New IO.DirectoryInfo(PathToCheck)
+				Dim objFolderInfo = New DirectoryInfo(PathToCheck)
 
 				If objFolderInfo.GetDirectories(FolderNameToFind).Length = 0 Then
 					blnValidFolder = False
@@ -1949,7 +1979,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Look for folder FolderNameToFind in this folder
 				' Note: Using a 1 second holdoff between retries
-				If Not FolderExistsWithRetry(IO.Path.Combine(PathToCheck, FolderNameToFind), 1, MaxRetryCount, LogFolderNotFound) Then
+				If Not FolderExistsWithRetry(Path.Combine(PathToCheck, FolderNameToFind), 1, MaxRetryCount, LogFolderNotFound) Then
 					blnValidFolder = False
 				End If
 			End If
@@ -2010,7 +2040,7 @@ Public MustInherit Class clsAnalysisResources
 		If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
 		While RetryCount > 0
-			If IO.Directory.Exists(FolderName) Then
+			If Directory.Exists(FolderName) Then
 				Return True
 			Else
 				If LogFolderNotFound Then
@@ -2052,8 +2082,8 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		strMSFileInfoScannerDLLPath = IO.Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
-		If Not IO.File.Exists(strMSFileInfoScannerDLLPath) Then
+		strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+		If Not File.Exists(strMSFileInfoScannerDLLPath) Then
 			m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " + m_message)
 			Return False
@@ -2071,7 +2101,7 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 		End Select
 
-		strInputFilePath = IO.Path.Combine(m_WorkingDir, strInputFilePath)
+		strInputFilePath = Path.Combine(m_WorkingDir, strInputFilePath)
 
 		If Not RetrieveSpectra(strRawDataType) Then
 			Dim strExtraMsg As String = m_message
@@ -2088,7 +2118,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		' Make sure the raw data file does not get copied to the results folder
-		m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strInputFilePath))
+		m_jobParams.AddResultFileToSkip(Path.GetFileName(strInputFilePath))
 
 		objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
 
@@ -2104,7 +2134,7 @@ Public MustInherit Class clsAnalysisResources
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			Try
-				IO.File.Delete(strInputFilePath)
+				File.Delete(strInputFilePath)
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
@@ -2286,7 +2316,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim reYearQuarter As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("[0-9]{4}_[0-9]{1,2}", Text.RegularExpressions.RegexOptions.Compiled)
 		Dim reMatch As Text.RegularExpressions.Match
 
-		lstFolders = strFolderPath.Split(IO.Path.DirectorySeparatorChar).ToList()
+		lstFolders = strFolderPath.Split(Path.DirectorySeparatorChar).ToList()
 		lstFolders.Reverse()
 
 		For Each strFolder As String In lstFolders
@@ -2371,7 +2401,7 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	Public Shared Function GetJobInfoFilePath(ByVal intJob As Integer, ByVal strWorkDirPath As String) As String
-		Return IO.Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX & intJob & ".txt")
+		Return Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX & intJob & ".txt")
 	End Function
 
 	''' <summary>
@@ -2431,6 +2461,70 @@ Public MustInherit Class clsAnalysisResources
 			Case Else
 				Return eRawDataTypeConstants.Unknown
 		End Select
+
+	End Function
+
+	Public Shared Function GetSplitFastaFileName(ByVal jobParams As IJobParams, <Out()> ByRef errorMessage As String) As String
+
+		errorMessage = String.Empty
+
+		Dim legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", "")
+		If String.IsNullOrEmpty(legacyFastaFileName) Then
+			errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return String.Empty
+		End If
+
+		Dim numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0)
+		If numberOfClonedSteps = 0 Then
+			errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return String.Empty
+		End If
+
+		Dim iteration = GetSplitFastaIteration(jobParams, errorMessage)
+		If iteration < 1 Then
+			If String.IsNullOrEmpty(errorMessage) Then
+				errorMessage = "GetSplitFastaIteration computed an iteration value of " & iteration & "; cannot determine the SplitFasta file name for this job step"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			End If
+			Return String.Empty
+		End If
+
+		Dim fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName)
+		Dim splitFastaName = fastaNameBase & "_" & numberOfClonedSteps.ToString() & "x_"		
+
+		If numberOfClonedSteps < 10 Then
+			splitFastaName &= iteration.ToString("0") & ".fasta"
+		ElseIf numberOfClonedSteps < 100 Then
+			splitFastaName &= iteration.ToString("00") & ".fasta"
+		Else
+			splitFastaName &= iteration.ToString("000") & ".fasta"
+		End If
+
+		Return splitFastaName
+
+	End Function
+
+	Public Shared Function GetSplitFastaIteration(ByVal jobParams As IJobParams, <Out()> ByRef errorMessage As String) As Integer
+
+		errorMessage = String.Empty
+
+		Dim cloneStepRenumStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0)
+		If cloneStepRenumStart = 0 Then
+			errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return 0
+		End If
+
+		Dim stepNumber = jobParams.GetJobParameter("StepParameters", "Step", 0)
+		If stepNumber = 0 Then
+			errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return 0
+		End If
+
+		Return stepNumber - cloneStepRenumStart + 1
 
 	End Function
 
@@ -2847,13 +2941,13 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
 		Try
-			Dim fiFileToRename As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(SourceFolderPath, SourceFilename))
-			Dim strFilePathWithPrefix As String = IO.Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
+			Dim fiFileToRename As FileInfo = New FileInfo(Path.Combine(SourceFolderPath, SourceFilename))
+			Dim strFilePathWithPrefix As String = Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
 
 			Threading.Thread.Sleep(100)
 			fiFileToRename.MoveTo(strFilePathWithPrefix)
 
-			m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strFilePathWithPrefix))
+			m_jobParams.AddResultFileToSkip(Path.GetFileName(strFilePathWithPrefix))
 
 		Catch ex As Exception
 			m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & intJob & " (data package has multiple jobs for the same dataset)"
@@ -2882,26 +2976,26 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Public Shared Function ResolveStoragePath(ByVal FolderPath As String, ByVal FileName As String) As String
 
-		Dim srInFile As IO.StreamReader
+		Dim srInFile As StreamReader
 		Dim strPhysicalFilePath As String = String.Empty
 		Dim strFilePath As String
 
 		Dim strLineIn As String
 
-		strFilePath = IO.Path.Combine(FolderPath, FileName)
+		strFilePath = Path.Combine(FolderPath, FileName)
 
-		If IO.File.Exists(strFilePath) Then
+		If File.Exists(strFilePath) Then
 			' The desired file is located in folder FolderPath
 			strPhysicalFilePath = strFilePath
 		Else
 			' The desired file was not found
 			strFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
 
-			If IO.File.Exists(strFilePath) Then
+			If File.Exists(strFilePath) Then
 				' The _StoragePathInfo.txt file is present
 				' Open that file to read the file path on the first line of the file
 
-				srInFile = New IO.StreamReader(New IO.FileStream(strFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+				srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				strLineIn = srInFile.ReadLine
 				strPhysicalFilePath = strLineIn
@@ -2928,23 +3022,23 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
 
-		Dim ioFolder As IO.DirectoryInfo
-		Dim ioFile As IO.FileInfo
+		Dim ioFolder As DirectoryInfo
+		Dim ioFile As FileInfo
 
-		Dim srInFile As IO.StreamReader
+		Dim srInFile As StreamReader
 		Dim strPhysicalFilePath As String = String.Empty
 		Dim strFilePath As String
 
 		Dim strLineIn As String
 
-		strFilePath = IO.Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
+		strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
 
-		If IO.File.Exists(strFilePath) Then
+		If File.Exists(strFilePath) Then
 			' The desired file is located in folder FolderPath
 			' The _StoragePathInfo.txt file is present
 			' Open that file to read the file path on the first line of the file
 
-			srInFile = New IO.StreamReader(New IO.FileStream(strFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			strLineIn = srInFile.ReadLine
 			strPhysicalFilePath = strLineIn
@@ -2954,13 +3048,13 @@ Public MustInherit Class clsAnalysisResources
 			' The desired file was not found
 
 			' Look for a ser file in the dataset folder
-			strPhysicalFilePath = IO.Path.Combine(FolderPath, BRUKER_SER_FILE)
-			ioFile = New IO.FileInfo(strPhysicalFilePath)
+			strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE)
+			ioFile = New FileInfo(strPhysicalFilePath)
 
 			If Not ioFile.Exists Then
 				' See if a folder named 0.ser exists in FolderPath
-				strPhysicalFilePath = IO.Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
-				ioFolder = New IO.DirectoryInfo(strPhysicalFilePath)
+				strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
+				ioFolder = New DirectoryInfo(strPhysicalFilePath)
 				If Not ioFolder.Exists Then
 					strPhysicalFilePath = ""
 				End If
@@ -3070,14 +3164,14 @@ Public MustInherit Class clsAnalysisResources
 
 			For Each fileToUnzip In lstFilesToUnzip
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " + fileToUnzip.Filename)
-				If UnzipFileStart(IO.Path.Combine(m_WorkingDir, fileToUnzip.Filename), m_WorkingDir, "clsAnalysisResources.RetrieveAggregateFiles", False) Then
+				If UnzipFileStart(Path.Combine(m_WorkingDir, fileToUnzip.Filename), m_WorkingDir, "clsAnalysisResources.RetrieveAggregateFiles", False) Then
 					If m_DebugLevel >= 2 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File unzipped: " & fileToUnzip.Filename)
 					End If
 					m_jobParams.AddResultFileExtensionToSkip(fileToUnzip.Filename)
 
 					' Note: This assumes that the file we just unzipped was a text file
-					RetrieveAggregateFilesRename(IO.Path.GetFileNameWithoutExtension(fileToUnzip.Filename) + ".txt", fileToUnzip.FilterValue, fileToUnzip.SaveMode)
+					RetrieveAggregateFilesRename(Path.GetFileNameWithoutExtension(fileToUnzip.Filename) + ".txt", fileToUnzip.FilterValue, fileToUnzip.SaveMode)
 				Else
 					Return False
 				End If
@@ -3109,9 +3203,9 @@ Public MustInherit Class clsAnalysisResources
 		Try
 			Select Case m_jobParams.GetParam("StepTool").ToLower
 				Case "phospho_fdr_aggregator"
-					Dim fi As New IO.FileInfo(IO.Path.Combine(m_WorkingDir, SourceFilename))
-					ext = IO.Path.GetExtension(SourceFilename)
-					filenameNoExt = IO.Path.GetFileNameWithoutExtension(SourceFilename)
+					Dim fi As New FileInfo(Path.Combine(m_WorkingDir, SourceFilename))
+					ext = Path.GetExtension(SourceFilename)
+					filenameNoExt = Path.GetFileNameWithoutExtension(SourceFilename)
 
 					If filterValue.ToLower().Contains("_hcd") Then
 						newFilename = filenameNoExt + "_hcd" + ext
@@ -3133,9 +3227,9 @@ Public MustInherit Class clsAnalysisResources
 
 						Do
 							Try
-								fi.MoveTo(IO.Path.Combine(m_WorkingDir, newFilename))
+								fi.MoveTo(Path.Combine(m_WorkingDir, newFilename))
 								blnSuccess = True
-							Catch ex As IO.IOException
+							Catch ex As IOException
 								intRetryCount += 1
 								If intRetryCount = 1 Then
 									strExceptionMsg = String.Copy(ex.Message)
@@ -3347,12 +3441,12 @@ Public MustInherit Class clsAnalysisResources
 
 					' Check whether a synopsis file by this name has already been copied locally
 					' If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-					If IO.File.Exists(IO.Path.Combine(m_WorkingDir, strSynopsisFileName)) Then
+					If File.Exists(Path.Combine(m_WorkingDir, strSynopsisFileName)) Then
 						blnPrefixRequired = True
 
-						LocalFolderPath = IO.Path.Combine(m_WorkingDir, "FileRename")
-						If Not IO.Directory.Exists(LocalFolderPath) Then
-							IO.Directory.CreateDirectory(LocalFolderPath)
+						LocalFolderPath = Path.Combine(m_WorkingDir, "FileRename")
+						If Not Directory.Exists(LocalFolderPath) Then
+							Directory.CreateDirectory(LocalFolderPath)
 						End If
 
 					Else
@@ -3360,10 +3454,10 @@ Public MustInherit Class clsAnalysisResources
 						LocalFolderPath = String.Copy(m_WorkingDir)
 					End If
 
-					Dim swJobInfoFile As IO.StreamWriter = Nothing
+					Dim swJobInfoFile As StreamWriter = Nothing
 					If udtOptions.CreateJobPathFiles Then
 						Dim strJobInfoFilePath As String = GetJobInfoFilePath(udtJobInfo.Job)
-						swJobInfoFile = New IO.StreamWriter(New IO.FileStream(strJobInfoFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+						swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 					End If
 
 					For Each SourceFilename In lstFilesToGet
@@ -3383,8 +3477,8 @@ Public MustInherit Class clsAnalysisResources
 						End If
 
 						If udtOptions.CreateJobPathFiles And Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-							Dim strSourceFilePath As String = IO.Path.Combine(SourceFolderPath, SourceFilename)
-							If IO.File.Exists(strSourceFilePath) Then
+							Dim strSourceFilePath As String = Path.Combine(SourceFolderPath, SourceFilename)
+							If File.Exists(strSourceFilePath) Then
 								swJobInfoFile.WriteLine(strSourceFilePath)
 							Else
 								If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
@@ -3469,7 +3563,7 @@ Public MustInherit Class clsAnalysisResources
 					Else
 						If Not String.IsNullOrEmpty(strMZidFilename) Then
 							' Unzip the MZId file
-							m_IonicZipTools.UnzipFile(IO.Path.Combine(m_WorkingDir, strMZidFilename))
+							m_IonicZipTools.UnzipFile(Path.Combine(m_WorkingDir, strMZidFilename))
 
 							If blnPrefixRequired Then
 								If Not RenameDuplicatePHRPFile(m_WorkingDir, m_DatasetName & "_msgfplus.mzid", m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_", udtJobInfo.Job) Then
@@ -3511,7 +3605,7 @@ Public MustInherit Class clsAnalysisResources
 					If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
 						Dim strCopyCommand As String
 						If blnIsFolder Then
-							strCopyCommand = "copy " & strRawFilePath & " .\" & IO.Path.GetFileName(strRawFilePath) & " /S /I"
+							strCopyCommand = "copy " & strRawFilePath & " .\" & Path.GetFileName(strRawFilePath) & " /S /I"
 						Else
 							' Make sure the case of the filename matches the case of the dataset name
 							' Also, make sure the extension is lowercase
@@ -3530,8 +3624,8 @@ Public MustInherit Class clsAnalysisResources
 			If dctRawFileRetrievalCommands.Count > 0 Then
 				' Create a batch file with commands for retrieve the dataset files
 				Dim strBatchFilePath As String
-				strBatchFilePath = IO.Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
-				Using swOutfile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strBatchFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				strBatchFilePath = Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
+				Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 					For Each item As String In dctRawFileRetrievalCommands.Values
 						swOutfile.WriteLine(item)
 					Next
@@ -3691,7 +3785,7 @@ Public MustInherit Class clsAnalysisResources
 
 		' Copy the PNNLOmicsElementData.xml file to the working directory
 		Dim strProgLoc As String
-		Dim fiSourceFile As IO.FileInfo
+		Dim fiSourceFile As FileInfo
 
 		Try
 			strProgLoc = m_mgrParams.GetParam(strProgLocName)
@@ -3701,7 +3795,7 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-			fiSourceFile = New IO.FileInfo(IO.Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE))
+			fiSourceFile = New FileInfo(Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE))
 
 			If Not fiSourceFile.Exists Then
 				m_message = "PNNLOmics Element Data file not found"
@@ -3709,7 +3803,7 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-			fiSourceFile.CopyTo(IO.Path.Combine(m_WorkingDir, OMICS_ELEMENT_DATA_FILE))
+			fiSourceFile.CopyTo(Path.Combine(m_WorkingDir, OMICS_ELEMENT_DATA_FILE))
 
 		Catch ex As Exception
 			m_message = "Error copying " & OMICS_ELEMENT_DATA_FILE
@@ -3740,7 +3834,7 @@ Public MustInherit Class clsAnalysisResources
 			Return True
 		End If
 
-		Dim fiDatasetFile As IO.FileInfo = New IO.FileInfo(DatasetFilePath)
+		Dim fiDatasetFile As FileInfo = New FileInfo(DatasetFilePath)
 		If Not fiDatasetFile.Exists Then
 			m_message = "Source dataset file file not found"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiDatasetFile.FullName)
@@ -3764,7 +3858,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function RetrieveMgfFile(ByVal GetCdfAlso As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim strMGFFilePath As String
-		Dim fiMGFFile As IO.FileInfo
+		Dim fiMGFFile As FileInfo
 
 		strMGFFilePath = FindMGFFile()
 
@@ -3774,7 +3868,7 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		fiMGFFile = New IO.FileInfo(strMGFFilePath)
+		fiMGFFile = New FileInfo(strMGFFilePath)
 		If Not fiMGFFile.Exists Then
 			m_message = "Source mgf file not found"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiMGFFile.FullName)
@@ -3788,7 +3882,7 @@ Public MustInherit Class clsAnalysisResources
 		'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
 		If Not GetCdfAlso Then Return True
 
-		For Each fiCDFFile As IO.FileInfo In fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION)
+		For Each fiCDFFile As FileInfo In fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION)
 			'Copy the .cdf file that was found
 			If CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then
 				Return True
@@ -3834,18 +3928,18 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RetrieveMZXmlFileUsingSourceFile(ByVal CreateStoragePathInfoOnly As Boolean, ByVal SourceFilePath As String, ByVal HashcheckFilePath As String) As Boolean
 
-		Dim fiSourceFile As IO.FileInfo
+		Dim fiSourceFile As FileInfo
 
 		If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
 			Return AddFileToMyEMSLDownloadQueue(SourceFilePath)
 		End If
 
-		fiSourceFile = New IO.FileInfo(SourceFilePath)
+		fiSourceFile = New FileInfo(SourceFilePath)
 
 		If fiSourceFile.Exists Then
 			If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 
-				If Not String.IsNullOrEmpty(HashcheckFilePath) AndAlso IO.File.Exists(HashcheckFilePath) Then
+				If Not String.IsNullOrEmpty(HashcheckFilePath) AndAlso File.Exists(HashcheckFilePath) Then
 					RetrieveMzXMLFileVerifyHash(fiSourceFile, HashcheckFilePath, CreateStoragePathInfoOnly)
 				Else
 					Return True
@@ -3873,7 +3967,7 @@ Public MustInherit Class clsAnalysisResources
 			' Don't compute the hash, since we're accessing the file over the network
 			blnComputeHash = False
 		Else
-			strTargetFilePath = IO.Path.Combine(m_WorkingDir, fiSourceFile.Name)
+			strTargetFilePath = Path.Combine(m_WorkingDir, fiSourceFile.Name)
 			blnComputeHash = True
 		End If
 
@@ -3886,13 +3980,13 @@ Public MustInherit Class clsAnalysisResources
 		Try
 			If CreateStoragePathInfoOnly Then
 				' Delete the local StoragePathInfo file
-				Dim strStoragePathInfoFile As String = IO.Path.Combine(m_WorkingDir, fiSourceFile.Name & STORAGE_PATH_INFO_FILE_SUFFIX)
-				If IO.File.Exists(strStoragePathInfoFile) Then
-					IO.File.Delete(strStoragePathInfoFile)
+				Dim strStoragePathInfoFile As String = Path.Combine(m_WorkingDir, fiSourceFile.Name & STORAGE_PATH_INFO_FILE_SUFFIX)
+				If File.Exists(strStoragePathInfoFile) Then
+					File.Delete(strStoragePathInfoFile)
 				End If
 			Else
 				' Delete the local file to force it to be re-generated
-				IO.File.Delete(strTargetFilePath)
+				File.Delete(strTargetFilePath)
 			End If
 
 		Catch ex As Exception
@@ -4032,15 +4126,15 @@ Public MustInherit Class clsAnalysisResources
 					Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 				End If
 			Else
-				Dim diFolderInfo As IO.DirectoryInfo
-				diFolderInfo = New IO.DirectoryInfo(ServerPath)
+				Dim diFolderInfo As DirectoryInfo
+				diFolderInfo = New DirectoryInfo(ServerPath)
 
 				If Not diFolderInfo.Exists Then
 					m_message = "Dataset folder with MASIC files not found: " + diFolderInfo.FullName
 				Else
 
 					' See if the ServerPath folder actually contains a subfolder that starts with "SIC"
-					Dim diSubfolders() As IO.DirectoryInfo = diFolderInfo.GetDirectories("SIC*")
+					Dim diSubfolders() As DirectoryInfo = diFolderInfo.GetDirectories("SIC*")
 					If diSubfolders.Length = 0 Then
 						m_message = "Dataset folder does not contain any MASIC results folders: " + diFolderInfo.FullName
 					Else
@@ -4049,8 +4143,8 @@ Public MustInherit Class clsAnalysisResources
 						Dim dtNewestScanStatsFileDate As DateTime
 						Dim strNewestScanStatsFilePath As String = String.Empty
 
-						For Each diSubFolder As IO.DirectoryInfo In diSubfolders
-							Dim fiSourceFile = New IO.FileInfo(IO.Path.Combine(diSubFolder.FullName, ScanStatsFilename))
+						For Each diSubFolder As DirectoryInfo In diSubfolders
+							Dim fiSourceFile = New FileInfo(Path.Combine(diSubFolder.FullName, ScanStatsFilename))
 							If fiSourceFile.Exists Then
 								If String.IsNullOrEmpty(strNewestScanStatsFilePath) OrElse fiSourceFile.LastWriteTimeUtc > dtNewestScanStatsFileDate Then
 									strNewestScanStatsFilePath = fiSourceFile.FullName
@@ -4062,7 +4156,7 @@ Public MustInherit Class clsAnalysisResources
 						If String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
 							m_message = "MASIC ScanStats file not found below " + diFolderInfo.FullName
 						Else
-							Dim fiSourceFile = New IO.FileInfo(strNewestScanStatsFilePath)
+							Dim fiSourceFile = New FileInfo(strNewestScanStatsFilePath)
 							Dim BestSICFolderPath = fiSourceFile.Directory.FullName
 							Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 						End If
@@ -4159,8 +4253,8 @@ Public MustInherit Class clsAnalysisResources
 
 		Else
 
-			Dim diFolderInfo As IO.DirectoryInfo
-			diFolderInfo = New IO.DirectoryInfo(MASICResultsFolderPath)
+			Dim diFolderInfo As DirectoryInfo
+			diFolderInfo = New DirectoryInfo(MASICResultsFolderPath)
 
 			If Not diFolderInfo.Exists Then
 				m_message = "MASIC Results folder not found: " + diFolderInfo.FullName
@@ -4229,7 +4323,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function RetrieveSICFileUNC(ByVal strFileToFind As String, ByVal MASICResultsFolderPath As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal MaxCopyAttempts As Integer, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
-		Dim fiSourceFile = New IO.FileInfo(IO.Path.Combine(MASICResultsFolderPath, strFileToFind))
+		Dim fiSourceFile = New FileInfo(Path.Combine(MASICResultsFolderPath, strFileToFind))
 
 		If m_DebugLevel >= 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying MASIC results file: " + fiSourceFile.FullName)
@@ -4385,16 +4479,16 @@ Public MustInherit Class clsAnalysisResources
 
 		'Do the copy
 		Try
-			Dim diSourceFolder As IO.DirectoryInfo
+			Dim diSourceFolder As DirectoryInfo
 			Dim DestFolderPath As String
 
-			diSourceFolder = New IO.DirectoryInfo(DSFolderPath)
+			diSourceFolder = New DirectoryInfo(DSFolderPath)
 			If Not diSourceFolder.Exists Then
 				m_message = "Source dataset folder not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diSourceFolder.FullName)
 			End If
 
-			DestFolderPath = IO.Path.Combine(m_WorkingDir, diSourceFolder.Name)
+			DestFolderPath = Path.Combine(m_WorkingDir, diSourceFolder.Name)
 
 			If CreateStoragePathInfoOnly Then
 				If Not diSourceFolder.Exists Then
@@ -4435,7 +4529,7 @@ Public MustInherit Class clsAnalysisResources
 		Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK As String = "*R*X*.zip"
 
 		Dim ChameleonCachedDataFolder As String = m_mgrParams.GetParam("ChameleonCachedDataFolder")
-		Dim diCachedDataFolder As IO.DirectoryInfo
+		Dim diCachedDataFolder As DirectoryInfo
 
 		Dim ServerPath As String
 		Dim strUnzipFolderPathBase As String = String.Empty
@@ -4461,16 +4555,16 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			Else
 				' Delete any subfolders at ChameleonCachedDataFolder that do not have this dataset's name
-				diCachedDataFolder = New IO.DirectoryInfo(ChameleonCachedDataFolder)
+				diCachedDataFolder = New DirectoryInfo(ChameleonCachedDataFolder)
 				If Not diCachedDataFolder.Exists Then
 					m_message = "Chameleon cached data folder does not exist"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + diCachedDataFolder.FullName)
 					Return False
 				Else
-					strUnzipFolderPathBase = IO.Path.Combine(diCachedDataFolder.FullName, m_DatasetName)
+					strUnzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, m_DatasetName)
 				End If
 
-				For Each diSubFolder As IO.DirectoryInfo In diCachedDataFolder.GetDirectories()
+				For Each diSubFolder As DirectoryInfo In diCachedDataFolder.GetDirectories()
 					If Not String.Equals(diSubFolder.Name, m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
 						' Delete this directory
 						Try
@@ -4493,8 +4587,8 @@ Public MustInherit Class clsAnalysisResources
 				Next
 
 				' Delete any .mis files that do not start with this dataset's name
-				For Each fiFile As IO.FileInfo In diCachedDataFolder.GetFiles("*.mis")
-					If Not String.Equals(IO.Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
+				For Each fiFile As FileInfo In diCachedDataFolder.GetFiles("*.mis")
+					If Not String.Equals(Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
 						fiFile.Delete()
 					End If
 				Next
@@ -4519,12 +4613,12 @@ Public MustInherit Class clsAnalysisResources
 			Dim strImagingSeqFilePathFinal As String
 
 			' Look for the .mis file (ImagingSequence file) 
-			strImagingSeqFilePathFinal = IO.Path.Combine(diCachedDataFolder.FullName, m_DatasetName + ".mis")
+			strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, m_DatasetName + ".mis")
 
-			If Not IO.File.Exists(strImagingSeqFilePathFinal) Then
+			If Not File.Exists(strImagingSeqFilePathFinal) Then
 
 				' Copy the .mis file (ImagingSequence file) over from the storage server
-				MisFiles = IO.Directory.GetFiles(ServerPath, "*.mis")
+				MisFiles = Directory.GetFiles(ServerPath, "*.mis")
 
 				If MisFiles.Length = 0 Then
 					' No .mis files were found; unable to continue
@@ -4535,8 +4629,8 @@ Public MustInherit Class clsAnalysisResources
 					' We'll copy the first file in MisFiles(0)
 					' Log a warning if we will be renaming the file
 
-					If Not String.Equals(IO.Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal, StringComparison.CurrentCultureIgnoreCase) Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Note: Renaming .mis file (ImagingSequence file) from " + IO.Path.GetFileName(MisFiles(0)) + " to " + IO.Path.GetFileName(strImagingSeqFilePathFinal))
+					If Not String.Equals(Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal, StringComparison.CurrentCultureIgnoreCase) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles(0)) + " to " + Path.GetFileName(strImagingSeqFilePathFinal))
 					End If
 
 					If Not CopyFileWithRetry(MisFiles(0), strImagingSeqFilePathFinal, True) Then
@@ -4563,7 +4657,7 @@ Public MustInherit Class clsAnalysisResources
 			' when processing the files
 
 			Dim ZipFiles() As String
-			ZipFiles = IO.Directory.GetFiles(ServerPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+			ZipFiles = Directory.GetFiles(ServerPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
 
 			For Each strZipFilePathRemote In ZipFiles
 
@@ -4597,9 +4691,9 @@ Public MustInherit Class clsAnalysisResources
 						If Not objEntry.IsDirectory Then
 
 							Dim strPathToCheck As String
-							strPathToCheck = IO.Path.Combine(strUnzipFolderPathBase, objEntry.FileName.Replace("/"c, "\"c))
+							strPathToCheck = Path.Combine(strUnzipFolderPathBase, objEntry.FileName.Replace("/"c, "\"c))
 
-							If Not IO.File.Exists(strPathToCheck) Then
+							If Not File.Exists(strPathToCheck) Then
 								blnUnzipFile = True
 								Exit For
 							End If
@@ -4617,7 +4711,7 @@ Public MustInherit Class clsAnalysisResources
 						Try
 
 							' Copy the file to the work directory on the local computer
-							strZipFilePathToExtract = IO.Path.Combine(m_WorkingDir, IO.Path.GetFileName(strZipFilePathRemote))
+							strZipFilePathToExtract = Path.Combine(m_WorkingDir, Path.GetFileName(strZipFilePathRemote))
 
 							If m_DebugLevel >= 2 Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " + strZipFilePathRemote)
@@ -4725,11 +4819,11 @@ Public MustInherit Class clsAnalysisResources
 			Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "", BRUKER_ZERO_SER_FOLDER)
 
 			If Not String.IsNullOrEmpty(DSFolderPath) Then
-				Dim diSourceFolder As IO.DirectoryInfo
-				Dim diTargetFolder As IO.DirectoryInfo
-				Dim fiFile As IO.FileInfo
+				Dim diSourceFolder As DirectoryInfo
+				Dim diTargetFolder As DirectoryInfo
+				Dim fiFile As FileInfo
 
-				diSourceFolder = New IO.DirectoryInfo(IO.Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER))
+				diSourceFolder = New DirectoryInfo(Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER))
 
 				If diSourceFolder.Exists Then
 					If CreateStoragePathInfoOnly Then
@@ -4741,7 +4835,7 @@ Public MustInherit Class clsAnalysisResources
 					Else
 						' Copy the 0.ser folder to the Work directory
 						' First create the 0.ser subfolder
-						diTargetFolder = IO.Directory.CreateDirectory(IO.Path.Combine(m_WorkingDir, BRUKER_ZERO_SER_FOLDER))
+						diTargetFolder = Directory.CreateDirectory(Path.Combine(m_WorkingDir, BRUKER_ZERO_SER_FOLDER))
 
 						' Now copy the files from the source 0.ser folder to the target folder
 						' Typically there will only be two files: ACQUS and ser
@@ -4772,7 +4866,7 @@ Public MustInherit Class clsAnalysisResources
 
 
 			'Get a listing of the zip files to process
-			ZipFiles = IO.Directory.GetFiles(m_WorkingDir, "s*.zip")
+			ZipFiles = Directory.GetFiles(m_WorkingDir, "s*.zip")
 			If ZipFiles.GetLength(0) < 1 Then
 				m_message = "No zipped s-folders found in working directory"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -4780,8 +4874,8 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			'Create a dataset subdirectory under the working directory
-			DSWorkFolder = IO.Path.Combine(m_WorkingDir, m_DatasetName)
-			IO.Directory.CreateDirectory(DSWorkFolder)
+			DSWorkFolder = Path.Combine(m_WorkingDir, m_DatasetName)
+			Directory.CreateDirectory(DSWorkFolder)
 
 			'Set up the unzipper
 			UnZipper = New clsIonicZipTools(m_DebugLevel, DSWorkFolder)
@@ -4792,10 +4886,10 @@ Public MustInherit Class clsAnalysisResources
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file " + ZipFile)
 				End If
 				Try
-					TargetFolderPath = IO.Path.Combine(DSWorkFolder, IO.Path.GetFileNameWithoutExtension(ZipFile))
-					IO.Directory.CreateDirectory(TargetFolderPath)
+					TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
+					Directory.CreateDirectory(TargetFolderPath)
 
-					SourceFilePath = IO.Path.Combine(m_WorkingDir, IO.Path.GetFileName(ZipFile))
+					SourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile))
 
 					If Not UnZipper.UnzipFile(SourceFilePath, TargetFolderPath) Then
 						m_message = "Error unzipping file " + ZipFile
@@ -4815,7 +4909,7 @@ Public MustInherit Class clsAnalysisResources
 			'Delete all s*.zip files in working directory
 			For Each ZipFile In ZipFiles
 				Try
-					IO.File.Delete(IO.Path.Combine(m_WorkingDir, IO.Path.GetFileName(ZipFile)))
+					File.Delete(Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile)))
 				Catch ex As Exception
 					m_message = "Exception deleting file " + ZipFile
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " : " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex))
@@ -4890,7 +4984,7 @@ Public MustInherit Class clsAnalysisResources
 			' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 
 			Dim paramFileType = SetBioworksVersion(m_jobParams.GetParam("ToolName"))
-			Dim fastaFilePath = IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+			Dim fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 			Dim connectionString = m_mgrParams.GetParam("connectionstring")
 			Dim datasetID As Integer = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
 
@@ -4966,7 +5060,7 @@ Public MustInherit Class clsAnalysisResources
 				Return SourceFolderPath
 			Else
 				' Return the path to the _dta.zip file
-				Return IO.Path.Combine(SourceFolderPath, SourceFileName)
+				Return Path.Combine(SourceFolderPath, SourceFileName)
 			End If
 		End If
 
@@ -4987,7 +5081,7 @@ Public MustInherit Class clsAnalysisResources
 				Return SourceFolderPath
 			Else
 				' Return the path to the _dta.txt file
-				Return IO.Path.Combine(SourceFolderPath, SourceFileName)
+				Return Path.Combine(SourceFolderPath, SourceFileName)
 			End If
 
 		End If
@@ -5001,10 +5095,10 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
 	Public Function RetrieveDtaFiles() As Boolean
 
-		Dim TargetZipFilePath As String = IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
-		Dim TargetCDTAFilePath As String = IO.Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
+		Dim TargetZipFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
+		Dim TargetCDTAFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
 
-		If Not IO.File.Exists(TargetCDTAFilePath) And Not IO.File.Exists(TargetZipFilePath) Then
+		If Not File.Exists(TargetCDTAFilePath) And Not File.Exists(TargetZipFilePath) Then
 
 			Dim SourceFilePath As String
 			Dim strErrorMessage As String = String.Empty
@@ -5028,7 +5122,7 @@ Public MustInherit Class clsAnalysisResources
 				End If
 			Else
 
-				Dim fiSourceFile As IO.FileInfo = New IO.FileInfo(SourceFilePath)
+				Dim fiSourceFile As FileInfo = New FileInfo(SourceFilePath)
 
 				' Copy the file locally
 				If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
@@ -5046,10 +5140,10 @@ Public MustInherit Class clsAnalysisResources
 
 		End If
 
-		If Not IO.File.Exists(TargetCDTAFilePath) Then
+		If Not File.Exists(TargetCDTAFilePath) Then
 
-			If Not IO.File.Exists(TargetZipFilePath) Then
-				m_message = IO.Path.GetFileName(TargetZipFilePath) & " not found in the working directory"
+			If Not File.Exists(TargetZipFilePath) Then
+				m_message = Path.GetFileName(TargetZipFilePath) & " not found in the working directory"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; cannot unzip in RetrieveDtaFiles")
 				Return False
 			End If
@@ -5072,7 +5166,7 @@ Public MustInherit Class clsAnalysisResources
 				Threading.Thread.Sleep(125)
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-				IO.File.Delete(TargetZipFilePath)
+				File.Delete(TargetZipFilePath)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting the _DTA.zip file: " + ex.Message)
 			End Try
@@ -5103,7 +5197,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'Unzip concatenated OUT file
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated OUT file")
-		If UnzipFileStart(IO.Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "clsAnalysisResources.RetrieveOutFiles", False) Then
+		If UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "clsAnalysisResources.RetrieveOutFiles", False) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenated OUT file unzipped")
 			End If
@@ -5113,8 +5207,8 @@ Public MustInherit Class clsAnalysisResources
 		If UnConcatenate Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated OUT file")
 
-			Dim fiSourceFile As IO.FileInfo
-			fiSourceFile = New IO.FileInfo(IO.Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"))
+			Dim fiSourceFile As FileInfo
+			fiSourceFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"))
 
 			If Not fiSourceFile.Exists Then
 				m_message = "_OUT.txt file not found after unzipping"
@@ -5143,7 +5237,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
 	Protected Friend Function RetrieveSettingsFileFromDb() As Boolean
 
-		Dim OutputFile As String = IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
+		Dim OutputFile As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
 
 		Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
 
@@ -5278,7 +5372,7 @@ Public MustInherit Class clsAnalysisResources
 	 ByVal CallingFunctionName As String, _
 	 ByVal ForceExternalZipProgramUse As Boolean) As Boolean
 
-		Dim fiFileInfo As IO.FileInfo
+		Dim fiFileInfo As FileInfo
 		Dim sngFileSizeMB As Single
 
 		Dim blnUseExternalUnzipper As Boolean = False
@@ -5300,7 +5394,7 @@ Public MustInherit Class clsAnalysisResources
 			strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram")
 			If strExternalUnzipperFilePath Is Nothing Then strExternalUnzipperFilePath = String.Empty
 
-			fiFileInfo = New IO.FileInfo(ZipFilePath)
+			fiFileInfo = New FileInfo(ZipFilePath)
 			sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
 
 			If Not fiFileInfo.Exists Then
@@ -5316,7 +5410,7 @@ Public MustInherit Class clsAnalysisResources
 			If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
 				If strExternalUnzipperFilePath.Length > 0 AndAlso _
 				   strExternalUnzipperFilePath.ToLower() <> "na" Then
-					If IO.File.Exists(strExternalUnzipperFilePath) Then
+					If File.Exists(strExternalUnzipperFilePath) Then
 						blnUseExternalUnzipper = True
 					End If
 				End If
@@ -5327,7 +5421,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			If blnUseExternalUnzipper Then
-				strUnzipperName = IO.Path.GetFileName(strExternalUnzipperFilePath)
+				strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath)
 
 				Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
 
@@ -5338,7 +5432,7 @@ Public MustInherit Class clsAnalysisResources
 				If blnSuccess Then
 					m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
 				Else
-					m_message = "Error unzipping " + IO.Path.GetFileName(ZipFilePath) + " using " + strUnzipperName
+					m_message = "Error unzipping " + Path.GetFileName(ZipFilePath) + " using " + strUnzipperName
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + m_message)
 					UnZipper = Nothing
 				End If
@@ -5441,7 +5535,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Public Shared Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByRef strErrorMessage As String, ByVal intNumericDataColIndex As Integer) As Boolean
 
-		Dim fiFileInfo As IO.FileInfo
+		Dim fiFileInfo As FileInfo
 
 		Dim strLineIn As String
 		Dim strSplitLine() As String
@@ -5452,7 +5546,7 @@ Public MustInherit Class clsAnalysisResources
 		strErrorMessage = String.Empty
 
 		Try
-			fiFileInfo = New IO.FileInfo(strFilePath)
+			fiFileInfo = New FileInfo(strFilePath)
 
 			If Not fiFileInfo.Exists Then
 				strErrorMessage = strFileDescription + " file not found: " + fiFileInfo.Name
@@ -5465,7 +5559,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			' Open the file and confirm it has data rows
-			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiFileInfo.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 				While srInFile.Peek > -1 And Not blnDataFound
 					strLineIn = srInFile.ReadLine()
 					If Not String.IsNullOrEmpty(strLineIn) Then

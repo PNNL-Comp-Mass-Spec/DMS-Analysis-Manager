@@ -8,8 +8,8 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisResourcesExtraction
 	Inherits clsAnalysisResources
@@ -66,10 +66,10 @@ Public Class clsAnalysisResourcesExtraction
 		End If
 
 		For Each entry In m_PendingFileRenames
-			Dim sourceFile As New FileInfo(IO.Path.Combine(m_WorkingDir, entry.Key))
+			Dim sourceFile As New FileInfo(Path.Combine(m_WorkingDir, entry.Key))
 			If sourceFile.Exists Then
-				sourceFile.MoveTo(IO.Path.Combine(m_WorkingDir, entry.Value))
-			End If			
+				sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value))
+			End If
 		Next
 
 		If mRetrieveOrganismDB Then
@@ -117,6 +117,10 @@ Public Class clsAnalysisResourcesExtraction
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Select
+
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				Return eResult
+			End If
 
 			RetrieveToolVersionFile(strResultType)
 
@@ -178,7 +182,7 @@ Public Class clsAnalysisResourcesExtraction
 		m_jobParams.AddResultFileToSkip(FileToGet)
 
 		If Not CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir) Then
-			Dim Msg As String = "Failed retrieving default_input.xml file."
+			Const Msg As String = "Failed retrieving default_input.xml file."
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
@@ -234,94 +238,158 @@ Public Class clsAnalysisResourcesExtraction
 
 	Private Function GetMSGFPlusFiles() As IJobParams.CloseOutType
 
-		Dim FileToGet As String
+		Dim currentStep As String = "Initializing"
 
 		Dim blnUseLegacyMSGFDB As Boolean
-		Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
-		Dim strBaseName As String
+		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+		Dim suffixToAdd As String
+		Dim numberOfClonedSteps = 1
+		Dim pepToProtMapRetrievalError As Boolean = False
 
-		Dim SourceFolderPath As String
-		SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus.zip", True, False)
-		If String.IsNullOrEmpty(SourceFolderPath) Then
-			' File not found
-			SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb.zip", True, False)
-			If String.IsNullOrEmpty(SourceFolderPath) Then
-				' File not found; log a warning
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find either the _msgfplus.zip file or the _msgfdb.zip file; auto-setting blnUseLegacyMSGFDB=False")
-				blnUseLegacyMSGFDB = False
-			Else
-				' File Found
-				blnUseLegacyMSGFDB = True
-			End If
-		Else
-			' Running MSGF+
-			blnUseLegacyMSGFDB = False
-		End If
+		Try
 
-		If blnUseLegacyMSGFDB Then
-			strBaseName = m_DatasetName & "_msgfdb"
-		Else
-			strBaseName = m_DatasetName & "_msgfplus"
-
-			FileToGet = m_DatasetName & "_msgfdb.tsv"
-
-			SourceFolderPath = FindDataFile(FileToGet, False, False)
-
-			If Not String.IsNullOrEmpty(SourceFolderPath) Then
-
-				If Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-					' Examine the date of the TSV file
-					' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
-
-					Dim fiTSVFile As System.IO.FileInfo
-					fiTSVFile = New System.IO.FileInfo(IO.Path.Combine(SourceFolderPath, FileToGet))
-					If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
-						' File is recent; grab it
-						If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
-							' File copy failed; that's OK; we'll grab the _msgfplus.zip file
-						Else
-							blnSkipMSGFResultsZipFileCopy = True
-							m_jobParams.AddResultFileToSkip(FileToGet)
-						End If
-					End If
-
-					m_jobParams.AddServerFileToDelete(fiTSVFile.FullName)
+			If splitFastaEnabled Then
+				numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
+				If numberOfClonedSteps = 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results")
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
-			End If
-		End If
-
-		If Not blnSkipMSGFResultsZipFileCopy Then
-			FileToGet = strBaseName & ".zip"
-			If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
-
-		'Manually add several files to skip
-		m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
-		m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.mzid")
-		m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.tsv")
-
-		' Get the peptide to protein mapping file
-		FileToGet = m_DatasetName & "_msgfdb_PepToProtMap.txt"
-		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-			'Errors were reported in function call
-
-			' See if IgnorePeptideToProteinMapError=True
-			If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
+				suffixToAdd = "_Part1"
 			Else
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+				suffixToAdd = String.Empty
 			End If
-		Else
-			' The OrgDB (aka fasta file) is not required
-			mRetrieveOrganismDB = False
-		End If
 
-		m_jobParams.AddResultFileToSkip(FileToGet)
+			Dim SourceFolderPath As String
+			currentStep = "Determining results file type based on the results file name"
+			SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
+			If String.IsNullOrEmpty(SourceFolderPath) Then
+				' File not found
+				SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
+				If String.IsNullOrEmpty(SourceFolderPath) Then
+					' File not found; log a warning
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find either the _msgfplus.zip file or the _msgfdb.zip file; auto-setting blnUseLegacyMSGFDB=False")
+					blnUseLegacyMSGFDB = False
+				Else
+					' File Found
+					blnUseLegacyMSGFDB = True
+				End If
+			Else
+				' Running MSGF+
+				blnUseLegacyMSGFDB = False
+			End If
+
+			For iteration As Integer = 1 To numberOfClonedSteps
+
+				Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
+				Dim FileToGet As String
+				Dim strBaseName As String
+
+				If splitFastaEnabled Then
+					suffixToAdd = "_Part" & iteration
+				Else
+					suffixToAdd = String.Empty
+				End If
+
+				If blnUseLegacyMSGFDB Then
+					strBaseName = m_DatasetName & "_msgfdb"
+
+					If splitFastaEnabled Then
+						m_message = "GetMSGFPlusFiles does not support SplitFasta mode for legacy MSGF-DB results"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
+				Else
+					strBaseName = m_DatasetName & "_msgfplus" & suffixToAdd
+
+					FileToGet = m_DatasetName & "_msgfdb" & suffixToAdd & ".tsv"
+					currentStep = "Retrieving " & FileToGet
+
+					SourceFolderPath = FindDataFile(FileToGet, False, False)
+
+					If Not String.IsNullOrEmpty(SourceFolderPath) Then
+
+						If Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+							' Examine the date of the TSV file
+							' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
+
+							Dim fiTSVFile As FileInfo
+							fiTSVFile = New FileInfo(Path.Combine(SourceFolderPath, FileToGet))
+							If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
+								' File is recent; grab it
+								If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
+									' File copy failed; that's OK; we'll grab the _msgfplus.zip file
+								Else
+									blnSkipMSGFResultsZipFileCopy = True
+									m_jobParams.AddResultFileToSkip(FileToGet)
+								End If
+							End If
+
+							m_jobParams.AddServerFileToDelete(fiTSVFile.FullName)
+						End If
+
+					End If
+				End If
+
+				If Not blnSkipMSGFResultsZipFileCopy Then
+					FileToGet = strBaseName & ".zip"
+					currentStep = "Retrieving " & FileToGet
+
+					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+						'Errors were reported in function call, so just return
+						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+					End If
+					m_jobParams.AddResultFileToSkip(FileToGet)
+				End If
+
+				' Manually add several files to skip
+				If splitFastaEnabled Then
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".txt")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".mzid")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".tsv")
+				Else
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.mzid")
+					m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.tsv")
+				End If
+
+				' Get the peptide to protein mapping file
+				FileToGet = m_DatasetName & "_msgfdb" & suffixToAdd & "_PepToProtMap.txt"
+				currentStep = "Retrieving " & FileToGet
+
+				If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+					'Errors were reported in function call
+
+					' See if IgnorePeptideToProteinMapError=True
+					If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
+					Else
+						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+					End If
+
+					pepToProtMapRetrievalError = True
+				Else
+					If splitFastaEnabled Then
+						Dim fiPepToProtMapFile As FileInfo
+						fiPepToProtMapFile = New FileInfo(Path.Combine(SourceFolderPath, FileToGet))
+						m_jobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName)
+					End If
+				End If
+
+				m_jobParams.AddResultFileToSkip(FileToGet)
+
+			Next
+
+			If Not pepToProtMapRetrievalError Then
+				' The OrgDB (aka fasta file) is not required
+				mRetrieveOrganismDB = False
+			End If
+
+		Catch ex As Exception
+			m_message = "Error in GetMSGFPlusFiles at step " & currentStep
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
 		' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
 
@@ -356,13 +424,13 @@ Public Class clsAnalysisResourcesExtraction
 	'Protected Function RetrieveDefaultMassCorrectionTagsFile() As Boolean
 
 	'	Dim strParamFileStoragePath As String
-	'	Dim ioFolderInfo As System.IO.DirectoryInfo
-	'	Dim ioSubfolders() As System.IO.DirectoryInfo
-	'	Dim ioFiles() As System.IO.FileInfo
+	'	Dim ioFolderInfo As System.DirectoryInfo
+	'	Dim ioSubfolders() As System.DirectoryInfo
+	'	Dim ioFiles() As System.FileInfo
 
 	'	Try
 	'		strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
-	'		ioFolderInfo = New System.IO.DirectoryInfo(strParamFileStoragePath).Parent
+	'		ioFolderInfo = New System.DirectoryInfo(strParamFileStoragePath).Parent
 
 	'		ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags")
 
@@ -383,7 +451,7 @@ Public Class clsAnalysisResourcesExtraction
 	'			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Retrieving default Mass Correction Tags file from " & ioFiles(0).FullName)
 	'		End If
 
-	'		ioFiles(0).CopyTo(System.IO.Path.Combine(m_WorkingDir, ioFiles(0).Name))
+	'		ioFiles(0).CopyTo(System.Path.Combine(m_WorkingDir, ioFiles(0).Name))
 
 	'	Catch ex As Exception
 	'		m_message = "Error retrieving " & MASS_CORRECTION_TAGS_FILENAME
@@ -407,7 +475,6 @@ Public Class clsAnalysisResourcesExtraction
 		Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
 		Dim ModDefsFolder As String
 
-		Dim blnSearchArchivedDatasetFolder As Boolean = False
 		Dim blnSuccess As Boolean
 
 		Try
@@ -431,7 +498,7 @@ Public Class clsAnalysisResourcesExtraction
 			End If
 
 			' Confirm that the file was actually created
-			blnSuccess = System.IO.File.Exists(System.IO.Path.Combine(m_WorkingDir, ModDefsFilename))
+			blnSuccess = File.Exists(Path.Combine(m_WorkingDir, ModDefsFilename))
 
 			If Not blnSuccess And ResultType <> RESULT_TYPE_MSALIGN Then
 				m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"
@@ -449,7 +516,7 @@ Public Class clsAnalysisResourcesExtraction
 			If String.IsNullOrEmpty(ModDefsFolder) Then
 				m_jobParams.AddResultFileToSkip(ModDefsFilename)
 			ElseIf ModDefsFolder.ToLower().StartsWith("\\proto") Then
-				If clsGlobal.FilesMatch(IO.Path.Combine(m_WorkingDir, ModDefsFilename), IO.Path.Combine(ModDefsFolder, ModDefsFilename)) Then
+				If clsGlobal.FilesMatch(Path.Combine(m_WorkingDir, ModDefsFilename), Path.Combine(ModDefsFolder, ModDefsFilename)) Then
 					m_jobParams.AddResultFileToSkip(ModDefsFilename)
 				End If
 			End If
@@ -468,7 +535,7 @@ Public Class clsAnalysisResourcesExtraction
 	Protected Function RetrieveToolVersionFile(ByVal strResultType As String) As Boolean
 
 		Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 			' Make sure the ResultType is valid

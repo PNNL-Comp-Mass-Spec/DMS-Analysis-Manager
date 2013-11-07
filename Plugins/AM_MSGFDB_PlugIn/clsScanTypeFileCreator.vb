@@ -1,11 +1,14 @@
 ﻿Option Strict On
 
+Imports AnalysisManagerBase
+Imports System.IO
+
 Public Class clsScanTypeFileCreator
 
 	Protected mErrorMessage As String
 	Protected mExceptionDetails As String
 
-	Protected mScanTypeMap As System.Collections.Generic.Dictionary(Of Integer, String)
+	Protected mScanTypeMap As Dictionary(Of Integer, String)
 
 	Protected mWorkDir As String
 	Protected mDatasetName As String
@@ -80,17 +83,17 @@ Public Class clsScanTypeFileCreator
 
 		Try
 			If mScanTypeMap Is Nothing Then
-				mScanTypeMap = New System.Collections.Generic.Dictionary(Of Integer, String)
+				mScanTypeMap = New Dictionary(Of Integer, String)
 			Else
 				mScanTypeMap.Clear()
 			End If
 			
-			If Not System.IO.File.Exists(strScanStatsExFilePath) Then
+			If Not File.Exists(strScanStatsExFilePath) Then
 				mErrorMessage = "_ScanStatsEx.txt file not found: " & strScanStatsExFilePath
 				Return False
 			End If
 
-			Using srScanStatsExFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsExFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			Using srScanStatsExFile As StreamReader = New StreamReader(New FileStream(strScanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				' Define the default column mapping
 				intScanNumberColIndex = 1
@@ -106,21 +109,17 @@ Public Class clsScanTypeFileCreator
 
 						If intLinesRead = 1 AndAlso strSplitLine.Length > 1 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
 							' This is a header line; define the column mapping
-							intScanNumberColIndex = -1
-							intCollisionModeColIndex = -1
-							intScanFilterColIndex = -1
-							For intColIndex As Integer = 0 To strSplitLine.Length - 1
-								Select Case strSplitLine(intColIndex).ToLower()
-									Case "ScanNumber".ToLower()
-										intScanNumberColIndex = intColIndex
-									Case "Collision Mode".ToLower()
-										intCollisionModeColIndex = intColIndex
-									Case "Scan Filter Text".ToLower()
-										intScanFilterColIndex = intColIndex
-									Case Else
-										' Ignore this column
-								End Select
-							Next
+
+							Const IS_CASE_SENSITIVE As Boolean = False
+							Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "Collision Mode", "Scan Filter Text"}
+
+							' Keys in this dictionary are column names, values are the 0-based column index
+							Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
+							
+							intScanNumberColIndex = dctHeaderMapping("ScanNumber")
+							intCollisionModeColIndex = dctHeaderMapping("Collision Mode")
+							intScanFilterColIndex = dctHeaderMapping("Scan Filter Text")
+						
 						Else
 							' Parse out the values
 
@@ -131,7 +130,7 @@ Public Class clsScanTypeFileCreator
 								If TryGetValueStr(strSplitLine, intCollisionModeColIndex, strCollisionMode) Then
 									blnStoreData = True
 								Else
-									strFilterText = String.empty
+									strFilterText = String.Empty
 									If TryGetValueStr(strSplitLine, intScanFilterColIndex, strFilterText) Then
 
 										strFilterText = strSplitLine(intScanFilterColIndex)
@@ -199,21 +198,21 @@ Public Class clsScanTypeFileCreator
 
 			mValidScanTypeLineCount = 0
 
-			strScanStatsFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "_ScanStats.txt")
-			strScanStatsExFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "_ScanStatsEx.txt")
+			strScanStatsFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStats.txt")
+			strScanStatsExFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStatsEx.txt")
 
-			If Not System.IO.File.Exists(strScanStatsFilePath) Then
+			If Not File.Exists(strScanStatsFilePath) Then
 				mErrorMessage = "_ScanStats.txt file not found: " & strScanStatsFilePath
 				Return False
 			End If
 
 			' Open the input file
-			Using srScanStatsFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				mScanTypeFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "_ScanType.txt")
+				mScanTypeFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanType.txt")
 
 				' Create the scan type output file
-				Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mScanTypeFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(mScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					swOutFile.WriteLine("ScanNumber" & ControlChars.Tab & "ScanTypeName" & ControlChars.Tab & "ScanType")
 
@@ -231,21 +230,17 @@ Public Class clsScanTypeFileCreator
 
 							If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
 								' This is a header line; define the column mapping
-								intScanNumberColIndex = -1
-								intScanTypeColIndex = -1
-								intScanTypeNameColIndex = -1
-								For intColIndex As Integer = 0 To strSplitLine.Length - 1
-									Select Case strSplitLine(intColIndex).ToLower()
-										Case "ScanNumber".ToLower()
-											intScanNumberColIndex = intColIndex
-										Case "ScanType".ToLower()
-											intScanTypeColIndex = intColIndex
-										Case "ScanTypeName".ToLower()
-											intScanTypeNameColIndex = intColIndex
-										Case Else
-											' Ignore this column
-									End Select
-								Next
+
+								Const IS_CASE_SENSITIVE As Boolean = False
+								Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "ScanType", "ScanTypeName"}
+
+								' Keys in this dictionary are column names, values are the 0-based column index
+								Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
+
+								intScanNumberColIndex = dctHeaderMapping("ScanNumber")
+								intScanTypeColIndex = dctHeaderMapping("ScanType")
+								intScanTypeNameColIndex = dctHeaderMapping("ScanTypeName")
+
 							Else
 								If intScanTypeNameColIndex < 0 And Not blnScanStatsExLoaded Then
 									' Need to read the ScanStatsEx file

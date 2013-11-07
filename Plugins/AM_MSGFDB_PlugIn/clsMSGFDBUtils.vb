@@ -45,8 +45,8 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Module Variables"
-	Protected m_mgrParams As AnalysisManagerBase.IMgrParams
-	Protected m_jobParams As AnalysisManagerBase.IJobParams
+	Protected m_mgrParams As IMgrParams
+	Protected m_jobParams As IJobParams
 
 	Protected m_WorkDir As String
 	Protected m_JobNum As String
@@ -63,7 +63,7 @@ Public Class clsMSGFDBUtils
 	Protected mPhosphorylationSearch As Boolean
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
-	' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+	' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
 	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
 
@@ -111,7 +111,7 @@ Public Class clsMSGFDBUtils
 
 #Region "Methods"
 
-	Public Sub New(oMgrParams As AnalysisManagerBase.IMgrParams, oJobParams As AnalysisManagerBase.IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
+	Public Sub New(oMgrParams As IMgrParams, oJobParams As IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
 		m_mgrParams = oMgrParams
 		m_jobParams = oJobParams
 		m_WorkDir = strWorkDir
@@ -192,7 +192,7 @@ Public Class clsMSGFDBUtils
 				' Auto-switch to c13
 				' Use the digit after the comma in the "ti" specification
 				strArgumentSwitch = "c13"
-				intCharIndex = strValue.IndexOf(",")
+				intCharIndex = strValue.IndexOf(",", StringComparison.Ordinal)
 				If intCharIndex >= 0 Then
 					strValue = strValue.Substring(intCharIndex + 1)
 				Else
@@ -217,7 +217,7 @@ Public Class clsMSGFDBUtils
 
 	Public Function ConvertMZIDToTSV(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
 
-		Dim strTSVFilePath As String = String.Empty
+		Dim strTSVFilePath As String
 		Dim intJavaMemorySize As Integer
 
 		Dim CmdStr As String
@@ -226,7 +226,7 @@ Public Class clsMSGFDBUtils
 		Try
 			' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
 			' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
-			strTSVFilePath = System.IO.Path.Combine(m_WorkDir, strDatasetName & "_msgfdb.tsv")
+			strTSVFilePath = IO.Path.Combine(m_WorkDir, strDatasetName & "_msgfdb.tsv")
 
 			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
 
@@ -241,9 +241,9 @@ Public Class clsMSGFDBUtils
 			CmdStr &= " -unroll 1"
 
 			' Make sure the machine has enough free memory to run MSGFPlus
-			Dim blnLogFreeMemoryOnSuccess As Boolean = False
+			Const LOG_FREE_MEMORY_ON_SUCCESS As Boolean = False
 
-			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MzIDToTsv", blnLogFreeMemoryOnSuccess) Then
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS) Then
 				ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
 				Return String.Empty
 			End If
@@ -293,7 +293,7 @@ Public Class clsMSGFDBUtils
 		Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
 		' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-		Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		Dim dbFilename As String = IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 		Dim strInputFilePath As String
 		Dim strFastaFilePath As String
 
@@ -302,15 +302,15 @@ Public Class clsMSGFDBUtils
 		Dim blnIgnorePeptideToProteinMapperErrors As Boolean
 		Dim blnSuccess As Boolean
 
-		strInputFilePath = System.IO.Path.Combine(m_WorkDir, ResultsFileName)
-		strFastaFilePath = System.IO.Path.Combine(OrgDbDir, dbFilename)
+		strInputFilePath = IO.Path.Combine(m_WorkDir, ResultsFileName)
+		strFastaFilePath = IO.Path.Combine(OrgDbDir, dbFilename)
 
 		Try
 			' Validate that the input file has at least one entry; if not, then no point in continuing
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				intLinesRead = 0
 				Do While srInFile.Peek > -1 AndAlso intLinesRead < 10
@@ -352,7 +352,7 @@ Public Class clsMSGFDBUtils
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(strFastaFilePath))
+			m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strFastaFilePath))
 		End If
 
 		Try
@@ -388,17 +388,17 @@ Public Class clsMSGFDBUtils
 				.ShowMessages = False
 			End With
 
-			' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+			' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
 			blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
 
 			mPeptideToProteinMapper.CloseLogFileNow()
 
 			Dim strResultsFilePath As String
-			strResultsFilePath = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING
-			strResultsFilePath = System.IO.Path.Combine(m_WorkDir, strResultsFilePath)
+			strResultsFilePath = IO.Path.GetFileNameWithoutExtension(strInputFilePath) & PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING
+			strResultsFilePath = IO.Path.Combine(m_WorkDir, strResultsFilePath)
 
 			If blnSuccess Then
-				If Not System.IO.File.Exists(strResultsFilePath) Then
+				If Not IO.File.Exists(strResultsFilePath) Then
 					ReportError("Peptide to protein mapping file was not created", "Peptide to protein mapping file was not created: " & strResultsFilePath)
 					blnSuccess = False
 				Else
@@ -421,7 +421,7 @@ Public Class clsMSGFDBUtils
 				If blnIgnorePeptideToProteinMapperErrors Then
 					ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
 
-					If System.IO.File.Exists(strResultsFilePath) Then
+					If IO.File.Exists(strResultsFilePath) Then
 						blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
 					Else
 						blnSuccess = True
@@ -455,10 +455,10 @@ Public Class clsMSGFDBUtils
 
 	Public Sub DeleteFileInWorkDir(ByVal strFilename As String)
 
-		Dim fiFile As System.IO.FileInfo
+		Dim fiFile As IO.FileInfo
 
 		Try
-			fiFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, strFilename))
+			fiFile = New IO.FileInfo(IO.Path.Combine(m_WorkDir, strFilename))
 
 			If fiFile.Exists Then
 				fiFile.Delete()
@@ -485,8 +485,8 @@ Public Class clsMSGFDBUtils
 		Const PROTEIN_LINE_START_CHAR As Char = ">"c
 		Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
 
-		Dim strDecoyFastaFilePath As String = String.Empty
-		Dim ioSourceFile As System.IO.FileInfo
+		Dim strDecoyFastaFilePath As String
+		Dim ioSourceFile As IO.FileInfo
 
 		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
 
@@ -494,13 +494,13 @@ Public Class clsMSGFDBUtils
 		Dim strPrefix As String
 
 		Try
-			ioSourceFile = New System.IO.FileInfo(strInputFilePath)
+			ioSourceFile = New IO.FileInfo(strInputFilePath)
 			If Not ioSourceFile.Exists Then
 				mErrorMessage = "Fasta file not found: " & ioSourceFile.FullName
 				Return String.Empty
 			End If
 
-			strDecoyFastaFilePath = System.IO.Path.Combine(strOutputDirectoryPath, System.IO.Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
+			strDecoyFastaFilePath = IO.Path.Combine(strOutputDirectoryPath, IO.Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
 
 			If m_DebugLevel >= 2 Then
 				ReportMessage("Creating decoy fasta file at " & strDecoyFastaFilePath)
@@ -523,7 +523,7 @@ Public Class clsMSGFDBUtils
 				strPrefix = "REV_"
 			End If
 
-			Using swProteinOutputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swProteinOutputFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strDecoyFastaFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 				Do
 					blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
@@ -555,9 +555,9 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Protected Function GetMSFGDBParameterNames() As System.Collections.Generic.Dictionary(Of String, String)
-		Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
-		dctParamNames = New System.Collections.Generic.Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
+	Protected Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
+		Dim dctParamNames As Dictionary(Of String, String)
+		dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
 		dctParamNames.Add("PMTolerance", "t")
 		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
@@ -599,7 +599,7 @@ Public Class clsMSGFDBUtils
 		End If
 	End Function
 
-	Protected Function GetKeyValueSetting(ByVal strText As String) As Generic.KeyValuePair(Of String, String)
+	Protected Function GetKeyValueSetting(ByVal strText As String) As KeyValuePair(Of String, String)
 
 		Dim strKey As String = String.Empty
 		Dim strValue As String = String.Empty
@@ -610,7 +610,7 @@ Public Class clsMSGFDBUtils
 			If Not strText.StartsWith("#") AndAlso strText.Contains("="c) Then
 
 				Dim intCharIndex As Integer
-				intCharIndex = strText.IndexOf("=")
+				intCharIndex = strText.IndexOf("=", StringComparison.Ordinal)
 
 				If intCharIndex > 0 Then
 					strKey = strText.Substring(0, intCharIndex).Trim()
@@ -624,7 +624,7 @@ Public Class clsMSGFDBUtils
 
 		End If
 
-		Return New Generic.KeyValuePair(Of String, String)(strKey, strValue)
+		Return New KeyValuePair(Of String, String)(strKey, strValue)
 	End Function
 
 	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String) As String
@@ -634,16 +634,16 @@ Public Class clsMSGFDBUtils
 	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String, ByVal strValueIfNotFound As String) As String
 
 		Dim strLineIn As String
-		Dim kvSetting As Generic.KeyValuePair(Of String, String)
+		Dim kvSetting As KeyValuePair(Of String, String)
 
-		If Not System.IO.File.Exists(strParameterFilePath) Then
+		If Not IO.File.Exists(strParameterFilePath) Then
 			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
 			Return strValueIfNotFound
 		End If
 
 		Try
 
-			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srParamFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				Do While srParamFile.Peek > -1
 					strLineIn = srParamFile.ReadLine()
@@ -682,10 +682,10 @@ Public Class clsMSGFDBUtils
 
 		' Define the path to the fasta file
 		OrgDbDir = m_mgrParams.GetParam("orgdbdir")
-		FastaFilePath = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		FastaFilePath = IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-		Dim fiFastaFile As System.IO.FileInfo
-		fiFastaFile = New System.IO.FileInfo(FastaFilePath)
+		Dim fiFastaFile As IO.FileInfo
+		fiFastaFile = New IO.FileInfo(FastaFilePath)
 
 		If Not fiFastaFile.Exists Then
 			' Fasta file not found
@@ -788,10 +788,10 @@ Public Class clsMSGFDBUtils
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Public Function LoadScanTypeFile(ByVal strScanTypeFilePath As String,
-	  ByRef lstLowResMSn As Generic.Dictionary(Of Integer, String),
-	  ByRef lstHighResMSn As Generic.Dictionary(Of Integer, String),
-	  ByRef lstHCDMSn As Generic.Dictionary(Of Integer, String),
-	  ByRef lstOther As Generic.Dictionary(Of Integer, String)) As Boolean
+	  ByRef lstLowResMSn As Dictionary(Of Integer, String),
+	  ByRef lstHighResMSn As Dictionary(Of Integer, String),
+	  ByRef lstHCDMSn As Dictionary(Of Integer, String),
+	  ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
 
 		Dim strLineIn As String
 		Dim intScanNumberColIndex As Integer = -1
@@ -799,14 +799,14 @@ Public Class clsMSGFDBUtils
 
 		Try
 			If Not IO.File.Exists(strScanTypeFilePath) Then
-				mErrorMessage = "ScanType file not found: " & strScanTypeFilePath				
+				mErrorMessage = "ScanType file not found: " & strScanTypeFilePath
 				Return False
 			End If
 
-			lstLowResMSn = New Generic.Dictionary(Of Integer, String)
-			lstHighResMSn = New Generic.Dictionary(Of Integer, String)
-			lstHCDMSn = New Generic.Dictionary(Of Integer, String)
-			lstOther = New Generic.Dictionary(Of Integer, String)
+			lstLowResMSn = New Dictionary(Of Integer, String)
+			lstHighResMSn = New Dictionary(Of Integer, String)
+			lstHCDMSn = New Dictionary(Of Integer, String)
+			lstOther = New Dictionary(Of Integer, String)
 
 			Using srScanTypeFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strScanTypeFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
@@ -815,7 +815,7 @@ Public Class clsMSGFDBUtils
 
 					If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim lstColumns As Generic.List(Of String)
+						Dim lstColumns As List(Of String)
 						lstColumns = strLineIn.Split(ControlChars.Tab).ToList()
 
 						If intScanNumberColIndex < 0 Then
@@ -918,8 +918,6 @@ Public Class clsMSGFDBUtils
 		  Text.RegularExpressions.RegexOptions.Compiled Or
 		  Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
-
 		Dim strConsoleOutputFilePath As String = "??"
 
 		Dim eThreadProgressBase() As eThreadProgressSteps
@@ -932,8 +930,8 @@ Public Class clsMSGFDBUtils
 			ReDim eThreadProgressBase(32)
 			ReDim sngThreadProgressAddon(32)
 
-			strConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT_FILE)
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			strConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSGFDB_CONSOLE_OUTPUT_FILE)
+			If Not IO.File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					ReportMessage("Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -948,14 +946,14 @@ Public Class clsMSGFDBUtils
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
-			Dim oMatch As System.Text.RegularExpressions.Match
+			Dim oMatch As Text.RegularExpressions.Match
 			Dim intThreadCount As Short = 0
 
 			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
 			mContinuumSpectraSkipped = 0
 			mSpectraSearched = 0
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 				intLinesRead = 0
 				Do While srInFile.Peek() >= 0
@@ -987,7 +985,7 @@ Public Class clsMSGFDBUtils
 						' Additionally, update progress if the line starts with one of the expected phrases
 						If strLineIn.StartsWith("Ignoring spectrum") Then
 							' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-							If strLineIn.IndexOf("spectrum is not centroided") > 0 Then
+							If strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0 Then
 								mContinuumSpectraSkipped += 1
 							End If
 						ElseIf strLineIn.StartsWith("Loading database files") Then
@@ -1097,6 +1095,7 @@ Public Class clsMSGFDBUtils
 
 						Case Else
 							' Unrecognized step
+							sngProgressOneThread = sngProgressOneThread
 					End Select
 
 					sngProgressAddonAllThreads += sngProgressOneThread / intThreadCount
@@ -1121,12 +1120,12 @@ Public Class clsMSGFDBUtils
 	 ByRef eThreadProgressBase() As eThreadProgressSteps, _
 	 ByRef sngThreadProgressAddon() As Single)
 
-		Dim oMatch As System.Text.RegularExpressions.Match
+		Dim oMatch As Text.RegularExpressions.Match
 
-		Static reExtractThreadNum As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("thread-(\d+)", _
+		Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)", _
 		  Text.RegularExpressions.RegexOptions.Compiled Or _
 		  Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Static reExtractPctComplete As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("([0-9.]+)% complete", _
+		Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete", _
 		  Text.RegularExpressions.RegexOptions.Compiled Or _
 		  Text.RegularExpressions.RegexOptions.IgnoreCase)
 
@@ -1181,27 +1180,27 @@ Public Class clsMSGFDBUtils
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
 	Protected Function ParseMSGFDBModifications(ByVal strParameterFilePath As String, _
-	  ByRef sbOptions As System.Text.StringBuilder, _
+	  ByRef sbOptions As Text.StringBuilder, _
 	  ByVal intNumMods As Integer, _
-	  ByRef lstStaticMods As System.Collections.Generic.List(Of String), _
-	  ByRef lstDynamicMods As System.Collections.Generic.List(Of String)) As Boolean
+	  ByRef lstStaticMods As List(Of String), _
+	  ByRef lstDynamicMods As List(Of String)) As Boolean
 
 		Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
 		Dim blnSuccess As Boolean
 		Dim strModFilePath As String
 
 		Try
-			Dim fiParameterFile As System.IO.FileInfo
-			fiParameterFile = New System.IO.FileInfo(strParameterFilePath)
+			Dim fiParameterFile As IO.FileInfo
+			fiParameterFile = New IO.FileInfo(strParameterFilePath)
 
-			strModFilePath = System.IO.Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
+			strModFilePath = IO.Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
 
 			' Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation 
 			mPhosphorylationSearch = False
 
 			sbOptions.Append(" -mod " & MOD_FILE_NAME)
 
-			Using swModFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strModFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swModFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strModFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 				swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
 				swModFile.WriteLine("")
@@ -1288,51 +1287,49 @@ Public Class clsMSGFDBUtils
 	  ByVal strInstrumentGroup As String,
 	  ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
-		Const DEFINE_MAX_THREADS As Boolean = True
 		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
 		Dim strParameterFilePath As String
 		Dim strLineIn As String
-		Dim sbOptions As System.Text.StringBuilder
+		Dim sbOptions As Text.StringBuilder
 
-		Dim kvSetting As Generic.KeyValuePair(Of String, String)
+		Dim kvSetting As KeyValuePair(Of String, String)
 		Dim intValue As Integer
 
 		Dim intParamFileThreadCount As Integer = 0
 		Dim strDMSDefinedThreadCount As String
 		Dim intDMSDefinedThreadCount As Integer = 0
 
-		Dim dctParamNames As System.Collections.Generic.Dictionary(Of String, String)
+		Dim dctParamNames As Dictionary(Of String, String)
 
 		Dim intNumMods As Integer = 0
-		Dim lstStaticMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
-		Dim lstDynamicMods As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
+		Dim lstStaticMods As List(Of String) = New List(Of String)
+		Dim lstDynamicMods As List(Of String) = New List(Of String)
 
 		Dim blnShowDecoyParamPresent As Boolean = False
 		Dim blnShowDecoy As Boolean = False
 		Dim blnTDA As Boolean = False
 
-		Dim strDatasetType As String
-		Dim blnHCD As Boolean = False
-
-		Dim strSearchEngineName As String = "Unknown MSGF App"
+		Dim strSearchEngineName As String
 
 		strMSGFDbCmdLineOptions = String.Empty
-		strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+		strParameterFilePath = IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
-		If Not System.IO.File.Exists(strParameterFilePath) Then
+		If Not IO.File.Exists(strParameterFilePath) Then
 			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
-		strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
-		If strDatasetType.ToUpper().Contains("HCD") Then
-			blnHCD = True
-		End If
+		'Dim strDatasetType As String
+		'Dim blnHCD As Boolean = False
+		'strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
+		'If strDatasetType.ToUpper().Contains("HCD") Then
+		'	blnHCD = True
+		'End If
 
 		strSearchEngineName = GetSearchEngineName()
 
-		sbOptions = New System.Text.StringBuilder(500)
+		sbOptions = New Text.StringBuilder(500)
 
 		' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
 		' Alternatively, if running MSGF+, this is set to true if TDA=1
@@ -1343,7 +1340,7 @@ Public Class clsMSGFDBUtils
 			' Initialize the Param Name dictionary
 			dctParamNames = GetMSFGDBParameterNames()
 
-			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srParamFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strParameterFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				Do While srParamFile.Peek > -1
 					strLineIn = srParamFile.ReadLine()
@@ -1395,8 +1392,8 @@ Public Class clsMSGFDBUtils
 									' #  3 means Q-Exactive
 
 									If String.IsNullOrEmpty(strInstrumentGroup) Then strInstrumentGroup = "#Undefined#"
-									Dim strNewInstrumentID As String = String.Empty
-									Dim strAutoSwitchReason As String = String.Empty
+									Dim strNewInstrumentID As String
+									Dim strAutoSwitchReason As String
 
 									' Thermo Instruments
 									If IsMatch(strInstrumentGroup, "QExactive") Then
@@ -1423,10 +1420,10 @@ Public Class clsMSGFDBUtils
 										' Count the number of High res CID or ETD spectra
 										' Count HCD spectra separtely since MSGF+ has a special scoring model for HCD spectra
 
-										Dim lstLowResMSn As Generic.Dictionary(Of Integer, String) = Nothing
-										Dim lstHighResMSn As Generic.Dictionary(Of Integer, String) = Nothing
-										Dim lstHCDMSn As Generic.Dictionary(Of Integer, String) = Nothing
-										Dim lstOther As Generic.Dictionary(Of Integer, String) = Nothing
+										Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
+										Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
+										Dim lstHCDMSn As Dictionary(Of Integer, String) = Nothing
+										Dim lstOther As Dictionary(Of Integer, String) = Nothing
 										Dim blnSuccess As Boolean
 
 										blnSuccess = LoadScanTypeFile(strScanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
@@ -1554,7 +1551,7 @@ Public Class clsMSGFDBUtils
 								End If
 							End If
 
-						ElseIf DEFINE_MAX_THREADS AndAlso IsMatch(kvSetting.Key, "NumThreads") Then
+						ElseIf IsMatch(kvSetting.Key, "NumThreads") Then
 							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "all") Then
 								' Do not append -thread to the command line; MSGFDB will use all available cores by default
 							Else
@@ -1587,13 +1584,13 @@ Public Class clsMSGFDBUtils
 							End If
 						End If
 
-						If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
-							If Integer.TryParse(strValue, intValue) Then
-								If intValue = 3 Then
-									blnHCD = True
-								End If
-							End If
-						End If
+						'If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+						'	If Integer.TryParse(strValue, intValue) Then
+						'		If intValue = 3 Then
+						'			blnHCD = True
+						'		End If
+						'	End If
+						'End If
 
 					End If
 				Loop
@@ -1637,7 +1634,7 @@ Public Class clsMSGFDBUtils
 			' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
 
 			Dim coreCount As Integer = 0
-			For Each item As System.Management.ManagementBaseObject In New System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
+			For Each item As Management.ManagementBaseObject In New Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
 				coreCount += Integer.Parse(item("NumberOfCores").ToString())
 			Next
 
@@ -1673,7 +1670,7 @@ Public Class clsMSGFDBUtils
 
 		' By default, MSGF+ filters out spectra with fewer than 20 data points
 		' Override this threshold to 5 data points
-		If strMSGFDbCmdLineOptions.ToLower().IndexOf("-minNumPeaks".ToLower()) < 0 Then
+		If strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.CurrentCultureIgnoreCase) < 0 Then
 			strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
 		End If
 
@@ -1754,7 +1751,7 @@ Public Class clsMSGFDBUtils
 	''' <param name="strParameterName"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function ParseMSFDBParamLine(ByRef sbOptions As System.Text.StringBuilder, _
+	Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
 	   ByVal strKeyName As String, _
 	   ByVal strValue As String, _
 	   ByVal strParameterName As String) As Boolean
@@ -1765,7 +1762,7 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Protected Function ParseMSFDBParamLine(ByRef sbOptions As System.Text.StringBuilder, _
+	Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
 	   ByVal strKeyName As String, _
 	   ByVal strValue As String, _
 	   ByVal strParameterName As String, _
@@ -1789,7 +1786,7 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Public Shared Function UseLegacyMSGFDB(jobParams As AnalysisManagerBase.IJobParams) As Boolean
+	Public Shared Function UseLegacyMSGFDB(jobParams As IJobParams) As Boolean
 		Dim strValue As String
 
 		' Default to using MSGF+
@@ -1830,7 +1827,7 @@ Public Class clsMSGFDBUtils
 
 		Const PROTEIN_NAME_NO_MATCH As String = "__NoMatch__"
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Dim intPeptideCount As Integer = 0
 		Dim intPeptideCountNoMatch As Integer = 0
@@ -1842,10 +1839,10 @@ Public Class clsMSGFDBUtils
 			Dim strLineIn As String
 
 			If m_DebugLevel >= 2 Then
-				ReportMessage("Validating peptide to protein mapping, file " & System.IO.Path.GetFileName(strPeptideToProteinMapFilePath))
+				ReportMessage("Validating peptide to protein mapping, file " & IO.Path.GetFileName(strPeptideToProteinMapFilePath))
 			End If
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strPeptideToProteinMapFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strPeptideToProteinMapFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				Do While srInFile.Peek > -1
 					strLineIn = srInFile.ReadLine()
@@ -1864,7 +1861,7 @@ Public Class clsMSGFDBUtils
 
 			If intPeptideCount = 0 Then
 				mErrorMessage = "Peptide to protein mapping file is empty"
-				ReportError(mErrorMessage, mErrorMessage & ", file " & System.IO.Path.GetFileName(strPeptideToProteinMapFilePath))
+				ReportError(mErrorMessage, mErrorMessage & ", file " & IO.Path.GetFileName(strPeptideToProteinMapFilePath))
 				blnSuccess = False
 
 			ElseIf intPeptideCountNoMatch = 0 Then
@@ -1902,7 +1899,7 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Private Sub WriteProteinSequence(ByRef swOutFile As System.IO.StreamWriter, ByVal strSequence As String)
+	Private Sub WriteProteinSequence(ByRef swOutFile As IO.StreamWriter, ByVal strSequence As String)
 		Dim intIndex As Integer = 0
 		Dim intLength As Integer
 
@@ -1925,14 +1922,14 @@ Public Class clsMSGFDBUtils
 
 		Try
 
-			TmpFilePath = System.IO.Path.Combine(m_WorkDir, FileName)
-			If Not System.IO.File.Exists(TmpFilePath) Then
+			TmpFilePath = IO.Path.Combine(m_WorkDir, FileName)
+			If Not IO.File.Exists(TmpFilePath) Then
 				ReportError("MSGFDB results file not found: " & FileName)
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 			End If
 
 			If Not oToolRunner.ZipFile(TmpFilePath, False) Then
-				Dim Msg As String = "Error zipping output files"
+				Const Msg As String = "Error zipping output files"
 				ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -1972,11 +1969,11 @@ Public Class clsMSGFDBUtils
 	Private Sub mPeptideToProteinMapper_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
 		Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
-		Static dtLastLogTime As System.DateTime = System.DateTime.UtcNow
+		Static dtLastLogTime As DateTime = DateTime.UtcNow
 
 		If m_DebugLevel >= 1 Then
-			If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-				dtLastLogTime = System.DateTime.UtcNow
+			If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+				dtLastLogTime = DateTime.UtcNow
 				ReportMessage("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
 			End If
 		End If

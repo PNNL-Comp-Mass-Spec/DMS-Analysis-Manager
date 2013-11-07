@@ -9,6 +9,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsCreateMSGFDBSuffixArrayFiles
 
@@ -137,20 +138,57 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal strRemoteIndexFolderPath As String,
 	  ByVal intDebugLevel As Integer) As Boolean
 
+		Dim strErrorMessage As String = String.Empty
+		Dim strManager As String = GetPseudoManagerName()
+		Const createIndexFileForExistingFiles As Boolean = False
+
+		Dim success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles, strErrorMessage)
+		If Not success Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage)
+		End If
+
+		Return success
+
+	End Function
+
+	''' <summary>
+	''' Copies the suffix array files for the specified fasta file to the remote MSGFPlus_Index_File folder share
+	''' </summary>
+	''' <param name="fiFastaFile"></param>
+	''' <param name="remoteIndexFolderPath"></param>
+	''' <param name="debugLevel"></param>
+	''' <param name="managerName">Manager name (only required because the constructor for PRISM.Files.clsFileTools requires this)</param>
+	''' <param name="createIndexFileForExistingFiles">When true, then assumes that the index files were previously copied to remoteIndexFolderPath, and we should simply create the .MSGFPlusIndexFileInfo file for the matching files</param>
+	''' <param name="strErrorMessage"></param>
+	''' <returns></returns>
+	''' <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
+	Public Shared Function CopyIndexFilesToRemote(
+	  ByVal fiFastaFile As FileInfo,
+	  ByVal remoteIndexFolderPath As String,
+	  ByVal debugLevel As Integer,
+	  ByVal managerName As String,
+	  ByVal createIndexFileForExistingFiles As Boolean,
+	  <Out()> ByRef strErrorMessage As String) As Boolean
+
 		Dim blnSuccess As Boolean = False
+		strErrorMessage = String.Empty
 
 		Try
 			Dim diRemoteIndexFolderPath As DirectoryInfo
-			diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
+			diRemoteIndexFolderPath = New DirectoryInfo(remoteIndexFolderPath)
 
 			If Not diRemoteIndexFolderPath.Parent.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSGF+ index files folder not found: " & diRemoteIndexFolderPath.Parent.FullName)
-				blnSuccess = False
+				strErrorMessage = "MSGF+ index files folder not found: " & diRemoteIndexFolderPath.Parent.FullName
 				Return False
 			End If
 
 			If Not diRemoteIndexFolderPath.Exists Then
 				diRemoteIndexFolderPath.Create()
+			End If
+
+			If createIndexFileForExistingFiles Then
+				Dim remoteFastaPath = Path.Combine(remoteIndexFolderPath, fiFastaFile.Name)
+				fiFastaFile = New FileInfo(remoteFastaPath)
 			End If
 
 			Dim dctFilesToCopy As Dictionary(Of String, Int64)
@@ -162,33 +200,36 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			' Find the index files for fiFastaFile
 			For Each fiSourceFile As FileInfo In fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) & ".*")
 				If fiSourceFile.FullName <> fiFastaFile.FullName Then
-					If fiSourceFile.Extension <> ".hashcheck" Then
+					If fiSourceFile.Extension <> ".hashcheck" AndAlso fiSourceFile.Extension <> ".MSGFPlusIndexFileInfo" Then
 						dctFilesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length)
 						lstFileInfo.Add(fiSourceFile.Name & ControlChars.Tab & fiSourceFile.Length & ControlChars.Tab & fiSourceFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
 					End If
 				End If
 			Next
 
-			' Copy up each file
-			Dim oFileTools As PRISM.Files.clsFileTools
-			Dim strManager As String = GetPseudoManagerName()
+			If createIndexFileForExistingFiles Then
+				blnSuccess = True
+			Else
+				' Copy up each file
+				Dim oFileTools As PRISM.Files.clsFileTools
 
-			oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
+				oFileTools = New PRISM.Files.clsFileTools(managerName, debugLevel)
 
-			For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
-				Dim strSourceFilePath As String
-				Dim strTargetFilePath As String
+				For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+					Dim strSourceFilePath As String
+					Dim strTargetFilePath As String
 
-				strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key)
-				strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key)
+					strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key)
+					strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key)
 
-				blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, strManager)
-				If Not blnSuccess Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying to " & strTargetFilePath)
-					Exit For
-				End If
+					blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, managerName)
+					If Not blnSuccess Then
+						strErrorMessage = "CopyFileUsingLocks returned false copying to " & strTargetFilePath
+						Exit For
+					End If
 
-			Next
+				Next
+			End If
 
 			If blnSuccess Then
 
@@ -209,7 +250,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyIndexFilesToRemote; " & ex.Message)
+			strErrorMessage = "Exception in CopyIndexFilesToRemote; " & ex.Message
 			blnSuccess = False
 		End Try
 
@@ -254,7 +295,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 		Dim blnMSGFPlus As Boolean
 		Dim strCurrentTask As String = "Initializing"
-		Dim eResult As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Dim eResult As IJobParams.CloseOutType
 
 		Try
 
@@ -369,11 +410,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			' This dictionary contains file suffixes to look for
 			' Keys will be "True" if the file exists and false if it does not exist
-			Dim lstFilesToFind As List(Of String)
-			Dim lstExistingFiles As List(Of String)
-
-			lstFilesToFind = New List(Of String)
-			lstExistingFiles = New List(Of String)
+			Dim lstFilesToFind = New List(Of String)
 
 			If Not blnReindexingRequired Then
 
@@ -381,7 +418,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Dim strMissingFiles As String = String.Empty
 
 				strCurrentTask = "Validating that expected files exist"
-				lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, lstFilesToFind, strExistingFiles, strMissingFiles)
+				Dim lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, lstFilesToFind, strExistingFiles, strMissingFiles)
 
 				If lstExistingFiles.Count < lstFilesToFind.Count Then
 					blnReindexingRequired = True
@@ -504,7 +541,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			' Determine the amount of ram to reserve for BuildSA
 			' Examine the size of the .Fasta file to determine how much ram to reserve
-			Dim intJavaMemorySizeMB As Integer = 2000
+			Dim intJavaMemorySizeMB As Integer
 
 			Dim intFastaFileSizeMB As Integer
 			intFastaFileSizeMB = CInt(fiFastaFile.Length / 1024.0 / 1024.0)
@@ -873,7 +910,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	Protected Sub WaitForExistingLockfile(ByVal fiLockFile As FileInfo, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single)
 
 		' Check to see if another Analysis Manager is already creating the indexed DB files
-		If fiLockFile.Exists AndAlso System.DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
+		If fiLockFile.Exists AndAlso DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
 			' Lock file is over 60 minutes old; delete it
 			If intDebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file is over 60 minutes old (created " & fiLockFile.LastWriteTime.ToString() & "); deleting " & fiLockFile.FullName)
@@ -890,9 +927,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			Dim blnStaleFile As Boolean = False
 			Do While fiLockFile.Exists
 				' Sleep for 2 seconds
-				System.Threading.Thread.Sleep(2000)
+				Threading.Thread.Sleep(2000)
 
-				If System.DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours Then
+				If DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours Then
 					blnStaleFile = True
 					Exit Do
 				Else

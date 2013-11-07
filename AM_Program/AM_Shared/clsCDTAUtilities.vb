@@ -139,7 +139,7 @@ Public Class clsCDTAUtilities
 	Protected Sub FinalizeCDTAValidation(ByVal blnNewCDTAFileHasUpdates As Boolean, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByVal fiOriginalFile As IO.FileInfo, ByVal fiUpdatedFile As IO.FileInfo)
 
 		If blnNewCDTAFileHasUpdates Then
-			System.Threading.Thread.Sleep(100)
+			Threading.Thread.Sleep(100)
 
 			Dim strSourceFilePath As String = fiOriginalFile.FullName
 
@@ -157,12 +157,12 @@ Public Class clsCDTAUtilities
 				Loop While IO.File.Exists(strOldFilePath)
 
 				fiOriginalFile.MoveTo(strOldFilePath)
-				System.Threading.Thread.Sleep(100)
+				Threading.Thread.Sleep(100)
 
 				fiUpdatedFile.MoveTo(strSourceFilePath)
 
 				If blnDeleteSourceFileIfUpdated Then
-					System.Threading.Thread.Sleep(125)
+					Threading.Thread.Sleep(125)
 					PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 					fiOriginalFile.Delete()
@@ -176,7 +176,7 @@ Public Class clsCDTAUtilities
 		Else
 			' No changes were made; nothing to update
 			' However, delete the new file we created
-			System.Threading.Thread.Sleep(125)
+			Threading.Thread.Sleep(125)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			fiUpdatedFile.Delete()

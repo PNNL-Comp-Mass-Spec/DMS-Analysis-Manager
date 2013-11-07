@@ -624,7 +624,7 @@ Public Class clsAnalysisJob
 					Outcome = RequestTaskResult.ResultError
 			End Select
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " & ex.Message)
 			Outcome = RequestTaskResult.ResultError
 		End Try
@@ -684,7 +684,7 @@ Public Class clsAnalysisJob
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving analysis job parameters to " & xmlParameterFilePath & ": " & ex.Message)
 			Return False
 		End Try

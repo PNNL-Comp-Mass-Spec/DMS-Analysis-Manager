@@ -8,6 +8,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources
@@ -95,7 +96,7 @@ Public Class clsAnalysisResourcesMSGFDB
 				If blnSuccess Then
 					' Open the ScanStats file and read the header line to see if column ScanTypeName is present
 					Dim blnScanTypeColumnFound As Boolean
-					Dim strScanStatsFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+					Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
 					blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsFilePath)
 
 					If Not blnScanTypeColumnFound Then
@@ -154,10 +155,10 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		Dim blnScanTypeColumnFound As Boolean = False
 
-		Using srScanStatsFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strScanStatsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			If srScanStatsFile.Peek > -1 Then
-				Dim lstColumns As Generic.List(Of String)
+				Dim lstColumns As List(Of String)
 				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
 				If lstColumns.Contains("ScanTypeName") Then

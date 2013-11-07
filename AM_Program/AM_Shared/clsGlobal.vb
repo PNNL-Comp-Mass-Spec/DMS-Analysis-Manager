@@ -266,6 +266,39 @@ Public Class clsGlobal
 		Return strStackTrace
 
 	End Function
+	
+	''' <summary>
+	''' Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
+	''' </summary>
+	''' <param name="strHeaderLine"></param>
+	''' <param name="lstHeaderNames"></param>
+	''' <returns>Dictionary with the header names and 0-based column index</returns>
+	''' <remarks>Header names not found in strHeaderLine will have an index of -1</remarks>
+	Public Shared Function ParseHeaderLine(ByVal strHeaderLine As String, ByVal lstHeaderNames As List(Of String), ByVal isCaseSensitive As Boolean) As Dictionary(Of String, Integer)
+		Dim dctHeaderMapping = New Dictionary(Of String, Integer)
+
+		Dim lstColumns = strHeaderLine.Split(ControlChars.Tab).ToList()
+
+		For Each headerName In lstHeaderNames
+			Dim colIndex As Integer = -1
+
+			If isCaseSensitive Then
+				colIndex = lstColumns.IndexOf(headerName)
+			Else
+				For i As Integer = 0 To lstColumns.Count - 1
+					If String.Equals(lstColumns(i), headerName, StringComparison.CurrentCultureIgnoreCase) Then
+						colIndex = i
+						Exit For
+					End If
+				Next
+			End If
+
+			dctHeaderMapping.Add(headerName, colIndex)
+		Next
+
+		Return dctHeaderMapping
+
+	End Function
 
 	''' <summary>
 	''' Examines strPath to look for spaces

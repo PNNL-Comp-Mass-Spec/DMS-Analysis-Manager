@@ -7,7 +7,10 @@
 ' Last modified 10/24/2008
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
+
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsExtractToolRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -17,16 +20,16 @@ Public Class clsExtractToolRunner
 	'*********************************************************************************************************
 
 #Region "Constants"
-    Protected Const SEQUEST_PROGRESS_EXTRACTION_DONE As Single = 33
-    Protected Const SEQUEST_PROGRESS_PHRP_DONE As Single = 66
-    Protected Const SEQUEST_PROGRESS_PEPPROPHET_DONE As Single = 100
+	Protected Const SEQUEST_PROGRESS_EXTRACTION_DONE As Single = 33
+	Protected Const SEQUEST_PROGRESS_PHRP_DONE As Single = 66
+	Protected Const SEQUEST_PROGRESS_PEPPROPHET_DONE As Single = 100
 
-    Public Const INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX As String = "_inspect_unfiltered.txt"
+	Public Const INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX As String = "_inspect_unfiltered.txt"
 
 #End Region
 
 #Region "Module variables"
-    Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
+	Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
 	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
 	Protected mGeneratedFastaFilePath As String
@@ -43,14 +46,14 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 		Dim Result As IJobParams.CloseOutType
 		Dim eReturnCode As IJobParams.CloseOutType
 
 		Dim OrgDbDir As String
 		Dim FastaFileName As String
 
-		Dim strCurrentAction As String = String.Empty
+		Dim strCurrentAction As String
 		Dim blnProcessingError As Boolean
 
 		Try
@@ -72,7 +75,7 @@ Public Class clsExtractToolRunner
 			If String.IsNullOrEmpty(FastaFileName) Then
 				mGeneratedFastaFilePath = String.Empty
 			Else
-				mGeneratedFastaFilePath = System.IO.Path.Combine(OrgDbDir, FastaFileName)
+				mGeneratedFastaFilePath = Path.Combine(OrgDbDir, FastaFileName)
 			End If
 
 
@@ -143,7 +146,7 @@ Public Class clsExtractToolRunner
 			End If
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 			If blnProcessingError Then
 				' Something went wrong
@@ -174,7 +177,7 @@ Public Class clsExtractToolRunner
 			If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
 				' Try to save whatever files were moved into the results folder
 				Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -188,7 +191,7 @@ Public Class clsExtractToolRunner
 			' Everything succeeded; now delete the _msgfdb.tsv file from the server
 			RemoveNonResultServerFiles()
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.RunTool(); Exception running extraction tool: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -204,9 +207,10 @@ Public Class clsExtractToolRunner
 	''' <summary>
 	''' Convert the .mzid file created by MSGF+ to a .tsv file
 	''' </summary>
+	''' <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MSGF+</param>
 	''' <returns>The path to the .tsv file if successful; empty string if an error</returns>
 	''' <remarks></remarks>
-	Protected Function ConvertMZIDToTSV() As String
+	Protected Function ConvertMZIDToTSV(ByVal suffixToAdd As String) As String
 
 		Dim strMZIDFileName As String
 		Dim JavaProgLoc As String
@@ -215,8 +219,8 @@ Public Class clsExtractToolRunner
 
 		Try
 
-			strMZIDFileName = m_Dataset & "_msgfplus.mzid"
-			If Not IO.File.Exists(IO.Path.Combine(m_WorkDir, strMZIDFileName)) Then
+			strMZIDFileName = m_Dataset & "_msgfplus" & suffixToAdd & ".mzid"
+			If Not File.Exists(Path.Combine(m_WorkDir, strMZIDFileName)) Then
 				m_message = strMZIDFileName & " file not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return String.Empty
@@ -224,7 +228,7 @@ Public Class clsExtractToolRunner
 
 			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 			JavaProgLoc = m_mgrParams.GetParam("JavaLoc")
-			If Not System.IO.File.Exists(JavaProgLoc) Then
+			If Not File.Exists(JavaProgLoc) Then
 				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
 				m_message = "Cannot find Java: " & JavaProgLoc
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -249,6 +253,13 @@ Public Class clsExtractToolRunner
 
 			If Not String.IsNullOrEmpty(strTSVFilePath) Then
 				' File successfully created
+
+				If Not String.IsNullOrEmpty(suffixToAdd) Then
+					Dim fiTSVFile = New FileInfo(strTSVFilePath)
+					Dim newTSVPath = Path.Combine(fiTSVFile.Directory.FullName, Path.GetFileNameWithoutExtension(strTSVFilePath) & suffixToAdd & ".tsv")
+					fiTSVFile.MoveTo(newTSVPath)
+				End If
+
 				Return strTSVFilePath
 			End If
 
@@ -265,6 +276,262 @@ Public Class clsExtractToolRunner
 
 	End Function
 
+	Private Function ParallelMSGFPlusMergeTSVFiles(
+	 ByVal numberOfClonedSteps As Integer,
+	 ByVal numberOfHitsPerScanToKeep As Integer,
+	 <Out()> ByRef lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
+
+		lstFilterPassingPeptides = New SortedSet(Of String)
+		Try
+
+			Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
+
+			' Keys in this dictionary are column names, values are the 0-based column index
+			Dim dctHeaderMapping = New Dictionary(Of String, Integer)
+
+			' This dictionary keeps track of the top hit(s) for each scan/charge combo
+			' Keys are scan_charge
+			' Values are the clsMSGFPlusPSMs class, which keeps track of the top numberOfHitsPerScanToKeep hits for each scan/charge combo
+			Dim dctScanChargeTopHits = New Dictionary(Of String, clsMSGFPlusPSMs)
+
+			' This dictionary keeps track of the best score (lowest SpecEValue) for each scan/charge combo
+			' Keys are scan_charge
+			' Values the lowest SpecEValue for the scan/charge
+			Dim dctScanChargeBestScore = New Dictionary(Of String, Double)
+
+			Dim totalLinesProcessed As Int64 = 0
+			Dim warningsLogged As Integer = 0
+
+			Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+				For iteration As Integer = 1 To numberOfClonedSteps
+
+					Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & ".tsv")
+					Dim linesRead As Integer = 0
+
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
+					End If
+
+					Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+						While srSourceFile.Peek() > -1
+							Dim strLineIn = srSourceFile.ReadLine()
+							linesRead += 1
+							totalLinesProcessed += 1
+
+							If linesRead = 1 Then
+								If iteration = 1 Then
+									' Write the header line
+									swMergedFile.WriteLine(strLineIn)
+
+									Const IS_CASE_SENSITIVE As Boolean = False
+									Dim lstHeaderNames = New List(Of String) From {"ScanNum", "Charge", "Peptide", "Protein", "SpecEValue"}
+									dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
+
+									For Each headerName In lstHeaderNames
+										If dctHeaderMapping(headerName) < 0 Then
+											m_message = "Header " & headerName & " not found in " & Path.GetFileName(sourceFilePath) & "; unable to merge the MSGF+ .tsv files"
+											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+										End If
+									Next
+
+								End If
+							Else
+								Dim splitLine = strLineIn.Split(ControlChars.Tab)
+
+								Dim scanChargeCombo = splitLine(dctHeaderMapping("ScanNum")) & "_" & splitLine(dctHeaderMapping("Charge"))
+								Dim peptide = splitLine(dctHeaderMapping("Peptide"))
+								Dim protein = splitLine(dctHeaderMapping("Protein"))
+								Dim specEValueText = splitLine(dctHeaderMapping("SpecEValue"))
+
+								Dim specEValue As Double
+								If Not Double.TryParse(specEValueText, specEValue) Then
+									If warningsLogged < 10 Then
+										clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SpecEValue was not numeric: " & specEValueText & " in " & strLineIn)
+										warningsLogged += 1
+
+										If warningsLogged >= 10 Then
+											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Additional warnings will not be logged")
+										End If
+									End If
+
+									Continue While
+								End If
+
+								Dim hitsForScan As clsMSGFPlusPSMs = Nothing
+								Dim passesFilter As Boolean = False
+
+								If dctScanChargeTopHits.TryGetValue(scanChargeCombo, hitsForScan) Then
+									' Possibly store this value
+
+									passesFilter = hitsForScan.AddPSM(peptide, protein, specEValue, strLineIn)
+
+									If passesFilter AndAlso specEValue < dctScanChargeBestScore(scanChargeCombo) Then
+										dctScanChargeBestScore(scanChargeCombo) = specEValue
+									End If
+
+								Else
+									' New entry for this scan/charge combo
+									hitsForScan = New clsMSGFPlusPSMs(numberOfHitsPerScanToKeep)
+									hitsForScan.AddPSM(peptide, protein, specEValue, strLineIn)
+
+									dctScanChargeTopHits.Add(scanChargeCombo, hitsForScan)
+									dctScanChargeBestScore.Add(scanChargeCombo, specEValue)
+								End If
+
+							End If
+						End While
+					End Using
+
+				Next
+
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sorting results for " & dctScanChargeBestScore.Count & " lines of scan/charge combos")
+				End If
+
+				' Sort the data, then write to disk
+				Dim lstScansByScore = From item In dctScanChargeBestScore Order By item.Value Select item.Key
+				Dim filterPassingPSMCount As Integer = 0
+
+				For Each scanChargeCombo In lstScansByScore
+
+					Dim hitsForScan = dctScanChargeTopHits(scanChargeCombo)
+					Dim lastPeptide As String = String.Empty
+
+					For Each psm In hitsForScan.PSMs
+						swMergedFile.WriteLine(psm.DataLine)
+
+						If Not lstFilterPassingPeptides.Contains(psm.Peptide) Then
+							lstFilterPassingPeptides.Add(psm.Peptide)
+						End If
+
+						If Not String.Equals(psm.Peptide, lastPeptide) Then
+							filterPassingPSMCount += 1
+							lastPeptide = psm.Peptide
+						End If
+
+					Next
+
+				Next
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Read " & totalLinesProcessed & " data lines from " & numberOfClonedSteps & " MSGF+ .tsv files; wrote " & filterPassingPSMCount & " PSMs to the merged file")
+				End If
+
+			End Using
+
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+
+		Catch ex As Exception
+			m_message = "Error in ParallelMSGFPlusMergeTSVFiles"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+	End Function
+
+	Private Function ParallelMSGFPlusMergePepToProtMapFiles(
+	  ByVal numberOfClonedSteps As Integer,
+	  ByVal lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
+
+		Try
+			Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.txt")
+			Dim lstPeptideLinesToWrite = New List(Of String)
+			Dim totalLinesProcessed As Int64 = 0
+
+			Dim lstPepProtMappingWritten = New SortedSet(Of String)
+
+			Dim lastPeptideFull As String = String.Empty
+			Dim addCurrentPeptide As Boolean = False
+
+			Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+				For iteration As Integer = 1 To numberOfClonedSteps
+
+					Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
+					Dim linesRead As Integer = 0
+
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
+					End If
+
+					Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+						While srSourceFile.Peek() > -1
+							Dim strLineIn = srSourceFile.ReadLine()
+							linesRead += 1
+							totalLinesProcessed += 1
+
+							If linesRead = 1 Then
+								If iteration = 1 Then
+									' Write the header line
+									swMergedFile.WriteLine(strLineIn)
+								End If
+							Else
+								Dim charIndex = strLineIn.IndexOf(ControlChars.Tab)
+								If charIndex > 0 Then
+									Dim peptideFull = strLineIn.Substring(0, charIndex)
+									Dim peptide = clsMSGFPlusPSMs.RemovePrefixAndSuffix(peptideFull)
+
+									If String.Equals(lastPeptideFull, peptideFull) OrElse lstFilterPassingPeptides.Contains(peptide) Then
+
+										If Not String.Equals(lastPeptideFull, peptideFull) Then
+											' Done processing the last peptide; we can now update lstPepProtMappingWritten to True for this peptide
+											' to prevent it from getting added to the merged file again in the future
+
+											If Not String.IsNullOrEmpty(lastPeptideFull) Then
+												If Not lstPepProtMappingWritten.contains(lastPeptideFull) Then
+													lstPepProtMappingWritten.add(lastPeptideFull)
+												End If
+											End If
+
+											lastPeptideFull = String.Copy(peptideFull)
+											addCurrentPeptide = Not lstPepProtMappingWritten.contains(peptideFull)
+
+										End If
+
+										' Add this peptide if we didn't already add it during a previous iteration
+										If addCurrentPeptide Then
+											lstPeptideLinesToWrite.Add(strLineIn)
+										End If
+									End If
+
+								End If
+							End If
+						End While
+					End Using
+
+				Next
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sorting " & lstPeptideLinesToWrite.Count & " lines of data in ParallelMSGFPlusMergePepToProtMapFiles")
+				End If
+
+				' Sort the data, then write to disk
+				lstPeptideLinesToWrite.Sort()
+
+				For Each peptideLine In lstPeptideLinesToWrite
+					swMergedFile.WriteLine(peptideLine)
+				Next
+
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Read " & totalLinesProcessed & " data lines from " & numberOfClonedSteps & " _PepToProtMap files; wrote " & lstPeptideLinesToWrite.Count & " data lines to the merged file")
+				End If
+
+			End Using
+
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+		Catch ex As Exception
+			m_message = "Error in ParallelMSGFPlusMergePepToProtMapFiles"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+	End Function
+
 	''' <summary>
 	''' Calls Ken's DLL to perform peptide hit extraction for Sequest data
 	''' </summary>
@@ -272,7 +539,7 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Private Function PerformPeptideExtraction() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 		Dim Result As IJobParams.CloseOutType
 		Dim PepExtractTool As New clsPeptideExtractWrapper(m_mgrParams, m_jobParams, m_StatusTools)
 
@@ -282,7 +549,7 @@ Public Class clsExtractToolRunner
 		End If
 		Try
 			Result = PepExtractTool.PerformExtraction
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -316,9 +583,9 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Private Function RunPhrpForSequest() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 		Dim Result As IJobParams.CloseOutType
-		Dim strSynFilePath As String = String.Empty
+		Dim strSynFilePath As String
 
 		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
 
@@ -328,12 +595,12 @@ Public Class clsExtractToolRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 		Try
-			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
+			Dim strTargetFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
 			strSynFilePath = String.Copy(strTargetFilePath)
 
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST)
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -361,9 +628,9 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForXTandem() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 		Dim Result As IJobParams.CloseOutType
-		Dim strSynFilePath As String = String.Empty
+		Dim strSynFilePath As String
 
 		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
 
@@ -373,12 +640,12 @@ Public Class clsExtractToolRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 		Try
-			Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_xt.txt")
+			Dim strTargetFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_xt.xml")
+			strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_xt.txt")
 
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM)
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -405,10 +672,10 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForMSAlign() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 
 		Dim strTargetFilePath As String
-		Dim strSynFilePath As String = String.Empty
+		Dim strSynFilePath As String
 
 		Dim Result As IJobParams.CloseOutType
 
@@ -423,8 +690,8 @@ Public Class clsExtractToolRunner
 		Try
 
 			' Create the Synopsis file using the _MSAlign_ResultTable.txt file
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_ResultTable.txt")
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msalign_syn.txt")
+			strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_ResultTable.txt")
+			strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msalign_syn.txt")
 
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN)
 
@@ -435,7 +702,7 @@ Public Class clsExtractToolRunner
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -454,90 +721,153 @@ Public Class clsExtractToolRunner
 
 	Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim currentStep As String = "Initializing"
+
+		Dim Msg As String
 
 		Dim CreateMSGFDBFirstHitsFile As Boolean
 		Dim CreateMSGFDBSynopsisFile As Boolean
 
 		Dim strTargetFilePath As String
-		Dim strSynFilePath As String = String.Empty
+		Dim strSynFilePath As String
 
 		Dim Result As IJobParams.CloseOutType
 
-		m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
-
-		'Run the processor
-		If m_DebugLevel > 3 Then
-			Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Starting PHRP"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-		End If
-
 		Try
-			' The goal:
-			'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file (which should already have been unzipped from the _msgfdb.zip file)
-			'   or from the _msgfdb.tsv file
 
-			Dim blnUseLegacyMSGFDB As Boolean
-			Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
+			m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
 
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
-			If IO.File.Exists(strTargetFilePath) Then
-				blnUseLegacyMSGFDB = True
-			Else
-				strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
-				If Not IO.File.Exists(strTargetFilePath) Then
-					' Need to create the .tsv file
-					strTargetFilePath = ConvertMZIDToTSV()
-					If String.IsNullOrEmpty(strTargetFilePath) Then
-						Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-					End If
-				End If
-			End If
-
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
-
-			' Create the Synopsis and First Hits files using the _msgfdb.txt file
-			CreateMSGFDBFirstHitsFile = True
-			CreateMSGFDBSynopsisFile = True
-
-			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFDB)
-
-			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
-				Msg = "Error running PHRP"
-				If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+			'Run the processor
+			If m_DebugLevel > 3 Then
+				Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Starting PHRP"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			Try
-				' Delete the _msgfdb.txt or _msgfdb.tsv file
-				System.IO.File.Delete(strTargetFilePath)
-			Catch ex As System.Exception
-				' Ignore errors here
+				' The goal:
+				'   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file (which should already have been unzipped from the _msgfdb.zip file)
+				'   or from the _msgfdb.tsv file
+
+				currentStep = "Determining results file type based on the results file name"
+
+				Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+				Dim numberOfClonedSteps = 1
+
+				strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
+				If Not File.Exists(strTargetFilePath) Then
+					' Processing MSGF+ results
+
+					If splitFastaEnabled Then
+						numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
+					End If
+
+					For iteration As Integer = 1 To numberOfClonedSteps
+						currentStep = "Verifying that .tsv files exist; iteration " & iteration
+
+						Dim suffixToAdd As String
+
+						If splitFastaEnabled Then
+							suffixToAdd = "_Part" & iteration
+						Else
+							suffixToAdd = String.Empty
+						End If
+
+						strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb" & suffixToAdd & ".tsv")
+
+						If Not File.Exists(strTargetFilePath) Then
+							' Need to create the .tsv file
+							currentStep = "Creating .tsv file " & strTargetFilePath
+
+							strTargetFilePath = ConvertMZIDToTSV(suffixToAdd)
+							If String.IsNullOrEmpty(strTargetFilePath) Then
+								Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+							End If
+						End If
+					Next
+
+					If splitFastaEnabled Then
+
+						currentStep = "Merging Parallel MSGF+ results"
+
+						Dim eResult As IJobParams.CloseOutType
+
+						' Keys in this dictionary are peptide sequences; values indicate whether the peptide (and its associated proteins) has been written to the merged _PepToProtMap.txt file
+						Dim lstFilterPassingPeptides As SortedSet(Of String) = Nothing
+
+						Dim numberOfHitsPerScanToKeep = m_jobParams.GetJobParameter("MergeResultsToKeepPerScan", 2)
+						If numberOfHitsPerScanToKeep < 1 Then numberOfHitsPerScanToKeep = 1
+
+						' Merge the TSV files (keeping the top scoring hit (or hits) for each scan)
+						currentStep = "Merging the TSV files"
+						eResult = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, lstFilterPassingPeptides)
+
+						If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+							Return eResult
+						End If
+
+						' Merge the _PepToProtMap files (making sure we don't have any duplicates, and only keeping peptides that passed the filters)
+						currentStep = "Merging the _PepToProtMap files"
+						eResult = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides)
+
+						If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+							Return eResult
+						End If
+
+						strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
+					End If
+
+				End If
+
+				strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
+
+				' Create the Synopsis and First Hits files using the _msgfdb.txt file
+				CreateMSGFDBFirstHitsFile = True
+				CreateMSGFDBSynopsisFile = True
+
+				Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFDB)
+
+				If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+					Msg = "Error running PHRP"
+					If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				If Not splitFastaEnabled Then
+					Try
+						' Delete the _msgfdb.txt or _msgfdb.tsv file
+						File.Delete(strTargetFilePath)
+					Catch ex As Exception
+						' Ignore errors here
+					End Try
+				End If
+
+			Catch ex As Exception
+				Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & _
+				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 
-		Catch ex As System.Exception
-			Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & _
-			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+			' Validate that the mass errors are within tolerance
+			Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+			If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMSGFDB at step " & currentStep, ex)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
-
-		' Validate that the mass errors are within tolerance
-		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
-
 
 	End Function
 
 	Private Function RunPhrpForInSpecT() As IJobParams.CloseOutType
 
-		Dim Msg As String = String.Empty
+		Dim Msg As String
 
 		Dim CreateInspectFirstHitsFile As Boolean
 		Dim CreateInspectSynopsisFile As Boolean
@@ -562,7 +892,7 @@ Public Class clsExtractToolRunner
 			'   Get the other files from the _inspect.txt file in the_inspect.zip file
 
 			' Extract _inspect.txt from the _inspect_fht.zip file
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip")
+			strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip")
 			blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
 			If Not blnSuccess Then
@@ -572,7 +902,7 @@ Public Class clsExtractToolRunner
 			' Create the First Hits files using the _inspect.txt file
 			CreateInspectFirstHitsFile = True
 			CreateInspectSynopsisFile = False
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
+			strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
 			If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
@@ -583,13 +913,13 @@ Public Class clsExtractToolRunner
 			End If
 
 			' Delete the _inspect.txt file
-			System.IO.File.Delete(strTargetFilePath)
+			File.Delete(strTargetFilePath)
 
-			System.Threading.Thread.Sleep(250)
+			Threading.Thread.Sleep(250)
 
 
 			' Extract _inspect.txt from the _inspect.zip file
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip")
+			strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip")
 			blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
 			If Not blnSuccess Then
@@ -599,8 +929,8 @@ Public Class clsExtractToolRunner
 			' Create the Synopsis files using the _inspect.txt file
 			CreateInspectFirstHitsFile = False
 			CreateInspectSynopsisFile = True
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
-			strSynFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_syn.txt")
+			strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
+			strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect_syn.txt")
 
 			Result = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
@@ -613,12 +943,12 @@ Public Class clsExtractToolRunner
 
 			Try
 				' Delete the _inspect.txt file
-				System.IO.File.Delete(strTargetFilePath)
-			Catch ex As System.Exception
+				File.Delete(strTargetFilePath)
+			Catch ex As Exception
 				' Ignore errors here
 			End Try
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " & _
 			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -641,7 +971,7 @@ Public Class clsExtractToolRunner
 		Const PEPPROPHET_RESULT_FILE_SUFFIX As String = "_PepProphet.txt"
 
 		Dim Msg As String
-		Dim fiSynFile As System.IO.FileInfo
+		Dim fiSynFile As FileInfo
 
 		Dim SynFile As String
 		Dim strFileList() As String
@@ -662,7 +992,7 @@ Public Class clsExtractToolRunner
 		Dim progLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
 
 		' verify that program file exists
-		If Not System.IO.File.Exists(progLoc) Then
+		If Not File.Exists(progLoc) Then
 			If progLoc.Length = 0 Then
 				m_message = "Manager parameter PeptideProphetRunnerProgLoc is not defined in the Manager Control DB"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -680,10 +1010,10 @@ Public Class clsExtractToolRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 
-		SynFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
+		SynFile = Path.Combine(m_WorkDir, m_Dataset & "_syn.txt")
 
 		'Check to see if Syn file exists
-		fiSynFile = New System.IO.FileInfo(SynFile)
+		fiSynFile = New FileInfo(SynFile)
 		If Not fiSynFile.Exists Then
 			Msg = "clsExtractToolRunner.RunPeptideProphet(); Syn file " & SynFile & " not found; unable to run peptide prophet"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -731,7 +1061,7 @@ Public Class clsExtractToolRunner
 			m_PeptideProphet.OutputFolderPath = m_WorkDir
 			m_PeptideProphet.DebugLevel = m_DebugLevel
 
-			fiSynFile = New System.IO.FileInfo(strFileList(intFileIndex))
+			fiSynFile = New FileInfo(strFileList(intFileIndex))
 			strSynFileNameAndSize = fiSynFile.Name & " (file size = " & (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") & " MB"
 			If strFileList.Length > 1 Then
 				strSynFileNameAndSize &= "; parent syn file is " & sngParentSynFileSizeMB.ToString("0.00") & " MB)"
@@ -748,15 +1078,15 @@ Public Class clsExtractToolRunner
 			If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 
 				' Make sure the Peptide Prophet output file was actually created
-				strPepProphetOutputFilePath = System.IO.Path.Combine(m_PeptideProphet.OutputFolderPath, _
-							System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
-							PEPPROPHET_RESULT_FILE_SUFFIX)
+				strPepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath, _
+				  Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
+				  PEPPROPHET_RESULT_FILE_SUFFIX)
 
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide prophet processing complete; checking for file " & strPepProphetOutputFilePath)
 				End If
 
-				If Not System.IO.File.Exists(strPepProphetOutputFilePath) Then
+				If Not File.Exists(strPepProphetOutputFilePath) Then
 
 					Msg = "clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " & strSynFileNameAndSize
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -798,7 +1128,7 @@ Public Class clsExtractToolRunner
 				' We now need to recombine the peptide prophet result files
 
 				' Update strFileList() to have the peptide prophet result file names
-				strBaseName = System.IO.Path.Combine(m_PeptideProphet.OutputFolderPath, System.IO.Path.GetFileNameWithoutExtension(SynFile))
+				strBaseName = Path.Combine(m_PeptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile))
 
 				For intFileIndex = 0 To strFileList.Length - 1
 					strFileList(intFileIndex) = strBaseName & "_part" & (intFileIndex + 1).ToString & PEPPROPHET_RESULT_FILE_SUFFIX
@@ -811,7 +1141,7 @@ Public Class clsExtractToolRunner
 				strPepProphetOutputFilePath = strBaseName & PEPPROPHET_RESULT_FILE_SUFFIX
 
 				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Combining " & strFileList.Length & " separate Peptide Prophet result files to create " & System.IO.Path.GetFileName(strPepProphetOutputFilePath))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Combining " & strFileList.Length & " separate Peptide Prophet result files to create " & Path.GetFileName(strPepProphetOutputFilePath))
 				End If
 
 				blnSuccess = InterleaveFiles(strFileList, strPepProphetOutputFilePath, True)
@@ -848,7 +1178,7 @@ Public Class clsExtractToolRunner
 	Private Sub DeleteTemporaryFiles(ByVal strFileList() As String)
 		Dim intFileIndex As Integer
 
-		System.Threading.Thread.Sleep(1000)					   'Delay for 1 second
+		Threading.Thread.Sleep(1000)					   'Delay for 1 second
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Delete each file in strFileList
@@ -857,9 +1187,9 @@ Public Class clsExtractToolRunner
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting file " & strFileList(intFileIndex))
 			End If
 			Try
-				System.IO.File.Delete(strFileList(intFileIndex))
-			Catch ex As System.Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " & System.IO.Path.GetFileName(strFileList(intFileIndex)) & ": " & ex.Message)
+				File.Delete(strFileList(intFileIndex))
+			Catch ex As Exception
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " & Path.GetFileName(strFileList(intFileIndex)) & ": " & ex.Message)
 			End Try
 		Next intFileIndex
 
@@ -876,17 +1206,17 @@ Public Class clsExtractToolRunner
 	''' <returns>True if success; false if failure</returns>
 	''' <remarks></remarks>
 	Protected Function InterleaveFiles(ByRef strFileList() As String, _
-			   ByVal strCombinedFilePath As String, _
-			   ByVal blnLookForHeaderLine As Boolean) As Boolean
+	  ByVal strCombinedFilePath As String, _
+	  ByVal blnLookForHeaderLine As Boolean) As Boolean
 
 		Dim Msg As String
 		Dim intIndex As Integer
 
 		Dim intFileCount As Integer
-		Dim srInFiles() As System.IO.StreamReader
-		Dim swOutFile As System.IO.StreamWriter
+		Dim srInFiles() As StreamReader
+		Dim swOutFile As StreamWriter
 
-		Dim strLineIn As String = String.Empty
+		Dim strLineIn As String
 		Dim strSplitLine() As String
 
 		Dim intFileIndex As Integer
@@ -911,8 +1241,8 @@ Public Class clsExtractToolRunner
 
 			' Open each of the input files
 			For intIndex = 0 To intFileCount - 1
-				If System.IO.File.Exists(strFileList(intIndex)) Then
-					srInFiles(intIndex) = New System.IO.StreamReader(New System.IO.FileStream(strFileList(intIndex), System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+				If File.Exists(strFileList(intIndex)) Then
+					srInFiles(intIndex) = New StreamReader(New FileStream(strFileList(intIndex), FileMode.Open, FileAccess.Read, FileShare.Read))
 				Else
 					' File not found; unable to continue
 					Msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
@@ -923,7 +1253,7 @@ Public Class clsExtractToolRunner
 
 			' Create the output file
 
-			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strCombinedFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			swOutFile = New StreamWriter(New FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 			intTotalLinesRead = 0
 			blnContinueReading = True
@@ -980,7 +1310,7 @@ Public Class clsExtractToolRunner
 			blnSuccess = True
 
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "Exception in clsExtractToolRunner.InterleaveFiles: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception in InterleaveFiles")
@@ -1003,31 +1333,31 @@ Public Class clsExtractToolRunner
 	''' <returns>True if success, false if failure</returns>
 	''' <remarks></remarks>
 	Private Function SplitFileRoundRobin(ByVal strSrcFilePath As String, _
-			  ByVal lngMaxSizeBytes As Int64, _
-			  ByVal blnLookForHeaderLine As Boolean, _
-			  ByRef strSplitFileList() As String) As Boolean
+	 ByVal lngMaxSizeBytes As Int64, _
+	 ByVal blnLookForHeaderLine As Boolean, _
+	 ByRef strSplitFileList() As String) As Boolean
 
-		Dim fiFileInfo As System.IO.FileInfo
+		Dim fiFileInfo As FileInfo
 		Dim strBaseName As String
 
-		Dim intLinesRead As Integer = 0
+		Dim intLinesRead As Integer
 		Dim intTargetFileIndex As Integer
 
 		Dim Msg As String
-		Dim strLineIn As String = String.Empty
+		Dim strLineIn As String
 		Dim strSplitLine() As String
 
-		Dim srInFile As System.IO.StreamReader
-		Dim swOutFiles() As System.IO.StreamWriter
+		Dim srInFile As StreamReader
+		Dim swOutFiles() As StreamWriter
 
 		Dim intSplitCount As Integer
 		Dim intIndex As Integer
 
 		Dim blnProcessLine As Boolean
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
-			fiFileInfo = New System.IO.FileInfo(strSrcFilePath)
+			fiFileInfo = New FileInfo(strSrcFilePath)
 			If Not fiFileInfo.Exists Then Return False
 
 			If fiFileInfo.Length <= lngMaxSizeBytes Then
@@ -1047,17 +1377,17 @@ Public Class clsExtractToolRunner
 				End If
 
 				' Open the input file
-				srInFile = New System.IO.StreamReader(New System.IO.FileStream(fiFileInfo.FullName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+				srInFile = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Create each of the output files
 				ReDim strSplitFileList(intSplitCount - 1)
 				ReDim swOutFiles(intSplitCount - 1)
 
-				strBaseName = System.IO.Path.Combine(fiFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name))
+				strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name))
 
 				For intIndex = 0 To intSplitCount - 1
-					strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & System.IO.Path.GetExtension(fiFileInfo.Name)
-					swOutFiles(intIndex) = New System.IO.StreamWriter(New System.IO.FileStream(strSplitFileList(intIndex), System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+					strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & Path.GetExtension(fiFileInfo.Name)
+					swOutFiles(intIndex) = New StreamWriter(New FileStream(strSplitFileList(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
 				Next
 
 				intLinesRead = 0
@@ -1104,7 +1434,7 @@ Public Class clsExtractToolRunner
 			End If
 
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception in SplitFileRoundRobin")
@@ -1132,18 +1462,18 @@ Public Class clsExtractToolRunner
 		Try
 
 			Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
-			Dim ioPHRP As System.IO.DirectoryInfo
-			ioPHRP = New System.IO.DirectoryInfo(progLoc)
+			Dim ioPHRP As DirectoryInfo
+			ioPHRP = New DirectoryInfo(progLoc)
 
 			' verify that program file exists
 			If ioPHRP.Exists Then
-				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
+				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
 			Else
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
 				Return False
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for the PeptideHitResultsProcessor: " & ex.Message)
 			Return False
 		End Try
@@ -1160,7 +1490,7 @@ Public Class clsExtractToolRunner
 			' Lookup the version of the PeptideProphetRunner
 
 			Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
-			Dim ioPeptideProphetRunner As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetRunnerLoc)
+			Dim ioPeptideProphetRunner As FileInfo = New FileInfo(strPeptideProphetRunnerLoc)
 
 			If ioPeptideProphetRunner.Exists() Then
 				' Lookup the version of the PeptideProphetRunner
@@ -1168,20 +1498,20 @@ Public Class clsExtractToolRunner
 				If Not blnSuccess Then Return False
 
 				' Lookup the version of the PeptideProphetLibrary
-				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
+				blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
 				If Not blnSuccess Then Return False
 			End If
 
 		End If
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
-        Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
-    End Function
+	End Function
 
 	Protected Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
 
@@ -1222,38 +1552,38 @@ Public Class clsExtractToolRunner
 #End Region
 
 #Region "Event handlers"
-    Private Sub m_PeptideProphet_PeptideProphetRunning(ByVal PepProphetStatus As String, ByVal PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
-        Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS As Integer = 60
-        Static dtLastPepProphetStatusLog As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
+	Private Sub m_PeptideProphet_PeptideProphetRunning(ByVal PepProphetStatus As String, ByVal PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
+		Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS As Integer = 60
+		Static dtLastPepProphetStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
-        m_progress = SEQUEST_PROGRESS_PHRP_DONE + CSng(PercentComplete / 3.0)
-        m_StatusTools.UpdateAndWrite(m_progress)
+		m_progress = SEQUEST_PROGRESS_PHRP_DONE + CSng(PercentComplete / 3.0)
+		m_StatusTools.UpdateAndWrite(m_progress)
 
-        If m_DebugLevel >= 4 Then
-            If System.DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS Then
-                dtLastPepProphetStatusLog = System.DateTime.UtcNow
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running peptide prophet: " & PepProphetStatus & "; " & PercentComplete & "% complete")
-            End If
-        End If
-    End Sub
+		If m_DebugLevel >= 4 Then
+			If DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS Then
+				dtLastPepProphetStatusLog = DateTime.UtcNow
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running peptide prophet: " & PepProphetStatus & "; " & PercentComplete & "% complete")
+			End If
+		End If
+	End Sub
 
-    Private Sub m_PHRP_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_PHRP.ProgressChanged
-        Const PHRP_LOG_INTERVAL_SECONDS As Integer = 180
-        Const PHRP_DETAILED_LOG_INTERVAL_SECONDS As Integer = 20
+	Private Sub m_PHRP_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_PHRP.ProgressChanged
+		Const PHRP_LOG_INTERVAL_SECONDS As Integer = 180
+		Const PHRP_DETAILED_LOG_INTERVAL_SECONDS As Integer = 20
 
-        Static dtLastPHRPStatusLog As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
+		Static dtLastPHRPStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
-        m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + CSng(percentComplete / 3.0)
-        m_StatusTools.UpdateAndWrite(m_progress)
+		m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + CSng(percentComplete / 3.0)
+		m_StatusTools.UpdateAndWrite(m_progress)
 
-        If m_DebugLevel >= 1 Then
-            If System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse _
-               System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
-                dtLastPHRPStatusLog = System.DateTime.UtcNow
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running PHRP: " & taskDescription & "; " & percentComplete & "% complete")
-            End If
-        End If
-    End Sub
+		If m_DebugLevel >= 1 Then
+			If DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse _
+			   DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
+				dtLastPHRPStatusLog = DateTime.UtcNow
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running PHRP: " & taskDescription & "; " & percentComplete & "% complete")
+			End If
+		End If
+	End Sub
 #End Region
 
 End Class

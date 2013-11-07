@@ -96,6 +96,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesExtraction.vb" />
     <Compile Include="clsExtractToolRunner.vb" />
+    <Compile Include="clsMSGFPlusPSMs.vb" />
     <Compile Include="clsPepHitResultsProcWrapper.vb" />
     <Compile Include="clsPeptideExtractWrapper.vb" />
     <Compile Include="clsPeptideProphetWrapper.vb" />

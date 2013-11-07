@@ -8,6 +8,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
@@ -26,7 +27,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 
-	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+	Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -74,7 +75,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 			' Note that we need to run MSGFDB with a 64-bit version of Java since it prefers to use 2 or more GB of ram
 			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
-			If Not System.IO.File.Exists(JavaProgLoc) Then
+			If Not File.Exists(JavaProgLoc) Then
 				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
 				m_message = "Cannot find Java: " & JavaProgLoc
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -89,11 +90,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
-				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+				strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
 				strSearchEngineName = "MS-GFDB"
 			Else
 				mMSGFPlus = True
-				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+				strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
 				strSearchEngineName = "MSGF+"
 			End If
 
@@ -115,11 +116,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 			' Initialize mMSGFDBUtils
-			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
+			mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
 			' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-			Dim strParameterFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+			Dim strParameterFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 			result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, strParameterFilePath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
@@ -172,8 +173,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			CmdStr &= " " & strMSGFDbCmdLineOptions
 
 			' Make sure the machine has enough free memory to run MSGFDB
-			Dim blnLogFreeMemoryOnSuccess As Boolean = True
-			If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
+			Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
 
 			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
 				m_message = "Not enough free memory to run " & strSearchEngineName
@@ -192,10 +192,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				.EchoOutputToConsole = True
 
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
 			End With
 
-			m_progress = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
+			m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
 
 			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, strSearchEngineName, True)
 
@@ -216,7 +216,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 
-			If Not blnSuccess Then				
+			If Not blnSuccess Then
 				Msg = "Error running " & strSearchEngineName
 				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
@@ -231,7 +231,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				blnProcessingError = True
 
 			Else
-				m_progress = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+				m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
 				m_StatusTools.UpdateAndWrite(m_progress)
 				If m_DebugLevel >= 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
@@ -239,13 +239,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
 					' See if any spectra were processed
-					If Not IO.File.Exists(System.IO.Path.Combine(m_WorkDir, ResultsFileName)) Then
+					If Not File.Exists(Path.Combine(m_WorkDir, ResultsFileName)) Then
 						m_message = "None of the spectra are centroided; unable to process with " & strSearchEngineName
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 						blnProcessingError = True
 					Else
 						' Compute the fraction of all potential spectra that were skipped
-						Dim dblFractionSkipped As Double = 0
+						Dim dblFractionSkipped As Double
 						Dim strPercentSkipped As String
 
 						dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
@@ -259,7 +259,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 							m_EvalMessage = strSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
 						End If
-						
+
 					End If
 
 				End If
@@ -276,10 +276,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				End If
 			End If
 
-			m_progress = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.PROGRESS_PCT_COMPLETE
+			m_progress = clsMSGFDBUtils.PROGRESS_PCT_COMPLETE
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 			'Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
@@ -287,7 +287,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		   '2 second delay
+			Threading.Thread.Sleep(2000)		   '2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -351,6 +351,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			End If
 			Return String.Empty
 		Else
+			Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+
+			If splitFastaEnabled Then
+				strTSVFilePath = ParallelMSGFPlusRenameFile(strTSVFilePath)
+			End If
+
 			Return strTSVFilePath
 		End If
 
@@ -382,7 +388,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			result = MoveResultFiles()
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
 			End If
 		End If
 
@@ -401,7 +407,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		If objScanTypeFileCreator.CreateScanTypeFile() Then
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Created ScanType file: " & System.IO.Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Created ScanType file: " & Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
 			End If
 			strScanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath
 			Return True
@@ -451,13 +457,35 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	Private Function ParallelMSGFPlusRenameFile(ByVal resultsFileName As String) As String
+
+		Dim filePathNew = "??"
+
+		Try
+			Dim fiFile = New FileInfo(Path.Combine(m_WorkDir, resultsFileName))
+
+			Dim iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, m_message)
+
+			filePathNew = Path.GetFileNameWithoutExtension(fiFile.Name) & "_Part" & iteration & fiFile.Extension
+			filePathNew = Path.Combine(m_WorkDir, filePathNew)
+			fiFile.MoveTo(filePathNew)
+
+			Return filePathNew
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming file " & resultsFileName & " to " & filePathNew, ex)
+			Return (resultsFileName)
+		End Try
+
+	End Function
+
 	''' <summary>
 	''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub ParseConsoleOutputFile()
 
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+		Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 		Dim sngMSGFBProgress As Single = 0
 
 		Try
@@ -468,8 +496,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			If m_progress < sngMSGFBProgress Then
 				m_progress = sngMSGFBProgress
 
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
+				If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+					dtLastProgressWriteTime = DateTime.UtcNow
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
 				End If
 			End If
@@ -486,6 +514,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String, ByVal JavaProgLoc As String) As IJobParams.CloseOutType
 
 		Dim result As IJobParams.CloseOutType
+		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+
+		If splitFastaEnabled Then
+			ResultsFileName = ParallelMSGFPlusRenameFile(ResultsFileName)
+			ParallelMSGFPlusRenameFile("MSGFDB_ConsoleOutput.txt")
+		End If
 
 		' Zip the output file
 		result = mMSGFDBUtils.ZipOutputFile(Me, ResultsFileName)
@@ -498,7 +532,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End If
 
 		Dim strMSGFDBResultsFileName As String
-		If IO.Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
+		If Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
 			' Convert the .mzid file to a .tsv file
 
 			UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
@@ -529,7 +563,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
+		Dim strToolVersionInfo As String
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -538,8 +572,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFDbVersion)
 
 		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mMSGFDbProgLoc))
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(mMSGFDbProgLoc))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -564,21 +598,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
-		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
 		' Synchronize the stored Debug level with the value stored in the database
 		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
 		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
 		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = DateTime.UtcNow
 			UpdateStatusRunning(m_progress)
 		End If
 
-		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-			dtLastConsoleOutputParse = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+			dtLastConsoleOutputParse = DateTime.UtcNow
 
 			ParseConsoleOutputFile()
 			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
@@ -589,12 +623,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Sub
 
-	Private Sub mMSGFDBUtils_ErrorEvent(Message As String, DetailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-		m_message = String.Copy(Message)
-		If String.IsNullOrEmpty(DetailedMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
+	Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
+		m_message = String.Copy(errorMessage)
+		If String.IsNullOrEmpty(detailedMessage) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, DetailedMessage)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
 		End If
 
 	End Sub
@@ -603,12 +637,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		m_message = String.Empty
 	End Sub
 
-	Private Sub mMSGFDBUtils_MessageEvent(Message As String) Handles mMSGFDBUtils.MessageEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, Message)
+	Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
 	End Sub
 
-	Private Sub mMSGFDBUtils_WarningEvent(Message As String) Handles mMSGFDBUtils.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
+	Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
 	End Sub
 
 #End Region
