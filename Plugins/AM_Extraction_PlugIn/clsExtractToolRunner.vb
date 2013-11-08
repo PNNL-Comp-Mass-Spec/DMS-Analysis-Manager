@@ -339,7 +339,15 @@ Public Class clsExtractToolRunner
 							Else
 								Dim splitLine = strLineIn.Split(ControlChars.Tab)
 
-								Dim scanChargeCombo = splitLine(dctHeaderMapping("ScanNum")) & "_" & splitLine(dctHeaderMapping("Charge"))
+								Dim scanNumber = splitLine(dctHeaderMapping("ScanNum"))
+								Dim chargeState = splitLine(dctHeaderMapping("Charge"))
+
+								Dim scanNumberValue As Integer
+								Dim chargeStateValue As Integer
+								Integer.TryParse(scanNumber, scanNumberValue)
+								Integer.TryParse(chargeState, chargeStateValue)
+
+								Dim scanChargeCombo = scanNumber & "_" & chargeState
 								Dim peptide = splitLine(dctHeaderMapping("Peptide"))
 								Dim protein = splitLine(dctHeaderMapping("Protein"))
 								Dim specEValueText = splitLine(dctHeaderMapping("SpecEValue"))
@@ -361,10 +369,15 @@ Public Class clsExtractToolRunner
 								Dim hitsForScan As clsMSGFPlusPSMs = Nothing
 								Dim passesFilter As Boolean = False
 
+								Dim udtPSM As clsMSGFPlusPSMs.udtPSMType
+								udtPSM.Peptide = peptide
+								udtPSM.SpecEValue = specEValue
+								udtPSM.DataLine = strLineIn
+
 								If dctScanChargeTopHits.TryGetValue(scanChargeCombo, hitsForScan) Then
 									' Possibly store this value
 
-									passesFilter = hitsForScan.AddPSM(peptide, protein, specEValue, strLineIn)
+									passesFilter = hitsForScan.AddPSM(udtPSM, protein)
 
 									If passesFilter AndAlso specEValue < dctScanChargeBestScore(scanChargeCombo) Then
 										dctScanChargeBestScore(scanChargeCombo) = specEValue
@@ -372,8 +385,8 @@ Public Class clsExtractToolRunner
 
 								Else
 									' New entry for this scan/charge combo
-									hitsForScan = New clsMSGFPlusPSMs(numberOfHitsPerScanToKeep)
-									hitsForScan.AddPSM(peptide, protein, specEValue, strLineIn)
+									hitsForScan = New clsMSGFPlusPSMs(scanNumberValue, chargeStateValue, numberOfHitsPerScanToKeep)
+									hitsForScan.AddPSM(udtPSM, protein)
 
 									dctScanChargeTopHits.Add(scanChargeCombo, hitsForScan)
 									dctScanChargeBestScore.Add(scanChargeCombo, specEValue)
