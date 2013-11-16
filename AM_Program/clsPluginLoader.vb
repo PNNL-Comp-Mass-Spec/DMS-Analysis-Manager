@@ -11,7 +11,6 @@ Option Strict On
 
 Imports System.Xml
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsPluginLoader
 

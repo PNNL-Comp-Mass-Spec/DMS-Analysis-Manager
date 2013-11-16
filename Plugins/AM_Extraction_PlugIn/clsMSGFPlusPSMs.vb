@@ -81,9 +81,10 @@
 			End If
 		End If
 
+		Dim proteinPeptide = protein & "_" & udtPSM.Peptide
+
 		If addPeptide Then
 
-			Dim proteinPeptide = protein & "_" & udtPSM.Peptide
 			Dim udtExistingPSM As udtPSMType = Nothing
 
 			If mPSMs.TryGetValue(proteinPeptide, udtExistingPSM) Then
@@ -115,7 +116,6 @@
 				End If
 
 				' Add the new PSM
-				Dim proteinPeptide = protein & "_" & udtPSM.Peptide
 				mPSMs.Add(proteinPeptide, udtPSM)
 
 				updateScores = True
@@ -124,7 +124,6 @@
 				' The new peptide has the same score as the best scoring peptide; keep it (and don't remove anything)
 
 				' Add the new PSM
-				Dim proteinPeptide = protein & "_" & udtPSM.Peptide
 				mPSMs.Add(proteinPeptide, udtPSM)
 
 				updateScores = True
