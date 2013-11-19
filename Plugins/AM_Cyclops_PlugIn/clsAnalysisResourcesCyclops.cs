@@ -29,10 +29,11 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
 				string analysisType = m_jobParams.GetParam("AnalysisType");
+				string sourceFolderName = m_jobParams.GetParam("StepInputFolderName");
 
-				if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
-				{
-					m_message = "Results.db3 file from Step2 failed to copy over to working directory";
+				if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), m_WorkingDir))
+			{
+					m_message = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
 					//Errors were reported in function call, so just return
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}

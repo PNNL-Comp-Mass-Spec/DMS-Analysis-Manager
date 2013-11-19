@@ -232,11 +232,13 @@ namespace AnalysisManager_Cyclops_PlugIn
 			}
 
 			// Store paths to key DLLs
-			var ioToolFiles = new List<FileInfo>();
-			ioToolFiles.Add(new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll")));
+			var ioToolFiles = new List<FileInfo>
+			{
+				new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll"))
+			};
 
-			try {
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+	        try {
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
 			} catch (Exception ex) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;
@@ -256,14 +258,16 @@ namespace AnalysisManager_Cyclops_PlugIn
 			Microsoft.Win32.RegistryKey regRCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY);
             if (regRCore == null)
             {
-				throw new ApplicationException("Registry key is not found: " + RCORE_SUBKEY);
+	            m_message = "Registry key is not found: " + RCORE_SUBKEY;
+				throw new ApplicationException(m_message);
             }
             bool is64Bit = Environment.Is64BitProcess;
 			string sRSubKey = is64Bit ? "R64" : "R";
 			Microsoft.Win32.RegistryKey regR = regRCore.OpenSubKey(sRSubKey);
             if (regR == null)
             {
-                throw new ApplicationException("Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey);
+	            m_message = "Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey;
+                throw new ApplicationException(m_message);
             }
             var currentVersion = new Version((string)regR.GetValue("Current Version"));
             var installPath = (string)regR.GetValue("InstallPath");
@@ -273,9 +277,8 @@ namespace AnalysisManager_Cyclops_PlugIn
             // From 2.12.0, DLLs are installed in the one level deeper directory.
 			if (currentVersion < new Version(2, 12))
 				return bin;
-			else
-				return Path.Combine(bin, is64Bit ? "x64" : "i386");
-
+			
+			return Path.Combine(bin, is64Bit ? "x64" : "i386");
         }
 	}
 }
