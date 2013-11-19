@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -123,7 +123,6 @@
     <Content Include="..\..\AM_Common\MageExtContentFilters.dll" />
     <Content Include="..\..\AM_Common\MageExtExtractionFilters.dll" />
     <Content Include="..\..\AM_Common\System.Data.SQLite.dll" />
-    <Content Include="..\..\AM_Common\System.Data.SQLite.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

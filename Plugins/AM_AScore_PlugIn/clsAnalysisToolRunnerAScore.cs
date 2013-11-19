@@ -21,15 +21,19 @@ namespace AnalysisManager_AScore_PlugIn
 			try 
 			{
 
-				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath")); 
-				IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-				bool blnSuccess = false;
+				m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
+				bool blnSuccess;
 
 				//Do the base class stuff
-				if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
+
+				// Make sure _dta.txt files are not copied to the server
+				m_jobParams.AddResultFileExtensionToSkip("_dta.txt");
+				m_jobParams.AddResultFileExtensionToSkip("extracted_results.txt");
+				m_jobParams.AddResultFileExtensionToSkip("AScoreFile.txt");
 
 				// Store the AScore version info in the database
 				if (!StoreToolVersionInfo())
@@ -104,7 +108,7 @@ namespace AnalysisManager_AScore_PlugIn
 				m_Dataset = m_jobParams.GetParam("OutputFolderName");
 				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				result = MakeResultsFolder();
+				IJobParams.CloseOutType result = MakeResultsFolder();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -152,9 +156,7 @@ namespace AnalysisManager_AScore_PlugIn
 
        protected void CopyFailedResultsToArchiveFolder()
         {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+	       string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -165,8 +167,7 @@ namespace AnalysisManager_AScore_PlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+	       string strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
@@ -182,7 +183,7 @@ namespace AnalysisManager_AScore_PlugIn
 		    */
 			
 		   // Make the results folder
-            result = MakeResultsFolder();
+            IJobParams.CloseOutType result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
@@ -195,7 +196,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             // Copy the results folder to the Archive folder
-            clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
@@ -208,7 +209,7 @@ namespace AnalysisManager_AScore_PlugIn
 	   {
 		   string strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-		   FileInfo fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
+		   var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
 
 		   return StoreToolVersionInfoDLL(fiIDMdll.FullName);
 	   }
@@ -228,15 +229,17 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
 			// Lookup the version of the DLL
-			base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAScoreDLLPath);
+			StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAScoreDLLPath);
 
 			// Store paths to key files in ioToolFiles
-			List<FileInfo> ioToolFiles = new List<FileInfo>();
-			ioToolFiles.Add(new FileInfo(strAScoreDLLPath));
-				
-            try
+			var ioToolFiles = new List<FileInfo>
+			{
+				new FileInfo(strAScoreDLLPath)
+			};
+
+	        try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

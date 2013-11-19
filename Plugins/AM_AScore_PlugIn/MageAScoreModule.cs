@@ -32,6 +32,7 @@ namespace AnalysisManager_AScore_PlugIn
 		protected int paramFileIdx;
 		protected int resultsFldrIdx;
 		protected int datasetNameIdx;
+		protected int datasetTypeIdx;
 		protected int settingsFileIdx;
 
 		protected clsIonicZipTools mIonicZipTools;
@@ -77,8 +78,8 @@ namespace AnalysisManager_AScore_PlugIn
 			paramFileIdx = InputColumnPos["Parameter_File"];
 			resultsFldrIdx = InputColumnPos["Folder"];
 			datasetNameIdx = InputColumnPos["Dataset"];
+			datasetTypeIdx = InputColumnPos["Dataset_Type"];
 			settingsFileIdx = InputColumnPos["Settings_File"];
-
 		}
 
 		// process the job described by the fields in the input vals object
@@ -87,7 +88,6 @@ namespace AnalysisManager_AScore_PlugIn
 
 			try
 			{
-				string fragtype = "";
 				// extract contents of results file for current job to local file in working directory
 				BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
 				ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
@@ -96,40 +96,53 @@ namespace AnalysisManager_AScore_PlugIn
 				string resultsFolderPath = vals[resultsFldrIdx];
 				string paramFileNameForPSMTool = vals[paramFileIdx];
 				string datasetName = vals[datasetNameIdx];
+				string datasetType = vals[datasetTypeIdx];
 
 				string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath);
 				if (string.IsNullOrEmpty(dtaFilePath))
 				{
 					return false;
 				}
-
-				string settingsFileName = vals[settingsFileIdx];
-				string findFragmentation = (paramFileNameForPSMTool + settingsFileName).ToLower();
-				if (findFragmentation.Contains("hcd"))
-				{
+				
+				string fragtype;
+				if (datasetType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) > 0)
 					fragtype = "hcd";
-				}
-				else if (findFragmentation.Contains("etd"))
+				else if (datasetType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) > 0)
 				{
 					fragtype = "etd";
 				}
 				else
 				{
-					fragtype = "cid";
+					string settingsFileName = vals[settingsFileIdx];
+					string findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
+					if (findFragmentation.Contains("hcd"))
+					{
+						fragtype = "hcd";
+					}
+					else if (findFragmentation.Contains("etd"))
+					{
+						fragtype = "etd";
+					}
+					else
+					{
+						fragtype = "cid";
+					}
 				}
+			
 
 				// process extracted results file and DTA file with AScore
-				const string ascoreOutputFile = "AScoreFile.txt"; // TODO: how do we name it
+				const string ascoreOutputFile = "AScoreFile.txt"; 
 				string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
-				// TODO: make the call to AScore
 				string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
 				string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
 				string paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
 
 				if (!File.Exists(paramFileToUse))
 				{
-					Console.WriteLine("Parameter file not found: " + paramFileToUse);
+					string msg = "Parameter file not found: " + paramFileToUse;
+					OnWarningMessage(new MageStatusEventArgs(msg));
+					Console.WriteLine(msg);
 
 					string paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
 					if (Path.GetExtension(paramFileToUse2).Length == 0)
@@ -137,12 +150,14 @@ namespace AnalysisManager_AScore_PlugIn
 
 					if (File.Exists(paramFileToUse2))
 					{
-						Console.WriteLine(" ... will instead use: " + paramFileToUse2);
+						msg = " ... will instead use: " + paramFileToUse2;
+						OnWarningMessage(new MageStatusEventArgs(msg));
+						Console.WriteLine(msg);
 						paramFileToUse = paramFileToUse2;
 					}
 					else
 					{
-						return false;
+						throw new FileNotFoundException("Parameter file not found: " + paramFileToUse);
 					}
 				}
 
@@ -170,17 +185,18 @@ namespace AnalysisManager_AScore_PlugIn
 						return false;
 				}
 
+				// Make the call to AScore
 				var ascoreAlgorithm = new Algorithm();
 
 				// Attach the eventes
-				ascoreAlgorithm.ErrorEvent += new MessageEventBase.MessageEventHandler(ascoreAlgorithm_ErrorEvent);
-				ascoreAlgorithm.WarningEvent += new MessageEventBase.MessageEventHandler(ascoreAlgorithm_WarningEvent);
+				ascoreAlgorithm.ErrorEvent += ascoreAlgorithm_ErrorEvent;
+				ascoreAlgorithm.WarningEvent += ascoreAlgorithm_WarningEvent;
 				ascoreAlgorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
 
 				Console.WriteLine();
 
 				// load AScore results into SQLite database
-				string tableName = "t_results_ascore"; // TODO: how do we name table
+				const string tableName = "t_results_ascore";
 				string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
 				clsAScoreMagePipeline.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
 
@@ -215,7 +231,7 @@ namespace AnalysisManager_AScore_PlugIn
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAScoreMage.CheckFilter: " + ex.Message);
 				Console.WriteLine(ex.Message);
-				return false;
+				throw;
 			}
 
 		}
@@ -476,23 +492,26 @@ namespace AnalysisManager_AScore_PlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders");
 				return string.Empty;
 			}
-			else
-				return dtaFolderName.Trim();
-
+			
+			return dtaFolderName.Trim();
 		}
 
-		/// <summary>
-		/// The function gets the name of the "value" attribute.
-		/// </summary>
+		///  <summary>
+		///  The function gets the name of the "value" attribute.
+		///  </summary>
+		/// <param name="oXmlDoc"></param>
 		/// <param name="sectionName">The name of the section.</param>
-		/// <param name="keyName">The name of the key.</param>
-		///<return>The function returns the name of the "value" attribute.</return>
+		///  <param name="keyName">The name of the key.</param>
+		/// <return>The function returns the name of the "value" attribute.</return>
 		private string GetIniValue(XmlDocument oXmlDoc, string sectionName, string keyName)
 		{
 			XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
 			if (N != null)
 			{
-				return (N.Attributes.GetNamedItem("value").Value);
+				if (N.Attributes != null)
+				{
+					return (N.Attributes.GetNamedItem("value").Value);
+				}
 			}
 			return null;
 		}
@@ -501,15 +520,15 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <summary>
 		/// The function gets an item.
 		/// </summary>
+		/// <param name="oXmlDoc"></param>
 		/// <param name="sectionName">The name of the section.</param>
 		/// <param name="keyName">The name of the key.</param>
 		/// <return>The function returns a XML element.</return>
 		private XmlElement GetItem(XmlDocument oXmlDoc, string sectionName, string keyName)
 		{
-			XmlElement section = default(XmlElement);
 			if (!string.IsNullOrEmpty(keyName))
 			{
-				section = GetSection(oXmlDoc, sectionName);
+				XmlElement section = GetSection(oXmlDoc, sectionName);
 				if (section != null)
 				{
 					return (XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
@@ -521,6 +540,7 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <summary>
 		/// The function gets a section as XmlElement.
 		/// </summary>
+		/// <param name="oXmlDoc"></param>
 		/// <param name="sectionName">The name of a section.</param>
 		/// <return>The function returns a section as XmlElement.</return>
 		private XmlElement GetSection(XmlDocument oXmlDoc, string sectionName)
@@ -534,11 +554,11 @@ namespace AnalysisManager_AScore_PlugIn
 
 
 		// Build Mage source module containing one job to process
-		private BaseModule MakeJobSourceModule(string[] jobFieldNames, string[] jobFields)
+		private BaseModule MakeJobSourceModule(string[] jobFieldNameList, string[] jobFields)
 		{
 			var currentJob = new DataGenerator
 			{
-				AddAdHocRow = jobFieldNames
+				AddAdHocRow = jobFieldNameList
 			};
 			currentJob.AddAdHocRow = jobFields;
 			return currentJob;

@@ -42,8 +42,8 @@ namespace AnalysisManager_AScore_PlugIn
 			if (mMyEMSLDatasetInfo == null)
 			{
 				mMyEMSLDatasetInfo = new DatasetListInfo();
-				clsAScoreMagePipeline.mMyEMSLDatasetInfo.ErrorEvent += new MessageEventHandler(mReader_ErrorEvent);
-				clsAScoreMagePipeline.mMyEMSLDatasetInfo.MessageEvent += new MessageEventHandler(mReader_MessageEvent);
+				mMyEMSLDatasetInfo.ErrorEvent += mReader_ErrorEvent;
+				mMyEMSLDatasetInfo.MessageEvent += mReader_MessageEvent;
 			}
 		}
 
@@ -91,6 +91,7 @@ namespace AnalysisManager_AScore_PlugIn
 			{
 				return false;
 			}
+
 			//not sure how to show that this was a success
 			SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
 			ApplyAScoreToJobs(ascoreJobsToProcess);
@@ -152,6 +153,7 @@ namespace AnalysisManager_AScore_PlugIn
 		/// query DMS to get list of data package jobs to process
 		/// </summary>
 		/// <param name="dataPackageID"></param>
+		/// <param name="tool"></param>
 		/// <returns></returns>
 		private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
 		{
@@ -169,7 +171,7 @@ namespace AnalysisManager_AScore_PlugIn
 		private void ApplyAScoreToJobs(SimpleSink jobsToProcess)
 		{
 			var ascoreModule = new MageAScoreModule();
-			ascoreModule.WarningMessageUpdated += new EventHandler<MageStatusEventArgs>(ascoreModule_WarningMessageUpdated);
+			ascoreModule.WarningMessageUpdated += ascoreModule_WarningMessageUpdated;
 
 			ascoreModule.ExtractionParms = GetExtractionParametersFromJobParameters();
 			ascoreModule.WorkingDir = mWorkingDir;
@@ -182,24 +184,27 @@ namespace AnalysisManager_AScore_PlugIn
 			ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule).RunRoot(null);
 		}
 
-		/// <summary>
-		/// Import reporter ions into results SQLite database from given list of jobs
-		/// </summary>
-		/// <param name="reporterIonJobsToProcess"></param>
-		private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
-		{
-			// get selected list of reporter ion files from list of jobs
-			const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-			SimpleSink fileList = GetListOfFilesFromFolderList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
+		// <summary>
+		// Import reporter ions into results SQLite database from given list of jobs
+		// </summary>
+		// <param name="reporterIonJobsToProcess"></param>
+		// <param name="tableName"></param>
+		//private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
+		//{
+		//    // get selected list of reporter ion files from list of jobs
+		//    const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+		//    SimpleSink fileList = GetListOfFilesFromFolderList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
 
-			// make module to import contents of each file in list
-			var importer = new MageFileImport();
-			importer.DBTableName = tableName;
-			importer.DBFilePath = Path.Combine(mWorkingDir, mResultsDBFileName);
-			importer.ImportColumnList = "Dataset_ID|+|text, *";
+		//    // make module to import contents of each file in list
+		//    var importer = new MageFileImport
+		//    {
+		//        DBTableName = tableName,
+		//        DBFilePath = Path.Combine(mWorkingDir, mResultsDBFileName),
+		//        ImportColumnList = "Dataset_ID|+|text, *"
+		//    };
 
-			ProcessingPipeline.Assemble("File_Import", fileList, importer).RunRoot(null);
-		}
+		//    ProcessingPipeline.Assemble("File_Import", fileList, importer).RunRoot(null);
+		//}
 
 		/// <summary>
 		/// Get a list of items using a database query
@@ -342,12 +347,12 @@ namespace AnalysisManager_AScore_PlugIn
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore error: " + e.Message);
 		}
 
-		void mReader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		void mReader_MessageEvent(object sender, MessageEventArgs e)
 		{
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
 		}
 
-		void mReader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		void mReader_ErrorEvent(object sender, MessageEventArgs e)
 		{
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSL Reader error: " + e.Message);
 		}

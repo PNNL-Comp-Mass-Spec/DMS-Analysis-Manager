@@ -7,7 +7,7 @@ namespace AnalysisManager_AScore_PlugIn
 	// class for managing IMgrParams object
 	public class ManagerParameters
 	{
-		protected IMgrParams mMgrParms;
+		private readonly IMgrParams mMgrParms;
 
 		public ManagerParameters(IMgrParams mgrParms)
 		{

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Globalization;
 using AnalysisManagerBase;
 using MyEMSLReader;
 
@@ -63,7 +63,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <returns></returns>
         private bool RunAScoreOperation(string ascoreOperation)
         {
-            bool blnSuccess =  true;
+            bool blnSuccess;
 
 			// Note: case statements must be lowercase
             switch (ascoreOperation.ToLower())
@@ -72,11 +72,10 @@ namespace AnalysisManager_AScore_PlugIn
                     blnSuccess = GetAScoreFiles();
                     break;
                 default:
-                    // Future: throw an error
-                    break;
+		            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
             }
 
-			if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+			if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
 				return false;
 			
             return blnSuccess;
@@ -87,22 +86,20 @@ namespace AnalysisManager_AScore_PlugIn
 
         private bool GetAScoreFiles()
         {
-            bool blnSuccess = true;
-            string[] SplitString = null;
-            string[] FileNameExt = null;
+            const bool blnSuccess = true;
 
-            //Add list the files to delete to global list
-            SplitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
+	        //Add list the files to delete to global list
+            string[] SplitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
             foreach (string row in SplitString)
             {
-                FileNameExt = row.Split(':');
-                if (FileNameExt[2] == "nocopy")
+	            string[] FileNameExt = row.Split(':');
+	            if (FileNameExt[2] == "nocopy")
                 {
 					m_jobParams.AddResultFileExtensionToSkip(FileNameExt[1]);                    
                 }
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreCIDParamFile param file");
+	        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreCIDParamFile param file");
 
             if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
             {
@@ -145,94 +142,94 @@ namespace AnalysisManager_AScore_PlugIn
             return blnSuccess;
         }
 
+		// Old method
+		//
+		//private bool BuildInputFile()
+		//{
+		//    string[] DatasetFiles = null;
+		//    string DatasetType = null;
+		//    string DatasetName = null;
+		//    string DatasetFileName = null;
+		//    string DatasetID = null;
+		//    string WorkDir = m_mgrParams.GetParam("workdir");
+		//    StreamWriter inputFile = new StreamWriter(Path.Combine(WorkDir, ASCORE_INPUT_FILE));
 
-        private bool BuildInputFile()
-        {
-            string[] DatasetFiles = null;
-            string DatasetType = null;
-            string DatasetName = null;
-            string DatasetFileName = null;
-            string DatasetID = null;
-            string WorkDir = m_mgrParams.GetParam("workdir");
-            StreamWriter inputFile = new StreamWriter(Path.Combine(WorkDir, ASCORE_INPUT_FILE));
+		//    try
+		//    {
+		//        inputFile.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+		//        inputFile.WriteLine("<ascore_batch>");
+		//        inputFile.WriteLine("  <settings>");
+		//        inputFile.WriteLine("    <max_threads>4</max_threads>");
+		//        inputFile.WriteLine("  </settings>");
 
-            try
-            {
-                inputFile.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-                inputFile.WriteLine("<ascore_batch>");
-                inputFile.WriteLine("  <settings>");
-                inputFile.WriteLine("    <max_threads>4</max_threads>");
-                inputFile.WriteLine("  </settings>");
+		//        //update list of files to be deleted after run
+		//        DatasetFiles = Directory.GetFiles(WorkDir, "*_syn*.txt");
+		//        foreach (string Dataset in DatasetFiles)
+		//        {
+		//            DatasetFileName = Path.GetFileName(Dataset);
 
-                //update list of files to be deleted after run
-                DatasetFiles = Directory.GetFiles(WorkDir, "*_syn*.txt");
-                foreach (string Dataset in DatasetFiles)
-                {
-                    DatasetFileName = Path.GetFileName(Dataset);
+		//            // Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
+		//            //  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
+		//            //  The suffix to use is based on text present in the settings file name for each job
+		//            // However, if the settings file name did not contain HCD, ETD, or CID, then the dta, fht, and syn files
+		//            //  will not have had a suffix added; in that case, DatasetType will be ".txt"
+		//            DatasetType = DatasetFileName.Substring(DatasetFileName.ToLower().IndexOf("_syn") + 4, 4);
 
-                    // Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
-                    //  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
-                    //  The suffix to use is based on text present in the settings file name for each job
-                    // However, if the settings file name did not contain HCD, ETD, or CID, then the dta, fht, and syn files
-                    //  will not have had a suffix added; in that case, DatasetType will be ".txt"
-                    DatasetType = DatasetFileName.Substring(DatasetFileName.ToLower().IndexOf("_syn") + 4, 4);
+		//            // If DatasetType is ".txt" then change it to an empty string
+		//            if (DatasetType.ToLower() == ".txt")
+		//                DatasetType = string.Empty;
 
-                    // If DatasetType is ".txt" then change it to an empty string
-                    if (DatasetType.ToLower() == ".txt")
-                        DatasetType = string.Empty;
+		//            DatasetName = DatasetFileName.Substring(0, DatasetFileName.Length - (DatasetFileName.Length - DatasetFileName.ToLower().IndexOf("_syn")));
+		//            inputFile.WriteLine("  <run>");
 
-                    DatasetName = DatasetFileName.Substring(0, DatasetFileName.Length - (DatasetFileName.Length - DatasetFileName.ToLower().IndexOf("_syn")));
-                    inputFile.WriteLine("  <run>");
+		//            DatasetID = GetDatasetID(DatasetName);
 
-                    DatasetID = GetDatasetID(DatasetName);
+		//            if (string.IsNullOrEmpty(DatasetType) || DatasetType == "_cid")
+		//            {
+		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) + "</param_file>");
+		//            }
+		//            else if (DatasetType == "_hcd")
+		//            {
+		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) + "</param_file>");
+		//            }
+		//            else if (DatasetType == "_etd")
+		//            {
+		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) + "</param_file>");
+		//            }
+		//            inputFile.WriteLine("    <output_path>" + WorkDir + "</output_path>");
+		//            inputFile.WriteLine("    <dta_file>" + Path.Combine(WorkDir, DatasetName + "_dta" + DatasetType + ".txt") + "</dta_file>");
+		//            inputFile.WriteLine("    <fht_file>" + Path.Combine(WorkDir, DatasetName + "_fht" + DatasetType + ".txt") + "</fht_file>");
+		//            inputFile.WriteLine("    <syn_file>" + Path.Combine(WorkDir, DatasetName + "_syn" + DatasetType + ".txt") + "</syn_file>");
+		//            inputFile.WriteLine("    <scan_stats_file>" + Path.Combine(WorkDir, DatasetName + "_ScanStatsEx" + ".txt") + "</scan_stats_file>");
+		//            inputFile.WriteLine("    <dataset_id>" + DatasetID + "</dataset_id>");
+		//            inputFile.WriteLine("  </run>");
+		//        }
 
-                    if (string.IsNullOrEmpty(DatasetType) || DatasetType == "_cid")
-                    {
-                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) + "</param_file>");
-                    }
-                    else if (DatasetType == "_hcd")
-                    {
-                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) + "</param_file>");
-                    }
-                    else if (DatasetType == "_etd")
-                    {
-                        inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) + "</param_file>");
-                    }
-                    inputFile.WriteLine("    <output_path>" + WorkDir + "</output_path>");
-                    inputFile.WriteLine("    <dta_file>" + Path.Combine(WorkDir, DatasetName + "_dta" + DatasetType + ".txt") + "</dta_file>");
-                    inputFile.WriteLine("    <fht_file>" + Path.Combine(WorkDir, DatasetName + "_fht" + DatasetType + ".txt") + "</fht_file>");
-                    inputFile.WriteLine("    <syn_file>" + Path.Combine(WorkDir, DatasetName + "_syn" + DatasetType + ".txt") + "</syn_file>");
-                    inputFile.WriteLine("    <scan_stats_file>" + Path.Combine(WorkDir, DatasetName + "_ScanStatsEx" + ".txt") + "</scan_stats_file>");
-                    inputFile.WriteLine("    <dataset_id>" + DatasetID + "</dataset_id>");
-                    inputFile.WriteLine("  </run>");
-                }
+		//        inputFile.WriteLine("</ascore_batch>");
 
-                inputFile.WriteLine("</ascore_batch>");
+		//    }
+		//    catch (Exception ex)
+		//    {
+		//        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating AScore input file" + ex.Message);
 
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating AScore input file" + ex.Message);
+		//    }
+		//    finally
+		//    {
+		//        inputFile.Close();
+		//    }
 
-            }
-            finally
-            {
-                inputFile.Close();
-            }
+		//    return true;
 
-            return true;
-
-        }
+		//}
 
         protected string GetDatasetID(string DatasetName)
         {
-			int DatasetID = 0;
+			int DatasetID;
 				
 			if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
-				return DatasetID.ToString();
-			else
-				return string.Empty;
-
+				return DatasetID.ToString(CultureInfo.InvariantCulture);
+	        
+			return string.Empty;
         }
 
         #endregion
