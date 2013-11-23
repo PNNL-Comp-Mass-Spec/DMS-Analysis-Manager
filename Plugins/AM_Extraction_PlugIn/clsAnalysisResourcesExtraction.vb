@@ -402,7 +402,7 @@ Public Class clsAnalysisResourcesExtraction
 		Dim FileToGet As String
 
 		FileToGet = m_DatasetName & "_MSAlign_ResultTable.txt"
-		If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
@@ -473,7 +473,6 @@ Public Class clsAnalysisResourcesExtraction
 
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
-		Dim ModDefsFolder As String
 
 		Dim blnSuccess As Boolean
 
@@ -498,9 +497,9 @@ Public Class clsAnalysisResourcesExtraction
 			End If
 
 			' Confirm that the file was actually created
-			blnSuccess = File.Exists(Path.Combine(m_WorkingDir, ModDefsFilename))
+			Dim fiModDefsFile = New FileInfo(Path.Combine(m_WorkingDir, ModDefsFilename))
 
-			If Not blnSuccess And ResultType <> RESULT_TYPE_MSALIGN Then
+			If Not fiModDefsFile.Exists And ResultType <> RESULT_TYPE_MSALIGN Then
 				m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " & strParamFileName)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -509,14 +508,20 @@ Public Class clsAnalysisResourcesExtraction
 			m_jobParams.AddResultFileToSkip(strParamFileName)
 			m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
 
+			Dim logModFilesFileNotFound As Boolean = True
+			If ResultType <> RESULT_TYPE_MSALIGN Then logModFilesFileNotFound = False
+
 			' Check whether the newly generated ModDefs file matches the existing one
-			' If it doesn't match, or if the existing one is missing, then we need keep the file
+			' If it doesn't match, or if the existing one is missing, then we need to keep the file
 			' Otherwise, we can skip it
-			ModDefsFolder = FindDataFile(ModDefsFilename)
-			If String.IsNullOrEmpty(ModDefsFolder) Then
-				m_jobParams.AddResultFileToSkip(ModDefsFilename)
-			ElseIf ModDefsFolder.ToLower().StartsWith("\\proto") Then
-				If clsGlobal.FilesMatch(Path.Combine(m_WorkingDir, ModDefsFilename), Path.Combine(ModDefsFolder, ModDefsFilename)) Then
+			Dim remoteModDefsFolder = FindDataFile(ModDefsFilename, SearchArchivedDatasetFolder:=True, LogFileNotFound:=logModFilesFileNotFound)
+			If String.IsNullOrEmpty(remoteModDefsFolder) Then
+				' ModDefs file not found on the server
+				If fiModDefsFile.Length = 0 Then
+					m_jobParams.AddResultFileToSkip(ModDefsFilename)
+				End If
+			ElseIf remoteModDefsFolder.ToLower().StartsWith("\\proto") Then
+				If clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsFolder, ModDefsFilename)) Then
 					m_jobParams.AddResultFileToSkip(ModDefsFilename)
 				End If
 			End If
