@@ -2070,7 +2070,6 @@ Public MustInherit Class clsAnalysisResources
 		Dim strMSFileInfoScannerDir As String
 		Dim strMSFileInfoScannerDLLPath As String
 
-		Dim objScanStatsGenerator As clsScanStatsGenerator
 		Dim blnSuccess As Boolean
 
 		strRawDataType = m_jobParams.GetParam("RawDataType")
@@ -2120,7 +2119,7 @@ Public MustInherit Class clsAnalysisResources
 		' Make sure the raw data file does not get copied to the results folder
 		m_jobParams.AddResultFileToSkip(Path.GetFileName(strInputFilePath))
 
-		objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
+		Dim objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
 
 		' Create the _ScanStats.txt and _ScanStatsEx.txt files
 		blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir)

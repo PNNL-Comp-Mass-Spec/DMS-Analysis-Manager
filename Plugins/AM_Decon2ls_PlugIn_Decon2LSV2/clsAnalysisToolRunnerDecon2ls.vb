@@ -10,6 +10,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisToolRunnerDecon2ls
 	Inherits clsAnalysisToolRunnerBase
@@ -102,9 +103,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Try
 
-			ScansFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX)
-			IsosFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
-			PeaksFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
+			ScansFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX)
+			IsosFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
+			PeaksFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
 
 			Select Case mRawDataType
 				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
@@ -112,33 +113,33 @@ Public Class clsAnalysisToolRunnerDecon2ls
 					' Still true as of 5/18/2012
 					blnDotDFolder = True
 				Case Else
-					If Not IO.File.Exists(IsosFilePath) And Not IO.File.Exists(ScansFilePath) Then
+					If Not File.Exists(IsosFilePath) And Not File.Exists(ScansFilePath) Then
 						If mInputFilePath.ToLower().EndsWith(".d") Then
 							blnDotDFolder = True
 						End If
 					End If
 			End Select
 
-			If blnDotDFolder AndAlso Not IO.File.Exists(IsosFilePath) AndAlso Not IO.File.Exists(ScansFilePath) Then
+			If blnDotDFolder AndAlso Not File.Exists(IsosFilePath) AndAlso Not File.Exists(ScansFilePath) Then
 				' Copy the files from the .D folder to the work directory
 
-				Dim fiSrcFilePath As IO.FileInfo
+				Dim fiSrcFilePath As FileInfo
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying Decon2LS result files from the .D folder to the working directory")
 				End If
 
-				fiSrcFilePath = New IO.FileInfo(IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX))
+				fiSrcFilePath = New FileInfo(Path.Combine(mInputFilePath, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX))
 				If fiSrcFilePath.Exists Then
 					fiSrcFilePath.CopyTo(ScansFilePath)
 				End If
 
-				fiSrcFilePath = New IO.FileInfo(IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX))
+				fiSrcFilePath = New FileInfo(Path.Combine(mInputFilePath, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX))
 				If fiSrcFilePath.Exists Then
 					fiSrcFilePath.CopyTo(IsosFilePath)
 				End If
 
-				fiSrcFilePath = New IO.FileInfo(IO.Path.Combine(mInputFilePath, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX))
+				fiSrcFilePath = New FileInfo(Path.Combine(mInputFilePath, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX))
 				If fiSrcFilePath.Exists Then
 					fiSrcFilePath.CopyTo(PeaksFilePath)
 				End If
@@ -160,8 +161,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				Else
 					' Superfluous file; delete it
 					Try
-						If IO.File.Exists(PeaksFilePath) Then
-							IO.File.Delete(PeaksFilePath)
+						If File.Exists(PeaksFilePath) Then
+							File.Delete(PeaksFilePath)
 						End If
 					Catch ex As Exception
 						' Ignore errors here
@@ -181,8 +182,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				If Not ResultsFileHasData(IsosFilePath) Then
 					' The file does not have any data lines
 					Try
-						If IO.File.Exists(IsosFilePath) Then
-							IO.File.Delete(IsosFilePath)
+						If File.Exists(IsosFilePath) Then
+							File.Delete(IsosFilePath)
 						End If
 					Catch ex As Exception
 						' Ignore errors here
@@ -191,7 +192,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 			Else
 				' Make sure the Isos File exists
-				If Not IO.File.Exists(IsosFilePath) Then
+				If Not File.Exists(IsosFilePath) Then
 					m_message = "DeconTools Isos file Not Found"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & IsosFilePath)
 					Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
@@ -239,16 +240,81 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	End Function
 
-	Private Function CreateNewExportFile(ByVal exportFileName As String) As IO.StreamWriter
-		Dim ef As IO.StreamWriter
+	''' <summary>
+	''' Use MSFileInfoScanner to create QC Plots
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function CreateQCPlots() As IJobParams.CloseOutType
 
-		If IO.File.Exists(exportFileName) Then
+		Dim blnSuccess As Boolean = False
+
+		Try
+
+			Dim strInputFilePath As String
+
+			Dim strMSFileInfoScannerDir As String
+			Dim strMSFileInfoScannerDLLPath As String
+
+			strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
+			If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
+				m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+			If Not File.Exists(strMSFileInfoScannerDLLPath) Then
+				m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			strInputFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
+
+			Dim objQCPlotGenerator = New clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
+
+			' Create the QC Plot .png files and associated Index.html file
+			blnSuccess = objQCPlotGenerator.CreateQCPlots(strInputFilePath, m_WorkDir)
+
+			If blnSuccess Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generated QC Plots file using " + strInputFilePath)
+				End If
+
+			Else
+				m_message = "Error generating QC Plots files with clsDeconToolsQCPlotsGenerator"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, objQCPlotGenerator.ErrorMessage)
+				If objQCPlotGenerator.MSFileInfoScannerErrorCount > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner encountered " + objQCPlotGenerator.MSFileInfoScannerErrorCount.ToString() + " errors")
+				End If
+			End If
+
+		Catch ex As Exception
+			m_message = "Error in CreateQCPlots: " + ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
+
+		If blnSuccess Then
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Else
+			Return (IJobParams.CloseOutType.CLOSEOUT_FAILED)
+		End If
+
+
+	End Function
+
+	Private Function CreateNewExportFile(ByVal exportFileName As String) As StreamWriter
+		Dim ef As StreamWriter
+
+		If File.Exists(exportFileName) Then
 			'post error to log
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase->createNewExportFile: Export file already exists (" & exportFileName & "); this is unexpected")
 			Return Nothing
 		End If
 
-		ef = New IO.StreamWriter(exportFileName, False)
+		ef = New StreamWriter(exportFileName, False)
 		Return ef
 
 	End Function
@@ -274,7 +340,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <remarks></remarks>
 	Protected Function IsosFileHasData(ByVal IsosFilePath As String, ByRef intDataLineCount As Integer, ByVal blnCountTotalDataLines As Boolean) As Boolean
 
-		Dim srInFile As IO.StreamReader
+		Dim srInFile As StreamReader
 
 		Dim strLineIn As String
 		Dim blnHeaderLineProcessed As Boolean
@@ -284,8 +350,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Try
 
-			If IO.File.Exists(IsosFilePath) Then
-				srInFile = New IO.StreamReader(New IO.FileStream(IsosFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			If File.Exists(IsosFilePath) Then
+				srInFile = New StreamReader(New FileStream(IsosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				Do While srInFile.Peek >= 0
 					strLineIn = srInFile.ReadLine
@@ -368,6 +434,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		End If
 
+		If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			' Create the QC plots
+			eReturnCode = CreateQCPlots()
+		End If
+		
 		' Zip the _Peaks.txt file (if it exists)
 		ZipPeaksFile()
 
@@ -410,7 +481,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
 			' Try to save whatever files were moved into the results folder
 			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(IO.Path.Combine(m_WorkDir, m_ResFolderName))
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -430,7 +501,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Dim blnLoopingEnabled As Boolean = False
 
-		Dim strParamFilePath As String = IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
+		Dim strParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
 		Dim blnDecon2LSError As Boolean
 
 		' Cache the parameters in the DeconTools parameter file
@@ -645,10 +716,10 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 			' Look for file Dataset*BAD_ERROR_log.txt
 			' If it exists, an exception occurred
-			Dim diWorkdir As IO.DirectoryInfo
-			diWorkdir = New IO.DirectoryInfo(IO.Path.Combine(m_WorkDir))
+			Dim diWorkdir As DirectoryInfo
+			diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
 
-			For Each fiFile As IO.FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
+			For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
 				m_message = "Error running DeconTools; Bad_Error_log file exists"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiFile.Name)
 				eDeconToolsStatus = DeconToolsStateType.BadErrorLogFile
@@ -762,7 +833,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As System.DateTime)
 
-		Dim fiFileInfo As IO.FileInfo
+		Dim fiFileInfo As FileInfo
 
 		Dim strLogFilePath As String
 		Dim strLineIn As String
@@ -778,14 +849,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			Select Case mRawDataType
 				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 					' As of 11/19/2010, the _Log.txt file is created inside the .D folder
-					strLogFilePath = IO.Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
+					strLogFilePath = Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
 				Case Else
-					strLogFilePath = IO.Path.Combine(m_WorkDir, IO.Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
+					strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
 			End Select
 
-			If IO.File.Exists(strLogFilePath) Then
+			If File.Exists(strLogFilePath) Then
 
-				Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+				Using srInFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 					Do While srInFile.Peek >= 0
 						strLineIn = srInFile.ReadLine
@@ -806,7 +877,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 								End If
 
 								If Not blnDateValid Then
-									fiFileInfo = New IO.FileInfo(strLogFilePath)
+									fiFileInfo = New FileInfo(strLogFilePath)
 									dtFinishTime = fiFileInfo.LastWriteTime
 								End If
 
@@ -910,7 +981,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <remarks></remarks>
 	Protected Function ResultsFileHasData(ByVal strFilePath As String) As Boolean
 
-		If Not IO.File.Exists(strFilePath) Then
+		If Not File.Exists(strFilePath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools results file not found: " & strFilePath)
 			Return False
 		End If
@@ -923,7 +994,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening the DeconTools results file: " & strFilePath)
 
-		Using srReader As IO.StreamReader = New IO.StreamReader(New IO.FileStream(strFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+		Using srReader As StreamReader = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			While srReader.Peek > -1 AndAlso intDataLineCount < 2
 
 				Dim strLineIn As String = srReader.ReadLine()
@@ -949,30 +1020,30 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				Return IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				Return Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
-				Return IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
+				Return Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
-				Return IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
+				Return Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-				Return IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
+				Return Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
 			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
-				Return IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_RAW_EXTENSION & "/_FUNC001.DAT"
+				Return Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_RAW_EXTENSION & "/_FUNC001.DAT"
 
 			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
-				Return IO.Path.Combine(m_WorkDir, m_Dataset)
+				Return Path.Combine(m_WorkDir, m_Dataset)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
 				' Bruker_FT folders are actually .D folders
-				Return IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
+				Return Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 				' Bruker_TOFBaf folders are actually .D folders
-				Return IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
+				Return Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
 				''''''''''''''''''''''''''''''''''''
@@ -980,7 +1051,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				'       DMS doesn't yet have a BrukerTOF dataset 
 				'        so we don't know the official folder structure
 				''''''''''''''''''''''''''''''''''''
-				Return IO.Path.Combine(m_WorkDir, m_Dataset)
+				Return Path.Combine(m_WorkDir, m_Dataset)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
 				''''''''''''''''''''''''''''''''''''
@@ -988,13 +1059,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				'       DMS doesn't yet have a BrukerTOF dataset 
 				'        so we don't know the official folder structure
 				''''''''''''''''''''''''''''''''''''
-				Return IO.Path.Combine(m_WorkDir, m_Dataset)
+				Return Path.Combine(m_WorkDir, m_Dataset)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-				Return IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+				Return Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
 			Case clsAnalysisResources.eRawDataTypeConstants.mzML
-				Return IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+				Return Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 
 			Case Else
 				'Should never get this value
@@ -1010,7 +1081,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	Protected Function StoreToolVersionInfo(ByVal strDeconToolsProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
-		Dim ioDeconToolsInfo As IO.FileInfo
+		Dim ioDeconToolsInfo As FileInfo
 		Dim blnSuccess As Boolean
 
 		Dim reParseVersion As System.Text.RegularExpressions.Regex
@@ -1020,11 +1091,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		ioDeconToolsInfo = New IO.FileInfo(strDeconToolsProgLoc)
+		ioDeconToolsInfo = New FileInfo(strDeconToolsProgLoc)
 		If Not ioDeconToolsInfo.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of IO.FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -1057,29 +1128,29 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		End If
 
 		' Lookup the version of the DeconTools Backend (in the DeconTools folder)
-		Dim strDeconToolsBackendPath As String = IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll")
+		Dim strDeconToolsBackendPath As String = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll")
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
 		If Not blnSuccess Then Return False
 
 		' Lookup the version of the UIMFLibrary (in the DeconTools folder)
-		Dim strDLLPath As String = IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll")
+		Dim strDLLPath As String = Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll")
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
 		' Lookup the version of DeconEngine (in the DeconTools folder)
-		strDLLPath = IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
+		strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
 		' Lookup the version of DeconEngineV2 (in the DeconTools folder)
-		strDLLPath = IO.Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
+		strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of IO.FileInfo)
-		ioToolFiles.Add(New IO.FileInfo(strDeconToolsProgLoc))
-		ioToolFiles.Add(New IO.FileInfo(strDeconToolsBackendPath))
+		Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(strDeconToolsProgLoc))
+		ioToolFiles.Add(New FileInfo(strDeconToolsBackendPath))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -1109,7 +1180,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			MinScanValueFromParamFile = 0
 			MaxScanValueFromParamFile = 100000
 
-			If Not IO.File.Exists(strParamFileCurrent) Then
+			If Not File.Exists(strParamFileCurrent) Then
 				' Parameter file not found
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFileCurrent)
 
@@ -1117,7 +1188,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			Else
 				' Open the file and parse the XML
 				objParamFile = New System.Xml.XmlDocument
-				objParamFile.Load(New IO.FileStream(strParamFileCurrent, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				objParamFile.Load(New FileStream(strParamFileCurrent, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Look for the XML: <MinScan></MinScan>
 				objNode = objParamFile.SelectSingleNode("//parameters/Miscellaneous/MinScan")
@@ -1165,11 +1236,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <remarks></remarks>
 	Private Function WriteTempParamFile(ByVal strParamFile As String, ByVal strParamFileTemp As String, ByVal NewMinScanValue As Integer, ByRef NewMaxScanValue As Integer) As Boolean
 		Dim objParamFile As System.Xml.XmlDocument
-		Dim swTempParamFile As IO.StreamWriter
+		Dim swTempParamFile As StreamWriter
 		Dim objTempParamFile As System.Xml.XmlTextWriter
 
 		Try
-			If Not IO.File.Exists(strParamFile) Then
+			If Not File.Exists(strParamFile) Then
 				' Parameter file not found
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFile)
 
@@ -1177,7 +1248,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			Else
 				' Open the file and parse the XML
 				objParamFile = New System.Xml.XmlDocument
-				objParamFile.Load(New IO.FileStream(strParamFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				objParamFile.Load(New FileStream(strParamFile, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Look for the XML: <UseScanRange></UseScanRange> in the Miscellaneous section
 				' Set its value to "True" (this sub will add it if not present)
@@ -1191,7 +1262,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 				Try
 					' Now write out the XML to strParamFileTemp
-					swTempParamFile = New IO.StreamWriter(New IO.FileStream(strParamFileTemp, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+					swTempParamFile = New StreamWriter(New FileStream(strParamFileTemp, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					objTempParamFile = New System.Xml.XmlTextWriter(swTempParamFile)
 					objTempParamFile.Indentation = 1
@@ -1258,10 +1329,10 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		Dim strZippedPeaksFilePath As String
 
 		Try
-			strPeaksFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
-			strZippedPeaksFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & "_peaks.zip")
+			strPeaksFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
+			strZippedPeaksFilePath = Path.Combine(m_WorkDir, m_Dataset & "_peaks.zip")
 
-			If IO.File.Exists(strPeaksFilePath) Then
+			If File.Exists(strPeaksFilePath) Then
 
 				If Not MyBase.ZipFile(strPeaksFilePath, False, strZippedPeaksFilePath) Then
 					Dim Msg As String = "Error zipping " & DECON2LS_PEAKS_FILE_SUFFIX & " file, job " & m_JobNum
@@ -1271,7 +1342,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				End If
 
 				' Add the _peaks.txt file to .FilesToDelete since we only want to keep the Zipped version
-				m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strPeaksFilePath))
+				m_jobParams.AddResultFileToSkip(Path.GetFileName(strPeaksFilePath))
 
 			End If
 
