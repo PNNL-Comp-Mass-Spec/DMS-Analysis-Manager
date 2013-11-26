@@ -251,26 +251,26 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		Try
 
-			Dim strInputFilePath As String
+			Dim strInputFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
+			If Not File.Exists(strInputFilePath) Then
+				' Do not treat this as a fatal error
+				' It's possible that this analysis job used a parameter file that only picks peaks but doesn't deisotope, e.g. PeakPicking_NonThresholded_PeakBR2_SN7.xml
+				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			End If
 
-			Dim strMSFileInfoScannerDir As String
-			Dim strMSFileInfoScannerDLLPath As String
-
-			strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
+			Dim strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
 			If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
 				m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+			Dim strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
 			If Not File.Exists(strMSFileInfoScannerDLLPath) Then
 				m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
-
-			strInputFilePath = Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
 
 			Dim objQCPlotGenerator = New clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
 
