@@ -1,6 +1,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisResourcesDtaRefinery
     Inherits clsAnalysisResources
@@ -22,24 +23,25 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
-        'Retrieve param file
-		If Not RetrieveGeneratedParamFile( _
-		  m_jobParams.GetParam("ParmFileName"), _
-		  m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		'Retrieve param file
+		Dim strParamFileName = m_jobParams.GetParam("ParmFileName")
 
-        Dim strParamFileStoragePathKeyName As String
-        Dim strDtaRefineryParmFileStoragePath As String
+		If Not RetrieveGeneratedParamFile(strParamFileName, m_jobParams.GetParam("ParmFileStoragePath")) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		Dim strParamFileStoragePathKeyName As String
+		Dim strDtaRefineryParmFileStoragePath As String
 		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "DTA_Refinery"
 
-        strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
-        If strDtaRefineryParmFileStoragePath Is Nothing OrElse strDtaRefineryParmFileStoragePath.Length = 0 Then
-            strDtaRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\DTARefinery"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strDtaRefineryParmFileStoragePath)
-        End If
+		strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
+		If strDtaRefineryParmFileStoragePath Is Nothing OrElse strDtaRefineryParmFileStoragePath.Length = 0 Then
+			strDtaRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\DTARefinery"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strDtaRefineryParmFileStoragePath)
+		End If
 
-        'Retrieve settings files aka default file that will have values overwritten by parameter file values
-        'Stored in same location as parameter file
+		'Retrieve settings files aka default file that will have values overwritten by parameter file values
+		'Stored in same location as parameter file
 		If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -60,7 +62,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 		End If
 
 		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
-		Dim strCDTAPath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+		Dim strCDTAPath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 		Dim blnReplaceSourceFile As Boolean = True
 		Dim blnDeleteSourceFileIfUpdated As Boolean = True
 
@@ -70,45 +72,47 @@ Public Class clsAnalysisResourcesDtaRefinery
 		End If
 
 		' If the _dta.txt file is over 2 GB in size, then condense it
-		If Not ValidateCDTAFileSize(m_WorkingDir, IO.Path.GetFileName(strCDTAPath)) Then
+		If Not ValidateCDTAFileSize(m_WorkingDir, Path.GetFileName(strCDTAPath)) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
 		' Retrieve DeconMSn Log file and DeconMSn Profile File
-        If Not RetrieveDeconMSnLogFiles() Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If Not RetrieveDeconMSnLogFiles() Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        'Add all the extensions of the files to delete after run
-        'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_DEFAULT_INPUT_FILE)
-        'm_JobParams.AddResultFileExtensionToSkip(XTANDEM_TAXONOMY_LIST_FILE)
-        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
-        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
-        m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+		'Add all the extensions of the files to delete after run
+		m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+		m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 		m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & ".xml")
+
+		m_jobParams.AddResultFileToSkip(strParamFileName)
+		m_jobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(strParamFileName) & "_ModDefs.txt")
+		m_jobParams.AddResultFileToSkip("Mass_Correction_Tags.txt")
 
 		m_jobParams.AddResultFileToKeep(m_DatasetName & "_dta.zip")
 
 		' Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        strErrorMessage = String.Empty
-        result = UpdateParameterFile(strErrorMessage)
-        If Not result Then
-            Dim Msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		strErrorMessage = String.Empty
+		result = UpdateParameterFile(strErrorMessage)
+		If Not result Then
+			Dim Msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-    End Function
+	End Function
 
-    Protected Function RetrieveDeconMSnLogFiles()  As Boolean
+	Protected Function RetrieveDeconMSnLogFiles() As Boolean
 
 		Dim sourceFolderPath As String
 
@@ -159,7 +163,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 			End If
 
 			If Not String.IsNullOrWhiteSpace(deconMSnLogFileName) Then
-				If Not ValidateDeconMSnLogFile(IO.Path.Combine(m_WorkingDir, deconMSnLogFileName)) Then
+				If Not ValidateDeconMSnLogFile(Path.Combine(m_WorkingDir, deconMSnLogFileName)) Then
 					Return False
 				End If
 			End If
@@ -168,14 +172,18 @@ Public Class clsAnalysisResourcesDtaRefinery
 
 			DeleteFileIfNoData(deconMSnProfileFileName, "DeconMSn Profile file")
 
+			' Make sure the DeconMSn files are not stored in the DTARefinery results folder
+			m_jobParams.AddResultFileExtensionToSkip("_DeconMSn_log.txt")
+			m_jobParams.AddResultFileExtensionToSkip("_profile.txt")
+
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveDeconMSnLogFiles: " & ex.Message)
 			Return False
 		End Try
 
-        Return True
+		Return True
 
-    End Function
+	End Function
 
 	Protected Sub DeleteFileIfNoData(ByVal fileName As String, ByVal fileDescription As String)
 
@@ -183,13 +191,13 @@ Public Class clsAnalysisResourcesDtaRefinery
 		Dim strFilePathToCheck As String
 
 		If Not String.IsNullOrWhiteSpace(fileName) Then
-			strFilePathToCheck = IO.Path.Combine(m_WorkingDir, fileName)
+			strFilePathToCheck = Path.Combine(m_WorkingDir, fileName)
 			If Not ValidateFileHasData(strFilePathToCheck, fileDescription, strErrorMessage) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, fileDescription & " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity")
 				End If
 
-				IO.File.Delete(strFilePathToCheck)
+				File.Delete(strFilePathToCheck)
 			End If
 		End If
 
@@ -198,20 +206,20 @@ Public Class clsAnalysisResourcesDtaRefinery
 	Protected Function UpdateParameterFile(ByRef strErrorMessage As String) As Boolean
 		'ByVal strTemplateFilePath As String, ByVal strFileToMerge As String, 
 		Dim XTandemExePath As String
-		Dim XtandemDefaultInput As String = System.IO.Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE)
-		Dim XtandemTaxonomyList As String = System.IO.Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE)
-		Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
-		Dim DtaRefineryDirectory As String = System.IO.Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
+		Dim XtandemDefaultInput As String = Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE)
+		Dim XtandemTaxonomyList As String = Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE)
+		Dim ParamFilePath As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
+		Dim DtaRefineryDirectory As String = Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
 
-		Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		Dim SearchSettings As String = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
 		Dim result As Boolean = True
-		Dim fiTemplateFile As System.IO.FileInfo
+		Dim fiTemplateFile As FileInfo
 		Dim objTemplate As System.Xml.XmlDocument
 		strErrorMessage = String.Empty
 
 		Try
-			fiTemplateFile = New System.IO.FileInfo(ParamFilePath)
+			fiTemplateFile = New FileInfo(ParamFilePath)
 
 			If Not fiTemplateFile.Exists Then
 				strErrorMessage = "File not found: " & fiTemplateFile.FullName
@@ -233,7 +241,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 				Dim par As System.Xml.XmlNode
 				Dim root As System.Xml.XmlElement = objTemplate.DocumentElement
 
-				XTandemExePath = System.IO.Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
+				XTandemExePath = Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
 				par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']")
 				par.InnerXml = XTandemExePath
 
