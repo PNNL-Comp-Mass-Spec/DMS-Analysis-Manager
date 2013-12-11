@@ -1,0 +1,32 @@
+MTD	submitter_name	Attila Csordas
+MTD	submitter_email	acsordas@ebi.ac.uk
+MTD	submitter_affiliation	Proteomics
+MTD	submitter_pride_login	acsordas
+MTD	lab_head_name	Samuel Payne
+MTD	lab_head_email	Samuel.Payne@pnnl.gov
+MTD	lab_head_affiliation	PNNL, USA
+MTD	project_title	Test Dataset for PNNL
+MTD	project_description	A temporal multi-omic analysis of Y. pestis and Y. pseudotuberculosis at physiologically relevant temperatures was performed to gain insights into how an acute and highly lethal bacterial pathogen, Y. pestis, differs from its less virulent progenitor, Y. pseudotuberculosis. Associated transcriptomics data have been deposited in GEO under accession number GSE30634.
+MTD	keywords	test, mzid, complete, px
+MTD	sample_processing_protocol	A temporal multi-omic analysis of Y. pestis and Y. pseudotuberculosis at physiologically relevant temperatures was performed to gain insights into how an acute and highly lethal bacterial pathogen, Y. pestis, differs from its less virulent progenitor, Y. pseudotuberculosis. Associated transcriptomics data have been deposited in GEO under accession number GSE30634.
+MTD	data_processing_protocol	A temporal multi-omic analysis of Y. pestis and Y. pseudotuberculosis at physiologically relevant temperatures was performed to gain insights into how an acute and highly lethal bacterial pathogen, Y. pestis, differs from its less virulent progenitor, Y. pseudotuberculosis. Associated transcriptomics data have been deposited in GEO under accession number GSE30634.
+MTD	experiment_type	[PRIDE, PRIDE:0000429, Shotgun proteomics, ]
+MTD	submission_type	COMPLETE
+MTD	species	[NEWT, 375440, Yersinia sp. HB6, ]
+MTD	tissue	[BTO, BTO:0000089, blood, ]
+MTD	cell_type	[CL, CL:0000081, blood cell, ]
+MTD	instrument	[MS, MS:1001742, LTQ Orbitrap Velos, ]
+
+FMH	file_id	file_type	file_path	file_mapping	
+FME	0	search	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID.dat		
+FME	1	peak	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID.mgf		
+FME	2	result	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID.mzid	0,1,5	
+FME	3	other	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID_quant.txt		
+FME	5	raw	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/sample_1_replicate_1.RAW		
+FME	6	peak	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID2.mgf		
+FME	7	result	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/AID_second.mzid	6,8	
+FME	8	raw	/Users/attilacsordas/Desktop/pxsubmissiontestsets/mzidtestcomplete/sample_1_replicate_2.RAW		
+
+SMH	file_id	species	tissue	cell_type	disease	modification	instrument	quantification	experimental_factor
+SME	2	[NEWT, 375440, Yersinia sp. HB6, ]	[BTO, BTO:0000089, blood, ]	[CL, CL:0000081, blood cell, ]			[MS, MS:1001742, LTQ Orbitrap Velos, ]		technical replicate 1
+SME	7	[NEWT, 375440, Yersinia sp. HB6, ]	[BTO, BTO:0000089, blood, ]	[CL, CL:0000081, blood cell, ]			[MS, MS:1001742, LTQ Orbitrap Velos, ]		technical replicate 2

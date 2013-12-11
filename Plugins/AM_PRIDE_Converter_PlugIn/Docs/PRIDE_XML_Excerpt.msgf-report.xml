@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report>
+<SearchResultIdentifier>
+    <hash></hash>
+    <sourceFilePath>QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf</sourceFilePath>
+    <timeCreated>2012-10-29T14:27:46Z</timeCreated>
+</SearchResultIdentifier>
+<Metadata>
+    <Title>QC_Shew</Title>
+    <ShortLabel>QC_Shew</ShortLabel>
+    <Protocol>
+        <ProtocolName>QC_Shew</ProtocolName>
+        <ProtocolSteps>
+            <StepDescription>
+                <cvParam cvLabel="MS" accession="MS:1001251" name="Trypsin" value=""/>
+            </StepDescription>
+        </ProtocolSteps>
+    </Protocol>
+    <MzDataDescription>
+        <cvLookup cvLabel="MS" fullName="PSI Mass Spectrometry Ontology" version="1.2" address="http://psidev.cvs.sourceforge.net/viewvc/*checkout*/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo"/>
+        <cvLookup cvLabel="PRIDE" fullName="PRIDE Controlled Vocabulary" version="1.101" address="http://ebi-pride.googlecode.com/svn/trunk/pride-core/schema/pride_cv.obo"/>
+        <admin>
+            <sampleName>QC_Shew_12_02</sampleName>
+            <sampleDescription comment="Digest Shewanella for QC standard for MS Instrumentation">
+                <cvParam cvLabel="NEWT" accession="70863" name="Shewanella oneidensis" value=""/>
+            </sampleDescription>
+            <sourceFile>
+                <nameOfFile>QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf</nameOfFile>
+                <pathToFile>QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf</pathToFile>
+                <fileType>MSGF file</fileType>
+            </sourceFile>
+            <contact>
+                <name>Matthew Monroe</name>
+                <institution>Pactific Northwest National Laboratory</institution>
+                <contactInfo>matthew.monroe@pnnl.gov</contactInfo>
+            </contact>
+        </admin>
+        <instrument>
+            <instrumentName>LTQ_Orb_3</instrumentName>
+            <source>
+                <cvParam cvLabel="MS" accession="MS:1000073" name="electrospray ionization" value=""/>
+            </source>
+            <analyzerList count="1">
+                <analyzer>
+                    <cvParam cvLabel="MS" accession="MS:1000484" name="orbitrap" value=""/>
+                </analyzer>
+            </analyzerList>
+            <detector>
+                <cvParam cvLabel="MS" accession="MS:1000624" name="inductive detector" value=""/>
+            </detector>
+            <additional/>
+        </instrument>
+        <dataProcessing>
+            <software>
+                <name>MS-GFDB</name>
+                <version>2012-05-07</version>
+                <comments></comments>
+            </software>
+            <processingMethod/>
+        </dataProcessing>
+    </MzDataDescription>
+    <ExperimentAdditional>
+        <cvParam cvLabel="PRIDE" accession="PRIDE:0000040" name="Experiment description" value=""/>
+        <cvParam cvLabel="PRIDE" accession="PRIDE:0000097" name="Project" value="PNNL QC_Shew LTQ_Orb_3"/>
+        <cvParam cvLabel="PRIDE" accession="PRIDE:0000218" name="Original MS data file format" value="MSGF file"/>
+        <cvParam cvLabel="PRIDE" accession="PRIDE:0000175" name="XML generation software" value="PRIDE Converter Toolsuite 2.0-SNAPSHOT-20120927-0929"/>
+        <cvParam cvLabel="MS" accession="MS:1001083" name="ms/ms search" value=""/>
+    </ExperimentAdditional>
+</Metadata>
+<Identifications>
+<Identification>
+    <Accession>SO_1931</Accession>
+    <UniqueIdentifier>SO_1931</UniqueIdentifier>
+    <Database>Unknown database</Database>
+    <DatabaseVersion>Unknown</DatabaseVersion>
+    <Peptide>
+        <Sequence>LTVADMTGGNFTVTNGGVFGSLMSTPILNLPQSAILGMHAIK</Sequence>
+        <CuratedSequence></CuratedSequence>
+        <Start>0</Start>
+        <End>0</End>
+        <SpectrumReference>10109</SpectrumReference>
+        <isSpecific>false</isSpecific>
+        <UniqueIdentifier>10109</UniqueIdentifier>
+        <additional>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000065" name="Upstream flanking sequence" value="K"/>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000066" name="Downstream flanking sequence" value="D"/>
+            <cvParam cvLabel="MS" accession="MS:1000041" name="charge state" value="3"/>
+            <cvParam cvLabel="MS" accession="MS:1000042" name="peak intensity" value="0.0"/>
+            <cvParam cvLabel="MS" accession="MS:1001870" name="p-value for peptides" value="4.11E-23"/>
+            <userParam name="MQScore" value="1.47E-29"/>
+            <userParam name="TotalPRMScore" value="246.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="1.47E-29"/>
+        </additional>
+    </Peptide>
+    <Peptide>
+        <Sequence>LTVADMTGGNFTVTNGGVFGSLMSTPILNLPQSAILGMHAIK</Sequence>
+        <CuratedSequence></CuratedSequence>
+        <Start>0</Start>
+        <End>0</End>
+        <SpectrumReference>10123</SpectrumReference>
+        <isSpecific>false</isSpecific>
+        <UniqueIdentifier>10123</UniqueIdentifier>
+        <additional>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000065" name="Upstream flanking sequence" value="K"/>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000066" name="Downstream flanking sequence" value="D"/>
+            <cvParam cvLabel="MS" accession="MS:1000041" name="charge state" value="3"/>
+            <cvParam cvLabel="MS" accession="MS:1000042" name="peak intensity" value="0.0"/>
+            <cvParam cvLabel="MS" accession="MS:1001870" name="p-value for peptides" value="3.23E-20"/>
+            <userParam name="MQScore" value="1.16E-26"/>
+            <userParam name="TotalPRMScore" value="220.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="1.16E-26"/>
+        </additional>
+    </Peptide>
+    <Peptide>
+        <Sequence>ESVGFLVAIKDFLEDPTR</Sequence>
+        <CuratedSequence></CuratedSequence>
+        <Start>0</Start>
+        <End>0</End>
+        <SpectrumReference>9971</SpectrumReference>
+        <isSpecific>false</isSpecific>
+        <UniqueIdentifier>9971</UniqueIdentifier>
+        <additional>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000065" name="Upstream flanking sequence" value="R"/>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000066" name="Downstream flanking sequence" value="L"/>
+            <cvParam cvLabel="MS" accession="MS:1000041" name="charge state" value="3"/>
+            <cvParam cvLabel="MS" accession="MS:1000042" name="peak intensity" value="0.0"/>
+            <cvParam cvLabel="MS" accession="MS:1001870" name="p-value for peptides" value="1.01E-11"/>
+            <userParam name="MQScore" value="3.63E-18"/>
+            <userParam name="TotalPRMScore" value="119.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="3.63E-18"/>
+        </additional>
+    </Peptide>
+    <Score>0.0</Score>
+    <Threshold>0.0</Threshold>
+    <SearchEngine>MSGF</SearchEngine>
+    <additional/>
+    <FastaSequenceReference>1678</FastaSequenceReference>
+</Identification>
+<Identification>
+    <Accession>SO_2916</Accession>
+    <UniqueIdentifier>SO_2916</UniqueIdentifier>
+    <Database>Unknown database</Database>
+    <DatabaseVersion>Unknown</DatabaseVersion>
+    <Peptide>
+        <Sequence>EQLEDNMVLGTMMLAQDEVDGIVSGAVNTTANTIRPPLQLIK</Sequence>
+        <CuratedSequence></CuratedSequence>
+        <Start>0</Start>
+        <End>0</End>
+        <SpectrumReference>10521</SpectrumReference>
+        <isSpecific>false</isSpecific>
+        <UniqueIdentifier>10521</UniqueIdentifier>
+        <additional>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000065" name="Upstream flanking sequence" value="K"/>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000066" name="Downstream flanking sequence" value="T"/>
+            <cvParam cvLabel="MS" accession="MS:1000041" name="charge state" value="3"/>
+            <cvParam cvLabel="MS" accession="MS:1000042" name="peak intensity" value="0.0"/>
+            <cvParam cvLabel="MS" accession="MS:1001870" name="p-value for peptides" value="6.06E-23"/>
+            <userParam name="MQScore" value="2.17E-29"/>
+            <userParam name="TotalPRMScore" value="251.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="2.17E-29"/>
+        </additional>
+    </Peptide>
+    <Peptide>
+        <Sequence>EQLEDNMVLGTMMLAQDEVDGIVSGAVNTTANTIRPPLQLIK</Sequence>
+        <CuratedSequence></CuratedSequence>
+        <Start>0</Start>
+        <End>0</End>
+        <SpectrumReference>10514</SpectrumReference>
+        <isSpecific>false</isSpecific>
+        <UniqueIdentifier>10514</UniqueIdentifier>
+        <additional>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000065" name="Upstream flanking sequence" value="K"/>
+            <cvParam cvLabel="PRIDE" accession="PRIDE:0000066" name="Downstream flanking sequence" value="T"/>
+            <cvParam cvLabel="MS" accession="MS:1000041" name="charge state" value="4"/>
+            <cvParam cvLabel="MS" accession="MS:1000042" name="peak intensity" value="0.0"/>
+            <cvParam cvLabel="MS" accession="MS:1001870" name="p-value for peptides" value="3.38E-13"/>
+            <userParam name="MQScore" value="1.21E-19"/>
+            <userParam name="TotalPRMScore" value="210.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="1.21E-19"/>
+        </additional>
+    </Peptide>
+    <Score>0.0</Score>
+    <Threshold>0.0</Threshold>
+    <SearchEngine>MSGF</SearchEngine>
+    <additional/>
+    <FastaSequenceReference>2505</FastaSequenceReference>
+</Identification>
+</Identifications>
+<Fasta sourceDb="Unknown database" sourceDbVersion="Unknown">
+<Sequence id="2059" accession="SO_2410">MSAIYNFCAGPAMLPAAVMKKAQQELLDWNGLGVSVMEVSHRGKEFIALTKQAEADLRELMHIPQNYHVLFMHGGGRGQFSAVVNNFLGNQGRALYLVSGQWSSAALAEAQKLAGDAQIDSLNIVEKHNCLNAVVLPDLHKIDADYRYVHYCPNETVDGIEIFDELDSPWPIVADLSSTIMSREIDVSRYGLIYAGAQKNIGPSGLSIVIVRDDMLTLPSLPQSSIMDYRLAVEHDSMFNTPPTFAWYLAAEVFAWLKSIGGVASIAKINQQKAQMLYACIDANPFYKNGVVAANRSQMNVTFQLADESLDGAFLKEAEAVGLVALKGHRIVGGMRASLYNAMPLEGVAALVTFMNEFAAKHYNI</Sequence>
+<Sequence id="2389" accession="SO_2778">MHTKILGTGSYVPVQVRSNQDLEKMVETSDQWIVERTGISERRIAAQDETVSTMGYLAALNALEMAGIEASDLDMIICGTTSAANAFPAAACEIQAMLGVHTIPAFDIAAACSGFVYALSVADQFVKNGTAKKVLVIGADVLSRLCEPEDRTTIILFGDGAGAAIIGASDEPGIISTHIYADGRQGDLLKCAFPPRQGETSEAVGFMTMKGNDVFKVAVTQLSHVVTETLRLNNIDKSEIDWLVPHQANFRIINATAKKLDMSLDKVVLTLAKHGNTSAASVPIALDEAVRDGRIQRGQLLLLEAFGAGFAWGSALVRF</Sequence>
+<Sequence id="196" accession="SO_0221">MAKLTKRMRVIREKVDGTKLYEINDAVALLKELATAKFVESVDVAVNLGIDPRKSDQNVRGATVLPHGTGRDVRVAVFTQGANAEAAKAAGAELVGMDDLAEKIKAGEMNFDVVIASPDAMRVVGMLGQILGPRGLMPNPKTGTVTPNVAEAVKNAKAGQVRYRNDKNGIIHTTIGKVDFTPVQLKENLEALISALKKAKPAVAKGVYVKKVSISTTMGAGVAVDQASLETAN</Sequence>
+<Sequence id="3431" accession="SO_3986">MSLVVAKFGGTSVADYGAMNRCAEIVLGNPDCRLVVVSASSGVTNLLVELTQESINDDGRLQRLKQIAQIQYAILDKLGRPNDVAAALDKLLSRMAVLSEALVSARSKATMDELLSLGEQCSSALFAAVLREKGANSSAFDVRRVLRTDSHFGRAEPQVEQIALLSREHLLPLLSEQVIVTQGFIGADEAGQTTTLGRGGSDYSAALLAEALTASAVEIWTDVAGIYTTDPRLAPNAHPIAEISFNEAAEMATFGAKVLHPATILPAVRQQIQVFVGSSKEPEKGGTWIRHQVEDAPVFRAVALRRDQTLLNLHSLQMLHAQGFLAETFATLARHKISVDLITTSEVNVSLTLDKTGSDSSGQGLLSEALLQELSQHCRVRVEDGLALVAIIGNRIATTAGICRRVFEVLEPHNVRMICQGASPHNLCVLVAESEAAQVVKALHENLFEGA</Sequence>
+<Sequence id="1678" accession="SO_1931">MSIEIKVPVLPESVADATIATWHVKVGQQVSRDQNLVDIETDKVVLEVVAPEDGHIGEFLFHEGDTVLGEQVIAKFIAGAVSGQEVTKAQAEAAAPAVASDESNDALSPSVRRLLAEHNVDASKVKGTGVGGRITKEDVEAFIKSAPKAAASAAPVVQPLAAGRSEKRVPMTRLRKTIANRLLEAKNSTAMLTTFNEVNMKPIMDIRKQYQDIFEKRHGIRLGFMSFYVKAVTEALKRFPEVNASIDGDDIVYHNYFDVSIAVSTPRGLVTPVLRDTDTMSLADIEKAVRDLAIKGRDGKLTVADMTGGNFTVTNGGVFGSLMSTPILNLPQSAILGMHAIKDRPMAVNGQVEILPMMYLALSYDHRIIDGRESVGFLVAIKDFLEDPTRLLLDL</Sequence>
+<Sequence id="2505" accession="SO_2916">MSRNIMLIPIGTGVGLTSLSLGMVRALERHGVKVQFFKPISQLRPNDNGPERSTTILSKSPTVNPLEPFDMAHAEALIRADQTDVLMEQIIARAAECASNTETLIVEGLVPTRNHPFADDVNYAIAKAMDADVIFIATPGSDTPTGLMNRLEIAYNSWGGKNNKRLIGAVINKIGAPVDDEGRARPDLSEVFDHQGVQRSDASIMFQLPGKSPLRILGSVPYNLDLVAPRASDLAKHLRARILNAGEMNIRRLRKVTFCARSLPNMVNHIKTDSLLVTSGDRSDVIVSACLAAMNGVKIGALLLTGSYEPEPEILKLCEQAFETGLPVFLIDTNTWQTSLNIQRFDHEVPVDDAVRIDLVQEYVASHIDQTWIESVTKNSPREHRLSPPAFRYKLTELARAAHKTVVLPEGDEPRTIKAAAICAERGIARCVLLGKKDEILRIAAQQDVVLGEGVVIVDPDEVRARYVEPMLELRRSKGLTEVVAKEQLEDNMVLGTMMLAQDEVDGIVSGAVNTTANTIRPPLQLIKTAPGSSLVSSIFFMLMPDQVLVYGDCAINPDPNAEQLADIAIQSAESAKAFGIEPRVAMISYSTGNSGTGSDVDKVREATRIAKEKRPDLVIDGPLQYDAAVMPNVARSKAPNSPVAGQATVFVFPDLNTGNTTYKAVQRSADLISIGPMLQGMRKPVNDLSRGALVDDIVYTIALTAIQASQNDAKKS</Sequence>
+</Fasta>
+<PTMs>
+</PTMs>
+<DatabaseMappings>
+<DatabaseMapping>
+    <SearchEngineDatabaseName>Unknown database</SearchEngineDatabaseName>
+    <SearchEngineDatabaseVersion>Unknown</SearchEngineDatabaseVersion>
+    <CuratedDatabaseName>UniProtKB</CuratedDatabaseName>
+    <CuratedDatabaseVersion>32</CuratedDatabaseVersion>
+</DatabaseMapping>
+</DatabaseMappings>
+<ConfigurationOptions>
+    <Option>
+        <Key>search_engine</Key>
+        <Value>MSGF</Value>
+    </Option>
+    <Option>
+        <Key>peptide_threshold</Key>
+        <Value>0.05</Value>
+    </Option>
+    <Option>
+        <Key>add_carbamidomethylation</Key>
+        <Value>false</Value>
+    </Option>
+</ConfigurationOptions>
+</Report>

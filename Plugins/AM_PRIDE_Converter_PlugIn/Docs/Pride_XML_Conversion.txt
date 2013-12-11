@@ -1,0 +1,125 @@
+Settings file parameters:
+FDRThreshold
+PepFDRThreshold
+MSGFSpecProbThresold 
+
+UseFDRThreshold
+UsePepFDRThreshold
+UseMSGFSpecProb
+
+CreateMSGFReportFilesOnly
+
+
+Processing steps.
+
+Create a data package to track the analysis jobs we want to process
+
+Use clsAnalysisResources.LoadDataPackageJobInfo to obtain the jobs associated with the data package
+For each job, use code extracted from RetrieveAggregateFiles to retrieve the necessary files
+
+
+
+Convert each analysis job (Sequest, X!Tandem, or MSGFDB) to .msgf-pride.xml format
+Steps for each job:
+
+1) Grab the _Syn.txt file and related files that are required by PHRPReader
+	Example filename: QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08_msgfdb_fht.txt
+
+2) Grab (or create) the .mzXML file 
+
+Skip: 3) Grab the FASTA file
+
+4) Create a filtered .msgf file
+	Example filename: QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf
+	Filter on MSGF_SpecProb value specified by user in settings file (e.g. 1E-10)
+
+	Use PHRPReader to read the data and find the filter-passing peptides for each peptide
+	Columns in the .msgf file:
+                      #SpectrumFile    Scan#    Annotation    Protein    Charge    MQScore            Length       TotalPRMScore    MedianPRMScore    FractionY    FractionB    Intensity    NTT    p-value           F-Score    DeltaScore    DeltaScoreOther    RecordNumber    DBFilePos    SpecFilePos    SpecProb
+		Sequest_Data  Dataset.mzXML    Scan     Peptide       Protein    3         MSGF_SpecProb      PepLength    Sp               0                 0            0            0            NTT    MSGF_SpecProb     0          DelCn         DelCn2             ResultID        0            SpecIndex      MSGFDB_SpecProb
+        MSGFDB_Data   Dataset.mzXML    Scan     Peptide       Protein    3         MSGFDB_SpecProb    PepLength    DeNovoScore      0                 0            0            0            NTT    PValue            0          0             0                  ResultID        0            SpecIndex      MSGFDB_SpecProb
+
+	Note: Do not include modification symbols or mod masses in the .msgf file; use .CleanSequence and don't include prefix or suffix
+
+	Note: The Scan Numbers in the .MSGF file dictate which spectra from the .mzXML file are included in the .msgf-pride.xml file
+
+5) Create a .msgf-report.xml file
+	Read a template .msgf-report.xml file from the Data Package folder
+	If template doesn't exist, use PRIDE_XML_Excerpt.msgf-report.xml (which has QC_Shew values)
+	See file PRIDE_XML_Excerpt.msgf-report.xml for details
+
+	Custom fields for SEQUEST
+            <userParam name="XCorr" value="1.21E-19"/>
+            <userParam name="Sp" value="210.0"/>
+            <userParam name="RankSp" value="0"/>
+            <userParam name="RankXc" value="0"/>
+            <userParam name="Ions_Observed" value="0.0"/>
+            <userParam name="Ions_Expected" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="1.21E-19"/>
+
+	Custom fields for MSGFDB
+            <userParam name="MQScore" value="1.21E-19"/>
+            <userParam name="TotalPRMScore" value="210.0"/>
+            <userParam name="MedianPRMScore" value="0.0"/>
+            <userParam name="FractionY" value="0.0"/>
+            <userParam name="FractionB" value="0.0"/>
+            <userParam name="NTT" value="2"/>
+            <userParam name="F-Score" value="0.0"/>
+            <userParam name="DeltaScore" value="0.0"/>
+            <userParam name="DeltaScoreOther" value="0.0"/>
+            <userParam name="SpecProb" value="1.21E-19"/>
+
+
+6) Use Pride Converter to create the .msgf-pride.xml file for each job
+	Inputs are
+		1) Dataset.msgf
+		2) Dataset.msgf-report.xml
+		3) Dataset.mzXML
+
+	Will create file:
+		Dataset.msgf-pride.xml
+
+	Command:
+		java -jar ../pride-converter-2.0.8/pride-converter-2.0-SNAPSHOT.jar -converter -mode convert -engine msgf -sourcefile PRIDE_XML_Excerpt.msgf -spectrafile QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML -reportfile PRIDE_XML_Excerpt.msgf-report.xml -reportOnlyIdentifiedSpectra
+
+		java -jar ../pride-converter-2.0.8/pride-converter-2.0-SNAPSHOT.jar -converter -mode convert -engine msgf -sourcefile QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf -spectrafile QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML -reportfile QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-report.xml -reportOnlyIdentifiedSpectra
+
+		java -jar ../pride-converter-2.0.8/pride-converter-2.0-SNAPSHOT.jar -converter -mode convert -engine msgf -sourcefile QC_Shew_12_02_Run-04_18Jul12_Roc_12-04-09.msgf -spectrafile QC_Shew_12_02_Run-04_18Jul12_Roc_12-04-09.mzXML -reportfile QC_Shew_12_02_Run-04_18Jul12_Roc_12-04-09_Excerpt.msgf-report.xml -reportOnlyIdentifiedSpectra
+
+
+7) Create a submission.px file that we can include with the PRIDE.XML files and .RAW files
+
+Note: fields are separated by tabs:
+
+MTD	name	Matthew Monroe
+MTD	email	matthew.monroe@pnl.gov
+MTD	affiliation	Biological Separations & Mass Spectrometry
+MTD	pride_login	alchemistmatt
+MTD	title	QC_Shew_12_02_Merged
+MTD	description	Test upload of two LC-MS/MS datasets.  Analyzed with MSGF-DB and merged with PRIDE merger
+MTD	keywords	QC, LC-MS/MS
+MTD	type	SUPPORTED
+
+FMH	file_id	file_type	file_path	file_mapping
+FME	1	result	F:\My Documents\SoftwareUpdates\ChemistryTools\Pride_Converter\QC_Shew3_MergeTest\QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-pride.xml	3
+FME 2	result	F:\My Documents\SoftwareUpdates\ChemistryTools\Pride_Converter\QC_Shew3_MergeTest\QC_Shew_12_02_Run-04_18Jul12_Roc_12-04-09.msgf-pride.xml	4	
+FME	3	raw	F:\My Documents\SoftwareUpdates\ChemistryTools\Pride_Converter\QC_Shew3_MergeTest\QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.RAW		
+FME	4	raw	F:\My Documents\SoftwareUpdates\ChemistryTools\Pride_Converter\QC_Shew3_MergeTest\QC_Shew_12_02_Run-04_18Jul12_Roc_12-04-09.RAW		
+
+
+
+Maybe, but likely not:
+	Merge together the .msgf-pride.xml files to create a single file that we can submit
+
+usage: PrideConverter -merger [-compress] [-debug] [-help] [-inputfiles <files>] [-outputfile <file>] [-version]
+ -compress             turn on gzip compression for output file
+ -debug                print debugging information
+ -help                 print this message. If combined with -engine, will
+                       also output engine-specific options
+ -inputfiles <files>   full path and filenames of files to merge
+ -outputfile <file>    full path and filename of PRIDE XML output file
+ -version              print the version information and exit
+

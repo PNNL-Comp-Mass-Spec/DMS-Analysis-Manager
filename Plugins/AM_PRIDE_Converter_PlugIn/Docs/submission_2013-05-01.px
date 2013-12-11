@@ -1,0 +1,31 @@
+
+MTD	name	Matthew Monroe
+MTD	email	matthew.monroe@pnnl.gov
+MTD	affiliation	Pacific Northwest National Laboratory
+MTD	title	Characterization of individual mouse cerebrospinal fluid proteomes
+MTD	description	Utilizing stringent protein inclusion criteria that required the identification of at least two unique peptides (1% false discovery rate at the peptide level) we identified a total of 566 unique proteins, including 128 proteins from three individual CSF samples that have been previously identified in brain tissue.
+MTD	keywords	mouse, cerebrospinal fluid, CSF
+MTD	type	SUPPORTED
+MTD	comment	msgf-pride.xml files are filtered at 1% FDR at the peptide level
+MTD	species	[NEWT,10090,Mus musculus (Mouse),]
+MTD	instrument	[MS,MS:1000484,orbitrap,]
+MTD	pride_login	alchemistmatt
+
+FMH	file_id	file_type	file_path	file_mapping
+FME	1	result	Dataset_Job900000.msgf-pride.xml		
+FME	2	search	Dataset_Job900000_msgfplus.mzid
+FME	3	raw	Dataset.raw	
+FME	4	peak	Dataset.mgf
+
+
+Tag		Description				file_mapping
+RESULT	.msgf-pride.xml files	Map to raw, peak, and .mzid files
+RAW		.Raw files
+PEAK	.mgf files 				Map to raw file
+SEARCH	.mzid files from MSGF+	Map to PEAK file
+
+
+TODO: Need to confirm that converting the _dta.txt file to .mgf format works
+TODO: Rename the .mzid files to include Job number IF there are multiple jobs for a given dataset
+
+Create a PXSubmission file with a custom datetime stamp in the name to keep it unique.

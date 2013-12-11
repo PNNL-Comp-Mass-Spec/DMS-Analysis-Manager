@@ -164,7 +164,7 @@ Public Class clsMainProcess
 				Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " & ex.Message)
 				Console.WriteLine("===============================================================")
 				Console.WriteLine()
-				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & CUSTOM_LOG_NAME & " application log")
+				Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " & CUSTOM_LOG_NAME & " application log")
 				Console.WriteLine()
 				System.Threading.Thread.Sleep(500)
 
@@ -1374,7 +1374,7 @@ Public Class clsMainProcess
 			Console.WriteLine(ErrMsg)
 			Console.WriteLine("===============================================================")
 			Console.WriteLine()
-			Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the " & EVENT_LOG_NAME & " application log")
+			Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " & EVENT_LOG_NAME & " application log")
 			Console.WriteLine()
 
 			Dim Ev As New EventLog("Application", ".", EVENT_LOG_NAME)
