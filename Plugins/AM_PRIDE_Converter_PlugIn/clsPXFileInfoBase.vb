@@ -8,9 +8,10 @@
 	Public Enum ePXFileType
 		Undefined = 0
 		Result = 1				' .msgf-pride.xml files
-		Raw = 2					' Instrument data files (typically .raw files)
-		Search = 3				' .mzid files from MSGF+
-		Peak = 4				' _dta.txt or .mgf files
+		ResultMzId = 2			' .mzid files from MSGF+  (listed as "result" files in the .px file)
+		Raw = 3					' Instrument data files (typically .raw files)
+		Search = 4				' Search engine output files, such as Mascot DAT or other output files (from analysis pipelines, such as pep.xml or prot.xml).
+		Peak = 5				' _dta.txt or .mgf files
 	End Enum
 #End Region
 

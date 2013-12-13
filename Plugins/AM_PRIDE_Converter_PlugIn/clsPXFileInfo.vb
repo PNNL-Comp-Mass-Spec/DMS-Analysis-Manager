@@ -3,7 +3,7 @@ Public Class clsPXFileInfo
 	Inherits clsPXFileInfoBase
 
 #Region "Module Variables"
-	Protected mFileMappings As Generic.List(Of Integer)
+	Protected mFileMappings As List(Of Integer)
 #End Region
 
 #Region "Auto-properties"
@@ -12,7 +12,7 @@ Public Class clsPXFileInfo
 
 
 #Region "Properties"
-	Public ReadOnly Property FileMappings() As Generic.List(Of Integer)
+	Public ReadOnly Property FileMappings() As List(Of Integer)
 		Get
 			Return mFileMappings
 		End Get
@@ -21,7 +21,7 @@ Public Class clsPXFileInfo
 
 	Public Sub New(ByVal FileName As String)
 		MyBase.New(FileName)
-		mFileMappings = New Generic.List(Of Integer)
+		mFileMappings = New List(Of Integer)
 	End Sub
 
 	Public Sub AddFileMapping(ByVal intPXFileID As Integer)

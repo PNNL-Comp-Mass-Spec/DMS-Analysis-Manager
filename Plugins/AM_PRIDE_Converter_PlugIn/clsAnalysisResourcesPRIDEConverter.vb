@@ -20,8 +20,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)
-		lstDataPackagePeptideHitJobs = New Generic.List(Of udtDataPackageJobInfoType)
+		Dim lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)
+		lstDataPackagePeptideHitJobs = New List(Of udtDataPackageJobInfoType)
 
 		Dim blnCreatePrideXMLFiles As Boolean = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
 
@@ -49,7 +49,6 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		If blnCreateMSGFReportFilesOnly Then
 			udtOptions.RetrieveDTAFiles = False
 			udtOptions.RetrieveMZidFiles = False
-			blnCreatePrideXMLFiles = False
 		Else
 			If blnCreatePrideXMLFiles Then
 				If Not RetrieveMSGFReportTemplateFile() Then
@@ -97,7 +96,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' <param name="udtOptions">File retrieval options</param>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub FindMissingMzXmlFiles(ByVal udtOptions As udtDataPackageRetrievalOptionsType, ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType))
+	Protected Sub FindMissingMzXmlFiles(ByVal udtOptions As udtDataPackageRetrievalOptionsType, ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
 
 		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
 		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)
@@ -114,7 +113,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 					If Not IO.File.Exists(strMzXmlFilePath) Then
 						If Not lstDatasets.Contains(udtJob.Dataset) Then
 							lstDatasets.Add(udtJob.Dataset)
-							lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & clsAnalysisResources.GetDatasetYearQuarter(udtJob.ServerStoragePath))
+							lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & GetDatasetYearQuarter(udtJob.ServerStoragePath))
 						End If
 					End If
 
@@ -168,7 +167,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	End Function
 
 
-	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType)) As Boolean
+	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)) As Boolean
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
@@ -181,10 +180,10 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		' This dictionary is used to avoid calling RetrieveOrgDB() for every job
 		' The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
 		' The dictionary values are the name of the generated (or retrieved) fasta file
-		Dim dctOrgDBParamsToGeneratedFileNameMap As Generic.Dictionary(Of String, String)
+		Dim dctOrgDBParamsToGeneratedFileNameMap As Dictionary(Of String, String)
 
 		Try
-			dctOrgDBParamsToGeneratedFileNameMap = New Generic.Dictionary(Of String, String)
+			dctOrgDBParamsToGeneratedFileNameMap = New Dictionary(Of String, String)
 
 			' Cache the current dataset and job info
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
@@ -249,7 +248,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		Dim strTemplateFileName As String
 		Dim diDataPackageFolder As IO.DirectoryInfo
-		Dim fiFiles As Generic.List(Of IO.FileInfo)
+		Dim fiFiles As List(Of IO.FileInfo)
 
 		Try
 			strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
@@ -318,7 +317,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		Dim strTemplateFileName As String
 		Dim diDataPackageFolder As IO.DirectoryInfo
-		Dim fiFiles As Generic.List(Of IO.FileInfo)
+		Dim fiFiles As List(Of IO.FileInfo)
 
 		Try
 			strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
@@ -377,8 +376,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' </summary>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As Generic.List(Of udtDataPackageJobInfoType))
-		Dim lstDataPackageJobs As Generic.List(Of String) = New Generic.List(Of String)
+	Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
+		Dim lstDataPackageJobs As List(Of String) = New List(Of String)
 
 		For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
 			lstDataPackageJobs.Add(udtJob.Job.ToString())
