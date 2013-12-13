@@ -10,6 +10,8 @@
 Option Strict On
 
 Imports System.IO
+Imports System.Text.RegularExpressions
+Imports System.Threading
 Imports AnalysisManagerBase
 
 Public Class clsMainProcess
@@ -103,7 +105,7 @@ Public Class clsMainProcess
 			If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 0")
 			Return 0
 
-		Catch Err As System.Exception
+		Catch Err As Exception
 			'Report any exceptions not handled at a lower level to the system application log
 			ErrMsg = "Critical exception starting application: " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err)
 			If Me.TraceMode Then ShowTraceMessage(ErrMsg)
@@ -111,8 +113,6 @@ Public Class clsMainProcess
 			If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1")
 			Return 1
 		End Try
-
-		Return 0
 
 	End Function
 
@@ -139,7 +139,7 @@ Public Class clsMainProcess
 	Private Function InitMgr() As Boolean
 
 		' Get settings from config file
-		Dim lstMgrSettings As Generic.Dictionary(Of String, String)
+		Dim lstMgrSettings As Dictionary(Of String, String)
 
 		Try
 			If Me.TraceMode Then ShowTraceMessage("Reading application config file")
@@ -151,7 +151,7 @@ Public Class clsMainProcess
 			Try
 				If Me.TraceMode Then ShowTraceMessage("Instantiating clsAnalysisMgrSettings")
 				m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath)
-			Catch ex As System.Exception
+			Catch ex As Exception
 				' Failures are logged by clsMgrSettings to application event logs;
 				'  this includes MgrActive_Local = False
 				'  
@@ -166,7 +166,7 @@ Public Class clsMainProcess
 				Console.WriteLine()
 				Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " & CUSTOM_LOG_NAME & " application log")
 				Console.WriteLine()
-				System.Threading.Thread.Sleep(500)
+				Thread.Sleep(500)
 
 				Return False
 			End Try
@@ -178,7 +178,7 @@ Public Class clsMainProcess
 			Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " & ex.Message)
 			Console.WriteLine("===============================================================")
 			Console.WriteLine()
-			System.Threading.Thread.Sleep(500)
+			Thread.Sleep(500)
 			Return False
 		End Try
 
@@ -252,11 +252,11 @@ Public Class clsMainProcess
 		Dim blnErrorDeletingFilesFlagFile As Boolean
 
 		Dim strMessage As String
-		Dim dtLastConfigDBUpdate As System.DateTime = System.DateTime.UtcNow
+		Dim dtLastConfigDBUpdate As DateTime = DateTime.UtcNow
 
-		Dim blnRequestJobs As Boolean = False
-		Dim blnOneTaskStarted As Boolean = False
-		Dim blnOneTaskPerformed As Boolean = False
+		Dim blnRequestJobs As Boolean
+		Dim blnOneTaskStarted As Boolean
+		Dim blnOneTaskPerformed As Boolean
 
 		Dim intErrorCount As Integer = 0
 		Dim intSuccessiveDeadLockCount As Integer = 0
@@ -524,10 +524,10 @@ Public Class clsMainProcess
 
 
 		' Update the cached most recent job info
-		m_MostRecentJobInfo = ConstructMostRecentJobInfoText(System.DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
+		m_MostRecentJobInfo = ConstructMostRecentJobInfoText(DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
 
 		With m_StatusTools
-			.TaskStartTime = System.DateTime.UtcNow
+			.TaskStartTime = DateTime.UtcNow
 			.Dataset = Dataset
 			.JobNumber = JobNum
 			.JobStep = StepNum
@@ -718,7 +718,7 @@ Public Class clsMainProcess
 				'If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
 				' However, wait another 5 seconds before continuing
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-				System.Threading.Thread.Sleep(5000)
+				Thread.Sleep(5000)
 
 				Return True
 			Else
@@ -843,8 +843,8 @@ Public Class clsMainProcess
 	''' <remarks></remarks>
 	Protected Function DecrementLogFilePath(ByVal strLogFilePath As String) As String
 
-		Dim reLogFileName As System.Text.RegularExpressions.Regex
-		Dim objMatch As System.Text.RegularExpressions.Match
+		Dim reLogFileName As Regex
+		Dim objMatch As Match
 
 		Dim intYear As Integer
 		Dim intMonth As Integer
@@ -852,7 +852,7 @@ Public Class clsMainProcess
 		Dim strPreviousLogFilePath As String = String.Empty
 
 		Try
-			reLogFileName = New System.Text.RegularExpressions.Regex("(.+_)(\d+)-(\d+)-(\d+).\S+", System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			reLogFileName = New Regex("(.+_)(\d+)-(\d+)-(\d+).\S+", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
 			objMatch = reLogFileName.Match(strLogFilePath)
 
@@ -861,13 +861,13 @@ Public Class clsMainProcess
 				intDay = CInt(objMatch.Groups(3).Value)
 				intYear = CInt(objMatch.Groups(4).Value)
 
-				Dim dtCurrentDate As System.DateTime
-				Dim dtNewDate As System.DateTime
+				Dim dtCurrentDate As DateTime
+				Dim dtNewDate As DateTime
 
-				dtCurrentDate = System.DateTime.Parse(intYear & "-" & intMonth & "-" & intDay)
-				dtNewDate = dtCurrentDate.Subtract(New System.TimeSpan(1, 0, 0, 0))
+				dtCurrentDate = DateTime.Parse(intYear & "-" & intMonth & "-" & intDay)
+				dtNewDate = dtCurrentDate.Subtract(New TimeSpan(1, 0, 0, 0))
 
-				strPreviousLogFilePath = objMatch.Groups(1).Value & dtNewDate.ToString("MM-dd-yyyy") & System.IO.Path.GetExtension(strLogFilePath)
+				strPreviousLogFilePath = objMatch.Groups(1).Value & dtNewDate.ToString("MM-dd-yyyy") & Path.GetExtension(strLogFilePath)
 			End If
 
 		Catch ex As Exception
@@ -903,12 +903,12 @@ Public Class clsMainProcess
 		Dim strLogFilePath As String
 		Dim intLogFileCountProcessed As Integer
 
-		Dim srInFile As System.IO.StreamReader
+		Dim srInFile As StreamReader
 
-		Dim reErrorLine As System.Text.RegularExpressions.Regex
-		Dim reJobStartLine As System.Text.RegularExpressions.Regex
+		Dim reErrorLine As Regex
+		Dim reJobStartLine As Regex
 
-		Dim objMatch As System.Text.RegularExpressions.Match
+		Dim objMatch As Match
 
 		Dim qErrorMsgQueue As Queue
 		Dim htUniqueErrorMessages As Hashtable
@@ -941,8 +941,8 @@ Public Class clsMainProcess
 			ReDim dtRecentErrorMessageDates(strRecentErrorMessages.Length - 1)
 
 			' Initialize the RegEx that splits out the timestamp from the error message
-			reErrorLine = New System.Text.RegularExpressions.Regex(ERROR_MATCH_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-			reJobStartLine = New System.Text.RegularExpressions.Regex(JOB_START_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			reErrorLine = New Regex(ERROR_MATCH_REGEX, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+			reJobStartLine = New Regex(JOB_START_REGEX, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
 			' Initialize the queue that holds recent error messages
 			qErrorMsgQueue = New Queue(intErrorMessageCountToReturn)
@@ -971,8 +971,8 @@ Public Class clsMainProcess
 
 				Do While qErrorMsgQueue.Count < intErrorMessageCountToReturn AndAlso intLogFileCountProcessed < MAX_LOG_FILES_TO_SEARCH
 
-					If System.IO.File.Exists(strLogFilePath) Then
-						srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+					If File.Exists(strLogFilePath) Then
+						srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 						If intErrorMessageCountToReturn < 1 Then intErrorMessageCountToReturn = 1
 
@@ -1065,7 +1065,7 @@ Public Class clsMainProcess
 					dtRecentErrorMessageDates(intRecentErrorMessageCount) = CDate(strTimestamp)
 				Catch ex As Exception
 					' Error converting date;
-					dtRecentErrorMessageDates(intRecentErrorMessageCount) = System.DateTime.MinValue
+					dtRecentErrorMessageDates(intRecentErrorMessageCount) = DateTime.MinValue
 				End Try
 
 				intRecentErrorMessageCount += 1
@@ -1104,7 +1104,7 @@ Public Class clsMainProcess
 
 	End Function
 
-	Protected Sub DetermineRecentErrorCacheError(ByRef objMatch As System.Text.RegularExpressions.Match, _
+	Protected Sub DetermineRecentErrorCacheError(ByRef objMatch As Match, _
 	 ByVal strErrorMessage As String, _
 	 ByRef htUniqueErrorMessages As Hashtable, _
 	 ByRef qErrorMsgQueue As Queue, _
@@ -1126,7 +1126,7 @@ Public Class clsMainProcess
 			strErrorMessageClean = objMatch.Groups(2).Value
 		Else
 			' Regex didn't match; this is unexpected
-			strTimestamp = System.DateTime.MinValue.ToString()
+			strTimestamp = DateTime.MinValue.ToString()
 			strErrorMessageClean = strErrorMessage
 		End If
 
@@ -1136,7 +1136,7 @@ Public Class clsMainProcess
 			' The error message is present
 			' Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
 			Try
-				If System.DateTime.Parse(strTimestamp) > System.DateTime.Parse(CStr(objItem)) Then
+				If DateTime.Parse(strTimestamp) > DateTime.Parse(CStr(objItem)) Then
 					htUniqueErrorMessages(strErrorMessageClean) = strTimestamp
 				End If
 			Catch ex As Exception
@@ -1170,7 +1170,7 @@ Public Class clsMainProcess
 				Else
 					' Compare the queued error's timestamp with the timestamp of the new error message
 					Try
-						If System.DateTime.Parse(CStr(objItem)) >= System.DateTime.Parse(strTimestamp) Then
+						If DateTime.Parse(CStr(objItem)) >= DateTime.Parse(strTimestamp) Then
 							' The queued error message's timestamp is equal to or newer than the new message's timestamp
 							' Do not add the new item to the queue
 							blnAddItemToQueue = False
@@ -1228,7 +1228,7 @@ Public Class clsMainProcess
 	End Function
 
 	Protected Function GetRecentLogFilename() As String
-		Dim lastFilename As String = String.Empty
+		Dim lastFilename As String
 		Dim x As Integer
 		Dim Files() As String
 
@@ -1288,7 +1288,7 @@ Public Class clsMainProcess
 			m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
 
 			With m_StatusTools
-				.TaskStartTime = System.DateTime.UtcNow
+				.TaskStartTime = DateTime.UtcNow
 				.Dataset = ""
 				.JobNumber = 0
 				.JobStep = 0
@@ -1310,10 +1310,10 @@ Public Class clsMainProcess
 	''' </summary>
 	''' <returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
 	''' <remarks></remarks>
-	Friend Shared Function LoadMgrSettingsFromFile() As Generic.Dictionary(Of String, String)
+	Friend Shared Function LoadMgrSettingsFromFile() As Dictionary(Of String, String)
 
 		'Load initial settings into string dictionary for return
-		Dim lstMgrSettings As New Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+		Dim lstMgrSettings As New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
 		' Note: When you are editing this project using the Visual Studio IDE, if you edit the values
 		'  ->My Project>Settings.settings, then when you run the program (from within the IDE), then it
@@ -1387,7 +1387,7 @@ Public Class clsMainProcess
 			Console.WriteLine("Exception logging to the event log: " & ex.Message)
 		End Try
 
-		System.Threading.Thread.Sleep(500)
+		Thread.Sleep(500)
 
 	End Sub
 
@@ -1398,7 +1398,7 @@ Public Class clsMainProcess
 			If Me.TraceMode Then ShowTraceMessage("Reading application config file")
 
 			'Get settings from config file
-			Dim lstMgrSettings As Generic.Dictionary(Of String, String)
+			Dim lstMgrSettings As Dictionary(Of String, String)
 			lstMgrSettings = LoadMgrSettingsFromFile()
 
 			If Me.TraceMode Then ShowTraceMessage("Storing manager settings in m_MgrSettings")
@@ -1426,7 +1426,6 @@ Public Class clsMainProcess
 	End Function
 
 	Private Sub RemoveTempFiles()
-		Dim lstFilesToDelete As New Generic.List(Of System.IO.FileInfo)
 
 		Dim diMgrFolder As DirectoryInfo = New DirectoryInfo(m_MgrFolderPath)
 		Dim msg As String
@@ -1435,7 +1434,7 @@ Public Class clsMainProcess
 		' This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
 		' <file value="IgnoreMe" />
 
-		For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("IgnoreMe*.txt")
+		For Each fiFile As FileInfo In diMgrFolder.GetFiles("IgnoreMe*.txt")
 			Try
 				fiFile.Delete()
 			Catch ex As Exception
@@ -1448,17 +1447,13 @@ Public Class clsMainProcess
 		' These files indicate a previous, failed Decon2LS task and can be safely deleted
 		' For safety, we will not delete files less than 24 hours old
 
-		For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("tmp.iso.*")
-			lstFilesToDelete.Add(fiFile)
-		Next
+		Dim lstFilesToDelete As List(Of FileInfo) = diMgrFolder.GetFiles("tmp.iso.*").ToList()
 
-		For Each fiFile As System.IO.FileInfo In diMgrFolder.GetFiles("tmp.peak.*")
-			lstFilesToDelete.Add(fiFile)
-		Next
+		lstFilesToDelete.AddRange(diMgrFolder.GetFiles("tmp.peak.*"))
 
-		For Each fiFile As System.IO.FileInfo In lstFilesToDelete
+		For Each fiFile As FileInfo In lstFilesToDelete
 			Try
-				If System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
+				If DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
 					If Me.TraceMode Then ShowTraceMessage("Deleting temp file " & fiFile.FullName)
 					fiFile.Delete()
 				End If
@@ -1497,7 +1492,7 @@ Public Class clsMainProcess
 
 	Private Function StatusFlagFileError() As Boolean
 
-		Dim blnMgrCleanupSuccess As Boolean = False
+		Dim blnMgrCleanupSuccess As Boolean
 
 		If m_MgrErrorCleanup.DetectStatusFlagFile() Then
 
@@ -1560,7 +1555,7 @@ Public Class clsMainProcess
 	End Function
 
 	Public Shared Sub ShowTraceMessage(ByVal strMessage As String)
-		Console.WriteLine(System.DateTime.Now.ToString("hh:mm:ss tt") & ": " & strMessage)
+		Console.WriteLine(DateTime.Now.ToString("hh:mm:ss tt") & ": " & strMessage)
 	End Sub
 
 	Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)
@@ -1578,13 +1573,13 @@ Public Class clsMainProcess
 	''' <param name="MinutesBetweenUpdates"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As System.DateTime, ByVal MinutesBetweenUpdates As Double) As Boolean
+	Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As DateTime, ByVal MinutesBetweenUpdates As Double) As Boolean
 
 		Dim blnSuccess As Boolean = True
 
-		If (System.DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
+		If (DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
 
-			dtLastConfigDBUpdate = System.DateTime.UtcNow
+			dtLastConfigDBUpdate = DateTime.UtcNow
 
 			If Me.TraceMode Then ShowTraceMessage("Loading manager settings from the manager control DB")
 
@@ -1670,7 +1665,7 @@ Public Class clsMainProcess
 
 		Dim DatasetStoragePath As String
 		Dim DatasetStorageMinFreeSpaceGB As Integer
-		Dim ioDatasetStoragePath As System.IO.DirectoryInfo
+		Dim ioDatasetStoragePath As DirectoryInfo
 
 		Dim WorkingDirMinFreeSpaceMB As Integer
 
@@ -1698,7 +1693,7 @@ Public Class clsMainProcess
 					Return False
 				End If
 
-				ioDatasetStoragePath = New System.IO.DirectoryInfo(DatasetStoragePath)
+				ioDatasetStoragePath = New DirectoryInfo(DatasetStoragePath)
 				If Not ioDatasetStoragePath.Exists Then
 					' Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
 					' Try to use the parent folder (or the parent of the parent)
@@ -1764,11 +1759,11 @@ Public Class clsMainProcess
 
 	Private Function ValidateFreeDiskSpaceWork(ByVal strDirectoryDescription As String, ByVal strDirectoryPath As String, ByVal intMinFreeSpaceMB As Integer, ByRef ErrorMessage As String, eLogLocationIfNotFound As clsLogTools.LoggerTypes) As Boolean
 
-		Dim diDirectory As System.IO.DirectoryInfo
-		Dim diDrive As System.IO.DriveInfo
+		Dim diDirectory As DirectoryInfo
+		Dim diDrive As DriveInfo
 		Dim dblFreeSpaceMB As Double
 
-		diDirectory = New System.IO.DirectoryInfo(strDirectoryPath)
+		diDirectory = New DirectoryInfo(strDirectoryPath)
 		If Not diDirectory.Exists Then
 			ErrorMessage = strDirectoryDescription & " not found: " & strDirectoryPath
 			clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, ErrorMessage)
@@ -1789,7 +1784,7 @@ Public Class clsMainProcess
 
 		Else
 
-			diDrive = New System.IO.DriveInfo(diDirectory.Root.FullName)
+			diDrive = New DriveInfo(diDirectory.Root.FullName)
 			dblFreeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
 		End If
 
@@ -1824,17 +1819,17 @@ Public Class clsMainProcess
 			' If the only file in the working directory is a JobParameters xml file,
 			'  then try to delete it, since it's likely left over from a previous job that never actually started
 			Dim strFileToCheck As String
-			strFileToCheck = System.IO.Path.GetFileName(TmpFilArray(0))
+			strFileToCheck = Path.GetFileName(TmpFilArray(0))
 
 			If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso _
 			   strFileToCheck.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
 				Try
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Working directory contains a stray JobParameters file, deleting it: " & TmpFilArray(0))
 
-					System.IO.File.Delete(TmpFilArray(0))
+					File.Delete(TmpFilArray(0))
 
 					' Wait 0.5 second and then refresh TmpFilArray
-					System.Threading.Thread.Sleep(500)
+					Thread.Sleep(500)
 
 					' Now obtain a new listing of files
 					TmpFilArray = Directory.GetFiles(m_WorkDirPath)
@@ -1863,7 +1858,7 @@ Public Class clsMainProcess
 	''' <param name="sender"></param>
 	''' <param name="e"></param>
 	''' <remarks></remarks>
-	Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles m_FileWatcher.Changed
+	Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles m_FileWatcher.Changed
 
 		m_FileWatcher.EnableRaisingEvents = False
 		m_ConfigChanged = True

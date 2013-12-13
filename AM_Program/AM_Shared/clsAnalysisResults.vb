@@ -9,6 +9,9 @@
 
 Option Strict On
 
+Imports System.IO
+Imports System.Threading
+
 Public Class clsAnalysisResults
 
 	'*********************************************************************************************************
@@ -23,19 +26,19 @@ Public Class clsAnalysisResults
 	Private Const DEFAULT_RETRY_HOLDOFF_SEC As Integer = 15
 
 	' access to the job parameters
-	Private m_jobParams As IJobParams
+	Private ReadOnly m_jobParams As IJobParams
 
 	' access to mgr parameters
-	Private m_mgrParams As IMgrParams
-	Private m_DebugLevel As Integer
-	Private m_MgrName As String
+	Private ReadOnly m_mgrParams As IMgrParams
+	Private ReadOnly m_DebugLevel As Integer
+	Private ReadOnly m_MgrName As String
 
 	' for posting a general explanation for external consumption
 	Protected m_message As String
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
-	Protected m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
-	Protected m_LockQueueWaitTimeStart As System.DateTime = System.DateTime.UtcNow
+	Protected m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
+	Protected m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -87,8 +90,8 @@ Public Class clsAnalysisResults
 	  ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer, _
 	  ByVal ContinueOnError As Boolean)
 
-		Dim diSourceDir As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(SourcePath)
-		Dim diDestDir As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(DestPath)
+		Dim diSourceDir As DirectoryInfo = New DirectoryInfo(SourcePath)
+		Dim diDestDir As DirectoryInfo = New DirectoryInfo(DestPath)
 
 		Dim strTargetPath As String
 		Dim strMessage As String
@@ -100,7 +103,7 @@ Public Class clsAnalysisResults
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 				Exit Sub
 			Else
-				Throw New System.IO.DirectoryNotFoundException(strMessage)
+				Throw New DirectoryNotFoundException(strMessage)
 			End If
 		Else
 			' If destination SubDir's parent SubDir does not exist throw an exception
@@ -110,7 +113,7 @@ Public Class clsAnalysisResults
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
 					Exit Sub
 				Else
-					Throw New System.IO.DirectoryNotFoundException(strMessage)
+					Throw New DirectoryNotFoundException(strMessage)
 				End If
 			End If
 
@@ -119,10 +122,10 @@ Public Class clsAnalysisResults
 			End If
 
 			' Copy all the files of the current directory
-			Dim ChildFile As System.IO.FileInfo
+			Dim ChildFile As FileInfo
 			For Each ChildFile In diSourceDir.GetFiles()
 				Try
-					strTargetPath = System.IO.Path.Combine(diDestDir.FullName, ChildFile.Name)
+					strTargetPath = Path.Combine(diDestDir.FullName, ChildFile.Name)
 					If Overwrite Then
 						CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
 						   True, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
@@ -130,7 +133,7 @@ Public Class clsAnalysisResults
 					Else
 						' Only copy if the file does not yet exist
 						' We are not throwing an error if the file exists in the target
-						If Not System.IO.File.Exists(strTargetPath) Then
+						If Not File.Exists(strTargetPath) Then
 							CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
 							   False, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
 						End If
@@ -146,10 +149,10 @@ Public Class clsAnalysisResults
 			Next
 
 			' Copy all the sub-directories by recursively calling this same routine
-			Dim SubDir As System.IO.DirectoryInfo
+			Dim SubDir As DirectoryInfo
 			For Each SubDir In diSourceDir.GetDirectories()
 				CopyDirectory(SubDir.FullName, _
-				  System.IO.Path.Combine(diDestDir.FullName, SubDir.Name), _
+				  Path.Combine(diDestDir.FullName, SubDir.Name), _
 				  Overwrite, MaxRetryCount, ContinueOnError)
 			Next
 		End If
@@ -157,7 +160,7 @@ Public Class clsAnalysisResults
 	End Sub
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean)
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
@@ -168,7 +171,7 @@ Public Class clsAnalysisResults
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
 	  ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
@@ -184,8 +187,8 @@ Public Class clsAnalysisResults
 		If MaxRetryCount < 1 Then MaxRetryCount = 1
 
 		' First make sure the source file exists
-		If Not System.IO.File.Exists(SrcFilePath) Then
-			Throw New System.IO.IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " & SrcFilePath)
+		If Not File.Exists(SrcFilePath) Then
+			Throw New IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " & SrcFilePath)
 		End If
 
 		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
@@ -203,11 +206,11 @@ Public Class clsAnalysisResults
 				Dim ErrMsg As String = "clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath & ": " & ex.Message
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 
-				If Not Overwrite AndAlso System.IO.File.Exists(DestFilePath) Then
-					Throw New System.IO.IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
+				If Not Overwrite AndAlso File.Exists(DestFilePath) Then
+					Throw New IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
 				End If
 
-				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
@@ -218,15 +221,15 @@ Public Class clsAnalysisResults
 		Loop
 
 		If Not blnSuccess Then
-			Throw New System.IO.IOException("Excessive failures during file copy")
+			Throw New IOException("Excessive failures during file copy")
 		End If
 
 	End Sub
 
 	Public Sub CopyFailedResultsToArchiveFolder(ByVal ResultsFolderPath As String)
 
-		Dim diSourceFolder As System.IO.DirectoryInfo
-		Dim diTargetFolder As System.IO.DirectoryInfo
+		Dim diSourceFolder As DirectoryInfo
+		Dim diTargetFolder As DirectoryInfo
 
 		Dim strFailedResultsFolderPath As String = String.Empty
 
@@ -244,12 +247,12 @@ Public Class clsAnalysisResults
 			' Make sure the target folder exists
 			CreateFolderWithRetry(strFailedResultsFolderPath, 2, 5)
 
-			diSourceFolder = New System.IO.DirectoryInfo(ResultsFolderPath)
-			diTargetFolder = New System.IO.DirectoryInfo(strFailedResultsFolderPath)
+			diSourceFolder = New DirectoryInfo(ResultsFolderPath)
+			diTargetFolder = New DirectoryInfo(strFailedResultsFolderPath)
 
 			' Create an info file that describes the saved results
 			Try
-				strFolderInfoFilePath = System.IO.Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
+				strFolderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
 				CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath, ex)
@@ -263,7 +266,7 @@ Public Class clsAnalysisResults
 				DeleteOldFailedResultsFolders(diTargetFolder)
 
 				Dim strTargetFolderPath As String
-				strTargetFolderPath = System.IO.Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
+				strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
 
 				' Actually copy the results folder
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & strTargetFolderPath)
@@ -281,11 +284,11 @@ Public Class clsAnalysisResults
 
 	Private Sub CopyFailedResultsCreateInfoFile(ByVal strFolderInfoFilePath As String, ByVal strResultsFolderName As String)
 
-		Dim swArchivedFolderInfoFile As System.IO.StreamWriter
-		swArchivedFolderInfoFile = New System.IO.StreamWriter(New System.IO.FileStream(strFolderInfoFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+		Dim swArchivedFolderInfoFile As StreamWriter
+		swArchivedFolderInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 		With swArchivedFolderInfoFile
-			.WriteLine("Date" & ControlChars.Tab & System.DateTime.Now())
+			.WriteLine("Date" & ControlChars.Tab & DateTime.Now())
 			.WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
 			.WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
 			If Not m_jobParams Is Nothing Then
@@ -293,7 +296,7 @@ Public Class clsAnalysisResults
 				.WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
 				.WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
 			End If
-			.WriteLine("Date" & ControlChars.Tab & System.DateTime.Now().ToString)
+			.WriteLine("Date" & ControlChars.Tab & DateTime.Now().ToString)
 			If Not m_jobParams Is Nothing Then
 				.WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
 				.WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
@@ -313,13 +316,13 @@ Public Class clsAnalysisResults
 	End Sub
 
 	Public Sub CreateFolderWithRetry(ByVal FolderPath As String)
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
 	Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
 	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
@@ -335,18 +338,18 @@ Public Class clsAnalysisResults
 		If MaxRetryCount < 1 Then MaxRetryCount = 1
 
 		If String.IsNullOrWhiteSpace(FolderPath) Then
-			Throw New System.IO.DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry")
+			Throw New DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry")
 		End If
 
 		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
 			AttemptCount += 1
 
 			Try
-				If System.IO.Directory.Exists(FolderPath) Then
+				If Directory.Exists(FolderPath) Then
 					' If the folder already exists, then there is nothing to do
 					blnSuccess = True
 				Else
-					System.IO.Directory.CreateDirectory(FolderPath)
+					Directory.CreateDirectory(FolderPath)
 					blnSuccess = True
 				End If
 
@@ -354,7 +357,7 @@ Public Class clsAnalysisResults
 				Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
-				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
@@ -366,28 +369,28 @@ Public Class clsAnalysisResults
 
 		If Not blnSuccess Then
 			If Not FolderExistsWithRetry(FolderPath, 1, 3) Then
-				Throw New System.IO.IOException("Excessive failures during folder creation")
+				Throw New IOException("Excessive failures during folder creation")
 			End If
 		End If
 
 	End Sub
 
-	Private Sub DeleteOldFailedResultsFolders(ByVal diTargetFolder As System.IO.DirectoryInfo)
+	Private Sub DeleteOldFailedResultsFolders(ByVal diTargetFolder As DirectoryInfo)
 
-		Dim fiFileInfo As System.IO.FileInfo
-		Dim diOldResultsFolder As System.IO.DirectoryInfo
+		Dim fiFileInfo As FileInfo
+		Dim diOldResultsFolder As DirectoryInfo
 
 		Dim strOldResultsFolderName As String
 		Dim strTargetFilePath As String = ""
 
 		' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
 		For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
-			If System.DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
+			If DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
 				' File was modified before the threshold; delete the results folder, then rename this file
 
 				Try
-					strOldResultsFolderName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length)
-					diOldResultsFolder = New System.IO.DirectoryInfo(System.IO.Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
+					strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length)
+					diOldResultsFolder = New DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
 
 					If diOldResultsFolder.Exists Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " & diOldResultsFolder.FullName)
@@ -396,7 +399,7 @@ Public Class clsAnalysisResults
 					End If
 
 					Try
-						strTargetFilePath = System.IO.Path.Combine(fiFileInfo.DirectoryName, "x_" & fiFileInfo.Name)
+						strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" & fiFileInfo.Name)
 						fiFileInfo.CopyTo(strTargetFilePath, True)
 						fiFileInfo.Delete()
 					Catch ex As Exception
@@ -414,13 +417,13 @@ Public Class clsAnalysisResults
 	End Sub
 
 	Public Function FolderExistsWithRetry(ByVal FolderPath As String) As Boolean
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Function
 
 	Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
 	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = False
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 	End Function
 
@@ -441,14 +444,14 @@ Public Class clsAnalysisResults
 			AttemptCount += 1
 
 			Try
-				blnFolderExists = System.IO.Directory.Exists(FolderPath)
+				blnFolderExists = Directory.Exists(FolderPath)
 				blnSuccess = True
 
 			Catch ex As Exception
 				Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
-				System.Threading.Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
 
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
 			End Try
@@ -469,8 +472,8 @@ Public Class clsAnalysisResults
 	End Function
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
-		m_LockQueueWaitTimeStart = System.DateTime.UtcNow
+		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+		m_LockQueueWaitTimeStart = DateTime.UtcNow
 	End Sub
 
 #End Region
@@ -479,7 +482,7 @@ Public Class clsAnalysisResults
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
 
 		If clsAnalysisResources.IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+			m_LastLockQueueWaitTimeLog = DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResults); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
 			End If

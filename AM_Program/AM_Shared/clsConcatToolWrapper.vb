@@ -10,6 +10,7 @@
 Option Strict On
 
 Imports FileConcatenator
+Imports System.Threading
 
 Public Class clsConcatToolWrapper
 
@@ -95,7 +96,7 @@ Public Class clsConcatToolWrapper
 
             'Loop until the concatenation finishes
             While m_CatInProgress
-                System.Threading.Thread.Sleep(1000)
+				Thread.Sleep(1000)
             End While
 
             'Concatenation must have finished successfully, so exit

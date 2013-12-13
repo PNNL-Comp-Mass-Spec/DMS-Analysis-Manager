@@ -1,5 +1,7 @@
 ﻿Option Strict On
 
+Imports System.IO
+
 Public Class clsScanStatsGenerator
 
 	Protected mDebugLevel As Integer
@@ -73,11 +75,11 @@ Public Class clsScanStatsGenerator
 		Dim msg As String
 
 		Try
-			If Not System.IO.File.Exists(strMSFileInfoScannerDLLPath) Then
+			If Not File.Exists(strMSFileInfoScannerDLLPath) Then
 				msg = "DLL not found: " + strMSFileInfoScannerDLLPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
 			Else
-				Dim obj As Object = Nothing
+				Dim obj As Object
 				obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
 				If obj IsNot Nothing Then
 					objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
@@ -100,8 +102,8 @@ Public Class clsScanStatsGenerator
 		Dim obj As Object = Nothing
 		Try
 			' Dynamically load the specified class from strDLLFilePath
-			Dim assem As System.Reflection.Assembly
-			assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath)
+			Dim assem As Reflection.Assembly
+			assem = Reflection.Assembly.LoadFrom(strDLLFilePath)
 			Dim dllType As Type = assem.[GetType](className, False, True)
 			obj = Activator.CreateInstance(dllType)
 		Catch ex As Exception

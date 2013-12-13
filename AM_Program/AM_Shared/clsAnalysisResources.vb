@@ -415,7 +415,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for error</returns>
 	''' <remarks>Logs copy errors</remarks>
 	Private Function CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean) As Boolean
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxCopyAttempts)
 	End Function
 
@@ -481,7 +481,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
 	Protected Function CopyFileToWorkDir(ByVal InpFile As String, ByVal InpFolder As String, ByVal OutDir As String) As Boolean
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 	End Function
 
@@ -499,7 +499,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 
 	End Function
@@ -540,7 +540,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
 	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly, MaxCopyAttempts)
 
 	End Function
@@ -565,7 +565,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal MaxCopyAttempts As Integer) As Boolean
 
 		Dim SourceFile As String = String.Empty
-		Dim DestFilePath As String = String.Empty
+		Dim DestFilePath As String		
 
 		Try
 
@@ -590,7 +590,7 @@ Public MustInherit Class clsAnalysisResources
 
 			If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDir, File copied: " + SourceFile
+					Dim Msg As String = "CopyFileToWorkDir, File copied: " + SourceFile
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 				Return True
@@ -623,7 +623,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function CopyFileToWorkDirWithRename(ByVal InpFile As String, _
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String) As Boolean
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 	End Function
 
@@ -640,7 +640,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-		Dim MaxCopyAttempts As Integer = 3
+		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 	End Function
 
@@ -682,7 +682,7 @@ Public MustInherit Class clsAnalysisResources
 
 
 		Dim SourceFile As String = String.Empty
-		Dim DestFilePath As String = String.Empty
+		Dim DestFilePath As String
 
 		Try
 			SourceFile = Path.Combine(InpFolder, InpFile)
@@ -705,7 +705,7 @@ Public MustInherit Class clsAnalysisResources
 
 			If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.CopyFileToWorkDirWithRename, File copied: " + SourceFile
+					Dim Msg As String = "CopyFileToWorkDirWithRename, File copied: " + SourceFile
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 				Return True
@@ -736,7 +736,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Function CreateFastaFile(ByVal DestFolder As String) As Boolean
 
 		Dim HashString As String
-		Dim OrgDBDescription As String = String.Empty
+		Dim OrgDBDescription As String
 
 		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file")
@@ -1069,7 +1069,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'Find file location
 		Dim FolderName As String
-		Dim CreateStoragePathInfoFile As Boolean = False
+		Const CreateStoragePathInfoFile As Boolean = False
 
 		' Look for the file in the various folders
 		FolderName = FindDataFile(FileName, SearchArchivedDatasetFolder)
@@ -1093,7 +1093,7 @@ Public MustInherit Class clsAnalysisResources
 		If Not Unzip Then Return True
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " + FileName)
-		If UnzipFileStart(Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "clsAnalysisResources.FindAndRetrieveMiscFiles", False) Then
+		If UnzipFileStart(Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "FindAndRetrieveMiscFiles", False) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " + FileName)
 			End If
@@ -1136,7 +1136,10 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function FindDataFile(ByVal FileToFind As String, ByVal SearchArchivedDatasetFolder As Boolean, ByVal LogFileNotFound As Boolean) As String
 
 		Dim FoldersToSearch As New List(Of String)
+
+		' ReSharper disable once RedundantAssignment
 		Dim TempDir As String = String.Empty
+
 		Dim FileFound As Boolean = False
 
 		Dim strParentFolderPaths As List(Of String)
@@ -1314,7 +1317,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim ioFile As FileSystemInfo
 		Dim ioSubFolder As FileSystemInfo
 
-		Dim strFilePathMatch As String = String.Empty
+		Dim strFilePathMatch As String
 
 		ioFolder = New DirectoryInfo(strFolderPath)
 
@@ -1571,10 +1574,10 @@ Public MustInherit Class clsAnalysisResources
 		' Finds this dataset's .mzXML file		
 		Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 
-		Dim MSXmlFoldernameBase As String = "MSXML_Gen_1_"
+		Const MSXmlFoldernameBase As String = "MSXML_Gen_1_"
 		Dim MzXMLFilename As String = m_DatasetName + ".mzXML"
 
-		Dim MaxRetryCount As Integer = 1
+		Const MaxRetryCount As Integer = 1
 
 		Dim lstValuesToCheck As List(Of Integer)
 		lstValuesToCheck = New List(Of Integer)
@@ -1781,12 +1784,12 @@ Public MustInherit Class clsAnalysisResources
 			For Each pathToCheck In lstPathsToCheck
 				Try
 					If m_DebugLevel > 3 Then
-						Dim Msg As String = "clsAnalysisResources.FindValidDatasetFolder, Looking for folder " + pathToCheck
+						Dim Msg As String = "FindValidDatasetFolder, Looking for folder " + pathToCheck
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 					End If
 
 					If pathToCheck = MYEMSL_PATH_FLAG Then
-						Dim recurseMyEMSL As Boolean = False
+						Const recurseMyEMSL As Boolean = False
 						blnValidFolder = FindValidFolderMyEMSL(DSName, FileNameToFind, FolderNameToFind, False, recurseMyEMSL)
 					Else
 						blnValidFolder = FindValidFolderUNC(pathToCheck, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound)
@@ -1809,7 +1812,7 @@ Public MustInherit Class clsAnalysisResources
 			If blnValidFolder Then
 
 				If m_DebugLevel >= 4 OrElse m_DebugLevel >= 1 AndAlso blnFileNotFoundEncountered Then
-					Dim Msg As String = "clsAnalysisResources.FindValidFolder, Valid dataset folder has been found:  " + strBestPath
+					Dim Msg As String = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath
 					If FileNameToFind.Length > 0 Then
 						Msg &= " (matched file " + FileNameToFind + ")"
 					End If
@@ -1857,7 +1860,7 @@ Public MustInherit Class clsAnalysisResources
 		If String.IsNullOrEmpty(FileNameToFind) Then FileNameToFind = "*"
 
 		If m_DebugLevel > 3 Then
-			Dim Msg As String = "clsAnalysisResources.FindValidFolderMyEMSL, querying MyEMSL for this dataset's files"
+			Const Msg As String = "FindValidFolderMyEMSL, querying MyEMSL for this dataset's files"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 
@@ -1922,7 +1925,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim blnValidFolder = True
 
 		If m_DebugLevel > 3 Then
-			Dim Msg As String = "clsAnalysisResources.FindValidFolderUNC, Folder found " + PathToCheck
+			Dim Msg As String = "FindValidFolderUNC, Folder found " + PathToCheck
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 		End If
 
@@ -1931,7 +1934,7 @@ Public MustInherit Class clsAnalysisResources
 
 			If FileNameToFind.Contains("*") Then
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.FindValidFolderUNC, Looking for files matching " + FileNameToFind
+					Dim Msg As String = "FindValidFolderUNC, Looking for files matching " + FileNameToFind
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 
@@ -1944,7 +1947,7 @@ Public MustInherit Class clsAnalysisResources
 				End If
 			Else
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.FindValidFolderUNC, Looking for file named " + FileNameToFind
+					Dim Msg As String = "FindValidFolderUNC, Looking for file named " + FileNameToFind
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 
@@ -1960,7 +1963,7 @@ Public MustInherit Class clsAnalysisResources
 		If blnValidFolder AndAlso Not String.IsNullOrEmpty(FolderNameToFind) Then
 			If FolderNameToFind.Contains("*") Then
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.FindValidFolderUNC, Looking for folders matching " + FolderNameToFind
+					Dim Msg As String = "FindValidFolderUNC, Looking for folders matching " + FolderNameToFind
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 
@@ -1973,7 +1976,7 @@ Public MustInherit Class clsAnalysisResources
 				End If
 			Else
 				If m_DebugLevel > 3 Then
-					Dim Msg As String = "clsAnalysisResources.FindValidFolderUNC, Looking for folder named " + FolderNameToFind
+					Dim Msg As String = "FindValidFolderUNC, Looking for folder named " + FolderNameToFind
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 
@@ -2089,11 +2092,11 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
-		Select Case clsAnalysisResources.GetRawDataType(strRawDataType)
-			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				strInputFilePath = m_DatasetName + clsAnalysisResources.DOT_RAW_EXTENSION
-			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
-				strInputFilePath = m_DatasetName + clsAnalysisResources.DOT_UIMF_EXTENSION
+		Select Case GetRawDataType(strRawDataType)
+			Case eRawDataTypeConstants.ThermoRawFile
+				strInputFilePath = m_DatasetName + DOT_RAW_EXTENSION
+			Case eRawDataTypeConstants.UIMF
+				strInputFilePath = m_DatasetName + DOT_UIMF_EXTENSION
 			Case Else
 				m_message = "Invalid dataset type for auto-generating ScanStats.txt file: " + strRawDataType
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " + m_message)
@@ -2335,14 +2338,14 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>Free memory, in MB</returns>
 	Public Shared Function GetFreeMemoryMB() As Single
 
-		Static mFreeMemoryPerformanceCounter As Diagnostics.PerformanceCounter
+		Static mFreeMemoryPerformanceCounter As PerformanceCounter
 
 		Dim sngFreeMemory As Single = 0
 		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
 		Try
 			If mFreeMemoryPerformanceCounter Is Nothing Then
-				mFreeMemoryPerformanceCounter = New Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+				mFreeMemoryPerformanceCounter = New PerformanceCounter("Memory", "Available MBytes")
 				mFreeMemoryPerformanceCounter.ReadOnly = True
 			End If
 
@@ -2491,7 +2494,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		Dim fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName)
-		Dim splitFastaName = fastaNameBase & "_" & numberOfClonedSteps.ToString() & "x_"		
+		Dim splitFastaName = fastaNameBase & "_" & numberOfClonedSteps.ToString() & "x_"
 
 		If numberOfClonedSteps < 10 Then
 			splitFastaName &= iteration.ToString("0") & ".fasta"
@@ -2529,7 +2532,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
 
-		Dim intWaitTimeLogIntervalSeconds As Integer = 30
+		Dim intWaitTimeLogIntervalSeconds As Integer
 
 		If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = DateTime.UtcNow()
 
@@ -2606,8 +2609,8 @@ Public MustInherit Class clsAnalysisResources
 		'Get a table to hold the results of the query
 		While RetryCount > 0
 			Try
-				Using Cn As Data.SqlClient.SqlConnection = New Data.SqlClient.SqlConnection(ConnectionString)
-					Using Da As Data.SqlClient.SqlDataAdapter = New Data.SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
+				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(ConnectionString)
+					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
 						Using Ds As DataSet = New DataSet
 							Da.Fill(Ds)
 							Dt = Ds.Tables(0)
@@ -2617,7 +2620,7 @@ Public MustInherit Class clsAnalysisResources
 				Exit While
 			Catch ex As Exception
 				RetryCount -= 1S
-				strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
+				strMsg = "LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
 				strMsg &= ", RetryCount = " + RetryCount.ToString
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 				Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
@@ -2626,7 +2629,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'If loop exited due to errors, return false
 		If RetryCount < 1 Then
-			strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
+			strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
 			Return False
@@ -2635,7 +2638,7 @@ Public MustInherit Class clsAnalysisResources
 		'Verify at least one row returned
 		If Dt.Rows.Count < 1 Then
 			' No data was returned
-			strMsg = "clsAnalysisResources.LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
+			strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
 			Return False
@@ -3025,7 +3028,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim ioFile As FileInfo
 
 		Dim srInFile As StreamReader
-		Dim strPhysicalFilePath As String = String.Empty
+		Dim strPhysicalFilePath As String
 		Dim strFilePath As String
 
 		Dim strLineIn As String
@@ -3076,7 +3079,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 			If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
@@ -3084,7 +3087,7 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
 			Return False
 		End Try
 
@@ -3149,7 +3152,7 @@ Public MustInherit Class clsAnalysisResources
 						End If
 
 					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveAggregateFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
 						Return False
 
 					End Try
@@ -3163,7 +3166,7 @@ Public MustInherit Class clsAnalysisResources
 
 			For Each fileToUnzip In lstFilesToUnzip
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " + fileToUnzip.Filename)
-				If UnzipFileStart(Path.Combine(m_WorkingDir, fileToUnzip.Filename), m_WorkingDir, "clsAnalysisResources.RetrieveAggregateFiles", False) Then
+				If UnzipFileStart(Path.Combine(m_WorkingDir, fileToUnzip.Filename), m_WorkingDir, "RetrieveAggregateFiles", False) Then
 					If m_DebugLevel >= 2 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File unzipped: " & fileToUnzip.Filename)
 					End If
@@ -3182,7 +3185,7 @@ Public MustInherit Class clsAnalysisResources
 			blnSuccess = True
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAnalysisResources.RetrieveAggregateFiles", ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveAggregateFiles", ex)
 			blnSuccess = False
 		End Try
 
@@ -3190,21 +3193,16 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Private Function RetrieveAggregateFilesRename(
-	  ByVal SourceFilename As String, _
-	  ByVal filterValue As String, _
-	  ByVal SaveMode As String) As Boolean
+	Private Sub RetrieveAggregateFilesRename(ByVal SourceFilename As String, ByVal filterValue As String, ByVal SaveMode As String)
 
 		Dim newFilename As String = ""
-		Dim ext As String = ""
-		Dim filenameNoExt As String = "'"
 
 		Try
 			Select Case m_jobParams.GetParam("StepTool").ToLower
 				Case "phospho_fdr_aggregator"
 					Dim fi As New FileInfo(Path.Combine(m_WorkingDir, SourceFilename))
-					ext = Path.GetExtension(SourceFilename)
-					filenameNoExt = Path.GetFileNameWithoutExtension(SourceFilename)
+					Dim ext = Path.GetExtension(SourceFilename)
+					Dim filenameNoExt = Path.GetFileNameWithoutExtension(SourceFilename)
 
 					If filterValue.ToLower().Contains("_hcd") Then
 						newFilename = filenameNoExt + "_hcd" + ext
@@ -3241,7 +3239,7 @@ Public MustInherit Class clsAnalysisResources
 
 						If Not blnSuccess Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Unable to rename file" + fi.Name + " to " + newFilename + " in folder " + m_WorkingDir + ": " + strExceptionMsg)
-							Return False
+							Return
 						End If
 					End If
 
@@ -3249,18 +3247,17 @@ Public MustInherit Class clsAnalysisResources
 						m_jobParams.AddResultFileExtensionToSkip(newFilename)
 					End If
 
-					Return True
+					Return
 
 			End Select
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " + newFilename + " from folder " + m_WorkingDir, ex)
-			Return False
+			Return
 		End Try
 
-		Return True
-
-	End Function
+		Return
+	End Sub
 
 	Protected Function RetrieveDataPackagePeptideHitJobInfo(ByRef DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
 
@@ -3299,7 +3296,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		Catch ex As Exception
 			strMsg = "Exception calling LoadDataPackageJobInfo"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
 			Return lstDataPackagePeptideHitJobs
 		End Try
 
@@ -3316,7 +3313,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Catch ex As Exception
 			strMsg = "Exception determining data package jobs for this aggregation job"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackagePeptideHitJobInfo; " & strMsg, ex)
 		End Try
 
 		Return lstDataPackagePeptideHitJobs
@@ -3340,7 +3337,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim DataPackageID As Integer = 0
 
 		Dim blnFileCopied As Boolean
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		' The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
 		' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
@@ -3379,7 +3376,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Catch ex As Exception
 			m_message = "Exception calling RetrieveDataPackagePeptideHitJobInfo"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; " & m_message, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackagePeptideHitJobPHRPFiles; " & m_message, ex)
 			Return False
 		End Try
 
@@ -3576,7 +3573,7 @@ Public MustInherit Class clsAnalysisResources
 
 				If udtOptions.RetrieveMzXMLFile Then
 					' See if a .mzXML file already exists for this dataset
-					Dim strMzXMLFilePath As String = String.Empty
+					Dim strMzXMLFilePath As String
 					Dim strHashcheckFilePath As String = String.Empty
 
 					strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
@@ -3644,7 +3641,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
 			blnSuccess = False
 		End Try
 
@@ -3674,8 +3671,8 @@ Public MustInherit Class clsAnalysisResources
 		Try
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)			' Raw file
-			m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)			' mzXML file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)			' Raw file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' mzXML file
 
 			If udtOptions.CreateJobPathFiles Then
 				CreateStoragePathInfoOnly = True
@@ -3764,7 +3761,7 @@ Public MustInherit Class clsAnalysisResources
 			blnSuccess = True
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResources.RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
 			blnSuccess = False
 		End Try
 
@@ -4014,7 +4011,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanStatsFiles(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim RetrieveSICStatsFile As Boolean = False
+		Const RetrieveSICStatsFile As Boolean = False
 		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
 
 	End Function
@@ -4030,7 +4027,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanStatsFiles(ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
-		Dim RetrieveSICStatsFile As Boolean = False
+		Const RetrieveSICStatsFile As Boolean = False
 		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
 
 	End Function
@@ -4090,7 +4087,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim BestScanStatsFileTransactionID As Int64 = 0
 
-		Dim MaxRetryCount As Integer = 1
+		Const MaxRetryCount As Integer = 1
 
 		' Look for the MASIC Results folder
 		' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
@@ -4213,7 +4210,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal RetrieveScanStatsExFile As Boolean,
 	  ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
-		Dim MaxCopyAttempts As Integer = 2
+		Const MaxCopyAttempts As Integer = 2
 
 		' Copy the MASIC files from the MASIC results folder
 
@@ -4349,7 +4346,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Protected Function RetrieveSpectra(ByVal RawDataType As String) As Boolean
-		Dim CreateStoragePathInfoOnly As Boolean = False
+		Const CreateStoragePathInfoOnly As Boolean = False
 		Return RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly)
 	End Function
 
@@ -4531,7 +4528,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim diCachedDataFolder As DirectoryInfo
 
 		Dim ServerPath As String
-		Dim strUnzipFolderPathBase As String = String.Empty
+		Dim strUnzipFolderPathBase As String
 
 		Dim strFilesToDelete As New Queue(Of String)
 
@@ -4734,16 +4731,13 @@ Public MustInherit Class clsAnalysisResources
 					' Do not overwrite existing files (assume they're already valid)
 					Try
 
-						Dim objZipfile As Ionic.Zip.ZipFile
+						Using objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
+							If m_DebugLevel >= 2 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping " + strZipFilePathToExtract)
+							End If
 
-						objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
-
-						If m_DebugLevel >= 2 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping " + strZipFilePathToExtract)
-						End If
-
-						objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
-						objZipfile = Nothing
+							objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
+						End Using
 
 					Catch ex As Exception
 						m_message = "Error extracting zipped instrument data"
@@ -4980,7 +4974,7 @@ Public MustInherit Class clsAnalysisResources
 			ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile
 			ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
 
-			' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+			' Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
 
 			Dim paramFileType = SetBioworksVersion(m_jobParams.GetParam("ToolName"))
 			Dim fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
@@ -5149,7 +5143,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Unzip concatenated DTA file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-			If UnzipFileStart(TargetZipFilePath, m_WorkingDir, "clsAnalysisResources.RetrieveDtaFiles", False) Then
+			If UnzipFileStart(TargetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
 				End If
@@ -5196,7 +5190,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'Unzip concatenated OUT file
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated OUT file")
-		If UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "clsAnalysisResources.RetrieveOutFiles", False) Then
+		If UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "RetrieveOutFiles", False) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Concatenated OUT file unzipped")
 			End If
@@ -5375,7 +5369,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim sngFileSizeMB As Single
 
 		Dim blnUseExternalUnzipper As Boolean = False
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Dim strExternalUnzipperFilePath As String
 		Dim strUnzipperName As String = String.Empty
@@ -5433,7 +5427,6 @@ Public MustInherit Class clsAnalysisResources
 				Else
 					m_message = "Error unzipping " + Path.GetFileName(ZipFilePath) + " using " + strUnzipperName
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + m_message)
-					UnZipper = Nothing
 				End If
 			Else
 				' Use Ionic.Zip
@@ -5520,7 +5513,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>True if the file has data; otherwise false</returns>
 	''' <remarks></remarks>
 	Public Shared Function ValidateFileHasData(ByVal strFilePath As String, ByVal strFileDescription As String, ByRef strErrorMessage As String) As Boolean
-		Dim intNumericDataColIndex As Integer = 0
+		Const intNumericDataColIndex As Integer = 0
 		Return ValidateFileHasData(strFilePath, strFileDescription, strErrorMessage, intNumericDataColIndex)
 	End Function
 
@@ -5602,7 +5595,7 @@ Public MustInherit Class clsAnalysisResources
 	''' These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
 	Protected Function ValidateFreeMemorySize(ByVal strJavaMemorySizeJobParamName As String, ByVal strStepToolName As String) As Boolean
 
-		Dim blnLogFreeMemoryOnSuccess As Boolean = True
+		Const blnLogFreeMemoryOnSuccess As Boolean = True
 		Return ValidateFreeMemorySize(strJavaMemorySizeJobParamName, strStepToolName, blnLogFreeMemoryOnSuccess)
 
 	End Function

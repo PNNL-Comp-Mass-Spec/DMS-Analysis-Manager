@@ -9,6 +9,9 @@
 
 Option Strict On
 
+Imports System.IO
+Imports System.Xml
+
 Public Class clsFormattedXMLWriter
 
 	'*********************************************************************************************************
@@ -30,8 +33,8 @@ Public Class clsFormattedXMLWriter
 #Region "Methods"
 	Public Function WriteXMLToFile(ByVal strXMLText As String, ByVal strOutputFilePath As String) As Boolean
 
-		Dim objXMLDoc As New System.Xml.XmlDocument()
-		Dim swOutfile As System.Xml.XmlTextWriter
+		Dim objXMLDoc As XmlDocument
+		Dim swOutfile As XmlTextWriter
 
 		Dim blnSuccess As Boolean = False
 
@@ -39,7 +42,7 @@ Public Class clsFormattedXMLWriter
 
 		Try
 			' Instantiate objXMLDoc
-			objXMLDoc = New System.Xml.XmlDocument()
+			objXMLDoc = New XmlDocument()
 			objXMLDoc.LoadXml(strXMLText)
 
 		Catch ex As Exception
@@ -49,10 +52,10 @@ Public Class clsFormattedXMLWriter
 
 		Try
 			' Initialize the XML writer
-			swOutfile = New System.Xml.XmlTextWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read), System.Text.Encoding.UTF8)
+			swOutfile = New XmlTextWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
 
 			' Define the indenting
-			swOutfile.Formatting = Xml.Formatting.Indented
+			swOutfile.Formatting = Formatting.Indented
 			swOutfile.Indentation = 2
 			swOutfile.IndentChar = " "c
 

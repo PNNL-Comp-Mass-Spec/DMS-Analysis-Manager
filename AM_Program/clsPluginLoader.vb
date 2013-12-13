@@ -9,8 +9,9 @@
 
 Option Strict On
 
-Imports System.Xml
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Xml
 
 Public Class clsPluginLoader
 
@@ -19,10 +20,10 @@ Public Class clsPluginLoader
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Private m_msgList As New Generic.List(Of String)
+	Private m_msgList As New List(Of String)
 	Private m_MgrFolderPath As String
 	Private m_pluginConfigFile As String = "plugin_info.xml"
-	Private m_SummaryFile As AnalysisManagerBase.clsSummaryFile
+	Private m_SummaryFile As clsSummaryFile
 #End Region
 
 #Region "Properties"
@@ -40,7 +41,7 @@ Public Class clsPluginLoader
 			Dim s As String = ""
 
 			For Each DumStr As String In m_msgList
-				If s <> "" Then s &= System.Environment.NewLine
+				If s <> "" Then s &= Environment.NewLine
 				s &= DumStr
 			Next
 
@@ -51,7 +52,7 @@ Public Class clsPluginLoader
 
 #Region "Methods"
 
-	Public Sub New(ByRef objSummaryFile As AnalysisManagerBase.clsSummaryFile, ByVal MgrFolderPath As String)
+	Public Sub New(ByRef objSummaryFile As clsSummaryFile, ByVal MgrFolderPath As String)
 		m_SummaryFile = objSummaryFile
 		m_MgrFolderPath = MgrFolderPath
 	End Sub
@@ -70,9 +71,9 @@ Public Class clsPluginLoader
 
 #If PLUGIN_DEBUG_MODE_ENABLED Then
 
-	Private Function DebugModeGetToolRunner(ByVal className As String) As AnalysisManagerBase.IToolRunner
+	Private Function DebugModeGetToolRunner(ByVal className As String) As IToolRunner
 
-		Dim myToolRunner As AnalysisManagerBase.IToolRunner = Nothing
+		Dim myToolRunner As IToolRunner = Nothing
 
 		Select Case className.ToLower()
 			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisToolRunnerXT".ToLower()
@@ -182,9 +183,9 @@ Public Class clsPluginLoader
 		Return myToolRunner
 	End Function
 
-	Private Function DebugModeGetAnalysisResources(ByVal className As String) As AnalysisManagerBase.IAnalysisResources
+	Private Function DebugModeGetAnalysisResources(ByVal className As String) As IAnalysisResources
 
-		Dim myModule As AnalysisManagerBase.IAnalysisResources = Nothing
+		Dim myModule As IAnalysisResources = Nothing
 
 		Select Case className.ToLower()
 			'Case "AnalysisManagerXTandemPlugIn.clsAnalysisResourcesXT".ToLower()
@@ -328,7 +329,7 @@ Public Class clsPluginLoader
 			' make sure that we found exactly one element, 
 			' and if we did, retrieve its information 
 			If nodeList.Count <> 1 Then
-				Throw New System.Exception("Could not resolve tool name; " & strPluginInfo)
+				Throw New Exception("Could not resolve tool name; " & strPluginInfo)
 			End If
 			For Each n In nodeList
 				className = n.GetAttribute("Class")
@@ -354,8 +355,8 @@ Public Class clsPluginLoader
 
 		Try
 			'Build instance of tool runner subclass from class name and assembly file name.
-			Dim a As System.Reflection.Assembly
-			a = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName))
+			Dim a As Reflection.Assembly
+			a = Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName))
 			Dim t As Type = a.GetType(className, False, True)
 			obj = Activator.CreateInstance(t)
 		Catch ex As Exception
@@ -371,13 +372,13 @@ Public Class clsPluginLoader
 	''' <param name="ToolName">Name of tool</param>
 	''' <returns>An object meeting the IToolRunner interface</returns>
 	''' <remarks></remarks>
-	Public Function GetToolRunner(ByVal ToolName As String) As AnalysisManagerBase.IToolRunner
+	Public Function GetToolRunner(ByVal ToolName As String) As IToolRunner
 
 		Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower & "']"
 
 		Dim className As String = ""
 		Dim assyName As String = ""
-		Dim myToolRunner As AnalysisManagerBase.IToolRunner = Nothing
+		Dim myToolRunner As IToolRunner = Nothing
 
 		If GetPluginInfo(xpath, className, assyName) Then
 
@@ -391,7 +392,7 @@ Public Class clsPluginLoader
 			Dim obj As Object = LoadObject(className, assyName)
 			If Not obj Is Nothing Then
 				Try
-					myToolRunner = DirectCast(obj, AnalysisManagerBase.IToolRunner)
+					myToolRunner = DirectCast(obj, IToolRunner)
 				Catch ex As Exception
 					''Catch any exceptions
 					m_msgList.Add(ex.Message)
@@ -408,13 +409,13 @@ Public Class clsPluginLoader
 	''' <param name="ToolName">Name of analysis tool</param>
 	''' <returns>An object meeting the IAnalysisResources interface</returns>
 	''' <remarks></remarks>
-	Public Function GetAnalysisResources(ByVal ToolName As String) As AnalysisManagerBase.IAnalysisResources
+	Public Function GetAnalysisResources(ByVal ToolName As String) As IAnalysisResources
 
 		Dim xpath As String = "//Resourcers/Resourcer[@Tool='" & ToolName & "']"
 		Dim className As String = ""
 		Dim assyName As String = ""
-		Dim myModule As AnalysisManagerBase.IAnalysisResources = Nothing
-		
+		Dim myModule As IAnalysisResources = Nothing
+
 		If GetPluginInfo(xpath, className, assyName) Then
 
 #If PLUGIN_DEBUG_MODE_ENABLED Then
@@ -427,7 +428,7 @@ Public Class clsPluginLoader
 			Dim obj As Object = LoadObject(className, assyName)
 			If Not obj Is Nothing Then
 				Try
-					myModule = DirectCast(obj, AnalysisManagerBase.IAnalysisResources)
+					myModule = DirectCast(obj, IAnalysisResources)
 				Catch ex As Exception
 					''Catch any exceptions
 					m_msgList.Add(ex.Message)
@@ -447,7 +448,7 @@ Public Class clsPluginLoader
 	''' <returns>Path to plugin info file</returns>
 	''' <remarks></remarks>
 	Private Function GetPluginInfoFilePath(ByVal PluginInfoFileName As String) As String
-		Return System.IO.Path.Combine(m_MgrFolderPath, PluginInfoFileName)
+		Return Path.Combine(m_MgrFolderPath, PluginInfoFileName)
 	End Function
 #End Region
 

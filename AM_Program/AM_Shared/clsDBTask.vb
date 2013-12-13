@@ -13,6 +13,7 @@ Imports System.Data.SqlClient
 Imports System.Xml.XPath
 Imports System.Xml
 Imports System.IO
+Imports System.Threading
 
 Public MustInherit Class clsDBTask
 
@@ -44,7 +45,7 @@ Public MustInherit Class clsDBTask
 	Protected m_MgrParams As IMgrParams
 	Protected m_ConnStr As String
 	Protected m_BrokerConnStr As String
-	Protected m_ErrorList As New Generic.List(Of String)
+	Protected m_ErrorList As New List(Of String)
 	Protected m_DebugLevel As Integer
 
 	'Job status
@@ -169,7 +170,7 @@ Public MustInherit Class clsDBTask
 
 	End Sub
 
-	Protected Function FillParamDictXml(ByVal InpXml As String) As Generic.List(Of udtParameterInfoType)
+	Protected Function FillParamDictXml(ByVal InpXml As String) As List(Of udtParameterInfoType)
 
 		Dim ErrMsg As String
 
@@ -182,7 +183,7 @@ Public MustInherit Class clsDBTask
 			Dim xpn As XPathNavigator = xdoc.CreateNavigator()
 			Dim nodes As XPathNodeIterator = xpn.Select("//item")
 
-			Dim dctParameters As New Generic.List(Of udtParameterInfoType)
+			Dim dctParameters As New List(Of udtParameterInfoType)
 			Dim udtParamInfo As udtParameterInfoType
 
 			' Traverse the parsed XML document and extract the key and value for each item
@@ -192,7 +193,7 @@ Public MustInherit Class clsDBTask
 				udtParamInfo.Value = nodes.Current.GetAttribute("value", "")
 
 				' Extract the section name for the current item and dump it to output
-				Dim nav2 As Xml.XPath.XPathNavigator = nodes.Current.Clone
+				Dim nav2 As XPathNavigator = nodes.Current.Clone
 				nav2.MoveToParent()
 				udtParamInfo.Section = nav2.GetAttribute("name", "")
 
@@ -202,7 +203,7 @@ Public MustInherit Class clsDBTask
 
 			Return dctParameters
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			ErrMsg = "clsDBTask.FillParamDict(), exception filling dictionary; " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 			Return Nothing
@@ -262,7 +263,7 @@ Public MustInherit Class clsDBTask
 
 		Dim ResCode As Integer = -9999	'If this value is in error msg, then exception occurred before ResCode was set
 		Dim ErrMsg As String
-		Dim MyTimer As New System.Diagnostics.Stopwatch
+		Dim MyTimer As New Stopwatch
 		Dim RetryCount As Integer = MaxRetryCount
 		Dim blnDeadlockOccurred As Boolean
 
@@ -304,7 +305,7 @@ Public MustInherit Class clsDBTask
 				End Using  'Cn
 				LogErrorEvents()
 				Exit While
-			Catch ex As System.Exception
+			Catch ex As Exception
 				MyTimer.Stop()
 				RetryCount -= 1
 				ErrMsg = "clsDBTask.ExecuteSP(), exception filling data adapter for " & SpCmd.CommandText & ", " & ex.Message
@@ -326,7 +327,7 @@ Public MustInherit Class clsDBTask
 			End Try
 
 			If RetryCount > 0 Then
-				System.Threading.Thread.Sleep(20000)	'Wait 20 seconds before retrying
+				Thread.Sleep(20000)	'Wait 20 seconds before retrying
 			End If
 		End While
 
@@ -363,7 +364,7 @@ Public MustInherit Class clsDBTask
 		Dim MyMsg As String = ""
 
 		For Each MyParam As SqlParameter In InpCmd.Parameters
-			MyMsg &= System.Environment.NewLine & "Name= " & MyParam.ParameterName & ControlChars.Tab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
+			MyMsg &= Environment.NewLine & "Name= " & MyParam.ParameterName & ControlChars.Tab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
 		Next
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" & MyMsg)

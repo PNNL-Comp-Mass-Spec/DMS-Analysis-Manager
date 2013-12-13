@@ -27,7 +27,6 @@ Public Class clsStatusFile
 
 #Region "Module variables"
 	Public Const ABORT_PROCESSING_NOW_FILENAME As String = "AbortProcessingNow.txt"
-	Private Const REMOVE_XML_WHITESPACE_WHEN_QUEUE_LOGGING As Boolean = False
 
 	'Status file name and location
 	Private m_FileNamePath As String = ""
@@ -51,7 +50,7 @@ Public Class clsStatusFile
 	Private m_TaskStatus As IStatusFile.EnumTaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
 
 	'Task start time
-	Private m_TaskStartTime As Date = System.DateTime.UtcNow
+	Private m_TaskStartTime As Date = DateTime.UtcNow
 
 	'Progess (in percent)
 	Private m_Progress As Single = 0
@@ -88,6 +87,8 @@ Public Class clsStatusFile
 
 	Const MAX_ERROR_MESSAGE_COUNT_TO_CACHE As Integer = 10
 	Private m_RecentErrorMessageCount As Integer
+
+	' ReSharper disable once FieldCanBeMadeReadOnly.Local
 	Private m_RecentErrorMessages(MAX_ERROR_MESSAGE_COUNT_TO_CACHE - 1) As String
 
 	' The following provides access to the master logger
@@ -100,12 +101,11 @@ Public Class clsStatusFile
 	Private m_BrokerDBLogger As clsDBStatusLogger
 
 	Private m_MessageQueueLogger As clsMessageQueueLogger
-	Private m_MessageQueueClientName As String
 	Private m_MessageSender As clsMessageSender
 	Private m_QueueLogger As clsMessageQueueLogger
 
-	Private mCPUUsagePerformanceCounter As System.Diagnostics.PerformanceCounter
-	Private mFreeMemoryPerformanceCounter As System.Diagnostics.PerformanceCounter
+	Private mCPUUsagePerformanceCounter As PerformanceCounter
+	Private mFreeMemoryPerformanceCounter As PerformanceCounter
 
 #End Region
 
@@ -170,11 +170,11 @@ Public Class clsStatusFile
 		End Set
 	End Property
 
-	Public Property TaskStartTime() As System.DateTime
+	Public Property TaskStartTime() As DateTime
 		Get
 			Return m_TaskStartTime
 		End Get
-		Set(ByVal value As System.DateTime)
+		Set(ByVal value As DateTime)
 			m_TaskStartTime = value
 		End Set
 	End Property
@@ -294,7 +294,7 @@ Public Class clsStatusFile
 	''' <remarks></remarks>
 	Public Sub New(ByVal FileLocation As String, ByVal debugLevel As Integer)
 		m_FileNamePath = FileLocation
-		m_TaskStartTime = System.DateTime.UtcNow
+		m_TaskStartTime = DateTime.UtcNow
 		m_DebugLevel = debugLevel
 
 		ClearCachedInfo()
@@ -358,7 +358,8 @@ Public Class clsStatusFile
 		m_LogToMessageQueue = LogStatusToMessageQueue
 		m_MessageQueueURI = MsgQueueURI
 		m_MessageQueueTopic = MessageQueueTopicMgrStatus
-		m_MessageQueueClientName = ClientName
+
+		' m_MessageQueueClientName = ClientName
 
 		If Not m_LogToMessageQueue And Not m_MessageQueueLogger Is Nothing Then
 			' Stop logging to the message queue
@@ -376,16 +377,16 @@ Public Class clsStatusFile
 		Dim strNewPath As String
 
 		Try
-			strPathToCheck = System.IO.Path.GetDirectoryName(m_FileNamePath)
-			strPathToCheck = System.IO.Path.Combine(strPathToCheck, ABORT_PROCESSING_NOW_FILENAME)
+			strPathToCheck = Path.GetDirectoryName(m_FileNamePath)
+			strPathToCheck = Path.Combine(strPathToCheck, ABORT_PROCESSING_NOW_FILENAME)
 
-			If System.IO.File.Exists(strPathToCheck) Then
+			If File.Exists(strPathToCheck) Then
 				m_AbortProcessingNow = True
 
 				strNewPath = strPathToCheck & ".done"
 
-				System.IO.File.Delete(strNewPath)
-				System.IO.File.Move(strPathToCheck, strNewPath)
+				File.Delete(strNewPath)
+				File.Move(strPathToCheck, strNewPath)
 
 			End If
 		Catch ex As Exception
@@ -506,24 +507,24 @@ Public Class clsStatusFile
 		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
 		Try
-			mCPUUsagePerformanceCounter = New System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
+			mCPUUsagePerformanceCounter = New PerformanceCounter("Processor", "% Processor Time", "_Total")
 			mCPUUsagePerformanceCounter.ReadOnly = True
 		Catch ex As Exception
 			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
 			End If
 		End Try
 
 		Try
-			mFreeMemoryPerformanceCounter = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+			mFreeMemoryPerformanceCounter = New PerformanceCounter("Memory", "Available MBytes")
 			mFreeMemoryPerformanceCounter.ReadOnly = True
 		Catch ex As Exception
 			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
 			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
 			' Alternatively, add the user to the "Administrators" group.
 			' In either case, you will need to reboot the computer for the change to take effect
-			If Not blnVirtualMachineOnPIC AndAlso System.DateTime.Now().Hour = 0 AndAlso System.DateTime.Now().Minute <= 30 Then
+			If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
 			End If
 
@@ -578,7 +579,7 @@ Public Class clsStatusFile
 	Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
 
 		Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
-		Static dtLastFailureTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
+		Static dtLastFailureTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
 		Try
 			If m_MessageSender Is Nothing Then
@@ -605,8 +606,8 @@ Public Class clsStatusFile
 			End If
 
 		Catch ex As Exception
-			If System.DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
-				dtLastFailureTime = System.DateTime.UtcNow
+			If DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
+				dtLastFailureTime = DateTime.UtcNow
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
 			End If
 
@@ -623,7 +624,7 @@ Public Class clsStatusFile
 		With udtStatusInfo
 			.MgrName = m_MgrName
 			.MgrStatus = m_MgrStatus
-			.LastUpdate = System.DateTime.UtcNow()
+			.LastUpdate = DateTime.UtcNow()
 			.LastStartTime = m_TaskStartTime
 			.CPUUtilization = m_CpuUtilization
 			.FreeMemoryMB = m_FreeMemoryMB
@@ -738,19 +739,16 @@ Public Class clsStatusFile
 	Public Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
 
 		'Writes a status file for external monitor to read
-		Dim XDocument As System.Xml.XmlDocument
-		Dim XWriter As XmlTextWriter
-
-		Dim objMemoryStream As System.IO.MemoryStream
-		Dim srMemoryStreamReader As System.IO.StreamReader
+		Dim objMemoryStream As MemoryStream
+		Dim srMemoryStreamReader As StreamReader
 
 		Dim strXMLText As String = String.Empty
 
-		Dim dtLastUpdate As System.DateTime
+		Dim dtLastUpdate As DateTime
 		Dim sngRunTimeHours As Single
 
 		Try
-			dtLastUpdate = System.DateTime.UtcNow()
+			dtLastUpdate = DateTime.UtcNow()
 			sngRunTimeHours = GetRunTime()
 
 			m_CpuUtilization = CInt(GetCPUUtilization())
@@ -761,75 +759,72 @@ Public Class clsStatusFile
 
 		'Set up the XML writer
 		Try
-			XDocument = New System.Xml.XmlDocument()
-
 			' Create a new memory stream in which to write the XML
-			objMemoryStream = New System.IO.MemoryStream
-			XWriter = New XmlTextWriter(objMemoryStream, System.Text.Encoding.UTF8)
+			objMemoryStream = New MemoryStream
+			Using XWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
 
-			XWriter.Formatting = Formatting.Indented
-			XWriter.Indentation = 2
+				XWriter.Formatting = Formatting.Indented
+				XWriter.Indentation = 2
 
-			'Create the XML document in memory
-			XWriter.WriteStartDocument(True)
-			XWriter.WriteComment("Analysis manager job status")
+				'Create the XML document in memory
+				XWriter.WriteStartDocument(True)
+				XWriter.WriteComment("Analysis manager job status")
 
-			'General job information
-			'Root level element
-			XWriter.WriteStartElement("Root")	 ' Root
-			XWriter.WriteStartElement("Manager")  ' Manager
-			XWriter.WriteElementString("MgrName", m_MgrName)
-			XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
-			XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
-			XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
-			XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
-			XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
-			XWriter.WriteStartElement("RecentErrorMessages")
-			If m_RecentErrorMessageCount = 0 Then
-				XWriter.WriteElementString("ErrMsg", String.Empty)
-			Else
-				For intErrorMsgIndex As Integer = 0 To m_RecentErrorMessageCount - 1
-					XWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
-				Next
-			End If
-			XWriter.WriteEndElement()				' RecentErrorMessages
-			XWriter.WriteEndElement()				' Manager
+				'General job information
+				'Root level element
+				XWriter.WriteStartElement("Root")	 ' Root
+				XWriter.WriteStartElement("Manager")  ' Manager
+				XWriter.WriteElementString("MgrName", m_MgrName)
+				XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
+				XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
+				XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
+				XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
+				XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
+				XWriter.WriteStartElement("RecentErrorMessages")
+				If m_RecentErrorMessageCount = 0 Then
+					XWriter.WriteElementString("ErrMsg", String.Empty)
+				Else
+					For intErrorMsgIndex As Integer = 0 To m_RecentErrorMessageCount - 1
+						XWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
+					Next
+				End If
+				XWriter.WriteEndElement()				' RecentErrorMessages
+				XWriter.WriteEndElement()				' Manager
 
-			XWriter.WriteStartElement("Task")		' Task
-			XWriter.WriteElementString("Tool", m_Tool)
-			XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus))
-			XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
-			XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
-			XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
-			XWriter.WriteElementString("CurrentOperation", m_CurrentOperation)
+				XWriter.WriteStartElement("Task")		' Task
+				XWriter.WriteElementString("Tool", m_Tool)
+				XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus))
+				XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
+				XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
+				XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
+				XWriter.WriteElementString("CurrentOperation", m_CurrentOperation)
 
-			XWriter.WriteStartElement("TaskDetails") 'TaskDetails
-			XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(m_TaskStatusDetail))
-			XWriter.WriteElementString("Job", CStr(m_JobNumber))
-			XWriter.WriteElementString("Step", CStr(m_JobStep))
-			XWriter.WriteElementString("Dataset", m_Dataset)
-			XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
-			XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo)
-			XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString)
-			XWriter.WriteEndElement()				' TaskDetails
-			XWriter.WriteEndElement()				' Task
-			XWriter.WriteEndElement()				' Root
+				XWriter.WriteStartElement("TaskDetails") 'TaskDetails
+				XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(m_TaskStatusDetail))
+				XWriter.WriteElementString("Job", CStr(m_JobNumber))
+				XWriter.WriteElementString("Step", CStr(m_JobStep))
+				XWriter.WriteElementString("Dataset", m_Dataset)
+				XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
+				XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo)
+				XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString)
+				XWriter.WriteEndElement()				' TaskDetails
+				XWriter.WriteEndElement()				' Task
+				XWriter.WriteEndElement()				' Root
 
-			'Close out the XML document (but do not close XWriter yet)
-			XWriter.WriteEndDocument()
-			XWriter.Flush()
+				'Close out the XML document (but do not close XWriter yet)
+				XWriter.WriteEndDocument()
+				XWriter.Flush()
 
-			' Now use a StreamReader to copy the XML text to a string variable
-			objMemoryStream.Seek(0, SeekOrigin.Begin)
-			srMemoryStreamReader = New System.IO.StreamReader(objMemoryStream)
-			strXMLText = srMemoryStreamReader.ReadToEnd
+				' Now use a StreamReader to copy the XML text to a string variable
+				objMemoryStream.Seek(0, SeekOrigin.Begin)
+				srMemoryStreamReader = New StreamReader(objMemoryStream)
+				strXMLText = srMemoryStreamReader.ReadToEnd
 
-			srMemoryStreamReader.Close()
-			objMemoryStream.Close()
+				srMemoryStreamReader.Close()
+				objMemoryStream.Close()
 
-			' Since strXMLText now contains the XML, we can now safely close XWriter
-			XWriter.Close()
-			XWriter = Nothing
+				' Since strXMLText now contains the XML, we can now safely close XWriter
+			End Using
 
 			WriteStatusFileToDisk(strXMLText)
 
@@ -861,35 +856,36 @@ Public Class clsStatusFile
 
 		Const MIN_FILE_WRITE_INTERVAL_SECONDS As Integer = 2
 
-		Static dtLastFileWriteTime As System.DateTime = System.DateTime.UtcNow
+		Static dtLastFileWriteTime As DateTime = DateTime.UtcNow
 
 		Dim strTempStatusFilePath As String
 		Dim blnSuccess As Boolean
 
 		blnSuccess = True
 
-		If System.DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
+		If DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
 			' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
-			strTempStatusFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(m_FileNamePath), _
-						  System.IO.Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
+			strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(m_FileNamePath), Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
 
-			dtLastFileWriteTime = System.DateTime.UtcNow
+			dtLastFileWriteTime = DateTime.UtcNow
 
 			blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText)
 			If blnSuccess Then
 				Try
-					System.IO.File.Copy(strTempStatusFilePath, m_FileNamePath, True)
+					File.Copy(strTempStatusFilePath, m_FileNamePath, True)
 				Catch ex As Exception
 					' Log a warning that the file copy failed
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & " to " & System.IO.Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" &
+					  Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
 				End Try
 
 				Try
-					System.IO.File.Delete(strTempStatusFilePath)
+					File.Delete(strTempStatusFilePath)
 				Catch ex As Exception
 					' Log a warning that the file delete failed
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" & System.IO.Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" &
+					  Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
 				End Try
 
 			Else
@@ -909,16 +905,12 @@ Public Class clsStatusFile
 
 		Dim blnSuccess As Boolean
 
-		Dim srOutFile As System.IO.StreamWriter
-
 		Try
 			' Write out the XML text to a file
 			' If the file is in use by another process, then the writing will fail
-			srOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-			srOutFile.WriteLine(strXMLText)
-
-			' Close the text file
-			srOutFile.Close()
+			Using srOutFile = New StreamWriter(New FileStream(strFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+				srOutFile.WriteLine(strXMLText)
+			End Using
 
 			' Reset the error counter
 			intWritingErrorCountSaved = 0
@@ -933,7 +925,7 @@ Public Class clsStatusFile
 				' 5 or more errors in a row have occurred
 				' Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
 				If intWritingErrorCountSaved = WRITE_FAILURE_LOG_THRESHOLD OrElse intWritingErrorCountSaved Mod 10 = 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error writing status file " & System.IO.Path.GetFileName(strFilePath) & ": " & ex.Message)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error writing status file " & Path.GetFileName(strFilePath) & ": " & ex.Message)
 				End If
 			End If
 			blnSuccess = False
@@ -1204,7 +1196,7 @@ Public Class clsStatusFile
 	''' <remarks></remarks>
 	Private Function GetRunTime() As Single
 
-		Return CSng(System.DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
+		Return CSng(DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
 
 	End Function
 

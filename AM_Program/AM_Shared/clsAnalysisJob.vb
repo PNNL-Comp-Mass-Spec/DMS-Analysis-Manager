@@ -27,7 +27,7 @@ Public Class clsAnalysisJob
 
 #Region "Module variables"
 	' The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
-	Protected m_JobParams As Generic.Dictionary(Of String, Generic.Dictionary(Of String, String))
+	Protected m_JobParams As Dictionary(Of String, Dictionary(Of String, String))
 
 	Protected m_JobId As Integer
 	Protected m_TaskWasClosed As Boolean
@@ -172,7 +172,7 @@ Public Class clsAnalysisJob
 	''' <param name="FileName"></param>
 	''' <remarks></remarks>
 	Public Sub AddResultFileToKeep(ByVal FileName As String) Implements IJobParams.AddResultFileToKeep
-		FileName = IO.Path.GetFileName(FileName)
+		FileName = Path.GetFileName(FileName)
 		If Not m_ResultFilesToKeep.Contains(FileName) Then
 			m_ResultFilesToKeep.Add(FileName)
 		End If
@@ -184,7 +184,7 @@ Public Class clsAnalysisJob
 	''' <param name="FileName"></param>
 	''' <remarks></remarks>
 	Public Sub AddResultFileToSkip(ByVal FileName As String) Implements IJobParams.AddResultFileToSkip
-		FileName = IO.Path.GetFileName(FileName)
+		FileName = Path.GetFileName(FileName)
 		If Not m_ResultFilesToSkip.Contains(FileName) Then
 			m_ResultFilesToSkip.Add(FileName)
 		End If
@@ -397,11 +397,11 @@ Public Class clsAnalysisJob
 	''' <remarks></remarks>
 	Public Sub SetParam(ByVal Section As String, ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
 
-		Dim oParams As Generic.Dictionary(Of String, String) = Nothing
+		Dim oParams As Dictionary(Of String, String) = Nothing
 
 		If Not m_JobParams.TryGetValue(Section, oParams) Then
 			' Need to add a section with a blank name
-			oParams = New Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+			oParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 			m_JobParams.Add(Section, oParams)
 		End If
 
@@ -427,7 +427,7 @@ Public Class clsAnalysisJob
 		ParamValue = String.Empty
 
 		If Not m_JobParams Is Nothing Then
-			For Each oEntry As Generic.KeyValuePair(Of String, Generic.Dictionary(Of String, String)) In m_JobParams
+			For Each oEntry As KeyValuePair(Of String, Dictionary(Of String, String)) In m_JobParams
 				If oEntry.Value.TryGetValue(ParamName, ParamValue) Then
 					If String.IsNullOrWhiteSpace(ParamValue) Then
 						ParamValue = String.Empty
@@ -464,7 +464,7 @@ Public Class clsAnalysisJob
 	''' <remarks></remarks>
 	Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
 
-		Dim oParams As Generic.Dictionary(Of String, String) = Nothing
+		Dim oParams As Dictionary(Of String, String) = Nothing
 		ParamValue = String.Empty
 
 		If Not m_JobParams Is Nothing Then
@@ -506,15 +506,15 @@ Public Class clsAnalysisJob
 	''' </summary>
 	''' <returns>Enum indicating if task was found</returns>
 	''' <remarks></remarks>
-	Public Overrides Function RequestTask() As clsDBTask.RequestTaskResult Implements IJobParams.RequestTask
+	Public Overrides Function RequestTask() As RequestTaskResult Implements IJobParams.RequestTask
 
-		Dim RetVal As clsDBTask.RequestTaskResult
+		Dim RetVal As RequestTaskResult
 
 		RetVal = RequestAnalysisJob()
 		Select Case RetVal
-			Case clsDBTask.RequestTaskResult.NoTaskFound
+			Case RequestTaskResult.NoTaskFound
 				m_TaskWasAssigned = False
-			Case clsDBTask.RequestTaskResult.TaskFound
+			Case RequestTaskResult.TaskFound
 				m_TaskWasAssigned = True
 			Case Else
 				m_TaskWasAssigned = False
@@ -528,10 +528,10 @@ Public Class clsAnalysisJob
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function RequestAnalysisJob() As clsDBTask.RequestTaskResult
+	Private Function RequestAnalysisJob() As RequestTaskResult
 
 		Dim MyCmd As New SqlCommand
-		Dim Outcome As clsDBTask.RequestTaskResult = RequestTaskResult.NoTaskFound
+		Dim Outcome As RequestTaskResult
 		Dim RetVal As Integer
 		Dim paramXml As String
 
@@ -545,29 +545,29 @@ Public Class clsAnalysisJob
 			With MyCmd
 				.CommandType = CommandType.StoredProcedure
 				.CommandText = SP_NAME_REQUEST_TASK
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-				.Parameters.Add(New SqlClient.SqlParameter("@processorName", SqlDbType.VarChar, 128))
+				.Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128))
 				.Parameters.Item("@processorName").Direction = ParameterDirection.Input
 				.Parameters.Item("@processorName").Value = m_MgrParams.GetParam("MgrName")
 
-				.Parameters.Add(New SqlClient.SqlParameter("@jobNumber", SqlDbType.Int))
+				.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int))
 				.Parameters.Item("@jobNumber").Direction = ParameterDirection.Output
 
-				.Parameters.Add(New SqlClient.SqlParameter("@parameters", SqlDbType.VarChar, 8000))
+				.Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000))
 				.Parameters.Item("@parameters").Direction = ParameterDirection.Output
 				.Parameters.Item("@parameters").Value = ""
 
-				.Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
+				.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
 				.Parameters.Item("@message").Direction = ParameterDirection.Output
 				.Parameters.Item("@message").Value = ""
 
-				.Parameters.Add(New SqlClient.SqlParameter("@infoOnly", SqlDbType.TinyInt))
+				.Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt))
 				.Parameters.Item("@infoOnly").Direction = ParameterDirection.Input
 				.Parameters.Item("@infoOnly").Value = 0
 
-				.Parameters.Add(New SqlClient.SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128))
+				.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128))
 				.Parameters.Item("@AnalysisManagerVersion").Direction = ParameterDirection.Input
 				.Parameters.Item("@AnalysisManagerVersion").Value = strProductVersion
 			End With
@@ -590,32 +590,31 @@ Public Class clsAnalysisJob
 					paramXml = CStr(MyCmd.Parameters("@parameters").Value)
 
 					'Step task was found; get the data for it
-					Dim dctParameters As New Generic.List(Of clsDBTask.udtParameterInfoType)
-					dctParameters = FillParamDictXml(paramXml)
+					Dim dctParameters = FillParamDictXml(paramXml)
 
 					If dctParameters IsNot Nothing Then
 
-						For Each udtParamInfo As clsDBTask.udtParameterInfoType In dctParameters
+						For Each udtParamInfo As udtParameterInfoType In dctParameters
 							Me.SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
 						Next
 
 						SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
-						Outcome = clsDBTask.RequestTaskResult.TaskFound
+						Outcome = RequestTaskResult.TaskFound
 					Else
 						'There was an error
-						Dim Msg As String = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
+						Const Msg As String = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 						Outcome = RequestTaskResult.ResultError
 					End If
 				Case RET_VAL_TASK_NOT_AVAILABLE
 					'No jobs found
-					Outcome = clsDBTask.RequestTaskResult.NoTaskFound
+					Outcome = RequestTaskResult.NoTaskFound
 				Case RET_VAL_EXCESSIVE_RETRIES
 					' Too many retries
-					Outcome = clsDBTask.RequestTaskResult.TooManyRetries
+					Outcome = RequestTaskResult.TooManyRetries
 				Case RET_VAL_DEADLOCK
 					' Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-					Outcome = clsDBTask.RequestTaskResult.Deadlock
+					Outcome = RequestTaskResult.Deadlock
 				Case Else
 					'There was an SP error
 					Dim msg As String = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString
@@ -648,7 +647,7 @@ Public Class clsAnalysisJob
 		m_DatasetInfoList.Clear()
 
 		If m_JobParams Is Nothing Then
-			m_JobParams = New Generic.Dictionary(Of String, Generic.Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+			m_JobParams = New Dictionary(Of String, Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
 		End If
 
 		m_JobParams.Clear()
@@ -661,19 +660,19 @@ Public Class clsAnalysisJob
 	''' <param name="WorkDir">Full path to work directory</param>
 	''' <param name="paramXml">Contains the xml for all the job parameters</param>
 	''' <param name="jobNum">Contains the job number</param>
-	Private Function SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer) As Boolean
+	Private Sub SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer)
 
 		Dim xmlWriter As New clsFormattedXMLWriter
-		Dim xmlParameterFilename As String = String.Empty
+		Dim xmlParameterFilename As String
 		Dim xmlParameterFilePath As String = String.Empty
 
 		Try
-			xmlParameterFilename = clsAnalysisJob.JobParametersFilename(jobNum.ToString())
+			xmlParameterFilename = JobParametersFilename(jobNum.ToString())
 			xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
 
 			xmlWriter.WriteXMLToFile(paramXml, xmlParameterFilePath)
 
-			If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return False
+			If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
 
 			Dim Msg As String = "Job Parameters successfully saved to file: " & xmlParameterFilePath
 
@@ -686,12 +685,11 @@ Public Class clsAnalysisJob
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving analysis job parameters to " & xmlParameterFilePath & ": " & ex.Message)
-			Return False
+			Return
 		End Try
 
-		Return True
-
-	End Function
+		Return
+	End Sub
 
 	''' <summary>
 	''' Closes an analysis job
@@ -746,7 +744,7 @@ Public Class clsAnalysisJob
 	   ByVal EvalCode As Integer, ByVal EvalMsg As String, _
 	   ByVal ConnStr As String) As Boolean
 
-		Dim Outcome As Boolean = False
+		Dim Outcome As Boolean
 		Dim ResCode As Integer
 
 		'Setup for execution of the stored procedure
@@ -755,34 +753,34 @@ Public Class clsAnalysisJob
 			.CommandType = CommandType.StoredProcedure
 			.CommandText = SpName
 
-			.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+			.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
 			.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-			.Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
+			.Parameters.Add(New SqlParameter("@job", SqlDbType.Int))
 
 			.Parameters.Item("@job").Direction = ParameterDirection.Input
 			.Parameters.Item("@job").Value = GetJobParameter("StepParameters", "Job", 0)
 
-			.Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
+			.Parameters.Add(New SqlParameter("@step", SqlDbType.Int))
 			.Parameters.Item("@step").Direction = ParameterDirection.Input
 			.Parameters.Item("@step").Value = GetJobParameter("StepParameters", "Step", 0)
 
-			.Parameters.Add(New SqlClient.SqlParameter("@completionCode", SqlDbType.Int))
+			.Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int))
 			.Parameters.Item("@completionCode").Direction = ParameterDirection.Input
 			.Parameters.Item("@completionCode").Value = CompCode
 
-			.Parameters.Add(New SqlClient.SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
+			.Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
 			.Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
 			.Parameters.Item("@completionMessage").Value = CompMsg
 
-			.Parameters.Add(New SqlClient.SqlParameter("@evaluationCode", SqlDbType.Int))
+			.Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int))
 			.Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
 			.Parameters.Item("@evaluationCode").Value = EvalCode
 
-			.Parameters.Add(New SqlClient.SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
+			.Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
 			.Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
 			.Parameters.Item("@evaluationMessage").Value = EvalMsg
 
-			.Parameters.Add(New SqlClient.SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
+			.Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
 			.Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
 
 			Dim strValue As String = String.Empty

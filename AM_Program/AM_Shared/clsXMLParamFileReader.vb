@@ -50,9 +50,9 @@ Public Class clsXMLParamFileReader
 
 		' Read the entire XML file into a Linq to XML XDocument object
 		' Note: For this to work, the project must have a reference to System.XML.Linq
-		Dim xParamFile As System.Xml.Linq.XDocument = System.Xml.Linq.XDocument.Load(strParamFilePath)
+		Dim xParamFile As Xml.Linq.XDocument = Xml.Linq.XDocument.Load(strParamFilePath)
 
-		Dim parameters As IEnumerable(Of System.Xml.Linq.XElement) = xParamFile.Elements()
+		Dim parameters As IEnumerable(Of Xml.Linq.XElement) = xParamFile.Elements()
 
 		' Store the parameters
 		CacheXMLParseSection(parameters, dctSections)
@@ -67,7 +67,7 @@ Public Class clsXMLParamFileReader
 	''' <param name="parameters">XML parameters to examine</param>
 	''' <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
 	''' <remarks></remarks>
-	Protected Sub CacheXMLParseSection(parameters As IEnumerable(Of System.Xml.Linq.XElement), ByRef dctParameters As Dictionary(Of String, Dictionary(Of String, String)))
+	Protected Sub CacheXMLParseSection(parameters As IEnumerable(Of Xml.Linq.XElement), ByRef dctParameters As Dictionary(Of String, Dictionary(Of String, String)))
 
 		For Each parameter In parameters
 			If parameter.Descendants.Count > 0 Then
@@ -126,7 +126,7 @@ Public Class clsXMLParamFileReader
 
 	Public Function GetParameterBySection(ByVal strSectionName As String, ByVal strParameterName As String, ByVal strValueIfMissing As String) As String
 
-		Dim dctParameters = New Generic.Dictionary(Of String, String)
+		Dim dctParameters = New Dictionary(Of String, String)
 
 		If mSections.TryGetValue(strSectionName, dctParameters) Then
 			Dim strValue As String = String.Empty

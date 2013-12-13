@@ -9,11 +9,10 @@
 
 Option Strict On
 
-Imports System.Data.SqlClient
-Imports System.IO
-Imports System.Xml
-Imports System.Configuration
 Imports AnalysisManagerBase
+Imports System.Data.SqlClient
+Imports System.Xml
+Imports System.Threading
 
 Public Class clsAnalysisMgrSettings
 	Implements IMgrParams
@@ -28,15 +27,15 @@ Public Class clsAnalysisMgrSettings
 #Region "Module variables"
 	Private Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
 
-	Private m_ParamDictionary As Generic.Dictionary(Of String, String)
+	Private m_ParamDictionary As Dictionary(Of String, String)
 	Private m_ErrMsg As String = ""
-	Private m_EmergencyLogSource As String = ""
-	Private m_EmergencyLogName As String = ""
-	Private m_MgrFolderPath As String
+	Private ReadOnly m_EmergencyLogSource As String = ""
+	Private ReadOnly m_EmergencyLogName As String = ""
+	Private ReadOnly m_MgrFolderPath As String
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property ErrMsg() As String Implements AnalysisManagerBase.IMgrParams.ErrMsg
+	Public ReadOnly Property ErrMsg() As String Implements IMgrParams.ErrMsg
 		Get
 			Return m_ErrMsg
 		End Get
@@ -48,16 +47,15 @@ Public Class clsAnalysisMgrSettings
 	''' Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
 	''' </summary>
 	''' <remarks></remarks>
-	Public Sub AckManagerUpdateRequired() Implements AnalysisManagerBase.IMgrParams.AckManagerUpdateRequired
+	Public Sub AckManagerUpdateRequired() Implements IMgrParams.AckManagerUpdateRequired
 
-		Dim MyConnection As System.Data.SqlClient.SqlConnection
-		Dim MyCmd As New System.Data.SqlClient.SqlCommand
-		Dim RetVal As Integer
+		Dim MyConnection As SqlConnection
+		Dim MyCmd As New SqlCommand
 		Dim ConnectionString As String
 
 		Try
 			ConnectionString = Me.GetParam("MgrCnfgDbConnectStr")
-			MyConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+			MyConnection = New SqlConnection(ConnectionString)
 			MyConnection.Open()
 
 			'Set up the command object prior to SP execution
@@ -66,29 +64,29 @@ Public Class clsAnalysisMgrSettings
 				.CommandText = SP_NAME_ACKMANAGERUPDATE
 				.Connection = MyConnection
 
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-				.Parameters.Add(New SqlClient.SqlParameter("@managerName", SqlDbType.VarChar, 128))
+				.Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128))
 				.Parameters.Item("@managerName").Direction = ParameterDirection.Input
 				.Parameters.Item("@managerName").Value = Me.GetParam("MgrName")
 
-				.Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
+				.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
 				.Parameters.Item("@message").Direction = ParameterDirection.Output
 				.Parameters.Item("@message").Value = ""
 			End With
 
 			'Execute the SP
-			RetVal = MyCmd.ExecuteNonQuery
+			MyCmd.ExecuteNonQuery()
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
 		End Try
 
 	End Sub
 
-	Public Function DisableManagerLocally() As Boolean Implements AnalysisManagerBase.IMgrParams.DisableManagerLocally
+	Public Function DisableManagerLocally() As Boolean Implements IMgrParams.DisableManagerLocally
 		Return WriteConfigSetting("MgrActive_Local", "False")
 	End Function
 
@@ -98,7 +96,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="EmergencyLogSource">Source name registered for emergency logging</param>
 	''' <param name="EmergencyLogName">Name of system log for emergency logging</param>
 	''' <remarks></remarks>
-	Public Sub New(ByVal EmergencyLogSource As String, ByVal EmergencyLogName As String, ByVal lstMgrSettings As Generic.Dictionary(Of String, String), ByVal MgrFolderPath As String)
+	Public Sub New(ByVal EmergencyLogSource As String, ByVal EmergencyLogName As String, ByVal lstMgrSettings As Dictionary(Of String, String), ByVal MgrFolderPath As String)
 		m_EmergencyLogName = EmergencyLogName
 		m_EmergencyLogSource = EmergencyLogSource
 		m_MgrFolderPath = MgrFolderPath
@@ -120,7 +118,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ConfigFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
 	''' <returns>True if successful; False on error</returns>
 	''' <remarks></remarks>
-	Public Function LoadSettings(ByVal ConfigFileSettings As Generic.Dictionary(Of String, String)) As Boolean Implements AnalysisManagerBase.IMgrParams.LoadSettings
+	Public Function LoadSettings(ByVal ConfigFileSettings As Dictionary(Of String, String)) As Boolean Implements IMgrParams.LoadSettings
 
 		m_ErrMsg = ""
 
@@ -156,7 +154,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="InpDict"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function CheckInitialSettings(ByRef InpDict As Generic.Dictionary(Of String, String)) As Boolean
+	Private Function CheckInitialSettings(ByRef InpDict As Dictionary(Of String, String)) As Boolean
 
 		Dim MyMsg As String
 
@@ -189,7 +187,7 @@ Public Class clsAnalysisMgrSettings
 	End Function
 
 	' Retrieves the manager and global settings from various databases
-	Public Function LoadDBSettings() As Boolean Implements AnalysisManagerBase.IMgrParams.LoadDBSettings
+	Public Function LoadDBSettings() As Boolean Implements IMgrParams.LoadDBSettings
 		Dim blnSuccess As Boolean
 
 		blnSuccess = LoadMgrSettingsFromDB()
@@ -275,14 +273,14 @@ Public Class clsAnalysisMgrSettings
 					End Using  'Da
 				End Using  'Cn
 				Exit While
-			Catch ex As System.Exception
+			Catch ex As Exception
 				RetryCount -= 1S
 				Dim MyMsg As String
 				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Exception getting manager settings from database: " & ex.Message & "; ConnectionString: " & ConnectionString
 				MyMsg &= ", RetryCount = " & RetryCount.ToString
 				WriteErrorMsg(MyMsg)
 
-				System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
+				Thread.Sleep(5000)				'Delay for 5 second before trying again
 			End Try
 		End While
 
@@ -330,7 +328,7 @@ Public Class clsAnalysisMgrSettings
 			Next
 			blnSuccess = True
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
 			WriteErrorMsg(m_ErrMsg)
 			blnSuccess = False
@@ -374,7 +372,7 @@ Public Class clsAnalysisMgrSettings
 								 " WHERE ISNULL([Param File Storage Path], '') <> ''"
 
 		Dim Dt As DataTable = Nothing
-		Dim blnsuccess As Boolean = False
+		Dim blnsuccess As Boolean
 
 		'Get a table to hold the results of the query
 		While RetryCount > 0
@@ -388,14 +386,14 @@ Public Class clsAnalysisMgrSettings
 					End Using  'Da
 				End Using  'Cn
 				Exit While
-			Catch ex As System.Exception
+			Catch ex As Exception
 				RetryCount -= 1S
 				MyMsg = "clsMgrSettings.LoadBrokerDBSettings; Exception getting settings from broker database: " & ex.Message & "; ConnectionString: " & ConnectionString
 				MyMsg &= ", RetryCount = " & RetryCount.ToString
 
 				WriteErrorMsg(MyMsg)
 
-				System.Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
+				Thread.Sleep(5000)				'Delay for 5 second before trying again
 			End Try
 		End While
 
@@ -427,7 +425,7 @@ Public Class clsAnalysisMgrSettings
 				Me.SetParam(ParamKey, ParamVal)
 			Next
 			blnsuccess = True
-		Catch ex As System.Exception
+		Catch ex As Exception
 			MyMsg = "clsMgrSettings.LoadBrokerDBSettings; Exception filling string dictionary from table: " & ex.Message
 			WriteErrorMsg(MyMsg)
 			blnsuccess = False
@@ -445,7 +443,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for item</param>
 	''' <returns>String value associated with specified key</returns>
 	''' <remarks>Returns empty string if key isn't found</remarks>
-	Public Function GetParam(ByVal ItemKey As String) As String Implements AnalysisManagerBase.IMgrParams.GetParam
+	Public Function GetParam(ByVal ItemKey As String) As String Implements IMgrParams.GetParam
 		Dim Value As String = String.Empty
 
 		If Not m_ParamDictionary Is Nothing Then
@@ -468,7 +466,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for item</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean Implements AnalysisManagerBase.IMgrParams.GetParam
+	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean Implements IMgrParams.GetParam
 		Return clsGlobal.CBoolSafe(GetParam(ItemKey), ValueIfMissing)
 	End Function
 
@@ -478,7 +476,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for item</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer Implements AnalysisManagerBase.IMgrParams.GetParam
+	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer Implements IMgrParams.GetParam
 		Return clsGlobal.CIntSafe(GetParam(ItemKey), ValueIfMissing)
 	End Function
 
@@ -488,7 +486,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for item</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String Implements AnalysisManagerBase.IMgrParams.GetParam
+	Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String Implements IMgrParams.GetParam
 		Dim strValue As String
 		strValue = GetParam(ItemKey)
 		If String.IsNullOrEmpty(strValue) Then
@@ -504,7 +502,7 @@ Public Class clsAnalysisMgrSettings
 	''' <param name="ItemKey">Key name for the item</param>
 	''' <param name="ItemValue">Value to assign to the key</param>
 	''' <remarks></remarks>
-	Public Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String) Implements AnalysisManagerBase.IMgrParams.SetParam
+	Public Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String) Implements IMgrParams.SetParam
 
 		If m_ParamDictionary.ContainsKey(ItemKey) Then
 			m_ParamDictionary(ItemKey) = ItemValue
@@ -582,7 +580,7 @@ Public Class clsAnalysisMgrSettings
 			End If
 			MyDoc.Save(GetConfigFilePath())
 			Return True
-		Catch ex As System.Exception
+		Catch ex As Exception
 			m_ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " & ex.Message
 			Return False
 		End Try
@@ -629,13 +627,13 @@ Public Class clsAnalysisMgrSettings
 	''' <remarks></remarks>
 	Private Function LoadConfigDocument() As XmlDocument
 
-		Dim MyDoc As XmlDocument = Nothing
+		Dim MyDoc As XmlDocument
 
 		Try
 			MyDoc = New XmlDocument
 			MyDoc.Load(GetConfigFilePath)
 			Return MyDoc
-		Catch ex As System.Exception
+		Catch ex As Exception
 			m_ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " & ex.Message
 			Return Nothing
 		End Try

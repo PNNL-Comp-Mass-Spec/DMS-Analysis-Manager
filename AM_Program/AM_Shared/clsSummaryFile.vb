@@ -18,7 +18,8 @@ Public Class clsSummaryFile
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-	Private m_lines As New Generic.List(Of String)	
+	' ReSharper disable once FieldCanBeMadeReadOnly.Local
+	Private m_lines As New List(Of String)
 #End Region
 
 #Region "Methods"
@@ -37,17 +38,16 @@ Public Class clsSummaryFile
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Public Function SaveSummaryFile(ByVal AnalysisSummaryFilePath As String) As Boolean
-		Dim LogFile As StreamWriter
 
 		Try
-			LogFile = File.CreateText(AnalysisSummaryFilePath)
+			Using swSummaryFile = New StreamWriter(New FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-			For Each DumString As String In m_lines
-				LogFile.WriteLine(DumString)
-			Next
+				For Each DumString As String In m_lines
+					swSummaryFile.WriteLine(DumString)
+				Next
 
-			LogFile.Close()
-			LogFile = Nothing
+			End Using
+
 			Return True
 		Catch Err As Exception
 			Return False

@@ -9,8 +9,8 @@
 
 Option Strict On
 
-Imports System.Xml
 Imports System.IO
+Imports System.Threading
 
 Public Class clsAnalysisToolRunnerBase
 	Implements IToolRunner
@@ -80,7 +80,7 @@ Public Class clsAnalysisToolRunnerBase
 
 	Protected m_SummaryFile As clsSummaryFile
 
-	Private m_LastLockQueueWaitTimeLog As System.DateTime = System.DateTime.UtcNow
+	Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
 
 #End Region
 
@@ -170,7 +170,7 @@ Public Class clsAnalysisToolRunnerBase
 		m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 		m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
-		m_SummaryFile = SummaryFile		
+		m_SummaryFile = SummaryFile
 
 		m_ResFolderName = m_jobParams.GetParam("OutputFolderName")
 
@@ -198,14 +198,14 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>Total job run time (HH:MM)</returns>
 	''' <remarks></remarks>
 	Protected Function CalcElapsedTime(ByVal StartTime As DateTime, ByVal StopTime As DateTime) As String
-		Dim dtElapsedTime As System.TimeSpan
+		Dim dtElapsedTime As TimeSpan
 
 		If StopTime < StartTime Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
-			StopTime = System.DateTime.UtcNow
+			StopTime = DateTime.UtcNow
 		End If
 
-		If StopTime < StartTime OrElse StartTime = System.DateTime.MinValue Then
+		If StopTime < StartTime OrElse StartTime = DateTime.MinValue Then
 			Return String.Empty
 		End If
 
@@ -260,19 +260,19 @@ Public Class clsAnalysisToolRunnerBase
 
 		Try
 
-			Dim diCacheFolder As IO.DirectoryInfo = New IO.DirectoryInfo(strCacheFolderPath)
+			Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(strCacheFolderPath)
 
 			If Not diCacheFolder.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & strCacheFolderPath)
 			Else
 
-				Dim diTargetFolder As IO.DirectoryInfo
+				Dim diTargetFolder As DirectoryInfo
 
 				' Define the target folder
 				If String.IsNullOrEmpty(strSubfolderInTarget) Then
 					diTargetFolder = diCacheFolder
 				Else
-					diTargetFolder = New IO.DirectoryInfo(IO.Path.Combine(diCacheFolder.FullName, strSubfolderInTarget))
+					diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, strSubfolderInTarget))
 					If Not diTargetFolder.Exists Then diTargetFolder.Create()
 				End If
 
@@ -285,7 +285,7 @@ Public Class clsAnalysisToolRunnerBase
 				End If
 
 				If Not String.IsNullOrEmpty(strDatasetYearQuarter) Then
-					diTargetFolder = New IO.DirectoryInfo(IO.Path.Combine(diTargetFolder.FullName, strDatasetYearQuarter))
+					diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, strDatasetYearQuarter))
 					If Not diTargetFolder.Exists Then diTargetFolder.Create()
 				End If
 
@@ -300,18 +300,18 @@ Public Class clsAnalysisToolRunnerBase
 					Return False
 				End If
 
-				Dim diTargetFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(diTargetFolder.FullName, IO.Path.GetFileName(strSourceFilePath)))
+				Dim diTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(strSourceFilePath)))
 
 				ResetTimestampForQueueWaitTimeLogging()
 				blnSuccess = m_FileTools.CopyFileUsingLocks(strSourceFilePath, diTargetFile.FullName, m_MachName, True)
 
 				If blnSuccess Then
 					' Copy over the .Hashcheck file
-					m_FileTools.CopyFile(strHashcheckFilePath, IO.Path.Combine(diTargetFile.DirectoryName, IO.Path.GetFileName(strHashcheckFilePath)), True)
+					m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(diTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
 				End If
 
 				If blnSuccess AndAlso blnPurgeOldFilesIfNeeded Then
-					Dim intSpaceUsageThresholdGB As Integer = 300
+					Const intSpaceUsageThresholdGB As Integer = 300
 					PurgeOldServerCacheFiles(strCacheFolderPath, intSpaceUsageThresholdGB)
 				End If
 			End If
@@ -336,7 +336,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function CopyMzXMLFileToServerCache(ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal strMSXmlGeneratorName As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 
@@ -346,7 +346,7 @@ Public Class clsAnalysisToolRunnerBase
 				strMSXmlGeneratorName = m_jobParams.GetJobParameter("MSXMLGenerator", String.Empty)
 
 				If Not String.IsNullOrEmpty(strMSXmlGeneratorName) Then
-					strMSXmlGeneratorName = IO.Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
+					strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
 				End If
 			End If
 
@@ -368,9 +368,9 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
 
-		Dim ResultsFolderName As String = String.Empty
+		Dim ResultsFolderName As String
 		Dim SourceFolderPath As String = String.Empty
-		Dim TargetFolderPath As String = String.Empty
+		Dim TargetFolderPath As String
 
 		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
@@ -379,9 +379,9 @@ Public Class clsAnalysisToolRunnerBase
 		Dim intFailedFileCount As Integer = 0
 
 
-		Dim intRetryCount As Integer = 10
-		Dim intRetryHoldoffSeconds As Integer = 15
-		Dim blnIncreaseHoldoffOnEachRetry As Boolean = True
+		Const intRetryCount As Integer = 10
+		Const intRetryHoldoffSeconds As Integer = 15
+		Const blnIncreaseHoldoffOnEachRetry As Boolean = True
 
 		Try
 
@@ -395,10 +395,10 @@ Public Class clsAnalysisToolRunnerBase
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			SourceFolderPath = System.IO.Path.Combine(m_WorkDir, ResultsFolderName)
+			SourceFolderPath = Path.Combine(m_WorkDir, ResultsFolderName)
 
 			'Verify the source folder exists
-			If Not System.IO.Directory.Exists(SourceFolderPath) Then
+			If Not Directory.Exists(SourceFolderPath) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
 				m_message = "Results folder not found"
 				' Without a source folder; there isn't much we can do
@@ -435,8 +435,8 @@ Public Class clsAnalysisToolRunnerBase
 			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderPath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(TargetFolderPath))
 			blnErrorEncountered = True
 		End Try
 
@@ -470,9 +470,9 @@ Public Class clsAnalysisToolRunnerBase
 	  ByVal intRetryHoldoffSeconds As Integer, _
 	  ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
 
-		Dim objSourceFolderInfo As System.IO.DirectoryInfo
-		Dim objSourceFile As System.IO.FileInfo
-		Dim objTargetFile As System.IO.FileInfo
+		Dim objSourceFolderInfo As DirectoryInfo
+		Dim objSourceFile As FileInfo
+		Dim objTargetFile As FileInfo
 
 		Dim htFilesToOverwrite As Hashtable
 
@@ -492,10 +492,10 @@ Public Class clsAnalysisToolRunnerBase
 				' Examine the files in the results folder to see if any of the files already exist in the transfer folder
 				' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
 
-				objSourceFolderInfo = New System.IO.DirectoryInfo(SourceFolderPath)
+				objSourceFolderInfo = New DirectoryInfo(SourceFolderPath)
 				For Each objSourceFile In objSourceFolderInfo.GetFiles()
-					If System.IO.File.Exists(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
-						objTargetFile = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolderPath, objSourceFile.Name))
+					If File.Exists(Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
+						objTargetFile = New FileInfo(Path.Combine(TargetFolderPath, objSourceFile.Name))
 
 						If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
 							strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
@@ -514,8 +514,8 @@ Public Class clsAnalysisToolRunnerBase
 				Try
 					objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
 				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-					m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & System.IO.Path.GetPathRoot(TargetFolderPath))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
+					m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & Path.GetPathRoot(TargetFolderPath))
 					objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End Try
@@ -529,11 +529,11 @@ Public Class clsAnalysisToolRunnerBase
 		End Try
 
 		' Note: Entries in ResultFiles will have full file paths, not just file names
-		ResultFiles = System.IO.Directory.GetFiles(SourceFolderPath, "*.*")
+		ResultFiles = Directory.GetFiles(SourceFolderPath, "*.*")
 
 		For Each FileToCopy As String In ResultFiles
-			strSourceFileName = System.IO.Path.GetFileName(FileToCopy)
-			strTargetPath = System.IO.Path.Combine(TargetFolderPath, strSourceFileName)
+			strSourceFileName = Path.GetFileName(FileToCopy)
+			strTargetPath = Path.Combine(TargetFolderPath, strSourceFileName)
 
 			Try
 				If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
@@ -542,14 +542,14 @@ Public Class clsAnalysisToolRunnerBase
 					 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 				Else
 					' Copy file only if it doesn't currently exist
-					If Not System.IO.File.Exists(strTargetPath) Then
+					If Not File.Exists(strTargetPath) Then
 						objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
 						 intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 					End If
 				End If
 			Catch ex As Exception
 				' Continue copying files; we'll fail the results at the end of this function
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & System.IO.Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
 				blnErrorEncountered = True
 				intFailedFileCount += 1
 			End Try
@@ -561,12 +561,12 @@ Public Class clsAnalysisToolRunnerBase
 		Dim eResult As IJobParams.CloseOutType
 		eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		Dim diSourceFolder As System.IO.DirectoryInfo
+		Dim diSourceFolder As DirectoryInfo
 		Dim strTargetFolderPathCurrent As String
-		diSourceFolder = New System.IO.DirectoryInfo(SourceFolderPath)
+		diSourceFolder = New DirectoryInfo(SourceFolderPath)
 
-		For Each objSubFolder As System.IO.DirectoryInfo In diSourceFolder.GetDirectories()
-			strTargetFolderPathCurrent = System.IO.Path.Combine(TargetFolderPath, objSubFolder.Name)
+		For Each objSubFolder As DirectoryInfo In diSourceFolder.GetDirectories()
+			strTargetFolderPathCurrent = Path.Combine(TargetFolderPath, objSubFolder.Name)
 
 			eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
 			 objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
@@ -588,7 +588,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function CreateRemoteTransferFolder(ByVal objAnalysisResults As clsAnalysisResults) As String
 
-		Dim strRemoteTransferFolderPath As String = String.Empty
+		Dim strRemoteTransferFolderPath As String
 		Dim ResultsFolderName As String
 		Dim TransferFolderPath As String
 
@@ -614,8 +614,8 @@ Public Class clsAnalysisToolRunnerBase
 		Try
 			objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TransferFolderPath) & ": " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & System.IO.Path.GetPathRoot(TransferFolderPath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & Path.GetPathRoot(TransferFolderPath) & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & Path.GetPathRoot(TransferFolderPath))
 			Return String.Empty
 		End Try
 
@@ -632,20 +632,20 @@ Public Class clsAnalysisToolRunnerBase
 			strRemoteTransferFolderPath = String.Copy(TransferFolderPath)
 		Else
 			' Append the dataset name to the transfer folder path
-			strRemoteTransferFolderPath = System.IO.Path.Combine(TransferFolderPath, m_Dataset)
+			strRemoteTransferFolderPath = Path.Combine(TransferFolderPath, m_Dataset)
 		End If
 
 		' Create the target folder if it doesn't exist
 		Try
 			objAnalysisResults.CreateFolderWithRetry(strRemoteTransferFolderPath, MaxRetryCount:=5, RetryHoldoffSeconds:=20, blnIncreaseHoldoffOnEachRetry:=True)
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(strRemoteTransferFolderPath) & ": " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & System.IO.Path.GetPathRoot(strRemoteTransferFolderPath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & Path.GetPathRoot(strRemoteTransferFolderPath) & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & Path.GetPathRoot(strRemoteTransferFolderPath))
 			Return String.Empty
 		End Try
 
 		' Now append the output folder name to strRemoteTransferFolderPath
-		strRemoteTransferFolderPath = System.IO.Path.Combine(strRemoteTransferFolderPath, ResultsFolderName)
+		strRemoteTransferFolderPath = Path.Combine(strRemoteTransferFolderPath, ResultsFolderName)
 
 		Return strRemoteTransferFolderPath
 
@@ -693,7 +693,6 @@ Public Class clsAnalysisToolRunnerBase
 		If Not File.Exists(FileNamePath) Then
 			'Throw an exception
 			Throw New AMFileNotFoundException(FileNamePath, "Specified file not found")
-			Return False
 		End If
 
 		While RetryCount < MaxRetryCount
@@ -730,7 +729,7 @@ Public Class clsAnalysisToolRunnerBase
 				ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception
 
 				'Delay 2 seconds
-				System.Threading.Thread.Sleep(2000)
+				Thread.Sleep(2000)
 
 				'Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
 				PRISM.Processes.clsProgRunner.GarbageCollectNow()
@@ -739,13 +738,11 @@ Public Class clsAnalysisToolRunnerBase
 			Catch Err3 As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message)
 				Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
-				Return False
 			End Try
 		End While
 
 		'If we got to here, then we've exceeded the max retry limit
 		Throw New AMFileNotDeletedAfterRetryException(FileNamePath, ErrType, "Unable to delete or move file after multiple retries")
-		Return False
 
 	End Function
 
@@ -766,37 +763,37 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function DeleteRawDataFiles(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As IJobParams.CloseOutType
 
 		'Deletes the raw data files/folders from the working directory
-		Dim IsFile As Boolean = True
+		Dim IsFile As Boolean
 		Dim IsNetworkDir As Boolean = False
 		Dim FileOrFolderName As String = String.Empty
 
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 				IsFile = True
 
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_WIFF_EXTENSION)
 				IsFile = True
 
 			Case clsAnalysisResources.eRawDataTypeConstants.UIMF
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_UIMF_EXTENSION)
 				IsFile = True
 
 			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 				IsFile = True
 
 			Case clsAnalysisResources.eRawDataTypeConstants.mzML
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 				IsFile = True
 
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
 			Case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 				IsFile = False
 
 			Case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders
@@ -804,7 +801,7 @@ Public Class clsAnalysisToolRunnerBase
 				Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
 				'Check for "0.ser" folder
 				If String.IsNullOrEmpty(NewSourceFolder) Then
-					FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+					FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset)
 					IsNetworkDir = False
 				Else
 					IsNetworkDir = True
@@ -814,7 +811,7 @@ Public Class clsAnalysisToolRunnerBase
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
 				' Bruker_FT folders are actually .D folders
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot
@@ -824,7 +821,7 @@ Public Class clsAnalysisToolRunnerBase
 				'        so we don't know the official folder structure
 				''''''''''''''''''''''''''''''''''''
 
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset)
 				IsFile = False
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging
@@ -835,13 +832,13 @@ Public Class clsAnalysisToolRunnerBase
 				'        so we don't know the official folder structure
 				''''''''''''''''''''''''''''''''''''
 
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset)
 				IsFile = False
 
 			Case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 
 				' BrukerTOFBaf folders are actually .D folders
-				FileOrFolderName = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
+				FileOrFolderName = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_D_EXTENSION)
 				IsFile = False
 
 			Case Else
@@ -875,9 +872,9 @@ Public Class clsAnalysisToolRunnerBase
 		Else
 			'Use folder deletion tools
 			Try
-				System.IO.Directory.Delete(FileOrFolderName, True)
+				Directory.Delete(FileOrFolderName, True)
 				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-			Catch ex As System.Exception
+			Catch ex As Exception
 				m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
 				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -891,8 +888,8 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Sub DeleteTemporaryfile(ByVal strFilePath As String)
 
 		Try
-			If System.IO.File.Exists(strFilePath) Then
-				System.IO.File.Delete(strFilePath)
+			If File.Exists(strFilePath) Then
+				File.Delete(strFilePath)
 			End If
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strFilePath, ex)
@@ -946,9 +943,9 @@ Public Class clsAnalysisToolRunnerBase
 		If Not String.IsNullOrWhiteSpace(strStepToolVersion) Then
 
 			' Specific version is defined; verify that the folder exists
-			progLoc = System.IO.Path.Combine(progLoc, strStepToolVersion)
+			progLoc = Path.Combine(progLoc, strStepToolVersion)
 
-			If Not System.IO.Directory.Exists(progLoc) Then
+			If Not Directory.Exists(progLoc) Then
 				m_message = "Version-specific folder not found for " & strStepToolName
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
 				Return String.Empty
@@ -958,9 +955,9 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 
 		' Define the path to the .Exe, then verify that it exists
-		progLoc = System.IO.Path.Combine(progLoc, strExeName)
+		progLoc = Path.Combine(progLoc, strExeName)
 
-		If Not System.IO.File.Exists(progLoc) Then
+		If Not File.Exists(progLoc) Then
 			m_message = "Cannot find " & strStepToolName & " program file"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
 			Return String.Empty
@@ -999,9 +996,9 @@ Public Class clsAnalysisToolRunnerBase
 	   ByRef objMgrParams As IMgrParams, _
 	   ByRef DebugLevel As Short) As Boolean
 
-		Dim MyConnection As System.Data.SqlClient.SqlConnection
-		Dim MyCmd As New System.Data.SqlClient.SqlCommand
-		Dim drSqlReader As System.Data.SqlClient.SqlDataReader
+		Dim MyConnection As SqlClient.SqlConnection
+		Dim MyCmd As New SqlClient.SqlCommand
+		Dim drSqlReader As SqlClient.SqlDataReader
 		Dim ConnectionString As String
 
 		Dim strParamName As String
@@ -1010,21 +1007,21 @@ Public Class clsAnalysisToolRunnerBase
 
 		Dim intNewDebugLevel As Short
 
-		Static dtLastUpdateTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
+		Static dtLastUpdateTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
 		Try
 
-			If intUpdateIntervalSeconds > 0 AndAlso System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
+			If intUpdateIntervalSeconds > 0 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
 				Return True
 			End If
-			dtLastUpdateTime = System.DateTime.UtcNow
+			dtLastUpdateTime = DateTime.UtcNow
 
 			If DebugLevel >= 5 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
 			End If
 
 			ConnectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr")
-			MyConnection = New System.Data.SqlClient.SqlConnection(ConnectionString)
+			MyConnection = New SqlClient.SqlConnection(ConnectionString)
 			MyConnection.Open()
 
 			'Set up the command object prior to SP execution
@@ -1062,7 +1059,7 @@ Public Class clsAnalysisToolRunnerBase
 
 			drSqlReader.Close()
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB: " & ex.Message)
 		End Try
 
@@ -1082,7 +1079,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function GetMSXmlGeneratorAppPath() As String
 
 		Dim strMSXmlGeneratorExe As String = GetMSXmlGeneratorExeName()
-		Dim strMSXmlGeneratorAppPath As String = String.Empty
+		Dim strMSXmlGeneratorAppPath As String
 
 		strMSXmlGeneratorAppPath = String.Empty
 		If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
@@ -1093,7 +1090,7 @@ Public Class clsAnalysisToolRunnerBase
 		ElseIf strMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
 			' MSConvert
 			Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-			strMSXmlGeneratorAppPath = System.IO.Path.Combine(ProteoWizardDir, strMSXmlGeneratorExe)
+			strMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, strMSXmlGeneratorExe)
 
 		Else
 			m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
@@ -1127,7 +1124,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="dctDataPackageJobs"></param>
 	''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
 	''' <remarks></remarks>
-	Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Generic.Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
+	Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
 
 		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 		Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
@@ -1148,7 +1145,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function LoadSettingsFile() As Boolean
 		Dim fileName As String = m_jobParams.GetParam("settingsFileName")
 		If fileName <> "na" Then
-			Dim filePath As String = System.IO.Path.Combine(m_WorkDir, fileName)
+			Dim filePath As String = Path.Combine(m_WorkDir, fileName)
 			If File.Exists(filePath) Then			 'XML tool Loadsettings returns True even if file is not found, so separate check reqd
 				Return m_settingsFileParams.LoadSettings(filePath)
 			Else
@@ -1174,7 +1171,7 @@ Public Class clsAnalysisToolRunnerBase
 
 		'Log status (both locally and in the DB)
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
-		ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+		ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
 
 		'make the results folder
 		Try
@@ -1205,25 +1202,25 @@ Public Class clsAnalysisToolRunnerBase
 
 		Dim Files() As String
 		Dim TmpFile As String = String.Empty
-		Dim TmpFileNameLcase As String = String.Empty
-		Dim OkToMove As Boolean = False
+		Dim TmpFileNameLcase As String
+		Dim OkToMove As Boolean
 		Dim strLogMessage As String
 
 		Dim strExtension As String
-		Dim dctRejectStats As Generic.Dictionary(Of String, Integer)
-		Dim dctAcceptStats As Generic.Dictionary(Of String, Integer)
+		Dim dctRejectStats As Dictionary(Of String, Integer)
+		Dim dctAcceptStats As Dictionary(Of String, Integer)
 		Dim intCount As Integer
 
-		Dim objExtension As Generic.Dictionary(Of String, Integer).Enumerator
+		Dim objExtension As Dictionary(Of String, Integer).Enumerator
 
 		Dim blnErrorEncountered As Boolean = False
 
 		'Move files into results folder
 		Try
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
-			ResFolderNamePath = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
-			dctRejectStats = New Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-			dctAcceptStats = New Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
+			dctRejectStats = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			dctAcceptStats = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 			'Log status
 			If m_DebugLevel >= 2 Then
@@ -1243,7 +1240,7 @@ Public Class clsAnalysisToolRunnerBase
 			' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
 			For Each TmpFile In Files
 				OkToMove = True
-				TmpFileNameLcase = System.IO.Path.GetFileName(TmpFile).ToLower()
+				TmpFileNameLcase = Path.GetFileName(TmpFile).ToLower()
 
 				' Check to see if the filename is defined in ResultFilesToSkip
 				' Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
@@ -1275,8 +1272,8 @@ Public Class clsAnalysisToolRunnerBase
 				' Note: now evaluating each character in the filename
 				If OkToMove Then
 					Dim intAscValue As Integer
-					For Each chChar As Char In System.IO.Path.GetFileName(TmpFile).ToCharArray
-						intAscValue = System.Convert.ToInt32(chChar)
+					For Each chChar As Char In Path.GetFileName(TmpFile).ToCharArray
+						intAscValue = Convert.ToInt32(chChar)
 						If intAscValue <= 31 Or intAscValue >= 128 Then
 							' Invalid character found
 							OkToMove = False
@@ -1286,7 +1283,7 @@ Public Class clsAnalysisToolRunnerBase
 					Next
 				Else
 					If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-						strExtension = System.IO.Path.GetExtension(TmpFile)
+						strExtension = Path.GetExtension(TmpFile)
 						If dctRejectStats.TryGetValue(strExtension, intCount) Then
 							dctRejectStats(strExtension) = intCount + 1
 						Else
@@ -1304,7 +1301,7 @@ Public Class clsAnalysisToolRunnerBase
 				'If valid file name, then move file to results folder
 				If OkToMove Then
 					If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-						strExtension = System.IO.Path.GetExtension(TmpFile).ToLower
+						strExtension = Path.GetExtension(TmpFile).ToLower
 						If dctAcceptStats.TryGetValue(strExtension, intCount) Then
 							dctAcceptStats(strExtension) = intCount + 1
 						Else
@@ -1318,13 +1315,13 @@ Public Class clsAnalysisToolRunnerBase
 					End If
 
 					Try
-						strTargetFilePath = System.IO.Path.Combine(ResFolderNamePath, System.IO.Path.GetFileName(TmpFile))
-						System.IO.File.Move(TmpFile, strTargetFilePath)
+						strTargetFilePath = Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile))
+						File.Move(TmpFile, strTargetFilePath)
 					Catch ex As Exception
 						Try
 							' Move failed
 							' Attempt to copy the file instead of moving the file
-							System.IO.File.Copy(TmpFile, strTargetFilePath, True)
+							File.Copy(TmpFile, strTargetFilePath, True)
 							' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
 
 						Catch ex2 As Exception
@@ -1359,7 +1356,7 @@ Public Class clsAnalysisToolRunnerBase
 			If m_DebugLevel > 0 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder")
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & TmpFile)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & System.IO.Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile)))
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile)))
 			End If
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & Err.Message)
 			m_message = clsGlobal.AppendToComment(m_message, "Error moving results files")
@@ -1377,7 +1374,7 @@ Public Class clsAnalysisToolRunnerBase
 		If blnErrorEncountered Then
 			' Try to save whatever files were moved into the results folder
 			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
@@ -1407,7 +1404,7 @@ Public Class clsAnalysisToolRunnerBase
 
 		objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
 
-		m_SummaryFile.SaveSummaryFile(System.IO.Path.Combine(OutputPath, m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"))
+		m_SummaryFile.SaveSummaryFile(Path.Combine(OutputPath, m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"))
 
 	End Sub
 
@@ -1446,8 +1443,8 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal intSpaceUsageThresholdGB As Integer)
 
-		Dim diCacheFolder As IO.DirectoryInfo
-		Dim lstDataFiles As Generic.SortedList(Of System.DateTime, IO.FileInfo) = New Generic.SortedList(Of System.DateTime, IO.FileInfo)
+		Dim diCacheFolder As DirectoryInfo
+		Dim lstDataFiles As SortedList(Of DateTime, FileInfo) = New SortedList(Of DateTime, FileInfo)
 
 		Dim dblTotalSizeMB As Double = 0
 
@@ -1455,23 +1452,23 @@ Public Class clsAnalysisToolRunnerBase
 		Dim intFileDeleteCount As Integer = 0
 		Dim intFileDeleteErrorCount As Integer = 0
 
-		Dim dctErrorSummary As Generic.Dictionary(Of String, Integer) = New Generic.Dictionary(Of String, Integer)
+		Dim dctErrorSummary As Dictionary(Of String, Integer) = New Dictionary(Of String, Integer)
 
 		If intSpaceUsageThresholdGB < 1 Then intSpaceUsageThresholdGB = 1
 
 		Try
-			diCacheFolder = New IO.DirectoryInfo(strCacheFolderPath)
+			diCacheFolder = New DirectoryInfo(strCacheFolderPath)
 
 			If diCacheFolder.Exists Then
 				' Make a list of all of the files in diCacheFolder
 
-				For Each fiItem As IO.FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
+				For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
 
 					If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
 						Dim strDataFilePath As String
 						strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
 
-						Dim fiDataFile As IO.FileInfo = New IO.FileInfo(strDataFilePath)
+						Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
 
 						If fiDataFile.Exists Then
 							lstDataFiles.Add(fiDataFile.LastWriteTimeUtc, fiDataFile)
@@ -1485,7 +1482,7 @@ Public Class clsAnalysisToolRunnerBase
 			If dblTotalSizeMB / 1024.0 > intSpaceUsageThresholdGB Then
 				' Purge files until the space usage falls below the threshold
 
-				For Each kvItem As Generic.KeyValuePair(Of System.DateTime, IO.FileInfo) In lstDataFiles
+				For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstDataFiles
 
 					Try
 						Dim strHashcheckPath As String
@@ -1495,7 +1492,7 @@ Public Class clsAnalysisToolRunnerBase
 						dblTotalSizeMB -= dblFileSizeMB
 
 						kvItem.Value.Delete()
-						IO.File.Delete(strHashcheckPath)
+						File.Delete(strHashcheckPath)
 
 						dblSizeDeletedMB += dblFileSizeMB
 						intFileDeleteCount += 1
@@ -1523,7 +1520,7 @@ Public Class clsAnalysisToolRunnerBase
 
 				If intFileDeleteErrorCount > 0 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
-					For Each kvItem As Generic.KeyValuePair(Of String, Integer) In dctErrorSummary
+					For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
 					Next
 				End If
@@ -1543,7 +1540,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Sub RedefineAggregationJobDatasetAndTransferFolder()
 
 		Dim strTransferFolderPath As String = m_jobParams.GetParam("transferFolderPath")
-		Dim diTransferFolder As New System.IO.DirectoryInfo(strTransferFolderPath)
+		Dim diTransferFolder As New DirectoryInfo(strTransferFolderPath)
 
 		m_Dataset = diTransferFolder.Name
 		strTransferFolderPath = diTransferFolder.Parent.FullName
@@ -1562,7 +1559,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function ReadVersionInfoFile(ByVal strDLLFilePath As String, ByVal strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
 
 		' Open strVersionInfoFilePath and read the Version= line
-		Dim srInFile As System.IO.StreamReader
+		Dim srInFile As StreamReader
 		Dim strLineIn As String
 		Dim strKey As String
 		Dim strValue As String
@@ -1573,12 +1570,12 @@ Public Class clsAnalysisToolRunnerBase
 
 		Try
 
-			If Not System.IO.File.Exists(strVersionInfoFilePath) Then
+			If Not File.Exists(strVersionInfoFilePath) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Version Info File not found: " & strVersionInfoFilePath)
 				Return False
 			End If
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			Do While srInFile.Peek > -1
 				strLineIn = srInFile.ReadLine()
@@ -1601,13 +1598,13 @@ Public Class clsAnalysisToolRunnerBase
 							Case "version"
 								strVersion = String.Copy(strValue)
 								If String.IsNullOrWhiteSpace(strVersion) Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Empty version line in Version Info file for " & System.IO.Path.GetFileName(strDLLFilePath))
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath))
 									blnSuccess = False
 								Else
 									blnSuccess = True
 								End If
 							Case "error"
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by DLLVersionInspector for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & strValue)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue)
 								blnSuccess = False
 							Case Else
 								' Ignore the line
@@ -1620,7 +1617,7 @@ Public Class clsAnalysisToolRunnerBase
 			srInFile.Close()
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & System.IO.Path.GetFileName(strDLLFilePath), ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
 		End Try
 
 		Return blnSuccess
@@ -1664,7 +1661,7 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
 	End Sub
 
 	''' <summary>
@@ -1682,7 +1679,7 @@ Public Class clsAnalysisToolRunnerBase
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
 		'Start the job timer
-		m_StartTime = System.DateTime.UtcNow
+		m_StartTime = DateTime.UtcNow
 
 		'Remainder of method is supplied by subclasses
 
@@ -1698,7 +1695,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
-		Dim swToolVersionFile As System.IO.StreamWriter
+		Dim swToolVersionFile As StreamWriter
 		Dim strToolVersionFilePath As String
 		Dim strStepToolName As String
 
@@ -1709,11 +1706,11 @@ Public Class clsAnalysisToolRunnerBase
 				strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
 			End If
 
-			strToolVersionFilePath = System.IO.Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
+			strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
 
-			swToolVersionFile = New System.IO.StreamWriter(New System.IO.FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+			swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
-			swToolVersionFile.WriteLine("Date: " & System.DateTime.Now().ToString(DATE_TIME_FORMAT))
+			swToolVersionFile.WriteLine("Date: " & DateTime.Now().ToString(DATE_TIME_FORMAT))
 			swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
 			swToolVersionFile.WriteLine("Job: " & m_JobNum)
 			swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
@@ -1739,7 +1736,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
-		Return SetStepTaskToolVersion(strToolVersionInfo, New Generic.List(Of FileInfo))
+		Return SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
 	End Function
 
 	''' <summary>
@@ -1750,7 +1747,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As Generic.List(Of FileInfo)) As Boolean
+	   ByVal ioToolFiles As List(Of FileInfo)) As Boolean
 
 		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
 	End Function
@@ -1764,18 +1761,18 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As Generic.List(Of FileInfo), _
+	   ByVal ioToolFiles As List(Of FileInfo), _
 	   ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
 
 		Dim strExeInfo As String = String.Empty
 		Dim strToolVersionInfoCombined As String
 
-		Dim Outcome As Boolean = False
+		Dim Outcome As Boolean
 		Dim ResCode As Integer
 
 		If Not ioToolFiles Is Nothing Then
 
-			For Each ioFileInfo As System.IO.FileInfo In ioToolFiles
+			For Each ioFileInfo As FileInfo In ioToolFiles
 				Try
 					If ioFileInfo.Exists Then
 						strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
@@ -1806,7 +1803,7 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 
 		'Setup for execution of the stored procedure
-		Dim MyCmd As New System.Data.SqlClient.SqlCommand
+		Dim MyCmd As New SqlClient.SqlCommand
 		With MyCmd
 			.CommandType = CommandType.StoredProcedure
 			.CommandText = SP_NAME_SET_TASK_TOOL_VERSION
@@ -1834,8 +1831,6 @@ Public Class clsAnalysisToolRunnerBase
 
 		'Execute the SP (retry the call up to 4 times)
 		ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
-
-		objAnalysisTask = Nothing
 
 		If ResCode = 0 Then
 			Outcome = True
@@ -1871,8 +1866,8 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String, ByVal blnIncludeRevision As Boolean) As Boolean
 
 		Try
-			Dim oAssemblyName As System.Reflection.AssemblyName
-			oAssemblyName = System.Reflection.Assembly.Load(strAssemblyName).GetName
+			Dim oAssemblyName As Reflection.AssemblyName
+			oAssemblyName = Reflection.Assembly.Load(strAssemblyName).GetName
 
 			Dim strNameAndVersion As String
 			If blnIncludeRevision Then
@@ -1902,19 +1897,19 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
 
-		Dim ioFileInfo As System.IO.FileInfo
+		Dim ioFileInfo As FileInfo
 		Dim blnSuccess As Boolean
 
 		Try
-			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
+			ioFileInfo = New FileInfo(strDLLFilePath)
 
 			If Not ioFileInfo.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
 				Return False
 			Else
 
-				Dim oAssemblyName As System.Reflection.AssemblyName
-				oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
+				Dim oAssemblyName As Reflection.AssemblyName
+				oAssemblyName = Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
 
 				Dim strNameAndVersion As String
 				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
@@ -1928,7 +1923,7 @@ Public Class clsAnalysisToolRunnerBase
 			'  <startup useLegacyV2RuntimeActivationPolicy="true">
 			'    <supportedRuntime version="v4.0" />
 			'  </startup>
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & System.IO.Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
 			blnSuccess = False
 		End Try
 
@@ -1948,11 +1943,11 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
-		Dim ioFileInfo As System.IO.FileInfo
+		Dim ioFileInfo As FileInfo
 		Dim blnSuccess As Boolean
 
 		Try
-			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
+			ioFileInfo = New FileInfo(strDLLFilePath)
 
 			If Not ioFileInfo.Exists Then
 				m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
@@ -1960,8 +1955,8 @@ Public Class clsAnalysisToolRunnerBase
 				Return False
 			Else
 
-				Dim oFileVersionInfo As System.Diagnostics.FileVersionInfo
-				oFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(strDLLFilePath)
+				Dim oFileVersionInfo As FileVersionInfo
+				oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath)
 
 				Dim strName As String
 				Dim strVersion As String
@@ -1996,7 +1991,7 @@ Public Class clsAnalysisToolRunnerBase
 			End If
 
 		Catch ex As Exception
-			m_message = "Exception determining File Version for " & System.IO.Path.GetFileName(strDLLFilePath)
+			m_message = "Exception determining File Version for " & Path.GetFileName(strDLLFilePath)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
 			blnSuccess = False
 		End Try
@@ -2019,26 +2014,26 @@ Public Class clsAnalysisToolRunnerBase
 		Dim strVersionInfoFilePath As String
 		Dim strArgs As String
 
-		Dim ioFileInfo As System.IO.FileInfo
+		Dim ioFileInfo As FileInfo
 
 		Try
-			strAppPath = System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "DLLVersionInspector.exe")
+			strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), "DLLVersionInspector.exe")
 
-			ioFileInfo = New System.IO.FileInfo(strDLLFilePath)
-			strNameAndVersion = System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
+			ioFileInfo = New FileInfo(strDLLFilePath)
+			strNameAndVersion = Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
 
 			If Not ioFileInfo.Exists Then
 				m_message = "File not found by StoreToolVersionInfoOneFile64Bit"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
 				Return False
-			ElseIf Not System.IO.File.Exists(strAppPath) Then
+			ElseIf Not File.Exists(strAppPath) Then
 				m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
 				Return False
 			Else
 				' Call DLLVersionInspector.exe to determine the tool version
 
-				strVersionInfoFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
+				strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
 
 				Dim objProgRunner As clsRunDosProgram
 				Dim blnSuccess As Boolean
@@ -2068,14 +2063,14 @@ Public Class clsAnalysisToolRunnerBase
 					Return False
 				End If
 
-				System.Threading.Thread.Sleep(100)
+				Thread.Sleep(100)
 
 				blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
 
 				' Delete the version info file
 				Try
-					System.Threading.Thread.Sleep(100)
-					System.IO.File.Delete(strVersionInfoFilePath)
+					Thread.Sleep(100)
+					File.Delete(strVersionInfoFilePath)
 				Catch ex As Exception
 					' Ignore errors here
 				End Try
@@ -2094,9 +2089,9 @@ Public Class clsAnalysisToolRunnerBase
 			Return True
 
 		Catch ex As Exception
-			m_message = "Exception determining Version info for " & System.IO.Path.GetFileName(strDLLFilePath)
+			m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, System.IO.Path.GetFileNameWithoutExtension(strDLLFilePath))
+			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
 		End Try
 
 		Return False
@@ -2113,9 +2108,9 @@ Public Class clsAnalysisToolRunnerBase
 		Dim strToolAndStepTool As String
 		Try
 			'Add a separator
-			m_SummaryFile.Add(System.Environment.NewLine)
+			m_SummaryFile.Add(Environment.NewLine)
 			m_SummaryFile.Add("=====================================================================================")
-			m_SummaryFile.Add(System.Environment.NewLine)
+			m_SummaryFile.Add(Environment.NewLine)
 
 			' Construct the Tool description (combination of Tool name and Step Tool name)
 			strTool = m_jobParams.GetParam("ToolName")
@@ -2134,7 +2129,7 @@ Public Class clsAnalysisToolRunnerBase
 			'Add the data
 			m_SummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
 			m_SummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
-			m_SummaryFile.Add("Date" & ControlChars.Tab & System.DateTime.Now().ToString)
+			m_SummaryFile.Add("Date" & ControlChars.Tab & DateTime.Now().ToString)
 			m_SummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
 			m_SummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
 			m_SummaryFile.Add("Dataset Name" & ControlChars.Tab & m_Dataset)
@@ -2148,9 +2143,9 @@ Public Class clsAnalysisToolRunnerBase
 			m_SummaryFile.Add("Analysis Time (hh:mm:ss)" & ControlChars.Tab & CalcElapsedTime(m_StartTime, m_StopTime))
 
 			'Add another separator
-			m_SummaryFile.Add(System.Environment.NewLine)
+			m_SummaryFile.Add(Environment.NewLine)
 			m_SummaryFile.Add("=====================================================================================")
-			m_SummaryFile.Add(System.Environment.NewLine)
+			m_SummaryFile.Add(Environment.NewLine)
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
@@ -2207,7 +2202,7 @@ Public Class clsAnalysisToolRunnerBase
 	Protected Function ValidateCDTAFile() As Boolean
 		Dim strDTAFilePath As String
 
-		strDTAFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
+		strDTAFilePath = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
 		Return ValidateCDTAFile(strDTAFilePath)
 
@@ -2219,13 +2214,13 @@ Public Class clsAnalysisToolRunnerBase
 		Dim blnDataFound As Boolean = False
 
 		Try
-			If Not System.IO.File.Exists(strDTAFilePath) Then
+			If Not File.Exists(strDTAFilePath) Then
 				m_message = "_DTA.txt file not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDTAFilePath)
 				Return False
 			End If
 
-			Using srReader As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strDTAFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			Using srReader As StreamReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				Do While srReader.Peek > -1
 					strLineIn = srReader.ReadLine()
@@ -2294,8 +2289,8 @@ Public Class clsAnalysisToolRunnerBase
 
 #Region "Event Handlers"
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-		If System.DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
-			m_LastLockQueueWaitTimeLog = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+			m_LastLockQueueWaitTimeLog = DateTime.UtcNow
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
 			End If

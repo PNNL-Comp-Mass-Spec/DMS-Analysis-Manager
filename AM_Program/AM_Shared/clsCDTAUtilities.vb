@@ -1,5 +1,8 @@
 ﻿Option Strict On
 
+Imports System.IO
+Imports System.Threading
+
 Public Class clsCDTAUtilities
 
 	Protected WithEvents m_CDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
@@ -15,8 +18,8 @@ Public Class clsCDTAUtilities
 		Const MINIMUM_ION_COUNT As Integer = 3
 
 		Dim strSourceFilePath As String
-		Dim fiOriginalFile As IO.FileInfo
-		Dim fiUpdatedFile As IO.FileInfo
+		Dim fiOriginalFile As FileInfo
+		Dim fiUpdatedFile As FileInfo
 
 		Dim strLineIn As String
 
@@ -30,7 +33,7 @@ Public Class clsCDTAUtilities
 
 		Try
 
-			strSourceFilePath = IO.Path.Combine(strWorkDir, strInputFileName)
+			strSourceFilePath = Path.Combine(strWorkDir, strInputFileName)
 
 			If String.IsNullOrEmpty(strWorkDir) Then
 				ReportError("Error in RemoveSparseSpectra: strWorkDir is empty")
@@ -42,19 +45,19 @@ Public Class clsCDTAUtilities
 				Return False
 			End If
 
-			fiOriginalFile = New IO.FileInfo(strSourceFilePath)
+			fiOriginalFile = New FileInfo(strSourceFilePath)
 			If Not fiOriginalFile.Exists Then
 				ReportError("Error in RemoveSparseSpectra: source file not found: " + strSourceFilePath)
 				Return False
 			End If
 
-			fiUpdatedFile = New IO.FileInfo(strSourceFilePath + ".tmp")
+			fiUpdatedFile = New FileInfo(strSourceFilePath + ".tmp")
 
 			' Open the input file
-			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiOriginalFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Create the output file
-				Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(fiUpdatedFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					Do While srInFile.Peek > -1
 						strLineIn = srInFile.ReadLine()
@@ -109,8 +112,8 @@ Public Class clsCDTAUtilities
 			End Using
 
 			Dim blnSpectraRemoved As Boolean = False
-			Dim blnReplaceSourceFile As Boolean = True
-			Dim blnDeleteSourceFileIfUpdated As Boolean = True
+			Const blnReplaceSourceFile As Boolean = True
+			Const blnDeleteSourceFileIfUpdated As Boolean = True
 
 			If intSpectraRemoved > 0 Then
 				ReportInfo("Removed " & intSpectraRemoved & " spectra from " & strInputFileName & " since fewer than " & MINIMUM_ION_COUNT & " ions", 1)
@@ -136,10 +139,10 @@ Public Class clsCDTAUtilities
 	''' <param name="fiOriginalFile">File handle to the original CDTA file</param>
 	''' <param name="fiUpdatedFile">File handle to the new CDTA file</param>
 	''' <remarks></remarks>
-	Protected Sub FinalizeCDTAValidation(ByVal blnNewCDTAFileHasUpdates As Boolean, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByVal fiOriginalFile As IO.FileInfo, ByVal fiUpdatedFile As IO.FileInfo)
+	Protected Sub FinalizeCDTAValidation(ByVal blnNewCDTAFileHasUpdates As Boolean, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByVal fiOriginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo)
 
 		If blnNewCDTAFileHasUpdates Then
-			Threading.Thread.Sleep(100)
+			Thread.Sleep(100)
 
 			Dim strSourceFilePath As String = fiOriginalFile.FullName
 
@@ -154,15 +157,15 @@ Public Class clsCDTAUtilities
 						strOldFilePath &= intAddon.ToString()
 					End If
 					intAddon += 1
-				Loop While IO.File.Exists(strOldFilePath)
+				Loop While File.Exists(strOldFilePath)
 
 				fiOriginalFile.MoveTo(strOldFilePath)
-				Threading.Thread.Sleep(100)
+				Thread.Sleep(100)
 
 				fiUpdatedFile.MoveTo(strSourceFilePath)
 
 				If blnDeleteSourceFileIfUpdated Then
-					Threading.Thread.Sleep(125)
+					Thread.Sleep(125)
 					PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 					fiOriginalFile.Delete()
@@ -176,7 +179,7 @@ Public Class clsCDTAUtilities
 		Else
 			' No changes were made; nothing to update
 			' However, delete the new file we created
-			Threading.Thread.Sleep(125)
+			Thread.Sleep(125)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			fiUpdatedFile.Delete()
@@ -204,17 +207,16 @@ Public Class clsCDTAUtilities
 		Dim intScanCount As Integer
 		Dim intCharge As Integer
 
-		Dim blnValidScanInfo As Boolean = False
 		Dim blnParentIonLineIsNext As Boolean = False
 		Dim blnParentIonLineUpdated As Boolean = False
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		' We use the DtaTextFileReader to parse out the scan and charge from the header line
 		Dim objReader As MSDataFileReader.clsDtaTextFileReader
 
-		Dim fiOriginalFile As IO.FileInfo
-		Dim fiUpdatedFile As IO.FileInfo
+		Dim fiOriginalFile As FileInfo
+		Dim fiUpdatedFile As FileInfo
 
 		Try
 
@@ -223,7 +225,7 @@ Public Class clsCDTAUtilities
 				Return False
 			End If
 
-			fiOriginalFile = New IO.FileInfo(strSourceFilePath)
+			fiOriginalFile = New FileInfo(strSourceFilePath)
 			If Not fiOriginalFile.Exists Then
 				ReportError("Error in ValidateCDTAFileScanAndCSTags: source file not found: " + strSourceFilePath)
 				Return False
@@ -240,15 +242,15 @@ Public Class clsCDTAUtilities
 				strOutputFilePathTemp = strOutputFilePath
 			End If
 
-			fiUpdatedFile = New IO.FileInfo(strOutputFilePathTemp)
+			fiUpdatedFile = New FileInfo(strOutputFilePathTemp)
 
 			objReader = New MSDataFileReader.clsDtaTextFileReader(False)
 
 			' Open the input file
-			Using srInFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiOriginalFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Create the output file
-				Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(fiUpdatedFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					Do While srInFile.Peek > -1
 						strLineIn = srInFile.ReadLine()
@@ -262,7 +264,7 @@ Public Class clsCDTAUtilities
 
 								' Remove the leading and trailing characters, then extract the scan and charge
 								strDTAHeader = strLineIn.Trim(New Char() {"="c, " "c, ControlChars.Quote})
-								blnValidScanInfo = objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
+								objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
 
 								blnParentIonLineIsNext = True
 
@@ -321,7 +323,7 @@ Public Class clsCDTAUtilities
 	Public Function ValidateCDTAFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
 		Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
 
-		Dim ioFileInfo As System.IO.FileInfo
+		Dim ioFileInfo As FileInfo
 		Dim strInputFilePath As String
 		Dim strFilePathOld As String
 
@@ -330,8 +332,8 @@ Public Class clsCDTAUtilities
 		Dim blnSuccess As Boolean
 
 		Try
-			strInputFilePath = System.IO.Path.Combine(strWorkDir, strInputFileName)
-			ioFileInfo = New System.IO.FileInfo(strInputFilePath)
+			strInputFilePath = Path.Combine(strWorkDir, strInputFileName)
+			ioFileInfo = New FileInfo(strInputFilePath)
 
 			If Not ioFileInfo.Exists Then
 				ReportError("_DTA.txt file not found: " & strInputFilePath)
@@ -353,18 +355,18 @@ Public Class clsCDTAUtilities
 					Return False
 				Else
 					' Wait 500 msec, then check the size of the new _dta.txt file
-					System.Threading.Thread.Sleep(500)
+					Thread.Sleep(500)
 
 					ioFileInfo.Refresh()
 
 					ReportInfo("Condensing complete; size of the new _dta.txt file is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB", 1)
 
 					Try
-						strFilePathOld = System.IO.Path.Combine(strWorkDir, System.IO.Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")
+						strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")
 
 						ReportInfo("Now deleting file " & strFilePathOld, 2)
 
-						ioFileInfo = New System.IO.FileInfo(strFilePathOld)
+						ioFileInfo = New FileInfo(strFilePathOld)
 						If ioFileInfo.Exists Then
 							ioFileInfo.Delete()
 						Else

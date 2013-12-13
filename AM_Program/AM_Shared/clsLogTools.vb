@@ -166,9 +166,9 @@ Public Class clsLogTools
 			Return
 		End If
 
-		For Each SelectedAppender As Appender.IAppender In AppendList
+		For Each SelectedAppender As IAppender In AppendList
 			'Convert the IAppender object to a RollingFileAppender
-			Dim AppenderToChange As Appender.RollingFileAppender = TryCast(SelectedAppender, Appender.RollingFileAppender)
+			Dim AppenderToChange As RollingFileAppender = TryCast(SelectedAppender, RollingFileAppender)
 			If AppenderToChange Is Nothing Then
 				WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender")
 				Return
@@ -192,9 +192,9 @@ Public Class clsLogTools
 		If LoggerList.GetLength(0) < 1 Then Return Nothing
 
 		'Create a List of appenders matching the criteria for each logger
-		Dim RetList As New List(Of Appender.IAppender)
+		Dim RetList As New List(Of IAppender)
 		For Each TestLogger As ILog In LoggerList
-			For Each TestAppender As Appender.IAppender In TestLogger.Logger.Repository.GetAppenders()
+			For Each TestAppender As IAppender In TestLogger.Logger.Repository.GetAppenders()
 				If TestAppender.Name = AppendName Then RetList.Add(TestAppender)
 			Next
 		Next

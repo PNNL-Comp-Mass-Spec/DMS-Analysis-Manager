@@ -3,7 +3,6 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Security.AccessControl
-Imports System.Security.Permissions
 
 Public Class clsCleanupMgrErrors
 
@@ -150,11 +149,8 @@ Public Class clsCleanupMgrErrors
 	''' <remarks></remarks>
 	Public Shared Function CleanWorkDir(ByVal WorkDir As String, ByVal HoldoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
 
-		Dim diWorkFolder As System.IO.DirectoryInfo
+		Dim diWorkFolder As DirectoryInfo
 		Dim HoldoffMilliseconds As Integer
-
-		Dim strCurrentFile As String = String.Empty
-		Dim strCurrentSubfolder As String = String.Empty
 
 		strFailureMessage = String.Empty
 
@@ -168,16 +164,16 @@ Public Class clsCleanupMgrErrors
 
 		'Try to ensure there are no open objects with file handles
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
-		System.Threading.Thread.Sleep(HoldoffMilliseconds)
+		Threading.Thread.Sleep(HoldoffMilliseconds)
 
 		' Delete all of the files and folders in the work directory
-		diWorkFolder = New System.IO.DirectoryInfo(WorkDir)
+		diWorkFolder = New DirectoryInfo(WorkDir)
 		If Not DeleteFilesWithRetry(diWorkFolder) Then
 			Return False
 		Else
 			Return True
 		End If
-		
+
 	End Function
 
 	Protected Shared Function DeleteFilesWithRetry(ByVal diWorkFolder As DirectoryInfo) As Boolean
@@ -260,13 +256,13 @@ Public Class clsCleanupMgrErrors
 								Console.WriteLine(strFailureMessage)
 								failedDeleteCount += 1
 							End Try
-							
-						Catch ex As Exception							
+
+						Catch ex As Exception
 							Dim strFailureMessage As String = "Error deleting folder " & diSubDirectory.FullName & ": " & ex.Message
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
 							Console.WriteLine(strFailureMessage)
 							failedDeleteCount += 1
-						End Try				
+						End Try
 					End If
 				Else
 					Dim strFailureMessage = "Error deleting working directory subfolder " & diSubDirectory.FullName
@@ -298,9 +294,9 @@ Public Class clsCleanupMgrErrors
 	Public Sub CreateErrorDeletingFilesFlagFile()
 
 		Try
-			Dim strPath As String = System.IO.Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
-			Using Sw As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strPath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
-				Sw.WriteLine(System.DateTime.Now().ToString())
+			Dim strPath As String = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
+			Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
+				Sw.WriteLine(DateTime.Now().ToString())
 				Sw.Flush()
 			End Using
 
@@ -317,9 +313,9 @@ Public Class clsCleanupMgrErrors
 	Public Sub CreateStatusFlagFile()
 
 		Try
-			Dim strPath As String = System.IO.Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
-			Using Sw As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strPath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
-				Sw.WriteLine(System.DateTime.Now().ToString())
+			Dim strPath As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+			Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
+				Sw.WriteLine(DateTime.Now().ToString())
 				Sw.Flush()
 			End Using
 
@@ -338,7 +334,7 @@ Public Class clsCleanupMgrErrors
 	Public Function DeleteDeconServerFlagFile(ByVal DebugLevel As Integer) As Boolean
 
 		'Deletes the job request control flag file
-		Dim strFlagFilePath As String = System.IO.Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME)
+		Dim strFlagFilePath As String = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME)
 
 		Return DeleteFlagFile(strFlagFilePath, DebugLevel)
 
@@ -354,13 +350,13 @@ Public Class clsCleanupMgrErrors
 	Protected Function DeleteFlagFile(ByVal strFlagFilePath As String, ByVal intDebugLevel As Integer) As Boolean
 
 		Try
-			If System.IO.File.Exists(strFlagFilePath) Then
+			If File.Exists(strFlagFilePath) Then
 
 				Try
 					' DeleteFileWithRetries will throw an exception if it cannot delete the file
 					' Thus, need to wrap it with an Exception handler
 
-					If AnalysisManagerBase.clsAnalysisToolRunnerBase.DeleteFileWithRetries(strFlagFilePath, intDebugLevel) Then
+					If clsAnalysisToolRunnerBase.DeleteFileWithRetries(strFlagFilePath, intDebugLevel) Then
 						Return True
 					Else
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " & strFlagFilePath)
@@ -391,7 +387,7 @@ Public Class clsCleanupMgrErrors
 	Public Function DeleteStatusFlagFile(ByVal DebugLevel As Integer) As Boolean
 
 		'Deletes the job request control flag file
-		Dim strFlagFilePath As String = System.IO.Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+		Dim strFlagFilePath As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
 
 		Return DeleteFlagFile(strFlagFilePath, DebugLevel)
 
@@ -406,9 +402,9 @@ Public Class clsCleanupMgrErrors
 	Public Function DetectErrorDeletingFilesFlagFile() As Boolean
 
 		'Returns True if job request control flag file exists
-		Dim TestFile As String = System.IO.Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
+		Dim TestFile As String = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
 
-		Return System.IO.File.Exists(TestFile)
+		Return File.Exists(TestFile)
 
 	End Function
 
@@ -422,9 +418,9 @@ Public Class clsCleanupMgrErrors
 	Public Function DetectStatusFlagFile() As Boolean
 
 		'Returns True if job request control flag file exists
-		Dim TestFile As String = System.IO.Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+		Dim TestFile As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
 
-		Return System.IO.File.Exists(TestFile)
+		Return File.Exists(TestFile)
 
 	End Function
 
@@ -438,11 +434,11 @@ Public Class clsCleanupMgrErrors
 	Public Sub DeleteErrorDeletingFilesFlagFile()
 
 		'Deletes the job request control flag file
-		Dim TestFile As String = System.IO.Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
+		Dim TestFile As String = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
 
 		Try
-			If System.IO.File.Exists(TestFile) Then
-				System.IO.File.Delete(TestFile)
+			If File.Exists(TestFile) Then
+				File.Delete(TestFile)
 			End If
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile", ex)
@@ -456,14 +452,13 @@ Public Class clsCleanupMgrErrors
 
 	Protected Sub ReportManagerErrorCleanup(ByVal eMgrCleanupActionCode As eCleanupActionCodeConstants, ByVal strFailureMessage As String)
 
-		Dim MyConnection As System.Data.SqlClient.SqlConnection
-		Dim MyCmd As New System.Data.SqlClient.SqlCommand
-		Dim RetVal As Integer
+		Dim MyConnection As SqlClient.SqlConnection
+		Dim MyCmd As New SqlClient.SqlCommand
 
 		Try
 			If strFailureMessage Is Nothing Then strFailureMessage = String.Empty
 
-			MyConnection = New System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString)
+			MyConnection = New SqlClient.SqlConnection(mMgrConfigDBConnectionString)
 			MyConnection.Open()
 
 			'Set up the command object prior to SP execution
@@ -493,9 +488,9 @@ Public Class clsCleanupMgrErrors
 			End With
 
 			'Execute the SP
-			RetVal = MyCmd.ExecuteNonQuery
+			MyCmd.ExecuteNonQuery()
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			If mMgrConfigDBConnectionString Is Nothing Then mMgrConfigDBConnectionString = String.Empty
 			Dim strErrorMessage As String = "Exception calling " & SP_NAME_REPORTMGRCLEANUP & " in ReportManagerErrorCleanup with connection string " & mMgrConfigDBConnectionString
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)

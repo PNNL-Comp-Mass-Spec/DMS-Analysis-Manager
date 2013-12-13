@@ -26,7 +26,7 @@ Public Interface IMgrParams
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer
 
 	Function LoadDBSettings() As Boolean
-	Function LoadSettings(ByVal ConfigFileSettings As Generic.Dictionary(Of String, String)) As Boolean
+	Function LoadSettings(ByVal ConfigFileSettings As Dictionary(Of String, String)) As Boolean
 	Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String)
 #End Region
 

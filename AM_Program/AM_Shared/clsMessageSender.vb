@@ -6,9 +6,9 @@ Imports Apache.NMS
 Class clsMessageSender
     '    Implements IDisposable
 
-    Private topicName As String = Nothing
-    Private brokerUri As String = Nothing
-    Private processorName As String = Nothing
+	Private ReadOnly topicName As String
+	Private ReadOnly brokerUri As String
+	Private ReadOnly processorName As String
 
     Private connection As IConnection
     Private session As ISession
@@ -57,7 +57,7 @@ Class clsMessageSender
         Try
 			Dim connectionFactory As IConnectionFactory = New ActiveMQ.ConnectionFactory(Me.brokerUri)
 			Me.connection = connectionFactory.CreateConnection()
-			Me.connection.RequestTimeout = New System.TimeSpan(0, 0, 15)
+			Me.connection.RequestTimeout = New TimeSpan(0, 0, 15)
 			Me.connection.Start()
 
             Me.session = connection.CreateSession()

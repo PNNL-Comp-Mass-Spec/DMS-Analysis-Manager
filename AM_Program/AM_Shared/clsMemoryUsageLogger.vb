@@ -8,20 +8,22 @@
 
 Option Strict On
 
+Imports System.IO
+
 Public Class clsMemoryUsageLogger
 
 #Region "Module variables"
 
 	'Status file name and location
-	Private m_LogFolderPath As String
+	Private ReadOnly m_LogFolderPath As String
 
 	' The minimum interval between appending a new memory usage entry to the log
 	Private m_MinimumMemoryUsageLogIntervalMinutes As Single = 1
 
 	'Used to determine the amount of free memory
-	Private m_PerfCounterFreeMemory As System.Diagnostics.PerformanceCounter
-	Private m_PerfCounterPoolPagedBytes As System.Diagnostics.PerformanceCounter
-	Private m_PerfCounterPoolNonpagedBytes As System.Diagnostics.PerformanceCounter
+	Private m_PerfCounterFreeMemory As PerformanceCounter
+	Private m_PerfCounterPoolPagedBytes As PerformanceCounter
+	Private m_PerfCounterPoolNonpagedBytes As PerformanceCounter
 
 	Private m_PerfCountersIntitialized As Boolean = False
 #End Region
@@ -118,8 +120,8 @@ Public Class clsMemoryUsageLogger
 	Public Shared Function GetProcessMemoryUsageMB() As Single
 		Try
 			' Obtain a handle to the current process
-			Dim objProcess As System.Diagnostics.Process
-			objProcess = System.Diagnostics.Process.GetCurrentProcess()
+			Dim objProcess As Process
+			objProcess = Process.GetCurrentProcess()
 
 			' The WorkingSet is the total physical memory usage 
 			Return CSng(objProcess.WorkingSet64 / 1024.0 / 1024)
@@ -138,7 +140,7 @@ Public Class clsMemoryUsageLogger
 		Dim msgErrors As String = String.Empty
 
 		Try
-			m_PerfCounterFreeMemory = New System.Diagnostics.PerformanceCounter("Memory", "Available MBytes")
+			m_PerfCounterFreeMemory = New PerformanceCounter("Memory", "Available MBytes")
 			m_PerfCounterFreeMemory.ReadOnly = True
 		Catch ex As Exception
 			If msgErrors.Length > 0 Then msgErrors &= "; "
@@ -146,7 +148,7 @@ Public Class clsMemoryUsageLogger
 		End Try
 
 		Try
-			m_PerfCounterPoolPagedBytes = New System.Diagnostics.PerformanceCounter("Memory", "Pool Paged Bytes")
+			m_PerfCounterPoolPagedBytes = New PerformanceCounter("Memory", "Pool Paged Bytes")
 			m_PerfCounterPoolPagedBytes.ReadOnly = True
 		Catch ex As Exception
 			If msgErrors.Length > 0 Then msgErrors &= "; "
@@ -154,7 +156,7 @@ Public Class clsMemoryUsageLogger
 		End Try
 
 		Try
-			m_PerfCounterPoolNonpagedBytes = New System.Diagnostics.PerformanceCounter("Memory", "Pool NonPaged Bytes")
+			m_PerfCounterPoolNonpagedBytes = New PerformanceCounter("Memory", "Pool NonPaged Bytes")
 			m_PerfCounterPoolNonpagedBytes.ReadOnly = True
 		Catch ex As Exception
 			If msgErrors.Length > 0 Then msgErrors &= "; "
@@ -172,55 +174,54 @@ Public Class clsMemoryUsageLogger
 	''' </summary>
 	''' <remarks></remarks>
 	Public Sub WriteMemoryUsageLogEntry()
-		Static dtLastWriteTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
+		Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
 		Dim strLogFileName As String
 		Dim strLogFilePath As String
 		Dim blnWriteHeader As Boolean = False
 
 		Try
-			If System.DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
+			If DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
 				' Not enough time has elapsed since the last write; exit sub
 				Exit Sub
 			End If
-			dtLastWriteTime = System.DateTime.UtcNow
+			dtLastWriteTime = DateTime.UtcNow
 
 			' We're creating a new log file each month
-			strLogFileName = "MemoryUsageLog_" & System.DateTime.Now.ToString("yyyy-MM") & ".txt"
+			strLogFileName = "MemoryUsageLog_" & DateTime.Now.ToString("yyyy-MM") & ".txt"
 
 			If Not m_LogFolderPath Is Nothing AndAlso m_LogFolderPath.Length > 0 Then
-				strLogFilePath = System.IO.Path.Combine(m_LogFolderPath, strLogFileName)
+				strLogFilePath = Path.Combine(m_LogFolderPath, strLogFileName)
 			Else
 				strLogFilePath = String.Copy(strLogFileName)
 			End If
 
-			If Not System.IO.File.Exists(strLogFilePath) Then
+			If Not File.Exists(strLogFilePath) Then
 				blnWriteHeader = True
 			End If
 
-			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strLogFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strLogFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 
 				If Not m_PerfCountersIntitialized Then
-					Dim msgErrors As String
-					msgErrors = InitializePerfCounters()
+					InitializePerfCounters()
 					m_PerfCountersIntitialized = True
 				End If
 
 				If blnWriteHeader Then
 					swOutFile.WriteLine("Date" & ControlChars.Tab & _
-						 "Time" & ControlChars.Tab & _
-						 "ProcessMemoryUsage_MB" & ControlChars.Tab & _
-						 "FreeMemory_MB" & ControlChars.Tab & _
-						 "PoolPaged_MB" & ControlChars.Tab & _
-						 "PoolNonpaged_MB" & ControlChars.Tab)
+					  "Time" & ControlChars.Tab & _
+					  "ProcessMemoryUsage_MB" & ControlChars.Tab & _
+					  "FreeMemory_MB" & ControlChars.Tab & _
+					  "PoolPaged_MB" & ControlChars.Tab & _
+					  "PoolNonpaged_MB" & ControlChars.Tab)
 				End If
 
-				swOutFile.WriteLine(System.DateTime.Now().ToString("yyyy-MM-dd") & ControlChars.Tab & _
-					 System.DateTime.Now().ToString("hh:mm:ss tt") & ControlChars.Tab & _
-					 GetProcessMemoryUsageMB.ToString("0.0") & ControlChars.Tab & _
-					 GetFreeMemoryMB.ToString("0.0") & ControlChars.Tab & _
-					 GetPoolPagedMemory.ToString("0.0") & ControlChars.Tab & _
-					 GetPoolNonpagedMemory.ToString("0.0") & ControlChars.Tab)
+				swOutFile.WriteLine(DateTime.Now().ToString("yyyy-MM-dd") & ControlChars.Tab & _
+				  DateTime.Now().ToString("hh:mm:ss tt") & ControlChars.Tab & _
+				  GetProcessMemoryUsageMB.ToString("0.0") & ControlChars.Tab & _
+				  GetFreeMemoryMB.ToString("0.0") & ControlChars.Tab & _
+				  GetPoolPagedMemory.ToString("0.0") & ControlChars.Tab & _
+				  GetPoolNonpagedMemory.ToString("0.0") & ControlChars.Tab)
 
 			End Using
 

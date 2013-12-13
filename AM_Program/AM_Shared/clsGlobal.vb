@@ -10,6 +10,8 @@
 Option Strict On
 
 Imports System.IO
+Imports System.Threading
+Imports System.Text.RegularExpressions
 
 Public Class clsGlobal
 
@@ -88,7 +90,7 @@ Public Class clsGlobal
 	''' <param name="lstFields"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Public Shared Function CollapseList(lstFields As Generic.List(Of String)) As String
+	Public Shared Function CollapseList(lstFields As List(Of String)) As String
 
 		Return FlattenList(lstFields, ControlChars.Tab)
 
@@ -101,9 +103,9 @@ Public Class clsGlobal
 	''' <param name="chDelimiter"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Public Shared Function FlattenList(ByVal lstItems As Generic.List(Of String), ByVal chDelimiter As Char) As String
+	Public Shared Function FlattenList(ByVal lstItems As List(Of String), ByVal chDelimiter As Char) As String
 
-		Dim sbText As System.Text.StringBuilder = New System.Text.StringBuilder()
+		Dim sbText As Text.StringBuilder = New Text.StringBuilder()
 
 		If lstItems Is Nothing OrElse lstItems.Count = 0 Then
 			' Nothing to do
@@ -127,11 +129,11 @@ Public Class clsGlobal
 		Static strAppFolderPath As String = String.Empty
 
 		If String.IsNullOrEmpty(strAppFolderPath) Then
-			Dim objAssembly As System.Reflection.Assembly
-			objAssembly = System.Reflection.Assembly.GetEntryAssembly()
+			Dim objAssembly As Reflection.Assembly
+			objAssembly = Reflection.Assembly.GetEntryAssembly()
 
-			Dim fiAssemblyFile As System.IO.FileInfo
-			fiAssemblyFile = New System.IO.FileInfo(objAssembly.Location)
+			Dim fiAssemblyFile As FileInfo
+			fiAssemblyFile = New FileInfo(objAssembly.Location)
 
 			strAppFolderPath = fiAssemblyFile.DirectoryName
 		End If
@@ -145,8 +147,8 @@ Public Class clsGlobal
 	''' </summary>
 	''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
 	Public Shared Function GetAssemblyVersion() As String
-		Dim objEntryAssembly As System.Reflection.Assembly
-		objEntryAssembly = System.Reflection.Assembly.GetEntryAssembly()
+		Dim objEntryAssembly As Reflection.Assembly
+		objEntryAssembly = Reflection.Assembly.GetEntryAssembly()
 
 		Return GetAssemblyVersion(objEntryAssembly)
 
@@ -156,14 +158,14 @@ Public Class clsGlobal
 	''' Returns the version string of the specified assembly
 	''' </summary>
 	''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-	Public Shared Function GetAssemblyVersion(ByRef objAssembly As System.Reflection.Assembly) As String
+	Public Shared Function GetAssemblyVersion(ByRef objAssembly As Reflection.Assembly) As String
 		' objAssembly.FullName typically returns something like this:
 		' AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
 		' 
 		' the goal is to extract out the text after Version= but before the next comma
 
-		Dim reGetVersion As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("version=([0-9.]+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim reGetVersion As Regex = New Regex("version=([0-9.]+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Dim reMatch As Match
 		Dim strVersion As String
 
 		strVersion = objAssembly.FullName
@@ -184,27 +186,27 @@ Public Class clsGlobal
 	''' <param name="objException"></param>
 	''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
 	''' <remarks></remarks>
-	Public Shared Function GetExceptionStackTrace(ByVal objException As System.Exception) As String
+	Public Shared Function GetExceptionStackTrace(ByVal objException As Exception) As String
 		Const REGEX_FUNCTION_NAME As String = "at ([^(]+)\("
 		Const REGEX_FILE_NAME As String = "in .+\\(.+)"
 
 		Dim intIndex As Integer
 
-		Dim lstFunctions As Generic.List(Of String) = New Generic.List(Of String)
+		Dim lstFunctions As List(Of String) = New List(Of String)
 
 		Dim strCurrentFunction As String
 		Dim strFinalFile As String = String.Empty
 
-		Dim strLine As String = String.Empty
-		Dim strStackTrace As String = String.Empty
+		Dim strLine As String
+		Dim strStackTrace As String
 
-		Dim reFunctionName As New System.Text.RegularExpressions.Regex(REGEX_FUNCTION_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Dim reFileName As New System.Text.RegularExpressions.Regex(REGEX_FILE_NAME, System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Dim objMatch As System.Text.RegularExpressions.Match
+		Dim reFunctionName As New Regex(REGEX_FUNCTION_NAME, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Dim reFileName As New Regex(REGEX_FILE_NAME, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Dim objMatch As Match
 
 		' Process each line in objException.StackTrace
 		' Populate strFunctions() with the function name of each line
-		Using trTextReader As System.IO.StringReader = New System.IO.StringReader(objException.StackTrace)
+		Using trTextReader As StringReader = New StringReader(objException.StackTrace)
 
 			Do While trTextReader.Peek > -1
 				strLine = trTextReader.ReadLine()
@@ -217,10 +219,10 @@ Public Class clsGlobal
 						strCurrentFunction = objMatch.Groups(1).Value
 					Else
 						' Look for the word " in "
-						intIndex = strLine.ToLower().IndexOf(" in ", System.StringComparison.Ordinal)
+						intIndex = strLine.ToLower().IndexOf(" in ", StringComparison.Ordinal)
 						If intIndex = 0 Then
 							' " in" not found; look for the first space after startIndex 4
-							intIndex = strLine.IndexOf(" ", 4, System.StringComparison.Ordinal)
+							intIndex = strLine.IndexOf(" ", 4, StringComparison.Ordinal)
 						End If
 						If intIndex = 0 Then
 							' Space not found; use the entire string
@@ -266,7 +268,7 @@ Public Class clsGlobal
 		Return strStackTrace
 
 	End Function
-	
+
 	''' <summary>
 	''' Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
 	''' </summary>
@@ -333,7 +335,7 @@ Public Class clsGlobal
 	''' <returns></returns>
 	''' <remarks>Returns false if an exception</remarks>
 	Public Shared Function CBoolSafe(ByVal Value As String) As Boolean
-		Dim blnValue As Boolean = False
+		Dim blnValue As Boolean
 
 		Try
 			If String.IsNullOrEmpty(Value) Then
@@ -357,7 +359,7 @@ Public Class clsGlobal
 	''' <returns></returns>
 	''' <remarks>Returns false if an exception</remarks>
 	Public Shared Function CBoolSafe(ByVal Value As String, ByVal blnDefaultValue As Boolean) As Boolean
-		Dim blnValue As Boolean = False
+		Dim blnValue As Boolean
 
 		Try
 			If String.IsNullOrEmpty(Value) Then
@@ -439,8 +441,8 @@ Public Class clsGlobal
 	  ByVal TargetFileName As String, _
 	  ByVal VersionCountToKeep As Integer) As Boolean
 
-		Dim ioSrcFile As System.IO.FileInfo
-		Dim ioFileToRename As System.IO.FileInfo
+		Dim ioSrcFile As FileInfo
+		Dim ioFileToRename As FileInfo
 
 		Dim strBaseName As String
 		Dim strBaseNameCurrent As String
@@ -451,13 +453,13 @@ Public Class clsGlobal
 		Dim intRevision As Integer
 
 		Try
-			ioSrcFile = New System.IO.FileInfo(SourceFilePath)
+			ioSrcFile = New FileInfo(SourceFilePath)
 			If Not ioSrcFile.Exists Then
 				' Source file not found
 				Return False
 			Else
-				strBaseName = System.IO.Path.GetFileNameWithoutExtension(TargetFileName)
-				strExtension = System.IO.Path.GetExtension(TargetFileName)
+				strBaseName = Path.GetFileNameWithoutExtension(TargetFileName)
+				strExtension = Path.GetExtension(TargetFileName)
 				If String.IsNullOrEmpty(strExtension) Then
 					strExtension = ".bak"
 				End If
@@ -475,12 +477,12 @@ Public Class clsGlobal
 					End If
 					strBaseNameCurrent &= strExtension
 
-					ioFileToRename = New System.IO.FileInfo(System.IO.Path.Combine(TargetFolder, strBaseNameCurrent))
-					strNewFilePath = System.IO.Path.Combine(TargetFolder, strBaseName & "_" & (intRevision + 1).ToString & strExtension)
+					ioFileToRename = New FileInfo(Path.Combine(TargetFolder, strBaseNameCurrent))
+					strNewFilePath = Path.Combine(TargetFolder, strBaseName & "_" & (intRevision + 1).ToString & strExtension)
 
 					' Confirm that strNewFilePath doesn't exist; delete it if it does
-					If System.IO.File.Exists(strNewFilePath) Then
-						System.IO.File.Delete(strNewFilePath)
+					If File.Exists(strNewFilePath) Then
+						File.Delete(strNewFilePath)
 					End If
 
 					' Rename the current file to strNewFilePath
@@ -494,7 +496,7 @@ Public Class clsGlobal
 
 			Next intRevision
 
-			strNewFilePath = System.IO.Path.Combine(TargetFolder, TargetFileName)
+			strNewFilePath = Path.Combine(TargetFolder, TargetFileName)
 
 			' Now copy the file from SourceFilePath to strNewFilePath
 			ioSrcFile.CopyTo(strNewFilePath, True)
@@ -618,8 +620,8 @@ Public Class clsGlobal
 	''' <param name="sErrorMessage">Error message (output)</param>
 	''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	''' <remarks>No logging is performed by this procedure</remarks>
-	Public Shared Function ExecuteSP(ByRef SpCmd As System.Data.SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByRef sErrorMessage As String) As Integer
-		Dim TimeoutSeconds As Integer = 30
+	Public Shared Function ExecuteSP(ByRef SpCmd As SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByRef sErrorMessage As String) As Integer
+		Const TimeoutSeconds As Integer = 30
 		Return ExecuteSP(SpCmd, ConnStr, MaxRetryCount, TimeoutSeconds, sErrorMessage)
 	End Function
 
@@ -633,7 +635,7 @@ Public Class clsGlobal
 	''' <param name="sErrorMessage">Error message (output)</param>
 	''' <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	''' <remarks>No logging is performed by this procedure</remarks>
-	Public Shared Function ExecuteSP(ByRef SpCmd As System.Data.SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByVal TimeoutSeconds As Integer, ByRef sErrorMessage As String) As Integer
+	Public Shared Function ExecuteSP(ByRef SpCmd As SqlClient.SqlCommand, ByVal ConnStr As String, ByVal MaxRetryCount As Integer, ByVal TimeoutSeconds As Integer, ByRef sErrorMessage As String) As Integer
 
 		Dim ResCode As Integer = -9999	'If this value is in error msg, then exception occurred before ResCode was set			
 		Dim RetryCount As Integer = MaxRetryCount
@@ -650,7 +652,7 @@ Public Class clsGlobal
 		While RetryCount > 0	'Multiple retry loop for handling SP execution failures
 			blnDeadlockOccurred = False
 			Try
-				Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(ConnStr)
+				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(ConnStr)
 
 					Cn.Open()
 
@@ -665,11 +667,11 @@ Public Class clsGlobal
 				sErrorMessage = String.Empty
 
 				Exit While
-			Catch ex As System.Exception
+			Catch ex As Exception
 				RetryCount -= 1
 				sErrorMessage = "clsGlobal.ExecuteSP(), exception calling stored procedure " & SpCmd.CommandText & ", " & ex.Message
 				sErrorMessage &= ". ResCode = " & ResCode.ToString & ". Retry count = " & RetryCount.ToString
-				sErrorMessage &= "; " & clsGlobal.GetExceptionStackTrace(ex)
+				sErrorMessage &= "; " & GetExceptionStackTrace(ex)
 				Console.WriteLine(sErrorMessage)
 				If ex.Message.StartsWith("Could not find stored procedure " & SpCmd.CommandText) Then
 					Exit While
@@ -679,7 +681,7 @@ Public Class clsGlobal
 			End Try
 
 			If RetryCount > 0 Then
-				System.Threading.Thread.Sleep(20000)	'Wait 20 seconds before retrying
+				Thread.Sleep(20000)	'Wait 20 seconds before retrying
 			End If
 		End While
 
@@ -705,7 +707,7 @@ Public Class clsGlobal
 	Private Shared Function ByteArrayToString(ByVal arrInput() As Byte) As String
 		' Converts a byte array into a hex string
 
-		Dim strOutput As New System.Text.StringBuilder(arrInput.Length)
+		Dim strOutput As New Text.StringBuilder(arrInput.Length)
 
 		For i As Integer = 0 To arrInput.Length - 1
 			strOutput.Append(arrInput(i).ToString("X2"))
@@ -725,17 +727,14 @@ Public Class clsGlobal
 		' Calculates the MD5 hash of a given file
 		' Code from Tim Hastings, at http://www.nonhostile.com/page000017.asp
 
-		Dim objMD5 As New System.Security.Cryptography.MD5CryptoServiceProvider
+		Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
 		Dim arrHash() As Byte
 
 		' open file (as read-only)
-		Using objReader As System.IO.Stream = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+		Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read)
 			' hash contents of this stream
 			arrHash = objMD5.ComputeHash(objReader)
 		End Using
-
-		' Cleanup the objects
-		objMD5 = Nothing
 
 		' Return the hash, formatted as a string
 		Return ByteArrayToString(arrHash)
@@ -754,7 +753,7 @@ Public Class clsGlobal
 
 		Dim strMD5Hash As String
 
-		If Not IO.File.Exists(strDataFilePath) Then Return String.Empty
+		If Not File.Exists(strDataFilePath) Then Return String.Empty
 
 		If blnComputeMD5Hash Then
 			strMD5Hash = ComputeFileHashMD5(strDataFilePath)
@@ -776,18 +775,18 @@ Public Class clsGlobal
 	''' <remarks></remarks>
 	Public Shared Function CreateHashcheckFile(ByVal strDataFilePath As String, ByVal strMD5Hash As String) As String
 
-		Dim fiDataFile As IO.FileInfo
+		Dim fiDataFile As FileInfo
 		Dim strHashFilePath As String
 
-		fiDataFile = New IO.FileInfo(strDataFilePath)
+		fiDataFile = New FileInfo(strDataFilePath)
 
 		If Not fiDataFile.Exists Then Return String.Empty
 
 		strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
 		If String.IsNullOrWhiteSpace(strMD5Hash) Then strMD5Hash = String.Empty
 
-		Using swOutFile As IO.StreamWriter = New IO.StreamWriter(New IO.FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-			swOutFile.WriteLine("# Hashcheck file created " & System.DateTime.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+		Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+			swOutFile.WriteLine("# Hashcheck file created " & DateTime.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
 			swOutFile.WriteLine("size=" & fiDataFile.Length)
 			swOutFile.WriteLine("modification_date_utc=" & fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
 			swOutFile.WriteLine("hash=" & strMD5Hash)
@@ -806,17 +805,14 @@ Public Class clsGlobal
 	Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
 		' Calculates the Sha-1 hash of a given file
 
-		Dim objSha1 As New System.Security.Cryptography.SHA1CryptoServiceProvider
+		Dim objSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
 		Dim arrHash() As Byte
 
 		' open file (as read-only)
-		Using objReader As System.IO.Stream = New System.IO.FileStream(strPath, IO.FileMode.Open, IO.FileAccess.Read)
+		Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read)
 			' hash contents of this stream
 			arrHash = objSha1.ComputeHash(objReader)
 		End Using
-
-		' Cleanup the objects
-		objSha1 = Nothing
 
 		' Return the hash, formatted as a string
 		Return ByteArrayToString(arrHash)
@@ -832,12 +828,12 @@ Public Class clsGlobal
 	''' <remarks></remarks>
 	Public Shared Function FilesMatch(ByVal strFilePath1 As String, ByVal strFilePath2 As String) As Boolean
 
-		Dim fiFile1 As System.IO.FileInfo
-		Dim fiFile2 As System.IO.FileInfo
+		Dim fiFile1 As FileInfo
+		Dim fiFile2 As FileInfo
 
 		Try
-			fiFile1 = New IO.FileInfo(strFilePath1)
-			fiFile2 = New IO.FileInfo(strFilePath2)
+			fiFile1 = New FileInfo(strFilePath1)
+			fiFile2 = New FileInfo(strFilePath2)
 
 			If Not fiFile1.Exists OrElse Not fiFile2.Exists Then
 				Return False
@@ -845,8 +841,8 @@ Public Class clsGlobal
 				Return False
 			End If
 
-			Using srFile1 As System.IO.BinaryReader = New System.IO.BinaryReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-				Using srFile2 As System.IO.BinaryReader = New System.IO.BinaryReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srFile1 As BinaryReader = New BinaryReader(New FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+				Using srFile2 As BinaryReader = New BinaryReader(New FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 					While srFile1.BaseStream.Position < fiFile1.Length
 						If srFile1.ReadByte <> srFile2.ReadByte Then
 							Return False
@@ -877,7 +873,7 @@ Public Class clsGlobal
 	Public Shared Function ReplaceIgnoreCase(ByVal strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
 
 		Dim intCharIndex As Integer
-		intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), System.StringComparison.Ordinal)
+		intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), StringComparison.Ordinal)
 
 		If intCharIndex < 0 Then
 			Return strTextToSearch
@@ -906,7 +902,7 @@ Public Class clsGlobal
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Public Shared Function UsingVirtualMachineOnPIC() As Boolean
-		Dim rePub1000 As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Pub-1\d{3,}", Text.RegularExpressions.RegexOptions.IgnoreCase)
+		Dim rePub1000 As Regex = New Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
 
 		If rePub1000.IsMatch(Environment.MachineName) Then
 			' The Memory performance counters are not available on Windows instances running under VMWare on PIC
@@ -969,14 +965,14 @@ Public Class clsGlobal
 
 		Dim lngExpectedFileSizeBytes As Int64 = 0
 		Dim strExpectedHash As String = String.Empty
-		Dim dtExpectedFileDate As System.DateTime = System.DateTime.MinValue
+		Dim dtExpectedFileDate As DateTime = DateTime.MinValue
 
 		Try
 
-			Dim fiDataFile As IO.FileInfo = New IO.FileInfo(strDataFilePath)
+			Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
 
 			If String.IsNullOrEmpty(strHashFilePath) Then strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-			Dim fiHashCheck As IO.FileInfo = New IO.FileInfo(strHashFilePath)
+			Dim fiHashCheck As FileInfo = New FileInfo(strHashFilePath)
 
 			If Not fiDataFile.Exists Then
 				strErrorMessage = "Data file not found at " & fiDataFile.FullName
@@ -992,7 +988,7 @@ Public Class clsGlobal
 			Dim strLineIn As String
 			Dim strSplitLine As String()
 
-			Using srInfile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiHashCheck.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInfile As StreamReader = New StreamReader(New FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 				While srInfile.Peek > -1
 					strLineIn = srInfile.ReadLine()
 
@@ -1008,7 +1004,7 @@ Public Class clsGlobal
 								Case "size"
 									Int64.TryParse(strSplitLine(1), lngExpectedFileSizeBytes)
 								Case "modification_date_utc"
-									System.DateTime.TryParse(strSplitLine(1), dtExpectedFileDate)
+									DateTime.TryParse(strSplitLine(1), dtExpectedFileDate)
 								Case "hash"
 									strExpectedHash = String.Copy(strSplitLine(1))
 
@@ -1035,7 +1031,7 @@ Public Class clsGlobal
 			If blnComputeHash Then
 				' Compute the hash of the file
 				Dim strActualHash As String
-				strActualHash = clsGlobal.ComputeFileHashMD5(strDataFilePath)
+				strActualHash = ComputeFileHashMD5(strDataFilePath)
 
 				If strActualHash <> strExpectedHash Then
 					strErrorMessage = "Hash mismatch: expecting " & strExpectedHash & " but computed " & strActualHash

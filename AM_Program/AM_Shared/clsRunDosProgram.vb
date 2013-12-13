@@ -9,6 +9,8 @@
 
 Option Strict On
 
+Imports System.Threading
+
 Public Class clsRunDosProgram
 
 	'*********************************************************************************************************
@@ -309,7 +311,7 @@ Public Class clsRunDosProgram
 	''' <remarks>MaxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
 	Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean, ByVal MaxSeconds As Integer) As Boolean
 
-		Dim dtStartTime As System.DateTime
+		Dim dtStartTime As DateTime
 		Dim blnRuntimeExceeded As Boolean
 		Dim blnAbortLogged As Boolean
 
@@ -349,7 +351,7 @@ Public Class clsRunDosProgram
 		m_AbortProgramPostLogEntry = True
 		blnRuntimeExceeded = False
 		blnAbortLogged = False
-		dtStartTime = System.DateTime.UtcNow
+		dtStartTime = DateTime.UtcNow
 
 		Try
 			' Start the program executing
@@ -358,17 +360,17 @@ Public Class clsRunDosProgram
 			' Loop until program is complete, or until m_MaxRuntimeSeconds seconds elapses
 			While (m_ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)  ' And (ProgRunner.State <> 10)
 				RaiseEvent LoopWaiting()
-				System.Threading.Thread.Sleep(m_MonitorInterval)
+				Thread.Sleep(m_MonitorInterval)
 
 				If m_MaxRuntimeSeconds > 0 Then
-					If System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds AndAlso Not m_AbortProgramNow Then
+					If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds AndAlso Not m_AbortProgramNow Then
 						m_AbortProgramNow = True
 						blnRuntimeExceeded = True
 						RaiseEvent Timeout()
 					End If
 				End If
 
-				If m_ProgRunner.State = PRISM.Processes.clsProgRunner.States.StartingProcess AndAlso System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 AndAlso System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90 Then
+				If m_ProgRunner.State = PRISM.Processes.clsProgRunner.States.StartingProcess AndAlso DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 AndAlso DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90 Then
 					' It has taken over 30 seconds for the thread to start
 					' Try re-joining
 					m_ProgRunner.JoinThreadNow()

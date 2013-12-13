@@ -15,8 +15,8 @@ Public Class clsDBStatusLogger
 	Public Structure udtStatusInfoType
 		Public MgrName As String
 		Public MgrStatus As IStatusFile.EnumMgrStatus
-		Public LastUpdate As System.DateTime
-		Public LastStartTime As System.DateTime
+		Public LastUpdate As DateTime
+		Public LastStartTime As DateTime
 		Public CPUUtilization As Single
 		Public FreeMemoryMB As Single
 		Public MostRecentErrorMessage As String
@@ -92,11 +92,10 @@ Public Class clsDBStatusLogger
 
 	Public Sub LogStatus(ByVal udtStatusInfo As udtStatusInfoType, ByVal blnForceLogToDB As Boolean)
 
-		Static dtLastWriteTime As System.DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(1, 0, 0))
+		Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
-		Dim MyConnection As System.Data.SqlClient.SqlConnection
-		Dim MyCmd As New System.Data.SqlClient.SqlCommand
-		Dim RetVal As Integer
+		Dim MyConnection As SqlClient.SqlConnection
+		Dim MyCmd As New SqlClient.SqlCommand
 
 		Try
 			If String.IsNullOrEmpty(m_DBConnectionString) Then
@@ -105,14 +104,14 @@ Public Class clsDBStatusLogger
 			End If
 
 			If Not blnForceLogToDB AndAlso _
-			   System.DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
+			   DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
 				' Not enough time has elapsed since the last write; exit sub
 				Exit Sub
 			End If
-			dtLastWriteTime = System.DateTime.UtcNow
+			dtLastWriteTime = DateTime.UtcNow
 
 
-			MyConnection = New System.Data.SqlClient.SqlConnection(m_DBConnectionString)
+			MyConnection = New SqlClient.SqlConnection(m_DBConnectionString)
 			MyConnection.Open()
 
 			'Set up the command object prior to SP execution
@@ -157,9 +156,9 @@ Public Class clsDBStatusLogger
 			End With
 
 			'Execute the SP
-			RetVal = MyCmd.ExecuteNonQuery
+			MyCmd.ExecuteNonQuery()
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			' Ignore errors here
 			Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " & ex.Message)
 		End Try
