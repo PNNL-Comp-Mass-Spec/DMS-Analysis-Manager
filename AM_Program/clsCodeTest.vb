@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 Imports System.Text.RegularExpressions
 
 Public Class clsCodeTest
@@ -766,6 +767,58 @@ Public Class clsCodeTest
 		Next
 
 		Console.WriteLine(strDate)
+
+	End Sub
+
+	Public Sub ConvertZipToGZip(ByVal zipFilePath As String)
+
+		Const debugLevel = 2
+		Const workDir = "e:\dms_workdir"
+
+		Dim ionicZipTools = New clsIonicZipTools(debugLevel, workDir)
+
+		ionicZipTools.UnzipFile(zipFilePath)
+
+		Dim diWorkDir = New DirectoryInfo(workDir)
+		For Each fiFile In diWorkDir.GetFiles("*.mzid")
+			ionicZipTools.GZipFile(fiFile.FullName, True)
+		Next
+
+	End Sub
+
+	Public Sub TestGZip()
+
+		Const intDebugLevel As Integer = 2
+
+		Dim objToolRunner As clsCodeTestAM
+		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+		Dim objSummaryFile As New clsSummaryFile()
+
+		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+		m_mgrParams.SetParam("MgrName", "Monroe_Test")
+		m_mgrParams.SetParam("debuglevel", "0")
+
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+
+		objToolRunner = New clsCodeTestAM
+		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+
+		Const sourceFilePath As String = "F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.mzid"
+
+		objToolRunner.GZipFile(sourceFilePath, "F:\Temp\GZip\new1", False)
+
+		objToolRunner.GZipFile(sourceFilePath, False)
+
+		Const gzippedFile As String = "F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.mzid.gz"
+
+		objToolRunner.GUnzipFile(gzippedFile)
+
+		objToolRunner.GUnzipFile(gzippedFile, "F:\Temp\GZip\new2")
 
 	End Sub
 

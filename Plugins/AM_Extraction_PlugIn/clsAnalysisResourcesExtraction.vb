@@ -243,6 +243,8 @@ Public Class clsAnalysisResourcesExtraction
 		Dim blnUseLegacyMSGFDB As Boolean
 		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
 		Dim suffixToAdd As String
+		Dim mzidSuffix As String
+
 		Dim numberOfClonedSteps = 1
 		Dim pepToProtMapRetrievalError As Boolean = False
 
@@ -262,21 +264,31 @@ Public Class clsAnalysisResourcesExtraction
 
 			Dim SourceFolderPath As String
 			currentStep = "Determining results file type based on the results file name"
-			SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
+			blnUseLegacyMSGFDB = False
+
+			SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".mzid.gz", True, False)
 			If String.IsNullOrEmpty(SourceFolderPath) Then
 				' File not found
-				SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
+				SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
 				If String.IsNullOrEmpty(SourceFolderPath) Then
-					' File not found; log a warning
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find either the _msgfplus.zip file or the _msgfdb.zip file; auto-setting blnUseLegacyMSGFDB=False")
-					blnUseLegacyMSGFDB = False
+					' File not found
+					SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
+					If String.IsNullOrEmpty(SourceFolderPath) Then
+						' File not found; log a warning
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MSGF+")
+						mzidSuffix = ".mzid.gz"
+					Else
+						' File Found
+						blnUseLegacyMSGFDB = True
+						mzidSuffix = ".zip"
+					End If
 				Else
-					' File Found
-					blnUseLegacyMSGFDB = True
+					' Running MSGF+ with zipped results
+					mzidSuffix = ".zip"
 				End If
 			Else
-				' Running MSGF+
-				blnUseLegacyMSGFDB = False
+				' Running MSGF+ with gzipped results
+				mzidSuffix = ".mzid.gz"
 			End If
 
 			For iteration As Integer = 1 To numberOfClonedSteps
@@ -332,7 +344,7 @@ Public Class clsAnalysisResourcesExtraction
 				End If
 
 				If Not blnSkipMSGFResultsZipFileCopy Then
-					FileToGet = strBaseName & ".zip"
+					FileToGet = strBaseName & mzidSuffix
 					currentStep = "Retrieving " & FileToGet
 
 					If Not FindAndRetrieveMiscFiles(FileToGet, True) Then

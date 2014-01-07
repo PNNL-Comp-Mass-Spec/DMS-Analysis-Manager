@@ -74,20 +74,360 @@ Public Class clsIonicZipTools
 
 	End Sub
 
+	Protected Sub DeleteFile(ByVal fiFile As FileInfo)
+		Try
+
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting source file: " & fiFile.FullName)
+			End If
+
+			fiFile.Refresh()
+
+			If fiFile.Exists() Then
+				' Now delete the source file
+				fiFile.Delete()
+			End If
+			
+
+			' Wait 250 msec
+			Thread.Sleep(250)
+			
+		Catch ex As Exception
+			' Log this as an error, but still return True
+			m_Message = "Error deleting " & fiFile.FullName & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+		End Try
+
+	End Sub
+	
+	''' <summary>
+	''' Unzip GZipFilePath into the working directory defined when this class was instantiated
+	''' Existing files will be overwritten
+	''' </summary>
+	''' <param name="GZipFilePath">.gz file to unzip</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GUnzipFile(ByVal GZipFilePath As String) As Boolean
+		Return GUnzipFile(GZipFilePath, m_WorkDir)
+	End Function
+
+	''' <summary>
+	''' Unzip GZipFilePath into the specified target directory
+	''' Existing files will be overwritten
+	''' </summary>
+	''' <param name="GZipFilePath">.gz file to unzip</param>
+	''' <param name="TargetDirectory">Folder to place the unzipped files</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GUnzipFile(ByVal GZipFilePath As String, ByVal TargetDirectory As String) As Boolean
+		Return GUnzipFile(GZipFilePath, TargetDirectory, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
+	End Function
+
+
+	''' <summary>
+	''' Unzip GZipFilePath into the specified target directory, applying the specified file filter
+	''' </summary>
+	''' <param name="GZipFilePath">.gz file to unzip</param>
+	''' <param name="TargetDirectory">Folder to place the unzipped files</param>
+	''' <param name="eOverwriteBehavior">Defines what to do when existing files could be ovewritten</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GUnzipFile(ByVal GZipFilePath As String, _
+	  ByVal TargetDirectory As String, _
+	  ByVal eOverwriteBehavior As Ionic.Zip.ExtractExistingFileAction) As Boolean
+
+		Dim dtStartTime As DateTime
+		Dim dtEndTime As DateTime
+
+		m_Message = String.Empty
+		m_MostRecentZipFilePath = String.Copy(GZipFilePath)
+		m_MostRecentUnzippedFiles.Clear()
+
+		Try
+			Dim fiFile = New FileInfo(GZipFilePath)
+
+			If Not File.Exists(GZipFilePath) Then
+				m_Message = "GZip file not found: " & fiFile.FullName
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file: " & fiFile.FullName)
+			End If
+
+			dtStartTime = DateTime.UtcNow
+
+			' Get original file extension, for example "doc" from report.doc.gz
+			Dim curFile As String = fiFile.Name
+			Dim decompressedFilePath = Path.Combine(TargetDirectory, curFile.Remove(curFile.Length - fiFile.Extension.Length))
+
+			Dim fiDecompressedFile = New FileInfo(decompressedFilePath)
+
+			If fiDecompressedFile.Exists Then
+				If eOverwriteBehavior = Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite Then
+					m_Message = "Decompressed file already exists; will not overwrite: " & fiDecompressedFile.FullName
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Message)
+					Return True
+				ElseIf eOverwriteBehavior = Ionic.Zip.ExtractExistingFileAction.Throw Then
+					Throw New Exception("Decompressed file already exists: " & fiDecompressedFile.FullName)
+				End If
+			Else
+				' Make sure the target directory exists
+				fiDecompressedFile.Directory.Create()
+			End If
+
+			Using inFile As FileStream = fiFile.OpenRead()
+
+				' Create the decompressed file.
+				Using outFile As FileStream = File.Create(decompressedFilePath)
+					Using Decompress = New Ionic.Zlib.GZipStream(inFile, Ionic.Zlib.CompressionMode.Decompress)
+
+						' Copy the decompression stream 
+						' into the output file.
+						Decompress.CopyTo(outFile)
+
+					End Using
+				End Using
+			End Using
+
+			dtEndTime = DateTime.UtcNow
+
+			ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+
+			' Update the file modification time of the decompressed file
+			fiDecompressedFile.Refresh()
+			If fiDecompressedFile.LastWriteTimeUtc > fiFile.LastWriteTimeUtc Then
+				fiDecompressedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc
+			End If
+
+			' Call the garbage collector to assure the handle to the .gz file is released
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+		Catch ex As Exception
+			m_Message = "Error unzipping .gz file " & GZipFilePath & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
+	''' Stores SourceFilePath in a zip file with the same name, but extension .gz
+	''' </summary>
+	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+	''' <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+		Dim fiFile = New FileInfo(SourceFilePath)
+		Return GZipFile(SourceFilePath, fiFile.Directory.FullName, DeleteSourceAfterZip)
+	End Function
+
+	''' <summary>
+	''' Stores SourceFilePath in a zip file with the same name, but extension .gz
+	''' </summary>
+	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+	''' <param name="TargetFolderPath">Target directory to create the .gz file</param>
+	''' <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+	''' <returns>True if success; false if an error</returns>
+	''' <remarks>Preferably uses the external gzip.exe software, since that software properly stores the original filename and date in the .gz file</remarks>
+	Public Function GZipFile(ByVal SourceFilePath As String, ByVal TargetFolderPath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+
+		Dim fiFile = New FileInfo(SourceFilePath)
+
+		Dim GZipFilePath = Path.Combine(TargetFolderPath, fiFile.Name & ".gz")
+
+		m_Message = String.Empty
+		m_MostRecentZipFilePath = String.Copy(GZipFilePath)
+
+		Try
+			If File.Exists(GZipFilePath) Then
+
+				If m_DebugLevel >= 3 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .gz file: " & GZipFilePath)
+				End If
+
+				File.Delete(GZipFilePath)
+				Thread.Sleep(250)
+
+			End If
+		Catch ex As Exception
+			m_Message = "Error deleting target .gz file prior to zipping " & SourceFilePath & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+			Return False
+		End Try
+
+		' Look for gzip.exe
+		Dim fiGZip = New FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "gzip.exe"))
+		Dim success As Boolean
+
+		If fiGZip.Exists Then
+			success = GZipUsingExe(fiFile, GZipFilePath, fiGZip)
+		Else
+			success = GZipUsingIonicZip(fiFile, GZipFilePath)
+		End If
+
+		If Not success Then
+			Return False
+		End If
+
+		' Call the garbage collector to assure the handle to the .gz file is released
+		PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+		If DeleteSourceAfterZip Then
+			DeleteFile(fiFile)
+		End If
+
+		Return True
+
+	End Function
+
+	''' <summary>
+	''' Compress a file using the external GZip.exe software
+	''' </summary>
+	''' <param name="fiFile">File to compress</param>
+	''' <param name="GZipFilePath">Full path to the .gz file to be created</param>
+	''' <param name="fiGZip">GZip.exe fileinfo object</param>
+	''' <returns></returns>
+	''' <remarks>The .gz file will initially be created in the same folder as the original file.  If GZipFilePath points to a different folder, then the file will be moved to that new location</remarks>
+	Private Function GZipUsingExe(ByVal fiFile As FileInfo, ByVal GZipFilePath As String, fiGZip As FileInfo) As Boolean
+
+		Dim dtStartTime As Date
+		Dim dtEndTime As Date
+
+		Try
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using " & fiGZip.Name & ": " & GZipFilePath)
+			End If
+
+			dtStartTime = DateTime.UtcNow
+			
+			Dim objProgRunner As clsRunDosProgram
+			Dim blnSuccess As Boolean
+
+			objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
+
+			Dim strArgs = "-f -k " & clsGlobal.PossiblyQuotePath(fiFile.FullName)
+
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, fiGZip.FullName & " " & strArgs)
+			End If
+
+			With objProgRunner
+				.CacheStandardOutput = False
+				.CreateNoWindow = True
+				.EchoOutputToConsole = True
+				.WriteConsoleOutputToFile = False
+
+				.DebugLevel = 1
+				.MonitorInterval = 250
+			End With
+
+			blnSuccess = objProgRunner.RunProgram(fiGZip.FullName, strArgs, "GZip", False)
+
+			If Not blnSuccess Then
+				m_Message = "GZip.exe reported an error code"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
+			Thread.Sleep(100)
+
+			dtEndTime = DateTime.UtcNow
+
+			' Confirm that the .gz file was created
+
+			Dim fiCompressedFile = New FileInfo(fiFile.FullName & ".gz")
+			If Not fiCompressedFile.Exists Then
+				m_Message = "GZip.exe did not create a .gz file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
+			ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+
+			Dim fiCompressedFileFinal = New FileInfo(GZipFilePath)
+
+			If Not String.Equals(fiCompressedFile.FullName, fiCompressedFileFinal.FullName, StringComparison.CurrentCultureIgnoreCase) Then
+
+				If fiCompressedFileFinal.Exists Then
+					fiCompressedFileFinal.Delete()
+				Else
+					fiCompressedFileFinal.Directory.Create()
+				End If
+
+				fiCompressedFile.MoveTo(fiCompressedFileFinal.FullName)
+			End If
+
+		Catch ex As Exception
+			m_Message = "Error gzipping file " & fiFile.FullName & " using gzip.exe: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
+	''' Compress the file using IonicZip
+	''' </summary>
+	''' <param name="fiFile"></param>
+	''' <param name="GZipFilePath"></param>
+	''' <returns></returns>
+	''' <remarks>IonicZip creates a valid .gz file, but it does not include the header information (filename and timestamp of the original file)</remarks>
+	Private Function GZipUsingIonicZip(ByVal fiFile As FileInfo, ByVal GZipFilePath As String) As Boolean
+		Dim dtStartTime As Date
+		Dim dtEndTime As Date
+
+		Try
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using IonicZip: " & GZipFilePath)
+			End If
+
+			dtStartTime = DateTime.UtcNow
+
+			Using inFile As Stream = fiFile.OpenRead()
+				Using outFile = File.Create(GZipFilePath)
+					Using gzippedStream = New Ionic.Zlib.GZipStream(outFile, Ionic.Zlib.CompressionMode.Compress)
+
+						inFile.CopyTo(gzippedStream)
+
+					End Using
+				End Using
+			End Using
+
+			dtEndTime = DateTime.UtcNow
+
+			ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+
+			' Update the file modification time of the .gz file to use the modification time of the original file
+			Dim fiGZippedFile = New FileInfo(GZipFilePath)
+			fiGZippedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc
+
+		Catch ex As Exception
+			m_Message = "Error gzipping file " & fiFile.FullName & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
 	Protected Sub ReportZipStats(ByVal fiFileSystemInfo As FileSystemInfo, _
-			ByVal dtStartTime As DateTime, _
-			ByVal dtEndTime As DateTime, _
-			ByVal FileWasZipped As Boolean)
+   ByVal dtStartTime As DateTime, _
+   ByVal dtEndTime As DateTime, _
+   ByVal FileWasZipped As Boolean)
 
 		ReportZipStats(fiFileSystemInfo, dtStartTime, dtEndTime, FileWasZipped, IONIC_ZIP_NAME)
 
 	End Sub
 
 	Public Sub ReportZipStats(ByVal fiFileSystemInfo As FileSystemInfo, _
-			ByVal dtStartTime As DateTime, _
-			ByVal dtEndTime As DateTime, _
-			ByVal FileWasZipped As Boolean, _
-			ByVal ZipProgramName As String)
+	  ByVal dtStartTime As DateTime, _
+	  ByVal dtEndTime As DateTime, _
+	  ByVal FileWasZipped As Boolean, _
+	  ByVal ZipProgramName As String)
 
 		Dim dblUnzipTimeSeconds As Double
 		Dim dblUnzipSpeedMBPerSec As Double
@@ -108,7 +448,7 @@ Public Class clsIonicZipTools
 			diFolderInfo = CType(fiFileSystemInfo, DirectoryInfo)
 
 			lngTotalSizeBytes = 0
-			For Each fiEntry As FileInfo In diFolderInfo.GetFiles("*.*", IO.SearchOption.AllDirectories)
+			For Each fiEntry As FileInfo In diFolderInfo.GetFiles("*.*", SearchOption.AllDirectories)
 				lngTotalSizeBytes += fiEntry.Length
 			Next
 		End If
@@ -163,8 +503,8 @@ Public Class clsIonicZipTools
 	''' <param name="FileFilter">Filter to apply when unzipping</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function UnzipFile(ByVal ZipFilePath As String, _
-			ByVal TargetDirectory As String, _
-			ByVal FileFilter As String) As Boolean
+	  ByVal TargetDirectory As String, _
+	  ByVal FileFilter As String) As Boolean
 
 		Return UnzipFile(ZipFilePath, TargetDirectory, FileFilter, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
 	End Function
@@ -179,23 +519,21 @@ Public Class clsIonicZipTools
 	''' <param name="eOverwriteBehavior">Defines what to do when existing files could be ovewritten</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function UnzipFile(ByVal ZipFilePath As String, _
-			ByVal TargetDirectory As String, _
-			ByVal FileFilter As String, _
-			ByVal eOverwriteBehavior As Ionic.Zip.ExtractExistingFileAction) As Boolean
+	  ByVal TargetDirectory As String, _
+	  ByVal FileFilter As String, _
+	  ByVal eOverwriteBehavior As Ionic.Zip.ExtractExistingFileAction) As Boolean
 
 		Dim dtStartTime As DateTime
 		Dim dtEndTime As DateTime
 
 		Dim objZipper As Ionic.Zip.ZipFile
 
-		Dim fiFile As FileInfo
-
 		m_Message = String.Empty
 		m_MostRecentZipFilePath = String.Copy(ZipFilePath)
 		m_MostRecentUnzippedFiles.Clear()
 
 		Try
-			fiFile = New FileInfo(ZipFilePath)
+			Dim fiFile = New FileInfo(ZipFilePath)
 
 			If Not File.Exists(ZipFilePath) Then
 				m_Message = "Zip file not found: " & fiFile.FullName
@@ -242,7 +580,7 @@ Public Class clsIonicZipTools
 			DisposeZipper(objZipper)
 
 		Catch ex As Exception
-			m_Message = "Error unzipping " & ZipFilePath & ": " & ex.Message
+			m_Message = "Error unzipping file " & ZipFilePath & ": " & ex.Message
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 			Return False
 		End Try
@@ -258,12 +596,9 @@ Public Class clsIonicZipTools
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
-		Dim ZipFilePath As String
-		Dim fiFile As FileInfo
 
-		fiFile = New FileInfo(SourceFilePath)
-
-		ZipFilePath = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & ".zip")
+		Dim fiFile = New FileInfo(SourceFilePath)
+		Dim ZipFilePath = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & ".zip")
 
 		Return ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
 
@@ -277,16 +612,15 @@ Public Class clsIonicZipTools
 	''' <param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function ZipFile(ByVal SourceFilePath As String, _
-		  ByVal DeleteSourceAfterZip As Boolean, _
-		  ByVal ZipFilePath As String) As Boolean
+	   ByVal DeleteSourceAfterZip As Boolean, _
+	   ByVal ZipFilePath As String) As Boolean
 
 		Dim dtStartTime As DateTime
 		Dim dtEndTime As DateTime
 
 		Dim objZipper As Ionic.Zip.ZipFile
 
-		Dim fiFile As FileInfo
-		fiFile = New FileInfo(SourceFilePath)
+		Dim fiFile = New FileInfo(SourceFilePath)
 
 		m_Message = String.Empty
 		m_MostRecentZipFilePath = String.Copy(ZipFilePath)
@@ -299,7 +633,7 @@ Public Class clsIonicZipTools
 				End If
 
 				File.Delete(ZipFilePath)
-				Thread.Sleep(500)
+				Thread.Sleep(250)
 
 			End If
 		Catch ex As Exception
@@ -332,40 +666,24 @@ Public Class clsIonicZipTools
 			Return False
 		End Try
 
-		Try
-
-			If DeleteSourceAfterZip Then
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting source file: " & fiFile.FullName)
-				End If
-
-				' Now delete the source file
-				fiFile.Delete()
-
-				' Wait 500 msec
-				Thread.Sleep(500)
-			End If
-
-		Catch ex As Exception
-			' Log this as an error, but still return True
-			m_Message = "Error deleting " & fiFile.FullName & ": " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
-		End Try
+		If DeleteSourceAfterZip Then
+			DeleteFile(fiFile)
+		End If
 
 		Return True
 
 	End Function
 
 	Public Function ZipDirectory(ByVal SourceDirectoryPath As String, _
-			ByVal ZipFilePath As String) As Boolean
+	  ByVal ZipFilePath As String) As Boolean
 
 		Return ZipDirectory(SourceDirectoryPath, ZipFilePath, True, String.Empty)
 
 	End Function
 
 	Public Function ZipDirectory(ByVal SourceDirectoryPath As String, _
-		   ByVal ZipFilePath As String, _
-		   ByVal Recurse As Boolean) As Boolean
+	 ByVal ZipFilePath As String, _
+	 ByVal Recurse As Boolean) As Boolean
 
 		Return ZipDirectory(SourceDirectoryPath, ZipFilePath, Recurse, String.Empty)
 
@@ -381,9 +699,9 @@ Public Class clsIonicZipTools
 	''' <param name="FileFilter">Filter to apply when zipping</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function ZipDirectory(ByVal SourceDirectoryPath As String, _
-			ByVal ZipFilePath As String, _
-			ByVal Recurse As Boolean, _
-			ByVal FileFilter As String) As Boolean
+	  ByVal ZipFilePath As String, _
+	  ByVal Recurse As Boolean, _
+	  ByVal FileFilter As String) As Boolean
 
 		Dim dtStartTime As DateTime
 		Dim dtEndTime As DateTime
@@ -403,7 +721,7 @@ Public Class clsIonicZipTools
 				End If
 
 				File.Delete(ZipFilePath)
-				Thread.Sleep(500)
+				Thread.Sleep(250)
 			End If
 		Catch ex As Exception
 			m_Message = "Error deleting target .zip file prior to zipping " & SourceDirectoryPath & ": " & ex.Message

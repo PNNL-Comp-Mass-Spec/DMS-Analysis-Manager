@@ -1099,7 +1099,6 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		End If
 
-
 		Return True
 
 	End Function
@@ -3404,33 +3403,38 @@ Public MustInherit Class clsAnalysisResources
 
 				Else
 
+					' Keys in this list are filenames; values are True if the file is required and False if not required
+					Dim lstFilesToGet = New SortedList(Of String, Boolean)
 					Dim LocalFolderPath As String
-					Dim lstFilesToGet = New List(Of String)
 					Dim lstPendingFileRenames = New List(Of String)
 					Dim strSynopsisFileName As String
 					Dim strSynopsisMSGFFileName As String
 					Dim eLogMsgTypeIfNotFound As clsLogTools.LogLevels
-					Dim strMZidFilename As String = String.Empty
+					Dim strMZidFilenameZip As String = String.Empty
+					Dim strMZidFilenameGZip As String = String.Empty
 					Dim blnPrefixRequired As Boolean
 
 					strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset)
 					strSynopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(strSynopsisFileName)
 
 					If udtOptions.RetrievePHRPFiles Then
-						lstFilesToGet.Add(strSynopsisFileName)
+						lstFilesToGet.Add(strSynopsisFileName, True)
 
-						lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
-						lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset))
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset), True)
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset), True)
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset), True)
+						lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(udtJobInfo.PeptideHitResultType, udtJobInfo.Dataset), True)
 
-						lstFilesToGet.Add(strSynopsisMSGFFileName)
+						lstFilesToGet.Add(strSynopsisMSGFFileName, False)
 					End If
 
 					If udtOptions.RetrieveMZidFiles AndAlso udtJobInfo.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 						' Retrieve MSGF+ .mzID files
-						strMZidFilename = m_DatasetName & "_msgfplus.zip"
-						lstFilesToGet.Add(strMZidFilename)
+						' They will either be stored as .zip files or as .gz files
+						strMZidFilenameZip = m_DatasetName & "_msgfplus.zip"
+						strMZidFilenameGZip = m_DatasetName & "_msgfplus.mzid.gz"
+						lstFilesToGet.Add(strMZidFilenameZip, False)
+						lstFilesToGet.Add(strMZidFilenameGZip, False)
 					End If
 
 					SourceFolderPath = String.Empty
@@ -3456,7 +3460,9 @@ Public MustInherit Class clsAnalysisResources
 						swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 					End If
 
-					For Each SourceFilename In lstFilesToGet
+					For Each sourceFile In lstFilesToGet
+
+						SourceFilename = sourceFile.Key
 
 						' Typically only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
 						' However, if the file resides in MyEMSL then we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
@@ -3464,8 +3470,8 @@ Public MustInherit Class clsAnalysisResources
 							SourceFolderPath = FindDataFile(SourceFilename)
 						End If
 
-						If SourceFilename = strSynopsisMSGFFileName Then
-							' It's OK if the MSGF file doesn't exist, we'll just log a debug message
+						If Not sourceFile.Value Then
+							' It's OK if this file doesn't exist, we'll just log a debug message
 							eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
 						Else
 							' This file must exist; log an error if it's not found
@@ -3479,7 +3485,7 @@ Public MustInherit Class clsAnalysisResources
 							Else
 								If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
 									m_message = "Required PHRP file not found: " & SourceFilename
-									If SourceFilename.ToLower().EndsWith("_msgfplus.zip") Then
+									If SourceFilename.ToLower().EndsWith("_msgfplus.zip") Or SourceFilename.ToLower().EndsWith("_msgfplus.mzid.gz") Then
 										m_message &= "; Confirm job used MSGF+ and not MSGFDB"
 									End If
 									If m_DebugLevel >= 1 Then
@@ -3516,7 +3522,7 @@ Public MustInherit Class clsAnalysisResources
 							End If
 						End If
 
-					Next SourceFilename	' in lstFilesToGet
+					Next sourceFile		' in lstFilesToGet
 
 					If m_MyEMSLDatasetListInfo.FilesToDownload.Count > 0 Then
 						' Some of the files were found in MyEMSL; download them now
@@ -3557,9 +3563,22 @@ Public MustInherit Class clsAnalysisResources
 					If udtOptions.CreateJobPathFiles Then
 						swJobInfoFile.Close()
 					Else
-						If Not String.IsNullOrEmpty(strMZidFilename) Then
-							' Unzip the MZId file
-							m_IonicZipTools.UnzipFile(Path.Combine(m_WorkingDir, strMZidFilename))
+						' Unzip the MZId file (if it exists)						
+						If Not String.IsNullOrEmpty(strMZidFilenameZip) Or Not String.IsNullOrEmpty(strMZidFilenameGZip) Then
+
+							Dim fiFileToUnzip = New FileInfo(Path.Combine(m_WorkingDir, strMZidFilenameZip))
+							If fiFileToUnzip.Exists Then
+								m_IonicZipTools.UnzipFile(fiFileToUnzip.FullName)
+							Else
+								fiFileToUnzip = New FileInfo(Path.Combine(m_WorkingDir, strMZidFilenameGZip))
+								If fiFileToUnzip.Exists Then
+									m_IonicZipTools.GUnzipFile(fiFileToUnzip.FullName)
+								Else
+									m_message = "Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset"
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+									Return False
+								End If
+							End If
 
 							If blnPrefixRequired Then
 								If Not RenameDuplicatePHRPFile(m_WorkingDir, m_DatasetName & "_msgfplus.mzid", m_WorkingDir, "Job" & udtJobInfo.Job.ToString() & "_", udtJobInfo.Job) Then
@@ -5361,9 +5380,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Public Function UnzipFileStart(ByVal ZipFilePath As String, _
-	 ByVal OutFolderPath As String, _
-	 ByVal CallingFunctionName As String, _
-	 ByVal ForceExternalZipProgramUse As Boolean) As Boolean
+	  ByVal OutFolderPath As String, _
+	  ByVal CallingFunctionName As String, _
+	  ByVal ForceExternalZipProgramUse As Boolean) As Boolean
 
 		Dim fiFileInfo As FileInfo
 		Dim sngFileSizeMB As Single
@@ -5396,6 +5415,14 @@ Public MustInherit Class clsAnalysisResources
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
+			End If
+
+			If ZipFilePath.ToLower().EndsWith(".gz") Then
+				' This is a gzipped file
+				' Use Ionic.Zip
+				strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
+				m_IonicZipTools.DebugLevel = m_DebugLevel
+				Return m_IonicZipTools.GUnzipFile(ZipFilePath, OutFolderPath)
 			End If
 
 			' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True

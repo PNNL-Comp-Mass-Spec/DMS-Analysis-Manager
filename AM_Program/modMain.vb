@@ -106,6 +106,10 @@ Module modMain
 
 						' objTest.ProcessDtaRefineryLogFiles()
 
+						' objTest.TestGZip()
+
+						objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
+
 					Catch ex As Exception
 						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
 					End Try

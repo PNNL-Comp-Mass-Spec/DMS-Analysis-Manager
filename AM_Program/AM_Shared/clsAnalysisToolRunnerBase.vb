@@ -1119,6 +1119,68 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
+	''' Decompresses the specified gzipped file
+	''' Output folder is m_WorkDir
+	''' </summary>
+	''' <param name="GZipFilePath">File to decompress</param>
+	''' <returns></returns>
+	Public Function GUnzipFile(ByVal GZipFilePath As String) As Boolean
+		Return GUnzipFile(GZipFilePath, m_WorkDir)
+	End Function
+
+	''' <summary>
+	''' Decompresses the specified gzipped file
+	''' </summary>
+	''' <param name="GZipFilePath">File to unzip</param>
+	''' <param name="TargetDirectory">Target directory for the extracted files</param>
+	''' <returns></returns>
+	Public Function GUnzipFile(ByVal GZipFilePath As String, ByVal TargetDirectory As String) As Boolean
+		m_IonicZipTools.DebugLevel = m_DebugLevel
+		Return m_IonicZipTools.GUnzipFile(GZipFilePath, TargetDirectory)
+	End Function
+
+	''' <summary>
+	''' Gzips SourceFilePath, creating a new file in the same folder, but with extension .gz appended
+	''' </summary>
+	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+		Dim blnSuccess As Boolean
+		m_IonicZipTools.DebugLevel = m_DebugLevel
+
+		blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, DeleteSourceAfterZip)
+
+		If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+			m_NeedToAbortProcessing = True
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	''' <summary>
+	''' Gzips SourceFilePath, creating a new file in TargetDirectoryPath; the file extension will be the original extension plus .gz
+	''' </summary>
+	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+	''' <returns>True if success; false if an error</returns>
+	Public Function GZipFile(ByVal SourceFilePath As String, ByVal TargetDirectoryPath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+
+		Dim blnSuccess As Boolean
+		m_IonicZipTools.DebugLevel = m_DebugLevel
+
+		blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, TargetDirectoryPath, DeleteSourceAfterZip)
+
+		If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+			m_NeedToAbortProcessing = True
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	''' <summary>
 	''' Lookups up dataset information the data package associated with this analysis job
 	''' </summary>
 	''' <param name="dctDataPackageJobs"></param>
@@ -2255,8 +2317,10 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
 	''' <returns>True if success; false if an error</returns>
 	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+
 		Dim blnSuccess As Boolean
 		m_IonicZipTools.DebugLevel = m_DebugLevel
+
 		blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
 
 		If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then

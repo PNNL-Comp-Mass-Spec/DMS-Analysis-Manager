@@ -1913,7 +1913,7 @@ Public Class clsMSGFDBUtils
 
 
 	''' <summary>
-	''' Zips MSGFDB Output File
+	''' Zips MSGFDB Output File (creating a .gz file)
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
@@ -1928,7 +1928,7 @@ Public Class clsMSGFDBUtils
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 			End If
 
-			If Not oToolRunner.ZipFile(TmpFilePath, False) Then
+			If Not oToolRunner.GZipFile(TmpFilePath, False) Then
 				Const Msg As String = "Error zipping output files"
 				ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
