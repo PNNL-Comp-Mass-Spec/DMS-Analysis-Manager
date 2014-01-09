@@ -1,9 +1,10 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace AnalysisManager_RepoPkgr_PlugIn
 {
-  static class FileUtils
+  public static class FileUtils
   {
     /// <summary>
     /// Utility method to clear files and folders from given directory
@@ -23,7 +24,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
       }
       var dir = new DirectoryInfo(sourceFolder);
       foreach (var fi in dir.GetFiles(searchPattern)) {
-        fi.CopyTo(Path.Combine(destinationFolder, fi.Name));
+        fi.CopyTo(Path.Combine(destinationFolder, fi.Name), true);
       }
     }
 
@@ -39,19 +40,74 @@ namespace AnalysisManager_RepoPkgr_PlugIn
       directory.GetFiles(filter).ToList().ForEach(f => f.Delete());
     }
 
+    // 
     /// <summary>
-    /// ensure an empty fasta working directory (create or clear)
+    /// Look for zipped files in given folder and convert them to gzip.
+    /// (conversions are performed in the working directory)
     /// </summary>
-    /// <param name="orgWDir"> </param>
-    /// <returns>Path to fasta working directory</returns>
-    public static string SetupWorkDir(string orgWDir)
+    /// <param name="targetDir">Full path to folder that contains zipped files to convert</param>
+    /// <param name="workDir">Local working directory</param>
+    public static void ConvertZipsToGZips(string targetDir, string workDir)
     {
-      if (!Directory.Exists(orgWDir)) {
-        Directory.CreateDirectory(orgWDir);
-      } else {
-        ClearDir(orgWDir);
+      const int debugLevel = 2;
+
+      //  make zipper to work on workDir
+      var ionicZipTools = new AnalysisManagerBase.clsIonicZipTools(debugLevel, workDir);
+
+      // get file handler object to access the targetDir
+      var diTargetDir = new DirectoryInfo(targetDir);
+
+      // get file handler object to access the workDir
+      var diWorkDir = new DirectoryInfo(workDir);
+
+      // for each zip file in target folder
+      foreach (var tarFi in diTargetDir.GetFiles("*.zip")) {
+
+        // get job prefix from zip file
+        var pfx = Regex.Match(tarFi.Name, @"Job_\d*_").Groups[0].Value;
+
+        // copy zip file to local work dir
+        tarFi.CopyTo(Path.Combine(workDir, tarFi.Name));
+
+        // unzip it and delete zip
+        ionicZipTools.UnzipFile(Path.Combine(workDir, tarFi.Name));
+
+        // find the unzipped mzid file
+        var mzFiles = diWorkDir.GetFiles("*.mzid");
+        if (mzFiles.Length != 1) {
+          // oops??
+        }
+
+        // gzip the mzid file
+        ionicZipTools.GZipFile(mzFiles[0].FullName, true);
+
+        // get gzip file
+        var gzFiles = diWorkDir.GetFiles("*mzid.gz");
+        if (gzFiles.Length != 1) {
+          // oops??
+        }
+
+        // resolve gzip file name
+        var gzFileName = gzFiles[0].Name;
+        if (!string.IsNullOrEmpty(pfx)) {
+          gzFileName = pfx + gzFileName;
+          File.Move(gzFiles[0].FullName, Path.Combine(workDir, gzFileName));
+        }
+
+        // move the gzip file to target directory
+	    string targetFilePath = Path.Combine(targetDir, gzFileName);
+	    if (File.Exists(targetFilePath))
+		  File.Delete(targetFilePath);
+
+	    File.Move(Path.Combine(workDir, gzFileName), targetFilePath);
+
+        // get rid of zip file on both sides		  
+        File.Delete(Path.Combine(workDir, tarFi.Name));
+        File.Delete(tarFi.FullName);
       }
-      return orgWDir;
+
+
     }
+
   }
 }
