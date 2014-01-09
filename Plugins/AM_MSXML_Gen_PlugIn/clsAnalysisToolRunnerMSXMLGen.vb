@@ -139,6 +139,9 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			CentroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 		End If
 
+		' Look for custom processing arguments
+		Dim CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
+
 		If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "mMSXmlGeneratorAppPath is empty; this is unexpected")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -163,7 +166,11 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
 			' MSConvert
 
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMS1, CentroidMS2, CentroidPeakCountToRetain)
+			If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
+				mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMS1, CentroidMS2, CentroidPeakCountToRetain)
+			Else
+				mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CustomMSConvertArguments)
+			End If
 
 		Else
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unsupported XmlGenerator: " & msXmlGenerator)
