@@ -190,7 +190,9 @@ Public Class clsIonicZipTools
 
 			dtEndTime = DateTime.UtcNow
 
-			ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+			End If
 
 			' Update the file modification time of the decompressed file
 			fiDecompressedFile.Refresh()
@@ -343,7 +345,9 @@ Public Class clsIonicZipTools
 				Return False
 			End If
 
-			ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			End If
 
 			Dim fiCompressedFileFinal = New FileInfo(GZipFilePath)
 
@@ -398,7 +402,9 @@ Public Class clsIonicZipTools
 
 			dtEndTime = DateTime.UtcNow
 
-			ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			End If
 
 			' Update the file modification time of the .gz file to use the modification time of the original file
 			Dim fiGZippedFile = New FileInfo(GZipFilePath)
@@ -415,9 +421,9 @@ Public Class clsIonicZipTools
 	End Function
 
 	Protected Sub ReportZipStats(ByVal fiFileSystemInfo As FileSystemInfo, _
-   ByVal dtStartTime As DateTime, _
-   ByVal dtEndTime As DateTime, _
-   ByVal FileWasZipped As Boolean)
+	  ByVal dtStartTime As DateTime, _
+	  ByVal dtEndTime As DateTime, _
+	  ByVal FileWasZipped As Boolean)
 
 		ReportZipStats(fiFileSystemInfo, dtStartTime, dtEndTime, FileWasZipped, IONIC_ZIP_NAME)
 
@@ -574,7 +580,9 @@ Public Class clsIonicZipTools
 
 			dtEndTime = DateTime.UtcNow
 
-			ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+			End If
 
 			' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
 			DisposeZipper(objZipper)
@@ -655,7 +663,9 @@ Public Class clsIonicZipTools
 			objZipper.Save()
 			dtEndTime = DateTime.UtcNow
 
-			ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+			End If
 
 			' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
 			DisposeZipper(objZipper)
@@ -753,7 +763,9 @@ Public Class clsIonicZipTools
 
 			dtEndTime = DateTime.UtcNow
 
-			ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
+			If m_DebugLevel >= 2 Then
+				ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
+			End If
 
 			' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
 			DisposeZipper(objZipper)
