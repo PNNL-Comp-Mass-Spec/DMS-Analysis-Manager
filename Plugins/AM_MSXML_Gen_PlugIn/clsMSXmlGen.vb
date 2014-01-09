@@ -192,7 +192,7 @@ Public MustInherit Class clsMSXmlGen
 
 	End Function
 
-	Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As System.DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
+	Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
 
 		Dim strSourceFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 		Dim strMsXmlFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
@@ -201,7 +201,7 @@ Public MustInherit Class clsMSXmlGen
 
 	End Sub
 
-	Public Sub LogCreationStatsSourceToMsXml(ByVal dtStartTimeUTC As System.DateTime, ByVal strSourceFilePath As String, ByVal strMsXmlFilePath As String)
+	Public Sub LogCreationStatsSourceToMsXml(ByVal dtStartTimeUTC As DateTime, ByVal strSourceFilePath As String, ByVal strMsXmlFilePath As String)
 
 		Try
 			' Save some stats to the log
@@ -214,7 +214,7 @@ Public MustInherit Class clsMSXmlGen
 			Dim strSourceFileExtension As String = IO.Path.GetExtension(strSourceFilePath)
 			Dim strTargetFileExtension As String = IO.Path.GetExtension(strMsXmlFilePath)
 
-			dblTotalMinutes = System.DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
+			dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
 
 			ioFileInfo = New IO.FileInfo(strSourceFilePath)
 			If ioFileInfo.Exists Then

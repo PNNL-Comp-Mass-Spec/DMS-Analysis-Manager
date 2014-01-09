@@ -595,6 +595,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			_MSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 			var objMSXmlCreator = new clsMSXMLCreator(_MSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
 			
+			// Attach the events
+			objMSXmlCreator.DebugEvent += objMSXmlCreator_DebugEvent;
+			objMSXmlCreator.ErrorEvent += objMSXmlCreator_ErrorEvent;
+			objMSXmlCreator.WarningEvent += objMSXmlCreator_WarningEvent;
+
 			// Process each dataset
 			foreach (var datasetName in dctDatasetRawFilePaths.Keys)
 			{
@@ -611,7 +616,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			}
 
 			return true;
-		}
+		}	
 
 		protected bool RetrieveStoragePathInfoTargetFile(string strStoragePathInfoFilePath, clsAnalysisResults objAnalysisResults, ref string strDestPath)
 		{
@@ -695,6 +700,23 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 		}
 
+		#endregion
+
+		#region Event_Handlers
+		void objMSXmlCreator_WarningEvent(string message)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, message);
+		}
+
+		void objMSXmlCreator_ErrorEvent(string message)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, message);
+		}
+
+		void objMSXmlCreator_DebugEvent(string message)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, message);
+		}
 		#endregion
 	}
 }

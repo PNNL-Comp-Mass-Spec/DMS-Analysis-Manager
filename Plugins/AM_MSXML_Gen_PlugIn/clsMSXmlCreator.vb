@@ -56,7 +56,7 @@ Public Class clsMSXMLCreator
 		Dim ProgLoc As String
 		Dim CmdStr As String
 
-		Dim dtStartTimeUTC As System.DateTime
+		Dim dtStartTimeUTC As DateTime
 		Dim strSourceFilePath As String
 
 		' mzXML filename is dataset plus .mzXML
@@ -101,7 +101,7 @@ Public Class clsMSXMLCreator
 		End With
 
 
-		dtStartTimeUTC = System.DateTime.UtcNow
+		dtStartTimeUTC = DateTime.UtcNow
 
 		If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
 			' .RunProgram returned False
@@ -136,7 +136,7 @@ Public Class clsMSXMLCreator
 	''' <remarks></remarks>
 	Public Function CreateMZXMLFile() As Boolean
 
-		Dim dtStartTimeUTC As System.DateTime
+		Dim dtStartTimeUTC As DateTime
 
 		' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
 		Dim CentroidMSXML As Boolean = True
@@ -201,7 +201,14 @@ Public Class clsMSXMLCreator
 				CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
 			End If
 
-			mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+			' Look for custom processing arguments
+			Dim CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
+
+			If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
+				mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+			Else
+				mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CustomMSConvertArguments)
+			End If
 
 		Else
 			m_ErrorMessage = "Unsupported XmlGenerator: " & strMSXmlGeneratorExe
@@ -209,7 +216,7 @@ Public Class clsMSXMLCreator
 			Return False
 		End If
 
-		dtStartTimeUTC = System.DateTime.UtcNow
+		dtStartTimeUTC = DateTime.UtcNow
 
 		' Create the file
 		blnSuccess = mMSXmlGen.CreateMSXMLFile()
@@ -272,7 +279,7 @@ Public Class clsMSXMLCreator
 	''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
 	''' <remarks></remarks>
 	Private Sub mMSXmlGenReadW_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
-		If m_DebugLevel >= 2 Then
+		If m_DebugLevel >= 1 Then
 			ReportDebugInfo(CommandLine)
 		End If
 	End Sub
