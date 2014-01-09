@@ -105,18 +105,11 @@ Public Class clsGlobal
 	''' <remarks></remarks>
 	Public Shared Function FlattenList(ByVal lstItems As List(Of String), ByVal chDelimiter As Char) As String
 
-		Dim sbText As Text.StringBuilder = New Text.StringBuilder()
-
 		If lstItems Is Nothing OrElse lstItems.Count = 0 Then
-			' Nothing to do
+			Return String.Empty
 		Else
-			sbText.Append(lstItems.Item(0).Replace(chDelimiter, " "c))
-			For intIndex As Integer = 1 To lstItems.Count - 1
-				sbText.Append(chDelimiter & lstItems(intIndex).Replace(chDelimiter, " "c))
-			Next
+			Return String.Join(chDelimiter, lstItems)
 		End If
-
-		Return sbText.ToString
 
 	End Function
 

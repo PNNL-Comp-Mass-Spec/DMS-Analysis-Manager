@@ -1505,6 +1505,9 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal intSpaceUsageThresholdGB As Integer)
 
+		Const PURGE_INTERVAL_MINUTES As Integer = 10
+		Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
+
 		Dim diCacheFolder As DirectoryInfo
 		Dim lstDataFiles As SortedList(Of DateTime, FileInfo) = New SortedList(Of DateTime, FileInfo)
 
@@ -1519,6 +1522,11 @@ Public Class clsAnalysisToolRunnerBase
 		If intSpaceUsageThresholdGB < 1 Then intSpaceUsageThresholdGB = 1
 
 		Try
+			If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+				Exit Sub
+			End If
+			dtLastCheck = DateTime.UtcNow
+
 			diCacheFolder = New DirectoryInfo(strCacheFolderPath)
 
 			If diCacheFolder.Exists Then

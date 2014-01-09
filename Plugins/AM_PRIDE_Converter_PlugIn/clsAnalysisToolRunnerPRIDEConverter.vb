@@ -52,10 +52,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected mPreviousDatasetName As String = String.Empty
 
-	' This list contains full fill paths for files that will be deleted from the local work directory
+	' This list contains full file paths for files that will be deleted from the local work directory
 	Protected mPreviousDatasetFilesToDelete As List(Of String)
 
-	' This list contains full fill paths for files that will be copied from the local work directory to the transfer directory
+	' This list contains full file paths for files that will be copied from the local work directory to the transfer directory
 	Protected mPreviousDatasetFilesToCopy As List(Of String)
 
 	Protected mCachedOrgDBName As String = String.Empty
@@ -268,7 +268,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' The clsAnalysisResults object is used to copy files to/from this computer
+			' The objAnalysisResults object is used to copy files to/from this computer
 			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
 			' Extract the dataset raw file paths
@@ -742,11 +742,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	''' </summary>
 	''' <returns>True if the file exists or was created</returns>
 	''' <remarks></remarks>
-	Protected Function CreateMzXMLFileIfMissing(ByVal intJob As Integer, ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults, ByVal dctDatasetRawFilePaths As Dictionary(Of String, String)) As Boolean
+	Protected Function CreateMzXMLFileIfMissing(ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults, ByVal dctDatasetRawFilePaths As Dictionary(Of String, String)) As Boolean
 		Dim blnSuccess As Boolean
 		Dim strDestPath As String = String.Empty
-
-		'Dim intDatasetsProcessed As Integer = 0
 
 		Try
 			' Look in m_WorkDir for the .mzXML file for this dataset
@@ -2856,7 +2854,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 			If mCreatePrideXMLFiles And Not mCreateMSGFReportFilesOnly Then
 				' Create the .mzXML files if it is missing
-				blnSuccess = CreateMzXMLFileIfMissing(intJob, strDataset, objAnalysisResults, dctDatasetRawFilePaths)
+				blnSuccess = CreateMzXMLFileIfMissing(strDataset, objAnalysisResults, dctDatasetRawFilePaths)
 				If Not blnSuccess Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 				End If

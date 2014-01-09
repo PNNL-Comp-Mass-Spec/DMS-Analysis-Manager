@@ -178,6 +178,9 @@ Public Class clsPluginLoader
 			'Case "AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe, IToolRunner)
 
+			Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr".ToLower()
+				myToolRunner = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -290,6 +293,9 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe".ToLower()
 			'	myModule = DirectCast(New AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe, IAnalysisResources)
+
+			Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr".ToLower()
+				myModule = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr, IAnalysisResources)
 
 		End Select
 

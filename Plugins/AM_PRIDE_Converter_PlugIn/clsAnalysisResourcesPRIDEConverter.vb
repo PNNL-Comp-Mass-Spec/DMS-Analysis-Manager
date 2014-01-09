@@ -75,7 +75,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		If udtOptions.RetrieveMzXMLFile Then
 			' Use lstDataPackagePeptideHitJobs to look for any datasets for which we will need to create a .mzXML file
-			FindMissingMzXmlFiles(udtOptions, lstDataPackagePeptideHitJobs)
+			FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs)
 		End If
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
@@ -93,10 +93,9 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' Datasets that need to have .mzXML files created will be added to the packed job parameters, storing the dataset names in "PackedParam_DatasetsMissingMzXMLFiles"
 	''' and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
 	''' </summary>
-	''' <param name="udtOptions">File retrieval options</param>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub FindMissingMzXmlFiles(ByVal udtOptions As udtDataPackageRetrievalOptionsType, ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
+	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
 
 		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
 		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)

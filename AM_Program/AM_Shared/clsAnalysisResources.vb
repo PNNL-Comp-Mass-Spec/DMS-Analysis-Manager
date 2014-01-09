@@ -88,8 +88,8 @@ Public MustInherit Class clsAnalysisResources
 	Public Const DOT_D_EXTENSION As String = ".d"
 	Public Const DOT_RAW_EXTENSION As String = ".raw"
 	Public Const DOT_UIMF_EXTENSION As String = ".uimf"
-	Public Const DOT_MZXML_EXTENSION As String = ".mzxml"
-	Public Const DOT_MZML_EXTENSION As String = ".mzml"
+	Public Const DOT_MZXML_EXTENSION As String = ".mzXML"
+	Public Const DOT_MZML_EXTENSION As String = ".mzML"
 
 	Public Const DOT_MGF_EXTENSION As String = ".mgf"
 	Public Const DOT_CDF_EXTENSION As String = ".cdf"
@@ -103,6 +103,8 @@ Public MustInherit Class clsAnalysisResources
 	Public Const BRUKER_SER_FILE As String = "ser"
 
 	Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
+	Public Const JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES As String = "PackedParam_DatasetRawDataTypes"
+
 	Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
 
 	Public Enum eRawDataTypeConstants
@@ -913,7 +915,6 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function CreateStoragePathInfoFile(ByVal SourceFilePath As String, ByVal DestFilePath As String) As Boolean
 
-		Dim swOutFile As StreamWriter
 		Dim strInfoFilePath As String = String.Empty
 
 		Try
@@ -923,10 +924,9 @@ Public MustInherit Class clsAnalysisResources
 
 			strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX
 
-			swOutFile = New StreamWriter(New FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-			swOutFile.WriteLine(SourceFilePath)
-			swOutFile.Close()
+			Using swOutFile = New StreamWriter(New FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+				swOutFile.WriteLine(SourceFilePath)
+			End Using
 
 		Catch ex As Exception
 			m_message = "Exception in CreateStoragePathInfoFile for " + strInfoFilePath
@@ -1566,7 +1566,7 @@ Public MustInherit Class clsAnalysisResources
 	''' Looks for the .mzXML file for this dataset
 	''' </summary>
 	''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
-	''' <returns></returns>
+	''' <returns>Full path to the file, if found; empty string if no match</returns>
 	''' <remarks></remarks>
 	Protected Function FindMZXmlFile(ByRef strHashcheckFilePath As String) As String
 
@@ -1582,7 +1582,7 @@ Public MustInherit Class clsAnalysisResources
 		lstValuesToCheck = New List(Of Integer)
 
 		' Initialize the values we'll look for
-		' Note that these values are added to the list in the of the preferred file to retrieve
+		' Note that these values are added to the list in the order of the preferred file to retrieve
 		lstValuesToCheck.Add(154)			' MSXML_Gen_1_154_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=MSConvert.exe; CentroidPeakCountToRetain=250; MSXMLOutputType=mzXML;
 		lstValuesToCheck.Add(132)			' MSXML_Gen_1_132_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=MSConvert.exe; CentroidPeakCountToRetain=150; MSXMLOutputType=mzXML;
 		lstValuesToCheck.Add(93)			' MSXML_Gen_1_93_DatasetID,    CentroidMSXML=True;  MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML;
@@ -3722,7 +3722,7 @@ Public MustInherit Class clsAnalysisResources
 			Next
 
 			' Next retrieve the remaining files
-			For Each kvItem As KeyValuePair(Of udtDataPackageJobInfoType, KeyValuePair(Of String, String)) In dctInstrumentDataToRetrieve
+			For Each kvItem In dctInstrumentDataToRetrieve
 
 				' The key in kvMzXMLFileInfo is the path to the .mzXML file
 				' The value in kvMzXMLFileInfo is the path to the .hashcheck file
