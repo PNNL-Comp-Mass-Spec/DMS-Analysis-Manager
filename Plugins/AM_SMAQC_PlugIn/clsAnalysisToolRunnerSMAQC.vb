@@ -1,6 +1,8 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Data.SqlClient
+Imports System.IO
 
 Public Class clsAnalysisToolRunnerSMAQC
 	Inherits clsAnalysisToolRunnerBase
@@ -35,8 +37,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
-		Dim CmdStr As String
-
 		Dim result As IJobParams.CloseOutType
 		Dim blnProcessingError As Boolean = False
 
@@ -76,7 +76,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			' The parameter file name specifies the name of the .XML file listing the Measurements to run
 			strParameterFileName = m_jobParams.GetParam("parmFileName")
-			strParameterFilePath = System.IO.Path.Combine(m_WorkDir, strParameterFileName)
+			strParameterFilePath = Path.Combine(m_WorkDir, strParameterFileName)
 
 			' Lookup the InstrumentID for this dataset			
 			Dim InstrumentID As Integer = 0
@@ -84,19 +84,19 @@ Public Class clsAnalysisToolRunnerSMAQC
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			ResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_SMAQC.txt")
+			ResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_SMAQC.txt")
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running SMAQC")
 
 
 			'Set up and execute a program runner to run SMAQC
-			CmdStr = " -i " & InstrumentID.ToString()
-			CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)					' Path to folder containing input files
-			CmdStr &= " -m " & PossiblyQuotePath(strParameterFilePath)		' Path to XML file specifying measurements to run	
-			CmdStr &= " -o " & PossiblyQuotePath(ResultsFilePath)			' Text file to write the results to
-			CmdStr &= " -db " & PossiblyQuotePath(m_WorkDir)				' Folder where SQLite DB will be created
+			Dim CmdStr = PossiblyQuotePath(m_WorkDir)						' Path to folder containing input files
+			CmdStr &= " /O:" & PossiblyQuotePath(ResultsFilePath)			' Text file to write the results to
+			CmdStr &= " /DB:" & PossiblyQuotePath(m_WorkDir)				' Folder where SQLite DB will be created
+			CmdStr &= " /I:" & InstrumentID.ToString()						' Instrument ID
+			CmdStr &= " /M:" & PossiblyQuotePath(strParameterFilePath)		' Path to XML file specifying measurements to run	
 
-			m_jobParams.AddResultFileToSkip("SMAQC.s3db")				' Don't keep the SQLite DB
+			m_jobParams.AddResultFileToSkip("SMAQC.s3db")					' Don't keep the SQLite DB
 
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
@@ -108,11 +108,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 				.CreateNoWindow = True
 				.CacheStandardOutput = True
 				.EchoOutputToConsole = True
-
-				' Future ToDo: Create a console output file; can't do so at present since SMAQC crashes
-
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT)
+				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT)
 			End With
 
 			' We will delete the console output file later since it has the same content as the log file
@@ -126,7 +123,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 				' Write the console output to a text file
 				System.Threading.Thread.Sleep(250)
 
-				Dim swConsoleOutputfile = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 				swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
 				swConsoleOutputfile.Close()
 			End If
@@ -325,8 +322,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 		While RetryCount > 0
 			Try
 
-				Using Cn = New System.Data.SqlClient.SqlConnection(ConnectionString)
-					Dim dbCmd = New System.Data.SqlClient.SqlCommand(SqlStr, Cn)
+				Using Cn = New SqlConnection(ConnectionString)
+					Dim dbCmd = New SqlCommand(SqlStr, Cn)
 
 					Cn.Open()
 
@@ -388,7 +385,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			result = MoveResultFiles()
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
 			End If
 		End If
 
@@ -479,7 +476,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' The measurments are returned via this list
 		Dim lstResults = New List(Of KeyValuePair(Of String, String))
 
-		If Not System.IO.File.Exists(ResultsFilePath) Then
+		If Not File.Exists(ResultsFilePath) Then
 			m_message = "SMAQC Results file not found"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & ": " & ResultsFilePath)
 			Return lstResults
@@ -495,7 +492,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		Dim blnMeasurementsFound As Boolean
 		Dim blnHeadersFound As Boolean
 
-		Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+		Using srInFile = New StreamReader(New FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			Do While srInFile.Peek() > -1
 				strLineIn = srInFile.ReadLine()
@@ -566,7 +563,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		Try
 
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			If Not File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -579,14 +576,14 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
+			Dim srInFile As StreamReader
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
 			Dim sngEffectiveProgress As Single
 			sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			intLinesRead = 0
 			Do While srInFile.Peek() >= 0
@@ -704,7 +701,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 		Dim strXMLResultsClean As String
 
-		Dim objCommand As System.Data.SqlClient.SqlCommand
+		Dim objCommand As SqlCommand
 
 		Dim blnSuccess As Boolean
 
@@ -736,20 +733,20 @@ Public Class clsAnalysisToolRunnerSMAQC
 				strStoredProcedure = STORE_SMAQC_RESULTS_SP_NAME
 			End If
 
-			objCommand = New System.Data.SqlClient.SqlCommand()
+			objCommand = New SqlCommand()
 
 			With objCommand
 				.CommandType = CommandType.StoredProcedure
 				.CommandText = strStoredProcedure
 
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-				.Parameters.Add(New SqlClient.SqlParameter("@DatasetID", SqlDbType.Int))
+				.Parameters.Add(New SqlParameter("@DatasetID", SqlDbType.Int))
 				.Parameters.Item("@DatasetID").Direction = ParameterDirection.Input
 				.Parameters.Item("@DatasetID").Value = intDatasetID
 
-				.Parameters.Add(New SqlClient.SqlParameter("@ResultsXML", SqlDbType.Xml))
+				.Parameters.Add(New SqlParameter("@ResultsXML", SqlDbType.Xml))
 				.Parameters.Item("@ResultsXML").Direction = ParameterDirection.Input
 				.Parameters.Item("@ResultsXML").Value = strXMLResultsClean
 			End With
@@ -829,23 +826,23 @@ Public Class clsAnalysisToolRunnerSMAQC
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub RenameSMAQCLogFile()
-		Dim diWorkDir As System.IO.DirectoryInfo
-		Dim fiFiles() As System.IO.FileInfo
+		Dim diWorkDir As DirectoryInfo
+		Dim fiFiles() As FileInfo
 		Dim strLogFilePathNew As String
 
 		Try
 
-			diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+			diWorkDir = New DirectoryInfo(m_WorkDir)
 
 			fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt")
 
 			If Not fiFiles Is Nothing AndAlso fiFiles.Length > 0 Then
 
 				' There should only be one file; just parse fiFiles(0)
-				strLogFilePathNew = System.IO.Path.Combine(m_WorkDir, "SMAQC_log.txt")
+				strLogFilePathNew = Path.Combine(m_WorkDir, "SMAQC_log.txt")
 
-				If System.IO.File.Exists(strLogFilePathNew) Then
-					System.IO.File.Delete(strLogFilePathNew)
+				If File.Exists(strLogFilePathNew) Then
+					File.Delete(strLogFilePathNew)
 				End If
 
 				fiFiles(0).MoveTo(strLogFilePathNew)
@@ -864,18 +861,18 @@ Public Class clsAnalysisToolRunnerSMAQC
 	Protected Function StoreToolVersionInfo(ByVal strSMAQCProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
-		Dim ioSMAQC As System.IO.FileInfo
+		Dim ioSMAQC As FileInfo
 		Dim blnSuccess As Boolean
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		ioSMAQC = New System.IO.FileInfo(strSMAQCProgLoc)
+		ioSMAQC = New FileInfo(strSMAQCProgLoc)
 		If Not ioSMAQC.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of System.IO.FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -893,7 +890,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles = New List(Of System.IO.FileInfo)
+		Dim ioToolFiles = New List(Of FileInfo)
 		ioToolFiles.Add(ioSMAQC)
 
 		Try
@@ -935,7 +932,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT))
+			ParseConsoleOutputFile(Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT))
 
 		End If
 

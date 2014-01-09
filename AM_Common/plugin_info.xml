@@ -297,6 +297,11 @@
 		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisToolRunnerResultsCleanup" 
 		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="repopkgr" 
+		Class="AnalysisManager_RepoPkgr_PlugIn.clsAnalysisToolRunnerRepoPkgr" 
+		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -596,7 +601,12 @@
 		Class="AnalysisManagerResultsCleanupPlugin.clsAnalysisResourcesResultsCleanup" 
 		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" 
 	/>
-
+	<Resourcer 
+		Tool="repopkgr" 
+		Class="AnalysisManager_RepoPkgr_PlugIn.clsAnalysisResourcesRepoPkgr" 
+		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll" 
+	/>
+	
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
