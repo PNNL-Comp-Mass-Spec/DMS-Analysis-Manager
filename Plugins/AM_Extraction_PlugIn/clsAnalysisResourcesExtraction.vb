@@ -73,10 +73,13 @@ Public Class clsAnalysisResourcesExtraction
 		Next
 
 		If mRetrieveOrganismDB Then
-			' Retrieve the Fasta file; required to create the _ProteinMods.txt file
-			If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+			Dim blnSkipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", False)
+			If Not blnSkipProteinMods Then
+				' Retrieve the Fasta file; required to create the _ProteinMods.txt file
+				If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+			End If			
 		End If
 
 
@@ -330,7 +333,7 @@ Public Class clsAnalysisResourcesExtraction
 							If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
 								' File is recent; grab it
 								If Not CopyFileToWorkDir(FileToGet, SourceFolderPath, m_WorkingDir) Then
-									' File copy failed; that's OK; we'll grab the _msgfplus.zip file
+									' File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
 								Else
 									blnSkipMSGFResultsZipFileCopy = True
 									m_jobParams.AddResultFileToSkip(FileToGet)

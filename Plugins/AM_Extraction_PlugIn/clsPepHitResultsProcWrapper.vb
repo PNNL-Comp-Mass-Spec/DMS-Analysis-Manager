@@ -11,8 +11,9 @@
 ' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class clsPepHitResultsProcWrapper
 
@@ -21,16 +22,16 @@ Public Class clsPepHitResultsProcWrapper
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-    Private m_DebugLevel As Integer = 0
-    Private m_MgrParams As IMgrParams
-    Private m_JobParams As IJobParams
+	Private ReadOnly m_DebugLevel As Integer = 0
+	Private ReadOnly m_MgrParams As IMgrParams
+	Private ReadOnly m_JobParams As IJobParams
 
     Private m_Progress As Integer = 0
     Private m_ErrMsg As String = String.Empty
     Private m_PHRPConsoleOutputFilePath As String
 
 	' This list tracks the error messages reported by CmdRunner
-	Protected mCmdRunnerErrors As System.Collections.Concurrent.ConcurrentBag(Of String)
+	Protected mCmdRunnerErrors As Concurrent.ConcurrentBag(Of String)
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -65,7 +66,7 @@ Public Class clsPepHitResultsProcWrapper
         m_JobParams = JobParams
 		m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1)
 
-		mCmdRunnerErrors = New System.Collections.Concurrent.ConcurrentBag(Of String)
+		mCmdRunnerErrors = New Concurrent.ConcurrentBag(Of String)
     End Sub
 
     ''' <summary>
@@ -92,7 +93,7 @@ Public Class clsPepHitResultsProcWrapper
 		Dim ModDefsFileName As String
 		Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
 
-		Dim ioInputFile As System.IO.FileInfo
+		Dim ioInputFile As FileInfo
 
 		Dim CmdStr As String
 		Dim blnSuccess As Boolean
@@ -107,31 +108,35 @@ Public Class clsPepHitResultsProcWrapper
 			End If
 
 			' Define the modification definitions file name
-			ModDefsFileName = System.IO.Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
+			ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
 
-			ioInputFile = New System.IO.FileInfo(PeptideSearchResultsFileName)
-			m_PHRPConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
+			ioInputFile = New FileInfo(PeptideSearchResultsFileName)
+			m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
 			CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
 
 			Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
-			progLoc = System.IO.Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
+			progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
 
 			' verify that program file exists
-			If Not System.IO.File.Exists(progLoc) Then
+			If Not File.Exists(progLoc) Then
 				m_ErrMsg = "PHRP not found at " & progLoc
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Set up and execute a program runner to run the PHRP
 			' Note that /SynPvalue is only used when processing Inspect files
-			CmdStr = ioInputFile.FullName & _
-			   " /O:" & ioInputFile.DirectoryName & _
-			   " /M:" & ModDefsFileName & _
-			   " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME & _
-			   " /N:" & ParamFileName & _
-			   " /SynPvalue:0.2" & _
-			   " /ProteinMods"
+			CmdStr = ioInputFile.FullName &
+			" /O:" & ioInputFile.DirectoryName &
+			" /M:" & ModDefsFileName &
+			" /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME &
+			" /N:" & ParamFileName &
+			" /SynPvalue:0.2"
+
+			Dim blnSkipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", False)
+			If Not blnSkipProteinMods Then
+				CmdStr &= " /ProteinMods"
+			End If
 
 			If Not String.IsNullOrEmpty(FastaFilePath) Then
 				CmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(FastaFilePath)
@@ -158,13 +163,13 @@ Public Class clsPepHitResultsProcWrapper
 			End With
 
 			' Abort PHRP if it runs for over 90 minutes (this generally indicates it's stuck)
-			Dim intMaxRuntimeSeconds As Integer = 90 * 60
+			Const intMaxRuntimeSeconds As Integer = 90 * 60
 			blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True, intMaxRuntimeSeconds)
 
 			If mCmdRunnerErrors.Count > 0 Then
 				' Append the error messages to the console output file
-				System.Threading.Thread.Sleep(250)
-				Using swConsoleOutputAppend As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+				Threading.Thread.Sleep(250)
+				Using swConsoleOutputAppend As StreamWriter = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 
 					swConsoleOutputAppend.WriteLine()
 					swConsoleOutputAppend.WriteLine(" ----- Error details ---- ")
@@ -186,12 +191,12 @@ Public Class clsPepHitResultsProcWrapper
 				' Parse the console output file for any lines that contain "Error"
 				' Append them to m_ErrMsg
 
-				Dim ioConsoleOutputFile As System.IO.FileInfo = New System.IO.FileInfo(m_PHRPConsoleOutputFilePath)
+				Dim ioConsoleOutputFile As FileInfo = New FileInfo(m_PHRPConsoleOutputFilePath)
 				Dim blnErrorMessageFound As Boolean = False
 
 				If ioConsoleOutputFile.Exists Then
-					Dim srInFile As System.IO.StreamReader
-					srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+					Dim srInFile As StreamReader
+					srInFile = New StreamReader(New FileStream(ioConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 					Do While srInFile.Peek() >= 0
 						Dim strLineIn As String
@@ -213,8 +218,8 @@ Public Class clsPepHitResultsProcWrapper
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Else
 				' Make sure the key PHRP result files were created
-				Dim lstFilesToCheck As System.Collections.Generic.List(Of String)
-				lstFilesToCheck = New System.Collections.Generic.List(Of String)
+				Dim lstFilesToCheck As List(Of String)
+				lstFilesToCheck = New List(Of String)
 
 				If CreateInspectFirstHitsFile And Not CreateInspectSynopsisFile Then
 					' We're processing Inspect data, and PHRP simply created the _fht.txt file
@@ -227,16 +232,18 @@ Public Class clsPepHitResultsProcWrapper
 					lstFilesToCheck.Add("_ModSummary.txt")
 					lstFilesToCheck.Add("_ModDetails.txt")
 
-					If Not String.IsNullOrEmpty(FastaFilePath) Then
-						Dim strWarningMessage As String = String.Empty
+					If Not blnSkipProteinMods Then
+						If Not String.IsNullOrEmpty(FastaFilePath) Then
+							Dim strWarningMessage As String = String.Empty
 
-						If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
+							If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
+								lstFilesToCheck.Add("_ProteinMods.txt")
+							End If
+						ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
 							lstFilesToCheck.Add("_ProteinMods.txt")
 						End If
-					ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
-						lstFilesToCheck.Add("_ProteinMods.txt")
 					End If
-
+					
 				End If
 
 				For Each strFileName As String In lstFilesToCheck
@@ -250,12 +257,12 @@ Public Class clsPepHitResultsProcWrapper
 
 			' Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
 			Try
-				System.IO.File.Delete(m_PHRPConsoleOutputFilePath)
+				File.Delete(m_PHRPConsoleOutputFilePath)
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Dim Msg As String
 			Msg = "Exception while running the peptide hit results processor: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
@@ -270,42 +277,42 @@ Public Class clsPepHitResultsProcWrapper
 
 	End Function
 
-    Private Sub ParsePHRPConsoleOutputFile()
-        Static reProcessing As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Processing: (\d+)")
+	Private Sub ParsePHRPConsoleOutputFile()
+		Static reProcessing As Regex = New Regex("Processing: (\d+)")
 
-        Try
-            Dim srInFile As System.IO.StreamReader
-            Dim strLineIn As String
-            Dim reMatch As System.Text.RegularExpressions.Match
-            Dim intProgress As Integer = 0
+		Try
+			Dim srInFile As StreamReader
+			Dim strLineIn As String
+			Dim reMatch As Text.RegularExpressions.Match
+			Dim intProgress As Integer = 0
 
-            If System.IO.File.Exists(m_PHRPConsoleOutputFilePath) Then
-                srInFile = New System.IO.StreamReader(New System.IO.FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			If File.Exists(m_PHRPConsoleOutputFilePath) Then
+				srInFile = New StreamReader(New FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek >= 0
-                    strLineIn = srInFile.ReadLine()
-                    reMatch = reProcessing.Match(strLineIn)
+				Do While srInFile.Peek >= 0
+					strLineIn = srInFile.ReadLine()
+					reMatch = reProcessing.Match(strLineIn)
 
-                    If reMatch.Success Then
-                        If Integer.TryParse(reMatch.Groups.Item(1).Value, intProgress) Then
-                            ' Success parsing out the progress
-                        End If
-                    End If
-                Loop
+					If reMatch.Success Then
+						If Integer.TryParse(reMatch.Groups.Item(1).Value, intProgress) Then
+							' Success parsing out the progress
+						End If
+					End If
+				Loop
 
-                srInFile.Close()
+				srInFile.Close()
 
-                If intProgress > m_Progress Then
-                    m_Progress = intProgress
-                    RaiseEvent ProgressChanged("Running PHRP", m_Progress)
-                End If
-            End If
+				If intProgress > m_Progress Then
+					m_Progress = intProgress
+					RaiseEvent ProgressChanged("Running PHRP", m_Progress)
+				End If
+			End If
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing PHRP Console Output File", ex)
-        End Try
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing PHRP Console Output File", ex)
+		End Try
 
-    End Sub
+	End Sub
 
 #End Region
 
@@ -341,11 +348,11 @@ Public Class clsPepHitResultsProcWrapper
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
 		'Update the status by parsing the PHRP Console Output file every 20 seconds
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
+			dtLastStatusUpdate = DateTime.UtcNow
 			ParsePHRPConsoleOutputFile()
 		End If
 
