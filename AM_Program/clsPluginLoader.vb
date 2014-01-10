@@ -178,8 +178,11 @@ Public Class clsPluginLoader
 			'Case "AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManager_Ape_PlugIn.clsAnalysisToolRunnerApe, IToolRunner)
 
-			Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr".ToLower()
-				myToolRunner = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr, IToolRunner)
+			'Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisToolRunnerRepoPkgr, IToolRunner)
+
+			Case "AnalysisManagerResultsXferPlugin.clsResultXferToolRunner".ToLower()
+				myToolRunner = DirectCast(New AnalysisManagerResultsXferPlugin.clsResultXferToolRunner, IToolRunner)
 
 		End Select
 
@@ -294,8 +297,11 @@ Public Class clsPluginLoader
 			'Case "AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe".ToLower()
 			'	myModule = DirectCast(New AnalysisManager_Ape_PlugIn.clsAnalysisResourcesApe, IAnalysisResources)
 
-			Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr".ToLower()
-				myModule = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr, IAnalysisResources)
+			'Case "AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr".ToLower()
+			'	myModule = DirectCast(New AnalysisManager_RepoPkgr_Plugin.clsAnalysisResourcesRepoPkgr, IAnalysisResources)
+
+			Case "AnalysisManagerResultsXferPlugin.clsAnalysisResourcesResultXfer".ToLower()
+				myModule = DirectCast(New AnalysisManagerResultsXferPlugin.clsAnalysisResourcesResultXfer, IAnalysisResources)
 
 		End Select
 

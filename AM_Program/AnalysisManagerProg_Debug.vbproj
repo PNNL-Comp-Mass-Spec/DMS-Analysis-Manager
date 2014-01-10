@@ -163,9 +163,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_RepoPkgr_PlugIn\AnalysisManager_RepoPkgr_PlugIn.csproj">
-      <Project>{02AB78CA-A428-4EF8-918F-D8864172AE7E}</Project>
-      <Name>AnalysisManager_RepoPkgr_PlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.vbproj">
+      <Project>{EDDE6076-0959-40E8-8760-08B29F66AB01}</Project>
+      <Name>AnalysisManagerResultsXferPlugin</Name>
     </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
