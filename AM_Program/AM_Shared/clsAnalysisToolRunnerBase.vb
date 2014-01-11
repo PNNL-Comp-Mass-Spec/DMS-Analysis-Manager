@@ -529,7 +529,7 @@ Public Class clsAnalysisToolRunnerBase
 		End Try
 
 		' Note: Entries in ResultFiles will have full file paths, not just file names
-		ResultFiles = Directory.GetFiles(SourceFolderPath, "*.*")
+		ResultFiles = Directory.GetFiles(SourceFolderPath, "*")
 
 		For Each FileToCopy As String In ResultFiles
 			strSourceFileName = Path.GetFileName(FileToCopy)
@@ -1297,7 +1297,7 @@ Public Class clsAnalysisToolRunnerBase
 
 
 			' Obtain a list of all files in the working directory
-			Files = Directory.GetFiles(m_WorkDir, "*.*")
+			Files = Directory.GetFiles(m_WorkDir, "*")
 
 			' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
 			For Each TmpFile In Files

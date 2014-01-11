@@ -454,7 +454,7 @@ Public Class clsIonicZipTools
 			diFolderInfo = CType(fiFileSystemInfo, DirectoryInfo)
 
 			lngTotalSizeBytes = 0
-			For Each fiEntry As FileInfo In diFolderInfo.GetFiles("*.*", SearchOption.AllDirectories)
+			For Each fiEntry As FileInfo In diFolderInfo.GetFiles("*", SearchOption.AllDirectories)
 				lngTotalSizeBytes += fiEntry.Length
 			Next
 		End If

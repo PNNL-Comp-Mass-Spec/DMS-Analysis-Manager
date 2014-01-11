@@ -9,6 +9,8 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Threading
 
 Public Class clsResultXferToolRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -16,18 +18,6 @@ Public Class clsResultXferToolRunner
 	'*********************************************************************************************************
 	'Derived class for performing analysis results transfer
 	'*********************************************************************************************************
-
-#Region "Constants"
-#End Region
-
-#Region "Module variables"
-#End Region
-
-#Region "Events"
-#End Region
-
-#Region "Properties"
-#End Region
 
 #Region "Methods"
 	''' <summary>
@@ -61,11 +51,10 @@ Public Class clsResultXferToolRunner
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-		
 			DeleteTransferFolderIfEmpty()
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 		Catch ex As Exception
 			m_message = "Error in ResultsXferPlugin->RunTool: " & ex.Message
@@ -75,6 +64,29 @@ Public Class clsResultXferToolRunner
 		'If we got to here, everything worked, so exit
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
+	End Function
+
+	Protected Function ChangeFolderPathsToLocal(ByVal serverName As String, ByRef transferFolderPath As String, ByRef datasetStoragePath As String) As Boolean
+
+		Dim connectionString = m_mgrParams.GetParam("connectionstring")
+
+		Dim datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionString)
+		If String.IsNullOrWhiteSpace(datasetStorageVolServer) Then
+			m_message = "Unable to determine the local drive letter for " + Path.Combine("\\" & serverName, datasetStoragePath)
+			Return False
+		Else
+			datasetStoragePath = datasetStorageVolServer
+		End If
+
+		Dim transferVolServer = LookupLocalPath(serverName, transferFolderPath, "results_transfer", connectionString)
+		If String.IsNullOrWhiteSpace(transferVolServer) Then
+			m_message = "Unable to determine the local drive letter for " + Path.Combine("\\" & serverName, transferFolderPath)
+			Return False
+		Else
+			transferFolderPath = transferVolServer
+		End If
+
+		Return True
 	End Function
 
 	Protected Sub DeleteTransferFolderIfEmpty()
@@ -87,9 +99,9 @@ Public Class clsResultXferToolRunner
 		' Thus, we will log any exceptions that occur, but we won't treat them as a job failure
 
 		Try
-			Dim diTransferFolder = New IO.DirectoryInfo(IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset))			
+			Dim diTransferFolder = New DirectoryInfo(Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset))
 
-			If diTransferFolder.Exists andalso diTransferFolder.GetFileSystemInfos("*", IO.SearchOption.AllDirectories).Length = 0 Then
+			If diTransferFolder.Exists AndAlso diTransferFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Count = 0 Then
 				' Dataset folder in transfer folder is empty; delete it
 				Try
 					If m_DebugLevel >= 3 Then
@@ -117,6 +129,185 @@ Public Class clsResultXferToolRunner
 		End Try
 
 	End Sub
+
+	Private Function GetMachineNameFromPath(ByVal uncFolderPath As String) As String
+		Dim charIndex = uncFolderPath.IndexOf("\"c, 2)
+
+		If charIndex < 0 OrElse Not uncFolderPath.StartsWith("\\") Then
+			Return String.Empty
+		End If
+		
+		Dim machineName = uncFolderPath.Substring(2, charIndex - 2)
+		Return machineName
+
+	End Function
+
+	Protected Function LookupLocalPath(ByVal serverName As String, ByVal uncFolderPath As String, ByVal folderFunction As String, ByVal connectionString As String) As String
+
+		Dim RetryCount As Short = 3
+
+		Dim rowCount As Integer = 0
+		Dim strMsg As String
+		Dim volServer = String.Empty
+
+		' Remove the server name from the start of folderPath
+		Dim charIndex = uncFolderPath.IndexOf("\"c, 2)
+
+		If charIndex < 0 OrElse Not uncFolderPath.StartsWith("\\") Then
+			Return String.Empty
+		End If
+
+		uncFolderPath = uncFolderPath.Substring(charIndex + 1)
+
+		' Make sure folderPath does not end in a slash
+		If uncFolderPath.EndsWith("\"c) Then
+			uncFolderPath = uncFolderPath.TrimEnd("\"c)
+		End If
+
+		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+
+		' Query V_Storage_Path_Export for the local volume name of the given path
+		'
+		SqlStr.Append(" SELECT TOP 1 VolServer, [Path]")
+		SqlStr.Append(" FROM V_Storage_Path_Export")
+		SqlStr.Append(" WHERE (MachineName = '" + serverName + "') AND")
+		SqlStr.Append("       ([Path] = '" + uncFolderPath + "' OR")
+		SqlStr.Append("        [Path] = '" + uncFolderPath + "\')")
+		SqlStr.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC")
+
+		While RetryCount > 0
+			Try
+				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(connectionString)
+					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
+						Using Ds As DataSet = New DataSet
+							Da.Fill(Ds)
+							Using Dt = Ds.Tables(0)
+								rowCount = Dt.Rows.Count
+								For Each CurRow As DataRow In Dt.Rows
+									volServer = clsGlobal.DbCStr(CurRow("VolServer"))
+									Exit For
+								Next
+							End Using
+						End Using  'Ds
+					End Using  'Da
+				End Using  'Cn
+				Exit While
+			Catch ex As Exception
+				RetryCount -= 1S
+				strMsg = "LookupLocalPath; Exception getting folder info from database: " + ex.Message + "; ConnectionString: " + connectionString
+				strMsg &= ", RetryCount = " + RetryCount.ToString
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+				Thread.Sleep(5000)				'Delay for 5 second before trying again
+			End Try
+		End While
+
+		'If loop exited due to errors, return an empty string
+		If RetryCount < 1 Then
+			strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+			Return String.Empty
+		End If
+
+		'Verify at least one row was returned
+		If rowCount < 1 Then
+			' No data was returned
+			strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+			Return String.Empty
+		End If
+
+		Dim localFolderPath = Path.Combine(volServer, uncFolderPath)
+		Return localFolderPath
+
+	End Function
+	
+	''' <summary>
+	''' Moves files from one local directory to another local directory
+	''' </summary>
+	''' <param name="sourceFolderpath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function MoveFilesLocally(ByVal sourceFolderpath As String, ByVal targetFolderPath As String, ByVal overwriteExisting As Boolean) As Boolean
+
+		Dim success = True
+		Dim errorCount = 0
+		Dim errorMessage = String.Empty
+
+		Try
+			If sourceFolderpath.StartsWith("\\") Then
+				m_message = "MoveFilesLocally cannot be used with files on network shares; " & sourceFolderpath
+				Return False
+			End If
+
+			If targetFolderPath.StartsWith("\\") Then
+				m_message = "MoveFilesLocally cannot be used with files on network shares; " & targetFolderPath
+				Return False
+			End If
+
+			Dim diSourceFolder = New DirectoryInfo(sourceFolderpath)
+			Dim diTargetFolder = New DirectoryInfo(targetFolderPath)
+
+			If Not diTargetFolder.Exists Then diTargetFolder.Create()
+
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Moving files locally to " & diTargetFolder.FullName)
+			End If
+
+			For Each fiSourceFile In diSourceFolder.GetFiles()
+				Try
+					Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fiSourceFile.Name))
+
+					If fiTargetFile.Exists Then
+						If Not overwriteExisting Then
+							If m_DebugLevel >= 2 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Skipping existing file: " & fiTargetFile.FullName)
+							End If
+							Continue For
+						End If
+						fiTargetFile.Delete()
+					End If
+
+					fiSourceFile.MoveTo(fiTargetFile.FullName)
+
+				Catch ex As Exception
+					errorCount += 1
+					If errorCount = 1 Then
+						errorMessage = "Error moving file " & fiSourceFile.Name & ": " & ex.Message
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error moving file " & fiSourceFile.Name & ": " & ex.Message)
+					success = False
+				End Try
+
+			Next
+
+			If errorCount > 0 Then
+				m_message = clsGlobal.AppendToComment(m_message, errorMessage)
+			End If
+
+			' Recursively call this function for each subdirectory
+			For Each diSubFolder In diSourceFolder.GetDirectories()
+				Dim subDirSuccess = MoveFilesLocally(diSubFolder.FullName, Path.Combine(diTargetFolder.FullName, diSubFolder.Name), overwriteExisting)
+				If Not subDirSuccess Then
+					success = False
+				End If
+			Next
+
+			' Delete this folder if it is empty
+			diSourceFolder.Refresh()
+			If diSourceFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Count = 0 Then
+				diSourceFolder.Delete()
+			End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error moving directory " & sourceFolderpath & ": " & ex.Message)
+			success = False
+		End Try
+
+		Return success
+
+	End Function
+
 	''' <summary>
 	''' Performs the results transfer
 	''' </summary>
@@ -128,131 +319,161 @@ Public Class clsResultXferToolRunner
 		Dim FolderToMove As String
 		Dim DatasetDir As String
 		Dim TargetDir As String
-        Dim diDatasetFolder As System.IO.DirectoryInfo
+		Dim diDatasetFolder As DirectoryInfo
 
-        ' Set this to True to overwrite existing results folders
-        Dim blnOverwriteExisting As Boolean = True
+		' Set this to True to overwrite existing results folders
+		Const blnOverwriteExisting As Boolean = True
 
-		'Verify input folder exists in storage server xfer folder
-        FolderToMove = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("DatasetFolderName"))
-        FolderToMove = System.IO.Path.Combine(FolderToMove, m_jobParams.GetParam("InputFolderName"))
-        If Not System.IO.Directory.Exists(FolderToMove) Then
-            Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
-            m_message = clsGlobal.AppendToComment(m_message, "results folder not found")
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        ElseIf m_DebugLevel >= 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder to move: " & FolderToMove)
-        End If
+		Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
+		Dim datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath")
 
-        ' Verify dataset folder exists on storage server
-        ' If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-        DatasetDir = System.IO.Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), m_jobParams.GetParam("DatasetFolderName"))
-        diDatasetFolder = New System.IO.DirectoryInfo(DatasetDir)
-        If Not diDatasetFolder.Exists Then
-            Msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " & DatasetDir & " not found; will attempt to make it"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+		' Check whether the transfer folder and the dataset folder reside on the same server as this manager
+		Dim serverName = Environment.MachineName
+		Dim movingLocalFiles As Boolean = False
 
-            Try
-                Dim diParentFolder As System.IO.DirectoryInfo
-                diParentFolder = diDatasetFolder.Parent
+		If String.Compare(GetMachineNameFromPath(transferFolderPath), serverName, True) = 0 AndAlso
+		   String.Compare(GetMachineNameFromPath(datasetStoragePath), serverName, True) = 0 Then
+			' Update the paths to use local file paths instead of network share paths
 
-                If Not diParentFolder.Exists Then
-                    ' Parent folder doesn't exist; try to go up one more level and create the parent
+			If Not ChangeFolderPathsToLocal(serverName, transferFolderPath, datasetStoragePath) Then
+				If String.IsNullOrWhiteSpace(m_message) Then m_message = "Unknown error calling ChangeFolderPathsToLocal"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-                    If Not diParentFolder.Parent Is Nothing Then
-                        ' Parent of the parent exist; try to create the parent folder
-                        diParentFolder.Create()
+			movingLocalFiles = True
+		End If
 
-                        ' Wait 500 msec then verify that the folder was created
-                        System.Threading.Thread.Sleep(500)
-                        diParentFolder.Refresh()
-                        diDatasetFolder.Refresh()
-                    End If
-                End If
+		' Verify input folder exists in storage server xfer folder
+		FolderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam("DatasetFolderName"))
+		FolderToMove = Path.Combine(FolderToMove, m_jobParams.GetParam("InputFolderName"))
 
-                If diParentFolder.Exists Then
-                    ' Parent folder exists; try to create the dataset folder
-                    diDatasetFolder.Create()
+		If Not Directory.Exists(FolderToMove) Then
+			Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
+			m_message = clsGlobal.AppendToComment(m_message, "results folder not found")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		ElseIf m_DebugLevel >= 4 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder to move: " & FolderToMove)
+		End If
 
-                    ' Wait 500 msec then verify that the folder now exists
-                    System.Threading.Thread.Sleep(500)
-                    diDatasetFolder.Refresh()
+		' Verify dataset folder exists on storage server
+		' If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
+		DatasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam("DatasetFolderName"))
+		diDatasetFolder = New DirectoryInfo(DatasetDir)
+		If Not diDatasetFolder.Exists Then
+			Msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " & DatasetDir & " not found; will attempt to make it"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
 
-                    If Not diDatasetFolder.Exists Then
-                        ' Creation of the dataset folder failed; unable to continue
-                        Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
-                        m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    End If
-                Else
-                    Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
-                    m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+			Try
+				Dim diParentFolder As DirectoryInfo
+				diParentFolder = diDatasetFolder.Parent
 
-            Catch ex As Exception
-                Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
-                m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+				If Not diParentFolder.Exists Then
+					' Parent folder doesn't exist; try to go up one more level and create the parent
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End Try
+					If Not diParentFolder.Parent Is Nothing Then
+						' Parent of the parent exist; try to create the parent folder
+						diParentFolder.Create()
+
+						' Wait 500 msec then verify that the folder was created
+						Thread.Sleep(500)
+						diParentFolder.Refresh()
+						diDatasetFolder.Refresh()
+					End If
+				End If
+
+				If diParentFolder.Exists Then
+					' Parent folder exists; try to create the dataset folder
+					diDatasetFolder.Create()
+
+					' Wait 500 msec then verify that the folder now exists
+					Thread.Sleep(500)
+					diDatasetFolder.Refresh()
+
+					If Not diDatasetFolder.Exists Then
+						' Creation of the dataset folder failed; unable to continue
+						Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
+						m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
+				Else
+					Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
+					m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+			Catch ex As Exception
+				Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
+				m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
 
 
-        ElseIf m_DebugLevel >= 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder path: " & DatasetDir)
-        End If
+		ElseIf m_DebugLevel >= 4 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder path: " & DatasetDir)
+		End If
 
-        TargetDir = System.IO.Path.Combine(DatasetDir, m_jobParams.GetParam("inputfoldername"))
+		TargetDir = Path.Combine(DatasetDir, m_jobParams.GetParam("inputfoldername"))
 
 
-        'Determine if output folder already exists on storage server
-        If System.IO.Directory.Exists(TargetDir) Then
-            If blnOverwriteExisting Then
-                Msg = "Warning: overwriting existing results folder: " & TargetDir
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
-                Msg = String.Empty
-            Else
-                Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
-                m_message = clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        End If
+		' Determine if output folder already exists on storage server
+		If Directory.Exists(TargetDir) Then
+			If blnOverwriteExisting Then
+				Msg = "Warning: overwriting existing results folder: " & TargetDir
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
+				Msg = String.Empty
+			Else
+				Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
+				m_message = clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		End If
 
-        'Move the directory
-        Try
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Moving '" & FolderToMove & "' to '" & TargetDir & "'")
-            End If
+		' Move the directory
+		Try
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Moving '" & FolderToMove & "' to '" & TargetDir & "'")
+			End If
 
-			ResetTimestampForQueueWaitTimeLogging()
-			m_FileTools.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting, m_mgrParams.GetParam("MgrName", "Undefined-Manager"))
+			If movingLocalFiles Then
+				Dim success = MoveFilesLocally(FolderToMove, TargetDir, blnOverwriteExisting)
+				If Not success Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				' Call MoveDirectory, which will copy the files using locks
+				If m_DebugLevel >= 2 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Using m_FileTools.MoveDirectory to copy files to " & TargetDir)
+				End If
+				ResetTimestampForQueueWaitTimeLogging()
+				m_FileTools.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting, m_mgrParams.GetParam("MgrName", "Undefined-Manager"))
+			End If
+			
+		Catch ex As Exception
+			Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
+			m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
-        Catch ex As Exception
-            Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
-            m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder")
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+	End Function
 
-    End Function
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo() As Boolean
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
+		Dim strToolVersionInfo As String = String.Empty
 		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
 
 		' Lookup the version of the Analysis Manager
 		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerProg") Then
@@ -264,19 +485,19 @@ Public Class clsResultXferToolRunner
 			Return False
 		End If
 
-        ' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")))
+		' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
+		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")))
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
-    End Function
+	End Function
 
 #End Region
 

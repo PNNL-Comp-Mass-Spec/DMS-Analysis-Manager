@@ -760,7 +760,7 @@ Public Class clsCodeTest
 
 		Dim ResultFiles() As String
 
-		ResultFiles = System.IO.Directory.GetFiles("C:\Temp\", "*.*")
+		ResultFiles = System.IO.Directory.GetFiles("C:\Temp\", "*")
 
 		For Each FileToCopy As String In ResultFiles
 			Console.WriteLine(FileToCopy)
