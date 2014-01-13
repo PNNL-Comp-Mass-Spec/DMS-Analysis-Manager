@@ -1198,9 +1198,12 @@ Public Class clsMainProcess
 	''' <remarks></remarks>
 	Private Sub DisableManagerLocally()
 
-		If Not m_MgrSettings.DisableManagerLocally() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error while disabling manager: " & m_MgrSettings.ErrMsg)
-		End If
+		' Note: We previously called m_MgrSettings.DisableManagerLocally() to update AnalysisManager.config.exe
+		' We now create a flag file instead
+		' This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
+
+		m_MgrErrorCleanup.CreateStatusFlagFile()
+		UpdateStatusFlagFileExists()
 
 	End Sub
 

@@ -11,8 +11,10 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.Data.SqlClient
+Imports System.IO
 Imports System.Xml
 Imports System.Threading
+Imports System.Reflection
 
 Public Class clsAnalysisMgrSettings
 	Implements IMgrParams
@@ -647,7 +649,8 @@ Public Class clsAnalysisMgrSettings
 	''' <remarks></remarks>
 	Private Function GetConfigFilePath() As String
 
-		Return m_MgrFolderPath & ".config"
+		Dim exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location)
+		Return Path.Combine(m_MgrFolderPath, exeName & ".config")
 
 	End Function
 

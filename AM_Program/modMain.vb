@@ -22,8 +22,13 @@
 ' SOFTWARE.  This notice including this sentence must appear on any copies of 
 ' this computer software.
 
+Imports AnalysisManagerBase
+Imports System.Reflection
+Imports System.IO
+Imports System.Threading
+
 Module modMain
-	Public Const PROGRAM_DATE As String = "October 30, 2013"
+	Public Const PROGRAM_DATE As String = "January 13, 2014"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -111,7 +116,7 @@ Module modMain
 						objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
 
 					Catch ex As Exception
-						Console.WriteLine(AnalysisManagerBase.clsGlobal.GetExceptionStackTrace(ex))
+						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
 					End Try
 				ElseIf mCreateWindowsEventLog Then
 					clsMainProcess.CreateAnalysisManagerEventLog()
@@ -128,12 +133,16 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-            ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
+			ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
 			intReturnCode = -1
 		End Try
 
 		Return intReturnCode
 
+	End Function
+
+	Private Function GetAppPath() As String
+		Return Assembly.GetExecutingAssembly().Location
 	End Function
 
 	''' <summary>
@@ -143,21 +152,21 @@ Module modMain
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Private Function GetAppVersion(ByVal strProgramDate As String) As String
-		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & strProgramDate & ")"
+		Return Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & strProgramDate & ")"
 	End Function
 
 	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim lstValidParameters As Generic.List(Of String) = New Generic.List(Of String) From {"T", "Test", "Trace", "EL"}
+		Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL"}
 
 		Try
 			' Make sure no invalid parameters are present
-            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
+			If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
 				ShowErrorMessage("Invalid commmand line parameters",
 				  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
-                Return False
+				Return False
 			Else
 				With objParseCommandLine
 					' Query objParseCommandLine to see if various parameters are present
@@ -175,24 +184,24 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-            ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
-        End Try
+			ShowErrorMessage("Error parsing the command line parameters: " & Environment.NewLine & ex.Message)
+		End Try
 
-        Return False
+		Return False
 
 	End Function
 
-    Private Sub ShowErrorMessage(ByVal strMessage As String)
+	Private Sub ShowErrorMessage(ByVal strMessage As String)
 		Const strSeparator As String = "------------------------------------------------------------------------------"
 
-        Console.WriteLine()
-        Console.WriteLine(strSeparator)
-        Console.WriteLine(strMessage)
-        Console.WriteLine(strSeparator)
-        Console.WriteLine()
+		Console.WriteLine()
+		Console.WriteLine(strSeparator)
+		Console.WriteLine(strMessage)
+		Console.WriteLine(strSeparator)
+		Console.WriteLine()
 
 		WriteToErrorStream(strMessage)
-    End Sub
+	End Sub
 
 	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As IEnumerable(Of String))
 		Const strSeparator As String = "------------------------------------------------------------------------------"
@@ -219,7 +228,7 @@ Module modMain
 
 			Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
 			Console.WriteLine()
-			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " [/EL] [/T] [/Trace] [/Q]")
+			Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/T] [/Trace] [/Q]")
 			Console.WriteLine()
 
 			Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
@@ -240,20 +249,20 @@ Module modMain
 			Console.WriteLine()
 
 			Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " & _
-							  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0")
+				  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0")
 			Console.WriteLine()
 
 			Console.WriteLine("Notice: This computer software was prepared by Battelle Memorial Institute, " & _
-							  "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " & _
-							  "Department of Energy (DOE).  All rights in the computer software are reserved " & _
-							  "by DOE on behalf of the United States Government and the Contractor as " & _
-							  "provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY " & _
-							  "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " & _
-							  "SOFTWARE.  This notice including this sentence must appear on any copies of " & _
-							  "this computer software.")
+				  "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " & _
+				  "Department of Energy (DOE).  All rights in the computer software are reserved " & _
+				  "by DOE on behalf of the United States Government and the Contractor as " & _
+				  "provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY " & _
+				  "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " & _
+				  "SOFTWARE.  This notice including this sentence must appear on any copies of " & _
+				  "this computer software.")
 
 			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			System.Threading.Thread.Sleep(750)
+			Thread.Sleep(750)
 
 		Catch ex As Exception
 			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
@@ -263,7 +272,7 @@ Module modMain
 
 	Private Sub WriteToErrorStream(strErrorMessage As String)
 		Try
-			Using swErrorStream As System.IO.StreamWriter = New System.IO.StreamWriter(Console.OpenStandardError())
+			Using swErrorStream As StreamWriter = New StreamWriter(Console.OpenStandardError())
 				swErrorStream.WriteLine(strErrorMessage)
 			End Using
 		Catch ex As Exception
