@@ -54,6 +54,8 @@ Public Class clsMainProcess
 	Private m_NeedToAbortProcessing As Boolean
 	Private m_MostRecentJobInfo As String
 
+	Private m_MostRecentErrorMessage As String = String.Empty
+
 	Private m_TraceMode As Boolean
 
 	Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
@@ -416,7 +418,12 @@ Public Class clsMainProcess
 								blnOneTaskPerformed = True
 							Else
 								'Something went wrong; errors were logged by DoAnalysisJob
-								intErrorCount += 1
+								If m_MostRecentErrorMessage.Contains("None of the spectra are centroided") Then
+									' Job failed, but this was not a manager error
+									' Do not increment the error count
+								Else
+									intErrorCount += 1
+								End If
 							End If
 
 						Catch ex As Exception
@@ -511,7 +518,6 @@ Public Class clsMainProcess
 		Dim StepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
 		Dim Dataset As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
 		Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
-		Dim ErrorMessage As String = String.Empty
 
 		Dim blnRunToolError As Boolean = False
 
@@ -572,11 +578,11 @@ Public Class clsMainProcess
 		End If
 
 		' Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
-		If Not ValidateFreeDiskSpace(ErrorMessage) Then
-			If String.IsNullOrEmpty(ErrorMessage) Then
-				ErrorMessage = "Insufficient free space (location undefined)"
+		If Not ValidateFreeDiskSpace(m_MostRecentErrorMessage) Then
+			If String.IsNullOrEmpty(m_MostRecentErrorMessage) Then
+				m_MostRecentErrorMessage = "Insufficient free space (location undefined)"
 			End If
-			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, ErrorMessage)
+			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage)
 			m_MgrErrorCleanup.CleanWorkDir()
 			UpdateStatusIdle("Processing aborted")
 			Return False
@@ -587,16 +593,16 @@ Public Class clsMainProcess
 		Try
 			eToolRunnerResult = m_Resource.GetResources()
 			If Not eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				ErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
+				m_MostRecentErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
 				If Not m_Resource.Message Is Nothing Then
-					ErrorMessage &= "; " & m_Resource.Message
+					m_MostRecentErrorMessage &= "; " & m_Resource.Message
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_Resource.Message)
 
 				m_MgrErrorCleanup.CleanWorkDir()
-				UpdateStatusIdle("Error encountered: " & ErrorMessage)
+				UpdateStatusIdle("Error encountered: " & m_MostRecentErrorMessage)
 				m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 				Return False
 			End If
@@ -621,30 +627,30 @@ Public Class clsMainProcess
 		Try
 			eToolRunnerResult = m_ToolRunner.RunTool()
 			If eToolRunnerResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				ErrorMessage = m_ToolRunner.Message
+				m_MostRecentErrorMessage = m_ToolRunner.Message
 
-				If String.IsNullOrEmpty(ErrorMessage) Then
-					ErrorMessage = "Unknown ToolRunner Error"
+				If String.IsNullOrEmpty(m_MostRecentErrorMessage) Then
+					m_MostRecentErrorMessage = "Unknown ToolRunner Error"
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & ErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
-				m_AnalysisTask.CloseTask(eToolRunnerResult, ErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+				m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
 				Try
-					If ErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) OrElse _
-					   ErrorMessage.Contains(DECON2LS_CORRUPTED_MEMORY_ERROR) Then
+					If m_MostRecentErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) OrElse _
+					   m_MostRecentErrorMessage.Contains(DECON2LS_CORRUPTED_MEMORY_ERROR) Then
 						m_NeedToAbortProcessing = True
 					End If
 
 				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Exception examining ErrorMessage", ex)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Exception examining MostRecentErrorMessage", ex)
 				End Try
 
 				If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE Then
 					m_NeedToAbortProcessing = True
 				End If
 
-				If m_NeedToAbortProcessing AndAlso ErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE) Then
+				If m_NeedToAbortProcessing AndAlso m_MostRecentErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE) Then
 					DisableManagerLocally()
 				End If
 
@@ -653,7 +659,7 @@ Public Class clsMainProcess
 
 			If m_ToolRunner.NeedToAbortProcessing Then
 				m_NeedToAbortProcessing = True
-				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, ErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
+				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 			End If
 
 		Catch Err As Exception
@@ -1786,7 +1792,7 @@ Public Class clsMainProcess
 			End If
 
 		Else
-
+			' Directory is a local drive; can query with .NET
 			diDrive = New DriveInfo(diDirectory.Root.FullName)
 			dblFreeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
 		End If
