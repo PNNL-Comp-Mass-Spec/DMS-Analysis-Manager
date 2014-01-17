@@ -303,17 +303,24 @@ Public Class clsMSGFResultsSummarizer
 		lstFilteredPSMs = New Dictionary(Of Integer, udtPSMInfoType)
 
 		Dim blnSuccess As Boolean
+		Dim blnFilterPSMs As Boolean = True
 
-		If blnUsingMSGFOrEValueFilter AndAlso mMSGFThreshold < 1 Then
+		If blnUsingMSGFOrEValueFilter Then
 			If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
 				' Filter on MSGF
 				blnSuccess = FilterPSMsByEValue(mEValueThreshold, lstPSMs, lstFilteredPSMs)
-			Else
+			ElseIf mMSGFThreshold < 1 Then
 				' Filter on MSGF
 				blnSuccess = FilterPSMsByMSGF(mMSGFThreshold, lstPSMs, lstFilteredPSMs)
+			Else
+				' Do not filter
+				blnFilterPSMs = False
 			End If
-
 		Else
+			blnFilterPSMs = False
+		End If
+
+		If Not blnFilterPSMs Then
 			' Keep all PSMs
 			For Each kvEntry As KeyValuePair(Of Integer, udtPSMInfoType) In lstPSMs
 				lstFilteredPSMs.Add(kvEntry.Key, kvEntry.Value)
@@ -476,7 +483,10 @@ Public Class clsMSGFResultsSummarizer
 
 	End Function
 
-	Protected Function FilterPSMsByEValue(ByVal dblEValueThreshold As Double, ByRef lstPSMs As Dictionary(Of Integer, udtPSMInfoType), ByRef lstFilteredPSMs As Dictionary(Of Integer, udtPSMInfoType)) As Boolean
+	Protected Function FilterPSMsByEValue(
+	  ByVal dblEValueThreshold As Double,
+	  ByRef lstPSMs As Dictionary(Of Integer, udtPSMInfoType),
+	  ByRef lstFilteredPSMs As Dictionary(Of Integer, udtPSMInfoType)) As Boolean
 
 		lstFilteredPSMs.Clear()
 
@@ -580,6 +590,15 @@ Public Class clsMSGFResultsSummarizer
 				.Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
 				.Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
 				.Parameters.Item("@UniqueProteinsFDRFilter").Value = mFDRBasedCounts.UniqueProteinCount
+
+				.Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
+				.Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
+				If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+					.Parameters.Item("@MSGFThresholdIsEValue").Value = 1
+				Else
+					.Parameters.Item("@MSGFThresholdIsEValue").Value = 0
+				End If
+
 
 			End With
 

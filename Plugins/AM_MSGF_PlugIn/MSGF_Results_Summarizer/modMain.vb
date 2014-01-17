@@ -15,7 +15,7 @@ Imports PHRPReader
 Imports System.IO
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "January 16, 2014"
+	Public Const PROGRAM_DATE As String = "January 17, 2014"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty

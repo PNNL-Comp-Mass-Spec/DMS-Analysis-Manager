@@ -725,7 +725,7 @@ Public Class clsExtractToolRunner
 		End Try
 
 		' Summarize the number of PSMs in _msalign_syn.txt
-		Const eResultType As clsPHRPReader.ePeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSAlign
+		Const eResultType As clsPHRPReader.ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSAlign
 		Dim job As Integer = 0
 		Dim blnPostResultsToDB As Boolean
 
@@ -746,8 +746,8 @@ Public Class clsExtractToolRunner
 		objSummarizer.SaveResultsToTextFile = False
 
 		Dim blnSuccess = objSummarizer.ProcessMSGFResults()
-		If Not blnSuccess Then
 
+		If Not blnSuccess Then
 			If String.IsNullOrEmpty(objSummarizer.ErrorMessage) Then
 				m_message = "Error summarizing the PSMs using clsMSGFResultsSummarizer"
 			Else
