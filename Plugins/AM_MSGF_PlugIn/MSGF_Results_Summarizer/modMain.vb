@@ -12,9 +12,10 @@
 ' -------------------------------------------------------------------------------
 ' 
 Imports PHRPReader
+Imports System.IO
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "November 1, 2012"
+	Public Const PROGRAM_DATE As String = "January 16, 2014"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
@@ -74,31 +75,30 @@ Module modMain
 	End Function
 
 	Private Function GetAppVersion() As String
-		Return System.Reflection.Assembly.GetExecutingAssembly.GetName.Version.ToString & " (" & PROGRAM_DATE & ")"
+		Return Reflection.Assembly.GetExecutingAssembly.GetName.Version.ToString & " (" & PROGRAM_DATE & ")"
 	End Function
 
 	Private Function SummarizeMSGFResults() As Boolean
 
-		Dim dctFileSuffixes As System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
-		Dim objEnum As System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType).Enumerator
+		Dim dctFileSuffixes As Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
 
 		Dim objSummarizer As AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer
 
 		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
-		Dim fiSourceFile As System.IO.FileInfo
+		Dim fiSourceFile As FileInfo
 
-		Dim blnAppendToResultsFile As Boolean
 		Dim blnSuccess As Boolean = False
 
 		Try
 			' Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-			dctFileSuffixes = New System.Collections.Generic.Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
+			dctFileSuffixes = New Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
 
 			dctFileSuffixes.Add("_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem)
 			dctFileSuffixes.Add("_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB)
 			dctFileSuffixes.Add("_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect)
 			dctFileSuffixes.Add("_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest)
+			dctFileSuffixes.Add("_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign)
 
 			eResultType = clsPHRPReader.ePeptideHitResultType.Unknown
 
@@ -108,33 +108,26 @@ Module modMain
 					Return False
 				End If
 
-				Dim diFolder As System.IO.DirectoryInfo = New System.IO.DirectoryInfo(mInputFolderPath)
+				Dim diFolder As DirectoryInfo = New DirectoryInfo(mInputFolderPath)
 				If Not diFolder.Exists Then
 					ShowErrorMessage("Input folder not found: " & diFolder.FullName)
 					Return False
 				End If
 
 				' Determine the input file path by looking for the expected files in mInputFolderPath
-				Dim strSuffixesSearched As String = String.Empty
-
-				objEnum = dctFileSuffixes.GetEnumerator()
-				While objEnum.MoveNext
-					Dim fiFiles() As System.IO.FileInfo
-					fiFiles = diFolder.GetFiles("*" & objEnum.Current.Key)
+				For Each suffixEntry In dctFileSuffixes
+					Dim fiFiles() As FileInfo
+					fiFiles = diFolder.GetFiles("*" & suffixEntry.Key)
 
 					If fiFiles.Length > 0 Then
 						' Match found
 						mMSGFSynFilePath = fiFiles(0).FullName
-						eResultType = objEnum.Current.Value
-						Exit While
+						eResultType = suffixEntry.Value
+						Exit For
 					End If
+				Next
 
-					If String.IsNullOrEmpty(strSuffixesSearched) Then
-						strSuffixesSearched = objEnum.Current.Key
-					Else
-						strSuffixesSearched &= ", " & objEnum.Current.Key
-					End If
-				End While
+				Dim strSuffixesSearched = String.Join(", ", dctFileSuffixes.Keys.ToList())
 
 				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 					Dim strMsg As String = _
@@ -152,14 +145,13 @@ Module modMain
 				eResultType = clsPHRPReader.AutoDetermineResultType(mMSGFSynFilePath)
 
 				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
-					objEnum = dctFileSuffixes.GetEnumerator()
-					While objEnum.MoveNext
-						If mMSGFSynFilePath.ToLower().EndsWith(objEnum.Current.Key.ToLower()) Then
+					For Each suffixEntry In dctFileSuffixes
+						If mMSGFSynFilePath.ToLower().EndsWith(suffixEntry.Key.ToLower()) Then
 							' Match found
-							eResultType = objEnum.Current.Value
-							Exit While
+							eResultType = suffixEntry.Value
+							Exit For
 						End If
-					End While
+					Next
 				End If
 
 				If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
@@ -169,7 +161,7 @@ Module modMain
 			End If
 
 
-			fiSourceFile = New System.IO.FileInfo(mMSGFSynFilePath)
+			fiSourceFile = New FileInfo(mMSGFSynFilePath)
 			If Not fiSourceFile.Exists Then
 				ShowErrorMessage("Input file not found: " & fiSourceFile.FullName)
 				Return False
@@ -191,7 +183,7 @@ Module modMain
 				Dim intUnderscoreIndex As Integer
 				Dim strNamePart As String
 
-				intUnderscoreIndex = fiSourceFile.DirectoryName.LastIndexOf("_")
+				intUnderscoreIndex = fiSourceFile.DirectoryName.LastIndexOf("_", StringComparison.Ordinal)
 
 				If intUnderscoreIndex > 0 Then
 					strNamePart = fiSourceFile.DirectoryName.Substring(intUnderscoreIndex + 1)
@@ -210,13 +202,13 @@ Module modMain
 
 			objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName)
 			objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
+			objSummarizer.EValueThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
 			objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
 
 			objSummarizer.OutputFolderPath = mOutputFolderPath
 			objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
 			objSummarizer.SaveResultsToTextFile = mSaveResultsAsText
 
-			blnAppendToResultsFile = False
 			blnSuccess = objSummarizer.ProcessMSGFResults()
 
 			If Not blnSuccess Then
@@ -227,17 +219,28 @@ Module modMain
 				End If
 			End If
 
-			Console.WriteLine("MSGF Threshold: ".PadRight(25) & objSummarizer.MSGFThreshold.ToString("0.00E+00"))
-			Console.WriteLine("FDR Threshold: ".PadRight(25) & objSummarizer.FDRThreshold.ToString("0.000"))
+			Console.WriteLine("Result Type: ".PadRight(25) & objSummarizer.ResultTypeName)
+
+			Dim strFilterText As String
+
+			If objSummarizer.ResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+				Console.WriteLine("EValue Threshold: ".PadRight(25) & objSummarizer.EValueThreshold.ToString("0.00E+00"))
+				strFilterText = "EValue"
+			Else
+				Console.WriteLine("MSGF Threshold: ".PadRight(25) & objSummarizer.MSGFThreshold.ToString("0.00E+00"))
+				strFilterText = "MSGF"
+			End If
+
+			Console.WriteLine("FDR Threshold: ".PadRight(25) & (objSummarizer.FDRThreshold * 100).ToString("0.0") & "%")
 			Console.WriteLine("Spectra Searched: ".PadRight(25) & objSummarizer.SpectraSearched.ToString("#,##0"))
 			Console.WriteLine()
-			Console.WriteLine("Total PSMs (MSGF Filter): ".PadRight(32) & objSummarizer.TotalPSMsMSGF)
-			Console.WriteLine("Unique Peptides (MSGF Filter): ".PadRight(32) & objSummarizer.UniquePeptideCountMSGF)
-			Console.WriteLine("Unique Proteins (MSGF Filter): ".PadRight(32) & objSummarizer.UniqueProteinCountMSGF)
+			Console.WriteLine(("Total PSMs (" & strFilterText & " Filter): ").PadRight(35) & objSummarizer.TotalPSMsMSGF)
+			Console.WriteLine(("Unique Peptides (" & strFilterText & " Filter): ").PadRight(35) & objSummarizer.UniquePeptideCountMSGF)
+			Console.WriteLine(("Unique Proteins (" & strFilterText & " Filter): ").PadRight(35) & objSummarizer.UniqueProteinCountMSGF)
 
-			Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(32) & objSummarizer.TotalPSMsFDR)
-			Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(32) & objSummarizer.UniquePeptideCountFDR)
-			Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(32) & objSummarizer.UniqueProteinCountFDR)
+			Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(35) & objSummarizer.TotalPSMsFDR)
+			Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(35) & objSummarizer.UniquePeptideCountFDR)
+			Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(35) & objSummarizer.UniqueProteinCountFDR)
 
 			Console.WriteLine()
 
@@ -303,7 +306,7 @@ Module modMain
 	End Function
 
 	Private Sub ShowErrorMessage(ByVal strMessage As String)
-		Dim strSeparator As String = "------------------------------------------------------------------------------"
+		Const strSeparator As String = "------------------------------------------------------------------------------"
 
 		Console.WriteLine()
 		Console.WriteLine(strSeparator)
@@ -322,15 +325,19 @@ Module modMain
 			Console.WriteLine("Peptides are first filtered on MSGF_SpecProb < 1E-10")
 			Console.WriteLine("They are next filtered on FDR < 1%")
 			Console.WriteLine()
-			Console.WriteLine("Program syntax #1:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location))
-			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName] [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
+			Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location))
+			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName]")
+			Console.WriteLine(" [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
 			Console.WriteLine()
 			Console.WriteLine("MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt")
-			Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined")
+			Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined via /Folder")
 			Console.WriteLine()
-			Console.WriteLine("Folder defines the input folder to process (and also to create the text result file in)")
-			Console.WriteLine("Dataset defines the dataset name; if /Dataset is not used, then will auto-determine the dataset name")
-			Console.WriteLine("Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
+			Console.WriteLine("/Folder defines the input folder to process (and also to create the text result file in if /O is not used)")
+			Console.WriteLine()
+			Console.WriteLine("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined")
+			Console.WriteLine()
+			Console.WriteLine("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
+			Console.WriteLine()
 			Console.WriteLine("Use /O to define a custom output folder path")
 			Console.WriteLine()
 			Console.WriteLine("Use /NoText to specify that a text file not be created")
@@ -345,7 +352,7 @@ Module modMain
 			Console.WriteLine()
 
 			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			System.Threading.Thread.Sleep(750)
+			Threading.Thread.Sleep(750)
 
 		Catch ex As Exception
 			Console.WriteLine("Error displaying the program syntax: " & ex.Message)

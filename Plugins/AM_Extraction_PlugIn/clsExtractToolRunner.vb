@@ -11,6 +11,7 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports PHRPReader
 
 Public Class clsExtractToolRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -494,13 +495,13 @@ Public Class clsExtractToolRunner
 											' to prevent it from getting added to the merged file again in the future
 
 											If Not String.IsNullOrEmpty(lastPeptideFull) Then
-												If Not lstPepProtMappingWritten.contains(lastPeptideFull) Then
-													lstPepProtMappingWritten.add(lastPeptideFull)
+												If Not lstPepProtMappingWritten.Contains(lastPeptideFull) Then
+													lstPepProtMappingWritten.Add(lastPeptideFull)
 												End If
 											End If
 
 											lastPeptideFull = String.Copy(peptideFull)
-											addCurrentPeptide = Not lstPepProtMappingWritten.contains(peptideFull)
+											addCurrentPeptide = Not lstPepProtMappingWritten.Contains(peptideFull)
 
 										End If
 
@@ -723,13 +724,48 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
+		' Summarize the number of PSMs in _msalign_syn.txt
+		Const eResultType As clsPHRPReader.ePeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSAlign
+		Dim job As Integer = 0
+		Dim blnPostResultsToDB As Boolean
+
+		If Integer.TryParse(m_JobNum, job) Then
+			blnPostResultsToDB = True
+		Else
+			blnPostResultsToDB = False
+			Msg = "Job number is not numeric: " & m_JobNum & "; will not be able to post PSM results to the database"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+		End If
+
+		Dim objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir)
+		objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
+		objSummarizer.EValueThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
+		objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
+
+		objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
+		objSummarizer.SaveResultsToTextFile = False
+
+		Dim blnSuccess = objSummarizer.ProcessMSGFResults()
+		If Not blnSuccess Then
+
+			If String.IsNullOrEmpty(objSummarizer.ErrorMessage) Then
+				m_message = "Error summarizing the PSMs using clsMSGFResultsSummarizer"
+			Else
+				m_message &= "Error summarizing the PSMs: " & objSummarizer.ErrorMessage
+			End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RunPhrpForMSAlign: " & m_message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		' Validate that the mass errors are within tolerance
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
 	End Function
 
 	Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType

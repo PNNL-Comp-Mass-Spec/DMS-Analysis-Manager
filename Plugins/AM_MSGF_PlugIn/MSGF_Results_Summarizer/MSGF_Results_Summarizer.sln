@@ -5,6 +5,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MSGF_Results_Summarizer", "
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSGFPlugin", "..\AnalysisManagerMSGFPlugin.vbproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSXMLGenPlugIn", "..\..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,6 +21,10 @@ Global
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Debug|x86.Build.0 = Debug|x86
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|x86.ActiveCfg = Release|x86
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|x86.Build.0 = Release|x86
+		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Debug|x86.ActiveCfg = Debug|x86
+		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Debug|x86.Build.0 = Debug|x86
+		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Release|x86.ActiveCfg = Release|x86
+		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
