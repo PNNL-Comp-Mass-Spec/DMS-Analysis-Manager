@@ -149,7 +149,15 @@ namespace AnalysisManager_AScore_PlugIn
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
            var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_IonicZipTools);
-		   return ascoreMage.Run();
+		   var success = ascoreMage.Run();
+
+	       if (!string.IsNullOrEmpty(ascoreMage.ErrorMessage))
+	       {
+		       m_message = ascoreMage.ErrorMessage;
+		       success = false;
+	       }
+
+	       return success;
            
        }
        

@@ -15,21 +15,34 @@ namespace AnalysisManager_AScore_PlugIn
 
 		#region Member Variables
 
-		protected string mResultsDBFileName = "";
+		protected string mResultsDBFileName = string.Empty;
 		protected string mWorkingDir;
 
 		protected JobParameters mJP;
 		protected ManagerParameters mMP;
 		protected static clsIonicZipTools m_IonicZipTools;
 		protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
-		protected static string mMessage = "";
+		protected static string mMessage = string.Empty;
 
-		protected string mSearchType = "";
-		protected string mParamFilename = "";
+		protected string mSearchType = string.Empty;
+		protected string mParamFilename = string.Empty;
+		protected string mErrorMessage = string.Empty;
 
 		protected clsIonicZipTools mIonicZipTools;
 
 		public static DatasetListInfo mMyEMSLDatasetInfo;
+
+		#endregion
+
+		#region Properties
+
+		public string ErrorMessage
+		{
+			get
+			{
+				return mErrorMessage;
+			}
+		}
 
 		#endregion
 
@@ -69,6 +82,9 @@ namespace AnalysisManager_AScore_PlugIn
 			if (mSearchType == "msgfdb")
 				mSearchType = "msgfplus";
 			mParamFilename = mJP.GetJobParam("AScoreParamFilename");
+
+			// Remove the file extension from mParamFilename
+			mParamFilename = Path.GetFileNameWithoutExtension(mParamFilename);
 
 			mIonicZipTools = ionicZipTools;
 		}
@@ -111,7 +127,8 @@ namespace AnalysisManager_AScore_PlugIn
 
 			if (string.IsNullOrEmpty(mParamFilename))
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore ParmFileName not defined in the settings for this job; unable to continue");
+				mErrorMessage = "AScore ParmFileName not defined in the settings for this job; unable to continue";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
 				return false;
 			}
 
@@ -125,11 +142,16 @@ namespace AnalysisManager_AScore_PlugIn
 
 			//Find all parameter files that match the base name and copy to working directory
 			var diParamFileFolder = new DirectoryInfo(strMAParameterFileStoragePath);
-			var fiParamFiles = diParamFileFolder.GetFiles(mParamFilename + "*.xml").ToList();
+
+			// Define the file mask to search for
+			var fileMask = Path.GetFileNameWithoutExtension(mParamFilename) + "*.xml";
+
+			var fiParamFiles = diParamFileFolder.GetFiles(fileMask).ToList();
 
 			if (fiParamFiles.Count == 0)
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No parameter files present");
+				mErrorMessage = "No parameter files matching " + fileMask + " were found at " + diParamFileFolder.FullName;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
 				return false;
 			}
 
@@ -141,7 +163,8 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 				catch (Exception ex)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying parameter file: " + ex.Message);
+					mErrorMessage = "Error copying parameter file: " + ex.Message;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
 				}
 			}
 
@@ -344,7 +367,8 @@ namespace AnalysisManager_AScore_PlugIn
 
 		void ascoreModule_WarningMessageUpdated(object sender, MageStatusEventArgs e)
 		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AScore error: " + e.Message);
+			var msg = "AScore warning: " + e.Message;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 		}
 
 		void mReader_MessageEvent(object sender, MessageEventArgs e)
@@ -354,7 +378,8 @@ namespace AnalysisManager_AScore_PlugIn
 
 		void mReader_ErrorEvent(object sender, MessageEventArgs e)
 		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSL Reader error: " + e.Message);
+			mErrorMessage = "MyEMSL Reader error: " + e.Message;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
 		}
 
 		#endregion
