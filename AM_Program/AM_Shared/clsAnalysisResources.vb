@@ -806,7 +806,6 @@ Public MustInherit Class clsAnalysisResources
 			OrgDBDescription = "Legacy DB: " + legacyFastaToUse
 
 			' Lookup connection strings
-			
 			Dim proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring")
 			If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
 				m_message = "Error in CreateFastaFile: manager parameter fastacnstring is not defined"
@@ -821,6 +820,14 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
+			' Lookup the MSGFPlus Index Folder path
+			Dim strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\Proto-7\MSGFPlus_Index_Files")
+			If String.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB) Then
+				strMSGFPlusIndexFilesFolderPathLegacyDB = "\\Proto-7\MSGFPlus_Index_Files\Other"
+			Else
+				strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
+			End If
+
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Verifying that split fasta file exists: " & legacyFastaToUse)
 			End If
@@ -829,6 +836,7 @@ Public MustInherit Class clsAnalysisResources
 			' and that DMS knows about them
 			'
 			m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps)
+			m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
 
 			m_SplitFastaLastUpdateTime = DateTime.UtcNow
 			m_SplitFastaLastPercentComplete = 0

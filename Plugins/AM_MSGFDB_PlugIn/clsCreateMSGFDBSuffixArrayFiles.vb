@@ -779,6 +779,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Return strRemoteIndexFolderPath
 
 	End Function
+
 	''' <summary>
 	''' Constructs a list of suffix array files that should exist
 	''' Looks for each of those files

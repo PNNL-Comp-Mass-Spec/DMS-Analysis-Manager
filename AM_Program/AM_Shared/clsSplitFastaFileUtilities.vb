@@ -12,6 +12,7 @@ Public Class clsSplitFastaFileUtilities
 
 	Protected mDMSConnectionString As String
 	Protected mProteinSeqsDBConnectionString As String
+	Protected mMSGFPlusIndexFilesFolderPathLegacyDB As String
 
 	ReadOnly mNumSplitParts As Integer
 
@@ -19,12 +20,21 @@ Public Class clsSplitFastaFileUtilities
 
 	Protected mWaitingForLockFile As Boolean
 
-	Protected WithEvents mSplitter As FastaFileSplitterDLL.clsFastaFileSplitter
+	Protected WithEvents mSplitter As clsFastaFileSplitter
 
 	Public ReadOnly Property ErrorMessage As String
 		Get
 			Return mErrorMessage
 		End Get
+	End Property
+
+	Public Property MSGFPlusIndexFilesFolderPathLegacyDB() As String
+		Get
+			Return mMSGFPlusIndexFilesFolderPathLegacyDB
+		End Get
+		Set(value As String)
+			mMSGFPlusIndexFilesFolderPathLegacyDB = value
+		End Set
 	End Property
 
 	Public ReadOnly Property WaitingForLockFile() As Boolean
@@ -45,6 +55,8 @@ Public Class clsSplitFastaFileUtilities
 		mDMSConnectionString = dmsConnectionString
 		mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString
 		mNumSplitParts = numSplitParts
+
+		mMSGFPlusIndexFilesFolderPathLegacyDB = "\\Proto-7\MSGFPlus_Index_Files\Other"
 
 		mErrorMessage = String.Empty
 		mWaitingForLockFile = False
@@ -437,6 +449,37 @@ Public Class clsSplitFastaFileUtilities
 
 			' Call the procedure that syncs up this information with ProteinSeqs
 			UpdateCachedOrganismDBInfo()
+
+			' Delete any cached MSGFPlus index files corresponding to the split fasta files
+
+			If Not String.IsNullOrWhiteSpace(mMSGFPlusIndexFilesFolderPathLegacyDB) Then
+				Dim diIndexFolder = New DirectoryInfo(mMSGFPlusIndexFilesFolderPathLegacyDB)
+
+				If diIndexFolder.Exists Then
+
+					For Each splitFileInfo In mSplitter.SplitFastaFileInfo
+						Dim fileSpecBase = Path.GetFileNameWithoutExtension(splitFileInfo.FilePath)
+
+						Dim lstFileSpecsToFind = New List(Of String)
+						lstFileSpecsToFind.Add(fileSpecBase & ".*")
+						lstFileSpecsToFind.Add(fileSpecBase & ".fasta.LastUsed")
+						lstFileSpecsToFind.Add(fileSpecBase & ".fasta.MSGFPlusIndexFileInfo")
+						lstFileSpecsToFind.Add(fileSpecBase & ".fasta.MSGFPlusIndexFileInfo.Lock")
+
+						For Each fileSpec In lstFileSpecsToFind
+							For Each fiFile As FileInfo In diIndexFolder.GetFiles(fileSpec)
+								Try
+									fiFile.Delete()
+								Catch ex As Exception
+									' Ignore errors here
+								End Try
+							Next
+						Next
+					Next
+
+				End If
+
+			End If
 
 			' Delete the lock file
 			DeleteLockStream(lockFilePath, lockStream)
