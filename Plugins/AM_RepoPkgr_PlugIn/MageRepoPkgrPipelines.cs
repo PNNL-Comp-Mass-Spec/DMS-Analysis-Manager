@@ -81,7 +81,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
       AssociatedFiles = null;
       ManifestForCopy = null;
       DataPackageItems = GetDataPackageItemList(queryTmpltName, filter);
-      GetItemsToRepoPkg(fileNameSelector, outputSubfolderName, prefixCol);
+      GetFilesToRepoPkg(fileNameSelector, outputSubfolderName, prefixCol);
     }
 
     /// <summary>
@@ -94,12 +94,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// <param name="fileNameSelector">Mage file filter to select specific files to copy</param>
     /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
     /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
-    public void GetItemsToRepoPkg(string fileNameSelector, string outputSubfolderName, string prefixCol)
+    public void GetFilesToRepoPkg(string fileNameSelector, string outputSubfolderName, string prefixCol)
     {
       AssociatedFiles = null;
       ManifestForCopy = null;
       AssociatedFiles = GetFileSearchResults(DataPackageItems, fileNameSelector);
-      GetItemsToRepoPkg(outputSubfolderName, prefixCol);
+      CopyFilesToRepoPkg(outputSubfolderName, prefixCol);
     }
 
     /// <summary>
@@ -110,11 +110,25 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
     /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
-    public void GetItemsToRepoPkg(string outputSubfolderName, string prefixCol)
+    public void CopyFilesToRepoPkg(string outputSubfolderName, string prefixCol)
     {
       ManifestForCopy = null;
       ManifestForCopy = CopyFiles(AssociatedFiles, Path.Combine(OutputResultsFolderPath, outputSubfolderName), prefixCol);
       WriteMetadata(DataPackageItems, outputSubfolderName);
+    }
+
+    /// <summary>
+    /// Determine if there are any duplicates in the file name column
+    /// </summary>
+    /// <param name="outputFileColumnName">Name of the column that contains file name</param>
+    /// <returns></returns>
+    private bool CheckForDuplicateFileNames(string outputFileColumnName)
+    {
+      var fileNameCol = AssociatedFiles.ColumnIndex[outputFileColumnName];
+      var fileNames = AssociatedFiles.Rows.Select(x => x[fileNameCol]);
+      var groupedFileNames = fileNames.GroupBy(y => y).Select(g => new { Value = g.Key, Count = g.Count() });
+      var duplicates = groupedFileNames.Where(z => z.Count > 1);
+      return (duplicates.Any());
     }
 
 
@@ -181,8 +195,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
     }
 
     /// <summary>
-    /// Mage pipeline that copies files in the given source list
-    /// to the given output folder
+    /// Mage pipeline that copies files in the given source list to the given output folder
+    /// A disambiguating prefix will be applied to file names if one is supplied and there are any duplicate file names.
     /// </summary>
     /// <param name="sourceObject">SimpleSink object containing list of files to copy</param>
     /// <param name="outputFolder">Full path the output folder</param>
@@ -197,7 +211,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
       }
       var source = new SinkWrapper(sourceObject);
       var copier = new FileCopy { OutputFolderPath = outputFolder, OverwriteExistingFiles = true };
-      if (!string.IsNullOrEmpty(prefixCol)) {
+      if (!string.IsNullOrEmpty(prefixCol) && CheckForDuplicateFileNames(copier.OutputFileColumnName)) {
         copier.ColumnToUseForPrefix = prefixCol;
         copier.PrefixLeader = prefixCol;
         copier.ApplyPrefixToFileName = "Yes";

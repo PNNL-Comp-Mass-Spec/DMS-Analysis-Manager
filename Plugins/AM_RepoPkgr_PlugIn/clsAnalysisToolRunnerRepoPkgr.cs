@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManager_RepoPkgr_PlugIn;
 using AnalysisManagerBase;
@@ -108,7 +110,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			foreach (var orgDbName in lstGeneratedOrgDBNames)
 			{
 				var sourceFilePath = Path.Combine(localOrgDBFolder, orgDbName);
-				var destFilePath = Path.Combine(targetFolderPath, orgDbName);
+
+				// Rename the target file if it was created using Protein collections (and used 3 or fewer protein collections)
+				var targetFileName = UpdateOrgDBNameIfRequired(orgDbName);
+
+				var destFilePath = Path.Combine(targetFolderPath, targetFileName);
 				m_FileTools.CopyFile(sourceFilePath, destFilePath, true);
 			}
 		}
@@ -698,6 +704,89 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				return false;
 			}
 
+		}
+
+		/// <summary>
+		/// Examines orgDbName to see if it is of the form ID_003878_0C3354F8.fasta
+		/// If it is, then queries the protein sequences database for the names of the protein collections used to generate the file
+		/// </summary>
+		/// <param name="orgDbName"></param>
+		/// <returns>If three or fewer protein collections, then returns an updated filename based on the protein collection names.  Otherwise, simply returns orgDbName</returns>
+		private string UpdateOrgDBNameIfRequired(string orgDbName)
+		{
+			var reArchiveFileId = new Regex("ID_([0-9]+)_[A-Z0-9]+\\.fasta", RegexOptions.Compiled);
+
+			try
+			{
+				// ID_003878_0C3354F8.fasta
+				var reMatch = reArchiveFileId.Match(orgDbName);
+
+				if (!reMatch.Success)
+					return orgDbName;		// Likely used a legacy fasta file
+				
+				var fileID = int.Parse(reMatch.Groups[1].Value);
+
+				var sqlQuery = "SELECT FileName FROM V_Archived_Output_File_Protein_Collections WHERE Archived_File_ID = " + fileID;
+				var retryCount = 3;
+				var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
+				if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+						                    "Error in UpdateOrgDBNameIfRequired: manager parameter fastacnstring is not defined");
+					return orgDbName;
+				}
+
+				var lstProteinCollections = new List<string>();
+
+				while (retryCount > 0)
+				{
+					try
+					{
+						using (var connection = new SqlConnection(proteinSeqsDBConnectionString))
+						{
+							connection.Open();
+							using (var dbCommand = new SqlCommand(sqlQuery, connection))
+							{
+								var dbReader = dbCommand.ExecuteReader();
+								if (dbReader.HasRows)
+								{
+									while (dbReader.Read())
+									{
+										lstProteinCollections.Add(dbReader.GetString(0));
+									}
+								}
+							}
+						}
+
+						// Data successfully retrieved
+						// Exit the while loop
+						break;	
+					}
+					catch (Exception ex)
+					{
+						retryCount -= 1;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+						                     "Exception getting protein collection info from Protein Sequences database for Archived_File_ID = " +
+						                     fileID, ex);
+						
+						// Delay for 2 seconds before trying again
+						Thread.Sleep(2000);
+					}
+				}
+
+				if (lstProteinCollections.Count > 0 && lstProteinCollections.Count < 4)
+				{
+					var orgDbNameNew = string.Join("_", lstProteinCollections) + ".fasta";
+					return orgDbNameNew;
+				}				
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UpdateOrgDBNameIfRequired", ex);
+			}
+
+			return orgDbName;
 		}
 
 		#endregion
