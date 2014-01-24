@@ -435,7 +435,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 strArguments &= " /M:TIC /T:0"
             Case Else
                 ' Unknown mode
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unknown mode ICR2LS processing Mode: " & eICR2LSMode.ToString)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unknown ICR2LS processing Mode: " & eICR2LSMode.ToString)
                 Return False
         End Select
 

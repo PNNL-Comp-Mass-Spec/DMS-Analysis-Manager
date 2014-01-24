@@ -215,6 +215,11 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
 
+	Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
+
+	Protected m_SplitFastaLastUpdateTime As DateTime
+	Protected m_SplitFastaLastPercentComplete As Integer
+
 	Protected WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
 	Protected m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 
@@ -567,7 +572,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal MaxCopyAttempts As Integer) As Boolean
 
 		Dim SourceFile As String = String.Empty
-		Dim DestFilePath As String		
+		Dim DestFilePath As String
 
 		Try
 
@@ -746,7 +751,7 @@ Public MustInherit Class clsAnalysisResources
 
 		'Instantiate fasta tool if not already done
 		If m_FastaTools Is Nothing Then
-			If m_FastaToolsCnStr = "" Then
+			If String.IsNullOrWhiteSpace(m_FastaToolsCnStr) Then
 				m_message = "Protein database connection string not specified"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error in CreateFastaFile: " + m_message)
 				Return False
@@ -777,6 +782,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+		Dim legacyFastaToUse As String
 
 		If splitFastaEnabled Then
 
@@ -786,17 +792,59 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-			' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName			
-			LegacyFasta = GetSplitFastaFileName(m_jobParams, m_message)
+			' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
+			' where NN is the number of total cloned steps and nn is this job's specific step number
+			Dim numberOfClonedSteps As Integer
+
+			legacyFastaToUse = GetSplitFastaFileName(m_jobParams, m_message, numberOfClonedSteps)
 
 			If String.IsNullOrEmpty(LegacyFasta) Then
 				' The error should have already been logged
 				Return False
 			End If
+
+			OrgDBDescription = "Legacy DB: " + legacyFastaToUse
+
+			' Lookup connection strings
+			
+			Dim proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring")
+			If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
+				m_message = "Error in CreateFastaFile: manager parameter fastacnstring is not defined"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
+			If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
+				m_message = "Error in CreateFastaFile: manager parameter connectionstring is not defined"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Verifying that split fasta file exists: " & legacyFastaToUse)
+			End If
+
+			' Make sure the original fasta file has already been split into the appropriate number parts
+			' and that DMS knows about them
+			'
+			m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps)
+
+			m_SplitFastaLastUpdateTime = DateTime.UtcNow
+			m_SplitFastaLastPercentComplete = 0
+
+			Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(LegacyFasta, legacyFastaToUse)
+			If Not success Then
+				m_message = m_SplitFastaFileUtility.ErrorMessage
+				Return False
+			End If
+
+		Else
+			legacyFastaToUse = String.Copy(LegacyFasta)
 		End If
 
 		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + LegacyFasta)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + legacyFastaToUse)
 		End If
 
 		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
@@ -811,7 +859,7 @@ Public MustInherit Class clsAnalysisResources
 		m_FastaGenStartTime = DateTime.UtcNow
 		Try
 			m_FastaTimer.Start()
-			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, LegacyFasta, DestFolder)
+			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, legacyFastaToUse, DestFolder)
 		Catch Ex As Exception
 			m_message = "Exception generating OrgDb file"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + Ex.Message + "; " + clsGlobal.GetExceptionStackTrace(Ex))
@@ -2465,9 +2513,32 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Get the name of the split fasta file to use for this job
+	''' </summary>
+	''' <param name="jobParams"></param>
+	''' <param name="errorMessage">Output parameter: error message</param>
+	''' <returns>The name of the split fasta file to use</returns>
+	''' <remarks>Returns an empty string if an error</remarks>
 	Public Shared Function GetSplitFastaFileName(ByVal jobParams As IJobParams, <Out()> ByRef errorMessage As String) As String
+		Dim numberOfClonedSteps As Integer = 0
+
+		Return GetSplitFastaFileName(jobParams, errorMessage, numberOfClonedSteps)
+
+	End Function
+
+	''' <summary>
+	''' Get the name of the split fasta file to use for this job
+	''' </summary>
+	''' <param name="jobParams"></param>
+	''' <param name="errorMessage">Output parameter: error message</param>
+	''' <param name="numberOfClonedSteps">Output parameter: total number of cloned steps</param>
+	''' <returns>The name of the split fasta file to use</returns>
+	''' <remarks>Returns an empty string if an error</remarks>
+	Public Shared Function GetSplitFastaFileName(ByVal jobParams As IJobParams, <Out()> ByRef errorMessage As String, <Out()> ByRef numberOfClonedSteps As Integer) As String
 
 		errorMessage = String.Empty
+		numberOfClonedSteps = 0
 
 		Dim legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", "")
 		If String.IsNullOrEmpty(legacyFastaFileName) Then
@@ -2476,7 +2547,7 @@ Public MustInherit Class clsAnalysisResources
 			Return String.Empty
 		End If
 
-		Dim numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0)
+		numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0)
 		If numberOfClonedSteps = 0 Then
 			errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
@@ -5699,7 +5770,7 @@ Public MustInherit Class clsAnalysisResources
 			   m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
 				dtLastUpdateTime = DateTime.UtcNow
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & percentComplete.ToString("0.00") & "% complete")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... CDTAUtilities: " & percentComplete.ToString("0.00") & "% complete")
 			End If
 		End If
 
@@ -5720,7 +5791,37 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
+	Private Sub m_SplitFastaFileUtility_ErrorEvent(strMessage As String) Handles m_SplitFastaFileUtility.ErrorEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+	End Sub
+
+	Private Sub m_SplitFastaFileUtility_ProgressUpdate(progressMessage As String, percentComplete As Integer) Handles m_SplitFastaFileUtility.ProgressUpdate
+
+		If m_DebugLevel >= 1 Then
+			If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 OrElse
+			   m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 OrElse
+			   percentComplete = 100 And m_SplitFastaLastPercentComplete < 100 Then
+
+				m_SplitFastaLastUpdateTime = DateTime.UtcNow
+				m_SplitFastaLastPercentComplete = percentComplete
+
+				If percentComplete > 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & progressMessage & ", " & percentComplete & "% complete")
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... SplitFastaFile: " & progressMessage)
+				End If
+
+			End If
+		End If
+	End Sub
+
+	Private Sub m_SplitFastaFileUtility_SplittingBaseFastafile(strBaseFastaFileName As String, numSplitParts As Integer) Handles m_SplitFastaFileUtility.SplittingBaseFastafile
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Splitting " & strBaseFastaFileName & " into " & numSplitParts & " parts")
+	End Sub
+
 #End Region
+
+#Region "MyEMSL Event Handlers"
 
 	Private Sub m_MyEMSLDatasetListInfo_ErrorEvent(sender As Object, e As MyEMSLReader.MessageEventArgs) Handles m_MyEMSLDatasetListInfo.ErrorEvent
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message)
@@ -5750,8 +5851,7 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 	End Sub
-
-
+#End Region
 
 End Class
 

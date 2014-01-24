@@ -60,6 +60,9 @@
     <Reference Include="CondenseCDTAFile">
       <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
+    <Reference Include="FastaFileSplitterDLL">
+      <HintPath>..\..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
+    </Reference>
     <Reference Include="FileConcatenator">
       <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
     </Reference>
@@ -132,6 +135,7 @@
     <Compile Include="clsRunDosProgram.vb" />
     <Compile Include="clsScanStatsGenerator.vb" />
     <Compile Include="clsSplitCattedFiles.vb" />
+    <Compile Include="clsSplitFastaFileUtilities.vb" />
     <Compile Include="clsSqLiteUtilities.vb" />
     <Compile Include="clsStatusFile.vb" />
     <Compile Include="clsSummaryFile.vb" />
