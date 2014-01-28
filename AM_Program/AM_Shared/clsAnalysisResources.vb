@@ -1971,8 +1971,8 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal LogFolderNotFound As Boolean) As Boolean
 
 		' First check whether this folder exists
-		' Using a 3 second holdoff between retries
-		If Not FolderExistsWithRetry(PathToCheck, 3, MaxRetryCount, LogFolderNotFound) Then
+		' Using a 1 second holdoff between retries
+		If Not FolderExistsWithRetry(PathToCheck, 1, MaxRetryCount, LogFolderNotFound) Then
 			Return False
 		End If
 
@@ -3337,7 +3337,14 @@ Public MustInherit Class clsAnalysisResources
 		Return
 	End Sub
 
-	Protected Function RetrieveDataPackagePeptideHitJobInfo(ByRef DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
+	Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
+
+		Dim lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
+		Return RetrieveDataPackagePeptideHitJobInfo(DataPackageID, lstAdditionalJobs)
+
+	End Function
+
+	Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
 
 		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 		DataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1)
@@ -3345,22 +3352,32 @@ Public MustInherit Class clsAnalysisResources
 		If DataPackageID < 0 Then
 			m_message = "DataPackageID is not defined for this analysis job"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
+			lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
 			Return New List(Of udtDataPackageJobInfoType)
 		Else
-			Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID)
+			Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID, lstAdditionalJobs)
 		End If
 
 	End Function
 
 	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(ByVal ConnectionString As String, ByVal DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
 
+		Dim lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
+		Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID, lstAdditionalJobs)
+	End Function
+
+	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(ByVal ConnectionString As String, ByVal DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
+
 		Dim lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)
 		Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)
 
 		Dim strMsg As String
 
-		' This list tracks the info for the jobs associated with this aggregation job's data package
+		' This list tracks the info for the Peptide Hit jobs (e.g. MSGF+ or Sequest) associated with this aggregation job's data package
 		lstDataPackagePeptideHitJobs = New List(Of udtDataPackageJobInfoType)
+
+		' This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with this aggregation job's data package
+		lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
 
 		' This dictionary will track the jobs associated with this aggregation job's data package
 		' Key is job number, value is an instance of udtDataPackageJobInfoType
@@ -3381,10 +3398,11 @@ Public MustInherit Class clsAnalysisResources
 		Try
 			For Each kvItem As KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
 
-				If kvItem.Value.PeptideHitResultType <> clsPHRPReader.ePeptideHitResultType.Unknown Then
+				If kvItem.Value.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+					lstAdditionalJobs.Add(kvItem.Value)
+				Else
 					' Cache this job info in lstDataPackagePeptideHitJobs
 					lstDataPackagePeptideHitJobs.Add(kvItem.Value)
-
 				End If
 
 			Next

@@ -13,11 +13,15 @@ Imports System.Runtime.InteropServices
 
 Public Class clsCreateMSGFDBSuffixArrayFiles
 
+#Region "Constants"
 	Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
 	Protected Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
+#End Region
 
+#Region "Module Variables"
 	Protected mErrorMessage As String = String.Empty
 	Protected mMgrName As String
+#End Region
 
 	Public ReadOnly Property ErrorMessage As String
 		Get
@@ -58,6 +62,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Dim fiMSGFPlusIndexFileInfo As FileInfo
 				fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
 
+				Dim fileSizeTotalKB As Int64 = 0
+
 				If fiMSGFPlusIndexFileInfo.Exists Then
 					' Read the filenames in the file
 					' There should be 3 columns: FileName, FileSize, and FileDateUTC
@@ -81,7 +87,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 								Dim intFileSizeBytes As Int64
 								If Int64.TryParse(lstData(1), intFileSizeBytes) Then
 									dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
+									fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
 								End If
+
 							End If
 						Loop
 
@@ -97,9 +105,17 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					End If
 
 					If blnFilesAreValid Then
+
+						If intDebugLevel >= 1 AndAlso fileSizeTotalKB >= 1000 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying existing MSGF+ index files from " & diRemoteIndexFolderPath.FullName)
+						End If
+
 						' Copy each file in lstFilesToCopy (overwrite existing files)
 						Dim oFileTools As PRISM.Files.clsFileTools
 						Dim strManager As String = GetPseudoManagerName()
+
+						Dim filesCopied As Integer = 0
+						Dim dtLastStatusUpdate = DateTime.UtcNow
 
 						oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
@@ -111,6 +127,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 							strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
 							oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
+
+							filesCopied += 1
+
+							If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
+								dtLastStatusUpdate = DateTime.UtcNow
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
+							End If
+
 						Next
 
 						' Now confirm that each file was successfully copied locally
@@ -775,7 +799,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		If String.IsNullOrEmpty(strRemoteIndexFolderPath) Then
 			strRemoteIndexFolderPath = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
 		End If
-		
+
 		Return strRemoteIndexFolderPath
 
 	End Function

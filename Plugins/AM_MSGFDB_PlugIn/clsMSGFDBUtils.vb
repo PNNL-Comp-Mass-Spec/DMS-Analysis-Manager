@@ -721,7 +721,7 @@ Public Class clsMSGFDBUtils
 
 		End If
 
-		If m_DebugLevel >= 3 Then
+		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And FastaFileSizeKB > 1000) Then
 			ReportMessage("Indexing Fasta file to create Suffix Array files")
 		End If
 
