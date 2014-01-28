@@ -47,9 +47,10 @@ namespace AnalysisManager_RepoPkgr_PlugIn
     /// </summary>
     /// <param name="targetDir">Full path to folder that contains zipped files to convert</param>
     /// <param name="workDir">Local working directory</param>
-    public static void ConvertZipsToGZips(string targetDir, string workDir)
+    /// <returns>The number of .zip files that were converted to .gz files</returns>
+    public static int ConvertZipsToGZips(string targetDir, string workDir)
     {
-      const int debugLevel = 2;
+      const int debugLevel = 1;
 
       //  make zipper to work on workDir
       var ionicZipTools = new AnalysisManagerBase.clsIonicZipTools(debugLevel, workDir);
@@ -57,8 +58,13 @@ namespace AnalysisManager_RepoPkgr_PlugIn
       // get file handler object to access the targetDir
       var diTargetDir = new DirectoryInfo(targetDir);
 
+	  if (!diTargetDir.Exists)
+		  return 0;
+
       // get file handler object to access the workDir
       var diWorkDir = new DirectoryInfo(workDir);
+
+	  int filesUpdated = 0;
 
       // for each zip file in target folder
       foreach (var tarFi in diTargetDir.GetFiles("*.zip")) {
@@ -104,9 +110,11 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         // get rid of zip file on both sides		  
         File.Delete(Path.Combine(workDir, tarFi.Name));
         File.Delete(tarFi.FullName);
+
+		filesUpdated++;
       }
 
-
+	  return filesUpdated;
     }
 
   }

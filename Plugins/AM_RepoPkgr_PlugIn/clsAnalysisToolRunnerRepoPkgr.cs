@@ -19,8 +19,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		#region Constants
 
 		protected const int PROGRESS_PCT_FASTA_FILES_COPIED = 10;
-		protected const int PROGRESS_PCT_SEQUEST_RESULTS_COPIED = 15;
 		protected const int PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED = 25;
+		protected const int PROGRESS_PCT_SEQUEST_RESULTS_COPIED = 40;
 		protected const int PROGRESS_PCT_MZID_RESULTS_COPIED = 50;
 		protected const int PROGRESS_PCT_INSTRUMENT_DATA_COPIED = 95;
 
@@ -131,27 +131,62 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			m_progress = PROGRESS_PCT_FASTA_FILES_COPIED;
 			m_StatusTools.UpdateAndWrite(m_progress);
 
-			if (_bIncludeSequestResults)
-			{
-				// find any sequest jobs in data package and copy their first hits files to appropriate cache subfolder
-				_mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "SEQUEST", "*_fht.txt", "SEQUEST_Results", "Job");
-			}
-			m_progress = PROGRESS_PCT_SEQUEST_RESULTS_COPIED;
-			m_StatusTools.UpdateAndWrite(m_progress);
+			int dataPkgJobCountMatch = 0;
+			int dataPkgFileCountMatch = 0;
 
 			if (_bIncludeMSGFPlusResults)
 			{
 				// find any MSGFPlus jobs in data package and copy their first hits files to appropriate cache subfolder
 				_mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "MSGFPlus", "*_msgfdb_fht.txt;*_msgfdb_fht_MSGF.txt", "MSGFPlus_Results", "Job");
-			}
+				dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count();
+				dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count();
+
+				if (dataPkgJobCountMatch == 0)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find any MSGF+ jobs in data package " + _mgr.DataPkgId + "; auto-setting _bIncludeSequestResults to True");
+					_bIncludeSequestResults = true;
+				}
+				else
+				{
+					if (dataPkgFileCountMatch == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
+					else
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId);
+				}				
+			}			
 			m_progress = PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED;
+			m_StatusTools.UpdateAndWrite(m_progress);
+
+			if (_bIncludeSequestResults)
+			{
+				// find any sequest jobs in data package and copy their first hits files to appropriate cache subfolder
+				_mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "SEQUEST", "*_fht.txt", "SEQUEST_Results", "Job");
+				dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count();
+				dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count();
+
+				if (dataPkgJobCountMatch == 0)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find any SEQUEST jobs in data package " + _mgr.DataPkgId);					
+				}
+				else
+				{
+					if (dataPkgFileCountMatch == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
+					else
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId);
+				}
+			}
+			m_progress = PROGRESS_PCT_SEQUEST_RESULTS_COPIED;
 			m_StatusTools.UpdateAndWrite(m_progress);
 
 			if (_bIncludeMZidFiles)
 			{
 				// find any MSGFPlus jobs in data package and copy their MZID files to appropriate cache subfolder
 				_mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "MSGFPlus", "*_msgfplus.zip;*_msgfplus.mzid.gz", @"MSGFPlus_Results\MZID_Files", "Job");
-				FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
+				int zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
+
+				if (zipFileCountConverted > 0)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Converted " + zipFileCountConverted + " _msgfplus.zip files to .mzid.gz files");
 			}
 			m_progress = PROGRESS_PCT_MZID_RESULTS_COPIED;
 			m_StatusTools.UpdateAndWrite(m_progress);
@@ -196,7 +231,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// New parameters:
 			_bIncludeMSGFPlusResults = m_jobParams.GetJobParameter("IncludeMSGFResults", true);
 			_bIncludeMZidFiles = _bIncludeMSGFPlusResults;
-			_bIncludeSequestResults = m_jobParams.GetJobParameter("IncludeSequestResults", false);
+			_bIncludeSequestResults = m_jobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to True if no MSGF+ jobs are found in the data package
 			_bIncludeInstrumentData = m_jobParams.GetJobParameter("IncludeInstrumentData", true);
 			_bIncludeMzXMLFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 

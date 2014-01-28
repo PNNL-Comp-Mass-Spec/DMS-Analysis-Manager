@@ -28,8 +28,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			string localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
 			// get fasta file(s) for jobs in data package and copy to local organism database working directory
-			int dataPkgId = -1;
-			List<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(ref dataPkgId);
+			int dataPkgId;
+
+			// This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
+			List<udtDataPackageJobInfoType> lstAdditionalJobs;
+
+			List<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs );
 			bool success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
 			if (!success)
@@ -37,7 +41,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			bool includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
-			success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, includeMzXmlFiles);
+			success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
 
 			if (includeMzXmlFiles)
 				FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs);
@@ -52,7 +56,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 		#region Code_Adapted_From_Pride_Plugin
 
-		private bool FindInstrumentDataFiles(IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs, bool includeMzXmlFiles)
+		private bool FindInstrumentDataFiles(
+			IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs,
+			IEnumerable<udtDataPackageJobInfoType> lstAdditionalJobs, 
+			bool includeMzXmlFiles)
 		{
 
 			// The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
@@ -68,7 +75,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// Cache the current dataset and job info
 			var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-			foreach (udtDataPackageJobInfoType udtJobInfo in lstDataPackagePeptideHitJobs)
+			foreach (udtDataPackageJobInfoType udtJobInfo in lstDataPackagePeptideHitJobs.Concat(lstAdditionalJobs))
 			{
 				if (!OverrideCurrentDatasetAndJobInfo(udtJobInfo))
 				{
