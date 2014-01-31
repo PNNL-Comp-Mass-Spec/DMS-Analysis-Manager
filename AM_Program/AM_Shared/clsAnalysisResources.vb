@@ -5101,6 +5101,11 @@ Public MustInherit Class clsAnalysisResources
 		Return True
 	End Function
 
+	Protected Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String) As Boolean
+		Dim udtHPCOptions = New udtHPCOptionsType
+		Return RetrieveOrgDB(LocalOrgDBFolder, udtHPCOptions)
+	End Function
+
 	''' <summary>
 	''' Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
 	''' </summary>
