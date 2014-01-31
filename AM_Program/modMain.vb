@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "January 28, 2014"
+    Public Const PROGRAM_DATE As String = "January 31, 2014"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -103,7 +103,7 @@ Module modMain
 						'objTest.TestProteinDBExport("c:\dms_temp_org")
 
 						'objTest.PerformanceCounterTest()
-						objTest.SystemMemoryUsage()
+                        'objTest.SystemMemoryUsage()
 
 						' objTest.TestIonicZipTools()
 
@@ -114,6 +114,8 @@ Module modMain
 						' objTest.TestGZip()
 
 						'objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
+
+                        Console.WriteLine(clsGlobal.DecodePassword("Test"))
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

@@ -275,7 +275,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask)
 				End If
 
-				mComputeCluster = New HPC_Submit.WindowsHPC2012()
+                Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
+                Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
+
+                If String.IsNullOrEmpty(sPICHPCUsername) Then
+                    m_message = "Manager parameter PICHPCUser is undefined; unable to schedule HPC job"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                If String.IsNullOrEmpty(sPICHPCPassword) Then
+                    m_message = "Manager parameter PICHPCPassword is undefined; unable to schedule HPC job"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
 				Dim jobID = mComputeCluster.Send(hpcJobInfo)
 
 				If jobID <= 0 Then

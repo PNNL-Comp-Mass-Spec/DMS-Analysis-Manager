@@ -96,6 +96,39 @@ Public Class clsGlobal
 
 	End Function
 
+    ''' <summary>
+    ''' Decrypts password received from ini file
+    ''' </summary>
+    ''' <param name="EnPwd">Encoded password</param>
+    ''' <returns>Clear text password</returns>
+    Public Shared Function DecodePassword(ByVal enPwd As String) As String
+        ' Decrypts password received from ini file
+        ' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
+
+        ' Convert the password string to a character array
+        Dim pwdChars As Char() = enPwd.ToCharArray()
+        Dim pwdBytes = New List(Of Byte)
+        Dim pwdCharsAdj = New List(Of Char)
+
+        For i As Integer = 0 To pwdChars.Length - 1
+            pwdBytes.Add(Convert.ToByte(pwdChars(i)))
+        Next
+
+        ' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+
+        For byteCntr As Integer = 0 To pwdBytes.Count - 1
+            If (byteCntr Mod 2) = 0 Then
+                pwdBytes(byteCntr) += CByte(1)
+            Else
+                pwdBytes(byteCntr) -= CByte(1)
+            End If
+            pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
+        Next
+
+        Return String.Join("", pwdCharsAdj)        
+
+    End Function
+
 	''' <summary>
 	''' Flatten a list of items into a single string, with items separated by chDelimiter
 	''' </summary>

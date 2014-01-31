@@ -609,6 +609,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & fiLockFile.FullName)
 			End If
 
+			' Delay between 2 and 5 seconds
+			Dim oRandom = New Random()
+			Threading.Thread.Sleep(oRandom.Next(2, 5) * 1000)
+
 			' Check one more time for a lock file
 			' If it exists, then another manager just created it and we should abort
 			strCurrentTask = "Look for the lock file one last time"
