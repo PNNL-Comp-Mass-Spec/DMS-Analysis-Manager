@@ -308,6 +308,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 					' Copy any newly created files from PIC back to the local working directory
 					SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
+
+					' Rename the Tool_Version_Info file
+					Dim fiToolVersionInfo = New FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB_HPC.txt"))
+					If Not fiToolVersionInfo.Exists Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ToolVersionInfo file not found; this will lead to problems with IDPicker: " & fiToolVersionInfo.FullName)
+					Else
+						fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB.txt"))
+					End If
 				End If
 
 			Else
