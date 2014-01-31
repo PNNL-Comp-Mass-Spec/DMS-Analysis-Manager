@@ -441,7 +441,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		{
 			try
 			{
-				File.Delete(filePath);
+				if (File.Exists(filePath))
+					File.Delete(filePath);
 			}
 			catch (Exception ex)
 			{
@@ -559,9 +560,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 						return false;
 					}
 
+					var fiMzXmlFileSource = new FileInfo(mzXmlFilePathLocal);
+
 					// Copy the .MzXml file to the final folder
-					var targetFilePath = Path.Combine(instrumentDataFolderPath, Path.GetFileName(mzXmlFilePathLocal));
-					m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, targetFilePath, m_MachName);
+					var fiTargetFile = new FileInfo(Path.Combine(instrumentDataFolderPath, Path.GetFileName(mzXmlFilePathLocal)));
+
+					if (fiTargetFile.Exists && fiTargetFile.Length == fiMzXmlFileSource.Length)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Skipping .mzXML file since already present in the target folder: " + fiTargetFile.FullName);
+					else
+						m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, m_MachName);
 
 					// Delete the local .mzXml file
 					DeleteFileIgnoreErrors(mzXmlFilePathLocal);
@@ -587,9 +594,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					}
 					else
 					{
-						var fiDatasetFile = new FileInfo(strDatasetFilePathSource);
-						var strDatasetFilePathTarget = Path.Combine(instrumentDataFolderPath, fiDatasetFile.Name);
-						m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, strDatasetFilePathTarget, m_MachName);
+						var fiDatasetFile = new FileInfo(strDatasetFilePathSource);						
+						var fiTargetFile = new FileInfo(Path.Combine(instrumentDataFolderPath, fiDatasetFile.Name));
+
+						if (fiTargetFile.Exists && fiTargetFile.Length == fiDatasetFile.Length)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Skipping instrument file since already present in the target folder: " + fiTargetFile.FullName);
+						else
+							m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, m_MachName);
 					}
 
 					if (!string.IsNullOrEmpty(strDatasetFilePathLocal))

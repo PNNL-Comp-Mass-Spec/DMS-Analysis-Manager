@@ -2169,6 +2169,182 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String) As Boolean
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, "*")
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Will retry failed copies up to 3 times</remarks>
+	Protected Function SynchronizeFolders(
+	  ByVal sourceFolderPath As String,
+	  ByVal targetFolderPath As String,
+	  ByVal fileNameFilterSpec As String) As Boolean
+
+		Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}		
+		Dim lstFileNameExclusionSpec = New List(Of String)
+		Const maxRetryCount = 3
+
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Will retry failed copies up to 3 times</remarks>
+	Protected Function SynchronizeFolders(
+	  ByVal sourceFolderPath As String,
+	  ByVal targetFolderPath As String,
+	  ByVal lstFileNameFilterSpec As List(Of String)) As Boolean
+
+		Dim lstFileNameExclusionSpec = New List(Of String)
+		Const maxRetryCount = 3
+
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Will retry failed copies up to 3 times</remarks>
+	Protected Function SynchronizeFolders(
+	  ByVal sourceFolderPath As String,
+	  ByVal targetFolderPath As String,
+	  ByVal lstFileNameFilterSpec As List(Of String),
+	  ByVal lstFileNameExclusionSpec As List(Of String)) As Boolean
+
+		Const maxRetryCount = 3
+
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+	''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function SynchronizeFolders(
+	  ByVal sourceFolderPath As String,
+	  ByVal targetFolderPath As String,
+	  ByVal lstFileNameFilterSpec As List(Of String),
+	  ByVal lstFileNameExclusionSpec As List(Of String),
+	  ByVal maxRetryCount As Integer) As Boolean
+
+		Try
+			Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
+			Dim diTargetFolder = New DirectoryInfo(targetFolderPath)
+
+			If Not diTargetFolder.Exists Then
+				diTargetFolder.Create()
+			End If
+
+			If lstFileNameFilterSpec Is Nothing Then
+				lstFileNameFilterSpec = New List(Of String)
+			End If
+
+			If lstFileNameFilterSpec.Count = 0 Then lstFileNameFilterSpec.Add("*")
+
+			Dim lstFilesToCopy = New SortedSet(Of String)
+
+			For Each filterSpec In lstFileNameFilterSpec
+				If String.IsNullOrWhiteSpace(filterSpec) Then
+					filterSpec = "*"
+				End If
+
+				For Each fiFile In diSourceFolder.GetFiles(filterSpec)
+					If Not lstFilesToCopy.Contains(fiFile.Name) Then
+						lstFilesToCopy.Add(fiFile.Name)
+					End If
+				Next
+			Next
+
+			If Not lstFileNameExclusionSpec Is Nothing AndAlso lstFileNameExclusionSpec.Count > 0 Then
+				' Remove any files from lstFilesToCopy that would get matched by items in lstFileNameExclusionSpec
+
+				For Each filterSpec In lstFileNameExclusionSpec
+					If Not String.IsNullOrWhiteSpace(filterSpec) Then
+						For Each fiFile In diSourceFolder.GetFiles(filterSpec)
+							If lstFilesToCopy.Contains(fiFile.Name) Then
+								lstFilesToCopy.Remove(fiFile.Name)
+							End If
+						Next
+					End If
+				Next
+			End If
+
+
+			For Each fileName In lstFilesToCopy
+				Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, fileName))
+				Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fileName))
+				Dim copyFile = False
+
+				If Not fiTargetFile.Exists Then
+					copyFile = True
+				ElseIf fiTargetFile.Length <> fiSourceFile.Length Then
+					copyFile = True
+				ElseIf fiTargetFile.LastWriteTimeUtc < fiSourceFile.LastWriteTimeUtc Then
+					copyFile = True
+				End If
+
+				If copyFile Then
+					Dim retriesRemaining = maxRetryCount
+
+					Dim success = False
+					While Not success
+						success = m_FileTools.CopyFileUsingLocks(fiSourceFile, fiTargetFile.FullName, m_MachName, True)
+						If Not success Then
+							retriesRemaining -= 1
+							If retriesRemaining < 0 Then
+								m_message = "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName
+								Return False
+							End If
+
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName & "; RetriesRemaining: " & retriesRemaining)
+
+							' Wait 2 seconds then try again
+							Thread.Sleep(2000)
+						End If
+					End While
+
+				End If
+			Next
+
+		Catch ex As Exception
+			m_message = "Error in SynchronizeFolders"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
 	''' Updates the analysis summary file
 	''' </summary>
 	''' <returns>TRUE for success, FALSE for failure</returns>

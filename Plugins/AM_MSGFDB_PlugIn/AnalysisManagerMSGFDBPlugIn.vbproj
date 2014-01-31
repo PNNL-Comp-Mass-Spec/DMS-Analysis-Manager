@@ -54,6 +54,16 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="HPC_Connector">
+      <HintPath>..\..\AM_Common\HPC_Connector.dll</HintPath>
+    </Reference>
+    <Reference Include="HPC_Submit">
+      <HintPath>..\..\AM_Common\HPC_Submit.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Hpc.Scheduler, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\Microsoft.Hpc.Scheduler.dll</HintPath>
+    </Reference>
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>

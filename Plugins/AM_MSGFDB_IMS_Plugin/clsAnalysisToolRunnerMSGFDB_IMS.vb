@@ -148,9 +148,10 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			End If
 
 			Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+			Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
 
 			' Read the MSGFDB Parameter File	
-			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strMSGFDbCmdLineOptions)
+			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return result
 			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then

@@ -189,6 +189,18 @@ Public MustInherit Class clsAnalysisResources
 		Public FilterValue As String
 		Public SaveMode As String
 	End Structure
+
+	Public Structure udtHPCOptionsType
+		Public HeadNode As String
+		Public UsingHPC As Boolean
+		Public SharePath As String
+		Public ResourceType As String
+		Public NodeGroup As String
+		Public MinimumMemoryMB As Integer
+		Public MinimumCores As Integer
+		Public WorkDirPath As String
+	End Structure
+
 #End Region
 
 #Region "Module variables"
@@ -746,7 +758,11 @@ Public MustInherit Class clsAnalysisResources
 		Dim OrgDBDescription As String
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file at " & DestFolder)
+		End If
+
+		If Not Directory.Exists(DestFolder) Then
+			Directory.CreateDirectory(DestFolder)
 		End If
 
 		'Instantiate fasta tool if not already done
@@ -2521,6 +2537,53 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Public Shared Function GetHPCOptions(ByVal jobParams As IJobParams, ByVal managerName As String) As udtHPCOptionsType
+
+		Dim stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool")
+		Dim bMSGFPlusHPC = False
+
+		Dim udtHPCOptions = New udtHPCOptionsType
+
+		udtHPCOptions.HeadNode = jobParams.GetJobParameter("HPCHeadNode", "")
+		If stepTool.ToLower() = "MSGFPlus_HPC".ToLower() AndAlso String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode) Then
+			' Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
+			udtHPCOptions.HeadNode = "deception.pnl.gov"
+			bMSGFPlusHPC = True
+		End If
+
+		udtHPCOptions.UsingHPC = Not String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode)
+
+		udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket")
+		udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
+		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs\projects\DMS")
+		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("MinimumMemoryMB", 0)
+		udtHPCOptions.MinimumCores = jobParams.GetJobParameter("MinimumCores", 0)
+
+		If bMSGFPlusHPC AndAlso udtHPCOptions.MinimumMemoryMB <= 0 Then
+			udtHPCOptions.MinimumMemoryMB = 28000
+		End If
+
+		If bMSGFPlusHPC AndAlso udtHPCOptions.MinimumCores <= 0 Then
+			udtHPCOptions.MinimumCores = 16
+		End If
+
+		Dim mgrNameClean = String.Empty
+
+		For charIndex = 0 To managerName.Length - 1
+			If Path.GetInvalidFileNameChars.Contains(managerName.Chars(charIndex)) Then
+				mgrNameClean &= "_"
+			Else
+				mgrNameClean &= managerName.Chars(charIndex)
+			End If
+		Next
+
+		' Example WorkDirPath: \\picfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+		udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean)
+
+		Return udtHPCOptions
+
+	End Function
+
 	''' <summary>
 	''' Get the name of the split fasta file to use for this job
 	''' </summary>
@@ -2900,6 +2963,7 @@ Public MustInherit Class clsAnalysisResources
 		If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
 
 		Try
+			
 			Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
 			If diOrgDbFolder.FullName.Length <= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
@@ -3017,6 +3081,7 @@ Public MustInherit Class clsAnalysisResources
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
 		End Try
+
 	End Sub
 
 	Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
@@ -5042,29 +5107,39 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-	Protected Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String) As Boolean
+	Protected Function RetrieveOrgDB(ByVal LocalOrgDBFolder As String, ByVal udtHPCOptions As udtHPCOptionsType) As Boolean
 
 		If m_DebugLevel >= 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Obtaining org db file")
 		End If
 
-		'Make a new fasta file from scratch
-		If Not CreateFastaFile(LocalOrgDBFolder) Then
-			'There was a problem. Log entries in lower-level routines provide documentation
-			Return False
-		End If
+		Try
+			'Make a new fasta file from scratch
+			If Not CreateFastaFile(LocalOrgDBFolder) Then
+				'There was a problem. Log entries in lower-level routines provide documentation
+				Return False
+			End If
 
-		'Fasta file was successfully generated. Put the name of the generated fastafile in the
-		'	job data class for other methods to use
-		If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
-			m_message = "Error adding parameter 'generatedFastaName' to m_jobParams"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+			'Fasta file was successfully generated. Put the name of the generated fastafile in the
+			'	job data class for other methods to use
+			If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
+				m_message = "Error adding parameter 'generatedFastaName' to m_jobParams"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
 
-		' Delete old fasta files and suffix array files if getting low on disk space
-		Const freeSpaceThresholdPercent As Integer = 20
-		PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
+			If Not udtHPCOptions.UsingHPC Then
+				' Delete old fasta files and suffix array files if getting low on disk space
+				Const freeSpaceThresholdPercent As Integer = 20
+				PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
+			End If
+			
+
+		Catch ex As Exception
+			m_message = "Exception in RetrieveOrgDB: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveOrgDB", ex)
+			Return False
+		End Try
 
 		'We got to here OK, so return
 		Return True
@@ -5091,7 +5166,7 @@ Public MustInherit Class clsAnalysisResources
 			ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
 
 			' Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
-
+			' Furthermore, the full path to the fasta file is only necessary when creating Sequest parameter files
 			Dim paramFileType = SetBioworksVersion(m_jobParams.GetParam("ToolName"))
 			Dim fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 			Dim connectionString = m_mgrParams.GetParam("connectionstring")
@@ -5198,7 +5273,7 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
-	''' Retrieves the _DTA.txt file (either zipped or unzipped).  Does not unzip the file; use ? to do that
+	''' Retrieves the _DTA.txt file (either zipped or unzipped).  
 	''' </summary>
 	''' <returns>TRUE for success, FALSE for error</returns>
 	''' <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>

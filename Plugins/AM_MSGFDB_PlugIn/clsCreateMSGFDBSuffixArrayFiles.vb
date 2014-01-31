@@ -21,6 +21,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 #Region "Module Variables"
 	Protected mErrorMessage As String = String.Empty
 	Protected mMgrName As String
+
+	Protected WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
 #End Region
 
 	Public ReadOnly Property ErrorMessage As String
@@ -306,7 +308,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByRef strFASTAFilePath As String,
 	  ByVal blnFastaFileIsDecoy As Boolean,
 	  ByVal strMSGFPlusIndexFilesFolderPathBase As String,
-	  ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String) As IJobParams.CloseOutType
+	  ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
 		Const MAX_WAITTIME_HOURS As Single = 1.0
 
@@ -500,7 +503,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					End If
 
 					If blnReindexingRequired Then
-						eResult = CreateSuffixArrayFilesWork(strLogFileDir, intDebugLevel, JobNum, fiFastaFile, fiLockFile, JavaProgLoc, MSGFDBProgLoc, blnFastaFileIsDecoy, blnMSGFPlus, dbSarrayFilename)
+						eResult = CreateSuffixArrayFilesWork(
+						  strLogFileDir, intDebugLevel, JobNum,
+						  fiFastaFile, fiLockFile,
+						  JavaProgLoc, MSGFDBProgLoc,
+						  blnFastaFileIsDecoy, blnMSGFPlus,
+						  dbSarrayFilename,
+						  udtHPCOptions)
 
 						If blnRemoteLockFileCreated AndAlso eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 							CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel)
@@ -539,7 +548,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal MSGFDBProgLoc As String,
 	  ByVal blnFastaFileIsDecoy As Boolean,
 	  ByVal blnMSGFPlus As Boolean,
-	  ByVal dbSarrayFilename As String) As IJobParams.CloseOutType
+	  ByVal dbSarrayFilename As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
 		Dim strCurrentTask As String = String.Empty
 
@@ -580,15 +590,21 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				intJavaMemorySizeMB = 12000
 			End If
 
-			strCurrentTask = "Verify free memory"
+			If udtHPCOptions.UsingHPC Then
+				intJavaMemorySizeMB = udtHPCOptions.MinimumMemoryMB
+			Else
 
-			' Make sure the machine has enough free memory to run BuildSA
-			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", False) Then
-				mErrorMessage = "Cannot run BuildSA since less than " & intJavaMemorySizeMB & " MB of free memory"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				strCurrentTask = "Verify free memory"
+
+				' Make sure the machine has enough free memory to run BuildSA
+				If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", False) Then
+					mErrorMessage = "Cannot run BuildSA since less than " & intJavaMemorySizeMB & " MB of free memory"
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
 			End If
 
-			' Create a lock file on the local computer
+			' Create a lock file
 			If intDebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & fiLockFile.FullName)
 			End If
@@ -604,11 +620,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				End If
 			End If
 
-			' Create lock file locally
-			Dim bSuccess As Boolean
+			' Create a lock file in the folder that the index files will be created
+			Dim success As Boolean
 			strCurrentTask = "Create the local lock file: " & fiLockFile.FullName
-			bSuccess = CreateLockFile(fiLockFile.FullName)
-			If Not bSuccess Then
+			success = CreateLockFile(fiLockFile.FullName)
+			If Not success Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -649,21 +665,74 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 			End If
 
-			Dim objBuildSA As clsRunDosProgram
-			objBuildSA = New clsRunDosProgram(fiFastaFile.DirectoryName)
+			If udtHPCOptions.UsingHPC Then
+				Dim jobName As String = "BuildSA_" & fiFastaFile.FullName
+				Const taskName = "BuildSA"
+				
+				Dim buildSAJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName)
 
-			With objBuildSA
-				.CreateNoWindow = True
-				.CacheStandardOutput = True
-				.EchoOutputToConsole = True
+				buildSAJobInfo.ClusterParameters.WorkerNodeGroup = "ComputeNodes"
+				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.AboveNormal
+				buildSAJobInfo.JobParameters.ProjectName = "PIC"
+				buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 
-				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt")
-			End With
+				' Since we are requesting a socket, there is no need to set the number of cores
+				' buildSAJobInfo.JobParameters.MinNumberOfCores = 0
+				' buildSAJobInfo.JobParameters.MaxNumberOfCores = 0
 
-			strCurrentTask = "Run BuildSA using " & CmdStr
-			If Not objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", True) Then
-				mErrorMessage = "Error running BuildSA in " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
+				buildSAJobInfo.TaskParameters.CommandLine = JavaProgLoc & " " & CmdStr
+				buildSAJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
+				buildSAJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MSGFDB_BuildSA_ConsoleOutput.txt")
+				buildSAJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
+				buildSAJobInfo.TaskParameters.FailJobOnFailure = True
+
+				mComputeCluster = New HPC_Submit.WindowsHPC2012()
+				Dim jobID = mComputeCluster.Send(buildSAJobInfo)
+
+				If jobID <= 0 Then
+					mErrorMessage = "BuildSA Job was not created in HPC: " & mComputeCluster.ErrorMessage
+					DeleteLockFile(fiLockFile)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				If mComputeCluster.Scheduler Is Nothing Then
+					mErrorMessage = "Error: HPC Scheduler is null for BuildSA Job"
+					DeleteLockFile(fiLockFile)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				Dim buildSAJob = mComputeCluster.Scheduler.OpenJob(jobID)
+
+				success = mComputeCluster.MonitorJob(buildSAJob)
+				If Not success Then
+					mErrorMessage = "HPC Job Monitor returned false: " & mComputeCluster.ErrorMessage
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage)
+				End If
+
+			Else
+
+				Dim objBuildSA As clsRunDosProgram
+				objBuildSA = New clsRunDosProgram(fiFastaFile.DirectoryName)
+
+				With objBuildSA
+					.CreateNoWindow = True
+					.CacheStandardOutput = True
+					.EchoOutputToConsole = True
+
+					.WriteConsoleOutputToFile = True
+					.ConsoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt")
+				End With
+
+				strCurrentTask = "Run BuildSA using " & CmdStr
+				success = objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", True)
+
+			End If
+
+			If Not success Then
+				mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
+				If udtHPCOptions.UsingHPC Then
+					mErrorMessage &= " using HPC"
+				End If
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
 				DeleteLockFile(fiLockFile)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -974,4 +1043,23 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	End Sub
 
+#Region "Event Handlers"
+	Private Sub mComputeCluster_ErrorEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.ErrorEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message)
+	End Sub
+
+	Private Sub mComputeCluster_MessageEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.MessageEvent
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
+	End Sub
+
+	Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 60 Then
+			dtLastStatusUpdate = DateTime.UtcNow
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running BuildSA with HPC, " & (e.HoursElapsed * 60).ToString("0.00") & " minutes elapsed")
+		End If
+
+	End Sub
+#End Region
 End Class

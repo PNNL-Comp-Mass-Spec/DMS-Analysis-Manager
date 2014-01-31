@@ -15,14 +15,35 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+		' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
+		Dim udtHPCOptions As udtHPCOptionsType = GetHPCOptions(m_jobParams, m_MgrName)
+
 		' Make sure the machine has enough free memory to run MSGFDB
-		If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
-			m_message = "Not enough free memory to run MSGFDB"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		If udtHPCOptions.UsingHPC Then
+			' Make sure the working directory exists and that it is empty
+			Dim fiPicFsWorkDir = New DirectoryInfo(udtHPCOptions.WorkDirPath)
+			If fiPicFsWorkDir.Exists Then
+				Const blnDeleteFolderIfEmpty = False
+				m_FileTools.DeleteDirectoryFiles(fiPicFsWorkDir.FullName, blnDeleteFolderIfEmpty)
+			Else
+				fiPicFsWorkDir.Create()
+			End If
+		Else
+			If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
+				m_message = "Not enough free memory to run MSGFDB"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 		End If
 
-		'Retrieve Fasta file
-		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		' Retrieve the Fasta file
+		Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")		
+
+		If udtHPCOptions.UsingHPC Then
+			' Override the OrgDbDir to point to Picfs, specifically \\picfs\projects\DMS\DMS_Temp_Org
+			localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
+		End If
+
+		If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 

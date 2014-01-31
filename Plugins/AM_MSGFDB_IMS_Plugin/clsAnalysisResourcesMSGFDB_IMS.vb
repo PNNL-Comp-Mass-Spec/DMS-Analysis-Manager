@@ -31,7 +31,8 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 		End If
 
 		'Retrieve Fasta file
-		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Dim udtHPCOptions = New udtHPCOptionsType
+		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir"), udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
