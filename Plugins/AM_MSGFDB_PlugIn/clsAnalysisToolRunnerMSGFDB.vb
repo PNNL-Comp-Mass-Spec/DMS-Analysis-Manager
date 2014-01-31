@@ -38,6 +38,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	Protected WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
 
+	Protected WithEvents mHPCMonitorInitTimer As Timers.Timer
+
 #End Region
 
 #Region "Methods"
@@ -77,6 +79,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSGFDB.RunTool(): Enter")
 			End If
 
+			mHPCMonitorInitTimer = New Timers.Timer(30000)
+			mHPCMonitorInitTimer.Enabled = False
 
 			' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
 			Dim udtHPCOptions As clsAnalysisResources.udtHPCOptionsType = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName)
@@ -187,7 +191,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If udtHPCOptions.UsingHPC AndAlso intJavaMemorySize < 10000 Then
 				' Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
-				intJavaMemorySize = 28000				
+				intJavaMemorySize = 28000
 			End If
 
 			'Set up and execute a program runner to run MSGFDB
@@ -275,22 +279,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask)
 				End If
 
-                Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
-                Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
+				Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
+				Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
-                If String.IsNullOrEmpty(sPICHPCUsername) Then
-                    m_message = "Manager parameter PICHPCUser is undefined; unable to schedule HPC job"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+				If String.IsNullOrEmpty(sPICHPCUsername) Then
+					m_message = "Manager parameter PICHPCUser is undefined; unable to schedule HPC job"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
 
-                If String.IsNullOrEmpty(sPICHPCPassword) Then
-                    m_message = "Manager parameter PICHPCPassword is undefined; unable to schedule HPC job"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+				If String.IsNullOrEmpty(sPICHPCPassword) Then
+					m_message = "Manager parameter PICHPCPassword is undefined; unable to schedule HPC job"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
 
-                mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
+				mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
 				Dim jobID = mComputeCluster.Send(hpcJobInfo)
 
 				If jobID <= 0 Then
@@ -311,6 +315,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				If blnSuccess Then
 					Dim hpcJob = mComputeCluster.Scheduler.OpenJob(jobID)
+
+					mHPCMonitorInitTimer.Enabled = True
 
 					blnSuccess = mComputeCluster.MonitorJob(hpcJob)
 					If Not blnSuccess Then
@@ -640,6 +646,32 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	Private Sub MonitorMSGFPlusProgress()
+
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+
+		' Synchronize the stored Debug level with the value stored in the database
+		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+		'Update the status file (limit the updates to every 15 seconds)
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 15 Then
+			dtLastStatusUpdate = DateTime.UtcNow
+			UpdateStatusRunning(m_progress)
+		End If
+
+		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
+			dtLastConsoleOutputParse = DateTime.UtcNow
+
+			ParseConsoleOutputFile(mWorkingDirectoryInUse)
+			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+				mToolVersionWritten = StoreToolVersionInfo()
+			End If
+
+		End If
+	End Sub
+
 	Private Function ParallelMSGFPlusRenameFile(ByVal resultsFileName As String) As String
 
 		Dim filePathNew = "??"
@@ -817,7 +849,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
 			Return False
 		End Try
-	
+
 		Return True
 
 	End Function
@@ -831,29 +863,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
-		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 10 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 10 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
-
-		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 20 Then
-			dtLastConsoleOutputParse = DateTime.UtcNow
-
-			ParseConsoleOutputFile(mWorkingDirectoryInUse)
-			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
-
-		End If
-
+		MonitorMSGFPlusProgress()
 	End Sub
 
 	Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
@@ -887,29 +897,19 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	End Sub
 
 	Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
-		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+		mHPCMonitorInitTimer.Enabled = False
+		MonitorMSGFPlusProgress()
+	End Sub
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 10 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 10 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
-
-		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
-			dtLastConsoleOutputParse = DateTime.UtcNow
-
-			ParseConsoleOutputFile(mWorkingDirectoryInUse)
-			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
-
-		End If
-
+	''' <summary>
+	''' This timer is started just before the call to mComputeCluster.MonitorJob
+	''' The event will fire very 30 seconds, allowing the manager to update its status
+	''' </summary>
+	''' <param name="sender"></param>
+	''' <param name="e"></param>
+	''' <remarks>When event mComputeCluster.ProgressEvent fires, it will disable this timer</remarks>
+	Private Sub mHPCMonitorInitTimer_Elapsed(sender As Object, e As System.Timers.ElapsedEventArgs) Handles mHPCMonitorInitTimer.Elapsed
+		UpdateStatusRunning(m_progress)
 	End Sub
 
 #End Region
