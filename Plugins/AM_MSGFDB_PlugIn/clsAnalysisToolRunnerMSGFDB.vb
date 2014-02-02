@@ -255,6 +255,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
 				hpcJobInfo.TaskParameters.FailJobOnFailure = True
 
+				' Set the maximum runtime to 3 days
+				' Note that this runtime includes the time the job is queued, plus also the time the job is running
+				hpcJobInfo.JobParameters.MaxRunTimeHours = 72
+
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, hpcJobInfo.TaskParameters.CommandLine)
 				End If
