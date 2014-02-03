@@ -677,7 +677,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 				buildSAJobInfo.ClusterParameters.WorkerNodeGroup = "ComputeNodes"
 				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.AboveNormal
-				buildSAJobInfo.JobParameters.ProjectName = "PIC"
+				buildSAJobInfo.JobParameters.ProjectName = "DMS"
+				buildSAJobInfo.JobParameters.TemplateName = "DMS"
 				buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 
 				' Since we are requesting a socket, there is no need to set the number of cores
