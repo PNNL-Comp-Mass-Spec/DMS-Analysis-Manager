@@ -7,6 +7,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_S
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSGFDBPlugIn", "..\Plugins\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerICR2LSPlugIn", "..\Plugins\AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.vbproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Mixed Platforms.Build.0 = Release|x86
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.ActiveCfg = Release|x86
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.Build.0 = Release|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|x86.ActiveCfg = Debug|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Debug|x86.Build.0 = Debug|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|Any CPU.ActiveCfg = Release|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|Mixed Platforms.Build.0 = Release|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|x86.ActiveCfg = Release|x86
+		{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

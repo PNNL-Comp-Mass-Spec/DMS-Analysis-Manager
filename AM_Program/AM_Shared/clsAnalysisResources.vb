@@ -101,6 +101,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 	Public Const BRUKER_SER_FILE As String = "ser"
+	Public Const BRUKER_FID_FILE As String = "fid"
 
 	Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
 	Public Const JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES As String = "PackedParam_DatasetRawDataTypes"
@@ -4588,8 +4589,15 @@ Public MustInherit Class clsAnalysisResources
 
 				' Both the MSXml step tool and DeconTools require the .Baf file
 				' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
-				Dim blnSkipBAFFiles As Boolean
-				blnSkipBAFFiles = False
+				' In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
+
+				Dim blnSkipBAFFiles As Boolean = False
+
+				Dim strStepTool = m_jobParams.GetJobParameter("StepTool", "Unknown")
+
+				If strStepTool = "ICR2LS" Then
+					blnSkipBAFFiles = True
+				End If
 
 				blnSuccess = RetrieveDotDFolder(CreateStoragePathInfoOnly, blnSkipBAFFiles)
 

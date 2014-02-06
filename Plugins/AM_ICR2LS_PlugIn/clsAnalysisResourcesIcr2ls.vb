@@ -42,22 +42,22 @@ Public Class clsAnalysisResourcesIcr2ls
 
 		RawDataType = m_jobParams.GetParam("RawDataType")
 
-		strRemoteDatasetFolderPath = System.IO.Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))
+		strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))
 
-		If RawDataType.ToLower() = clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-			strLocalDatasetFolderPath = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & ".d")
-			strRemoteDatasetFolderPath = System.IO.Path.Combine(strRemoteDatasetFolderPath, m_DatasetName & ".d")
+		If RawDataType.ToLower() = RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
+			strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, m_DatasetName & ".d")
+			strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, m_DatasetName & ".d")
 		Else
 			strLocalDatasetFolderPath = String.Copy(m_WorkingDir)
 		End If
 
-		SerFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(strLocalDatasetFolderPath, blnIsFolder)
+		SerFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, blnIsFolder)
 
 		If String.IsNullOrEmpty(SerFileOrFolderPath) Then
-			' Ser file or 0.ser folder not found in the working directory
+			' Ser file, fid file, or 0.ser folder not found in the working directory
 			' See if the file exists in the archive			
 
-			SerFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(strRemoteDatasetFolderPath, blnIsFolder)
+			SerFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, blnIsFolder)
 
 			If Not String.IsNullOrEmpty(SerFileOrFolderPath) Then
 				' File found in the archive; need to copy it locally
@@ -65,28 +65,28 @@ Public Class clsAnalysisResourcesIcr2ls
 				Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
 
 				If blnIsFolder Then
-					Dim diSourceFolder As System.IO.DirectoryInfo
-					diSourceFolder = New System.IO.DirectoryInfo(SerFileOrFolderPath)
+					Dim diSourceFolder As DirectoryInfo
+					diSourceFolder = New DirectoryInfo(SerFileOrFolderPath)
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying 0.ser folder from archive to working directory: " & SerFileOrFolderPath)
 					ResetTimestampForQueueWaitTimeLogging()
-					m_FileTools.CopyDirectory(SerFileOrFolderPath, System.IO.Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
+					m_FileTools.CopyDirectory(SerFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
 
 					If m_DebugLevel >= 1 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
 					End If
 
 				Else
-					Dim fiSourceFile As System.IO.FileInfo
-					fiSourceFile = New System.IO.FileInfo(SerFileOrFolderPath)
+					Dim fiSourceFile As FileInfo
+					fiSourceFile = New FileInfo(SerFileOrFolderPath)
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying ser file from archive to working directory: " & SerFileOrFolderPath)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying " & Path.GetFileName(SerFileOrFolderPath) & " file from archive to working directory: " & SerFileOrFolderPath)
 
 					If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, clsLogTools.LogLevels.ERROR) Then
 						Return False
 					Else
 						If m_DebugLevel >= 1 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied ser file in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied " & Path.GetFileName(SerFileOrFolderPath) & " file in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
 						End If
 					End If
 
@@ -100,11 +100,11 @@ Public Class clsAnalysisResourcesIcr2ls
 	End Function
 
 	''' <summary>
-	''' Looks for a ser file or 0.ser folder in strFolderToCheck
+	''' Looks for a ser file, fid file, or 0.ser folder in strFolderToCheck
 	''' </summary>
 	''' <param name="strFolderToCheck"></param>
 	''' <param name="blnIsFolder"></param>
-	''' <returns>The path to the ser file or 0.ser folder, if found.  An empty string if not found</returns>
+	''' <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
 	''' <remarks></remarks>
 	Public Shared Function FindSerFileOrFolder(ByVal strFolderToCheck As String, ByRef blnIsFolder As Boolean) As String
 
@@ -113,19 +113,26 @@ Public Class clsAnalysisResourcesIcr2ls
 		blnIsFolder = False
 
 		' Look for a ser file in the working directory
-		SerFileOrFolderPath = System.IO.Path.Combine(strFolderToCheck, clsAnalysisResources.BRUKER_SER_FILE)
+		SerFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_SER_FILE)
 
-		If System.IO.File.Exists(SerFileOrFolderPath) Then
+		If File.Exists(SerFileOrFolderPath) Then
 			' Ser file found
 			Return SerFileOrFolderPath
-		Else
-			' Ser file not found; look for a 0.ser folder in the working directory
-			' Look for the "0.ser" folder in the working directory
-			SerFileOrFolderPath = System.IO.Path.Combine(strFolderToCheck, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER)
-			If System.IO.Directory.Exists(SerFileOrFolderPath) Then
-				blnIsFolder = True
-				Return SerFileOrFolderPath
-			End If
+		End If
+
+		' Ser file not found; look for a fid file
+		SerFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_FID_FILE)
+
+		If File.Exists(SerFileOrFolderPath) Then
+			' Fid file found
+			Return SerFileOrFolderPath
+		End If
+
+		' Fid file not found; look for a 0.ser folder in the working directory
+		SerFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_ZERO_SER_FOLDER)
+		If Directory.Exists(SerFileOrFolderPath) Then
+			blnIsFolder = True
+			Return SerFileOrFolderPath
 		End If
 
 		Return String.Empty
