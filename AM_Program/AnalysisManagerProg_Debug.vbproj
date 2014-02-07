@@ -160,9 +160,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj">
-      <Project>{44E81B35-BA39-47AD-9B67-FBAFC925CACA}</Project>
-      <Name>AnalysisManagerMSGFDBPlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_RepoPkgr_PlugIn\AnalysisManager_RepoPkgr_PlugIn.csproj">
+      <Project>{02ab78ca-a428-4ef8-918f-d8864172ae7e}</Project>
+      <Name>AnalysisManager_RepoPkgr_PlugIn</Name>
     </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>

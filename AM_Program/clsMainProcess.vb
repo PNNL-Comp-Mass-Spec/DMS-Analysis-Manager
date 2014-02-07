@@ -350,7 +350,12 @@ Public Class clsMainProcess
 					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 				End If
 
-				'Verify that an error hasn't left the the system in an odd state
+                ' Verify that the working directory exists
+                If Not VerifyWorkDir() Then
+                    Exit Sub
+                End If
+
+                ' Verify that an error hasn't left the the system in an odd state
 				If StatusFlagFileError() Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
 					UpdateStatusFlagFileExists()
@@ -1808,17 +1813,26 @@ Public Class clsMainProcess
 
 	End Function
 
+    Private Function VerifyWorkDir() As Boolean
+
+        ' Verify working directory is valid
+        If Not Directory.Exists(m_WorkDirPath) Then
+            Dim MsgStr = "Invalid working directory: " & m_WorkDirPath
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MsgStr)
+            Return False
+        End If
+
+    End Function
+
 	Private Function ValidateWorkingDir() As Boolean
 
 		'Verifies working directory is properly specified and is empty
 		Dim MsgStr As String
 
 		'Verify working directory is valid
-		If Not Directory.Exists(m_WorkDirPath) Then
-			MsgStr = "Invalid working directory: " & m_WorkDirPath
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MsgStr)
-			Return False
-		End If
+        If Not VerifyWorkDir() Then
+            Return False
+        End If
 
 		'Verify the working directory is empty
 		Dim TmpFilArray() As String = Directory.GetFiles(m_WorkDirPath)
