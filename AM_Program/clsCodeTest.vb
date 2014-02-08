@@ -204,24 +204,23 @@ Public Class clsCodeTest
 		'   "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
 		'   " WHERE (JSH.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JSH.Tool = 'DTA_Refinery') AND (JSH.Most_Recent_Entry = 1) AND (JSH.State = 5)"
 
-		Dim strSql As String = "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" &
-	" FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" &
-	"      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" &
-	"      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
-	" WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
+		Dim strSql As String = _
+		  "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" &
+		  " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" &
+		  "      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" &
+		  "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
+		  " WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
 
-		Dim strConnectionString As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+		Const strConnectionString As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+		Const RetryCount As Short = 2
 
 		Dim Dt As DataTable = Nothing
 
-		Using Cn As System.Data.SqlClient.SqlConnection = New System.Data.SqlClient.SqlConnection(strConnectionString)
-			Using Da As System.Data.SqlClient.SqlDataAdapter = New System.Data.SqlClient.SqlDataAdapter(strSql, Cn)
-				Using Ds As DataSet = New DataSet
-					Da.Fill(Ds)
-					Dt = Ds.Tables(0)
-				End Using  'Ds
-			End Using  'Da
-		End Using  'Cn
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(strSql, strConnectionString, "ProcessDtaRefineryLogFiles", RetryCount, Dt)
+
+		If Not blnSuccess Then
+			Console.WriteLine("Repeated errors running database query")
+		End If
 
 		If Dt.Rows.Count < 1 Then
 			' No data was returned

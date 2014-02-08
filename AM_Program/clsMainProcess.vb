@@ -1822,6 +1822,8 @@ Public Class clsMainProcess
             Return False
         End If
 
+		Return True
+
     End Function
 
 	Private Function ValidateWorkingDir() As Boolean

@@ -211,10 +211,26 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			//    }
 			//}
 
-			var success = RetrieveInstrumentData();
+			int datasetsProcessed;
+			var success = RetrieveInstrumentData(out datasetsProcessed);
 			if (!success)
 				return false;
 
+			if (datasetsProcessed == 0)
+			{
+				if (dataPkgJobCountMatch == 0)
+				{
+					m_message = "Data package " + _mgr.DataPkgId +
+					            " does not have any analysis jobs associated with it; unable to obtain instrument data";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+					return false;
+				}
+				
+				
+				string msg = "Data package " + _mgr.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+				
+			}
 			m_progress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
 			m_StatusTools.UpdateAndWrite(m_progress);
 
@@ -631,7 +647,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 		}
 
-		private bool RetrieveInstrumentData()
+		private bool RetrieveInstrumentData(out int datasetsProcessed)
 		{
 
 			// Extract the packed parameters
@@ -639,7 +655,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
 			var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
-			int intDatasetsProcessed = 0;
+			datasetsProcessed = 0;
 
 			// The objAnalysisResults object is used to copy files to/from this computer
 			var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
@@ -661,8 +677,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				if (!success)
 					return false;
 
-				intDatasetsProcessed += 1;
-				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, intDatasetsProcessed, dctDatasetRawFilePaths.Count);
+				datasetsProcessed += 1;
+				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
 				m_StatusTools.UpdateAndWrite(m_progress);
 
 			}

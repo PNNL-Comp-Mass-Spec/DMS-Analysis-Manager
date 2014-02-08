@@ -161,8 +161,7 @@ Public Class clsSplitFastaFileUtilities
 	''' <remarks></remarks>
 	Protected Function GetLegacyFastaFilePath(ByVal legacyFASTAFileName As String, <Out()> ByRef organismName As String) As String
 
-		Dim RetryCount As Short = 3
-		Dim legacyFASTAFilePath = String.Empty
+		Const RetryCount As Short = 3
 
 		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
 
@@ -174,34 +173,24 @@ Public Class clsSplitFastaFileUtilities
 		SqlStr.Append(" FROM V_Legacy_Static_File_Locations")
 		SqlStr.Append(" WHERE FileName = '" & legacyFASTAFileName & "'")
 
-		While RetryCount > 0
-			Try
-				Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mProteinSeqsDBConnectionString)
-					connection.Open()
-					Using dbCommand As SqlClient.SqlCommand = New SqlClient.SqlCommand(SqlStr.ToString(), connection)
-						Dim dbReader = dbCommand.ExecuteReader()
+		Dim dtResults As DataTable = Nothing
 
-						If Not dbReader.HasRows() Then
-							' Database query was successful, but no rows were returned
-							Return String.Empty
-						End If
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", RetryCount, dtResults)
 
-						dbReader.Read()
-						legacyFASTAFilePath = dbReader.GetString(0)
-						organismName = dbReader.GetString(1)
-					End Using
-				End Using
-				Exit While
-			Catch ex As Exception
-				RetryCount -= 1S
-				mErrorMessage = "Exception getting fasta file path from database: " + ex.Message + "; FastaFile: " + legacyFASTAFileName
-				OnErrorEvent(mErrorMessage)
-				' Delay for 2 seconds before trying again
-				Thread.Sleep(2000)
-			End Try
-		End While
+		If Not blnSuccess Then
+			Return String.Empty
+		End If
 
-		Return legacyFASTAFilePath
+		For Each CurRow As DataRow In dtResults.Rows
+
+			Dim legacyFASTAFilePath = clsGlobal.DbCStr(CurRow(0))
+			organismName = clsGlobal.DbCStr(CurRow(1))
+
+			Return legacyFASTAFilePath
+		Next
+
+		' Database query was successful, but no rows were returned
+		Return String.Empty
 
 	End Function
 

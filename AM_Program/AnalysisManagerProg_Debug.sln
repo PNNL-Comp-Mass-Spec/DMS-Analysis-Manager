@@ -1,8 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg_Debug", "AnalysisManagerProg_Debug.vbproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_Shared.vbproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
@@ -10,6 +8,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_RepoPkgr_PlugIn", "..\Plugins\AM_RepoPkgr_PlugIn\AnalysisManager_RepoPkgr_PlugIn.csproj", "{02AB78CA-A428-4EF8-918F-D8864172AE7E}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSXMLGenPlugIn", "..\Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerResultsXferPlugin", "..\Plugins\AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.vbproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +61,16 @@ Global
 		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Release|Mixed Platforms.Build.0 = Release|x86
 		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Release|x86.ActiveCfg = Release|x86
 		{02D682E5-F70F-4C46-BAC8-1C18920FFF22}.Release|x86.Build.0 = Release|x86
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{EDDE6076-0959-40E8-8760-08B29F66AB01}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

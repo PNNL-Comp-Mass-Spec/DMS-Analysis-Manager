@@ -264,30 +264,10 @@ Public Class clsAnalysisMgrSettings
 		Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
 
 		'Get a table to hold the results of the query
-		While RetryCount > 0
-			Try
-				Using Cn As SqlConnection = New SqlConnection(ConnectionString)
-					Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
-						Using Ds As DataSet = New DataSet
-							Da.Fill(Ds)
-							dtSettings = Ds.Tables(0)
-						End Using  'Ds
-					End Using  'Da
-				End Using  'Cn
-				Exit While
-			Catch ex As Exception
-				RetryCount -= 1S
-				Dim MyMsg As String
-				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Exception getting manager settings from database: " & ex.Message & "; ConnectionString: " & ConnectionString
-				MyMsg &= ", RetryCount = " & RetryCount.ToString
-				WriteErrorMsg(MyMsg)
-
-				Thread.Sleep(5000)				'Delay for 5 second before trying again
-			End Try
-		End While
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, ConnectionString, "LoadMgrSettingsFromDBWork", RetryCount, dtSettings)
 
 		'If loop exited due to errors, return false
-		If RetryCount < 1 Then
+		If Not blnSuccess Then
 			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
 			WriteErrorMsg(m_ErrMsg)
 			If Not dtSettings Is Nothing Then dtSettings.Dispose()
@@ -374,33 +354,13 @@ Public Class clsAnalysisMgrSettings
 								 " WHERE ISNULL([Param File Storage Path], '') <> ''"
 
 		Dim Dt As DataTable = Nothing
-		Dim blnsuccess As Boolean
+		Dim blnSuccess As Boolean
 
 		'Get a table to hold the results of the query
-		While RetryCount > 0
-			Try
-				Using Cn As SqlConnection = New SqlConnection(ConnectionString)
-					Using Da As SqlDataAdapter = New SqlDataAdapter(SqlStr, Cn)
-						Using Ds As DataSet = New DataSet
-							Da.Fill(Ds)
-							Dt = Ds.Tables(0)
-						End Using  'Ds
-					End Using  'Da
-				End Using  'Cn
-				Exit While
-			Catch ex As Exception
-				RetryCount -= 1S
-				MyMsg = "clsMgrSettings.LoadBrokerDBSettings; Exception getting settings from broker database: " & ex.Message & "; ConnectionString: " & ConnectionString
-				MyMsg &= ", RetryCount = " & RetryCount.ToString
-
-				WriteErrorMsg(MyMsg)
-
-				Thread.Sleep(5000)				'Delay for 5 second before trying again
-			End Try
-		End While
-
+		blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadBrokerDBSettings", RetryCount, Dt)
+		
 		'If loop exited due to errors, return false
-		If RetryCount < 1 Then
+		If Not blnSuccess Then
 			MyMsg = "clsMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database"
 			WriteErrorMsg(MyMsg)
 			Dt.Dispose()

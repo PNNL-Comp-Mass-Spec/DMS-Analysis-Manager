@@ -12,6 +12,7 @@ Option Strict On
 Imports System.IO
 Imports System.Threading
 Imports System.Text.RegularExpressions
+Imports System.Runtime.InteropServices
 
 Public Class clsGlobal
 
@@ -96,38 +97,38 @@ Public Class clsGlobal
 
 	End Function
 
-    ''' <summary>
-    ''' Decrypts password received from ini file
-    ''' </summary>
-    ''' <param name="EnPwd">Encoded password</param>
-    ''' <returns>Clear text password</returns>
-    Public Shared Function DecodePassword(ByVal enPwd As String) As String
-        ' Decrypts password received from ini file
-        ' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
+	''' <summary>
+	''' Decrypts password received from ini file
+	''' </summary>
+	''' <param name="enPwd">Encoded password</param>
+	''' <returns>Clear text password</returns>
+	Public Shared Function DecodePassword(ByVal enPwd As String) As String
+		' Decrypts password received from ini file
+		' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
 
-        ' Convert the password string to a character array
-        Dim pwdChars As Char() = enPwd.ToCharArray()
-        Dim pwdBytes = New List(Of Byte)
-        Dim pwdCharsAdj = New List(Of Char)
+		' Convert the password string to a character array
+		Dim pwdChars As Char() = enPwd.ToCharArray()
+		Dim pwdBytes = New List(Of Byte)
+		Dim pwdCharsAdj = New List(Of Char)
 
-        For i As Integer = 0 To pwdChars.Length - 1
-            pwdBytes.Add(Convert.ToByte(pwdChars(i)))
-        Next
+		For i As Integer = 0 To pwdChars.Length - 1
+			pwdBytes.Add(Convert.ToByte(pwdChars(i)))
+		Next
 
-        ' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+		' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
 
-        For byteCntr As Integer = 0 To pwdBytes.Count - 1
-            If (byteCntr Mod 2) = 0 Then
-                pwdBytes(byteCntr) += CByte(1)
-            Else
-                pwdBytes(byteCntr) -= CByte(1)
-            End If
-            pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
-        Next
+		For byteCntr As Integer = 0 To pwdBytes.Count - 1
+			If (byteCntr Mod 2) = 0 Then
+				pwdBytes(byteCntr) += CByte(1)
+			Else
+				pwdBytes(byteCntr) -= CByte(1)
+			End If
+			pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
+		Next
 
-        Return String.Join("", pwdCharsAdj)        
+		Return String.Join("", pwdCharsAdj)
 
-    End Function
+	End Function
 
 	''' <summary>
 	''' Flatten a list of items into a single string, with items separated by chDelimiter
@@ -203,6 +204,55 @@ Public Class clsGlobal
 		End If
 
 		Return strVersion
+
+	End Function
+
+	''' <summary>
+	''' Runs the specified Sql query
+	''' </summary>
+	''' <param name="SqlStr"></param>
+	''' <param name="RetryCount"></param>
+	''' <param name="ConnectionString"></param>
+	''' <param name="Dt">Datatable (Output Parameter)</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Public Shared Function GetDataTableByQuery(
+	  ByVal SqlStr As String,
+	  ByVal ConnectionString As String,
+	  ByVal CallingFunction As String,
+	  ByVal RetryCount As Short,
+	  <Out()> ByRef Dt As DataTable) As Boolean
+
+		Dim strMsg As String
+
+		If String.IsNullOrEmpty(SqlStr) Then Throw New ArgumentException("SqlStr argument cannot be empty")
+		If String.IsNullOrEmpty(ConnectionString) Then Throw New ArgumentException("ConnectionString argument cannot be empty")
+		If String.IsNullOrEmpty(CallingFunction) Then CallingFunction = "UnknownCaller"
+		If RetryCount < 1 Then RetryCount = 1
+
+		While RetryCount > 0
+			Try
+				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(ConnectionString)
+					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
+						Using Ds As DataSet = New DataSet
+							Da.Fill(Ds)
+							Dt = Ds.Tables(0)
+						End Using
+					End Using
+				End Using
+				Return True
+			Catch ex As Exception
+				RetryCount -= 1S
+				strMsg = CallingFunction & "; Exception querying database: " + ex.Message + "; ConnectionString: " + ConnectionString
+				strMsg &= ", RetryCount = " + RetryCount.ToString
+				strMsg &= ", Query = " + SqlStr
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+				Thread.Sleep(5000)				'Delay for 5 second before trying again
+			End Try
+		End While
+
+		Dt = Nothing
+		Return False
 
 	End Function
 
@@ -1075,7 +1125,6 @@ Public Class clsGlobal
 	End Function
 
 #End Region
-
 End Class
 
 

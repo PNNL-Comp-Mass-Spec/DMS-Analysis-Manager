@@ -144,11 +144,8 @@ Public Class clsResultXferToolRunner
 
 	Protected Function LookupLocalPath(ByVal serverName As String, ByVal uncFolderPath As String, ByVal folderFunction As String, ByVal connectionString As String) As String
 
-		Dim RetryCount As Short = 3
-
-		Dim rowCount As Integer = 0
+		Const RetryCount As Short = 3
 		Dim strMsg As String
-		Dim volServer = String.Empty
 
 		' Remove the server name from the start of folderPath
 		Dim charIndex = uncFolderPath.IndexOf("\"c, 2)
@@ -175,49 +172,26 @@ Public Class clsResultXferToolRunner
 		SqlStr.Append("        [Path] = '" + uncFolderPath + "\')")
 		SqlStr.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC")
 
-		While RetryCount > 0
-			Try
-				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(connectionString)
-					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
-						Using Ds As DataSet = New DataSet
-							Da.Fill(Ds)
-							Using Dt = Ds.Tables(0)
-								rowCount = Dt.Rows.Count
-								For Each CurRow As DataRow In Dt.Rows
-									volServer = clsGlobal.DbCStr(CurRow("VolServer"))
-									Exit For
-								Next
-							End Using
-						End Using  'Ds
-					End Using  'Da
-				End Using  'Cn
-				Exit While
-			Catch ex As Exception
-				RetryCount -= 1S
-				strMsg = "LookupLocalPath; Exception getting folder info from database: " + ex.Message + "; ConnectionString: " + connectionString
-				strMsg &= ", RetryCount = " + RetryCount.ToString
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-				Thread.Sleep(5000)				'Delay for 5 second before trying again
-			End Try
-		End While
+		' Get a table to hold the results of the query
+		Dim Dt As DataTable = Nothing
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), connectionString, "LookupLocalPath", RetryCount, Dt)
 
-		'If loop exited due to errors, return an empty string
-		If RetryCount < 1 Then
+		If Not blnSuccess Then
 			strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Return String.Empty
 		End If
 
-		'Verify at least one row was returned
-		If rowCount < 1 Then
-			' No data was returned
-			strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-			Return String.Empty
-		End If
+		For Each CurRow As DataRow In Dt.Rows
+			Dim volServer = clsGlobal.DbCStr(CurRow("VolServer"))
+			Dim localFolderPath = Path.Combine(volServer, uncFolderPath)
+			Return localFolderPath
+		Next
 
-		Dim localFolderPath = Path.Combine(volServer, uncFolderPath)
-		Return localFolderPath
+		' No data was returned
+		strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+		Return String.Empty
 
 	End Function
 	

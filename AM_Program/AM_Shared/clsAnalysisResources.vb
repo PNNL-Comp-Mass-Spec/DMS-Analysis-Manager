@@ -12,6 +12,7 @@ Option Strict On
 Imports PHRPReader
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports System.Text
 
 Public MustInherit Class clsAnalysisResources
 	Implements IAnalysisResources
@@ -2749,28 +2750,9 @@ Public MustInherit Class clsAnalysisResources
 		Dim Dt As DataTable = Nothing
 
 		'Get a table to hold the results of the query
-		While RetryCount > 0
-			Try
-				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(ConnectionString)
-					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
-						Using Ds As DataSet = New DataSet
-							Da.Fill(Ds)
-							Dt = Ds.Tables(0)
-						End Using  'Ds
-					End Using  'Da
-				End Using  'Cn
-				Exit While
-			Catch ex As Exception
-				RetryCount -= 1S
-				strMsg = "LoadDataPackageJobInfo; Exception getting aggregate list from database: " + ex.Message + "; ConnectionString: " + ConnectionString
-				strMsg &= ", RetryCount = " + RetryCount.ToString
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-				Threading.Thread.Sleep(5000)				'Delay for 5 second before trying again
-			End Try
-		End While
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
 
-		'If loop exited due to errors, return false
-		If RetryCount < 1 Then
+		If Not blnSuccess Then
 			strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
@@ -2780,9 +2762,32 @@ Public MustInherit Class clsAnalysisResources
 		'Verify at least one row returned
 		If Dt.Rows.Count < 1 Then
 			' No data was returned
+
+			' If the data package exists and has datasets associated with it, then Log this as a warning but return true
+			' Otherwise, log an error and return false
+
+			SqlStr.Clear()
+			SqlStr.Append(" SELECT Count(*) AS Datasets")
+			SqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
+			SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
+
+			'Get a table to hold the results of the query
+			blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
+			If blnSuccess AndAlso Dt.Rows.Count > 0 Then
+				For Each curRow As DataRow In Dt.Rows
+					Dim datasetCount = clsGlobal.DbCInt(curRow(0))
+
+					If datasetCount > 0 Then
+						strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID & ", but it does have " & datasetCount & " dataset"
+						If datasetCount > 1 Then strMsg &= "s"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
+						Return True
+					End If
+				Next
+			End If
+
 			strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-			Dt.Dispose()
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)			
 			Return False
 		Else
 			For Each CurRow As DataRow In Dt.Rows
@@ -2964,7 +2969,7 @@ Public MustInherit Class clsAnalysisResources
 		If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
 
 		Try
-			
+
 			Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
 			If diOrgDbFolder.FullName.Length <= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
@@ -5146,7 +5151,7 @@ Public MustInherit Class clsAnalysisResources
 				Const freeSpaceThresholdPercent As Integer = 20
 				PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
 			End If
-			
+
 
 		Catch ex As Exception
 			m_message = "Exception in RetrieveOrgDB: " & ex.Message
@@ -5966,7 +5971,6 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 #End Region
-
 End Class
 
 
