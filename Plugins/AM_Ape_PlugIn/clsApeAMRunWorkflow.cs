@@ -70,9 +70,13 @@ namespace AnalysisManager_Ape_PlugIn
 					mErrorMessage = "Ape.SqlServerToSQLite.StartWorkflow returned false";
 			}
 			else
-			{				
-				// Add the protein parsimony tables
-				blnSuccess = StartProteinParsimony(apeDatabase);
+			{
+				string analysisType = GetJobParam("AnalysisType", string.Empty);
+				if (!string.Equals(analysisType, "improv", StringComparison.CurrentCultureIgnoreCase))
+				{
+					// Add the protein parsimony tables
+					blnSuccess = StartProteinParsimony(apeDatabase);
+				}
 				
 			}
 
