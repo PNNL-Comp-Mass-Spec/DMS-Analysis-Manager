@@ -40,9 +40,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal strRemoteIndexFolderPath As String,
 	  ByVal blnCheckForLockFile As Boolean,
 	  ByVal intDebugLevel As Integer,
-	  ByVal sngMaxWaitTimeHours As Single) As IJobParams.CloseOutType
+	  ByVal sngMaxWaitTimeHours As Single,
+	  <Out()> ByRef diskFreeSpaceBelowThreshold As Boolean) As IJobParams.CloseOutType
 
 		Dim blnSuccess As Boolean = False
+
+		diskFreeSpaceBelowThreshold = False
 
 		Try
 
@@ -121,13 +124,30 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 						oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
+						' Compute the total disk space required
+						Dim fileSizeTotalBytes As Int64 = 0
+
 						For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
-							Dim fiSourceFile As FileInfo
-							Dim strTargetFilePath As String
+							Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+							fileSizeTotalBytes += fiSourceFile.Length
+						Next
 
-							fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+						Const DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750
 
-							strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
+						' Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
+						Dim minFreeSpaceMB = CInt(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
+
+						diskFreeSpaceBelowThreshold = Not clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, mErrorMessage)
+
+						If diskFreeSpaceBelowThreshold Then
+							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+						End If
+
+						For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+
+							Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+
+							Dim strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
 							oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
 
 							filesCopied += 1
@@ -453,7 +473,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					strCurrentTask = "Some files are missing: " & lstExistingFiles.Count & " vs. " & lstFilesToFind.Count
 					If lstExistingFiles.Count > 0 Then
 						If intDebugLevel >= 1 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Indexing of " & fiFastaFile.Name & " was incomplete (found " & lstExistingFiles.Count & " out of " & lstFilesToFind.Count & " index files); will repeat the call to BuildSA")
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Indexing of " & fiFastaFile.Name & " was incomplete (found " & lstExistingFiles.Count & " out of " & lstFilesToFind.Count & " index files)")
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... existing files: " & strExistingFiles)
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... missing files: " & strMissingFiles)
 						End If
@@ -474,9 +494,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase, strMSGFPlusIndexFilesFolderPathLegacyDB)
 
 				Dim blnCheckForLockFile As Boolean
+				Dim diskFreeSpaceBelowThreshold As Boolean = False
 
 				blnCheckForLockFile = True
-				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
+				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
+
+				If diskFreeSpaceBelowThreshold Then
+					' Not enough free disk space; abort
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
 
 				If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					' Files did not exist, or an error occurred while copying them
@@ -494,15 +520,23 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						' If this manager ended up waiting while another manager was indexing the files, then we should once again try to copy the files locally
 
 						blnCheckForLockFile = False
-						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours)
+						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
 
 						If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 							' Existing files were copied; this manager does not need to re-create them
 							blnReindexingRequired = False
 						End If
+
+						If diskFreeSpaceBelowThreshold Then
+							' Not enough free disk space; abort
+							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+						End If
 					End If
 
 					If blnReindexingRequired Then
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running BuildSA to index " & fiFastaFile.Name)
+
 						eResult = CreateSuffixArrayFilesWork(
 						  strLogFileDir, intDebugLevel, JobNum,
 						  fiFastaFile, fiLockFile,
@@ -512,6 +546,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						  udtHPCOptions)
 
 						If blnRemoteLockFileCreated AndAlso eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying index files to " & strRemoteIndexFolderPath)
 							CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel)
 						End If
 

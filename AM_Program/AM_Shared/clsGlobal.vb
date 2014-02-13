@@ -28,6 +28,14 @@ Public Class clsGlobal
 
 #End Region
 
+#Region "Module variables"
+	Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
+	  ByVal lpRootPathName As String, _
+	  ByRef lpFreeBytesAvailable As Long, _
+	  ByRef lpTotalNumberOfBytes As Long, _
+	  ByRef lpTotalNumberOfFreeBytes As Long) As Integer
+#End Region
+
 #Region "Methods"
 	''' <summary>
 	''' Appends a string to a job comment string
@@ -210,48 +218,118 @@ Public Class clsGlobal
 	''' <summary>
 	''' Runs the specified Sql query
 	''' </summary>
-	''' <param name="SqlStr"></param>
-	''' <param name="RetryCount"></param>
-	''' <param name="ConnectionString"></param>
-	''' <param name="Dt">Datatable (Output Parameter)</param>
+	''' <param name="sqlStr">Sql query</param>
+	''' <param name="connectionString">Connection string</param>
+	''' <param name="callingFunction">Name of the calling function</param>
+	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+	''' <param name="dtResults">Datatable (Output Parameter)</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Uses a timeout of 30 seconds</remarks>
+	Public Shared Function GetDataTableByQuery(
+	  ByVal sqlStr As String,
+	  ByVal connectionString As String,
+	  ByVal callingFunction As String,
+	  ByVal retryCount As Short,
+	  <Out()> ByRef dtResults As DataTable) As Boolean
+
+		Const timeoutSeconds = 30
+
+		Return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+
+	End Function
+
+	''' <summary>
+	''' Runs the specified Sql query
+	''' </summary>
+	''' <param name="sqlStr">Sql query</param>
+	''' <param name="connectionString">Connection string</param>
+	''' <param name="callingFunction">Name of the calling function</param>
+	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+	''' <param name="dtResults">Datatable (Output Parameter)</param>
+	''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks></remarks>
 	Public Shared Function GetDataTableByQuery(
-	  ByVal SqlStr As String,
-	  ByVal ConnectionString As String,
-	  ByVal CallingFunction As String,
-	  ByVal RetryCount As Short,
-	  <Out()> ByRef Dt As DataTable) As Boolean
+	  ByVal sqlStr As String,
+	  ByVal connectionString As String,
+	  ByVal callingFunction As String,
+	  ByVal retryCount As Short,
+	  <Out()> ByRef dtResults As DataTable,
+	  ByVal timeoutSeconds As Integer) As Boolean
+
+		Dim cmd = New SqlClient.SqlCommand()
+		cmd.CommandType = CommandType.Text
+		cmd.CommandText = sqlStr
+
+		Return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+
+	End Function
+
+	''' <summary>
+	''' Runs the stored procedure or database query defined by "cmd"
+	''' </summary>
+	''' <param name="cmd"></param>
+	''' <param name="connectionString">Connection string</param>
+	''' <param name="callingFunction">Name of the calling function</param>
+	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+	''' <param name="dtResults">Datatable (Output Parameter)</param>
+	''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Public Shared Function GetDataTableByCmd(
+	  ByVal cmd As SqlClient.SqlCommand,
+	  ByVal connectionString As String,
+	  ByVal callingFunction As String,
+	  ByVal retryCount As Short,
+	  <Out()> ByRef dtResults As DataTable,
+	  ByVal timeoutSeconds As Integer) As Boolean
 
 		Dim strMsg As String
 
-		If String.IsNullOrEmpty(SqlStr) Then Throw New ArgumentException("SqlStr argument cannot be empty")
-		If String.IsNullOrEmpty(ConnectionString) Then Throw New ArgumentException("ConnectionString argument cannot be empty")
-		If String.IsNullOrEmpty(CallingFunction) Then CallingFunction = "UnknownCaller"
-		If RetryCount < 1 Then RetryCount = 1
+		If cmd Is Nothing Then Throw New ArgumentException("cmd is undefined")
+		If String.IsNullOrEmpty(connectionString) Then Throw New ArgumentException("ConnectionString argument cannot be empty")
+		If String.IsNullOrEmpty(callingFunction) Then callingFunction = "UnknownCaller"
+		If retryCount < 1 Then retryCount = 1
+		If timeoutSeconds < 5 Then timeoutSeconds = 5
 
-		While RetryCount > 0
+		While retryCount > 0
 			Try
-				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(ConnectionString)
-					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(SqlStr.ToString(), Cn)
+				Using Cn As SqlClient.SqlConnection = New SqlClient.SqlConnection(connectionString)
+
+					cmd.Connection = Cn
+					cmd.CommandTimeout = timeoutSeconds
+
+					Using Da As SqlClient.SqlDataAdapter = New SqlClient.SqlDataAdapter(cmd)
 						Using Ds As DataSet = New DataSet
 							Da.Fill(Ds)
-							Dt = Ds.Tables(0)
+							dtResults = Ds.Tables(0)
 						End Using
 					End Using
 				End Using
 				Return True
 			Catch ex As Exception
-				RetryCount -= 1S
-				strMsg = CallingFunction & "; Exception querying database: " + ex.Message + "; ConnectionString: " + ConnectionString
-				strMsg &= ", RetryCount = " + RetryCount.ToString
-				strMsg &= ", Query = " + SqlStr
+				retryCount -= 1S
+				If cmd.CommandType = CommandType.StoredProcedure Then
+					strMsg = callingFunction & "; Exception running stored procedure " & cmd.CommandText
+				ElseIf cmd.CommandType = CommandType.TableDirect Then
+					strMsg = callingFunction & "; Exception querying table " & cmd.CommandText
+				Else
+					strMsg = callingFunction & "; Exception querying database"
+				End If
+
+				strMsg &= ": " + ex.Message + "; ConnectionString: " + connectionString
+				strMsg &= ", RetryCount = " + retryCount.ToString
+
+				If cmd.CommandType = CommandType.Text Then
+					strMsg &= ", Query = " + cmd.CommandText
+				End If
+
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 				Thread.Sleep(5000)				'Delay for 5 second before trying again
 			End Try
 		End While
 
-		Dt = Nothing
+		dtResults = Nothing
 		Return False
 
 	End Function
@@ -939,6 +1017,29 @@ Public Class clsGlobal
 	End Function
 
 	''' <summary>
+	''' Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
+	''' </summary>
+	''' <param name="strDirectoryPath"></param>
+	''' <param name="lngFreeBytesAvailableToUser"></param>
+	''' <param name="lngTotalDriveCapacityBytes"></param>
+	''' <param name="lngTotalNumberOfFreeBytes"></param>
+	''' <returns>True if success, false if a problem</returns>
+	''' <remarks></remarks>
+	Private Shared Function GetDiskFreeSpace(ByVal strDirectoryPath As String, ByRef lngFreeBytesAvailableToUser As Int64, ByRef lngTotalDriveCapacityBytes As Int64, ByRef lngTotalNumberOfFreeBytes As Int64) As Boolean
+
+		Dim intResult As Integer
+
+		intResult = GetDiskFreeSpaceEx(strDirectoryPath, lngFreeBytesAvailableToUser, lngTotalDriveCapacityBytes, lngTotalNumberOfFreeBytes)
+
+		If intResult = 0 Then
+			Return False
+		Else
+			Return True
+		End If
+
+	End Function
+
+	''' <summary>
 	''' Replaces text in a string, ignoring case
 	''' </summary>
 	''' <param name="strTextToSearch"></param>
@@ -1124,6 +1225,49 @@ Public Class clsGlobal
 
 	End Function
 
+	Public Shared Function ValidateFreeDiskSpace(ByVal directoryDescription As String, ByVal directoryPath As String, ByVal minFreeSpaceMB As Integer, ByVal eLogLocationIfNotFound As clsLogTools.LoggerTypes, <Out()> ByRef errorMessage As String) As Boolean
+
+		Dim diDirectory As DirectoryInfo
+		Dim diDrive As DriveInfo
+		Dim freeSpaceMB As Double
+
+		errorMessage = String.Empty
+
+		diDirectory = New DirectoryInfo(directoryPath)
+		If Not diDirectory.Exists Then
+			errorMessage = directoryDescription & " not found: " & directoryPath
+			clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return False
+		End If
+
+		If diDirectory.Root.FullName.StartsWith("\\") OrElse Not diDirectory.Root.FullName.Contains(":") Then
+			' Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
+			Dim lngFreeBytesAvailableToUser As Long
+			Dim lngTotalNumberOfBytes As Long
+			Dim lngTotalNumberOfFreeBytes As Long
+
+			If GetDiskFreeSpace(diDirectory.FullName, lngFreeBytesAvailableToUser, lngTotalNumberOfBytes, lngTotalNumberOfFreeBytes) Then
+				freeSpaceMB = lngTotalNumberOfFreeBytes / 1024.0 / 1024.0
+			Else
+				freeSpaceMB = 0
+			End If
+
+		Else
+			' Directory is a local drive; can query with .NET
+			diDrive = New DriveInfo(diDirectory.Root.FullName)
+			freeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
+		End If
+
+
+		If freeSpaceMB < minFreeSpaceMB Then
+			errorMessage = directoryDescription & " drive has less than " & minFreeSpaceMB.ToString & " MB free: " & CInt(freeSpaceMB).ToString() & " MB"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Return False
+		Else
+			Return True
+		End If
+
+	End Function
 #End Region
 End Class
 

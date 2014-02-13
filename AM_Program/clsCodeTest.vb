@@ -769,6 +769,59 @@ Public Class clsCodeTest
 
 	End Sub
 
+	Public Sub TestRunQuery()
+
+		Const sqlStr = "Select top 50 * from t_log_entries"
+
+
+		Const connectionString As String = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;"
+		Const callingFunction As String = "TestRunQuery"
+		Const retryCount As Short = 2
+		Const timeoutSeconds As Integer = 30
+		Dim dtResults As DataTable = Nothing
+
+		clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+
+		For Each row As DataRow In dtResults.Rows
+			Console.WriteLine(row.Item(0).ToString() & ": " & row.Item(1).ToString())
+		Next
+
+	End Sub
+
+	Public Sub TestRunSP()
+
+		Dim cmd = New SqlClient.SqlCommand()
+		cmd.CommandType = CommandType.StoredProcedure
+		cmd.CommandText = "GetJobStepParamsAsTable"
+
+		cmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+		cmd.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+		cmd.Parameters.Add(New SqlClient.SqlParameter("@jobNumber", SqlDbType.Int))
+		cmd.Parameters.Item("@jobNumber").Direction = ParameterDirection.Input
+		cmd.Parameters.Item("@jobNumber").Value = 1026591
+
+		cmd.Parameters.Add(New SqlClient.SqlParameter("@stepNumber", SqlDbType.Int))
+		cmd.Parameters.Item("@stepNumber").Direction = ParameterDirection.Input
+		cmd.Parameters.Item("@stepNumber").Value = 3
+
+		cmd.Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
+		cmd.Parameters.Item("@message").Direction = ParameterDirection.Output
+
+		Const connectionString As String = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;"
+		Const callingFunction As String = "TestRunSP"
+		Const retryCount As Short = 2
+		Const timeoutSeconds As Integer = 30
+		Dim dtResults As DataTable = Nothing
+
+		clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+
+		For Each row As DataRow In dtResults.Rows
+			Console.WriteLine(row.Item(0).ToString() & ": " & row.Item(1).ToString())
+		Next
+
+	End Sub
+
 	Public Sub ConvertZipToGZip(ByVal zipFilePath As String)
 
 		Const debugLevel = 2

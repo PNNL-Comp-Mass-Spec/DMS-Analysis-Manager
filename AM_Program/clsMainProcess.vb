@@ -58,12 +58,6 @@ Public Class clsMainProcess
 
 	Private m_TraceMode As Boolean
 
-	Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
-	   ByVal lpRootPathName As String, _
-	   ByRef lpFreeBytesAvailable As Long, _
-	   ByRef lpTotalNumberOfBytes As Long, _
-	   ByRef lpTotalNumberOfFreeBytes As Long) As Integer
-
 #End Region
 
 #Region "Properties"
@@ -1218,29 +1212,6 @@ Public Class clsMainProcess
 
 	End Sub
 
-	''' <summary>
-	''' Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
-	''' </summary>
-	''' <param name="strDirectoryPath"></param>
-	''' <param name="lngFreeBytesAvailableToUser"></param>
-	''' <param name="lngTotalDriveCapacityBytes"></param>
-	''' <param name="lngTotalNumberOfFreeBytes"></param>
-	''' <returns>True if success, false if a problem</returns>
-	''' <remarks></remarks>
-	Private Function GetDiskFreeSpace(ByVal strDirectoryPath As String, ByRef lngFreeBytesAvailableToUser As Long, ByRef lngTotalDriveCapacityBytes As Long, ByRef lngTotalNumberOfFreeBytes As Long) As Boolean
-
-		Dim intResult As Integer
-
-		intResult = GetDiskFreeSpaceEx(strDirectoryPath, lngFreeBytesAvailableToUser, lngTotalDriveCapacityBytes, lngTotalNumberOfFreeBytes)
-
-		If intResult = 0 Then
-			Return False
-		Else
-			Return True
-		End If
-
-	End Function
-
 	Protected Function GetRecentLogFilename() As String
 		Dim lastFilename As String
 		Dim x As Integer
@@ -1771,45 +1742,9 @@ Public Class clsMainProcess
 
 	End Function
 
-	Private Function ValidateFreeDiskSpaceWork(ByVal strDirectoryDescription As String, ByVal strDirectoryPath As String, ByVal intMinFreeSpaceMB As Integer, ByRef ErrorMessage As String, eLogLocationIfNotFound As clsLogTools.LoggerTypes) As Boolean
+	Private Function ValidateFreeDiskSpaceWork(ByVal directoryDescription As String, ByVal directoryPath As String, ByVal minFreeSpaceMB As Integer, ByRef errorMessage As String, ByVal eLogLocationIfNotFound As clsLogTools.LoggerTypes) As Boolean
 
-		Dim diDirectory As DirectoryInfo
-		Dim diDrive As DriveInfo
-		Dim dblFreeSpaceMB As Double
-
-		diDirectory = New DirectoryInfo(strDirectoryPath)
-		If Not diDirectory.Exists Then
-			ErrorMessage = strDirectoryDescription & " not found: " & strDirectoryPath
-			clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, ErrorMessage)
-			Return False
-		End If
-
-		If diDirectory.Root.FullName.StartsWith("\\") OrElse Not diDirectory.Root.FullName.Contains(":") Then
-			' Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-			Dim lngFreeBytesAvailableToUser As Long
-			Dim lngTotalNumberOfBytes As Long
-			Dim lngTotalNumberOfFreeBytes As Long
-
-			If GetDiskFreeSpace(diDirectory.FullName, lngFreeBytesAvailableToUser, lngTotalNumberOfBytes, lngTotalNumberOfFreeBytes) Then
-				dblFreeSpaceMB = lngTotalNumberOfFreeBytes / 1024.0 / 1024.0
-			Else
-				dblFreeSpaceMB = 0
-			End If
-
-		Else
-			' Directory is a local drive; can query with .NET
-			diDrive = New DriveInfo(diDirectory.Root.FullName)
-			dblFreeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
-		End If
-
-
-		If dblFreeSpaceMB < intMinFreeSpaceMB Then
-			ErrorMessage = strDirectoryDescription & " drive has less than " & intMinFreeSpaceMB.ToString & " MB free: " & CInt(dblFreeSpaceMB).ToString() & " MB"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage)
-			Return False
-		Else
-			Return True
-		End If
+		Return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, eLogLocationIfNotFound, errorMessage)
 
 	End Function
 
