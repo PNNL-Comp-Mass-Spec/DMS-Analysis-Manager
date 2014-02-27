@@ -14,7 +14,7 @@ Public Class clsPHRPMassErrorValidator
 	' This is a value between 0 and 100
 	Protected mErrorThresholdPercent As Double = 5
 
-	Protected mPSMs As System.Collections.Generic.List(Of PHRPReader.clsPSM)
+	Protected mPSMs As List(Of PHRPReader.clsPSM)
 
 	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
 
@@ -43,6 +43,10 @@ Public Class clsPHRPMassErrorValidator
 		mDatasetName = strDatasetName
 		mWorkingDirectory = strWorkingDirectoryPath
 		mDebugLevel = intDebugLevel
+	End Sub
+
+	Protected Sub InformLargeErrorExample(ByVal massErrorEntry As KeyValuePair(Of Double, String))
+		ShowErrorMessage("  ... large error example: " & massErrorEntry.Key & " Da for " & massErrorEntry.Value)
 	End Sub
 
 	Protected Function LoadSearchEngineParameters(ByRef objPHRPReader As PHRPReader.clsPHRPReader, ByVal strSearchEngineParamFileName As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType) As PHRPReader.clsSearchEngineParameters
@@ -131,7 +135,7 @@ Public Class clsPHRPMassErrorValidator
 
 		Try
 			mErrorMessage = String.Empty
-			mPSMs = New System.Collections.Generic.List(Of PHRPReader.clsPSM)
+			mPSMs = New List(Of PHRPReader.clsPSM)
 
 			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, eResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False, blnLoadScanStats:=False)
 
@@ -194,8 +198,7 @@ Public Class clsPHRPMassErrorValidator
 			Dim intErrorCount As Integer = 0
 
 			Dim strPeptideDescription As String
-			Dim lstLargestMassErrors As System.Collections.Generic.SortedDictionary(Of Double, String)
-			lstLargestMassErrors = New System.Collections.Generic.SortedDictionary(Of Double, String)
+			Dim lstLargestMassErrors = New SortedDictionary(Of Double, String)
 
 			For Each oPSMEntry As PHRPReader.clsPSM In mPSMs
 
@@ -208,8 +211,8 @@ Public Class clsPHRPMassErrorValidator
 						strPeptideDescription = "Scan=" & oPSMEntry.ScanNumberStart & ", charge=" & oPSMEntry.Charge & ", peptide=" & oPSMEntry.PeptideWithNumericMods
 						intErrorCount += 1
 
-						' Keep track of the 10 largest mass errors
-						If lstLargestMassErrors.Count < 10 Then
+						' Keep track of the 100 largest mass errors
+						If lstLargestMassErrors.Count < 100 Then
 							If Not lstLargestMassErrors.ContainsKey(dblMassError) Then
 								lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
 							End If
@@ -239,7 +242,28 @@ Public Class clsPHRPMassErrorValidator
 				strMessage = mErrorMessage & " (" & intErrorCount & " / " & mPSMs.Count & ")"
 
 				If dblPercentInvalid > mErrorThresholdPercent Then
-					ShowErrorMessage(strMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")					
+					ShowErrorMessage(strMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")
+
+					' Log the first, last, and middle entry in lstLargestMassErrors
+					InformLargeErrorExample(lstLargestMassErrors.First)
+
+					If lstLargestMassErrors.Count > 1 Then
+						InformLargeErrorExample(lstLargestMassErrors.Last)
+
+						If lstLargestMassErrors.Count > 2 Then
+							Dim iterator As Integer = 0
+							For Each massError In lstLargestMassErrors
+								iterator += 1
+								If iterator >= lstLargestMassErrors.Count / 2 Then
+									InformLargeErrorExample(massError)
+									Exit For
+								End If
+							Next
+						End If
+
+					End If
+
+
 					blnSuccess = False
 				Else
 					ShowWarningMessage(strMessage & "; this value is within tolerance")
