@@ -175,29 +175,35 @@ namespace AnalysisManager_Mage_PlugIn
 		}
 
 		/// <summary>
-		/// Copy files in data package folder named by "DataPackageSourceFolderName" job parameter
-		/// to the step results folder and import contents to tables in the SQLite step results database.  
+		/// Imports contents of files specified by job parameter "DataPackageSourceFolderName"
+		/// to tables in the SQLite step results database.  
 		/// </summary>
 		/// <returns></returns>
 		private bool ImportDataPackageFiles()
 		{
-			const string importMode = "CopyAndImport";
+			// Note: Switched from CopyAndImport to SimpleImport in March 2014
+			const string importMode = "SimpleImport";
 			return ImportDataPackageFiles(importMode);
 		}
 
+		/// <summary>
+		/// Imports the specified files
+		/// </summary>
+		/// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
+		/// <returns></returns>
 		private bool ImportDataPackageFiles(string importMode)
 		{
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
 			string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
 			string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
-			System.IO.DirectoryInfo diInputFolder = new System.IO.DirectoryInfo(inputFolderPath);
+			var diInputFolder = new System.IO.DirectoryInfo(inputFolderPath);
 			if (!diInputFolder.Exists)
 				throw new System.IO.DirectoryNotFoundException("Folder specified by job parameter DataPackageSourceFolderName does not exist: " + inputFolderPath);
 
 			List<System.IO.FileInfo> lstInputFolderFiles = diInputFolder.GetFiles().ToList();
 			if (lstInputFolderFiles.Count == 0)
-				throw new System.IO.DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically contain file T_Alias.txt): " + inputFolderPath);
+				throw new System.IO.DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles and it should have a file named T_alias.txt): " + inputFolderPath);
 			else
 			{
 				List<System.IO.FileInfo> lstMatchingFiles = (from item in lstInputFolderFiles
@@ -206,7 +212,13 @@ namespace AnalysisManager_Mage_PlugIn
 
 				if (lstMatchingFiles.Count == 0)
 				{
-					string msg = "File t_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
+					string analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
+					if (analysisType.IndexOf("iTRAQ", System.StringComparison.CurrentCultureIgnoreCase) >= 0)
+					{
+						throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
+					}
+
+					const string msg = "File T_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
 					string msgVerbose = msg + ": " + inputFolderPath;
 					AppendToWarningMessage(msg, msgVerbose);
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);

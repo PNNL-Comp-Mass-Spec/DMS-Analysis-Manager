@@ -53,7 +53,7 @@ namespace AnalysisManager_MAC {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message);
                     blnSuccess = false;
 
-                    m_message = "Error running MAC";
+					m_message = "Error running MAC: " + ex.Message;
 					string sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
                     if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found")) {
 						m_message += "; " + sDataPackageSourceFolderName + " folder in the data package is empty or does not exist";
@@ -186,19 +186,77 @@ namespace AnalysisManager_MAC {
 
         }
 
-		protected bool TableExists(FileInfo fiSqlLiteDatabase, string tableName)
+		/// <summary>
+		/// Confirms that the table has 1 or more rows and has the specified columns
+		/// </summary>
+		/// <param name="fiSqlLiteDatabase"></param>
+		/// <param name="tableName"></param>
+		/// <param name="lstColumns"></param>
+		/// <param name="errorMessage">Error message</param>
+		/// <returns></returns>
+		protected bool TableContainsDataAndColumns(FileInfo fiSqlLiteDatabase, string tableName, List<string> lstColumns, out string errorMessage)
+		{
+			errorMessage = string.Empty;
+
+			try
+			{
+				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+				using (var conn = new SQLiteConnection(connectionString))
+				{
+					conn.Open();
+
+					string query = "select * From " + tableName;
+					using (var cmd = new SQLiteCommand(query, conn))
+					{
+						var drReader = cmd.ExecuteReader();
+
+						if (!drReader.HasRows)
+						{
+							errorMessage = "is empty";
+							return false;
+						}
+
+						drReader.Read();
+						foreach (var columnName in lstColumns)
+						{
+							try
+							{
+								object result = drReader[columnName];
+							}
+							catch (Exception)
+							{
+								errorMessage = "is missing column " + columnName;
+								return false;
+							}						
+
+						}										
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+				errorMessage = "threw an exception while querying (" + ex.Message + ")";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception confirming table's columns in SqLite file: " + ex.Message);
+				return false;
+			}
+
+			return true;
+		}
+
+	    protected bool TableExists(FileInfo fiSqlLiteDatabase, string tableName)
 		{
 			bool tableFound = false;
 
 			try
 			{
 				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
-				 using (SQLiteConnection conn = new SQLiteConnection(connectionString))
+				 using (var conn = new SQLiteConnection(connectionString))
 				 {
 					 conn.Open();
 
 					 string query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
-					 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
+					 using (var cmd = new SQLiteCommand(query, conn))
 					 {
 						 object result = cmd.ExecuteScalar();
 						 if (Convert.ToInt32(result) > 0)
@@ -211,6 +269,7 @@ namespace AnalysisManager_MAC {
 			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking for table in SqLite file: " + ex.Message);
+				return false;
 			}
 
 			return tableFound;

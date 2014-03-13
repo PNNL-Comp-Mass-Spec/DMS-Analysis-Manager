@@ -118,6 +118,11 @@ Public Class clsAnalysisResourcesMSGFDB
 				currentTask = "RetrieveDtaFiles"
 
 				If Not RetrieveDtaFiles() Then
+					Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
+					If Not String.IsNullOrEmpty(sharedResultsFolder) Then
+						m_message &= "; shared results folder is " & sharedResultsFolder
+					End If
+
 					'Errors were reported in function call, so just return
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If

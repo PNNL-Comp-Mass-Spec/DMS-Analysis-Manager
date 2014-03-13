@@ -141,14 +141,33 @@ Public Class clsSplitFastaFileUtilities
 
 	Protected Sub DeleteLockStream(ByVal lockFilePath As String, ByVal lockStream As IO.FileStream)
 
-		If Not lockStream Is Nothing Then
-			lockStream.Close()
-		End If
+		Try
+			If Not lockStream Is Nothing Then
+				lockStream.Close()
+			End If
 
-		Dim lockFi = New FileInfo(lockFilePath)
-		If lockFi.Exists Then
-			lockFi.Delete()
-		End If
+			Dim retryCount As Integer = 3
+
+			While retryCount > 0
+				Try
+
+					Dim lockFi = New FileInfo(lockFilePath)
+					If lockFi.Exists Then
+						lockFi.Delete()
+					End If
+					Exit While
+
+				Catch ex As Exception
+					OnErrorEvent("Exception deleting lock file in DeleteLockStream: " & ex.Message)
+					retryCount -= 1
+					Dim oRandom = New Random()
+					Thread.Sleep(oRandom.Next(100, 500))
+				End Try
+			End While
+
+		Catch ex As Exception
+			OnErrorEvent("Exception in DeleteLockStream: " & ex.Message)
+		End Try
 
 	End Sub
 
@@ -161,7 +180,7 @@ Public Class clsSplitFastaFileUtilities
 	''' <remarks></remarks>
 	Protected Function GetLegacyFastaFilePath(ByVal legacyFASTAFileName As String, <Out()> ByRef organismName As String) As String
 
-		Const RetryCount As Short = 3
+		Const retryCount As Short = 3
 
 		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
 
@@ -175,7 +194,7 @@ Public Class clsSplitFastaFileUtilities
 
 		Dim dtResults As DataTable = Nothing
 
-		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", RetryCount, dtResults)
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, dtResults)
 
 		If Not blnSuccess Then
 			Return String.Empty
@@ -238,8 +257,8 @@ Public Class clsSplitFastaFileUtilities
 				End With
 
 
-				Dim RetryCount = 3
-				While RetryCount > 0
+				Dim retryCount = 3
+				While retryCount > 0
 					Try
 						Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mDMSConnectionString)
 							connection.Open()
@@ -254,7 +273,7 @@ Public Class clsSplitFastaFileUtilities
 
 								Dim statusMessage = MyCmd.Parameters("@Message").Value
 								If Not statusMessage Is Nothing Then
-									mErrorMessage = mErrorMessage & "; " & CStr(statusMessage)									
+									mErrorMessage = mErrorMessage & "; " & CStr(statusMessage)
 								End If
 
 								OnErrorEvent(mErrorMessage)
@@ -266,7 +285,7 @@ Public Class clsSplitFastaFileUtilities
 						Exit While
 
 					Catch ex As Exception
-						RetryCount -= 1S
+						retryCount -= 1S
 						mErrorMessage = "Exception storing fasta file " & splitFastaName & " in T_Organism_DB_File: " + ex.Message
 						OnErrorEvent(mErrorMessage)
 						' Delay for 2 seconds before trying again
@@ -303,8 +322,8 @@ Public Class clsSplitFastaFileUtilities
 			End With
 
 
-			Dim RetryCount = 3
-			While RetryCount > 0
+			Dim retryCount = 3
+			While retryCount > 0
 				Try
 					Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mProteinSeqsDBConnectionString)
 						connection.Open()
@@ -323,7 +342,7 @@ Public Class clsSplitFastaFileUtilities
 					Exit While
 
 				Catch ex As Exception
-					RetryCount -= 1S
+					retryCount -= 1S
 					mErrorMessage = "Exception updating the cached organism DB info on ProteinSeqs: " + ex.Message
 					OnErrorEvent(mErrorMessage)
 					' Delay for 2 seconds before trying again
@@ -350,10 +369,13 @@ Public Class clsSplitFastaFileUtilities
 	''' <remarks>If the split file is not found, then will automatically split the original file and update DMS with the split file information</remarks>
 	Public Function ValidateSplitFastaFile(ByVal baseFastaName As String, ByVal splitFastaName As String) As Boolean
 
+		Dim strCurrentTask = "Initializing"
+
 		Try
 			Dim organismName As String = String.Empty
 			Dim organismNameBaseFasta As String = String.Empty
 
+			strCurrentTask = "GetLegacyFastaFilePath for splitFastaName"
 			Dim fastaFilePath = GetLegacyFastaFilePath(splitFastaName, organismName)
 
 			If Not String.IsNullOrWhiteSpace(fastaFilePath) Then
@@ -364,6 +386,7 @@ Public Class clsSplitFastaFileUtilities
 
 			' Split file not found
 			' Query DMS for the location of baseFastaName
+			strCurrentTask = "GetLegacyFastaFilePath for baseFastaName"
 			Dim baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, organismNameBaseFasta)
 			If String.IsNullOrWhiteSpace(baseFastaFilePath) Then
 				' Base file not found
@@ -377,6 +400,7 @@ Public Class clsSplitFastaFileUtilities
 			' Try to create a lock file
 			Dim lockStream As FileStream
 			Dim lockFilePath As String = String.Empty
+			strCurrentTask = "CreateLockStream"
 			lockStream = CreateLockStream(fiBaseFastaFile, lockFilePath)
 
 			If lockStream Is Nothing Then
@@ -387,10 +411,12 @@ Public Class clsSplitFastaFileUtilities
 			' Check again for the existence of the desired .Fasta file
 			' It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
 
+			strCurrentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)"
 			fastaFilePath = GetLegacyFastaFilePath(splitFastaName, organismName)
 			If Not String.IsNullOrWhiteSpace(fastaFilePath) Then
 				' The file now exists
 				mErrorMessage = String.Empty
+				strCurrentTask = "DeleteLockStream (fasta file now exists)"
 				DeleteLockStream(lockFilePath, lockStream)
 				Return True
 			End If
@@ -404,6 +430,7 @@ Public Class clsSplitFastaFileUtilities
 			mSplitter.ShowMessages = True
 			mSplitter.LogMessagesToFile = False
 
+			strCurrentTask = "SplitFastaFile " & fiBaseFastaFile.FullName
 			Dim success = mSplitter.SplitFastaFile(fiBaseFastaFile.FullName, fiBaseFastaFile.Directory.FullName, mNumSplitParts)
 
 			If Not success Then
@@ -415,6 +442,7 @@ Public Class clsSplitFastaFileUtilities
 			End If
 
 			' Verify that the fasta files were created
+			strCurrentTask = "Verify new files"
 			For Each splitFileInfo In mSplitter.SplitFastaFileInfo
 				Dim fiSplitFastaFile = New FileInfo(splitFileInfo.FilePath)
 				If Not fiSplitFastaFile.Exists Then
@@ -427,6 +455,7 @@ Public Class clsSplitFastaFileUtilities
 			OnProgressUpdate("Fasta file successfully split into " & mNumSplitParts & " parts", 100)
 
 			' Store the newly created Fasta file names, plust their protein and residue stats, in DMS
+			strCurrentTask = "StoreSplitFastaFileNames"
 			success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo)
 			If Not success Then
 				If String.IsNullOrWhiteSpace(mErrorMessage) Then
@@ -437,6 +466,7 @@ Public Class clsSplitFastaFileUtilities
 			End If
 
 			' Call the procedure that syncs up this information with ProteinSeqs
+			strCurrentTask = "UpdateCachedOrganismDBInfo"
 			UpdateCachedOrganismDBInfo()
 
 			' Delete any cached MSGFPlus index files corresponding to the split fasta files
@@ -471,10 +501,11 @@ Public Class clsSplitFastaFileUtilities
 			End If
 
 			' Delete the lock file
+			strCurrentTask = "DeleteLockStream (fasta file created)"
 			DeleteLockStream(lockFilePath, lockStream)
 
 		Catch ex As Exception
-			mErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName & ": " & ex.Message
+			mErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName & " at " & strCurrentTask & ": " & ex.Message
 			OnErrorEvent(mErrorMessage)
 			Return False
 		End Try
