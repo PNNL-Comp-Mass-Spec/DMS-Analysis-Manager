@@ -386,7 +386,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Private Function CopySFoldersToWorkDir(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
-		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "s*.zip")
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder:=True)
 
 		Dim ZipFiles() As String
 		Dim DestFilePath As String
@@ -1508,7 +1508,7 @@ Public MustInherit Class clsAnalysisResources
 		' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
 
 		Dim DSFolderPath As String
-		DSFolderPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+		DSFolderPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder:=True)
 		If String.IsNullOrEmpty(DSFolderPath) Then Return String.Empty
 
 		Return DSFolderPath
@@ -1571,7 +1571,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim FileNameToFind As String = String.Empty
 		Dim FolderExtensionWildcard As String = "*" + FolderExtension
-		Dim ServerPath As String = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard)
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard, RetrievingInstrumentDataFolder:=True)
 
 		Dim diDatasetFolder As DirectoryInfo = New DirectoryInfo(ServerPath)
 
@@ -1594,14 +1594,14 @@ Public MustInherit Class clsAnalysisResources
 
 		' First Check for the existence of a 0.ser Folder
 		Dim FileNameToFind As String = String.Empty
-		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER)
+		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER, RetrievingInstrumentDataFolder:=True)
 
 		If Not String.IsNullOrEmpty(DSFolderPath) Then
 			Return Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER)
 		End If
 
 		' The 0.ser folder does not exist; look for zipped s-folders
-		DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip")
+		DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder:=True)
 
 		Return DSFolderPath
 
@@ -1672,7 +1672,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Look for the MSXmlFolder
 			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False)
+			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False, RetrievingInstrumentDataFolder:=False)
 
 			If String.IsNullOrEmpty(ServerPath) Then
 				Continue For
@@ -1776,9 +1776,26 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
 	Protected Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
+		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
 
 	End Function
+
+	''' <summary>
+	''' Determines the most appropriate folder to use to obtain dataset files from
+	''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+	''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+	''' </summary>
+	''' <param name="DSName">Name of the dataset</param>
+	''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+	''' <returns>Path to the most appropriate dataset folder</returns>
+	''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+	Protected Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String, RetrievingInstrumentDataFolder As Boolean) As String
+
+		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
+
+	End Function
+
 
 	''' <summary>
 	''' Determines the most appropriate folder to use to obtain dataset files from
@@ -1790,11 +1807,31 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-	Protected Function FindValidFolder(ByVal DSName As String, _
-	  ByVal FileNameToFind As String, _
+	Protected Function FindValidFolder(ByVal DSName As String,
+	  ByVal FileNameToFind As String,
 	  ByVal FolderNameToFind As String) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True)
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
+
+	End Function
+
+	''' <summary>
+	''' Determines the most appropriate folder to use to obtain dataset files from
+	''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+	''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+	''' </summary>
+	''' <param name="DSName">Name of the dataset</param>
+	''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+	''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+	''' <returns>Path to the most appropriate dataset folder</returns>
+	''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+	Protected Function FindValidFolder(ByVal DSName As String,
+	  ByVal FileNameToFind As String,
+	  ByVal FolderNameToFind As String,
+	  ByVal RetrievingInstrumentDataFolder As Boolean) As String
+
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
 
 	End Function
 
@@ -1809,12 +1846,12 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="MaxRetryCount">Maximum number of attempts</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-	Protected Function FindValidFolder(ByVal DSName As String, _
-	  ByVal FileNameToFind As String, _
-	  ByVal FolderNameToFind As String, _
+	Protected Function FindValidFolder(ByVal DSName As String,
+	  ByVal FileNameToFind As String,
+	  ByVal FolderNameToFind As String,
 	  ByVal MaxRetryCount As Integer) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound:=True)
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
 
 	End Function
 
@@ -1828,13 +1865,15 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
 	''' <param name="MaxRetryCount">Maximum number of attempts</param>
 	''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
+	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-	Protected Function FindValidFolder(ByVal DSName As String, _
-	   ByVal FileNameToFind As String, _
-	   ByVal FolderNameToFind As String, _
-	   ByVal MaxRetryCount As Integer, _
-	   ByVal LogFolderNotFound As Boolean) As String
+	Protected Function FindValidFolder(ByVal DSName As String,
+	  ByVal FileNameToFind As String,
+	  ByVal FolderNameToFind As String,
+	  ByVal MaxRetryCount As Integer,
+	  ByVal LogFolderNotFound As Boolean,
+	  ByVal RetrievingInstrumentDataFolder As Boolean) As String
 
 		Dim strBestPath As String = String.Empty
 		Dim lstPathsToCheck = New List(Of String)
@@ -1846,7 +1885,15 @@ Public MustInherit Class clsAnalysisResources
 			If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
 			If FolderNameToFind Is Nothing Then FolderNameToFind = String.Empty
 
-			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName))
+			Dim instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0)
+
+			If RetrievingInstrumentDataFolder AndAlso instrumentDataPurged <> 0 Then
+				' The instrument data is purged and we're retrieving instrument data
+				' Skip the primary dataset folder since the primary data files were most likely purged
+			Else
+				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName))
+			End If
+
 			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName))
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName))
@@ -2787,7 +2834,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)			
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Return False
 		Else
 			For Each CurRow As DataRow In Dt.Rows
@@ -4283,7 +4330,7 @@ Public MustInherit Class clsAnalysisResources
 		' Look for the MASIC Results folder
 		' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
 		ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX
-		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, False)
+		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, LogFolderNotFound:=False, RetrievingInstrumentDataFolder:=False)
 
 		If String.IsNullOrEmpty(ServerPath) Then
 			m_message = "Dataset folder path not defined"
@@ -4802,7 +4849,7 @@ Public MustInherit Class clsAnalysisResources
 
 		' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
 		' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-		ServerPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
+		ServerPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder:=True)
 
 		Try
 
@@ -5010,7 +5057,7 @@ Public MustInherit Class clsAnalysisResources
 
 			'First Check for the existence of a 0.ser Folder
 			'If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
-			Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "", BRUKER_ZERO_SER_FOLDER)
+			Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "", BRUKER_ZERO_SER_FOLDER, RetrievingInstrumentDataFolder:=True)
 
 			If Not String.IsNullOrEmpty(DSFolderPath) Then
 				Dim diSourceFolder As DirectoryInfo
