@@ -4024,6 +4024,10 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
+		If m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving file " & fiDatasetFile.FullName)
+		End If
+
 		If CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
 			Return True
 		Else
@@ -4691,6 +4695,9 @@ Public MustInherit Class clsAnalysisResources
 			Else
 				' Copy the directory and all subdirectories
 				' Skip any files defined by objFileNamesToSkip
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving folder " & diSourceFolder.FullName)
+				End If
 				ResetTimestampForQueueWaitTimeLogging()
 				m_FileTools.CopyDirectory(diSourceFolder.FullName, DestFolderPath, objFileNamesToSkip)
 			End If
