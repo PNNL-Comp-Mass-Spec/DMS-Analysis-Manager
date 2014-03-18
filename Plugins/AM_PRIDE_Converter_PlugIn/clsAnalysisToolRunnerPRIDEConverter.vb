@@ -28,8 +28,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected Const DEFAULT_TISSUE_CV As String = "[BTO, BTO:0000089, blood, ]"
 	Protected Const DEFAULT_CELL_TYPE_CV As String = "[CL, CL:0000081, blood cell, ]"
-	Protected Const DEFAULT_DISEASE_TYPE_CV As String = "[DOID, DOID:1319, brain cancer, ]"
+	Protected Const DEFAULT_DISEASE_TYPE_CV As String = "[DOID, DOID:1612, breast cancer, ]"
 	Protected Const DEFAULT_EXPERIMENTAL_FACTOR As String = "Technical Replicate nnn"
+	Protected Const DEFAULT_QUANTIFICATION_TYPE_CV As String = "[PRIDE, PRIDE:0000436, Spectral counting,]"
 
 	Protected Const DEFAULT_PVALUE_THRESHOLD As Double = 0.05
 
@@ -172,12 +173,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Structure
 
 	Protected Structure udtSampleMetadataType
-		Public Species As String
-		Public Tissue As String
-		Public CellType As String
-		Public Disease As String
-		Public Modifications As Dictionary(Of String, udtCvParamInfoType)
-		Public InstrumentGroup As String
+		Public Species As String											' Recommended to use NEWT CVs
+		Public Tissue As String												' Recommended to use BRENDA CVs
+		Public CellType As String											' Recommended to use CL CVs
+		Public Disease As String											' Recommended to use DOID CVs
+		Public Modifications As Dictionary(Of String, udtCvParamInfoType)	' Recommended to use PSI-MOD, though Unimod is acceptable
+		Public InstrumentGroup As String									' Recommended to use MS CVs
 		Public Quantification As String
 		Public ExperimentalFactor As String
 		Public Sub Clear()
@@ -360,10 +361,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Sub AddNewtInfo(ByVal intNEWTID As Integer, strNEWTName As String)
-		If Not mExperimentNEWTInfo.ContainsKey(intNEWTID) Then
-			mExperimentNEWTInfo.Add(intNEWTID, strNEWTName)
+	Protected Sub AddNEWTInfo(ByVal newtID As Integer, newtName As String)
+
+		If newtID = 0 Then
+			newtID = 2323
+			newtName = "unclassified Bacteria"
 		End If
+
+		If Not mExperimentNEWTInfo.ContainsKey(newtID) Then
+			mExperimentNEWTInfo.Add(newtID, newtName)
+		End If
+
 	End Sub
 
 	Protected Function AddPxFileToMasterList(ByVal strFilePath As String, ByVal intJob As Integer, ByVal strDataset As String) As Integer
@@ -2204,15 +2212,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", dctParameters)
 				WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", dctParameters)
 				WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, dctParameters)
-				WritePXHeader(swPXFile, "submitter_pride_login", "alchemistmatt", dctParameters)
+				WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnl.gov", dctParameters)
 
 				WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", dctParameters)
 				WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", dctParameters)
 				WritePXHeader(swPXFile, "lab_head_affiliation", PNNL_NAME_COUNTRY, dctParameters)
 
-
 				WritePXHeader(swPXFile, "project_title", TBD & "User-friendly Article Title", dctParameters)
-				WritePXHeader(swPXFile, "project_description", TBD & "Summary sentence", dctParameters)
+				WritePXHeader(swPXFile, "project_description", TBD & "Summary sentence", dctParameters, 50)			' Minimum 50 characterse, max 5000 characters
 
 				' We don't normally use the project_tag field, so it is commented out
 				' Example official tags are:
@@ -2224,10 +2231,19 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					WritePXHeader(swPXFile, "pubmed_id", TBD, dctParameters)
 				End If
 
-				WritePXHeader(swPXFile, "keywords", TBD, dctParameters)
-				WritePXHeader(swPXFile, "sample_processing_protocol", TBD, dctParameters)
-				WritePXHeader(swPXFile, "data_processing_protocol", TBD, dctParameters)
+				' We don't normally use this field, so it is commented out
+				' WritePXHeader(swPXFile, "other_omics_link", "Related data is available from PeptideAtlas at http://www.peptideatlas.org/PASS/PASS00297")
 
+				WritePXHeader(swPXFile, "keywords", TBD, dctParameters)								' Comma separated list; suggest at least 3 keywords
+				WritePXHeader(swPXFile, "sample_processing_protocol", TBD, dctParameters, 50)			' Minimum 50 characterse, max 5000 characters
+				WritePXHeader(swPXFile, "data_processing_protocol", TBD, dctParameters, 50)				' Minimum 50 characterse, max 5000 characters
+
+				' Example values for experiment_type (a given submission can have more than one experiment_type listed)
+				'   [PRIDE, PRIDE:0000427, Top-down proteomics, ]
+				'   [PRIDE, PRIDE:0000429, Shotgun proteomics, ]
+				'   [PRIDE, PRIDE:0000430, Chemical cross-linking coupled with mass spectrometry proteomics, ]
+				'   [PRIDE, PRIDE:0000433, Affinity purification coupled with mass spectrometry proteomics, ]
+				'   [PRIDE, PRIDE:0000311, SRM/MRM, ]
 				WritePXHeader(swPXFile, "experiment_type", GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics", ""), dctParameters)
 
 				WritePXLine(swPXFile, New List(Of String) From {"MTD", "submission_type", strSubmissionType})
@@ -2235,7 +2251,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				If strSubmissionType = COMPLETE_SUBMISSION Then
 					' Note that the comment field has been deprecated in v2.x of the px file
 					' However, we don't have a good alternative place to put this comment, so we'll include it anyway
-					WritePXHeader(swPXFile, "comment", strFilterText)
+					If Not String.IsNullOrWhiteSpace(strFilterText) Then
+						WritePXHeader(swPXFile, "comment", strFilterText)
+					End If
 				Else
 					Dim strComment As String = "Data produced by the DMS Processing pipeline using "
 					If mSearchToolsUsed.Count = 1 Then
@@ -2243,7 +2261,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					ElseIf mSearchToolsUsed.Count = 2 Then
 						strComment &= "search tools " & mSearchToolsUsed.First & " and " & mSearchToolsUsed.Last
 					ElseIf mSearchToolsUsed.Count > 2 Then
-						strComment &= "search tools " & clsGlobal.FlattenList((From item In mSearchToolsUsed Where item <> mSearchToolsUsed.Last Order By item).ToList, ","c) & " and " & mSearchToolsUsed.Last
+						strComment &= "search tools " & String.Join(", ", (From item In mSearchToolsUsed Where item <> mSearchToolsUsed.Last Order By item).ToList())
+						strComment &= ", and " & mSearchToolsUsed.Last
 					End If
 
 					WritePXHeader(swPXFile, "reason_for_partial", strComment)
@@ -2251,11 +2270,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 				If mExperimentNEWTInfo.Count = 0 Then
 					' None of the data package jobs had valid NEWT info
-					WritePXHeader(swPXFile, "species", TBD & GetCVString("NEWT", "10090", "Mus musculus (Mouse)", ""), dctParameters)
+					WritePXHeader(swPXFile, "species", TBD & GetCVString("NEWT", "2323", "unclassified Bacteria", ""), dctParameters)
 				Else
 					' NEWT info is defined; write it out
 					For Each item In mExperimentNEWTInfo
-						WritePXHeader(swPXFile, "species", GetCVString("NEWT", item.Key.ToString(), item.Value, ""))
+						WritePXHeader(swPXFile, "species", GetNEWTCv(item.Key, item.Value))
 					Next
 				End If
 
@@ -2263,13 +2282,44 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				WritePXHeader(swPXFile, "cell_type", TBD & DEFAULT_CELL_TYPE_CV, dctParameters)
 				WritePXHeader(swPXFile, "disease", TBD & "Optional, e.g. " & DEFAULT_DISEASE_TYPE_CV, dctParameters)
 
+				' Example values for quantification (a given submission can have more than one type listed)
+				'   [PRIDE, PRIDE:0000318, 18O,]
+				'   [PRIDE, PRIDE:0000320, AQUA,]
+				'   [PRIDE, PRIDE:0000319, ICAT,]
+				'   [PRIDE, PRIDE:0000321, ICPL,]
+				'   [PRIDE, PRIDE:0000315, SILAC,]
+				'   [PRIDE, PRIDE:0000314, TMT,]
+				'   [PRIDE, PRIDE:0000313, iTRAQ,] 
+				'   [PRIDE, PRIDE:0000323, TIC,]
+				'   [PRIDE, PRIDE:0000322, emPAI,]
+				'   [PRIDE, PRIDE:0000435, Peptide counting,]
+				'   [PRIDE, PRIDE:0000436, Spectral counting,]
+				'   [PRIDE, PRIDE:0000437, Protein Abundance Index – PAI,]
+				'   [PRIDE, PRIDE:0000438, Spectrum count/molecular weight,]
+				'   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
+				'   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
+				'   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
+				WritePXHeader(swPXFile, "quantification", TBD & "Optional, e.g. " & DEFAULT_QUANTIFICATION_TYPE_CV, dctParameters)
+
+
 				If mInstrumentGroupsStored.Count > 0 Then
 					WritePXInstruments(swPXFile)
 				Else
-					WritePXHeader(swPXFile, "instrument", GetCVString("MS", "MS:1000449", "LTQ Orbitrap", ""), dctParameters)
+					' Instrument type is unknown
+					WritePXHeader(swPXFile, "instrument", TBD & GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC"), dctParameters)
 				End If
 
+				' Note that the modification terms are optional for complete submissions
+				' However, it doesn't hurt to include them
 				WritePXMods(swPXFile)
+
+				' Could write additional terms here
+				' WritePXHeader(swPXFile, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), dctParameters)
+
+				' If this is a re-submission or re-analysis, then use these:
+				' WritePXHeader(swPXFile, "resubmission_px", "PXD00001", dctParameters)
+				' WritePXHeader(swPXFile, "reanalysis_px", "PXD00001", dctParameters)
+
 
 				' Add a blank line
 				swPXFile.WriteLine()
@@ -2287,17 +2337,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					lstFileInfoCols.Clear()
 
 					lstFileInfoCols.Add("FME")
-					lstFileInfoCols.Add(item.Key.ToString)
+					lstFileInfoCols.Add(item.Key.ToString)						' file_id
 					Dim fileTypeName = PXFileTypeName(item.Value.PXFileType)
-					lstFileInfoCols.Add(fileTypeName)
-					lstFileInfoCols.Add(Path.Combine("D:\Upload", m_ResFolderName, item.Value.Filename))
+					lstFileInfoCols.Add(fileTypeName)							' file_type; allowed values are result, raw, peak, search, quantification, gel, other
+					lstFileInfoCols.Add(Path.Combine("D:\Upload", m_ResFolderName, item.Value.Filename))	' file_path
 
-					Dim strFileMappings As List(Of String) = New List(Of String)
+					Dim lstFileMappings = New List(Of String)
 					For Each mapID In item.Value.FileMappings
-						strFileMappings.Add(mapID.ToString())
+						lstFileMappings.Add(mapID.ToString())					' file_mapping
 					Next
 
-					lstFileInfoCols.Add(clsGlobal.FlattenList(strFileMappings, ","c))
+					lstFileInfoCols.Add(String.Join(",", lstFileMappings))
 
 					WritePXLine(swPXFile, lstFileInfoCols)
 
@@ -2305,6 +2355,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 						lstResultFileIDs.Add(item.Key, item.Value.Filename)
 					End If
 				Next
+
+
+				'' Possible ToDo: Determine the columns that will be included in the SMH section
+				'For Each resultFile In lstResultFileIDs
+				'	lstFileInfoCols.Clear()
+				'Next
 
 				' Write the header row for the SMH section
 				swPXFile.WriteLine()
@@ -2314,32 +2370,32 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				For Each resultFile In lstResultFileIDs
 					lstFileInfoCols.Clear()
 
-					lstFileInfoCols.Add("FME")
-					lstFileInfoCols.Add(resultFile.Key.ToString())
+					lstFileInfoCols.Add("SME")
+					lstFileInfoCols.Add(resultFile.Key.ToString())			' file_id
 
 					Dim udtSampleMetadata = New udtSampleMetadataType
 					If mMzIdSampleInfo.TryGetValue(resultFile.Value, udtSampleMetadata) Then
-						lstFileInfoCols.Add(udtSampleMetadata.Species)
-						lstFileInfoCols.Add(udtSampleMetadata.Tissue)
-						lstFileInfoCols.Add(udtSampleMetadata.CellType)
-						lstFileInfoCols.Add(udtSampleMetadata.Disease)
+						lstFileInfoCols.Add(udtSampleMetadata.Species)		' species
+						lstFileInfoCols.Add(udtSampleMetadata.Tissue)		' tissue
+						lstFileInfoCols.Add(udtSampleMetadata.CellType)		' cell_type
+						lstFileInfoCols.Add(udtSampleMetadata.Disease)		' disease
 
 						Dim strMods As String = String.Empty
 						For Each modEntry In udtSampleMetadata.Modifications
 							If strMods.Length > 0 Then strMods &= ", "
 							strMods &= GetCVString(modEntry.Value)
 						Next
-						lstFileInfoCols.Add(strMods)
+						lstFileInfoCols.Add(strMods)									' modification	
 
 						Dim instrumentAccession = String.Empty
 						Dim instrumentDescription = String.Empty
 						GetInstrumentAccession(udtSampleMetadata.InstrumentGroup, instrumentAccession, instrumentDescription)
 
 						Dim strInstrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription)
-						lstFileInfoCols.Add(strInstrumentCV)
+						lstFileInfoCols.Add(strInstrumentCV)							' instrument
 
-						lstFileInfoCols.Add(udtSampleMetadata.Quantification)
-						lstFileInfoCols.Add(udtSampleMetadata.ExperimentalFactor)
+						lstFileInfoCols.Add(udtSampleMetadata.Quantification)			' quantification
+						lstFileInfoCols.Add(udtSampleMetadata.ExperimentalFactor)		' experimental_factor
 					Else
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " Sample Metadata not found for " & resultFile.Value)
 					End If
@@ -2464,6 +2520,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Function
 
 	Protected Function GetCVString(ByVal cvRef As String, ByVal accession As String, ByVal name As String, ByVal value As String) As String
+
+		If String.IsNullOrEmpty(value) Then
+			value = String.Empty
+		ElseIf value.Length > 200 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "CV value parameter truncated since too long: " & value)
+			value = value.Substring(0, 200)
+		End If
+
 		Return "[" & cvRef & ", " & accession & ", " & name & ", " & value & "]"
 	End Function
 
@@ -2471,12 +2535,22 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim strInstrumentCV As String
 
 		If String.IsNullOrEmpty(accession) Then
-			strInstrumentCV = GetCVString("MS", "MS:1000449", "LTQ Orbitrap", "")
+			strInstrumentCV = GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC")
 		Else
 			strInstrumentCV = GetCVString("MS", accession, description, "")
 		End If
 
 		Return strInstrumentCV
+	End Function
+
+	Protected Function GetNEWTCv(ByVal newtID As Integer, ByVal newtName As String) As String
+
+		If newtID = 0 And String.IsNullOrWhiteSpace(newtName) Then
+			newtID = 2323
+			newtName = "unclassified Bacteria"
+		End If
+
+		Return GetCVString("NEWT", newtID.ToString(), newtName, "")
 	End Function
 
 	''' <summary>
@@ -3469,6 +3543,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim blnNodeWritten As Boolean
 		Dim blnSkipNode As Boolean
 		Dim blnReadModAccession As Boolean = False
+		Dim blnReadingSpecificityRules As Boolean = False
 
 		Dim lstAttributeOverride As Dictionary(Of String, String) = New Dictionary(Of String, String)
 
@@ -3480,7 +3555,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim udtSampleMetadata = New udtSampleMetadataType
 		udtSampleMetadata.Clear()
 
-		udtSampleMetadata.Species = GetCVString("NEWT", jobInfo.Experiment_NEWT_ID.ToString(), jobInfo.Experiment_NEWT_Name, "")
+		udtSampleMetadata.Species = GetNEWTCv(jobInfo.Experiment_NEWT_ID, jobInfo.Experiment_NEWT_Name)
 		udtSampleMetadata.Tissue = DEFAULT_TISSUE_CV
 		udtSampleMetadata.CellType = DEFAULT_CELL_TYPE_CV
 		udtSampleMetadata.Disease = DEFAULT_DISEASE_TYPE_CV
@@ -3620,8 +3695,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 												blnReadModAccession = True
 											End If
 
-										Case "cvParam"
+										Case "SpecificityRules"
 											If blnReadModAccession Then
+												blnReadingSpecificityRules = True
+											End If
+
+										Case "cvParam"
+											If blnReadModAccession And Not blnReadingSpecificityRules Then
 												Dim udtModInfo As udtCvParamInfoType
 												udtModInfo = ReadWriteCvParam(objXmlReader, objXmlWriter, lstElementCloseDepths)
 
@@ -3693,6 +3773,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 										blnReadModAccession = False
 									End If
 
+									If objXmlReader.Name = "SpecificityRules" Then
+										blnReadingSpecificityRules = False
+									End If
+									
 								Case Xml.XmlNodeType.Text
 
 									If Not String.IsNullOrEmpty(objXmlReader.Value) Then
@@ -3818,10 +3902,41 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
 	''' <remarks></remarks>
 	Protected Function WritePXHeader(ByVal swPXFile As StreamWriter, ByVal strType As String, ByVal strValue As String, ByVal dctParameters As Dictionary(Of String, String)) As String
+
+		Return WritePXHeader(swPXFile, strType, strValue, dctParameters, intMinimumValueLength:=0)
+	End Function
+
+	''' <summary>
+	''' Append a new header line to the .px file
+	''' </summary>
+	''' <param name="swPXFile"></param>
+	''' <param name="strType"></param>
+	''' <param name="strValue"></param>
+	''' <param name="dctParameters"></param>
+	''' <param name="intMinimumValueLength"></param>
+	''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
+	''' <remarks></remarks>
+	Protected Function WritePXHeader(
+	  ByVal swPXFile As StreamWriter,
+	  ByVal strType As String,
+	  ByVal strValue As String,
+	  ByVal dctParameters As Dictionary(Of String, String),
+	  ByVal intMinimumValueLength As Integer) As String
+
 		Dim strValueOverride As String = String.Empty
 
-		If dctParameters.TryGetValue(strType, strValueOverride) Then			
+		If dctParameters.TryGetValue(strType, strValueOverride) Then
 			strValue = strValueOverride
+		End If
+
+		If intMinimumValueLength > 0 Then
+			If String.IsNullOrEmpty(strValue) Then
+				strValue = "**** Value must be at least " & intMinimumValueLength & " characters long **** "
+			End If
+
+			Do While strValue.Length < intMinimumValueLength
+				strValue &= "__"
+			Loop		
 		End If
 
 		WritePXLine(swPXFile, New List(Of String) From {"MTD", strType, strValue})
@@ -3850,9 +3965,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Next
 
 	End Sub
-	
+
 	Protected Sub WritePXLine(ByVal swPXFile As StreamWriter, ByVal lstItems As List(Of String))
-		swPXFile.WriteLine(clsGlobal.FlattenList(lstItems, ControlChars.Tab))
+		If lstItems.Count > 0 Then
+			swPXFile.WriteLine(String.Join(ControlChars.Tab, lstItems))
+		End If
 	End Sub
 
 	Protected Sub WritePXMods(ByVal swPXFile As StreamWriter)
@@ -3860,8 +3977,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If mModificationsUsed.Count = 0 Then
 			WritePXHeader(swPXFile, "modification", GetCVString("PRIDE", "PRIDE:0000398", "No PTMs are included in the dataset", ""))
 		Else
-			' Write out each modification, for example:
-			' modification	[UNIMOD,UNIMOD:35,Oxidation,]
+			' Write out each modification, for example, for Unimod:
+			'   modification	[UNIMOD,UNIMOD:35,Oxidation,]
+			' Or for PSI-mod
+			'   modification	[MOD,MOD:00394,acetylated residue,]
+
 			For Each item In mModificationsUsed
 				WritePXHeader(swPXFile, "modification", GetCVString(item.Value))
 			Next

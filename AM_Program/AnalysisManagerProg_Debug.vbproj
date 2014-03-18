@@ -65,6 +65,9 @@
     <Reference Include="Mage">
       <HintPath>..\AM_Common\Mage.dll</HintPath>
     </Reference>
+    <Reference Include="MsMsDataFileReader">
+      <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM, Version=2.1.4520.23090, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PRISM.dll</HintPath>
@@ -160,6 +163,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Plugins\AM_PRIDE_Converter_PlugIn\AnalysisManagerPRIDEConverterPlugIn.vbproj">
+      <Project>{A6C648E6-F0C4-4A76-9740-0DCF39973E84}</Project>
+      <Name>AnalysisManagerPRIDEConverterPlugIn</Name>
+    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

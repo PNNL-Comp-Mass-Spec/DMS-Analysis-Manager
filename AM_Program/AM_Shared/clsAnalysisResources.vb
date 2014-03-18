@@ -598,7 +598,9 @@ Public MustInherit Class clsAnalysisResources
 			DestFilePath = Path.Combine(OutDir, InpFile)
 
 			'Verify source file exists
-			If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
+			Const HoldoffSeconds As Integer = 1
+			Const MaxAttempts As Integer = 1
+			If Not FileExistsWithRetry(SourceFile, HoldoffSeconds, eLogMsgTypeIfNotFound, MaxAttempts) Then
 				m_message = "File not found: " + SourceFile
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
 				Return False
@@ -1088,7 +1090,23 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Private Function FileExistsWithRetry(ByVal FileName As String, ByVal RetryHoldoffSeconds As Integer, ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-		Dim RetryCount As Integer = 3
+		Const MaxAttempts As Integer = 3
+		Return FileExistsWithRetry(FileName, RetryHoldoffSeconds, eLogMsgTypeIfNotFound, MaxAttempts)
+
+	End Function
+
+	''' <summary>
+	''' Test for file existence with a retry loop in case of temporary glitch
+	''' </summary>
+	''' <param name="FileName"></param>
+	''' <param name="RetryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
+	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Private Function FileExistsWithRetry(ByVal FileName As String, ByVal RetryHoldoffSeconds As Integer, ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, ByVal MaxAttempts As Integer) As Boolean
+
+		Dim RetryCount As Integer = MaxAttempts
+		If RetryCount < 1 Then RetryCount = 1
 
 		If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
 		If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
@@ -1104,7 +1122,9 @@ Public MustInherit Class clsAnalysisResources
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, ErrMsg)
 				End If
 				RetryCount -= 1
-				Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
+				If RetryCount > 0 Then
+					Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
+				End If
 			End If
 		End While
 
@@ -2774,7 +2794,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Shared Function LoadDataPackageJobInfo(ByVal ConnectionString As String, DataPackageID As Integer, ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
 		'Requests Dataset information from a data package
-		Dim RetryCount As Short = 3
+		Const RetryCount As Short = 3
 		Dim strMsg As String
 
 		If dctDataPackageJobs Is Nothing Then
@@ -5278,7 +5298,6 @@ Public MustInherit Class clsAnalysisResources
 
 	''' <summary>
 	''' This is just a generic function to copy files to the working directory
-	'''	
 	''' </summary>
 	''' <param name="FileName">Name of file to be copied</param>
 	''' <param name="FilePath">File storage path</param>
@@ -5294,6 +5313,26 @@ Public MustInherit Class clsAnalysisResources
 		Return True
 
 	End Function
+
+	''' <summary>
+	''' This is just a generic function to copy files to the working directory
+	'''	
+	''' </summary>
+	''' <param name="FileName">Name of file to be copied</param>
+	''' <param name="FilePath">File storage path</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	Protected Function RetrieveFile(ByVal FileName As String, ByVal FilePath As String, ByVal MaxCopyAttempts As Integer) As Boolean
+
+		'Copy the file
+		If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
+		If Not CopyFileToWorkDir(FileName, FilePath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts) Then
+			Return False
+		End If
+
+		Return True
+
+	End Function
+
 
 	''' <summary>
 	''' Finds the _DTA.txt file for this dataset

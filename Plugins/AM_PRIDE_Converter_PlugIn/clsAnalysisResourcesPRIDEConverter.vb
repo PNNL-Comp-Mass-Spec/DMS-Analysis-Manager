@@ -346,11 +346,17 @@ Public Class clsAnalysisResourcesPRIDEConverter
 				End If
 			Else
 				Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+				If String.IsNullOrEmpty(strParamFileStoragePath) Then
+					strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
+				End If
 				strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
 
-				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath) Then
+				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1) Then
+					If String.IsNullOrEmpty(m_message) Then
+						m_message = "Template PX file " & strTemplateFileName & " to found in the data package folder"
+					End If
 					Return False
 				End If
 			End If
