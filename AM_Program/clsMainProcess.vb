@@ -527,7 +527,6 @@ Public Class clsMainProcess
 			InitStatusTools()
 		End If
 
-
 		' Update the cached most recent job info
 		m_MostRecentJobInfo = ConstructMostRecentJobInfoText(DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
 
@@ -1470,7 +1469,7 @@ Public Class clsMainProcess
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
 		End If
 
-		m_Resource.Setup(m_MgrSettings, m_AnalysisTask)
+		m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
 		Return True
 
 	End Function

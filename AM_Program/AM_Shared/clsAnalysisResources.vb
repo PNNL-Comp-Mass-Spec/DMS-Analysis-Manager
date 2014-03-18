@@ -214,6 +214,8 @@ Public MustInherit Class clsAnalysisResources
 	Protected m_DebugLevel As Short
 	Protected m_MgrName As String
 
+	Protected m_StatusTools As IStatusFile		' Might be nothing
+
 	Protected m_GenerationStarted As Boolean = False
 	Protected m_GenerationComplete As Boolean = False
 	Protected m_FastaToolsCnStr As String = ""
@@ -313,7 +315,17 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="jobParams">Job parameter object</param>
 	''' <remarks></remarks>
 	Public Overridable Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams) Implements IAnalysisResources.Setup
+		Dim statusTools As IStatusFile = Nothing
+		Me.Setup(mgrParams, jobParams, statusTools)
+	End Sub
 
+	''' <summary>
+	''' Initialize class
+	''' </summary>
+	''' <param name="mgrParams">Manager parameter object</param>
+	''' <param name="jobParams">Job parameter object</param>
+	''' <remarks></remarks>
+	Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal statusTools As IStatusFile) Implements IAnalysisResources.Setup
 		m_mgrParams = mgrParams
 		m_jobParams = jobParams
 
@@ -333,6 +345,9 @@ Public MustInherit Class clsAnalysisResources
 		m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
 
 		m_RecentlyFoundMyEMSLFiles = New List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+
+		m_StatusTools = statusTools
+
 	End Sub
 
 	Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
@@ -3566,6 +3581,27 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal udtOptions As udtDataPackageRetrievalOptionsType,
 	  ByRef lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)) As Boolean
 
+		Const progressPercentAtStart As Single = 0
+		Const progressPercentAtFinish As Single = 20
+		Return RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish)
+	End Function
+
+	''' <summary>
+	''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
+	''' Also creates a batch file that can be manually run to retrieve the instrument data files
+	''' </summary>
+	''' <param name="udtOptions">File retrieval options</param>
+	''' <param name="lstDataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+	''' <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
+	''' <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
+	  ByVal udtOptions As udtDataPackageRetrievalOptionsType,
+	  ByRef lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType),
+	  ByVal progressPercentAtStart As Single,
+	  ByVal progressPercentAtFinish As Single) As Boolean
+
 		Dim SourceFolderPath As String = "??"
 		Dim SourceFilename As String = "??"
 		Dim DataPackageID As Integer = 0
@@ -3625,6 +3661,8 @@ Public MustInherit Class clsAnalysisResources
 
 			' Cache the current dataset and job info
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
+
+			Dim intJobsProcessed As Integer = 0
 
 			For Each udtJobInfo As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
 
@@ -3864,6 +3902,13 @@ Public MustInherit Class clsAnalysisResources
 						dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
 						dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath)
 					End If
+				End If
+
+				intJobsProcessed += 1
+				Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count)
+				If Not m_StatusTools Is Nothing Then
+					m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles"
+					m_StatusTools.UpdateAndWrite(sngProgress)
 				End If
 
 			Next udtJobInfo		' in lstDataPackagePeptideHitJobs

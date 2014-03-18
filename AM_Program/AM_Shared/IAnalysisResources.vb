@@ -21,6 +21,7 @@ Public Interface IAnalysisResources
 
 #Region "Methods"
 	Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+	Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal statusTools As IStatusFile)
 	Function GetResources() As IJobParams.CloseOutType
 #End Region
 

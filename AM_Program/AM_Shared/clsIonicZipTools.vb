@@ -183,7 +183,7 @@ Public Class clsIonicZipTools
 						' Copy the decompression stream 
 						' into the output file.
 						Decompress.CopyTo(outFile)
-
+						m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiDecompressedFile.Name, fiDecompressedFile.FullName))
 					End Using
 				End Using
 			End Using

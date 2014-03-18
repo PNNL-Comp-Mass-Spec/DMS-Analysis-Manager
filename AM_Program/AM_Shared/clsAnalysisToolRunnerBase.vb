@@ -233,7 +233,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="CurrentTaskTotalItems">Total number of items to process during this subtask</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function ComputeIncrementalProgress(ByVal CurrentTaskProgressAtStart As Single, ByVal CurrentTaskProgressAtEnd As Single, ByVal CurrentTaskItemsProcessed As Integer, ByVal CurrentTaskTotalItems As Integer) As Single
+	Public Shared Function ComputeIncrementalProgress(ByVal CurrentTaskProgressAtStart As Single, ByVal CurrentTaskProgressAtEnd As Single, ByVal CurrentTaskItemsProcessed As Integer, ByVal CurrentTaskTotalItems As Integer) As Single
 		If CurrentTaskTotalItems < 1 Then
 			Return CurrentTaskProgressAtStart
 		ElseIf CurrentTaskItemsProcessed > CurrentTaskTotalItems Then

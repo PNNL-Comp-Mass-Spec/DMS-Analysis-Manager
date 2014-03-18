@@ -13,7 +13,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 #Region "Module Variables"
 	Protected Const PRIDEConverter_CONSOLE_OUTPUT As String = "PRIDEConverter_ConsoleOutput.txt"
-	Protected Const PROGRESS_PCT_STARTING As Single = 1
+	Public Const PROGRESS_PCT_TOOL_RUNNER_STARTING As Single = 20
 	Protected Const PROGRESS_PCT_SAVING_RESULTS As Single = 95
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
@@ -281,17 +281,22 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			Dim linqJobsSortedByDataset = (From item In mDataPackagePeptideHitJobs Select item Order By item.Value.Dataset)
 
 			Const blnContinueOnError As Boolean = True
+			Const maxErrorCount As Integer = 10
 			Dim intJobsProcessed As Integer = 0
+			Dim intJobFailureCount As Integer = 0
 
 			For Each kvJobInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType) In linqJobsSortedByDataset
 				Console.WriteLine()
 				Console.WriteLine((intJobsProcessed + 1).ToString() & ": Processing job " & kvJobInfo.Value.Job & ", dataset " & kvJobInfo.Value.Dataset)
 
 				result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, dctDatasetRawFilePaths)
-				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS AndAlso Not blnContinueOnError Then Exit For
+				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+					intJobFailureCount += 1
+					If Not blnContinueOnError OrElse intJobFailureCount > maxErrorCount Then Exit For
+				End If
 
 				intJobsProcessed += 1
-				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_SAVING_RESULTS, intJobsProcessed, mDataPackagePeptideHitJobs.Count)
+				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, intJobsProcessed, mDataPackagePeptideHitJobs.Count)
 				m_StatusTools.UpdateAndWrite(m_progress)
 			Next
 
@@ -321,7 +326,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			Threading.Thread.Sleep(2000)		   '2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			If Not blnSuccess Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			If Not blnSuccess Or intJobFailureCount > 0 Then
 				' Something went wrong
 				' In order to help diagnose things, we will move whatever files were created into the result folder, 
 				'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -706,7 +711,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		' Bump up the debug level if less than 2
 		If m_DebugLevel < 2 Then m_DebugLevel = 2
 
+		' Make sure the PRIDEConverter console output file is retained
 		m_jobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT)
+
+		' Skip the .mgf files; no need to put them in the FailedResults folder
+		m_jobParams.AddResultFileExtensionToSkip(".mgf")
 
 		' Try to save whatever files are in the work directory
 		Dim strFolderPathToArchive As String
@@ -2969,8 +2978,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		udtResultFiles.MzIDFilePath = String.Empty
 		If mProcessMzIdFiles AndAlso kvJobInfo.Value.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 
+			m_message = String.Empty
 			blnSuccess = UpdateMzIdFile(intJob, strDataset, kvJobInfo.Value, mCreateMGFFiles, udtResultFiles.MzIDFilePath)
 			If Not blnSuccess Then
+				If Not String.IsNullOrEmpty(m_message) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -3186,10 +3199,19 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					Return False
 				End If
 
-				If fiLocalFile.Extension.ToLower() = ".zip" Then
-					' Need to unzip the file
-					m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir)
+				Dim blnUnzipped = False
 
+				If fiLocalFile.Extension.ToLower() = ".zip" Then
+					' Decompress the .zip file
+					m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir)
+					blnUnzipped = True
+				ElseIf fiLocalFile.Extension.ToLower() = ".gz" Then
+					' Decompress the .gz file
+					m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir)
+					blnUnzipped = True
+				End If
+
+				If blnUnzipped Then
 					For Each kvUnzippedFile In m_IonicZipTools.MostRecentUnzippedFiles
 						AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value)
 					Next
