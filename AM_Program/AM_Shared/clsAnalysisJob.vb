@@ -115,7 +115,7 @@ Public Class clsAnalysisJob
 
 		MyBase.New(mgrParams, DebugLvl)
 
-		Me.Reset()
+		Reset()
 
 	End Sub
 
@@ -132,7 +132,7 @@ Public Class clsAnalysisJob
 		Try
 			If ParamValue Is Nothing Then ParamValue = String.Empty
 
-			Me.SetParam(SectionName, ParamName, ParamValue)
+			SetParam(SectionName, ParamName, ParamValue)
 
 			Return True
 		Catch ex As Exception
@@ -212,7 +212,7 @@ Public Class clsAnalysisJob
 		Dim strValue As String
 
 		Try
-			strValue = Me.GetParam(Name)
+			strValue = GetParam(Name)
 
 			If String.IsNullOrEmpty(strValue) Then
 				Return ValueIfMissing
@@ -237,7 +237,7 @@ Public Class clsAnalysisJob
 		Dim strValue As String
 
 		Try
-			strValue = Me.GetParam(Name)
+			strValue = GetParam(Name)
 
 			If String.IsNullOrEmpty(strValue) Then
 				Return ValueIfMissing
@@ -259,7 +259,7 @@ Public Class clsAnalysisJob
 		Dim strValue As String
 
 		Try
-			strValue = Me.GetParam(Name)
+			strValue = GetParam(Name)
 
 			If String.IsNullOrEmpty(strValue) Then
 				Return ValueIfMissing
@@ -289,7 +289,7 @@ Public Class clsAnalysisJob
 	''' <param name="Name">Key name for parameter</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-		Return clsGlobal.CSngSafe(Me.GetParam(Name), ValueIfMissing)
+		Return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing)
 	End Function
 
 	''' <summary>
@@ -300,7 +300,7 @@ Public Class clsAnalysisJob
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
-		Return clsGlobal.CBoolSafe(Me.GetParam(Section, Name), ValueIfMissing)
+		Return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
 	''' <summary>
@@ -311,7 +311,7 @@ Public Class clsAnalysisJob
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
-		Return clsGlobal.CIntSafe(Me.GetParam(Section, Name), ValueIfMissing)
+		Return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
 	''' <summary>
@@ -323,7 +323,7 @@ Public Class clsAnalysisJob
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
 		Dim strValue As String
-		strValue = Me.GetParam(Section, Name)
+		strValue = GetParam(Section, Name)
 		If String.IsNullOrEmpty(strValue) Then
 			Return ValueIfMissing
 		Else
@@ -339,7 +339,7 @@ Public Class clsAnalysisJob
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-		Return clsGlobal.CSngSafe(Me.GetParam(Section, Name), ValueIfMissing)
+		Return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
 	''' <summary>
@@ -387,6 +387,32 @@ Public Class clsAnalysisJob
 	Public Shared Function JobParametersFilename(jobNum As String) As String
 		Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
 	End Function
+
+	''' <summary>
+	''' Add/updates the value for the given parameter (searches all sections)
+	''' </summary>
+	''' <param name="ParamName">Parameter name</param>
+	''' <param name="ParamValue">Parameter value</param>
+	''' <remarks></remarks>
+	Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
+
+		Dim blnMatchFound As Boolean
+
+		If ParamValue Is Nothing Then ParamValue = String.Empty
+
+		For Each oSection In m_JobParams		
+			If oSection.Value.ContainsKey(ParamName) Then
+				oSection.Value(ParamName) = ParamValue
+				blnMatchFound = True
+			End If
+		Next
+
+		If Not blnMatchFound AndAlso m_JobParams.Count > 0 Then
+			' Add the parameter to the first section
+			m_JobParams.First.Value.Add(ParamName, ParamValue)
+		End If
+
+	End Sub
 
 	''' <summary>
 	''' Add/updates the value for the given parameter
@@ -538,7 +564,7 @@ Public Class clsAnalysisJob
 		Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()
 		If strProductVersion Is Nothing Then strProductVersion = "??"
 
-		Me.Reset()
+		Reset()
 
 		Try
 			'Set up the command object prior to SP execution
@@ -595,7 +621,7 @@ Public Class clsAnalysisJob
 					If dctParameters IsNot Nothing Then
 
 						For Each udtParamInfo As udtParameterInfoType In dctParameters
-							Me.SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
+							SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
 						Next
 
 						SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
@@ -784,7 +810,7 @@ Public Class clsAnalysisJob
 			.Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
 
 			Dim strValue As String = String.Empty
-			If Me.TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
+			If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
 				.Parameters.Item("@organismDBName").Value = strValue
 			Else
 				.Parameters.Item("@organismDBName").Value = String.Empty
@@ -823,12 +849,12 @@ Public Class clsAnalysisJob
 		If m_JobParams Is Nothing Then
 			strToolAndStepTool = "??"
 		Else
-			strTool = Me.GetParam("ToolName")
+			strTool = GetParam("ToolName")
 
-			strToolAndStepTool = Me.GetParam("StepTool")
+			strToolAndStepTool = GetParam("StepTool")
 			If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
 
-			strStep = Me.GetParam("StepParameters", "Step")
+			strStep = GetParam("StepParameters", "Step")
 			If strStep Is Nothing Then strStep = String.Empty
 
 			If strToolAndStepTool <> strTool Then

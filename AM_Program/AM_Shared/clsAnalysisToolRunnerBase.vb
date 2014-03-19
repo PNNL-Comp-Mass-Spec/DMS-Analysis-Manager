@@ -1301,6 +1301,10 @@ Public Class clsAnalysisToolRunnerBase
 
 			' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
 			For Each TmpFile In Files
+				If TmpFile = "IDPicker_AnalysisSummary.txt" Then
+					Console.WriteLine("Check this file")
+				End If
+
 				OkToMove = True
 				TmpFileNameLcase = Path.GetFileName(TmpFile).ToLower()
 
@@ -1384,6 +1388,7 @@ Public Class clsAnalysisToolRunnerBase
 							' Move failed
 							' Attempt to copy the file instead of moving the file
 							File.Copy(TmpFile, strTargetFilePath, True)
+
 							' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
 
 						Catch ex2 As Exception

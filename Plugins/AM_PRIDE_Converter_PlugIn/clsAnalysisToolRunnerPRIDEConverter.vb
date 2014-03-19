@@ -284,10 +284,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			Const maxErrorCount As Integer = 10
 			Dim intJobsProcessed As Integer = 0
 			Dim intJobFailureCount As Integer = 0
+			Dim dtLastLogTime As DateTime = DateTime.UtcNow
 
 			For Each kvJobInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType) In linqJobsSortedByDataset
+
+				m_StatusTools.CurrentOperation = "Processing job " & kvJobInfo.Value.Job & ", dataset " & kvJobInfo.Value.Dataset
+
 				Console.WriteLine()
-				Console.WriteLine((intJobsProcessed + 1).ToString() & ": Processing job " & kvJobInfo.Value.Job & ", dataset " & kvJobInfo.Value.Dataset)
+				Console.WriteLine((intJobsProcessed + 1).ToString() & ": " & m_StatusTools.CurrentOperation)
 
 				result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, dctDatasetRawFilePaths)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -298,6 +302,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				intJobsProcessed += 1
 				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, intJobsProcessed, mDataPackagePeptideHitJobs.Count)
 				m_StatusTools.UpdateAndWrite(m_progress)
+
+				If DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 OrElse m_DebugLevel >= 2 Then
+					dtLastLogTime = DateTime.UtcNow
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... processed " & intJobsProcessed & " / " & mDataPackagePeptideHitJobs.Count & " jobs")
+				End If
 			Next
 
 			TransferPreviousDatasetFiles(objAnalysisResults)

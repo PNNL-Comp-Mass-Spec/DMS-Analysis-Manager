@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "January 31, 2014"
+	Public Const PROGRAM_DATE As String = "March 19, 2014"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -111,7 +111,8 @@ Module modMain
 
 						' objTest.ProcessDtaRefineryLogFiles()
 
-						' objTest.TestGZip()
+						'objTest.TestZip()
+						'objTest.TestGZip()
 
 						'objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
 

@@ -860,17 +860,17 @@ Public Class clsCodeTest
 		objToolRunner = New clsCodeTestAM
 		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
-		Const sourceFilePath As String = "F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.mzid"
+		Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
 
-		objToolRunner.GZipFile(sourceFilePath, "F:\Temp\GZip\new1", False)
+		objToolRunner.GZipFile(sourceFilePath, "F:\Temp\ZipTest\QExact01\GZipTarget", False)
 
 		objToolRunner.GZipFile(sourceFilePath, False)
 
-		Const gzippedFile As String = "F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.mzid.gz"
+		Dim gzippedFile As String = "F:\Temp\ZipTest\QExact01\" & Path.GetFileName(sourceFilePath) & ".gz"
 
 		objToolRunner.GUnzipFile(gzippedFile)
 
-		objToolRunner.GUnzipFile(gzippedFile, "F:\Temp\GZip\new2")
+		objToolRunner.GUnzipFile(gzippedFile, "F:\Temp\ZipTest\GUnzipTarget")
 
 	End Sub
 
@@ -904,6 +904,45 @@ Public Class clsCodeTest
 
 		Return blnSuccess
 	End Function
+
+	Public Sub TestZip()
+
+		Const intDebugLevel As Integer = 2
+
+		Dim objToolRunner As clsCodeTestAM
+		Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+		Dim objSummaryFile As New clsSummaryFile()
+
+		Const workDir As String = "E:\DMS_WorkDir"
+
+		m_mgrParams.SetParam("workdir", workDir)
+		m_mgrParams.SetParam("MgrName", "Monroe_Test")
+		m_mgrParams.SetParam("debuglevel", "0")
+
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+
+		objToolRunner = New clsCodeTestAM
+		objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+
+		Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
+
+		objToolRunner.ZipFile(sourceFilePath, False)
+
+		Dim zippedFile As String = "F:\Temp\ZipTest\QExact01\" & Path.GetFileNameWithoutExtension(sourceFilePath) & ".zip"
+
+		objToolRunner.UnzipFile(zippedFile)
+
+		objToolRunner.UnzipFile(zippedFile, "F:\Temp\ZipTest\UnzipTarget")
+
+		Dim oZipTools = New clsIonicZipTools(1, workDir)
+		oZipTools.ZipDirectory("F:\Temp\ZipTest\QExact01\", "F:\Temp\ZipTest\QExact01_Folder.zip")
+
+	End Sub
 
 	Public Sub TestIonicZipTools()
 		Dim oIonicZipTools As clsIonicZipTools

@@ -1,6 +1,5 @@
 ﻿Option Strict On
 
-Imports System
 Imports System.Threading
 
 ' delegate that does the eventual posting
@@ -12,15 +11,15 @@ Class clsMessageQueueLogger
 
 	' the worker thread that pulls messages off the queue
 	' and posts them
-	Private worker As Thread
+	Private ReadOnly worker As Thread
 
 	' synchronization and signalling stuff to coordinate
 	' with worker thread
-	Private waitHandle As EventWaitHandle = New AutoResetEvent(False)
-	Private locker As New Object()
+	Private ReadOnly waitHandle As EventWaitHandle = New AutoResetEvent(False)
+	Private ReadOnly locker As New Object()
 
 	' local queue that contains messages to be sent
-	Private m_statusMessages As New Queue(Of String)()
+	Private ReadOnly m_statusMessages As New Queue(Of String)()
 
 	Public Sub New()
 		worker = New Thread(AddressOf PostalWorker)

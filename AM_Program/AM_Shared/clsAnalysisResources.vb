@@ -12,7 +12,6 @@ Option Strict On
 Imports PHRPReader
 Imports System.IO
 Imports System.Runtime.InteropServices
-Imports System.Text
 
 Public MustInherit Class clsAnalysisResources
 	Implements IAnalysisResources
@@ -833,7 +832,7 @@ Public MustInherit Class clsAnalysisResources
 
 			legacyFastaToUse = GetSplitFastaFileName(m_jobParams, m_message, numberOfClonedSteps)
 
-			If String.IsNullOrEmpty(LegacyFasta) Then
+			If String.IsNullOrEmpty(legacyFastaToUse) Then
 				' The error should have already been logged
 				Return False
 			End If
@@ -2147,32 +2146,35 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	''' <summary>
-	''' Test for folder existence with a retry loop in case of temporary glitch
-	''' </summary>
-	''' <param name="FolderName">Folder name to look for</param>
-	Private Function FolderExistsWithRetry(ByVal FolderName As String) As Boolean
-		Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
-	End Function
+	' Obsolete code:
+	'
+	' ''' <summary>
+	' ''' Test for folder existence with a retry loop in case of temporary glitch
+	' ''' </summary>
+	' ''' <param name="FolderName">Folder name to look for</param>	
+	'Private Function FolderExistsWithRetry(ByVal FolderName As String) As Boolean
+	'	Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
+	'End Function
 
-	''' <summary>
-	''' Test for folder existence with a retry loop in case of temporary glitch
-	''' </summary>
-	''' <param name="FolderName">Folder name to look for</param>
-	''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-	Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
-		Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
-	End Function
+	' ''' <summary>
+	' ''' Test for folder existence with a retry loop in case of temporary glitch
+	' ''' </summary>
+	' ''' <param name="FolderName">Folder name to look for</param>
+	' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+	'Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer) As Boolean
+	'	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
+	'End Function
 
-	''' <summary>
-	''' Test for folder existence with a retry loop in case of temporary glitch
-	''' </summary>
-	''' <param name="FolderName">Folder name to look for</param>
-	''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-	''' <param name="MaxRetryCount">Maximum number of attempts</param>
-	Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer, ByVal MaxRetryCount As Integer) As Boolean
-		Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, MaxRetryCount, True)
-	End Function
+	' ''' <summary>
+	' ''' Test for folder existence with a retry loop in case of temporary glitch
+	' ''' </summary>
+	' ''' <param name="FolderName">Folder name to look for</param>
+	' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+	' ''' <param name="MaxRetryCount">Maximum number of attempts</param>
+	'Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer, ByVal MaxRetryCount As Integer) As Boolean
+	'	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, MaxRetryCount, True)
+	'End Function
+
 
 	''' <summary>
 	''' Test for folder existence with a retry loop in case of temporary glitch

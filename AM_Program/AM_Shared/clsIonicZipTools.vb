@@ -74,6 +74,31 @@ Public Class clsIonicZipTools
 
 	End Sub
 
+	Protected Sub DeleteFolder(ByVal diFolder As DirectoryInfo)
+		Try
+
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting folder: " & diFolder.FullName)
+			End If
+
+			diFolder.Refresh()
+
+			If diFolder.Exists() Then
+				' Now delete the source file
+				diFolder.Delete(True)
+			End If
+
+			' Wait 100 msec
+			Thread.Sleep(100)
+
+		Catch ex As Exception
+			' Log this as an error, but don't treat this as fatal
+			m_Message = "Error deleting " & diFolder.FullName & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+		End Try
+
+	End Sub
+
 	Protected Sub DeleteFile(ByVal fiFile As FileInfo)
 		Try
 
@@ -93,7 +118,7 @@ Public Class clsIonicZipTools
 			Thread.Sleep(250)
 			
 		Catch ex As Exception
-			' Log this as an error, but still return True
+			' Log this as an error, but don't treat this as fatal
 			m_Message = "Error deleting " & fiFile.FullName & ": " & ex.Message
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 		End Try
@@ -340,7 +365,7 @@ Public Class clsIonicZipTools
 
 			Dim fiCompressedFile = New FileInfo(fiFile.FullName & ".gz")
 			If Not fiCompressedFile.Exists Then
-				m_Message = "GZip.exe did not create a .gz file"
+				m_Message = "GZip.exe did not create a .gz file: " & fiCompressedFile.FullName
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 				Return False
 			End If
@@ -408,6 +433,13 @@ Public Class clsIonicZipTools
 
 			' Update the file modification time of the .gz file to use the modification time of the original file
 			Dim fiGZippedFile = New FileInfo(GZipFilePath)
+
+			If Not fiGZippedFile.Exists Then
+				m_Message = "IonicZip did not create a .gz file: " & GZipFilePath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
 			fiGZippedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc
 
 		Catch ex As Exception
@@ -598,6 +630,101 @@ Public Class clsIonicZipTools
 	End Function
 
 	''' <summary>
+	''' Verifies that the zip file exists and is not corrupt
+	''' If the file size is less than 2 GB, then also performs a full CRC check of the data
+	''' </summary>
+	''' <param name="zipFilePath">Zip file to check</param>
+	''' <returns>True if a valid zip file, otherwise false</returns>	
+	Public Function VerifyZipFile(ByVal zipFilePath As String) As Boolean
+		Return VerifyZipFile(zipFilePath, crcCheckThresholdGB:=2)
+	End Function
+
+	''' <summary>
+	''' Verifies that the zip file exists.  
+	''' If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
+	''' </summary>
+	''' <param name="zipFilePath">Zip file to check</param>
+	''' <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
+	''' <returns>True if a valid zip file, otherwise false</returns>
+	Public Function VerifyZipFile(ByVal zipFilePath As String, ByVal crcCheckThresholdGB As Single) As Boolean
+
+		Try
+			' Wait 150 msec
+			Thread.Sleep(150)
+
+			' Confirm that the zip file was created
+			Dim fiZipFile = New FileInfo(zipFilePath)
+			If Not fiZipFile.Exists Then
+				m_Message = "Zip file not found: " & zipFilePath
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
+			' Perform a quick check of the zip file (simply iterates over the directory entries)
+			Dim blnsuccess = Ionic.Zip.ZipFile.CheckZip(zipFilePath)
+
+			If Not blnsuccess Then
+				If String.IsNullOrEmpty(m_Message) Then
+					m_Message = "Zip quick check failed for " & zipFilePath
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				End If
+				Return False
+			End If
+
+			' For zip files less than 2 GB in size, perform a full unzip test to confirm that the file is not corrupted
+			Dim crcCheckThresholdBytes As Int64 = CLng(crcCheckThresholdGB * 1024 * 1024 * 1024)
+
+			If fiZipFile.Length < crcCheckThresholdBytes Then
+
+				' Unzip each zipped file to a byte buffer (no need to actually write to disk)
+
+				Dim objZipper = New Ionic.Zip.ZipFile(zipFilePath)
+
+				Dim objEntries As ICollection(Of Ionic.Zip.ZipEntry)
+				objEntries = objZipper.SelectEntries("*")
+
+				For Each objItem As Ionic.Zip.ZipEntry In objEntries
+
+					If Not objItem.IsDirectory Then
+
+						Dim bytBuffer As Byte() = New Byte(8095) {}
+						Dim n As Integer
+						Dim totalBytesRead As Int64 = 0
+
+						Using srReader = objItem.OpenReader()
+
+							Do
+								n = srReader.Read(bytBuffer, 0, bytBuffer.Length)
+								totalBytesRead += n
+							Loop While (n > 0)
+
+							If (srReader.Crc <> objItem.Crc) Then
+								m_Message = String.Format("Zip entry " & objItem.FileName & " failed the CRC Check in " & zipFilePath & " (0x{0:X8} != 0x{1:X8})", srReader.Crc, objItem.Crc)
+							End If
+
+							If (totalBytesRead <> objItem.UncompressedSize) Then
+								m_Message = String.Format("Unexpected number of bytes for entry " & objItem.FileName & " in " & zipFilePath & " ({0} != {1})", totalBytesRead, objItem.UncompressedSize)
+							End If
+
+						End Using
+
+					End If
+
+				Next
+
+			End If
+
+		Catch ex As Exception
+			m_Message = "Error verifying zip file " & zipFilePath & ": " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
 	''' Stores SourceFilePath in a zip file with the same name, but extension .zip
 	''' </summary>
 	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
@@ -626,8 +753,6 @@ Public Class clsIonicZipTools
 		Dim dtStartTime As DateTime
 		Dim dtEndTime As DateTime
 
-		Dim objZipper As Ionic.Zip.ZipFile
-
 		Dim fiFile = New FileInfo(SourceFilePath)
 
 		m_Message = String.Empty
@@ -655,7 +780,7 @@ Public Class clsIonicZipTools
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .zip file: " & ZipFilePath)
 			End If
 
-			objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
+			Dim objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
 			objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
 			dtStartTime = DateTime.UtcNow
@@ -675,6 +800,10 @@ Public Class clsIonicZipTools
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 			Return False
 		End Try
+
+		If Not VerifyZipFile(ZipFilePath) Then
+			Return False
+		End If
 
 		If DeleteSourceAfterZip Then
 			DeleteFile(fiFile)
@@ -775,6 +904,10 @@ Public Class clsIonicZipTools
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 			Return False
 		End Try
+
+		If Not VerifyZipFile(ZipFilePath) Then
+			Return False
+		End If
 
 		Return True
 

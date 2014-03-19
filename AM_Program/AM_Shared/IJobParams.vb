@@ -79,7 +79,9 @@ Public Interface IJobParams
 
 	Function RequestTask() As clsDBTask.RequestTaskResult
 
+	Sub SetParam(ByVal KeyName As String, ByVal Value As String)
 	Sub SetParam(ByVal Section As String, ByVal KeyName As String, ByVal Value As String)
+
 #End Region
 
 End Interface

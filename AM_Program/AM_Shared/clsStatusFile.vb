@@ -956,7 +956,7 @@ Public Class clsStatusFile
 		StoreRecentErrorMessages(RecentErrorMessages)
 		StoreRecentJobInfo(JobInfo)
 
-		Me.WriteStatusFile(ForceLogToBrokerDB)
+		WriteStatusFile(ForceLogToBrokerDB)
 
 	End Sub
 
@@ -968,7 +968,7 @@ Public Class clsStatusFile
 	Public Sub UpdateAndWrite(ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
 		m_Progress = PercentComplete
-		Me.WriteStatusFile()
+		WriteStatusFile()
 
 	End Sub
 
@@ -986,7 +986,7 @@ Public Class clsStatusFile
 		m_TaskStatus = eTaskStatus
 		m_TaskStatusDetail = eTaskStatusDetail
 		m_Progress = PercentComplete
-		Me.WriteStatusFile()
+		WriteStatusFile()
 
 	End Sub
 
@@ -1003,7 +1003,7 @@ Public Class clsStatusFile
 		m_Progress = PercentComplete
 		m_SpectrumCount = SpectrumCountTotal
 
-		Me.WriteStatusFile()
+		WriteStatusFile()
 
 	End Sub
 
@@ -1041,7 +1041,7 @@ Public Class clsStatusFile
 		StoreNewErrorMessage(MostRecentErrorMessage, True)
 		StoreRecentJobInfo(RecentJobInfo)
 
-		Me.WriteStatusFile(ForceLogToBrokerDB)
+		WriteStatusFile(ForceLogToBrokerDB)
 
 	End Sub
 
@@ -1064,7 +1064,7 @@ Public Class clsStatusFile
 		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
 		m_MostRecentLogMessage = ManagerIdleMessage
 
-		Me.WriteStatusFile(ForceLogToBrokerDB)
+		WriteStatusFile(ForceLogToBrokerDB)
 	End Sub
 
 	''' <summary>
@@ -1087,7 +1087,7 @@ Public Class clsStatusFile
 		StoreNewErrorMessage(IdleErrorMessage, True)
 		StoreRecentJobInfo(RecentJobInfo)
 
-		Me.WriteStatusFile(ForceLogToBrokerDB)
+		WriteStatusFile(ForceLogToBrokerDB)
 
 	End Sub
 
@@ -1114,7 +1114,7 @@ Public Class clsStatusFile
 		StoreRecentErrorMessages(RecentErrorMessages)
 		StoreRecentJobInfo(RecentJobInfo)
 
-		Me.WriteStatusFile(ForceLogToBrokerDB)
+		WriteStatusFile(ForceLogToBrokerDB)
 	End Sub
 
 	''' <summary>
@@ -1158,7 +1158,7 @@ Public Class clsStatusFile
 		StoreRecentJobInfo(RecentJobInfo)
 		StoreRecentErrorMessages(RecentErrorMessages)
 
-		Me.WriteStatusFile(True)
+		WriteStatusFile(True)
 	End Sub
 
 	''' <summary>
@@ -1186,7 +1186,7 @@ Public Class clsStatusFile
 		StoreRecentErrorMessages(RecentErrorMessages)
 		StoreRecentJobInfo(RecentJobInfo)
 
-		Me.WriteStatusFile(True)
+		WriteStatusFile(True)
 	End Sub
 
 	''' <summary>
