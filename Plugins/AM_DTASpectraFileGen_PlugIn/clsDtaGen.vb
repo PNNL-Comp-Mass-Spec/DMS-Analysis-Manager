@@ -8,6 +8,8 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public MustInherit Class clsDtaGen
 	Implements ISpectraFileProcessor
@@ -140,7 +142,7 @@ Public MustInherit Class clsDtaGen
 	Protected Function VerifyDirExists(ByVal TestDir As String) As Boolean
 
 		'Verifies that the specified directory exists
-		If System.IO.Directory.Exists(TestDir) Then
+		If Directory.Exists(TestDir) Then
 			m_ErrMsg = ""
 			Return True
 		Else
@@ -152,7 +154,7 @@ Public MustInherit Class clsDtaGen
 
 	Protected Function VerifyFileExists(ByVal TestFile As String) As Boolean
 		'Verifies specified file exists
-		If System.IO.File.Exists(TestFile) Then
+		If File.Exists(TestFile) Then
 			m_ErrMsg = ""
 			Return True
 		Else
@@ -194,12 +196,12 @@ Public MustInherit Class clsDtaGen
 		'extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This
 		'	function removes those files
 
-		Dim WorkDir As New System.IO.DirectoryInfo(m_WorkDir)
-		Dim TestFile As System.IO.FileInfo
-		Dim TestStr As String = ".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$"
+		Dim WorkDir As New DirectoryInfo(m_WorkDir)
+		Dim TestFile As FileInfo
+		Const TestStr As String = ".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$"
 
 		For Each TestFile In WorkDir.GetFiles
-			If Not System.Text.RegularExpressions.Regex.IsMatch(TestFile.Extension, TestStr, System.Text.RegularExpressions.RegexOptions.IgnoreCase) Then
+			If Not Regex.IsMatch(TestFile.Extension, TestStr, RegexOptions.IgnoreCase) Then
 				Try
 					TestFile.Delete()
 				Catch err As Exception
@@ -214,8 +216,8 @@ Public MustInherit Class clsDtaGen
 	End Function
 
 	Protected Sub LogDTACreationStats(ByVal strProcedureName As String, ByVal strDTAToolName As String, ByVal strErrorMessage As String)
-		Dim objFolderInfo As System.IO.DirectoryInfo
-		Dim objFiles() As System.IO.FileInfo
+		Dim objFolderInfo As DirectoryInfo
+		Dim objFiles() As FileInfo
 
 		Dim intIndex As Integer
 		Dim intDTACount As Integer
@@ -243,7 +245,7 @@ Public MustInherit Class clsDtaGen
 		' Now count the number of .Dta files in the working folder
 
 		Try
-			objFolderInfo = New System.IO.DirectoryInfo(m_WorkDir)
+			objFolderInfo = New DirectoryInfo(m_WorkDir)
 
 			objFiles = objFolderInfo.GetFiles("*.dta")
 			If objFiles Is Nothing OrElse objFiles.Length <= 0 Then

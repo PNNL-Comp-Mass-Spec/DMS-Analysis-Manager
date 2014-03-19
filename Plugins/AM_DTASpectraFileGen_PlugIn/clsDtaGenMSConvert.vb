@@ -10,6 +10,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsDtaGenMSConvert
 	Inherits clsDtaGenThermoRaw
@@ -53,7 +54,7 @@ Public Class clsDtaGenMSConvert
 		Dim strDTAToolPath As String
 
 		Dim ProteoWizardDir As String = m_MgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-		strDTAToolPath = System.IO.Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME)
+		strDTAToolPath = Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME)
 
 		Return strDTAToolPath
 
@@ -144,17 +145,17 @@ Public Class clsDtaGenMSConvert
 		' Construct the path to the .raw file
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 			Case clsAnalysisResources.eRawDataTypeConstants.mzML
-				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 			Case Else
 				m_ErrMsg = "Raw data file type not supported: " & eRawDataType.ToString()
 				Return False
 		End Select
 
-		m_InstrumentFileName = System.IO.Path.GetFileName(RawFilePath)
+		m_InstrumentFileName = Path.GetFileName(RawFilePath)
 		m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
 
 		ScanStart = 1
@@ -255,9 +256,9 @@ Public Class clsDtaGenMSConvert
 
 		If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "MSConvert", True) Then
 			' .RunProgram returned False
-			LogDTACreationStats("ConvertRawToMGF", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+			LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
 
-			m_ErrMsg = "Error running " & System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
+			m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
 			Return False
 		End If
 

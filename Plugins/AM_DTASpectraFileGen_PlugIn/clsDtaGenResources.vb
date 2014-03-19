@@ -7,7 +7,6 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsDtaGenResources

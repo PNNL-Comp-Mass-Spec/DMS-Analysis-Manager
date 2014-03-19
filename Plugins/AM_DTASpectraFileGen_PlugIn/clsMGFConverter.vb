@@ -1,6 +1,8 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Collections.Generic
+Imports System.IO
 
 Public Class clsMGFConverter
 
@@ -66,14 +68,14 @@ Public Class clsMGFConverter
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
 		End If
 
-		strMGFFilePath = System.IO.Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MGF_EXTENSION)
+		strMGFFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MGF_EXTENSION)
 
 		If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
 			' Read the .mzML file to construct a mapping between "title" line and scan number
 			' If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
 
 			Dim strMzMLFilePath As String
-			strMzMLFilePath = System.IO.Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
+			strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
 
 			blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName)
 			If Not blnSuccess Then
@@ -103,9 +105,9 @@ Public Class clsMGFConverter
 
 	End Function
 
-	Protected Function GetCVParams(ByRef objXMLReader As System.Xml.XmlTextReader, ByVal strCurrentElementName As String) As System.Collections.Generic.Dictionary(Of String, String)
+	Protected Function GetCVParams(ByRef objXMLReader As Xml.XmlTextReader, ByVal strCurrentElementName As String) As Dictionary(Of String, String)
 
-		Dim lstCVParams As System.Collections.Generic.Dictionary(Of String, String) = New System.Collections.Generic.Dictionary(Of String, String)()
+		Dim lstCVParams As Dictionary(Of String, String) = New Dictionary(Of String, String)()
 		Dim strAccession As String
 		Dim strValue As String
 
@@ -130,7 +132,7 @@ Public Class clsMGFConverter
 
 	End Function
 
-	Protected Function ParseMzMLFile(ByVal strMzMLFilePath As String, ByRef blnAutoNumberScans As Boolean, lstSpectrumIDToScanNumber As System.Collections.Generic.Dictionary(Of String, udtScanInfoType)) As Boolean
+	Protected Function ParseMzMLFile(ByVal strMzMLFilePath As String, ByRef blnAutoNumberScans As Boolean, lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
 
 		Dim strSpectrumID As String = String.Empty
 
@@ -143,15 +145,15 @@ Public Class clsMGFConverter
 		Dim strValue As String = String.Empty
 		Dim intValue As Integer
 
-		Dim lstCVParams As System.Collections.Generic.Dictionary(Of String, String)
+		Dim lstCVParams As Dictionary(Of String, String)
 
 		blnAutoNumberScans = False
 
 		If lstSpectrumIDToScanNumber Is Nothing Then
-			lstSpectrumIDToScanNumber = New System.Collections.Generic.Dictionary(Of String, udtScanInfoType)
+			lstSpectrumIDToScanNumber = New Dictionary(Of String, udtScanInfoType)
 		End If
 
-		Using objXMLReader As System.Xml.XmlTextReader = New System.Xml.XmlTextReader(strMzMLFilePath)
+		Using objXMLReader As Xml.XmlTextReader = New Xml.XmlTextReader(strMzMLFilePath)
 
 			Do While objXMLReader.Read()
 				XMLTextReaderSkipWhitespace(objXMLReader)
@@ -211,7 +213,7 @@ Public Class clsMGFConverter
 
 	End Function
 
-	Private Function XMLTextReaderGetAttributeValue(ByRef objXMLReader As System.Xml.XmlTextReader, ByVal strAttributeName As String, ByVal strValueIfMissing As String) As String
+	Private Function XMLTextReaderGetAttributeValue(ByRef objXMLReader As Xml.XmlTextReader, ByVal strAttributeName As String, ByVal strValueIfMissing As String) As String
 		objXMLReader.MoveToAttribute(strAttributeName)
 		If objXMLReader.ReadAttributeValue() Then
 			Return objXMLReader.Value
@@ -220,7 +222,7 @@ Public Class clsMGFConverter
 		End If
 	End Function
 
-	Private Function XMLTextReaderGetInnerText(ByRef objXMLReader As System.Xml.XmlTextReader) As String
+	Private Function XMLTextReaderGetInnerText(ByRef objXMLReader As Xml.XmlTextReader) As String
 		Dim strValue As String = String.Empty
 		Dim blnSuccess As Boolean
 
@@ -238,7 +240,7 @@ Public Class clsMGFConverter
 		Return strValue
 	End Function
 
-	Private Sub XMLTextReaderSkipWhitespace(ByRef objXMLReader As System.Xml.XmlTextReader)
+	Private Sub XMLTextReaderSkipWhitespace(ByRef objXMLReader As Xml.XmlTextReader)
 		If objXMLReader.NodeType = Xml.XmlNodeType.Whitespace Then
 			' Whitspace; read the next node
 			objXMLReader.Read()
@@ -256,8 +258,8 @@ Public Class clsMGFConverter
 		Dim blnSuccess As Boolean
 		Dim blnAutoNumberScans As Boolean
 
-		Dim lstSpectrumIDtoScanNumber As System.Collections.Generic.Dictionary(Of String, udtScanInfoType)
-		lstSpectrumIDtoScanNumber = New System.Collections.Generic.Dictionary(Of String, udtScanInfoType)
+		Dim lstSpectrumIDtoScanNumber As Dictionary(Of String, udtScanInfoType)
+		lstSpectrumIDtoScanNumber = New Dictionary(Of String, udtScanInfoType)
 
 		Try
 
@@ -283,11 +285,11 @@ Public Class clsMGFConverter
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating the Title lines in the MGF file")
 			End If
 
-			strNewMGFFile = System.IO.Path.GetTempFileName
+			strNewMGFFile = Path.GetTempFileName
 
 			' Now read the MGF file and update the title lines
-			Using srSourceMGF As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMGFFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-				Using swNewMGF As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strNewMGFFile, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using srSourceMGF As StreamReader = New StreamReader(New FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+				Using swNewMGF As StreamWriter = New StreamWriter(New FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					Do While srSourceMGF.Peek > -1
 						strLineIn = srSourceMGF.ReadLine()
@@ -322,11 +324,11 @@ Public Class clsMGFConverter
 
 			' Delete the original .mgf file and replace it with strNewMGFFile
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			System.Threading.Thread.Sleep(500)
+			Threading.Thread.Sleep(500)
 			clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel)
-			System.Threading.Thread.Sleep(500)
+			Threading.Thread.Sleep(500)
 
-			Dim ioNewMGF As System.IO.FileInfo = New System.IO.FileInfo(strNewMGFFile)
+			Dim ioNewMGF As FileInfo = New FileInfo(strNewMGFFile)
 			ioNewMGF.MoveTo(strMGFFilePath)
 
 			blnSuccess = True

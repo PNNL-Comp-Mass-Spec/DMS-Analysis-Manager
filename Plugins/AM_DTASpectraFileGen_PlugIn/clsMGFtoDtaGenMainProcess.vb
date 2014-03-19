@@ -7,6 +7,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsMGFtoDtaGenMainProcess
 	Inherits clsDtaGen
@@ -16,7 +17,7 @@ Public Class clsMGFtoDtaGenMainProcess
 #End Region
 
 #Region "Module variables"
-	Private m_thThread As System.Threading.Thread
+	Private m_thThread As Threading.Thread
 
 	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
@@ -31,7 +32,7 @@ Public Class clsMGFtoDtaGenMainProcess
     Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) 
         MyBase.Setup(InitParams)
 
-		m_DtaToolNameLoc = System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
+		m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
 
     End Sub
 
@@ -49,7 +50,7 @@ Public Class clsMGFtoDtaGenMainProcess
         'Make the DTA files (the process runs in a separate thread)
 		Try
 			If USE_THREADING Then
-				m_thThread = New System.Threading.Thread(AddressOf MakeDTAFilesThreaded)
+				m_thThread = New Threading.Thread(AddressOf MakeDTAFilesThreaded)
 				m_thThread.Start()
 				m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
 			Else
@@ -69,7 +70,7 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private Function VerifyMGFFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
 		'Verifies a .mgf file exists in specfied directory
-		If System.IO.File.Exists(System.IO.Path.Combine(WorkDir, DSName & clsAnalysisResources.DOT_MGF_EXTENSION)) Then
+		If File.Exists(Path.Combine(WorkDir, DSName & clsAnalysisResources.DOT_MGF_EXTENSION)) Then
 			m_ErrMsg = ""
 			Return True
 		Else
@@ -126,7 +127,7 @@ Public Class clsMGFtoDtaGenMainProcess
 		Dim MGFFile As String
 
 		'Get the parameters from the various setup files
-		MGFFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
+		MGFFile = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
 		mScanStart = m_JobParams.GetJobParameter("ScanStart", 0)
 		mScanStop = m_JobParams.GetJobParameter("ScanStop", 0)
 		mMWLower = m_JobParams.GetJobParameter("MWStart", 0)
@@ -213,8 +214,8 @@ Public Class clsMGFtoDtaGenMainProcess
 	Private Function VerifyDtaCreation() As Boolean
 
 		'Verify that the _DTA.txt file was created and is not empty
-		Dim fiCDTAFile As System.IO.FileInfo
-		fiCDTAFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_DTA.txt"))
+		Dim fiCDTAFile As FileInfo
+		fiCDTAFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_DTA.txt"))
 
 		If Not fiCDTAFile.Exists Then
 			m_ErrMsg = "_DTA.txt file not created"

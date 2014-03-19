@@ -12,6 +12,8 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Collections.Generic
+Imports System.IO
 
 Public Class clsDtaGenDeconConsole
 	Inherits clsDtaGenThermoRaw
@@ -53,7 +55,7 @@ Public Class clsDtaGenDeconConsole
 		Dim strDTAToolPath As String
 
 		Dim DeconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")			' DeconConsole.exe is stored in the DeconTools folder
-		strDTAToolPath = System.IO.Path.Combine(DeconToolsDir, DECON_CONSOLE_FILENAME)
+		strDTAToolPath = Path.Combine(DeconToolsDir, DECON_CONSOLE_FILENAME)
 
 		Return strDTAToolPath
 
@@ -141,13 +143,13 @@ Public Class clsDtaGenDeconConsole
 		' Construct the path to the .raw file
 		Select Case eRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				RawFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 			Case Else
 				m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " & eRawDataType.ToString()
 				Return False
 		End Select
 
-		m_InstrumentFileName = System.IO.Path.GetFileName(RawFilePath)
+		m_InstrumentFileName = Path.GetFileName(RawFilePath)
 		mInputFilePath = RawFilePath
 		m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
 
@@ -176,7 +178,7 @@ Public Class clsDtaGenDeconConsole
 			m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile")
 			Return False
 		Else
-			strParamFilePath = IO.Path.Combine(m_WorkDir, strParamFilePath)
+			strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath)
 		End If
 
 		'Set up command
@@ -200,7 +202,7 @@ Public Class clsDtaGenDeconConsole
 
 		' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
-		Dim dtFinishTime As System.DateTime
+		Dim dtFinishTime As DateTime
 		Dim blnFinishedProcessing As Boolean
 
 		ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
@@ -215,10 +217,10 @@ Public Class clsDtaGenDeconConsole
 
 		' Look for file Dataset*BAD_ERROR_log.txt
 		' If it exists, an exception occurred
-		Dim diWorkdir As System.IO.DirectoryInfo
-		diWorkdir = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir))
+		Dim diWorkdir As DirectoryInfo
+		diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
 
-		For Each fiFile As System.IO.FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
+		For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
 			m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ": " & fiFile.Name)
 			blnSuccess = False
@@ -235,10 +237,10 @@ Public Class clsDtaGenDeconConsole
 
 		If Not blnSuccess Then
 			' .RunProgram returned False
-			LogDTACreationStats("ConvertRawToMGF", System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+			LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
 
 			If Not String.IsNullOrEmpty(m_ErrMsg) Then
-				m_ErrMsg = "Error running " & System.IO.Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
+				m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
 			End If
 
 			Return False
@@ -254,7 +256,7 @@ Public Class clsDtaGenDeconConsole
 
 	Protected Overrides Sub MonitorProgress()
 
-		Dim dtFinishTime As System.DateTime
+		Dim dtFinishTime As DateTime
 		Dim blnFinishedProcessing As Boolean
 
 		ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
@@ -273,7 +275,7 @@ Public Class clsDtaGenDeconConsole
 			' The DeconConsole Log File reports that the task is complete
 			' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
 
-			If System.DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
+			If DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, but the DeconConsole CmdRunner is still active")
 
 				mDeconConsoleFinishedDespiteProgRunnerError = True
@@ -281,17 +283,17 @@ Public Class clsDtaGenDeconConsole
 				' Abort processing
 				m_RunProgTool.AbortProgramNow()
 
-				System.Threading.Thread.Sleep(3000)
+				Threading.Thread.Sleep(3000)
 			End If
 		End If
 
 	End Sub
 
-	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As System.DateTime)
+	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As DateTime)
 
 		''Dim TOTAL_WORKFLOW_STEPS As Integer = 2
 
-		Dim fiFileInfo As System.IO.FileInfo
+		Dim fiFileInfo As FileInfo
 
 		Dim strLogFilePath As String
 		Dim strLineIn As String
@@ -308,14 +310,14 @@ Public Class clsDtaGenDeconConsole
 			Select Case m_RawDataType
 				Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
 					' As of 11/19/2010, the _Log.txt file is created inside the .D folder
-					strLogFilePath = System.IO.Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
+					strLogFilePath = Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
 				Case Else
-					strLogFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
+					strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
 			End Select
 
-			If System.IO.File.Exists(strLogFilePath) Then
+			If File.Exists(strLogFilePath) Then
 
-				Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+				Using srInFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 					Do While srInFile.Peek >= 0
 						strLineIn = srInFile.ReadLine
@@ -327,7 +329,7 @@ Public Class clsDtaGenDeconConsole
 								blnDateValid = False
 								If intCharIndex > 1 Then
 									' Parse out the date from strLineIn
-									If System.DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+									If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
 										blnDateValid = True
 									Else
 										' Unable to parse out the date
@@ -336,7 +338,7 @@ Public Class clsDtaGenDeconConsole
 								End If
 
 								If Not blnDateValid Then
-									fiFileInfo = New System.IO.FileInfo(strLogFilePath)
+									fiFileInfo = New FileInfo(strLogFilePath)
 									dtFinishTime = fiFileInfo.LastWriteTime
 								End If
 
@@ -393,7 +395,7 @@ Public Class clsDtaGenDeconConsole
 				End Using
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			' Ignore errors here		
 			If m_DebugLevel >= 4 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exception in ParseDeconToolsLogFile: " & ex.Message)
@@ -407,7 +409,7 @@ Public Class clsDtaGenDeconConsole
 			' Scan= 16500; PercentComplete= 89.2
 
 			Dim strProgressStats() As String
-			Dim kvStat As System.Collections.Generic.KeyValuePair(Of String, String)
+			Dim kvStat As KeyValuePair(Of String, String)
 
 			strProgressStats = strScanLine.Split(";"c)
 
@@ -441,20 +443,20 @@ Public Class clsDtaGenDeconConsole
 	''' <param name="strData"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function ParseKeyValue(ByVal strData As String) As System.Collections.Generic.KeyValuePair(Of String, String)
+	Protected Function ParseKeyValue(ByVal strData As String) As KeyValuePair(Of String, String)
 		Dim intCharIndex As Integer
 		intCharIndex = strData.IndexOf("="c)
 
 		If intCharIndex > 0 Then
 			Try
-				Return New System.Collections.Generic.KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
+				Return New KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
 				 strData.Substring(intCharIndex + 1).Trim())
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
 		End If
 
-		Return New System.Collections.Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty)
+		Return New KeyValuePair(Of String, String)(String.Empty, String.Empty)
 
 	End Function
 

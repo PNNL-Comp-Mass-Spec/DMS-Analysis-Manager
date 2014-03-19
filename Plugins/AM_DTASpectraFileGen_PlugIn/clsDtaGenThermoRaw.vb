@@ -15,7 +15,6 @@ Imports System.IO
 Imports System.Threading
 Imports System.Text.RegularExpressions
 
-
 Public Class clsDtaGenThermoRaw
 	Inherits clsDtaGen
 
@@ -153,7 +152,7 @@ Public Class clsDtaGenThermoRaw
 	''' <remarks></remarks>
 	Protected Function VerifyRawFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
 
-		Dim strExtension As String = ".xyz"
+		Dim strExtension As String
 
 		'Verifies a the data file exists in specfied directory
 		Select Case m_RawDataType
@@ -322,7 +321,7 @@ Public Class clsDtaGenThermoRaw
 		Dim MWUpper As String
 		Dim MassTol As String
 		Dim IonCount As String
-		Dim CreateDefaultCharges As Boolean = True
+		Dim CreateDefaultCharges As Boolean
 		Dim ExplicitChargeStart As Short			' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
 		Dim ExplicitChargeEnd As Short				' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
 
@@ -412,7 +411,7 @@ Public Class clsDtaGenThermoRaw
 			mDTAWatcher = New FileSystemWatcher(m_WorkDir, "*.dta")
 
 			mDTAWatcher.IncludeSubdirectories = False
-			mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
+			mDTAWatcher.NotifyFilter = NotifyFilters.FileName Or NotifyFilters.CreationTime
 
 			mDTAWatcher.EnableRaisingEvents = True
 		Else
@@ -421,7 +420,7 @@ Public Class clsDtaGenThermoRaw
 			mDeconMSnProgressWatcher = New FileSystemWatcher(m_WorkDir, m_Dataset & "_DeconMSn_progress.txt")
 
 			mDeconMSnProgressWatcher.IncludeSubdirectories = False
-			mDeconMSnProgressWatcher.NotifyFilter = IO.NotifyFilters.LastWrite
+			mDeconMSnProgressWatcher.NotifyFilter = NotifyFilters.LastWrite
 
 			mDeconMSnProgressWatcher.EnableRaisingEvents = True
 		End If
@@ -603,15 +602,14 @@ Public Class clsDtaGenThermoRaw
 	End Sub
 
 	Private Sub UpdateDTAProgress(ByVal DTAFileName As String)
-		Static reDTAFile As System.Text.RegularExpressions.Regex
+		Static reDTAFile As Regex
 
-		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim reMatch As Match
 		Dim intScanNumber As Integer
 
 		If reDTAFile Is Nothing Then
-			reDTAFile = New System.Text.RegularExpressions.Regex("(\d+)\.\d+\.\d+\.dta$", _
-			 System.Text.RegularExpressions.RegexOptions.Compiled Or _
-			 System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			reDTAFile = New Regex("(\d+)\.\d+\.\d+\.dta$", _
+			RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 		End If
 
 		Try
@@ -668,8 +666,8 @@ Public Class clsDtaGenThermoRaw
 	''' <remarks></remarks>
 	Private Sub m_RunProgTool_LoopWaiting() Handles m_RunProgTool.LoopWaiting
 
-		Static dtLastDtaCountTime As System.DateTime = System.DateTime.UtcNow
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+		Static dtLastDtaCountTime As DateTime = DateTime.UtcNow
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
 		' Synchronize the stored Debug level with the value stored in the database
 		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -677,14 +675,14 @@ Public Class clsDtaGenThermoRaw
 
 		' Count the number of .Dta files or monitor the log file to determine the percent complete
 		' (only count the files every 15 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 15 Then
-			dtLastDtaCountTime = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastDtaCountTime).TotalSeconds >= 15 Then
+			dtLastDtaCountTime = DateTime.UtcNow
 			MonitorProgress()
 		End If
 
 		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = DateTime.UtcNow
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
 		End If
 
