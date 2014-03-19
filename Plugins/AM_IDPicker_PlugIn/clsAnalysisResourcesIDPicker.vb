@@ -64,9 +64,21 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		Dim blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", False)
+
+		If blnSplitFasta Then
+			' Override the SplitFasta job parameter
+			m_jobParams.SetParam("SplitFasta", "False")
+		End If
+		
 		'Retrieve the Fasta file
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
+		If blnSplitFasta Then
+			' Restore the setting for SplitFasta
+			m_jobParams.SetParam("SplitFasta", "True")
+		End If
+		
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
