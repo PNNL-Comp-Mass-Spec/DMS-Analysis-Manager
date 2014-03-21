@@ -154,7 +154,6 @@ Public Class clsAnalysisResourcesExtraction
 		m_jobParams.AddResultFileExtensionToSkip("_out.txt") 'Unzipped, concatenated OUT
 		m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 		m_jobParams.AddResultFileExtensionToSkip(".out")  'DTA files
-		m_jobParams.AddResultFileExtensionToSkip("_PepToProtMapMTS.txt") ' Created by the PeptideToProteinMapEngine when creating the _ProteinMods.txt file
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

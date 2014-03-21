@@ -308,14 +308,39 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Public Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String, blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
+	Public Function CreatePeptideToProteinMapping(
+	  ByVal ResultsFileName As String,
+	  ByVal ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
+
+		Const blnResultsIncludeAutoAddedDecoyPeptides = False
+		Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
+		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat)
+
+	End Function
+
+	Public Function CreatePeptideToProteinMapping(
+	  ByVal ResultsFileName As String,
+	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
 
 		Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
 		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
 
 	End Function
 
-	Public Function CreatePeptideToProteinMapping(ByVal ResultsFileName As String, blnResultsIncludeAutoAddedDecoyPeptides As Boolean, ByVal localOrgDbFolder As String) As IJobParams.CloseOutType
+	Public Function CreatePeptideToProteinMapping(
+	  ByVal ResultsFileName As String,
+	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
+	  ByVal localOrgDbFolder As String) As IJobParams.CloseOutType
+
+		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile)
+
+	End Function
+
+	Public Function CreatePeptideToProteinMapping(
+	  ByVal ResultsFileName As String,
+	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
+	  ByVal localOrgDbFolder As String,
+	  ByVal ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
 
 		' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
 		Dim dbFilename As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
@@ -402,7 +427,7 @@ Public Class clsMSGFDBUtils
 
 				.MatchPeptidePrefixAndSuffixToProtein = False
 				.OutputProteinSequence = False
-				.PeptideInputFileFormat = PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile
+				.PeptideInputFileFormat = ePeptideInputFileFormat
 				.PeptideFileSkipFirstLine = False
 				.ProteinDataRemoveSymbolCharacters = True
 				.ProteinInputFilePath = strFastaFilePath
@@ -1918,7 +1943,6 @@ Public Class clsMSGFDBUtils
 				Loop
 
 			End Using
-
 
 			If intPeptideCount = 0 Then
 				mErrorMessage = "Peptide to protein mapping file is empty"

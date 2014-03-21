@@ -79,7 +79,6 @@ Public Class clsExtractToolRunner
 				mGeneratedFastaFilePath = Path.Combine(OrgDbDir, FastaFileName)
 			End If
 
-
 			Select Case m_jobParams.GetParam("ResultType")
 				Case clsAnalysisResources.RESULT_TYPE_SEQUEST	'Sequest result type
 
@@ -104,9 +103,8 @@ Public Class clsExtractToolRunner
 						m_progress = SEQUEST_PROGRESS_PHRP_DONE	  ' 66% done
 						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
 						strCurrentAction = "running peptide prophet for Sequest"
-						Result = RunPeptideProphet()
+						RunPeptideProphet()
 					End If
-
 
 				Case clsAnalysisResources.RESULT_TYPE_XTANDEM
 					'Run PHRP
