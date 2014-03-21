@@ -50,6 +50,7 @@
       <HintPath>..\..\AM_Common\Mage.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader, Version=1.0.5067.27946, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
