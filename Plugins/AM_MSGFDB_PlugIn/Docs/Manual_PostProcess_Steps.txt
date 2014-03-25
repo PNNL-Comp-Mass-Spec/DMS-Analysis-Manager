@@ -1,0 +1,11 @@
+1) Create a decoy version of the fasta file using Protein Digestion Simulator (reversed protein sequences)
+
+2) Append the decoy fasta file to the forward fasta file
+
+3) Convert the .mzid file to a .tsv file:
+
+	"C:\Program Files\Java\jre7\bin\java.exe"  -Xmx2000M -cp C:\DMS_Programs\MSGFDB\MSGFPlus.jar edu.ucsd.msjava.ui.MzIDToTsv -i Dataset_msgfplus.mzid -o Dataset_msgfdb.tsv -showQValue 1 -showDecoy 1 -unroll 1
+
+4) Create the _PepToProtMap.txt file:
+
+	"F:\My Documents\Projects\DataMining\Protein_Coverage_Summarizer\PeptidetoProteinMapper\bin\PeptideToProteinMapper.exe" Dataset_msgfdb.tsv /R:C:\DMS_Temp_Org\Proteins_WithDecoy.fasta /H /K

@@ -2009,7 +2009,7 @@ Public Class clsMSGFDBUtils
 
 			TmpFilePath = Path.Combine(m_WorkDir, FileName)
 			If Not File.Exists(TmpFilePath) Then
-				ReportError("MSGFDB results file not found: " & FileName)
+				ReportError("MSGF+ results file not found: " & FileName)
 				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
 			End If
 

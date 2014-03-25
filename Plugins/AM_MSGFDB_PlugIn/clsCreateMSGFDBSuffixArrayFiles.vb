@@ -710,7 +710,6 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				
 				Dim buildSAJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName)
 
-				buildSAJobInfo.ClusterParameters.WorkerNodeGroup = "ComputeNodes"
 				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.AboveNormal
 				buildSAJobInfo.JobParameters.ProjectName = "DMS"
 				buildSAJobInfo.JobParameters.TemplateName = "DMS"

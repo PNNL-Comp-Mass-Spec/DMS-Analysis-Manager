@@ -32,6 +32,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	Protected mWorkingDirectoryInUse As String
 
+	Protected mUsingHPC As Boolean
+	Protected mHPCJobID As Integer
+
+	Protected mMSGFPlusComplete As Boolean
+	Protected mMSGFPlusCompletionTime As DateTime
+
 	Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
@@ -123,7 +129,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-
 			If udtHPCOptions.UsingHPC Then
 				' Make sure the MSGF+ program is up-to-date on the HPC share
 				' Warning: if MSGF+ is running and the .jar file gets updated, then the running jobs will fail because MSGF+ will throw an exception
@@ -133,6 +138,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
 			mToolVersionWritten = False
+
+			mUsingHPC = False
+			mMSGFPlusComplete = False
 
 			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, strScanTypeFilePath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -224,6 +232,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If udtHPCOptions.UsingHPC Then
 				mWorkingDirectoryInUse = String.Copy(udtHPCOptions.WorkDirPath)
+				mUsingHPC = True
 
 				' Synchronize local files to the remote working directory on PIC
 
@@ -239,7 +248,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
 
-				hpcJobInfo.ClusterParameters.WorkerNodeGroup = "ComputeNodes"
 				hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
 				hpcJobInfo.JobParameters.ProjectName = "PIC"
 
@@ -299,9 +307,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				End If
 
 				mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
-				Dim jobID = mComputeCluster.Send(hpcJobInfo)
+				mHPCJobID = mComputeCluster.Send(hpcJobInfo)
 
-				If jobID <= 0 Then
+				If mHPCJobID <= 0 Then
 					m_message = strSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					blnSuccess = False
@@ -318,7 +326,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				End If
 
 				If blnSuccess Then
-					Dim hpcJob = mComputeCluster.Scheduler.OpenJob(jobID)
+					Dim hpcJob = mComputeCluster.Scheduler.OpenJob(mHPCJobID)
 
 					mHPCMonitorInitTimer.Enabled = True
 
@@ -381,14 +389,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
 			End If
 
-
-			If Not blnSuccess Then
-				Msg = "Error running " & strSearchEngineName
+			If blnSuccess Then
+				If Not mMSGFPlusComplete Then
+					mMSGFPlusComplete = True
+					mMSGFPlusCompletionTime = DateTime.UtcNow
+				End If
+			Else
+				If mMSGFPlusComplete Then
+					Msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen"
+				Else
+					Msg = "Error running " & strSearchEngineName
+				End If
 				m_message = clsGlobal.AppendToComment(m_message, Msg)
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-				If Not udtHPCOptions.UsingHPC Then
+				If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
 					If CmdRunner.ExitCode <> 0 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
 					Else
@@ -398,7 +414,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				blnProcessingError = True
 
-			Else
+			End If
+
+			If mMSGFPlusComplete Then
 				m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
 				m_StatusTools.UpdateAndWrite(m_progress)
 				If m_DebugLevel >= 3 Then
@@ -434,7 +452,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			End If
 
-			If Not blnProcessingError Then
+			' Look for the .mzid file
+			' If it exists, then call PostProcessMSGFDBResults even if blnProcessingError is true
+			Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, ResultsFileName))
+
+			If fiResultsFile.Exists Then
 				result = PostProcessMSGFDBResults(ResultsFileName, JavaProgLoc, udtHPCOptions)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					If String.IsNullOrEmpty(m_message) Then
@@ -442,12 +464,16 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					End If
 					blnProcessingError = True
 				End If
-
-				' Copy any newly created files from PIC back to the local working directory
-				' ToDo: Uncomment this code if we run the PeptideToProteinMapper on HPC
-				' SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
-
+			Else
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "MSGF+ results file not found: " & ResultsFileName
+					blnProcessingError = True
+				End If
 			End If
+
+			' Copy any newly created files from PIC back to the local working directory
+			' ToDo: Uncomment this code if we run the PeptideToProteinMapper on HPC
+			' SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
 
 			m_progress = clsMSGFDBUtils.PROGRESS_PCT_COMPLETE
 
@@ -673,9 +699,40 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				mToolVersionWritten = StoreToolVersionInfo()
 			End If
 
+			If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
+				If Not mMSGFPlusComplete Then
+					mMSGFPlusComplete = True
+					mMSGFPlusCompletionTime = DateTime.UtcNow
+				Else
+					If DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
+						' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
+						' Java is likely frozen and thus the process should be aborted
+						Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+
+						' Bump up mMSGFPlusCompletionTime by one hour
+						' This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+						mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1)
+
+						If mUsingHPC Then
+							mComputeCluster.AbortNow()
+						Else
+							CmdRunner.AbortProgramNow()
+						End If
+
+					End If
+				End If
+			End If
+
 		End If
 	End Sub
 
+	''' <summary>
+	''' Renames the results file created by a Parallel MSGF+ instance to have _Part##.mzid as a suffix
+	''' </summary>
+	''' <param name="resultsFileName"></param>
+	''' <returns>The path to the new file if success, otherwise the original filename</returns>
+	''' <remarks></remarks>
 	Private Function ParallelMSGFPlusRenameFile(ByVal resultsFileName As String) As String
 
 		Dim filePathNew = "??"
@@ -686,6 +743,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, m_message)
 
 			Dim fileNameNew = Path.GetFileNameWithoutExtension(fiFile.Name) & "_Part" & iteration & fiFile.Extension
+
+			If Not fiFile.Exists Then Return resultsFileName
 
 			filePathNew = Path.Combine(m_WorkDir, fileNameNew)
 			fiFile.MoveTo(filePathNew)
@@ -731,7 +790,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Sub
 
-	Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String, ByVal JavaProgLoc As String, ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+	''' <summary>
+	''' Convert the .mzid file to a TSV file and create the PeptideToProtein map file
+	''' </summary>
+	''' <param name="ResultsFileName"></param>
+	''' <param name="JavaProgLoc"></param>
+	''' <param name="udtHPCOptions"></param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>Assumes that the calling function has verified that ResultsFileName exists</remarks>
+	Protected Function PostProcessMSGFDBResults(
+	  ByVal ResultsFileName As String,
+	  ByVal JavaProgLoc As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
 		Dim result As IJobParams.CloseOutType
 		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
