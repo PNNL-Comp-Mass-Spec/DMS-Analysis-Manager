@@ -2451,13 +2451,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected Function DefineProgramPaths() As Boolean
 
-		' mJavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
-		' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-		mJavaProgLoc = m_mgrParams.GetParam("JavaLoc")
-		If Not File.Exists(mJavaProgLoc) Then
-			If mJavaProgLoc.Length = 0 Then mJavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-			m_message = "Cannot find Java: " & mJavaProgLoc
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+		' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+		Dim JavaProgLoc = GetJavaProgLoc()
+		If String.IsNullOrEmpty(JavaProgLoc) Then
 			Return False
 		End If
 

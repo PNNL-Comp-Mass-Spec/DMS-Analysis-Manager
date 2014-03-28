@@ -85,13 +85,10 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 			' Note that we need to run MSGFDB with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
-			If Not System.IO.File.Exists(JavaProgLoc) Then
-				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-				m_message = "Cannot find Java: " & JavaProgLoc
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Dim JavaProgLoc = GetJavaProgLoc()
+			If String.IsNullOrEmpty(JavaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
