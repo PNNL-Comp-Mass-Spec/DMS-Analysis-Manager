@@ -186,6 +186,13 @@ Public Class clsDtaGenMSConvert
 
 		'Verify max scan specified is in file
 		If m_MaxScanInFile > 0 Then
+			If ScanStart = 1 AndAlso ScanStop = 999999 AndAlso ScanStop < m_MaxScanInFile Then
+				' The default scan range for processing all scans has traditionally be 1 to 999999
+				' This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
+				' Assume that the user actually wants to analyze all of the spectra
+				ScanStop = m_MaxScanInFile
+			End If
+
 			If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
 			If ScanStop < m_MaxScanInFile Then blnLimitingScanRange = True
 			If ScanStart > 1 Then blnLimitingScanRange = True
@@ -193,7 +200,7 @@ Public Class clsDtaGenMSConvert
 			If ScanStart > 1 Or ScanStop < DEFAULT_SCAN_STOP Then blnLimitingScanRange = True
 		End If
 
-		'Determine max number of scans to be performed
+		'Determine max number of scans to be used
 		m_NumScans = ScanStop - ScanStart + 1
 
 		'Setup a program runner tool to make the spectra files

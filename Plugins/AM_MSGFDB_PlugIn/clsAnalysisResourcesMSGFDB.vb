@@ -24,9 +24,8 @@ Public Class clsAnalysisResourcesMSGFDB
 			' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
 			Dim udtHPCOptions As udtHPCOptionsType = GetHPCOptions(m_jobParams, m_MgrName)
 
-			' Make sure the machine has enough free memory to run MSGFDB
 			If udtHPCOptions.UsingHPC Then
-				' Make sure the working directory exists and that it is empty
+				' Make sure the HPC working directory exists and that it is empty
 				currentTask = "Verify " & udtHPCOptions.WorkDirPath
 
 				Dim diPicFsWorkDir = New DirectoryInfo(udtHPCOptions.WorkDirPath)
@@ -44,12 +43,13 @@ Public Class clsAnalysisResourcesMSGFDB
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
 						CheckParentFolder(diPicFsWorkDir)
-					
+
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					End Try
 
 				End If
 			Else
+				' Make sure the machine has enough free memory to run MSGFDB
 				currentTask = "ValidateFreeMemorySize"
 				If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
 					m_message = "Not enough free memory to run MSGFDB"

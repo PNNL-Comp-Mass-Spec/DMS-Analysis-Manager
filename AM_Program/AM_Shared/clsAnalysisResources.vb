@@ -196,7 +196,7 @@ Public MustInherit Class clsAnalysisResources
 		Public UsingHPC As Boolean
 		Public SharePath As String
 		Public ResourceType As String
-		Public NodeGroup As String
+		' Obsolete parameter; no longer used: Public NodeGroup As String
 		Public MinimumMemoryMB As Integer
 		Public MinimumCores As Integer
 		Public WorkDirPath As String
@@ -2640,7 +2640,7 @@ Public MustInherit Class clsAnalysisResources
 		udtHPCOptions.UsingHPC = Not String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode)
 
 		udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket")
-		udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
+		' Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
 		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs\projects\DMS")
 		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("MinimumMemoryMB", 0)
 		udtHPCOptions.MinimumCores = jobParams.GetJobParameter("MinimumCores", 0)

@@ -231,146 +231,16 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			mWorkingDirectoryInUse = String.Copy(m_WorkDir)
 
 			If udtHPCOptions.UsingHPC Then
-				mWorkingDirectoryInUse = String.Copy(udtHPCOptions.WorkDirPath)
-				mUsingHPC = True
+				Dim criticalError As Boolean
 
-				' Synchronize local files to the remote working directory on PIC
+				blnSuccess = StartMSGFPlusHPC(javaExePath, msgfdbJarFilePath, strSearchEngineName, ResultsFileName, CmdStr, udtHPCOptions, criticalError)
 
-				Dim lstFileNameFilterSpec = New List(Of String)
-				Dim lstFileNameExclusionSpec = New List(Of String) From {m_Dataset & "_ScanStats.txt", m_Dataset & "_ScanStatsEx.txt", "Mass_Correction_Tags.txt"}
-
-				SynchronizeFolders(m_WorkDir, mWorkingDirectoryInUse, lstFileNameFilterSpec, lstFileNameExclusionSpec)
-
-
-				Dim jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
-
-				Dim jobName As String = strSearchEngineName & "_Job" & m_JobNum & "_Step" & jobStep
-
-				Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
-
-				hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
-				hpcJobInfo.JobParameters.ProjectName = "PIC"
-
-				hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
-
-				' Since we are requesting a socket, there is no need to set the number of cores
-				' hpcJobInfo.JobParameters.MinNumberOfCores = udtHPCOptions.MinimumCores
-				' hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
-
-				hpcJobInfo.TaskParameters.CommandLine = javaExePath & " " & CmdStr
-				hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
-				hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
-				hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
-				hpcJobInfo.TaskParameters.FailJobOnFailure = True
-
-				' Set the maximum runtime to 3 days
-				' Note that this runtime includes the time the job is queued, plus also the time the job is running
-				hpcJobInfo.JobParameters.MaxRunTimeHours = 72
-
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, hpcJobInfo.TaskParameters.CommandLine)
-				End If
-
-				If mMSGFPlus Then
-					Dim mzidToTSVTask = New HPC_Connector.ParametersTask("MZID_To_TSV")
-					Dim tsvFileName = m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX
-					Const tsvConversionJavaMemorySizeMB As Integer = 4000
-
-					Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(ResultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
-
-					mzidToTSVTask.CommandLine = javaExePath & " " & cmdStrConvertToTSV
-					mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath
-					mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MzIDToTsv_ConsoleOutput.txt")
-					mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
-					mzidToTSVTask.FailJobOnFailure = True
-
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mzidToTSVTask.CommandLine)
-					End If
-
-					hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask)
-				End If
-
-				Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
-				Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
-
-				If String.IsNullOrEmpty(sPICHPCUsername) Then
-					m_message = "Manager parameter PICHPCUser is undefined; unable to schedule HPC job"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				If criticalError Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-
-				If String.IsNullOrEmpty(sPICHPCPassword) Then
-					m_message = "Manager parameter PICHPCPassword is undefined; unable to schedule HPC job"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-
-				mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
-				mHPCJobID = mComputeCluster.Send(hpcJobInfo)
-
-				If mHPCJobID <= 0 Then
-					m_message = strSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					blnSuccess = False
-				Else
-					blnSuccess = True
-				End If
-
-				If blnSuccess Then
-					If mComputeCluster.Scheduler Is Nothing Then
-						m_message = "Error: HPC Scheduler is null for " & strSearchEngineName
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						blnSuccess = False
-					End If
-				End If
-
-				If blnSuccess Then
-					Dim hpcJob = mComputeCluster.Scheduler.OpenJob(mHPCJobID)
-
-					mHPCMonitorInitTimer.Enabled = True
-
-					blnSuccess = mComputeCluster.MonitorJob(hpcJob)
-					If Not blnSuccess Then
-						m_message = "HPC Job Monitor returned false"
-						If Not String.IsNullOrWhiteSpace(mComputeCluster.ErrorMessage) Then
-							m_message &= ": " & mComputeCluster.ErrorMessage
-						End If
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					End If
-
-					' Copy any newly created files from PIC back to the local working directory
-					SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
-
-					' Rename the Tool_Version_Info file
-					Dim fiToolVersionInfo = New FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB_HPC.txt"))
-					If Not fiToolVersionInfo.Exists Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ToolVersionInfo file not found; this will lead to problems with IDPicker: " & fiToolVersionInfo.FullName)
-					Else
-						fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB.txt"))
-					End If
 				End If
 
 			Else
-
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
-				End If
-
-				CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-				With CmdRunner
-					.CreateNoWindow = True
-					.CacheStandardOutput = True
-					.EchoOutputToConsole = True
-
-					.WriteConsoleOutputToFile = True
-					.ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
-				End With
-
-				m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
-
-				blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
+				blnSuccess = StartMSGFPlusLocal(javaExePath, strSearchEngineName, CmdStr)
 			End If
 
 			If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
@@ -533,6 +403,168 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
+
+	End Function
+
+	Protected Function StartMSGFPlusHPC(
+	  ByVal javaExePath As String,
+	  ByVal msgfdbJarFilePath As String,
+	  ByVal strSearchEngineName As String,
+	  ByVal ResultsFileName As String,
+	  ByVal CmdStr As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+	  ByRef criticalError As Boolean) As Boolean
+
+		mWorkingDirectoryInUse = String.Copy(udtHPCOptions.WorkDirPath)
+		mUsingHPC = True
+		criticalError = False
+
+		' Synchronize local files to the remote working directory on PIC
+
+		Dim lstFileNameFilterSpec = New List(Of String)
+		Dim lstFileNameExclusionSpec = New List(Of String) From {m_Dataset & "_ScanStats.txt", m_Dataset & "_ScanStatsEx.txt", "Mass_Correction_Tags.txt"}
+
+		SynchronizeFolders(m_WorkDir, mWorkingDirectoryInUse, lstFileNameFilterSpec, lstFileNameExclusionSpec)
+
+		Dim jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
+
+		Dim jobName As String = strSearchEngineName & "_Job" & m_JobNum & "_Step" & jobStep
+
+		Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
+
+		hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
+		hpcJobInfo.JobParameters.ProjectName = "PIC"
+
+		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
+
+		' Since we are requesting a socket, there is no need to set the number of cores
+		' hpcJobInfo.JobParameters.MinNumberOfCores = udtHPCOptions.MinimumCores
+		' hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
+
+		hpcJobInfo.TaskParameters.CommandLine = javaExePath & " " & CmdStr
+		hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
+		hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+		hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
+		hpcJobInfo.TaskParameters.FailJobOnFailure = True
+
+		' Set the maximum runtime to 3 days
+		' Note that this runtime includes the time the job is queued, plus also the time the job is running
+		hpcJobInfo.JobParameters.MaxRunTimeHours = 72
+
+		If m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, hpcJobInfo.TaskParameters.CommandLine)
+		End If
+
+		If mMSGFPlus Then
+			Dim mzidToTSVTask = New HPC_Connector.ParametersTask("MZID_To_TSV")
+			Dim tsvFileName = m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX
+			Const tsvConversionJavaMemorySizeMB As Integer = 4000
+
+			Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(ResultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
+
+			mzidToTSVTask.CommandLine = javaExePath & " " & cmdStrConvertToTSV
+			mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath
+			mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MzIDToTsv_ConsoleOutput.txt")
+			mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
+			mzidToTSVTask.FailJobOnFailure = True
+
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mzidToTSVTask.CommandLine)
+			End If
+
+			hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask)
+		End If
+
+		Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
+		Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
+
+		If String.IsNullOrEmpty(sPICHPCUsername) Then
+			m_message = "Manager parameter PICHPCUser is undefined; unable to schedule HPC job"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			criticalError = True
+			Return False
+		End If
+
+		If String.IsNullOrEmpty(sPICHPCPassword) Then
+			m_message = "Manager parameter PICHPCPassword is undefined; unable to schedule HPC job"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			criticalError = True
+			Return False
+		End If
+
+		mComputeCluster = New HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword))
+		mHPCJobID = mComputeCluster.Send(hpcJobInfo)
+
+		Dim blnSuccess As Boolean
+
+		If mHPCJobID <= 0 Then
+			m_message = strSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			blnSuccess = False
+		Else
+			blnSuccess = True
+		End If
+
+		If blnSuccess Then
+			If mComputeCluster.Scheduler Is Nothing Then
+				m_message = "Error: HPC Scheduler is null for " & strSearchEngineName
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				blnSuccess = False
+			End If
+		End If
+
+		If blnSuccess Then
+			Dim hpcJob = mComputeCluster.Scheduler.OpenJob(mHPCJobID)
+
+			mHPCMonitorInitTimer.Enabled = True
+
+			blnSuccess = mComputeCluster.MonitorJob(hpcJob)
+			If Not blnSuccess Then
+				m_message = "HPC Job Monitor returned false"
+				If Not String.IsNullOrWhiteSpace(mComputeCluster.ErrorMessage) Then
+					m_message &= ": " & mComputeCluster.ErrorMessage
+				End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			End If
+
+			' Copy any newly created files from PIC back to the local working directory
+			SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
+
+			' Rename the Tool_Version_Info file
+			Dim fiToolVersionInfo = New FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB_HPC.txt"))
+			If Not fiToolVersionInfo.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ToolVersionInfo file not found; this will lead to problems with IDPicker: " & fiToolVersionInfo.FullName)
+			Else
+				fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB.txt"))
+			End If
+		End If
+
+		Return blnSuccess
+
+	End Function
+
+	Protected Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal strSearchEngineName As String, ByVal CmdStr As String) As Boolean
+
+		If m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
+		End If
+
+		CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+		With CmdRunner
+			.CreateNoWindow = True
+			.CacheStandardOutput = True
+			.EchoOutputToConsole = True
+
+			.WriteConsoleOutputToFile = True
+			.ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+		End With
+
+		m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
+
+		Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
+
+		Return blnSuccess
 
 	End Function
 

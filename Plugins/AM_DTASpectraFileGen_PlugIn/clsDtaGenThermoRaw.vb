@@ -387,6 +387,13 @@ Public Class clsDtaGenThermoRaw
 
 		'Verify max scan specified is in file
 		If m_MaxScanInFile > 0 Then
+			If ScanStart = 1 AndAlso ScanStop = 999999 AndAlso ScanStop < m_MaxScanInFile Then
+				' The default scan range for processing all scans has traditionally be 1 to 999999
+				' This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
+				' Assume that the user actually wants to analyze all of the spectra
+				ScanStop = m_MaxScanInFile
+			End If
+
 			If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
 		End If
 
