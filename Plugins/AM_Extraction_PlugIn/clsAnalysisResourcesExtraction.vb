@@ -82,7 +82,6 @@ Public Class clsAnalysisResourcesExtraction
 			End If			
 		End If
 
-
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
@@ -114,6 +113,9 @@ Public Class clsAnalysisResourcesExtraction
 
 				Case RESULT_TYPE_MSALIGN
 					eResult = GetMSAlignFiles()
+
+				Case RESULT_TYPE_MODA
+					eResult = GetMODaFiles()
 
 				Case Else
 					m_message = "Invalid tool result type: " & strResultType
@@ -233,6 +235,23 @@ Public Class clsAnalysisResourcesExtraction
 		m_jobParams.AddResultFileToSkip(FileToGet)
 
 		' Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Private Function GetMODaFiles() As IJobParams.CloseOutType
+	
+		Dim FileToGet As String
+
+		FileToGet = m_DatasetName & "_moda.txt"
+		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+		m_jobParams.AddResultFileToSkip(FileToGet)
+
+		' Note that we'll obtain the MODa parameter file in RetrieveMiscFiles
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -522,8 +541,7 @@ Public Class clsAnalysisResourcesExtraction
 			m_jobParams.AddResultFileToSkip(strParamFileName)
 			m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME)
 
-			Dim logModFilesFileNotFound As Boolean = True
-			If ResultType <> RESULT_TYPE_MSALIGN Then logModFilesFileNotFound = False
+			Dim logModFilesFileNotFound = Not ResultType <> RESULT_TYPE_MSALIGN
 
 			' Check whether the newly generated ModDefs file matches the existing one
 			' If it doesn't match, or if the existing one is missing, then we need to keep the file

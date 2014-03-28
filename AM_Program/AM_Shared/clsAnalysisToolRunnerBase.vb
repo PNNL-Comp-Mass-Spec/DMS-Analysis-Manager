@@ -1072,6 +1072,32 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
+	''' Deterime the path to java.exe
+	''' </summary>
+	''' <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
+	''' <remarks></remarks>
+	Protected Function GetJavaProgLoc() As String
+
+		' JavaLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+		Dim javaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
+
+		If String.IsNullOrEmpty(javaProgLoc) Then
+			m_message = "Parameter 'JavaLoc' not defined for this manager"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return String.Empty
+		End If
+
+		If Not File.Exists(javaProgLoc) Then
+			m_message = "Cannot find Java: " & javaProgLoc
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Return String.Empty
+		End If
+
+		Return javaProgLoc
+
+	End Function
+
+	''' <summary>
 	''' Returns the full path to the program to use for converting a dataset to a .mzXML file
 	''' </summary>
 	''' <returns></returns>

@@ -83,6 +83,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
 	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Used for MSGFDB and MSGF+
 	Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
+	Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
 
 	Public Const DOT_WIFF_EXTENSION As String = ".wiff"
 	Public Const DOT_D_EXTENSION As String = ".d"

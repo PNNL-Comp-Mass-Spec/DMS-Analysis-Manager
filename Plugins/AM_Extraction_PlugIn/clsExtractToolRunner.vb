@@ -27,6 +27,9 @@ Public Class clsExtractToolRunner
 
 	Public Const INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX As String = "_inspect_unfiltered.txt"
 
+	Protected Const MODa_JAR_NAME As String = "moda.jar"
+	Protected Const MODa_FILTER_JAR_NAME As String = "anal_moda.jar"
+
 #End Region
 
 #Region "Module variables"
@@ -82,15 +85,15 @@ Public Class clsExtractToolRunner
 			Select Case m_jobParams.GetParam("ResultType")
 				Case clsAnalysisResources.RESULT_TYPE_SEQUEST	'Sequest result type
 
-					'Run Ken's Peptide Extractor DLL
+					' Run Ken's Peptide Extractor DLL
 					strCurrentAction = "running peptide extraction for Sequest"
 					Result = PerformPeptideExtraction()
-					'Check for no data first. If no data, then exit but still copy results to server
+					' Check for no data first. If no data, then exit but still copy results to server
 					If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 						Exit Select
 					End If
 
-					'Run PHRP
+					' Run PHRP
 					If Result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 						m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE	  ' 33% done
 						m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
@@ -107,27 +110,36 @@ Public Class clsExtractToolRunner
 					End If
 
 				Case clsAnalysisResources.RESULT_TYPE_XTANDEM
-					'Run PHRP
+					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for X!Tandem"
 					Result = RunPhrpForXTandem()
 
 				Case clsAnalysisResources.RESULT_TYPE_INSPECT
-					'Run PHRP
+					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for Inspect"
 					Result = RunPhrpForInSpecT()
 
 				Case clsAnalysisResources.RESULT_TYPE_MSGFDB
-					'Run PHRP
+					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for MSGF+"
 					Result = RunPhrpForMSGFDB()
 
 				Case clsAnalysisResources.RESULT_TYPE_MSALIGN
-					'Run PHRP
+					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for MSAlign"
 					Result = RunPhrpForMSAlign()
 
+				Case clsAnalysisResources.RESULT_TYPE_MODA
+
+					' Convert the MODa results to a tab-delimited file, filtering by FDR when converting
+					Dim strFilteredMODaResultsFilePath = ConvertMODaResultsToTxt()
+
+					' Run PHRP
+					strCurrentAction = "running peptide hits result processor for MODa"
+					Result = RunPhrpForMODa(strFilteredMODaResultsFilePath)
+
 				Case Else
-					'Should never get here - invalid result type specified
+					' Should never get here - invalid result type specified
 					Msg = "Invalid ResultType specified: " & m_jobParams.GetParam("ResultType")
 					m_message = clsGlobal.AppendToComment(m_message, Msg)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & Msg)
@@ -144,7 +156,7 @@ Public Class clsExtractToolRunner
 				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
 			End If
 
-			'Stop the job timer
+			' Stop the job timer
 			m_StopTime = DateTime.UtcNow
 
 			If blnProcessingError Then
@@ -154,21 +166,21 @@ Public Class clsExtractToolRunner
 				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			'Add the current job data to the summary file
+			' Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 			End If
 
 			Result = MakeResultsFolder()
 			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'MakeResultsFolder handles posting to local log, so set database error message and exit
+				' MakeResultsFolder handles posting to local log, so set database error message and exit
 				m_message = "Error making results folder"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			Result = MoveResultFiles()
 			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'MoveResultFiles moves the Result files to the Result folder
+				' MoveResultFiles moves the Result files to the Result folder
 				m_message = "Error moving files into results folder"
 				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -191,15 +203,104 @@ Public Class clsExtractToolRunner
 			RemoveNonResultServerFiles()
 
 		Catch ex As Exception
-			Msg = "clsExtractToolRunner.RunTool(); Exception running extraction tool: " & _
-			 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			Msg = "clsExtractToolRunner.RunTool(); Exception running extraction tool: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		'If we got to here, everything worked so exit happily
+		' If we got to here, everything worked so exit happily
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	''' <summary>
+	''' Convert the MODa output file to a tab-delimited text file
+	''' </summary>
+	''' <returns>The path to the .txt file if successful; empty string if an error</returns>
+	''' <remarks></remarks>
+	Protected Function ConvertMODaResultsToTxt() As String
+
+		Try
+			Dim fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05)
+			Dim decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "XXX_")
+
+			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
+			Dim paramFilePath = Path.Combine(m_WorkDir, paramFileName)
+
+			Dim MODaResultsFilePath = m_Dataset & "_moda.txt"
+
+			If Math.Abs(fdrThreshold) < Single.Epsilon Then
+				fdrThreshold = 0.05
+			ElseIf fdrThreshold > 1 Then
+				fdrThreshold = 1
+			End If
+
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtering MODa Results with FDR threshold " & fdrThreshold.ToString("0.00"))
+			End If
+
+			Const intJavaMemorySize = 1000
+
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+			Dim JavaProgLoc = GetJavaProgLoc()
+			If String.IsNullOrEmpty(JavaProgLoc) Then
+				Return String.Empty
+			End If
+
+			' Determine the path to the MODa program
+			Dim strMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", Path.Combine("jar", MODa_JAR_NAME))
+
+			Dim fiModA = New FileInfo(strMODaProgLoc)
+
+			'Set up and execute a program runner to run anal_moda.jar
+			Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & Path.Combine(fiModA.Directory.FullName, MODa_FILTER_JAR_NAME)
+			CmdStr &= " -i " & MODaResultsFilePath
+			CmdStr &= " -p " & paramFilePath
+			CmdStr &= " -fdr " & fdrThreshold
+			CmdStr &= " -d " & decoyPrefix
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+
+			Dim progRunner = New clsRunDosProgram(m_WorkDir)
+
+			With progRunner
+				.CreateNoWindow = True
+				.CacheStandardOutput = False
+				.EchoOutputToConsole = True
+
+				.WriteConsoleOutputToFile = True
+				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MODa_Filter_ConsoleOutput.txt")
+			End With
+
+			Dim blnSuccess = progRunner.RunProgram(JavaProgLoc, CmdStr, "MODa_Filter", True)
+
+			If Not blnSuccess Then
+				Dim Msg As String
+				Msg = "Error parsing and filtering MODa results"
+				m_message = clsGlobal.AppendToComment(m_message, Msg)
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+
+				If progRunner.ExitCode <> 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, MODa_FILTER_JAR_NAME & " returned a non-zero exit code: " & progRunner.ExitCode.ToString)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & MODa_FILTER_JAR_NAME & " failed (but exit code is 0)")
+				End If
+
+				Return String.Empty
+
+			End If
+
+			Dim strFilteredMODaResultsFilePath = Path.ChangeExtension(MODaResultsFilePath, ".id.txt")
+
+			Return strFilteredMODaResultsFilePath
+
+		Catch ex As Exception
+			m_message = "Error in MODaPlugin->PostProcessResults"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return String.Empty
+		End Try
 
 	End Function
 
@@ -211,14 +312,9 @@ Public Class clsExtractToolRunner
 	''' <remarks></remarks>
 	Protected Function ConvertMZIDToTSV(ByVal suffixToAdd As String) As String
 
-		Dim strMZIDFileName As String
-		Dim JavaProgLoc As String
-		Dim MSGFDbProgLoc As String
-		Dim strTSVFilePath As String
-
 		Try
 
-			strMZIDFileName = m_Dataset & "_msgfplus" & suffixToAdd & ".mzid"
+			Dim strMZIDFileName = m_Dataset & "_msgfplus" & suffixToAdd & ".mzid"
 			If Not File.Exists(Path.Combine(m_WorkDir, strMZIDFileName)) Then
 				m_message = strMZIDFileName & " file not found"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -226,11 +322,8 @@ Public Class clsExtractToolRunner
 			End If
 
 			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
-			JavaProgLoc = m_mgrParams.GetParam("JavaLoc")
-			If Not File.Exists(JavaProgLoc) Then
-				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-				m_message = "Cannot find Java: " & JavaProgLoc
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+			Dim JavaProgLoc = GetJavaProgLoc()
+			If String.IsNullOrEmpty(JavaProgLoc) Then
 				Return String.Empty
 			End If
 
@@ -238,7 +331,7 @@ Public Class clsExtractToolRunner
 			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
 			' The reason?  The AM_MSGFDB_PlugIn uses "MSGFDB" when creating the ToolVersionInfo file
 			' We need to keep the name the same since the PeptideHitResultsProcessor (and possibly other software) expects the file to be named Tool_Version_Info_MSGFDB.txt
-			MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
+			Dim MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
 
 			If String.IsNullOrEmpty(MSGFDbProgLoc) Then
 				If String.IsNullOrEmpty(m_message) Then m_message = "Parameter 'MSGFDbProgLoc' not defined for this manager"
@@ -248,7 +341,7 @@ Public Class clsExtractToolRunner
 			' Initialize mMSGFDBUtils
 			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
 
-			strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
+			Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
 
 			If Not String.IsNullOrEmpty(strTSVFilePath) Then
 				' File successfully created
@@ -629,12 +722,11 @@ Public Class clsExtractToolRunner
 
 		' Validate that the mass errors are within tolerance
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName) Then
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
-
 
 	End Function
 
@@ -674,7 +766,7 @@ Public Class clsExtractToolRunner
 
 		' Validate that the mass errors are within tolerance		
 		' Use input.xml for the X!Tandem parameter file
-		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml") Then
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml") Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -758,11 +850,91 @@ Public Class clsExtractToolRunner
 
 		' Validate that the mass errors are within tolerance
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName) Then
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+	End Function
+
+	Private Function RunPhrpForMODa(ByVal strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
+
+
+		Dim currentStep As String = "Initializing"
+
+		Dim Msg As String
+
+		Dim strSynFilePath As String
+
+		Dim Result As IJobParams.CloseOutType
+
+		Try
+
+			m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
+
+			'Run the processor
+			If m_DebugLevel > 3 Then
+				Msg = "clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+			End If
+
+			Try
+				' The goal:
+				'   Create the _fht.txt and _syn.txt files from the _moda.id.txt file
+
+				currentStep = "Determining results file type based on the results file name"
+
+				If Not File.Exists(strFilteredMODaResultsFilePath) Then
+					m_message = "Filtered MODa results file not found: " & Path.GetFileName(strFilteredMODaResultsFilePath)
+					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+				End If
+
+				strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_moda_syn.txt")
+
+				' Create the Synopsis and First Hits files using the _moda.id.txt file
+				Const CreatMODaFirstHitsFile As Boolean = True
+				Const CreateMODaSynopsisFile As Boolean = True
+
+
+				Result = m_PHRP.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreatMODaFirstHitsFile, CreateMODaSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA)
+
+				If (Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+					Msg = "Error running PHRP"
+					If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				Try
+					' Delete the _moda.id.txt file
+					File.Delete(strFilteredMODaResultsFilePath)
+				Catch ex As Exception
+					' Ignore errors here
+				End Try
+
+			Catch ex As Exception
+				Msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " & _
+				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+				m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Try
+
+			Throw New NotImplementedException("Need new version of PHRP that supports MODa; uncomment the following after updating the DLL")
+
+			'' Validate that the mass errors are within tolerance
+			'Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+			'If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, strParamFileName) Then
+			'	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			'Else
+			'	Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+			'End If
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " & currentStep, ex)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
 	End Function
 
@@ -899,7 +1071,7 @@ Public Class clsExtractToolRunner
 
 			' Validate that the mass errors are within tolerance
 			Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-			If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
+			If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Else
 				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -1005,7 +1177,7 @@ Public Class clsExtractToolRunner
 
 		' Validate that the mass errors are within tolerance
 		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		If Not ValidatePHRPResultMassErrors(strSynFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName) Then
+		If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -1560,7 +1732,7 @@ Public Class clsExtractToolRunner
 
 	End Function
 
-	Protected Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
+	Protected Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
 
 		Dim blnSuccess As Boolean
 

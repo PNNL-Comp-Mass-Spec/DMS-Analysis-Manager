@@ -80,13 +80,13 @@ Public Class clsPepHitResultsProcWrapper
 	End Function
 
 	''' <summary>
-	''' Converts Sequest, X!Tandem, Inspect, MSGDB, or MSAlign output file to a flat file
+	''' Converts Sequest, X!Tandem, Inspect, MSGDB, MSAlign, or MODa output file to a flat file
 	''' </summary>
 	''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
-	  ByVal CreateInspectFirstHitsFile As Boolean, _
-	  ByVal CreateInspectSynopsisFile As Boolean, _
+	  ByVal CreateFirstHitsFile As Boolean, _
+	  ByVal CreateSynopsisFile As Boolean, _
 	  ByVal FastaFilePath As String, _
 	  ByVal ResultType As String) As IJobParams.CloseOutType
 
@@ -144,9 +144,9 @@ Public Class clsPepHitResultsProcWrapper
 
 			' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
 			' Thus, we only need to use these switches if either or these should be false
-			If Not CreateInspectFirstHitsFile Or Not CreateInspectSynopsisFile Then
-				CmdStr &= " /InsFHT:" & CreateInspectFirstHitsFile.ToString()
-				CmdStr &= " /InsSyn:" & CreateInspectSynopsisFile.ToString()
+			If Not CreateFirstHitsFile Or Not CreateSynopsisFile Then
+				CmdStr &= " /InsFHT:" & CreateFirstHitsFile.ToString()
+				CmdStr &= " /InsSyn:" & CreateSynopsisFile.ToString()
 			End If
 
 			If m_DebugLevel >= 1 Then
@@ -221,7 +221,7 @@ Public Class clsPepHitResultsProcWrapper
 				Dim lstFilesToCheck As List(Of String)
 				lstFilesToCheck = New List(Of String)
 
-				If CreateInspectFirstHitsFile And Not CreateInspectSynopsisFile Then
+				If CreateFirstHitsFile And Not CreateSynopsisFile Then
 					' We're processing Inspect data, and PHRP simply created the _fht.txt file
 					' Thus, only look for the first-hits file
 					lstFilesToCheck.Add("_fht.txt")
@@ -243,7 +243,7 @@ Public Class clsPepHitResultsProcWrapper
 							lstFilesToCheck.Add("_ProteinMods.txt")
 						End If
 					End If
-					
+
 				End If
 
 				For Each strFileName As String In lstFilesToCheck

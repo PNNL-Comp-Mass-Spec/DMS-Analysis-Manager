@@ -19,15 +19,12 @@ Public Class clsAnalysisToolRunnerMODa
 	'*********************************************************************************************************
 
 #Region "Constants and Enums"
-	Protected Const MODa_CONSOLE_OUTPUT As String = "MODa_ConsoleOutput.txt"
-	Protected Const MODa_FILTER_CONSOLE_OUTPUT As String = "MODa_Filter_ConsoleOutput.txt"
+	Protected Const MODa_CONSOLE_OUTPUT As String = "MODa_ConsoleOutput.txt"	
 	Protected Const MODa_JAR_NAME As String = "moda.jar"
-	Protected Const MODa_FILTER_JAR_NAME As String = "anal_moda.jar"
 
 	Protected Const REGEX_MODa_PROGRESS As String = "MOD-A \| (\d+)/(\d+)"
 
 	Protected Const PROGRESS_PCT_STARTING As Single = 1
-	Protected Const PROGRESS_PCT_MODA_COMPLETE As Single = 95
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
 	Protected Const MODA_RESULTS_FILE_SUFFIX As String = "_moda.txt"
@@ -68,17 +65,13 @@ Public Class clsAnalysisToolRunnerMODa
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
-			' Note that we need to run MODa with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-			Dim JavaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
-			If Not File.Exists(JavaProgLoc) Then
-				If JavaProgLoc.Length = 0 Then JavaProgLoc = "Parameter 'JavaLoc' not defined for this manager"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Java: " & JavaProgLoc)
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+			Dim JavaProgLoc = GetJavaProgLoc()
+			If String.IsNullOrEmpty(JavaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Determine the path to the MODa program
-			' Note that 
 			mMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", Path.Combine("jar", MODa_JAR_NAME))
 
 			If String.IsNullOrWhiteSpace(mMODaProgLoc) Then
@@ -168,7 +161,7 @@ Public Class clsAnalysisToolRunnerMODa
 		Dim fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename)
 
 		If Not UpdateParameterFile(paramFileName, spectrumFileName, fastaFilePath) Then
-
+			Return False
 		End If
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MODa")
@@ -227,22 +220,14 @@ Public Class clsAnalysisToolRunnerMODa
 			End If
 
 			Return False
-
-		Else
-			m_progress = PROGRESS_PCT_MODA_COMPLETE
-
-			' Post-process the results to create a tab-delimited result file, filtering the identified peptides using the specified FDR value
-			If Not PostProcessResults(modaResultsFilePath, modaResultsFilePath, paramFilePath) Then
-				Return False
-			End If
-
-			m_progress = PROGRESS_PCT_COMPLETE
-			m_StatusTools.UpdateAndWrite(m_progress)
-			If m_DebugLevel >= 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa Search Complete")
-			End If
 		End If
-
+		
+		m_progress = PROGRESS_PCT_COMPLETE
+		m_StatusTools.UpdateAndWrite(m_progress)
+		If m_DebugLevel >= 3 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa Search Complete")
+		End If
+		
 		Return True
 
 	End Function
@@ -342,7 +327,7 @@ Public Class clsAnalysisToolRunnerMODa
 			Dim intTotalScans As Integer = 0
 			Dim strMODaVersionAndDate As String = String.Empty
 
-			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				intLinesRead = 0
 				Do While srInFile.Peek() >= 0
@@ -409,7 +394,7 @@ Public Class clsAnalysisToolRunnerMODa
 				mMODaVersion = strMODaVersionAndDate
 			End If
 
-			Dim sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_MODA_COMPLETE, intScansProcessed, intTotalScans)
+			Dim sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, intScansProcessed, intTotalScans)
 
 			If m_progress < sngActualProgress Then
 				m_progress = sngActualProgress
@@ -429,82 +414,13 @@ Public Class clsAnalysisToolRunnerMODa
 
 	End Sub
 
-	Protected Function PostProcessResults(ByVal JavaProgLoc As String, ByVal modaResultsFilePath As String, ByVal paramFilePath As String) As Boolean
-
-		Try
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MODa")
-
-			Const intJavaMemorySize = 1000
-
-			Dim fdrThreshold = m_jobParams.GetJobParameter("MODa_FDR_Threshold", 0.01)
-			If Math.Abs(fdrThreshold) < Single.Epsilon Then
-				fdrThreshold = 0.01
-			ElseIf fdrThreshold > 1 Then
-				fdrThreshold = 1
-			End If
-
-			Const decoyPrefix = "XXX_"
-			Dim fiModA = New FileInfo(mMODaProgLoc)
-
-			'Set up and execute a program runner to run MODa
-			Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & Path.Combine(fiModA.Directory.FullName, MODa_FILTER_JAR_NAME)
-			CmdStr &= " -i " & modaResultsFilePath
-			CmdStr &= " -p " & paramFilePath
-			CmdStr &= " -fdr " & fdrThreshold
-			CmdStr &= " -d " & decoyPrefix
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
-
-			Dim progRunner = New clsRunDosProgram(m_WorkDir)
-
-			With progRunner
-				.CreateNoWindow = True
-				.CacheStandardOutput = False
-				.EchoOutputToConsole = True
-
-				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MODa_FILTER_CONSOLE_OUTPUT)
-			End With
-
-
-			Dim blnSuccess = progRunner.RunProgram(JavaProgLoc, CmdStr, "MODa_Filter", True)
-
-			If Not blnSuccess Then
-				Dim Msg As String
-				Msg = "Error filtering MODa results based on FDR"
-				m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-				If CmdRunner.ExitCode <> 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, MODa_FILTER_JAR_NAME & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & MODa_FILTER_JAR_NAME & " failed (but exit code is 0)")
-				End If
-
-				Return False
-
-			End If
-
-		Catch ex As Exception
-			m_message = "Error in MODaPlugin->PostProcessResults"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-
-		Return True
-
-	End Function
-
-
 	''' <summary>
 	''' Stores the tool version info in the database
 	''' </summary>
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
+		Dim strToolVersionInfo As String
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -556,8 +472,8 @@ Public Class clsAnalysisToolRunnerMODa
 			Dim fiConsoleOutputFile = New FileInfo(strConsoleOutputFilePath)
 			Dim fiTrimmedFilePath = New FileInfo(strConsoleOutputFilePath & ".trimmed")
 
-			Using srInFile = New StreamReader(New FileStream(fiConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-				Using swOutFile = New StreamWriter(New FileStream(fiTrimmedFilePath.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using srInFile = New StreamReader(New FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+				Using swOutFile = New StreamWriter(New FileStream(fiTrimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					intScanNumberOutputThreshold = 0
 					Do While srInFile.Peek() >= 0
@@ -637,10 +553,10 @@ Public Class clsAnalysisToolRunnerMODa
 			Dim fiSpecFile = New FileInfo(Path.Combine(m_WorkDir, spectrumFileName))
 
 			' Open the input file
-			Using srInFile = New StreamReader(New FileStream(fiSourceParamFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile = New StreamReader(New FileStream(fiSourceParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 				' Create the output file
 
-				Using swOutFile = New StreamWriter(New FileStream(fiTempParamFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using swOutFile = New StreamWriter(New FileStream(fiTempParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					Do While srInFile.Peek > -1
 						Dim strLineIn = srInFile.ReadLine()
