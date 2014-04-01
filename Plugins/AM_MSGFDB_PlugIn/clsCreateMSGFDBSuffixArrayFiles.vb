@@ -486,7 +486,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					blnReindexingRequired = False
 
 					For Each fiIndexFile In lstExistingFiles
-						If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc Then
+						If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1) Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
 							  fiIndexFile.FullName & " modified " &
 							  fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
@@ -1052,7 +1052,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			ElseIf fiSourceFile.Length <> entry.Value Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
 				Return False
-			ElseIf fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC Then
+			ElseIf fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1) Then
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
 				  fiSourceFile.FullName & " modified " &

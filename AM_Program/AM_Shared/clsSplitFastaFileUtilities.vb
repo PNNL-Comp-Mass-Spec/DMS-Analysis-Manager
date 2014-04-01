@@ -379,7 +379,7 @@ Public Class clsSplitFastaFileUtilities
 			Dim fastaFilePath = GetLegacyFastaFilePath(splitFastaName, organismName)
 
 			If Not String.IsNullOrWhiteSpace(fastaFilePath) Then
-				' Split file was found; all is well
+				' Split file is defined in the database
 				mErrorMessage = String.Empty
 				Return True
 			End If
