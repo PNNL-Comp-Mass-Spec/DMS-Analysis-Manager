@@ -72,7 +72,7 @@ Public Class clsAnalysisToolRunnerMODa
 			End If
 
 			' Determine the path to the MODa program
-			mMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", Path.Combine("jar", MODa_JAR_NAME))
+			mMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", MODa_JAR_NAME)
 
 			If String.IsNullOrWhiteSpace(mMODaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -152,7 +152,7 @@ Public Class clsAnalysisToolRunnerMODa
 		' Customize the parameter file
 		Dim paramFileName = m_jobParams.GetParam("ParmFileName")
 
-		Dim spectrumFileName = m_Dataset & "_dta.txt"
+		Dim spectrumFileName = m_Dataset & ".mgf"
 
 		Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 
@@ -221,13 +221,13 @@ Public Class clsAnalysisToolRunnerMODa
 
 			Return False
 		End If
-		
+
 		m_progress = PROGRESS_PCT_COMPLETE
 		m_StatusTools.UpdateAndWrite(m_progress)
 		If m_DebugLevel >= 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa Search Complete")
 		End If
-		
+
 		Return True
 
 	End Function

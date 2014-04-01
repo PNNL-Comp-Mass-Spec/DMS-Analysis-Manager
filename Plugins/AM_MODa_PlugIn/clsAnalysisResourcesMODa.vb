@@ -8,10 +8,12 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisResourcesMODa
 	Inherits clsAnalysisResources
 
+	Protected WithEvents mDTAtoMGF As DTAtoMGF.clsDTAtoMGF
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -59,7 +61,71 @@ Public Class clsAnalysisResourcesMODa
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		' Convert the _dta.txt file to a mgf file
+		If Not ConvertCDTAToMGF() Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	''' <summary>
+	''' Convert the _dta.txt file to a .mgf file
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function ConvertCDTAToMGF() As Boolean
+
+		Try
+			mDTAtoMGF = New DTAtoMGF.clsDTAtoMGF()
+			mDTAtoMGF.Combine2And3PlusCharges = False
+			mDTAtoMGF.FilterSpectra = False
+			mDTAtoMGF.MaximumIonsPer100MzInterval = 0
+			mDTAtoMGF.NoMerge = True
+
+			' Convert the _dta.txt file for this dataset
+			Dim fiCDTAFile As FileInfo = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt"))
+
+			If Not fiCDTAFile.Exists Then
+				m_message = "_dta.txt file not found; cannot convert to .mgf"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiCDTAFile.FullName)
+				Return False
+			End If
+
+			If Not mDTAtoMGF.ProcessFile(fiCDTAFile.FullName) Then
+				m_message = "Error converting " & fiCDTAFile.Name & " to a .mgf file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
+				Return False
+			Else
+				' Delete the _dta.txt file
+				Try
+					fiCDTAFile.Delete()
+				Catch ex As Exception
+					' Ignore errors here
+				End Try
+			End If
+
+			Threading.Thread.Sleep(125)
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+			Dim fiNewMGFFile As FileInfo
+			fiNewMGFFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & ".mgf"))
+
+			If Not fiNewMGFFile.Exists Then
+				' MGF file was not created
+				m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
+				Return False
+			End If
+
+		Catch ex As Exception
+			m_message = "Exception in ConvertCDTAToMGF"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
+
+		Return True
 
 	End Function
 
