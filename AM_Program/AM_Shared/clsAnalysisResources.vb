@@ -4367,7 +4367,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
 		Dim lstNonCriticalFileSuffixes As List(Of String) = New List(Of String)
-		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
 
 	End Function
 

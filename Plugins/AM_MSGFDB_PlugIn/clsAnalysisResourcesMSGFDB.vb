@@ -213,7 +213,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			m_jobParams.AddResultFileExtensionToSkip("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
 			m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
-			m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
+			m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)
 
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

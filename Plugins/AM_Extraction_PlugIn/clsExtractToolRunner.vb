@@ -249,7 +249,7 @@ Public Class clsExtractToolRunner
 			End If
 
 			' Determine the path to the MODa program
-			Dim strMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", Path.Combine("jar", MODa_JAR_NAME))
+			Dim strMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", MODa_JAR_NAME)
 
 			Dim fiModA = New FileInfo(strMODaProgLoc)
 

@@ -52,119 +52,122 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			Dim diRemoteIndexFolderPath As DirectoryInfo
 			diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
-			If diRemoteIndexFolderPath.Exists Then
-
-				If blnCheckForLockFile Then
-					' Look for an existing lock file
-					Dim fiRemoteLockFile As FileInfo
-					fiRemoteLockFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
-
-					WaitForExistingLockfile(fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
-
-				End If
-
-				' Look for the .MSGFPlusIndexFileInfo file for this fasta file
-				Dim fiMSGFPlusIndexFileInfo As FileInfo
-				fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
-
-				Dim fileSizeTotalKB As Int64 = 0
-
-				If fiMSGFPlusIndexFileInfo.Exists Then
-					' Read the filenames in the file
-					' There should be 3 columns: FileName, FileSize, and FileDateUTC
-					' When looking for existing files we only require that the filesize match; FileDateUTC is not used
-
-					Dim dctFilesToCopy As Dictionary(Of String, Int64)
-					dctFilesToCopy = New Dictionary(Of String, Int64)
-
-					Using srInFile As StreamReader = New StreamReader(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-						Dim strLineIn As String
-						Dim lstData As List(Of String)
-
-						Do While srInFile.Peek > 0
-							strLineIn = srInFile.ReadLine()
-
-							lstData = strLineIn.Split(ControlChars.Tab).ToList()
-
-							If lstData.Count >= 3 Then
-								' Add this file to the list of files to copy
-								Dim intFileSizeBytes As Int64
-								If Int64.TryParse(lstData(1), intFileSizeBytes) Then
-									dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
-									fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
-								End If
-
-							End If
-						Loop
-
-					End Using
-
-					Dim blnFilesAreValid As Boolean
-
-					If dctFilesToCopy.Count = 0 Then
-						blnFilesAreValid = False
-					Else
-						' Confirm that each file in dctFilesToCopy exists on the remote server
-						blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy)
-					End If
-
-					If blnFilesAreValid Then
-
-						If intDebugLevel >= 1 AndAlso fileSizeTotalKB >= 1000 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying existing MSGF+ index files from " & diRemoteIndexFolderPath.FullName)
-						End If
-
-						' Copy each file in lstFilesToCopy (overwrite existing files)
-						Dim oFileTools As PRISM.Files.clsFileTools
-						Dim strManager As String = GetPseudoManagerName()
-
-						Dim filesCopied As Integer = 0
-						Dim dtLastStatusUpdate = DateTime.UtcNow
-
-						oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
-
-						' Compute the total disk space required
-						Dim fileSizeTotalBytes As Int64 = 0
-
-						For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
-							Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
-							fileSizeTotalBytes += fiSourceFile.Length
-						Next
-
-						Const DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750
-
-						' Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
-						Dim minFreeSpaceMB = CInt(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
-
-						diskFreeSpaceBelowThreshold = Not clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, mErrorMessage)
-
-						If diskFreeSpaceBelowThreshold Then
-							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-						End If
-
-						For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
-
-							Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
-
-							Dim strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
-							oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
-
-							filesCopied += 1
-
-							If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
-								dtLastStatusUpdate = DateTime.UtcNow
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
-							End If
-
-						Next
-
-						' Now confirm that each file was successfully copied locally
-						blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy)
-					End If
-
-				End If
+			If Not diRemoteIndexFolderPath.Exists Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
+
+			If blnCheckForLockFile Then
+				' Look for an existing lock file
+				Dim fiRemoteLockFile As FileInfo
+				fiRemoteLockFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
+
+				WaitForExistingLockfile(fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours)
+
+			End If
+
+			' Look for the .MSGFPlusIndexFileInfo file for this fasta file
+			Dim fiMSGFPlusIndexFileInfo As FileInfo
+			fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
+
+			Dim fileSizeTotalKB As Int64 = 0
+
+			If Not fiMSGFPlusIndexFileInfo.Exists Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+
+			' Read the filenames in the file
+			' There should be 3 columns: FileName, FileSize, and FileDateUTC
+			' When looking for existing files we only require that the filesize match; FileDateUTC is not used
+
+			Dim dctFilesToCopy As Dictionary(Of String, Int64)
+			dctFilesToCopy = New Dictionary(Of String, Int64)
+
+			Using srInFile As StreamReader = New StreamReader(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+				Dim strLineIn As String
+				Dim lstData As List(Of String)
+
+				Do While srInFile.Peek > 0
+					strLineIn = srInFile.ReadLine()
+
+					lstData = strLineIn.Split(ControlChars.Tab).ToList()
+
+					If lstData.Count >= 3 Then
+						' Add this file to the list of files to copy
+						Dim intFileSizeBytes As Int64
+						If Int64.TryParse(lstData(1), intFileSizeBytes) Then
+							dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
+							fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
+						End If
+
+					End If
+				Loop
+
+			End Using
+
+			Dim blnFilesAreValid As Boolean
+
+			If dctFilesToCopy.Count = 0 Then
+				blnFilesAreValid = False
+			Else
+				' Confirm that each file in dctFilesToCopy exists on the remote server and is newer than the fasta file that was indexed
+				blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, fiFastaFile.LastWriteTimeUtc)
+			End If
+
+			If Not blnFilesAreValid Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+
+			If intDebugLevel >= 1 AndAlso fileSizeTotalKB >= 1000 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying existing MSGF+ index files from " & diRemoteIndexFolderPath.FullName)
+			End If
+
+			' Copy each file in lstFilesToCopy (overwrite existing files)
+			Dim oFileTools As PRISM.Files.clsFileTools
+			Dim strManager As String = GetPseudoManagerName()
+
+			Dim filesCopied As Integer = 0
+			Dim dtLastStatusUpdate = DateTime.UtcNow
+
+			oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
+
+			' Compute the total disk space required
+			Dim fileSizeTotalBytes As Int64 = 0
+
+			For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+				Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+				fileSizeTotalBytes += fiSourceFile.Length
+			Next
+
+			Const DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750
+
+			' Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
+			Dim minFreeSpaceMB = CInt(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
+
+			diskFreeSpaceBelowThreshold = Not clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, mErrorMessage)
+
+			If diskFreeSpaceBelowThreshold Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+
+				Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+
+				Dim strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
+				oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
+
+				filesCopied += 1
+
+				If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
+					dtLastStatusUpdate = DateTime.UtcNow
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
+				End If
+
+			Next
+
+			' Now confirm that each file was successfully copied locally
+			blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, fiFastaFile.LastWriteTimeUtc)
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyExistingIndexFilesFromRemote; " & ex.Message)
@@ -479,7 +482,20 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						End If
 					End If
 				Else
+					' Make sure all of the index files have a file modification date newer than the fasta file
 					blnReindexingRequired = False
+
+					For Each fiIndexFile In lstExistingFiles
+						If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
+							  fiIndexFile.FullName & " modified " &
+							  fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
+							  fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+
+							blnReindexingRequired = True
+							Exit For
+						End If
+					Next					
 				End If
 
 			End If
@@ -505,7 +521,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				End If
 
 				If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					' Files did not exist, or an error occurred while copying them
+					' Files did not exist or were out of date, or an error occurred while copying them
 
 					' Create a remote lock file
 
@@ -670,13 +686,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			' Delete any existing index files (BuildSA throws an error if they exist)
 			strCurrentTask = "Delete any existing files"
 
-			Dim lstExistingFiles As List(Of String)
 			Dim strOutputNameBase As String = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
-			lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, New List(Of String), String.Empty, String.Empty)
+			Dim lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, New List(Of String), String.Empty, String.Empty)
 
-			For Each strFileToDelete In lstExistingFiles
-				File.Delete(Path.Combine(fiFastaFile.DirectoryName, strFileToDelete))
+			For Each fiIndexFileToDelete In lstExistingFiles
+				If fiIndexFileToDelete.Exists Then
+					fiIndexFileToDelete.Delete()
+				End If
 			Next
 
 			If intDebugLevel >= 2 Then
@@ -932,10 +949,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal strFolderPathToSearch As String,
 	  ByRef lstFilesToFind As List(Of String),
 	  ByRef strExistingFiles As String,
-	  ByRef strMissingFiles As String) As List(Of String)
+	  ByRef strMissingFiles As String) As List(Of FileInfo)
 
-		Dim lstExistingFiles As List(Of String)
-		lstExistingFiles = New List(Of String)
+		Dim lstExistingFiles As List(Of FileInfo)
+		lstExistingFiles = New List(Of FileInfo)
 
 		If lstFilesToFind Is Nothing Then
 			lstFilesToFind = New List(Of String)
@@ -982,8 +999,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			Dim strFileNameToFind As String = strOutputNameBase & strSuffix
 
-			If File.Exists(Path.Combine(strFolderPathToSearch, strFileNameToFind)) Then
-				lstExistingFiles.Add(strFileNameToFind)
+			Dim fiFileToFind = New FileInfo(Path.Combine(strFolderPathToSearch, strFileNameToFind))
+
+			If fiFileToFind.Exists() Then
+				lstExistingFiles.Add(fiFileToFind)
 				strExistingFiles = clsGlobal.AppendToComment(strExistingFiles, strFileNameToFind)
 			Else
 				strMissingFiles = clsGlobal.AppendToComment(strMissingFiles, strFileNameToFind)
@@ -1021,7 +1040,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' <param name="dctFilesToCopy">Dictionary with filenames and file sizes</param>
 	''' <returns>True if all files are found and are the right size</returns>
 	''' <remarks></remarks>
-	Protected Function ValidateFiles(ByVal strFolderPathToCheck As String, ByVal dctFilesToCopy As Dictionary(Of String, Int64)) As Boolean
+	Protected Function ValidateFiles(ByVal strFolderPathToCheck As String, ByVal dctFilesToCopy As Dictionary(Of String, Int64), ByVal dtMinWriteTimeThresholdUTC As DateTime) As Boolean
 
 		For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
 			Dim fiSourceFile As FileInfo
@@ -1032,6 +1051,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Return False
 			ElseIf fiSourceFile.Length <> entry.Value Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
+				Return False
+			ElseIf fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC Then
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
+				  fiSourceFile.FullName & " modified " &
+				  fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
+				  dtMinWriteTimeThresholdUTC.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+
 				Return False
 			End If
 		Next
