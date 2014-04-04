@@ -244,8 +244,8 @@ Public Class clsAnalysisResourcesExtraction
 	
 		Dim FileToGet As String
 
-		FileToGet = m_DatasetName & "_moda.txt"
-		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+		FileToGet = m_DatasetName & "_moda.zip"
+		If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If

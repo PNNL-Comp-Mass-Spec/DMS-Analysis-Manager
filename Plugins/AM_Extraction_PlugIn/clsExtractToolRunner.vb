@@ -57,7 +57,7 @@ Public Class clsExtractToolRunner
 		Dim OrgDbDir As String
 		Dim FastaFileName As String
 
-		Dim strCurrentAction As String
+		Dim strCurrentAction As String = "preparing for extraction"
 		Dim blnProcessingError As Boolean
 
 		Try
@@ -132,7 +132,12 @@ Public Class clsExtractToolRunner
 				Case clsAnalysisResources.RESULT_TYPE_MODA
 
 					' Convert the MODa results to a tab-delimited file, filtering by FDR when converting
-					Dim strFilteredMODaResultsFilePath = ConvertMODaResultsToTxt()
+					Dim strFilteredMODaResultsFilePath As String = String.Empty
+					Result = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath)
+					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						blnProcessingError = True
+						Exit Select
+					End If
 
 					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for MODa"
@@ -217,9 +222,12 @@ Public Class clsExtractToolRunner
 	''' <summary>
 	''' Convert the MODa output file to a tab-delimited text file
 	''' </summary>
+	''' <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
 	''' <returns>The path to the .txt file if successful; empty string if an error</returns>
 	''' <remarks></remarks>
-	Protected Function ConvertMODaResultsToTxt() As String
+	Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
+
+		strFilteredMODaResultsFilePath = String.Empty
 
 		Try
 			Dim fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05)
@@ -242,10 +250,10 @@ Public Class clsExtractToolRunner
 
 			Const intJavaMemorySize = 1000
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 			Dim JavaProgLoc = GetJavaProgLoc()
 			If String.IsNullOrEmpty(JavaProgLoc) Then
-				Return String.Empty
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Determine the path to the MODa program
@@ -260,6 +268,8 @@ Public Class clsExtractToolRunner
 			CmdStr &= " -fdr " & fdrThreshold
 			CmdStr &= " -d " & decoyPrefix
 
+			' Example command line:
+			' "C:\Program Files\Java\jre7\bin\java.exe" -Xmx1500M -jar C:\DMS_Programs\MODa\anal_moda.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt" -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
 			Dim progRunner = New clsRunDosProgram(m_WorkDir)
@@ -288,18 +298,25 @@ Public Class clsExtractToolRunner
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & MODa_FILTER_JAR_NAME & " failed (but exit code is 0)")
 				End If
 
-				Return String.Empty
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 			End If
 
-			Dim strFilteredMODaResultsFilePath = Path.ChangeExtension(MODaResultsFilePath, ".id.txt")
+			' Confirm that the reuslts file was created
+			Dim fiFilteredMODaResultsFilePath = New FileInfo(Path.ChangeExtension(MODaResultsFilePath, ".id.txt"))
 
-			Return strFilteredMODaResultsFilePath
+			If Not fiFilteredMODaResultsFilePath.Exists() Then
+				m_message = "Filtered MODa results file not found: " & fiFilteredMODaResultsFilePath.Name
+				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			End If
+
+			strFilteredMODaResultsFilePath = fiFilteredMODaResultsFilePath.FullName
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		Catch ex As Exception
 			m_message = "Error in MODaPlugin->PostProcessResults"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return String.Empty
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 	End Function
@@ -865,8 +882,6 @@ Public Class clsExtractToolRunner
 
 		Dim Msg As String
 
-		Dim strSynFilePath As String
-
 		Dim Result As IJobParams.CloseOutType
 
 		Try
@@ -890,12 +905,11 @@ Public Class clsExtractToolRunner
 					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 				End If
 
-				strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_moda_syn.txt")
+				Dim strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_moda_syn.txt")
 
 				' Create the Synopsis and First Hits files using the _moda.id.txt file
 				Const CreatMODaFirstHitsFile As Boolean = True
 				Const CreateMODaSynopsisFile As Boolean = True
-
 
 				Result = m_PHRP.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreatMODaFirstHitsFile, CreateMODaSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA)
 
@@ -904,6 +918,12 @@ Public Class clsExtractToolRunner
 					If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then Msg &= "; " & m_PHRP.ErrMsg
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				' Confirm that the synopsis file was made
+				If Not File.Exists(strSynFilePath) Then
+					m_message = "Synopsis file not found: " & Path.GetFileName(strSynFilePath)
+					Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
 				End If
 
 				Try
