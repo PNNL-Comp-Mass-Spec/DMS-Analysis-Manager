@@ -2,7 +2,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports ParamFileGenerator.MakeParams
+Imports System.IO
 
 Public Class clsAnalysisResourcesMASIC
     Inherits clsAnalysisResources
@@ -18,6 +18,7 @@ Public Class clsAnalysisResourcesMASIC
         ' Get input data file
         Dim CreateStoragePathInfoOnly As Boolean = False
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
+		Dim toolName As String = m_jobParams.GetParam("ToolName")
 
         Select Case RawDataType.ToLower
             Case RAW_DATA_TYPE_DOT_RAW_FILES, _
@@ -47,6 +48,33 @@ Public Class clsAnalysisResourcesMASIC
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		If String.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, True) = 0 AndAlso toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()) Then
+
+			Dim strRawFileName = m_DatasetName & ".raw"
+			Dim strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName)
+
+			If String.IsNullOrWhiteSpace(strInputFilePath) Then
+				' Unable to resolve the file path
+				m_message = "Could not find " & strRawFileName & " or " & strRawFileName & STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Examine the size of the .Raw file
+			Dim fiInputFile As New FileInfo(strInputFilePath)
+
+			If clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile) Then
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)")
+
+				If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
+					' Error message should already have been logged and stored in m_message
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+			End If
+		End If
+	
         ' Add additional extensions to delete after the tool finishes
         m_JobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
 

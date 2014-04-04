@@ -11,6 +11,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Inherits clsAnalysisToolRunnerBase
@@ -41,440 +42,439 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
         ' Use clsLogTools.WriteLog to write these to the log
 
-        Dim srInFile As System.IO.StreamReader
-        Dim strLineIn As String
-        Dim intErrorCount As Integer
+		Dim srInFile As StreamReader
+		Dim strLineIn As String
+		Dim intErrorCount As Integer
 
-        Try
-            ' Fix the case of the MASIC LogFile
-            Dim ioFileInfo As New System.IO.FileInfo(strLogFilePath)
-            Dim strLogFileNameCorrectCase As String
+		Try
+			' Fix the case of the MASIC LogFile
+			Dim ioFileInfo As New FileInfo(strLogFilePath)
+			Dim strLogFileNameCorrectCase As String
 
-            strLogFileNameCorrectCase = System.IO.Path.GetFileName(strLogFilePath)
+			strLogFileNameCorrectCase = Path.GetFileName(strLogFilePath)
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking capitalization of the the MASIC Log File: should be " & strLogFileNameCorrectCase & "; is currently " & ioFileInfo.Name)
-            End If
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking capitalization of the the MASIC Log File: should be " & strLogFileNameCorrectCase & "; is currently " & ioFileInfo.Name)
+			End If
 
-            If ioFileInfo.Name <> strLogFileNameCorrectCase Then
-                ' Need to fix the case
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fixing capitalization of the MASIC Log File: " & strLogFileNameCorrectCase & " instead of " & ioFileInfo.Name)
-                End If
-                ioFileInfo.MoveTo(System.IO.Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase))
-            End If
+			If ioFileInfo.Name <> strLogFileNameCorrectCase Then
+				' Need to fix the case
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fixing capitalization of the MASIC Log File: " & strLogFileNameCorrectCase & " instead of " & ioFileInfo.Name)
+				End If
+				ioFileInfo.MoveTo(Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase))
+			End If
 
-        Catch ex As Exception
-            ' Ignore errors here
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error fixing capitalization of the MASIC Log File at " & strLogFilePath & ": " & ex.Message)
-        End Try
+		Catch ex As Exception
+			' Ignore errors here
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error fixing capitalization of the MASIC Log File at " & strLogFilePath & ": " & ex.Message)
+		End Try
 
-        Try
-            If strLogFilePath Is Nothing OrElse strLogFilePath.Length = 0 Then
-                Exit Sub
-            End If
+		Try
+			If strLogFilePath Is Nothing OrElse strLogFilePath.Length = 0 Then
+				Exit Sub
+			End If
 
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            intErrorCount = 0
-            Do While srInFile.Peek >= 0
-                strLineIn = srInFile.ReadLine()
+			intErrorCount = 0
+			Do While srInFile.Peek >= 0
+				strLineIn = srInFile.ReadLine()
 
-                If Not strLineIn Is Nothing Then
-                    If strLineIn.ToLower.Contains("error") Then
-                        If intErrorCount = 0 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Errors found in the MASIC Log File for job " & m_JobNum)
-                        End If
+				If Not strLineIn Is Nothing Then
+					If strLineIn.ToLower.Contains("error") Then
+						If intErrorCount = 0 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Errors found in the MASIC Log File for job " & m_JobNum)
+						End If
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " & strLineIn)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " & strLineIn)
 
-                        intErrorCount += 1
-                    End If
-                End If
-            Loop
+						intErrorCount += 1
+					End If
+				End If
+			Loop
 
-            srInFile.Close()
+			srInFile.Close()
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading MASIC Log File at '" & strLogFilePath & "'; " & ex.Message)
-        End Try
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading MASIC Log File at '" & strLogFilePath & "'; " & ex.Message)
+		End Try
 
-    End Sub
-  
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+	End Sub
 
-        Dim StepResult As IJobParams.CloseOutType
+	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-        'Call base class for initial setup
-        MyBase.RunTool()
+		Dim eStepResult As IJobParams.CloseOutType
 
-        ' Store the MASIC version info in the database
+		'Call base class for initial setup
+		MyBase.RunTool()
+
+		' Store the MASIC version info in the database
 		If Not StoreToolVersionInfo() Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 			m_message = "Error determining MASIC version"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        'Start the job timer
-        m_StartTime = System.DateTime.UtcNow
-        m_message = String.Empty
+		'Start the job timer
+		m_StartTime = DateTime.UtcNow
+		m_message = String.Empty
 
-        'Make the SIC's 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling MASIC to create the SIC files, job " & m_JobNum)
-        Try
-            ' Note that RunMASIC will populate the File Path variables, then will call 
-            '  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
-            StepResult = RunMASIC()
-            If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return StepResult
-            End If
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+		'Make the SIC's 
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling MASIC to create the SIC files, job " & m_JobNum)
+		Try
+			' Note that RunMASIC will populate the File Path variables, then will call 
+			'  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
+			eStepResult = RunMASIC()
+			If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				Return eStepResult
+			End If
+		Catch Err As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " & Err.Message)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
-        ' Update progress to 100%
-        m_progress = 100
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+		' Update progress to 100%
+		m_progress = 100
+		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
 
-        'Run the cleanup routine from the base class
-        If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		'Run the cleanup routine from the base class
+		If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        'Make the results folder
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder")
-        End If
+		'Make the results folder
+		If m_DebugLevel > 3 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder")
+		End If
 
-        StepResult = MakeResultsFolder()
-        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MakeResultsFolder handles posting to local log, so set database error message and exit
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		eStepResult = MakeResultsFolder()
+		If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			'MakeResultsFolder handles posting to local log, so set database error message and exit
+			m_message = "Error making results folder"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        StepResult = MoveResultFiles()
-        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MoveResultFiles moves the result files to the result folder
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		eStepResult = MoveResultFiles()
+		If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+			m_message = "Error moving files into results folder"
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
-        StepResult = CopyResultsFolderToServer()
-        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return StepResult
-        End If
+		eStepResult = CopyResultsFolderToServer()
+		If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+			Return eStepResult
+		End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-    End Function
+	End Function
 
-    Protected Function StartMASICAndWait(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String) As IJobParams.CloseOutType
-        ' Note that this function is normally called by RunMasic() in the subclass
+	Protected Function StartMASICAndWait(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String) As IJobParams.CloseOutType
+		' Note that this function is normally called by RunMasic() in the subclass
 
-        Dim strMASICExePath As String = String.Empty
-        Dim objMasicProgRunner As PRISM.Processes.clsProgRunner
-        Dim CmdStr As String
-        Dim blnSuccess As Boolean
+		Dim strMASICExePath As String = String.Empty
+		Dim objMasicProgRunner As PRISM.Processes.clsProgRunner
+		Dim CmdStr As String
+		Dim blnSuccess As Boolean
 
-        m_ErrorMessage = String.Empty
-        m_ProcessStep = "NewTask"
+		m_ErrorMessage = String.Empty
+		m_ProcessStep = "NewTask"
 
-        Try
-            m_MASICStatusFileName = "MasicStatus_" & m_MachName & ".xml"
-            If m_MASICStatusFileName Is Nothing Then
-                m_MASICStatusFileName = "MasicStatus.xml"
-            End If
-        Catch ex As Exception
-            m_MASICStatusFileName = "MasicStatus.xml"
-        End Try
+		Try
+			m_MASICStatusFileName = "MasicStatus_" & m_MachName & ".xml"
+			If m_MASICStatusFileName Is Nothing Then
+				m_MASICStatusFileName = "MasicStatus.xml"
+			End If
+		Catch ex As Exception
+			m_MASICStatusFileName = "MasicStatus.xml"
+		End Try
 
-        ' Make sure the MASIC.Exe file exists
-        Try
-            strMASICExePath = m_mgrParams.GetParam("masicprogloc")
-            If Not System.IO.File.Exists(strMASICExePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " & strMASICExePath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+		' Make sure the MASIC.Exe file exists
+		Try
+			strMASICExePath = m_mgrParams.GetParam("masicprogloc")
+			If Not File.Exists(strMASICExePath) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " & strMASICExePath)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " & strMASICExePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " & strMASICExePath)
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
-        ' Call MASIC using the Program Runner class
+		' Call MASIC using the Program Runner class
 
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MASIC on file " & strInputFilePath)
-        End If
+		If m_DebugLevel >= 1 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MASIC on file " & strInputFilePath)
+		End If
 
-        ' Define the parameters to send to Masic.exe
-        CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q /SF:" & m_MASICStatusFileName
+		' Define the parameters to send to Masic.exe
+		CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q /SF:" & m_MASICStatusFileName
 
-        If m_DebugLevel >= 2 Then
-            ' Create a MASIC Log File
-            CmdStr &= " /L"
-            m_MASICLogFileName = "MASIC_Log_Job" & m_JobNum & ".txt"
+		If m_DebugLevel >= 2 Then
+			' Create a MASIC Log File
+			CmdStr &= " /L"
+			m_MASICLogFileName = "MASIC_Log_Job" & m_JobNum & ".txt"
 
-            CmdStr &= ":" & System.IO.Path.Combine(m_WorkDir, m_MASICLogFileName)
-        Else
-            m_MASICLogFileName = String.Empty
-        End If
+			CmdStr &= ":" & Path.Combine(m_WorkDir, m_MASICLogFileName)
+		Else
+			m_MASICLogFileName = String.Empty
+		End If
 
 
-        objMasicProgRunner = New PRISM.Processes.clsProgRunner
-        With objMasicProgRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True             ' Echo the output to the console
-            .WriteConsoleOutputToFile = False       ' Do not write the console output to a file
+		objMasicProgRunner = New PRISM.Processes.clsProgRunner
+		With objMasicProgRunner
+			.CreateNoWindow = True
+			.CacheStandardOutput = False
+			.EchoOutputToConsole = True				' Echo the output to the console
+			.WriteConsoleOutputToFile = False		' Do not write the console output to a file
 
-            .Name = "MASIC"
-            .Program = strMASICExePath
-            .Arguments = CmdStr
-            .WorkDir = m_WorkDir
-        End With
+			.Name = "MASIC"
+			.Program = strMASICExePath
+			.Arguments = CmdStr
+			.WorkDir = m_WorkDir
+		End With
 
 		objMasicProgRunner.StartAndMonitorProgram()
 
-        'Wait for the job to complete
-        blnSuccess = WaitForJobToFinish(objMasicProgRunner)
+		'Wait for the job to complete
+		blnSuccess = WaitForJobToFinish(objMasicProgRunner)
 
-        objMasicProgRunner = Nothing
-        System.Threading.Thread.Sleep(3000)             'Delay for 3 seconds to make sure program exits
+		objMasicProgRunner = Nothing
+		Threading.Thread.Sleep(3000)				'Delay for 3 seconds to make sure program exits
 
-        If Not String.IsNullOrEmpty(m_MASICLogFileName) Then
-            ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
-            ' Use clsLogTools.WriteLog to write these to the log
-            ExtractErrorsFromMASICLogFile(System.IO.Path.Combine(m_WorkDir, m_MASICLogFileName))
-        End If
+		If Not String.IsNullOrEmpty(m_MASICLogFileName) Then
+			' Read the most recent MASIC_Log file and look for any lines with the text "Error"
+			' Use clsLogTools.WriteLog to write these to the log
+			ExtractErrorsFromMASICLogFile(Path.Combine(m_WorkDir, m_MASICLogFileName))
+		End If
 
-        'Verify MASIC exited due to job completion
-        If Not blnSuccess Then
+		'Verify MASIC exited due to job completion
+		If Not blnSuccess Then
 
-            If m_DebugLevel > 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "WaitForJobToFinish returned False")
-            End If
+			If m_DebugLevel > 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "WaitForJobToFinish returned False")
+			End If
 
-            If Not m_ErrorMessage Is Nothing AndAlso m_ErrorMessage.Length > 0 Then
+			If Not m_ErrorMessage Is Nothing AndAlso m_ErrorMessage.Length > 0 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " & m_ErrorMessage)
 				If String.IsNullOrEmpty(m_message) Then m_message = m_ErrorMessage
-            Else
+			Else
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank")
 				If String.IsNullOrEmpty(m_message) Then m_message = "Unknown error running MASIC"
-            End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        Else
-            If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" & m_ProcessStep)
-            End If
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        End If
+			End If
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Else
+			If m_DebugLevel > 0 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" & m_ProcessStep)
+			End If
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		End If
 
-    End Function
+	End Function
 
-    Protected MustOverride Function RunMASIC() As IJobParams.CloseOutType
+	Protected MustOverride Function RunMASIC() As IJobParams.CloseOutType
 
-    Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
+	Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
 
-    Protected Overridable Sub CalculateNewStatus(ByVal strMasicProgLoc As String)
+	Protected Overridable Sub CalculateNewStatus(ByVal strMasicProgLoc As String)
 
-        'Calculates status information for progress file
-        'Does this by reading the MasicStatus.xml file
+		'Calculates status information for progress file
+		'Does this by reading the MasicStatus.xml file
 
-        Dim strPath As String
+		Dim strPath As String
 
-        Dim fsInFile As System.IO.FileStream = Nothing
-        Dim objXmlReader As System.Xml.XmlTextReader = Nothing
+		Dim fsInFile As FileStream = Nothing
+		Dim objXmlReader As Xml.XmlTextReader = Nothing
 
-        Dim strProgress As String = String.Empty
+		Dim strProgress As String = String.Empty
 
-        Try
-            strPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strMasicProgLoc), m_MASICStatusFileName)
+		Try
+			strPath = Path.Combine(Path.GetDirectoryName(strMasicProgLoc), m_MASICStatusFileName)
 
-            If System.IO.File.Exists(strPath) Then
+			If File.Exists(strPath) Then
 
-                fsInFile = New System.IO.FileStream(strPath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)
-                objXmlReader = New System.Xml.XmlTextReader(fsInFile)
-                objXmlReader.WhitespaceHandling = Xml.WhitespaceHandling.None
+				fsInFile = New FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
+				objXmlReader = New Xml.XmlTextReader(fsInFile)
+				objXmlReader.WhitespaceHandling = Xml.WhitespaceHandling.None
 
-                While objXmlReader.Read()
+				While objXmlReader.Read()
 
-                    If objXmlReader.NodeType = System.Xml.XmlNodeType.Element Then
-                        Select Case objXmlReader.Name
-                            Case "ProcessingStep"
-                                If Not objXmlReader.IsEmptyElement Then
-                                    If objXmlReader.Read() Then m_ProcessStep = objXmlReader.Value
-                                End If
-                            Case "Progress"
-                                If Not objXmlReader.IsEmptyElement Then
-                                    If objXmlReader.Read() Then strProgress = objXmlReader.Value
-                                End If
-                            Case "Error"
-                                If Not objXmlReader.IsEmptyElement Then
-                                    If objXmlReader.Read() Then m_ErrorMessage = objXmlReader.Value
-                                End If
-                        End Select
-                    End If
-                End While
+					If objXmlReader.NodeType = Xml.XmlNodeType.Element Then
+						Select Case objXmlReader.Name
+							Case "ProcessingStep"
+								If Not objXmlReader.IsEmptyElement Then
+									If objXmlReader.Read() Then m_ProcessStep = objXmlReader.Value
+								End If
+							Case "Progress"
+								If Not objXmlReader.IsEmptyElement Then
+									If objXmlReader.Read() Then strProgress = objXmlReader.Value
+								End If
+							Case "Error"
+								If Not objXmlReader.IsEmptyElement Then
+									If objXmlReader.Read() Then m_ErrorMessage = objXmlReader.Value
+								End If
+						End Select
+					End If
+				End While
 
-                If strProgress.Length > 0 Then
-                    Try
-                        m_progress = Single.Parse(strProgress)
-                    Catch ex As Exception
-                        ' Ignore errors
-                    End Try
-                End If
+				If strProgress.Length > 0 Then
+					Try
+						m_progress = Single.Parse(strProgress)
+					Catch ex As Exception
+						' Ignore errors
+					End Try
+				End If
 
-            End If
+			End If
 
-        Catch ex As Exception
-            ' Ignore errors
-        Finally
-            If Not objXmlReader Is Nothing Then
-                objXmlReader.Close()
-                objXmlReader = Nothing
-            End If
+		Catch ex As Exception
+			' Ignore errors
+		Finally
+			If Not objXmlReader Is Nothing Then
+				objXmlReader.Close()
+				objXmlReader = Nothing
+			End If
 
-            If Not fsInFile Is Nothing Then
-                fsInFile.Close()
-                fsInFile = Nothing
-            End If
-        End Try
+			If Not fsInFile Is Nothing Then
+				fsInFile.Close()
+				fsInFile = Nothing
+			End If
+		End Try
 
-    End Sub
+	End Sub
 
-    Protected Overridable Function PerfPostAnalysisTasks(ByVal ResType As String) As IJobParams.CloseOutType
+	Protected Overridable Function PerfPostAnalysisTasks(ByVal ResType As String) As IJobParams.CloseOutType
 
-        Dim StepResult As IJobParams.CloseOutType
-        Dim FoundFiles() As String
+		Dim StepResult As IJobParams.CloseOutType
+		Dim FoundFiles() As String
 
-        'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+		'Stop the job timer
+		m_StopTime = DateTime.UtcNow
 
-        'Get rid of raw data file
-        StepResult = DeleteDataFile()
-        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return StepResult
-        End If
+		'Get rid of raw data file
+		StepResult = DeleteDataFile()
+		If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return StepResult
+		End If
 
-        'Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
-        FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX)
+		'Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
+		FoundFiles = Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX)
 
-        If FoundFiles.Length > 0 Then
-            'Setup zipper
+		If FoundFiles.Length > 0 Then
+			'Setup zipper
 
-            Dim ZipFileName As String
+			Dim ZipFileName As String
 
-            ZipFileName = m_Dataset & "_SICs.zip"
+			ZipFileName = m_Dataset & "_SICs.zip"
 
-            If Not MyBase.ZipFile(FoundFiles(0), True, System.IO.Path.Combine(m_WorkDir, ZipFileName)) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping " & System.IO.Path.GetFileName(FoundFiles(0)) & ", job " & m_JobNum)
+			If Not MyBase.ZipFile(FoundFiles(0), True, Path.Combine(m_WorkDir, ZipFileName)) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping " & Path.GetFileName(FoundFiles(0)) & ", job " & m_JobNum)
 				m_message = clsGlobal.AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
-        End If
+		End If
 
-        'Add all the extensions of the files to delete after run
-        m_JobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
+		'Add all the extensions of the files to delete after run
+		m_JobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
 
-        'Add the current job data to the summary file
-        Try
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+		'Add the current job data to the summary file
+		Try
+			If Not UpdateSummaryFile() Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			End If
+		Catch Err As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-    End Function
+	End Function
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+	''' <summary>
+	''' Stores the tool version info in the database
+	''' </summary>
+	''' <remarks></remarks>
+	Protected Function StoreToolVersionInfo() As Boolean
 
-        Dim strToolVersionInfo As String = String.Empty
+		Dim strToolVersionInfo As String = String.Empty
 		Dim strMASICExePath As String = m_mgrParams.GetParam("masicprogloc")
 		Dim blnSuccess As Boolean
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
+		If m_DebugLevel >= 2 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+		End If
 
 		' Lookup the version of MASIC
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strMASICExePath)
 		If Not blnSuccess Then Return False
 
-        ' Store path to MASIC.exe in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(strMASICExePath))
+		' Store path to MASIC.exe in ioToolFiles
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(strMASICExePath))
 
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
+		Try
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+			Return False
+		End Try
 
-    End Function
+	End Function
 
-    Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
+	Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
 		Const MINIMUM_LOG_INTERVAL_SEC As Integer = 120
 		Const MAX_RUNTIME_HOURS As Integer = 12
 
-        Static dtLastLogTime As DateTime
-        Static sngProgressSaved As Single = -1
+		Static dtLastLogTime As DateTime
+		Static sngProgressSaved As Single = -1
 
-        Dim blnSICsXMLFileExists As Boolean
-		Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
+		Dim blnSICsXMLFileExists As Boolean
+		Dim dtStartTime As DateTime = DateTime.UtcNow
 		Dim blnAbortedProgram As Boolean = False
 
-        'Wait for completion
-        m_JobRunning = True
+		'Wait for completion
+		m_JobRunning = True
 
-        While m_JobRunning
-            System.Threading.Thread.Sleep(5000)             'Delay for 5 seconds
+		While m_JobRunning
+			Threading.Thread.Sleep(5000)				'Delay for 5 seconds
 
-            If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
-                m_JobRunning = False
-            Else
+			If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
+				m_JobRunning = False
+			Else
 
-                ' Synchronize the stored Debug level with the value stored in the database
-                Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-                MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+				' Synchronize the stored Debug level with the value stored in the database
+				Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+				MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-                CalculateNewStatus(objMasicProgRunner.Program)                       'Update the status
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+				CalculateNewStatus(objMasicProgRunner.Program)						 'Update the status
+				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
 
-                If m_DebugLevel >= 3 Then
-                    If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
-                        m_progress - sngProgressSaved >= 25 Then
-                        dtLastLogTime = System.DateTime.UtcNow
-                        sngProgressSaved = m_progress
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
-                                           "Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")")
-                    End If
-                End If
-            End If
+				If m_DebugLevel >= 3 Then
+					If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse m_progress - sngProgressSaved >= 25 Then
+						dtLastLogTime = DateTime.UtcNow
+						sngProgressSaved = m_progress
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
+							"Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")")
+					End If
+				End If
+			End If
 
-			If System.DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then
+			If DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then
 				' Abort processing
 				objMasicProgRunner.StopMonitoringProgram(Kill:=True)
 				blnAbortedProgram = True
 			End If
-        End While
+		End While
 
-        If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
-        End If
+		If m_DebugLevel > 0 Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
+		End If
 
 		If blnAbortedProgram Then
 			m_ErrorMessage = "Aborted MASIC processing since over " & MAX_RUNTIME_HOURS & " hours have elapsed"
@@ -487,7 +487,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
 
 			' See if a _SICs.XML file was created
-			If System.IO.Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
+			If Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
 				blnSICsXMLFileExists = True
 			End If
 
@@ -509,7 +509,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 			Return True
 		End If
 
-    End Function
+	End Function
 
 #End Region
 
