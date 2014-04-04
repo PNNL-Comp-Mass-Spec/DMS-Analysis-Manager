@@ -83,6 +83,7 @@ Public Class clsAnalysisResourcesMODa
 			mDTAtoMGF.FilterSpectra = False
 			mDTAtoMGF.MaximumIonsPer100MzInterval = 0
 			mDTAtoMGF.NoMerge = True
+			mDTAtoMGF.CreateIndexFile = True
 
 			' Convert the _dta.txt file for this dataset
 			Dim fiCDTAFile As FileInfo = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt"))
@@ -118,6 +119,8 @@ Public Class clsAnalysisResourcesMODa
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
 				Return False
 			End If
+
+			m_jobParams.AddResultFileExtensionToSkip(".mgf")
 
 		Catch ex As Exception
 			m_message = "Exception in ConvertCDTAToMGF"

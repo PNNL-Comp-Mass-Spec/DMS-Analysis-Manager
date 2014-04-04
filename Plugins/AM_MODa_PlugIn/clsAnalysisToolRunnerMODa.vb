@@ -39,6 +39,8 @@ Public Class clsAnalysisToolRunnerMODa
 	Protected mMODaProgLoc As String
 	Protected mConsoleOutputErrorMsg As String
 
+	Protected mMODaResultsFilePath As String
+
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
@@ -63,6 +65,8 @@ Public Class clsAnalysisToolRunnerMODa
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMODa.RunTool(): Enter")
 			End If
 
+			mMODaResultsFilePath = String.Empty
+
 			' Verify that program files exist
 
 			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
@@ -80,6 +84,27 @@ Public Class clsAnalysisToolRunnerMODa
 
 			' Run MODa, then post process the results
 			Dim blnSuccess = StartMODa(JavaProgLoc)
+
+			If blnSuccess Then
+				' Look for the moda results file
+				' If it exists, then zip it
+				Dim fiResultsFile = New FileInfo(mMODaResultsFilePath)
+
+				If fiResultsFile.Exists Then
+					' Zip the output file
+					blnSuccess = ZipOutputFile(fiResultsFile)
+
+					If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+						m_message = "Unknown error zipping the MODa results"
+					End If
+
+				Else
+					If String.IsNullOrEmpty(m_message) Then
+						m_message = "MODa results file not found: " & Path.GetFileName(mMODaResultsFilePath)
+						blnSuccess = False
+					End If
+				End If			
+			End If
 
 			m_progress = PROGRESS_PCT_COMPLETE
 
@@ -171,12 +196,12 @@ Public Class clsAnalysisToolRunnerMODa
 		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 		Dim paramFilePath = Path.Combine(m_WorkDir, paramFileName)
-		Dim modaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & MODA_RESULTS_FILE_SUFFIX)
+		mMODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & MODA_RESULTS_FILE_SUFFIX)
 
 		'Set up and execute a program runner to run MODa
 		CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMODaProgLoc
 		CmdStr &= " -i " & paramFilePath
-		CmdStr &= " -o " & modaResultsFilePath
+		CmdStr &= " -o " & mMODaResultsFilePath
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
@@ -628,6 +653,28 @@ Public Class clsAnalysisToolRunnerMODa
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
 
+	Protected Function ZipOutputFile(ByVal fiResultsFile As FileInfo) As Boolean
+
+		Try
+
+			If Not ZipFile(fiResultsFile.FullName, False) Then
+				m_message = "Error zipping MODa results file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
+			m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
+
+		Catch ex As Exception
+			m_message = "Exception zipping MODa results file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
 
 #End Region
 
