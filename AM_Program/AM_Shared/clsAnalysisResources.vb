@@ -2223,31 +2223,45 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+
+	''' <summary>
+	''' Creates the _ScanStats.txt file for this job's dataset
+	''' </summary>
+	''' <returns>True if success, false if a problem</returns>
+	''' <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
 	Protected Function GenerateScanStatsFile() As Boolean
 
-		Dim strRawDataType As String
-		Dim strInputFilePath As String
+		Const deleteRawDataFile = True
+		Return GenerateScanStatsFile(deleteRawDataFile)
 
-		Dim strMSFileInfoScannerDir As String
-		Dim strMSFileInfoScannerDLLPath As String
+	End Function
 
-		Dim blnSuccess As Boolean
+	''' <summary>
+	''' Creates the _ScanStats.txt file for this job's dataset
+	''' </summary>
+	''' <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
+	''' <returns>True if success, false if a problem</returns>
+	''' <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
+	Protected Function GenerateScanStatsFile(ByVal deleteRawDataFile As Boolean) As Boolean
 
-		strRawDataType = m_jobParams.GetParam("RawDataType")
+		Dim strRawDataType = m_jobParams.GetParam("RawDataType")
+		Dim intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0)
 
-		strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
+		Dim strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
 		If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
 			m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " + m_message)
 			Return False
 		End If
 
-		strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+		Dim strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
 		If Not File.Exists(strMSFileInfoScannerDLLPath) Then
 			m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GenerateScanStatsFile: " + m_message)
 			Return False
 		End If
+
+		Dim strInputFilePath As String
 
 		' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
 		Select Case GetRawDataType(strRawDataType)
@@ -2263,18 +2277,20 @@ Public MustInherit Class clsAnalysisResources
 
 		strInputFilePath = Path.Combine(m_WorkingDir, strInputFilePath)
 
-		If Not RetrieveSpectra(strRawDataType) Then
-			Dim strExtraMsg As String = m_message
-			m_message = "Error retrieving spectra file"
-			If Not String.IsNullOrWhiteSpace(strExtraMsg) Then
-				m_message &= "; " + strExtraMsg
+		If Not File.Exists(strInputFilePath) Then
+			If Not RetrieveSpectra(strRawDataType) Then
+				Dim strExtraMsg As String = m_message
+				m_message = "Error retrieving spectra file"
+				If Not String.IsNullOrWhiteSpace(strExtraMsg) Then
+					m_message &= "; " + strExtraMsg
+				End If
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
+				Return False
 			End If
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
-			Return False
-		End If
 
-		If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return False
+			If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+				Return False
+			End If
 		End If
 
 		' Make sure the raw data file does not get copied to the results folder
@@ -2283,7 +2299,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
 
 		' Create the _ScanStats.txt and _ScanStatsEx.txt files
-		blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir)
+		Dim blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir, intDatasetID)
 
 		If blnSuccess Then
 			If m_DebugLevel >= 1 Then
@@ -2293,11 +2309,14 @@ Public MustInherit Class clsAnalysisResources
 			Threading.Thread.Sleep(125)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			Try
-				File.Delete(strInputFilePath)
-			Catch ex As Exception
-				' Ignore errors here
-			End Try
+			If deleteRawDataFile Then
+				Try
+					File.Delete(strInputFilePath)
+				Catch ex As Exception
+					' Ignore errors here
+				End Try
+			End If
+		
 		Else
 			m_message = "Error generating ScanStats files with clsScanStatsGenerator"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, objScanStatsGenerator.ErrorMessage)

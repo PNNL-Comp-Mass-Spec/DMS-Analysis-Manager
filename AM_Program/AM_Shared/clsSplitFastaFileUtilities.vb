@@ -454,7 +454,7 @@ Public Class clsSplitFastaFileUtilities
 
 			OnProgressUpdate("Fasta file successfully split into " & mNumSplitParts & " parts", 100)
 
-			' Store the newly created Fasta file names, plust their protein and residue stats, in DMS
+			' Store the newly created Fasta file names, plus their protein and residue stats, in DMS
 			strCurrentTask = "StoreSplitFastaFileNames"
 			success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo)
 			If Not success Then

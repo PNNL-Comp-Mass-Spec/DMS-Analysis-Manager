@@ -1078,7 +1078,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function GetJavaProgLoc() As String
 
-		' JavaLoc will typically be "C:\Program Files\Java\jre6\bin\Java.exe"
+		' JavaLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 		Dim javaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
 
 		If String.IsNullOrEmpty(javaProgLoc) Then

@@ -30,7 +30,26 @@ Public Class clsScanStatsGenerator
 		mErrorMessage = String.Empty
 	End Sub
 
+	''' <summary>
+	''' Create the ScanStats file for the given dataset file
+	''' </summary>
+	''' <param name="strInputFilePath">Dataset file</param>
+	''' <param name="strOutputFolderPath">Output folder</param>
+	''' <returns></returns>
+	''' <remarks>Will list DatasetID as 0 in the output file</remarks>
 	Public Function GenerateScanStatsFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
+		Return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0)
+	End Function
+
+	''' <summary>
+	''' Create the ScanStats file for the given dataset file
+	''' </summary>
+	''' <param name="strInputFilePath">Dataset file</param>
+	''' <param name="strOutputFolderPath">Output folder</param>
+	''' <param name="intDatasetID">Dataset ID</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Function GenerateScanStatsFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal intDatasetID As Integer) As Boolean
 
 		Dim blnSuccess As Boolean
 
@@ -47,6 +66,7 @@ Public Class clsScanStatsGenerator
 			mMSFileInfoScanner.SaveLCMS2DPlots = False
 			mMSFileInfoScanner.SaveTICAndBPIPlots = False
 			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
+			mMSFileInfoScanner.DatasetIDOverride = intDatasetID
 
 			blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath)
 
