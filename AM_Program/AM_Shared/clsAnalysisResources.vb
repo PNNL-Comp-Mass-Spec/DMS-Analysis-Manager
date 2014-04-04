@@ -5293,7 +5293,6 @@ Public MustInherit Class clsAnalysisResources
 				PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
 			End If
 
-
 		Catch ex As Exception
 			m_message = "Exception in RetrieveOrgDB: " & ex.Message
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveOrgDB", ex)

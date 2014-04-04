@@ -44,7 +44,8 @@ Public Class clsAnalysisResourcesSeq
 			If strSrcFilePath Is Nothing Then strSrcFilePath = "??"
 			If strTargetFolderPath Is Nothing Then strTargetFolderPath = "??"
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error archiving param file to ParmFileStoragePath: " & strSrcFilePath & " --> " & strTargetFolderPath & ex.Message)
+			m_message = "Error archiving param file to ParmFileStoragePath"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message & ": " & strSrcFilePath & " --> " & strTargetFolderPath & ex.Message)
 		End Try
 
 	End Sub
@@ -173,7 +174,7 @@ Public Class clsAnalysisResourcesSeq
 			If Not ioSourceFolder.Exists Then
 				' Transfer folder not found; return false
 				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & ioSourceFolder.FullName)
 				End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
@@ -529,6 +530,9 @@ Public Class clsAnalysisResourcesSeq
 		eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
 
 		If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Call to CheckForExistingConcatenatedOutFile failed"
+			End If
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
@@ -551,7 +555,7 @@ Public Class clsAnalysisResourcesSeq
 			End If
 
 			If Not VerifyDatabase(OrbDBName, LocOrgDBFolder) Then
-				'Errors were reported in function call, so just return
+				' Errors were reported in function call, so just return
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -583,40 +587,44 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim strLogMessage As String
 
-		Dim blnFileAlreadyExists As Boolean
-		Dim intNodeCountProcessed As Integer
-		Dim intNodeCountFailed As Integer
-		Dim intNodeCountFileAlreadyExists As Integer
-
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & System.IO.Path.GetFileName(OrgDBName))
 
 		'Get the list of nodes from the hosts file
 		Nodes = GetHostList(HostFilePath)
 		If Nodes Is Nothing OrElse Nodes.Count = 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine node names from host file: " & HostFilePath)
+			m_message = "Unable to determine node names from host file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & HostFilePath)
 			Return False
 		End If
 
 
 		' Define the path to the database on the head node
 		Dim OrgDBFilePath As String = System.IO.Path.Combine(OrgDBPath, OrgDBName)
-		If Not System.IO.File.Exists(OrgDBFilePath) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Database file can't be found on master")
+		If Not IO.File.Exists(OrgDBFilePath) Then
+			m_message = "Database file can't be found on master"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & OrgDBFilePath)
 			Return False
 		End If
 
 		' For each node, verify specified database file is present and matches file on host
 		' Allow up to 25% of the nodes to fail (they should just get skipped when the Sequest search occurs)
 
-		blnFileAlreadyExists = False
-		intNodeCountProcessed = 0
-		intNodeCountFailed = 0
-		intNodeCountFileAlreadyExists = 0
+		Dim blnFileAlreadyExists = False
+		Dim blnNotEnoughFreeSpace = False
+
+		Dim intNodeCountProcessed = 0
+		Dim intNodeCountFailed = 0
+		Dim intNodeCountFileAlreadyExists = 0
+		Dim intNodeCountNotEnoughFreeSpace = 0
 
 		For Each NodeName As String In Nodes
-			If Not VerifyRemoteDatabase(OrgDBFilePath, "\\" & NodeName & "\" & NodeDbLoc, blnFileAlreadyExists) Then
+			If Not VerifyRemoteDatabase(OrgDBFilePath, "\\" & NodeName & "\" & NodeDbLoc, blnFileAlreadyExists, blnNotEnoughFreeSpace) Then
 				intNodeCountFailed += 1
 				blnFileAlreadyExists = True
+
+				If blnNotEnoughFreeSpace Then
+					intNodeCountNotEnoughFreeSpace += 1
+				End If
 			End If
 
 			intNodeCountProcessed += 1
@@ -624,7 +632,8 @@ Public Class clsAnalysisResourcesSeq
 		Next
 
 		If intNodeCountProcessed = 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "The Nodes collection is empty; unable to continue")
+			m_message = "The Nodes collection is empty; unable to continue"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			Return False
 		End If
 
@@ -640,6 +649,13 @@ Public Class clsAnalysisResourcesSeq
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strLogMessage)
 
 			If dblNodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT Then
+				m_message = "Unable to copy the database file one or more nodes; "
+				If intNodeCountNotEnoughFreeSpace > 0 Then
+					m_message = "not enough space on the disk"
+				Else
+					m_message = "see " & m_MgrName & " manager log for details"
+				End If
+
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since did not succeed on at least " & MINIMUM_NODE_SUCCESS_PCT.ToString & "% of the nodes")
 				Return False
 			Else
@@ -789,13 +805,16 @@ Public Class clsAnalysisResourcesSeq
 	''' </summary>
 	''' <param name="OrgDBFilePath">Full path to the source file</param>
 	''' <param name="DestPath">Fasta storage location on cluster node</param>
+	''' <param name="blnFileAlreadyExists">Output parameter: true if the file already exists</param>
+	''' <param name="blnNotEnoughFreeSpace">Output parameter: true if the target node does not have enough space for the file</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
-	Private Function VerifyRemoteDatabase(ByVal OrgDBFilePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean) As Boolean
+	Private Function VerifyRemoteDatabase(ByVal OrgDBFilePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean, ByRef blnNotEnoughFreeSpace As Boolean) As Boolean
 
 		Dim CopyNeeded As Boolean = False
 
 		blnFileAlreadyExists = False
+		blnNotEnoughFreeSpace = False
 
 		If m_DebugLevel > 3 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " & DestPath)
@@ -835,6 +854,9 @@ Public Class clsAnalysisResourcesSeq
 		Catch Err As Exception
 			'Something bad happened
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying database file to " & DestFile & ": " & Err.Message)
+			If Err.Message.Contains("not enough space") Then
+				blnNotEnoughFreeSpace = True
+			End If
 			Return False
 		End Try
 
