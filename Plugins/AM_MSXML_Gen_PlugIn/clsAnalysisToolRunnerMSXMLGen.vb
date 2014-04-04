@@ -66,19 +66,21 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 		result = MakeResultsFolder()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
+			'MakeResultsFolder handles posting to local log, so set database error message and exit
+			m_message = "Error making results folder"
 			Return result
 		End If
 
 		result = MoveResultFiles()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
+			' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+			m_message = "Error moving files into results folder"
 			Return result
 		End If
 
 		result = CopyResultsFolderToServer()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
+			' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 			Return result
 		End If
 

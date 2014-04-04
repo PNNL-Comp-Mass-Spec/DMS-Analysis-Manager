@@ -325,7 +325,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				result = PostProcessMSGFDBResults(ResultsFileName, JavaProgLoc, udtHPCOptions)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Unknown error post-processing the " & strSearchEngineName & "  results"
+						m_message = "Unknown error post-processing the " & strSearchEngineName & " results"
 					End If
 					blnProcessingError = True
 				End If

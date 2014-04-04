@@ -9,6 +9,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources
@@ -143,7 +144,7 @@ Public Class clsAnalysisResourcesMSGFDB
 							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					End Select
 				Else
-					' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+					' Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
 					currentTask = "RetrieveScanStatsFiles"
 
@@ -156,15 +157,36 @@ Public Class clsAnalysisResourcesMSGFDB
 
 					If blnSuccess Then
 						' Open the ScanStats file and read the header line to see if column ScanTypeName is present
-						Dim blnScanTypeColumnFound As Boolean
-						Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
-						blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsFilePath)
+						' Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
+						Dim strScanStatsOrExFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+
+						Dim blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath)
 
 						If Not blnScanTypeColumnFound Then
 							' We also have to retrieve the _ScanStatsEx.txt file
 							blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
+
+							If blnSuccess Then
+								strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStatsEx.txt")
+							End If
 						End If
 
+						If blnScanTypeColumnFound OrElse blnSuccess Then
+							Dim blnDetailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsOrExFilePath)
+
+							If Not blnDetailedScanTypesDefined Then
+								If blnScanTypeColumnFound Then
+									m_message = "ScanTypes defined in the ScanTypeName column"
+								Else
+									m_message = "ScanTypes defined in the ""Collision Mode"" column or ""Scan Filter Text"" column"
+								End If
+
+								m_message &= " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
+
+								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+							End If
+
+						End If
 					End If
 
 					If Not blnSuccess Then
@@ -174,6 +196,15 @@ Public Class clsAnalysisResourcesMSGFDB
 							' Error message should already have been logged and stored in m_message
 							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 						End If
+
+						Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+						Dim blnDetailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
+
+						If Not blnDetailedScanTypesDefined Then
+							m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
+							Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+						End If
+
 					Else
 						If m_DebugLevel >= 1 Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
@@ -238,13 +269,65 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	End Sub
 
-	Protected Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
+	Protected Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
 
-		Dim blnScanTypeColumnFound As Boolean = False
+		Dim lstColumnNameWithScanType = New List(Of String) From {"ScanTypeName", "Collision Mode", "Scan Filter Text"}
+		Dim lstColumnIndicesToCheck = New List(Of Integer)
+
+		Dim blnDetailedScanTypesDefined As Boolean = False
 
 		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			If srScanStatsFile.Peek > -1 Then
+				' Parse the scan headers
+
+				Dim lstColumns As List(Of String)
+				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+
+				For Each columnName In lstColumnNameWithScanType
+					Dim intScanTypeIndex = lstColumns.IndexOf(columnName)
+					If intScanTypeIndex >= 0 Then
+						lstColumnIndicesToCheck.Add(intScanTypeIndex)
+					End If
+				Next
+
+			End If
+
+			If lstColumnIndicesToCheck.Count > 0 Then
+				Do While srScanStatsFile.Peek > -1 And Not blnDetailedScanTypesDefined
+					Dim lstColumns As List(Of String)
+					lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+
+					For Each columnIndex In lstColumnIndicesToCheck
+						Dim strScanType = lstColumns(columnIndex)
+
+						If strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+							blnDetailedScanTypesDefined = True
+						ElseIf strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+							blnDetailedScanTypesDefined = True
+						ElseIf strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+							blnDetailedScanTypesDefined = True
+						End If
+					Next
+					
+				Loop
+			End If
+
+		End Using
+
+		Return blnDetailedScanTypesDefined
+
+	End Function
+
+	Protected Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
+
+		Dim blnScanTypeColumnFound As Boolean = False
+	
+		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+			If srScanStatsFile.Peek > -1 Then
+				' Parse the scan headers to look for ScanTypeName
+
 				Dim lstColumns As List(Of String)
 				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
