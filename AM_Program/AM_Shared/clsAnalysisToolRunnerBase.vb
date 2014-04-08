@@ -588,25 +588,32 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Function CreateRemoteTransferFolder(ByVal objAnalysisResults As clsAnalysisResults) As String
 
-		Dim strRemoteTransferFolderPath As String
-		Dim ResultsFolderName As String
-		Dim TransferFolderPath As String
-
-		ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
-		If String.IsNullOrEmpty(ResultsFolderName) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-			m_message = "Results folder not found"
-			' Without a source folder; there isn't much we can do
-			Return String.Empty
-		End If
-
-		TransferFolderPath = m_jobParams.GetParam("transferFolderPath")
+		Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
 
 		' Verify transfer directory exists
 		' First make sure TransferFolderPath is defined
 		If String.IsNullOrEmpty(TransferFolderPath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
 			m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
+			Return String.Empty
+		End If
+
+		Return CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath)
+
+	End Function
+
+	''' <summary>
+	''' Determines the path to the remote transfer folder
+	''' Creates the folder if it does not exist
+	''' </summary>
+	''' <returns>The full path to the remote transfer folder; an empty string if an error</returns>
+	''' <remarks></remarks>
+	Protected Function CreateRemoteTransferFolder(ByVal objAnalysisResults As clsAnalysisResults, ByVal transferFolderPath As String) As String
+
+		Dim ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
+		If String.IsNullOrEmpty(ResultsFolderName) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+			m_message = "Results folder not found"
 			Return String.Empty
 		End If
 
@@ -626,6 +633,8 @@ Public Class clsAnalysisToolRunnerBase
 			m_message = "Dataset name is undefined"
 			Return String.Empty
 		End If
+
+		Dim strRemoteTransferFolderPath As String
 
 		If m_Dataset.ToLower() = "Aggregation".ToLower() Then
 			' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
@@ -2223,7 +2232,7 @@ Public Class clsAnalysisToolRunnerBase
 	  ByVal targetFolderPath As String,
 	  ByVal fileNameFilterSpec As String) As Boolean
 
-		Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}		
+		Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}
 		Dim lstFileNameExclusionSpec = New List(Of String)
 		Const maxRetryCount = 3
 

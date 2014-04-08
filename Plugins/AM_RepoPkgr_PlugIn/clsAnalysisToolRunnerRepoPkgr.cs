@@ -221,7 +221,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				if (dataPkgJobCountMatch == 0)
 				{
 					m_message = "Data package " + _mgr.DataPkgId +
-					            " does not have any analysis jobs associated with it; unable to obtain instrument data";
+					            " does not have any analysis jobs associated with it; please add some MASIC or DeconTools jobs then reset this job";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
 					return false;
 				}

@@ -862,8 +862,7 @@ Public Class clsMSGFRunner
 			End If
 		End If
 
-		Dim blnCopySuccess As Boolean
-		blnCopySuccess = CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, IO.Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
+		CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, IO.Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
 
 		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
@@ -873,15 +872,15 @@ Public Class clsMSGFRunner
 
 	Protected Function DefineProgramPaths() As Boolean
 
-		' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+		' mJavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
 		' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-		Dim JavaProgLoc = GetJavaProgLoc()
-		If String.IsNullOrEmpty(JavaProgLoc) Then
+		mJavaProgLoc = GetJavaProgLoc()
+		If String.IsNullOrEmpty(mJavaProgLoc) Then
 			Return False
 		End If
 
 		' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
-		mMSGFProgLoc = DetermineMSGFProgramLocation(mUsingMSGFDB)
+		mMSGFProgLoc = DetermineMSGFProgramLocation()
 
 		If String.IsNullOrEmpty(mMSGFProgLoc) Then
 			If String.IsNullOrEmpty(m_message) Then
@@ -897,13 +896,13 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function DetermineMSGFProgramLocation(ByRef blnUsingMSGFDB As Boolean) As String
+	Protected Function DetermineMSGFProgramLocation() As String
 
 		Dim strStepToolName As String = "MSGFDB"
 		Dim strProgLocManagerParamName As String = "MSGFDbProgLoc"
 		Dim strExeName As String = MSGFDB_JAR_NAME
 
-		blnUsingMSGFDB = True
+		mUsingMSGFDB = True
 
 		' Note that as of 12/20/2011 we are using MSGFDB.jar to access the MSGF class
 		' In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
@@ -923,17 +922,17 @@ Public Class clsMSGFRunner
 				strProgLocManagerParamName = "MSGFLoc"
 				strExeName = MSGF_JAR_NAME
 
-				blnUsingMSGFDB = False
+				mUsingMSGFDB = False
 
 			Else
 				' Use MSGFDB
-				blnUsingMSGFDB = True
+				mUsingMSGFDB = True
 				mMSGFDBVersion = String.Copy(strMSGFStepToolVersion)
 			End If
 
 		Else
 			' Use MSGFDB
-			blnUsingMSGFDB = True
+			mUsingMSGFDB = True
 			mMSGFDBVersion = "Production_Release"
 		End If
 

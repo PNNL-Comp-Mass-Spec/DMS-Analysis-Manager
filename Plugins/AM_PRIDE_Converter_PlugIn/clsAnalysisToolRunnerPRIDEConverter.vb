@@ -2925,13 +2925,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	  ByVal objAnalysisResults As clsAnalysisResults,
 	  ByVal dctDatasetRawFilePaths As Dictionary(Of String, String)) As IJobParams.CloseOutType
 
-		Dim intJob As Integer
-		Dim strDataset As String
 		Dim blnSuccess As Boolean
 		Dim udtResultFiles As udtResultFileContainerType
 
-		intJob = kvJobInfo.Value.Job
-		strDataset = kvJobInfo.Value.Dataset
+		Dim intJob = kvJobInfo.Value.Job
+		Dim strDataset = kvJobInfo.Value.Dataset
 
 		If mPreviousDatasetName <> strDataset Then
 
@@ -3440,8 +3438,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If mPreviousDatasetFilesToCopy.Count > 0 Then
 			lstFilesToRetry.Clear()
 
-			Dim strRemoteTransferFolder As String
-			strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults)
+			Dim cacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\protoapps\PeptideAtlas_Staging")
+
+			Dim strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, cacheFolderPath)
 
 			If String.IsNullOrEmpty(strRemoteTransferFolder) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateRemoteTransferFolder returned an empty string; unable to copy files to the transfer folder")
