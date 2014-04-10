@@ -29,7 +29,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	Protected Const DEFAULT_TISSUE_CV As String = "[BTO, BTO:0000089, blood, ]"
 	Protected Const DEFAULT_CELL_TYPE_CV As String = "[CL, CL:0000081, blood cell, ]"
 	Protected Const DEFAULT_DISEASE_TYPE_CV As String = "[DOID, DOID:1612, breast cancer, ]"
-	Protected Const DEFAULT_EXPERIMENTAL_FACTOR As String = "Technical Replicate nnn"
 	Protected Const DEFAULT_QUANTIFICATION_TYPE_CV As String = "[PRIDE, PRIDE:0000436, Spectral counting,]"
 
 	Protected Const DEFAULT_PVALUE_THRESHOLD As Double = 0.05
@@ -2383,6 +2382,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				'	lstFileInfoCols.Clear()
 				'Next
 
+				Dim reJobAddon = New Text.RegularExpressions.Regex("(_Job\d+)(_msgfplus)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+
 				' Write the header row for the SMH section
 				swPXFile.WriteLine()
 				WritePXLine(swPXFile, New List(Of String) From {"SMH", "file_id", "species", "tissue", "cell_type", "disease", "modification", "instrument", "quantification", "experimental_factor"})
@@ -2395,7 +2396,19 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 					lstFileInfoCols.Add(resultFile.Key.ToString())			' file_id
 
 					Dim udtSampleMetadata = New udtSampleMetadataType
-					If mMzIdSampleInfo.TryGetValue(resultFile.Value, udtSampleMetadata) Then
+					Dim resultFileName = resultFile.Value
+					If Not mMzIdSampleInfo.TryGetValue(resultFile.Value, udtSampleMetadata) Then
+						' Result file name may have been customized to include _Job1000000
+						' Check for this, and update resultFileName if required
+
+						Dim reMatch = reJobAddon.Match(resultFileName)
+						If reMatch.Success() Then
+							Dim resultFileNameNew = resultFileName.Substring(0, reMatch.Index) + reMatch.Groups(2).Value.ToString + resultFileName.Substring(reMatch.Index + reMatch.Length)
+							resultFileName = resultFileNameNew
+						End If
+					End If
+
+					If mMzIdSampleInfo.TryGetValue(resultFileName, udtSampleMetadata) Then
 						lstFileInfoCols.Add(udtSampleMetadata.Species)		' species
 						lstFileInfoCols.Add(udtSampleMetadata.Tissue)		' tissue
 						lstFileInfoCols.Add(udtSampleMetadata.CellType)		' cell_type
@@ -3589,7 +3602,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		udtSampleMetadata.Modifications.Clear()
 		udtSampleMetadata.InstrumentGroup = jobInfo.InstrumentGroup
 		udtSampleMetadata.Quantification = String.Empty
-		udtSampleMetadata.ExperimentalFactor = DEFAULT_EXPERIMENTAL_FACTOR
+		udtSampleMetadata.ExperimentalFactor = jobInfo.Experiment
 
 		Try
 			' Open the .mzid and parse it to create a new .mzid file
