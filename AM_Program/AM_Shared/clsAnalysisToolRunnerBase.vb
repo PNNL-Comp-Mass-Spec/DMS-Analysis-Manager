@@ -364,13 +364,36 @@ Public Class clsAnalysisToolRunnerBase
 	''' <summary>
 	''' Copies the files from the results folder to the transfer folder on the server
 	''' </summary>
-	''' <returns></returns>
+	''' <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
 	''' <remarks></remarks>
 	Protected Function CopyResultsFolderToServer() As IJobParams.CloseOutType
 
-		Dim ResultsFolderName As String
-		Dim SourceFolderPath As String = String.Empty
-		Dim TargetFolderPath As String
+		Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
+
+		' Verify transfer directory exists
+		' First make sure TransferFolderPath is defined
+		If String.IsNullOrEmpty(transferFolderPath) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+			m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		Return CopyResultsFolderToServer(transferFolderPath)
+	End Function
+
+	''' <summary>
+	''' Copies the files from the results folder to the transfer folder on the server
+	''' </summary>
+	''' <param name="transferFolderPath">Transfer folder path to use
+	''' e.g. \\proto-6\DMS3_Xfer\DatasetName or 
+	''' \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
+	''' <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
+	''' <remarks></remarks>
+	Protected Function CopyResultsFolderToServer(ByVal transferFolderPath As String) As IJobParams.CloseOutType
+
+		Dim resultsFolderName As String
+		Dim sourceFolderPath As String = String.Empty
+		Dim targetFolderPath As String
 
 		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
@@ -387,34 +410,34 @@ Public Class clsAnalysisToolRunnerBase
 
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
 
-			ResultsFolderName = m_jobParams.GetParam("OutputFolderName")
-			If String.IsNullOrEmpty(ResultsFolderName) Then
+			resultsFolderName = m_jobParams.GetParam("OutputFolderName")
+			If String.IsNullOrEmpty(resultsFolderName) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
 				m_message = "Results folder not found"
 				' Without a source folder; there isn't much we can do
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			SourceFolderPath = Path.Combine(m_WorkDir, ResultsFolderName)
+			sourceFolderPath = Path.Combine(m_WorkDir, resultsFolderName)
 
 			'Verify the source folder exists
-			If Not Directory.Exists(SourceFolderPath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & SourceFolderPath)
+			If Not Directory.Exists(sourceFolderPath) Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
 				m_message = "Results folder not found"
 				' Without a source folder; there isn't much we can do
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			TargetFolderPath = CreateRemoteTransferFolder(objAnalysisResults)
-			If String.IsNullOrEmpty(TargetFolderPath) Then
+			targetFolderPath = CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath)
+			If String.IsNullOrEmpty(targetFolderPath) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
 			m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory")
-			If Not String.IsNullOrEmpty(SourceFolderPath) Then
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+			If Not String.IsNullOrEmpty(sourceFolderPath) Then
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath)
 			End If
 
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -428,15 +451,15 @@ Public Class clsAnalysisToolRunnerBase
 			Dim eResult As IJobParams.CloseOutType
 
 			' Copy the files and subfolders
-			eResult = CopyResultsFolderRecursive(SourceFolderPath, SourceFolderPath, TargetFolderPath, _
+			eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetFolderPath, _
 			  objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
 			  intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
 			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(TargetFolderPath) & " : " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(TargetFolderPath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(targetFolderPath) & " : " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(targetFolderPath))
 			blnErrorEncountered = True
 		End Try
 
@@ -447,7 +470,7 @@ Public Class clsAnalysisToolRunnerBase
 			End If
 			strMessage &= " to transfer folder"
 			m_message = clsGlobal.AppendToComment(m_message, strMessage)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(SourceFolderPath)
+			objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Else
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

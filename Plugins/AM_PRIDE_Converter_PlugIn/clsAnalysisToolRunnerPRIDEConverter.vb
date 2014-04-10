@@ -51,6 +51,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	Protected mProcessMzIdFiles As Boolean
 
+	Protected mCacheFolderPath As String = String.Empty
 	Protected mPreviousDatasetName As String = String.Empty
 
 	' This list contains full file paths for files that will be deleted from the local work directory
@@ -262,6 +263,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 			mConsoleOutputErrorMsg = String.Empty
 
+			mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\protoapps\PeptideAtlas_Staging")
+
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PRIDEConverter")
 
 			' Initialize mDataPackagePeptideHitJobs			
@@ -359,7 +362,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			result = CopyResultsFolderToServer()
+			result = CopyResultsFolderToServer(mCacheFolderPath)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 				Return result
@@ -3438,9 +3441,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		If mPreviousDatasetFilesToCopy.Count > 0 Then
 			lstFilesToRetry.Clear()
 
-			Dim cacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\protoapps\PeptideAtlas_Staging")
-
-			Dim strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, cacheFolderPath)
+			Dim strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, mCacheFolderPath)
 
 			If String.IsNullOrEmpty(strRemoteTransferFolder) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateRemoteTransferFolder returned an empty string; unable to copy files to the transfer folder")
