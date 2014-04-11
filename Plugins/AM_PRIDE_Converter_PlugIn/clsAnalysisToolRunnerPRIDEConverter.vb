@@ -3,6 +3,7 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports PHRPReader
+Imports System.Xml
 
 Public Class clsAnalysisToolRunnerPRIDEConverter
 	Inherits clsAnalysisToolRunnerBase
@@ -1552,25 +1553,25 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 			strPrideReportXMLFilePath = strPseudoMsgfFilePath & "-report.xml"
 
-			Using objXmlWriter As Xml.XmlTextWriter = New Xml.XmlTextWriter(New FileStream(strPrideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
-				objXmlWriter.Formatting = Xml.Formatting.Indented
+			Using objXmlWriter = New XmlTextWriter(New FileStream(strPrideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
+				objXmlWriter.Formatting = Formatting.Indented
 				objXmlWriter.Indentation = 4
 
 				objXmlWriter.WriteStartDocument()
 
-				Using objXmlReader As Xml.XmlTextReader = New Xml.XmlTextReader(New FileStream(Path.Combine(m_WorkDir, strTemplateFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+				Using objXmlReader As XmlTextReader = New XmlTextReader(New FileStream(Path.Combine(m_WorkDir, strTemplateFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
 					Do While objXmlReader.Read()
 
 						Select Case objXmlReader.NodeType
-							Case Xml.XmlNodeType.Whitespace
+							Case XmlNodeType.Whitespace
 								' Skip whitespace since the writer should be auto-formatting things
 								' objXmlWriter.WriteWhitespace(objXmlReader.Value)
 
-							Case Xml.XmlNodeType.Comment
+							Case XmlNodeType.Comment
 								objXmlWriter.WriteComment(objXmlReader.Value)
 
-							Case Xml.XmlNodeType.Element
+							Case XmlNodeType.Element
 								' Start element
 
 								If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
@@ -1746,9 +1747,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 
 								If blnSkipNode Then
-									If objXmlReader.NodeType <> Xml.XmlNodeType.EndElement Then
+									If objXmlReader.NodeType <> XmlNodeType.EndElement Then
 										' Skip this element (and any children nodes enclosed in this elemnt)
-										' Likely should not do this when objXmlReader.NodeType is Xml.XmlNodeType.EndElement
+										' Likely should not do this when objXmlReader.NodeType is XmlNodeType.EndElement
 										objXmlReader.Skip()
 									End If
 
@@ -1777,7 +1778,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 								End If
 
-							Case Xml.XmlNodeType.EndElement
+							Case XmlNodeType.EndElement
 
 								If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
 								lstRecentElements.Enqueue("EndElement " & objXmlReader.Name)
@@ -1797,7 +1798,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 									lstElementCloseDepths.Pop()
 								Loop
 
-							Case Xml.XmlNodeType.Text
+							Case XmlNodeType.Text
 
 								If Not String.IsNullOrEmpty(objXmlReader.Value) Then
 									If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
@@ -1843,7 +1844,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Function
 
 	Protected Function CreateMSGFReportXMLFileWriteIDs( _
-	  ByRef objXmlWriter As Xml.XmlTextWriter,
+	  ByRef objXmlWriter As XmlTextWriter,
 	  ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
 	  ByVal strOrgDBNameGenerated As String, _
 	  ByVal ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
@@ -1964,7 +1965,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Function
 
 	Protected Function CreateMSGFReportXMLFileWriteProteins( _
-	  ByRef objXmlWriter As Xml.XmlTextWriter,
+	  ByRef objXmlWriter As XmlTextWriter,
 	  ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
 	  ByVal strOrgDBNameGenerated As String) As Boolean
 
@@ -2019,7 +2020,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Sub CreateMSGFReportXmlFileWriteSoftwareVersion(ByRef objXmlReader As Xml.XmlTextReader, ByRef objXmlWriter As Xml.XmlTextWriter, PeptideHitResultType As clsPHRPReader.ePeptideHitResultType)
+	Protected Sub CreateMSGFReportXmlFileWriteSoftwareVersion(ByRef objXmlReader As XmlTextReader, ByRef objXmlWriter As XmlTextWriter, PeptideHitResultType As clsPHRPReader.ePeptideHitResultType)
 
 		Dim strToolName As String = String.Empty
 		Dim strToolVersion As String = String.Empty
@@ -2029,7 +2030,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		' Read the name, version, and comments elements under software
 		Do While objXmlReader.Read()
 			Select Case objXmlReader.NodeType
-				Case Xml.XmlNodeType.Element
+				Case XmlNodeType.Element
 					Select Case objXmlReader.Name
 						Case "name"
 							strToolName = objXmlReader.ReadElementContentAsString()
@@ -2038,7 +2039,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 						Case "comments"
 							strToolComments = objXmlReader.ReadElementContentAsString()
 					End Select
-				Case Xml.XmlNodeType.EndElement
+				Case XmlNodeType.EndElement
 					If objXmlReader.Depth <= intNodeDepth Then
 						Exit Do
 					End If
@@ -3131,7 +3132,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Function ReadWriteCvParam(ByVal objXmlReader As Xml.XmlTextReader, ByVal objXmlWriter As Xml.XmlTextWriter, ByRef lstElementCloseDepths As Stack(Of Integer)) As udtCvParamInfoType
+	Protected Function ReadWriteCvParam(ByVal objXmlReader As XmlTextReader, ByVal objXmlWriter As XmlTextWriter, ByRef lstElementCloseDepths As Stack(Of Integer)) As udtCvParamInfoType
 
 		Dim udtCvParam As udtCvParamInfoType = New udtCvParamInfoType
 		udtCvParam.Clear()
@@ -3638,32 +3639,36 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath)
 
 			strUpdatedFilePathTemp = strMzIDFilePath & ".tmp"
-			Using objXmlWriter As Xml.XmlTextWriter = New Xml.XmlTextWriter(New FileStream(strUpdatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
-				objXmlWriter.Formatting = Xml.Formatting.Indented
+
+			' Important: instantiate the XmlTextWriter using an instance of the UTF8Encoding class where the byte order mark (BOM) is not emitted
+			' The ProteomeXchange import pipeline breaks if the .mzid files have the BOM at the start of the file
+
+			Using objXmlWriter = New XmlTextWriter(New FileStream(strUpdatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
+				objXmlWriter.Formatting = Formatting.Indented
 				objXmlWriter.Indentation = 4
 
 				objXmlWriter.WriteStartDocument()
 
 				' Note that the following Using command will not work if the .mzid file has an encoding string of <?xml version="1.0" encoding="Cp1252"?>
-				' Using objXmlReader As Xml.XmlTextReader = New Xml.XmlTextReader(New FileStream(strMzIDFilePath, FileMode.Open, FileAccess.Read))
+				' Using objXmlReader As XmlTextReader = New XmlTextReader(New FileStream(strMzIDFilePath, FileMode.Open, FileAccess.Read))
 				' Thus, we instead first insantiate a streamreader using explicit encodings
 				' Then instantiate the XmlTextReader
 
 				Using srSourceFile As StreamReader = New StreamReader(New FileStream(strMzIDFilePath, FileMode.Open, FileAccess.Read, FileShare.Read), Text.Encoding.GetEncoding("ISO-8859-1"))
 
-					Using objXmlReader As Xml.XmlTextReader = New Xml.XmlTextReader(srSourceFile)
+					Using objXmlReader As XmlTextReader = New XmlTextReader(srSourceFile)
 
 						Do While objXmlReader.Read()
 
 							Select Case objXmlReader.NodeType
-								Case Xml.XmlNodeType.Whitespace
+								Case XmlNodeType.Whitespace
 									' Skip whitespace since the writer should be auto-formatting things
 									' objXmlWriter.WriteWhitespace(objXmlReader.Value)
 
-								Case Xml.XmlNodeType.Comment
+								Case XmlNodeType.Comment
 									objXmlWriter.WriteComment(objXmlReader.Value)
 
-								Case Xml.XmlNodeType.Element
+								Case XmlNodeType.Element
 									' Start element
 
 									If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
@@ -3762,9 +3767,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 
 									If blnSkipNode Then
-										If objXmlReader.NodeType <> Xml.XmlNodeType.EndElement Then
+										If objXmlReader.NodeType <> XmlNodeType.EndElement Then
 											' Skip this element (and any children nodes enclosed in this elemnt)
-											' Likely should not do this when objXmlReader.NodeType is Xml.XmlNodeType.EndElement
+											' Likely should not do this when objXmlReader.NodeType is XmlNodeType.EndElement
 											objXmlReader.Skip()
 										End If
 
@@ -3793,7 +3798,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 									End If
 
-								Case Xml.XmlNodeType.EndElement
+								Case XmlNodeType.EndElement
 
 									If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
 									lstRecentElements.Enqueue("EndElement " & objXmlReader.Name)
@@ -3816,8 +3821,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 									If objXmlReader.Name = "SpecificityRules" Then
 										blnReadingSpecificityRules = False
 									End If
-									
-								Case Xml.XmlNodeType.Text
+
+								Case XmlNodeType.Text
 
 									If Not String.IsNullOrEmpty(objXmlReader.Value) Then
 										If lstRecentElements.Count > 10 Then lstRecentElements.Dequeue()
@@ -3911,7 +3916,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Sub WriteConfigurationOption(objXmlWriter As Xml.XmlTextWriter, KeyName As String, Value As String)
+	Protected Sub WriteConfigurationOption(objXmlWriter As XmlTextWriter, KeyName As String, Value As String)
 
 		objXmlWriter.WriteStartElement("Option")
 		objXmlWriter.WriteElementString("Key", KeyName)
@@ -4029,7 +4034,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Sub
 
-	Protected Sub WriteUserParam(objXmlWriter As Xml.XmlTextWriter, Name As String, Value As String)
+	Protected Sub WriteUserParam(objXmlWriter As XmlTextWriter, Name As String, Value As String)
 
 		objXmlWriter.WriteStartElement("userParam")
 		objXmlWriter.WriteAttributeString("name", Name)
@@ -4038,7 +4043,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Sub
 
-	Protected Sub WriteCVParam(objXmlWriter As Xml.XmlTextWriter, CVLabel As String, Accession As String, Name As String, Value As String)
+	Protected Sub WriteCVParam(objXmlWriter As XmlTextWriter, CVLabel As String, Accession As String, Name As String, Value As String)
 
 		objXmlWriter.WriteStartElement("cvParam")
 		objXmlWriter.WriteAttributeString("cvLabel", CVLabel)
@@ -4049,7 +4054,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Sub
 
-	Protected Function WriteXMLInstrumentInfo(ByVal oWriter As Xml.XmlTextWriter, ByVal strInstrumentGroup As String) As Boolean
+	Protected Function WriteXMLInstrumentInfo(ByVal oWriter As XmlTextWriter, ByVal strInstrumentGroup As String) As Boolean
 
 		Dim blnInstrumentDetailsAutoDefined As Boolean
 
@@ -4138,7 +4143,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Sub WriteXMLInstrumentInfoAnalyzer(ByVal oWriter As Xml.XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
+	Protected Sub WriteXMLInstrumentInfoAnalyzer(ByVal oWriter As XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
 
 		oWriter.WriteStartElement("analyzer")
 		WriteCVParam(oWriter, strNamespace, strAccession, strDescription, String.Empty)
@@ -4146,7 +4151,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Sub
 
-	Protected Sub WriteXMLInstrumentInfoDetector(ByVal oWriter As Xml.XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
+	Protected Sub WriteXMLInstrumentInfoDetector(ByVal oWriter As XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
 
 		oWriter.WriteStartElement("detector")
 		WriteCVParam(oWriter, strNamespace, strAccession, strDescription, String.Empty)
@@ -4155,7 +4160,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Sub
 
 
-	Protected Sub WriteXMLInstrumentInfoESI(ByVal oWriter As Xml.XmlTextWriter, ByVal strPolarity As String)
+	Protected Sub WriteXMLInstrumentInfoESI(ByVal oWriter As XmlTextWriter, ByVal strPolarity As String)
 
 		If String.IsNullOrEmpty(strPolarity) Then strPolarity = "positive"
 
