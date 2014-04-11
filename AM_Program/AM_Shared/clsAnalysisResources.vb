@@ -2478,6 +2478,57 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Lookups up the storage path for a given data package
+	''' </summary>
+	''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+	''' <param name="DataPackageID">Data Package ID</param>
+	''' <returns>Storage path if successful, empty path if an error or unknown data package</returns>
+	''' <remarks></remarks>
+	Public Shared Function GetDataPackageStoragePath(ByVal ConnectionString As String, DataPackageID As Integer) As String
+
+		'Requests Dataset information from a data package
+		Const RetryCount As Short = 3
+		Dim strMsg As String
+
+
+		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+
+		SqlStr.Append("Select [Share Path] AS StoragePath ")
+		SqlStr.Append("From V_DMS_Data_Packages ")
+		SqlStr.Append("Where ID = " & DataPackageID.ToString())
+
+		Dim Dt As DataTable = Nothing
+
+		'Get a table to hold the results of the query
+		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "GetDataPackageStoragePath", RetryCount, Dt)
+
+		If Not blnSuccess Then
+			strMsg = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+			Dt.Dispose()
+			Return String.Empty
+		End If
+
+		'Verify at least one row returned
+		If Dt.Rows.Count < 1 Then
+			' No data was returned
+			' Log an error
+
+			strMsg = "GetDataPackageStoragePath; Data package not found: " & DataPackageID.ToString()
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+			Return String.Empty
+		Else
+			Dim CurRow As DataRow = Dt.Rows(0)
+
+			Dim storagePath = clsGlobal.DbCStr(CurRow(0))
+
+			Dt.Dispose()
+			Return storagePath
+		End If
+
+	End Function
+
+	''' <summary>
 	''' Examines the folder tree in strFolderPath to find the a folder with a name like 2013_2
 	''' </summary>
 	''' <param name="strFolderPath"></param>
@@ -2857,7 +2908,7 @@ Public MustInherit Class clsAnalysisResources
 		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
 
 		If Not blnSuccess Then
-			strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve aggregate list from database"
+			strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
 			Dt.Dispose()
 			Return False
@@ -5369,7 +5420,6 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FilePath">File storage path</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	Protected Function RetrieveFile(ByVal FileName As String, ByVal FilePath As String) As Boolean
-
 
 		'Copy the file
 		If Not CopyFileToWorkDir(FileName, FilePath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then

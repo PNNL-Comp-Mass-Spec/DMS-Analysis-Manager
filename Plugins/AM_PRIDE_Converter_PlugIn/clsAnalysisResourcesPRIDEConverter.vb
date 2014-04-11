@@ -314,37 +314,54 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		' Retrieve the template PX Submission file
 		' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
 
-		Dim strTemplateFileName As String
-		Dim diDataPackageFolder As IO.DirectoryInfo
-		Dim fiFiles As List(Of IO.FileInfo)
-
 		Try
-			strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
+			Dim strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
 
 			' First look for the template file in the data package folder
-			Dim strDataPackagePath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
-			If String.IsNullOrEmpty(strDataPackagePath) Then
+			' Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
+
+			Dim transferFolderPath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
+			If String.IsNullOrEmpty(transferFolderPath) Then
 				m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
 			End If
 
-			diDataPackageFolder = New IO.DirectoryInfo(strDataPackagePath)
-			fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
+			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+			Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-			If fiFiles.Count = 0 Then
-				' File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
-				fiFiles = diDataPackageFolder.GetFiles("*" & PX_SUBMISSION_FILE_SUFFIX).ToList()
-			End If
+			Dim matchFound = False
+			Dim lstSourceFolders = New List(Of String)
 
-			If fiFiles.Count > 0 Then
-				' Template file found in the data package; copy it locally
-				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
-					Return False
-				Else
-					strTemplateFileName = fiFiles(0).Name
+			lstSourceFolders.Add(GetDataPackageStoragePath(ConnectionString, dataPackageID))
+			lstSourceFolders.Add(transferFolderPath)
+
+			For Each sourceFolderPath In lstSourceFolders
+
+				If String.IsNullOrEmpty(sourceFolderPath) Then Continue For
+
+				Dim diDataPackageFolder = New IO.DirectoryInfo(sourceFolderPath)
+				Dim fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
+
+				If fiFiles.Count = 0 Then
+					' File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
+					fiFiles = diDataPackageFolder.GetFiles("*" & PX_SUBMISSION_FILE_SUFFIX).ToList()
 				End If
-			Else
+
+				If fiFiles.Count > 0 Then
+					' Template file found in the data package; copy it locally
+					If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
+						Return False
+					Else
+						strTemplateFileName = fiFiles(0).Name
+						matchFound = True
+						Exit For
+					End If
+				End If
+
+			Next
+
+			If Not matchFound Then
 				Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 				If String.IsNullOrEmpty(strParamFileStoragePath) Then
 					strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
