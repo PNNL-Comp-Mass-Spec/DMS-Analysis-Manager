@@ -79,6 +79,9 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="MsMsSpectrumFilter">
+      <HintPath>..\..\AM_Common\MsMsSpectrumFilter.dll</HintPath>
+    </Reference>
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
@@ -114,19 +117,6 @@
     </Compile>
     <Compile Include="clsAnalysisResourcesMsMsSpectrumFilter.vb" />
     <Compile Include="clsAnalysisToolRunnerMsMsSpectrumFilter.vb" />
-    <Compile Include="clsBaselineNoiseEstimator.vb" />
-    <Compile Include="clsMsMsSpectrumFilter.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsProcessFilesBaseClass.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsProcessFilesOrFoldersBase.vb" />
-    <Compile Include="clsProgRunnerThreaded.vb" />
-    <Compile Include="clsSearchRange.vb">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="clsXmlSettingsFileAccessor.vb" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

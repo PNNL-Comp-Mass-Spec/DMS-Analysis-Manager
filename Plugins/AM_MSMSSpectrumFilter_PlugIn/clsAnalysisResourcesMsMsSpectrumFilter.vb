@@ -2,7 +2,7 @@
 
 ' This class was created to support being loaded as a pluggable DLL into the New DMS 
 ' Analysis Tool Manager program.  Each DLL requires a Resource class.  The new ATM 
-' supports the mini-pipeline. It uses class clsMsMsSpectrumFilter to filter the .DTA 
+' supports the mini-pipeline. It uses class MsMsSpectrumFilter.DLL to filter the .DTA 
 ' files present in a given folder
 '
 ' Written by John Sandoval for the Department of Energy (PNNL, Richland, WA)
@@ -10,6 +10,7 @@
 ' Started January 20, 2009
 
 Imports AnalysisManagerBase
+Imports MSMSSpectrumFilter
 
 Public Class clsAnalysisResourcesMsMsSpectrumFilter
     Inherits clsAnalysisResources
@@ -56,10 +57,10 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
 
         strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "")
-        strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+		strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
         strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "")
-        strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", MSMSSpectrumFilterAM.clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+		strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
 
         If Not strMSLevelFilter Is Nothing AndAlso strMSLevelFilter.Length > 0 AndAlso strMSLevelFilter <> "0" Then

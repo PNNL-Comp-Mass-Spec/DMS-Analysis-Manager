@@ -13,18 +13,19 @@
 ' Updated August 2009 by MEM to generate _ScanStats.txt files, if required
 
 Imports AnalysisManagerBase
+Imports MSMSSpectrumFilter
 
 Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Inherits clsAnalysisToolRunnerBase
 
     Protected WithEvents m_MsMsSpectrumFilter As clsMsMsSpectrumFilter
-    Protected m_ErrMsg As String = ""
-	Protected m_SettingsFileName As String = ""			' Handy place to store value so repeated calls to m_JobParams aren't required
+	Protected m_ErrMsg As String = String.Empty
+	Protected m_SettingsFileName As String = String.Empty			' Handy place to store value so repeated calls to m_JobParams aren't required
     Protected m_Results As ISpectraFilter.ProcessResults
-    Protected m_DTATextFileName As String = ""
+	Protected m_DTATextFileName As String = String.Empty
 
     Protected m_thThread As System.Threading.Thread
-    Protected Shadows m_Status As ISpectraFilter.ProcessStatus
+	Protected m_FilterStatus As ISpectraFilter.ProcessStatus
 
 #Region "Methods"
     Public Sub New()
@@ -47,24 +48,24 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-        m_Status = ISpectraFilter.ProcessStatus.SFILT_STARTING
+		m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file")
 
         'Verify necessary files are in specified locations
         If Not InitSetup() Then
             m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-            m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Filter the spectra (the process runs in a separate thread)
-        m_Status = FilterDTATextFile()
+		m_FilterStatus = FilterDTATextFile()
 
-        If m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR Then
-            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+		If m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR Then
+			m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete")
@@ -274,7 +275,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         Catch ex As Exception
 			LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
-			m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
 		End Try
 
         Return intDTACount
@@ -328,8 +329,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
                     End If
 
-                    m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
-                    Return m_Status
+					m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+					Return m_FilterStatus
                 Else
                     If m_DebugLevel >= 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
@@ -363,14 +364,14 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             'If we reach here, everything must be good
-            m_Status = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
+			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
 
         Catch ex As Exception
             LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex)
-            m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
         End Try
 
-        Return m_Status
+		Return m_FilterStatus
     End Function
 
     Protected Overridable Sub FilterDTATextFileWork()
@@ -448,16 +449,16 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 						End If
 					End If
 
-					m_Status = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
+					m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
 				Else
 					If m_MsMsSpectrumFilter.AbortProcessing Then
 						LogErrors("FilterDTATextFileWork", "Processing aborted", Nothing)
 						m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED
-						m_Status = ISpectraFilter.ProcessStatus.SFILT_ABORTING
+						m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING
 					Else
 						LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), Nothing)
 						m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-						m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+						m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
 					End If
 				End If
 
@@ -465,12 +466,12 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
 			Catch ex As Exception
 				LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex)
-				m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+				m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
 			End Try
 
         Catch ex As Exception
             LogErrors("FilterDTATextFileWork", "Error calling m_MsMsSpectrumFilter.ProcessFilesWildcard", ex)
-            m_Status = ISpectraFilter.ProcessStatus.SFILT_ERROR
+			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
         End Try
 
 
