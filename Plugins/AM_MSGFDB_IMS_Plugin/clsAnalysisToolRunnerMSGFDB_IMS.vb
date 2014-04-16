@@ -22,6 +22,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 	Protected Const ION_MOBILITY_MSMS_CONSOLE_NAME As String = "IonMobilityMsMsConsole.exe"
 	Protected Const ION_MOBILITY_MSMS_RESULTS_FILE_NAME As String = "Results_MSGFDB_Appended.txt"
 
+	Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+
 	Protected Const PROGRESS_PCT_STARTING As Single = 1
 	Protected Const PROGRESS_PCT_RUNNING_ION_MOBILITY_MSMS_CONSOLE As Single = 2
 	Protected Const PROGRESS_PCT_LOADING_MS_PEAKS As Single = 3
@@ -103,7 +105,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 			If blnUseLegacyMSGFDB Then
 				mMSGFPlus = False
-				strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME
+				strMSGFJarfile = MSGFDB_JAR_NAME
 				strSearchEngineName = "MS-GFDB"
 			Else
 				mMSGFPlus = True
@@ -601,7 +603,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
 		' Store paths to key files in ioToolFiles
 		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioIonMobilityMsMs.DirectoryName, AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFDB_JAR_NAME)))
+		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioIonMobilityMsMs.DirectoryName, MSGFDB_JAR_NAME)))
 		ioToolFiles.Add(ioIonMobilityMsMs)
 
 		Try
