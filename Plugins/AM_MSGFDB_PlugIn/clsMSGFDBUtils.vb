@@ -35,7 +35,9 @@ Public Class clsMSGFDBUtils
 
 	Public Const MSGFDB_TSV_SUFFIX As String = "_msgfdb.tsv"
 
-	Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+	' Obsolete setting: Old MS-GFDB program
+	'Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+
 	Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
 	Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
 
@@ -741,13 +743,15 @@ Public Class clsMSGFDBUtils
 
 		Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
 		Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+		Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
+		Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
-		objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName)
+		objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
 
 		' Define the path to the fasta file
 		Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 		If udtHPCOptions.UsingHPC Then
-			' Override the OrgDB folder to point to Picfs, specifically \\picfs\projects\DMS\DMS_Temp_Org
+			' Override the OrgDB folder to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
 			localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
 		End If
 		FastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
@@ -1873,39 +1877,42 @@ Public Class clsMSGFDBUtils
 	End Function
 
 	Public Shared Function UseLegacyMSGFDB(jobParams As IJobParams) As Boolean
-		Dim strValue As String
 
-		' Default to using MSGF+
-		Dim blnUseLegacyMSGFDB As Boolean = False
+		Return False
 
-		strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
-		If Not String.IsNullOrEmpty(strValue) Then
-			If Not Boolean.TryParse(strValue, blnUseLegacyMSGFDB) Then
-				' Error parsing strValue; not boolean
-				strValue = String.Empty
-			End If
-		End If
+		'Dim strValue As String
 
-		If String.IsNullOrEmpty(strValue) Then
-			strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
+		'' Default to using MSGF+
+		'Dim blnUseLegacyMSGFDB As Boolean = False
 
-			If Not String.IsNullOrEmpty(strValue) Then
-				Dim blnUseMSGFPlus As Boolean
-				If Boolean.TryParse(strValue, blnUseMSGFPlus) Then
-					strValue = "False"
-					blnUseLegacyMSGFDB = False
-				Else
-					strValue = String.Empty
-				End If
-			End If
+		'strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
+		'If Not String.IsNullOrEmpty(strValue) Then
+		'	If Not Boolean.TryParse(strValue, blnUseLegacyMSGFDB) Then
+		'		' Error parsing strValue; not boolean
+		'		strValue = String.Empty
+		'	End If
+		'End If
 
-			If String.IsNullOrEmpty(strValue) Then
-				' Default to using MSGF+
-				blnUseLegacyMSGFDB = False
-			End If
-		End If
+		'If String.IsNullOrEmpty(strValue) Then
+		'	strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
 
-		Return blnUseLegacyMSGFDB
+		'	If Not String.IsNullOrEmpty(strValue) Then
+		'		Dim blnUseMSGFPlus As Boolean
+		'		If Boolean.TryParse(strValue, blnUseMSGFPlus) Then
+		'			strValue = "False"
+		'			blnUseLegacyMSGFDB = False
+		'		Else
+		'			strValue = String.Empty
+		'		End If
+		'	End If
+
+		'	If String.IsNullOrEmpty(strValue) Then
+		'		' Default to using MSGF+
+		'		blnUseLegacyMSGFDB = False
+		'	End If
+		'End If
+
+		'Return blnUseLegacyMSGFDB
 
 	End Function
 

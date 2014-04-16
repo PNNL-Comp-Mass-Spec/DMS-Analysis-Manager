@@ -62,7 +62,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 
 			If udtHPCOptions.UsingHPC Then
-				' Override the OrgDbDir to point to Picfs, specifically \\picfs\projects\DMS\DMS_Temp_Org
+				' Override the OrgDbDir to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
 				localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
 			End If
 

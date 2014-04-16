@@ -99,21 +99,24 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			Dim blnUseLegacyMSGFDB As Boolean
 			Dim strMSGFJarfile As String
 			Dim strSearchEngineName As String
 
-			blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
+			' Obsolete setting:
+			'Dim blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
 
-			If blnUseLegacyMSGFDB Then
-				mMSGFPlus = False
-				strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
-				strSearchEngineName = "MS-GFDB"
-			Else
-				mMSGFPlus = True
-				strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
-				strSearchEngineName = "MSGF+"
-			End If
+			'If blnUseLegacyMSGFDB Then
+			'	mMSGFPlus = False
+			'	strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
+			'	strSearchEngineName = "MS-GFDB"
+			'Else
+			'	mMSGFPlus = True
+			'End If
+
+			mMSGFPlus = True
+			strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+			strSearchEngineName = "MSGF+"
+
 
 			' Determine the path to MSGFDB (or MSGF+)
 			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
@@ -152,7 +155,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
 
 			If udtHPCOptions.UsingHPC Then
-				javaExePath = "\\picfs\projects\DMS\jre7\bin\java.exe"
+				javaExePath = "\\winhpcfs\projects\DMS\jre7\bin\java.exe"
 				msgfdbJarFilePath = mMSGFDbProgLocHPC
 			End If
 
@@ -428,7 +431,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
 
 		hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
-		hpcJobInfo.JobParameters.ProjectName = "PIC"
+		hpcJobInfo.JobParameters.TemplateName = "Default"		 ' If using 32 cores, could use Template "Single"
+		hpcJobInfo.JobParameters.ProjectName = "DMS"
 
 		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 

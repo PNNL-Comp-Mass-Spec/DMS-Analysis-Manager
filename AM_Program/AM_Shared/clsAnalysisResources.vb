@@ -2704,7 +2704,7 @@ Public MustInherit Class clsAnalysisResources
 		udtHPCOptions.HeadNode = jobParams.GetJobParameter("HPCHeadNode", "")
 		If stepTool.ToLower() = "MSGFPlus_HPC".ToLower() AndAlso String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode) Then
 			' Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
-			udtHPCOptions.HeadNode = "deception.pnl.gov"
+			udtHPCOptions.HeadNode = "deception2.pnnl.gov"
 			bMSGFPlusHPC = True
 		End If
 
@@ -2712,7 +2712,14 @@ Public MustInherit Class clsAnalysisResources
 
 		udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket")
 		' Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
-		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs\projects\DMS")
+
+		' Note: winhpcfs is a Windows File System wrapper to \\picfs (which is an Isilon FS)
+		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\winhpcfs\projects\DMS")
+
+		If udtHPCOptions.SharePath.StartsWith("\\picfs\", StringComparison.CurrentCultureIgnoreCase) Then
+			udtHPCOptions.SharePath = "\\winhpcfs\" & udtHPCOptions.SharePath.Substring("\\picfs\".Length)
+		End If
+
 		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("MinimumMemoryMB", 0)
 		udtHPCOptions.MinimumCores = jobParams.GetJobParameter("MinimumCores", 0)
 
@@ -2734,7 +2741,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		Next
 
-		' Example WorkDirPath: \\picfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+		' Example WorkDirPath: \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
 		udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean)
 
 		Return udtHPCOptions

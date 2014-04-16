@@ -22,6 +22,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	Protected mErrorMessage As String = String.Empty
 	Protected mMgrName As String
 
+	Protected mPICHPCUser As String
+	Protected mPICHPCPassword As String
+
 	Protected WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
 #End Region
 
@@ -31,12 +34,19 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		End Get
 	End Property
 
-	Public Sub New(strManagerName As String)
+	Public Sub New(ByVal strManagerName As String)
+		Me.New(strManagerName, String.Empty, String.Empty)
+	End Sub
+
+	Public Sub New(ByVal strManagerName As String, ByVal sPICHPCUser As String, ByVal sPICHPCPassword As String)
 		mMgrName = strManagerName
+		mPICHPCUser = sPICHPCUser
+		mPICHPCPassword = sPICHPCPassword
 	End Sub
 
 	Protected Function CopyExistingIndexFilesFromRemote(
 	  ByVal fiFastaFile As FileInfo,
+	  byval blnUsingLegacyFasta as boolean,
 	  ByVal strRemoteIndexFolderPath As String,
 	  ByVal blnCheckForLockFile As Boolean,
 	  ByVal intDebugLevel As Integer,
@@ -110,8 +120,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			If dctFilesToCopy.Count = 0 Then
 				blnFilesAreValid = False
 			Else
-				' Confirm that each file in dctFilesToCopy exists on the remote server and is newer than the fasta file that was indexed
-				blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, fiFastaFile.LastWriteTimeUtc)
+				' Confirm that each file in dctFilesToCopy exists on the remote server
+				' If using a legacy fasta file, then must also confirm that each file is newer than the fasta file that was indexed
+				blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
 			End If
 
 			If Not blnFilesAreValid Then
@@ -167,7 +178,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			Next
 
 			' Now confirm that each file was successfully copied locally
-			blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, fiFastaFile.LastWriteTimeUtc)
+			blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyExistingIndexFilesFromRemote; " & ex.Message)
@@ -271,7 +282,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key)
 					strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key)
 
-					blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, managerName)
+					blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, managerName, True)
 					If Not blnSuccess Then
 						strErrorMessage = "CopyFileUsingLocks returned false copying to " & strTargetFilePath
 						Exit For
@@ -348,7 +359,6 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Dim eResult As IJobParams.CloseOutType
 
 		Try
-
 			mErrorMessage = String.Empty
 
 			If intDebugLevel > 4 Then
@@ -361,31 +371,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			blnMSGFPlus = IsMSGFPlus(MSGFDBProgLoc)
 			If Not blnMSGFPlus Then
 				' Running legacy MS-GFDB
-				' Create the indexed fasta files in a subdirectory below strFASTAFilePath
-
-				Dim strFASTAFilePathLegacy As String
-				If fiFastaFile.Directory.Name.ToLower() = LEGACY_MSGFDB_SUBDIRECTORY_NAME.ToLower() Then
-					strFASTAFilePathLegacy = fiFastaFile.FullName
-				Else
-					strFASTAFilePathLegacy = Path.Combine(Path.Combine(fiFastaFile.DirectoryName, LEGACY_MSGFDB_SUBDIRECTORY_NAME), fiFastaFile.Name)
-				End If
-
-				Dim fiFastaFileLegacy As FileInfo
-				fiFastaFileLegacy = New FileInfo(strFASTAFilePathLegacy)
-
-				If Not fiFastaFileLegacy.Exists Then
-					strCurrentTask = "Creating legacy fasta file folder: " & fiFastaFileLegacy.Directory.FullName
-					If Not fiFastaFileLegacy.Directory.Exists Then
-						fiFastaFileLegacy.Directory.Create()
-					End If
-					strCurrentTask = "Copying FASTA file to " & fiFastaFileLegacy.FullName
-					fiFastaFile.CopyTo(fiFastaFileLegacy.FullName)
-				End If
-
-				' Update strFASTAFilePath and fiFastaFile
-				strFASTAFilePath = fiFastaFileLegacy.FullName
-				fiFastaFile = New FileInfo(strFASTAFilePath)
+				Throw New exception("Legacy MS-GFDB is no longer supported")
 			End If
+
+			' Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
+			' If the filename does not match that pattern, then we're using a legacy fasta file
+			Dim reProtectionCollectionFasta = New Text.RegularExpressions.Regex("ID_\d{6,}_[0-9a-z]+\.fasta", Text.RegularExpressions.RegexOptions.IgnoreCase)
+			Dim blnUsingLegacyFasta = Not reProtectionCollectionFasta.IsMatch(fiFastaFile.Name)
 
 			'  Look for existing suffix array files 
 			strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
@@ -495,7 +487,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 							blnReindexingRequired = True
 							Exit For
 						End If
-					Next					
+					Next
 				End If
 
 			End If
@@ -513,7 +505,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Dim diskFreeSpaceBelowThreshold As Boolean = False
 
 				blnCheckForLockFile = True
-				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
+				eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
 
 				If diskFreeSpaceBelowThreshold Then
 					' Not enough free disk space; abort
@@ -536,7 +528,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						' If this manager ended up waiting while another manager was indexing the files, then we should once again try to copy the files locally
 
 						blnCheckForLockFile = False
-						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
+						eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
 
 						If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 							' Existing files were copied; this manager does not need to re-create them
@@ -722,14 +714,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			End If
 
 			If udtHPCOptions.UsingHPC Then
-				Dim jobName As String = "BuildSA_" & fiFastaFile.FullName
+				Dim jobName As String = "BuildSA_" & fiFastaFile.Name
 				Const taskName = "BuildSA"
-				
+
 				Dim buildSAJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName)
 
-				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.AboveNormal
+				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
+				buildSAJobInfo.JobParameters.TemplateName = "Default"		 ' If using 32 cores, could use Template "Single"
 				buildSAJobInfo.JobParameters.ProjectName = "DMS"
-				buildSAJobInfo.JobParameters.TemplateName = "DMS"
 				buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 
 				' Since we are requesting a socket, there is no need to set the number of cores
@@ -742,7 +734,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				buildSAJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
 				buildSAJobInfo.TaskParameters.FailJobOnFailure = True
 
-				mComputeCluster = New HPC_Submit.WindowsHPC2012()
+				If String.IsNullOrEmpty(mPICHPCUser) Then
+					mComputeCluster = New HPC_Submit.WindowsHPC2012()
+				Else
+					mComputeCluster = New HPC_Submit.WindowsHPC2012(mPICHPCUser, clsGlobal.DecodePassword(mPICHPCPassword))
+				End If
+
 				Dim jobID = mComputeCluster.Send(buildSAJobInfo)
 
 				If jobID <= 0 Then
@@ -784,27 +781,27 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			End If
 
-			If Not success Then
-				mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
-				If udtHPCOptions.UsingHPC Then
-					mErrorMessage &= " using HPC"
+				If Not success Then
+					mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
+					If udtHPCOptions.UsingHPC Then
+						mErrorMessage &= " using HPC"
+					End If
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
+					DeleteLockFile(fiLockFile)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Else
+					If intDebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created suffix array files for " & fiFastaFile.Name)
+					End If
 				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
+
+				If intDebugLevel >= 3 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & fiLockFile.FullName)
+				End If
+
+				' Delete the lock file
+				strCurrentTask = "Delete the lock file"
 				DeleteLockFile(fiLockFile)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			Else
-				If intDebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created suffix array files for " & fiFastaFile.Name)
-				End If
-			End If
-
-			If intDebugLevel >= 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & fiLockFile.FullName)
-			End If
-
-			' Delete the lock file
-			strCurrentTask = "Delete the lock file"
-			DeleteLockFile(fiLockFile)
 
 		Catch ex As Exception
 			mErrorMessage = "Exception in .CreateSuffixArrayFilesWork"
@@ -1021,13 +1018,16 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	End Function
 
 	Public Function IsMSGFPlus(ByVal MSGFDBJarFilePath As String) As Boolean
+		Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
 		Dim fiJarFile As FileInfo
 		fiJarFile = New FileInfo(MSGFDBJarFilePath)
 
-		If fiJarFile.Name.ToLower() = clsMSGFDBUtils.MSGFDB_JAR_NAME.ToLower() Then
+		If String.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, True) = 0 Then
+			' Not MSGF+
 			Return False
 		Else
+			' Using MSGF+
 			Return True
 		End If
 
@@ -1038,9 +1038,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' </summary>
 	''' <param name="strFolderPathToCheck">folder to check</param>
 	''' <param name="dctFilesToCopy">Dictionary with filenames and file sizes</param>
+	''' <param name="blnUsingLegacyFasta"></param>
+	''' <param name="dtMinWriteTimeThresholdUTC"></param>
 	''' <returns>True if all files are found and are the right size</returns>
 	''' <remarks></remarks>
-	Protected Function ValidateFiles(ByVal strFolderPathToCheck As String, ByVal dctFilesToCopy As Dictionary(Of String, Int64), ByVal dtMinWriteTimeThresholdUTC As DateTime) As Boolean
+	Protected Function ValidateFiles(
+	  ByVal strFolderPathToCheck As String,
+	  ByVal dctFilesToCopy As Dictionary(Of String, Int64),
+	  ByVal blnUsingLegacyFasta As Boolean,
+	  ByVal dtMinWriteTimeThresholdUTC As DateTime) As Boolean
 
 		For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
 			Dim fiSourceFile As FileInfo
@@ -1052,14 +1058,17 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			ElseIf fiSourceFile.Length <> entry.Value Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
 				Return False
-			ElseIf fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1) Then
+			ElseIf blnUsingLegacyFasta Then
+				' Require that the index files be newer than the fasta file
+				If fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1) Then
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
-				  fiSourceFile.FullName & " modified " &
-				  fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
-				  dtMinWriteTimeThresholdUTC.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
+					  fiSourceFile.FullName & " modified " &
+					  fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
+					  dtMinWriteTimeThresholdUTC.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
 
-				Return False
+					Return False
+				End If
 			End If
 		Next
 
