@@ -935,7 +935,7 @@ Public Class clsDtaGenToolRunner
 			' Lookup the version of the DeconConsole application
 			Dim strDllPath As String
 
-			blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiDtaGenerator.FullName)
+			blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, fiDtaGenerator.FullName)
 			If Not blnSuccess Then Return False
 
 			If eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then

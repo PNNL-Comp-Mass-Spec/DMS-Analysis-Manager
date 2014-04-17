@@ -431,7 +431,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
 
 		hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
-		hpcJobInfo.JobParameters.TemplateName = "Default"		 ' If using 32 cores, could use Template "Single"
+		hpcJobInfo.JobParameters.TemplateName = "DMS"		 ' If using 32 cores, could use Template "Single"
 		hpcJobInfo.JobParameters.ProjectName = "DMS"
 
 		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket

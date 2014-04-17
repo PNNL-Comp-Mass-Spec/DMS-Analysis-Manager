@@ -2034,7 +2034,7 @@ Public Class clsAnalysisToolRunnerBase
 		Dim blnSuccess As Boolean
 
 		Try
-			ioFileInfo = New FileInfo(strDLLFilePath)
+            ioFileInfo = New FileInfo(strDLLFilePath)
 
 			If Not ioFileInfo.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
