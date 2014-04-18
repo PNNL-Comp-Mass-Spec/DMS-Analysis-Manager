@@ -103,7 +103,7 @@ Public Class clsAnalysisResourcesMSGFDB
 				' Note that capitalization matters for the extension; it must be .mzXML
 				Dim FileToGet As String = m_DatasetName & ".mzXML"
 				If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-					'Errors were reported in function call, so just return
+					' Errors were reported in function call, so just return
 					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 				End If
 				m_jobParams.AddResultFileToSkip(FileToGet)
@@ -124,7 +124,7 @@ Public Class clsAnalysisResourcesMSGFDB
 						m_message &= "; shared results folder is " & sharedResultsFolder
 					End If
 
-					'Errors were reported in function call, so just return
+					' Errors were reported in function call, so just return
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
@@ -222,7 +222,7 @@ Public Class clsAnalysisResourcesMSGFDB
 				currentTask = "ValidateCDTAFileSize"
 
 				If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
-					'Errors were reported in function call, so just return
+					' Errors were reported in function call, so just return
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
@@ -230,7 +230,17 @@ Public Class clsAnalysisResourcesMSGFDB
 				currentTask = "ValidateCDTAFileRemoveSparseSpectra"
 
 				If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
-					'Errors were reported in function call, so just return
+					' Errors were reported in function call, so just return
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
+				' Make sure that the spectra are centroided
+				Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra")
+
+				If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
+					' m_message is already updated
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 			End If

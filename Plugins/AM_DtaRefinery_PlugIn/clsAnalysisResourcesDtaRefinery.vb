@@ -63,8 +63,8 @@ Public Class clsAnalysisResourcesDtaRefinery
 
 		' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
 		Dim strCDTAPath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
-		Dim blnReplaceSourceFile As Boolean = True
-		Dim blnDeleteSourceFileIfUpdated As Boolean = True
+		Const blnReplaceSourceFile As Boolean = True
+		Const blnDeleteSourceFileIfUpdated As Boolean = True
 
 		If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
 			m_message = "Error validating the _DTA.txt file"
@@ -86,7 +86,17 @@ Public Class clsAnalysisResourcesDtaRefinery
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
-
+		
+		' If this is a MSGFPlus script, then make sure that the spectra are centroided
+		Dim toolName = m_jobParams.GetParam("ToolName")
+		If toolName.StartsWith("MSGFPlus", StringComparison.CurrentCultureIgnoreCase) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra (required by MSGF+)")
+			If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
+				' m_message is already updated
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		End If
+		
 		'Add all the extensions of the files to delete after run
 		m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
 		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA

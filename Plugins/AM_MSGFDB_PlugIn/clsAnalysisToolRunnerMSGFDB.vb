@@ -294,7 +294,14 @@ Public Class clsAnalysisToolRunnerMSGFDB
 				If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
 					' See if any spectra were processed
 					If Not File.Exists(Path.Combine(m_WorkDir, ResultsFileName)) Then
-						m_message = "None of the spectra are centroided; unable to process with " & strSearchEngineName
+						' Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
+						'   "None of the spectra are centroided; unable to process"
+						'   "skipped xx% of the spectra because they did not appear centroided"
+						'   "skip xx% of the spectra because they did not appear centroided"
+						'
+						' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
+
+						m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & strSearchEngineName
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 						blnProcessingError = True
 					Else
