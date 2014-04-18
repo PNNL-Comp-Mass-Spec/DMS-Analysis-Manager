@@ -65,6 +65,8 @@ Public Class clsScanStatsGenerator
 			mMSFileInfoScanner.CreateScanStatsFile = True
 			mMSFileInfoScanner.SaveLCMS2DPlots = False
 			mMSFileInfoScanner.SaveTICAndBPIPlots = False
+			mMSFileInfoScanner.CheckCentroidingStatus = False
+
 			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
 			mMSFileInfoScanner.DatasetIDOverride = intDatasetID
 

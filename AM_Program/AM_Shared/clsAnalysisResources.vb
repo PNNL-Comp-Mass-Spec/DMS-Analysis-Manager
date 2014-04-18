@@ -247,6 +247,7 @@ Public MustInherit Class clsAnalysisResources
 
 	Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
 
+	Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
 #End Region
 
 #Region "Properties"
@@ -2883,26 +2884,6 @@ Public MustInherit Class clsAnalysisResources
 		Return stepNumber - cloneStepRenumStart + 1
 
 	End Function
-
-	Protected Function IsDataCentroided(ByVal lstMzValues As List(Of Double), ByVal lstPpmDiffs As List(Of Double)) As Boolean
-
-        Static oMedianUtils As clsMedianUtilities = New clsMedianUtilities
-
-		Const ppmDiffThreshold As Integer = 50
-
-        Dim medianDelMppm = oMedianUtils.Median(lstPpmDiffs)
-
-		If medianDelMppm < ppmDiffThreshold Then
-			' Profile mode data
-			Return False
-		Else
-			' Centroided data
-			Return True
-		End If
-
-
-	End Function
-
 
 	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
 
@@ -6009,86 +5990,27 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Function ValidateCDTAFileIsCentroided(ByVal strCDTAPath As String) As Boolean
 
-		Dim dtLastStatusTime = DateTime.UtcNow()
-
-		Dim splitChars = New Char() {" "c}
-
-		Dim intSpectraCount As Integer = 0
-		Dim intSpectraCountCentroided As Integer = 0
-		Dim fractionCentroided As Double
-
 		Try
 
 			' Read the m/z values in the _dta.txt file
-			' Using a simple text reader here for speed purposes
+			' Examine the data in each spectrum to determine if it is centroided
 
-			Using srDtaFile = New StreamReader(New FileStream(strCDTAPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			mSpectraTypeClassifier = New SpectraTypeClassifier.clsSpectrumTypeClassifier()
 
-				Dim lstMZValues = New List(Of Double)(2000)
-				Dim lstPpmDiffs = New List(Of Double)(2000)
+			Dim blnSuccess = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath)
 
-				Dim dblPreviousMZ As Double = 0
-
-				While srDtaFile.Peek > -1
-					Dim strLineIn = srDtaFile.ReadLine
-
-					If Not String.IsNullOrEmpty(strLineIn) Then
-						If strLineIn.StartsWith("=============") Then
-							' DTA header line
-
-							' Process the data for the previous spectrum
-							If lstMZValues.Count > 0 Then
-								If IsDataCentroided(lstMZValues, lstPpmDiffs) Then
-									intSpectraCountCentroided += 1
-								End If
-							End If
-
-							' Reset the previous m/z value and skip the next line
-							If srDtaFile.Peek > -1 Then srDtaFile.ReadLine()
-							dblPreviousMZ = 0
-							lstPpmDiffs.Clear()
-							lstMZValues.Clear()
-							intSpectraCount += 1
-
-							If DateTime.UtcNow.Subtract(dtLastStatusTime).TotalSeconds >= 30 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intSpectraCount & " spectra parsed in the _dta.txt file")
-								dtLastStatusTime = DateTime.UtcNow
-							End If
-
-						Else
-							Dim dataColumns = strLineIn.Split(splitChars, 3)
-
-							Dim dblMZ As Double
-							If Double.TryParse(dataColumns(0), dblMZ) Then
-								If dblPreviousMZ > 0 AndAlso dblMZ > dblPreviousMZ Then
-									Dim delMPPM = 1000000.0 * (dblMZ - dblPreviousMZ) / dblMZ
-									lstPpmDiffs.Add(delMPPM)
-								End If
-								lstMZValues.Add(dblMZ)
-								dblPreviousMZ = dblMZ
-							End If
-						End If
-
-					End If
-
-				End While
-
-				' Process the data for the previous spectrum
-				If lstMZValues.Count > 0 Then
-					If IsDataCentroided(lstMZValues, lstPpmDiffs) Then
-						intSpectraCountCentroided += 1
-					End If
+			If Not blnSuccess Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "SpectraTypeClassifier encountered an error while parsing the _dta.txt file"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				End If
+				
+				Return False
+			End If
 
-				If intSpectraCount > 0 Then
-					fractionCentroided = intSpectraCountCentroided / CDbl(intSpectraCount)
-				Else
-					fractionCentroided = 1
-				End If
-
-			End Using
-
-			Dim commentSuffix = " (" & intSpectraCount & " total spectra)"
+			Dim fractionCentroided = mSpectraTypeClassifier.FractionCentroided
+			
+			Dim commentSuffix = " (" & mSpectraTypeClassifier.TotalSpectra & " total spectra)"
 
 			If fractionCentroided > 0.8 Then
 				' At least 80% of the spectra are centroided
@@ -6372,6 +6294,14 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 #End Region
+
+	Private Sub mSpectraTypeClassifier_ErrorEvent(ByVal strMessage As String) Handles mSpectraTypeClassifier.ErrorEvent
+
+	End Sub
+
+	Private Sub mSpectraTypeClassifier_ReadingSpectra(ByVal spectraProcessed As Integer) Handles mSpectraTypeClassifier.ReadingSpectra
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & spectraProcessed & " spectra parsed in the _dta.txt file")
+	End Sub
 End Class
 
 

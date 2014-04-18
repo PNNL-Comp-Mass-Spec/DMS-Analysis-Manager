@@ -94,6 +94,9 @@
     <Reference Include="Protein_Exporter">
       <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
+    <Reference Include="SpectraTypeClassifier">
+      <HintPath>..\..\AM_Common\SpectraTypeClassifier.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite, Version=1.0.51.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
@@ -127,7 +130,6 @@
     <Compile Include="clsGlobal.vb" />
     <Compile Include="clsIonicZipTools.vb" />
     <Compile Include="clsLogTools.vb" />
-    <Compile Include="clsMedianUtilities.vb" />
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />

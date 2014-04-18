@@ -1990,14 +1990,8 @@ Public Class clsCodeTest
 		Dim objResources As clsResourceTestClass
 		objResources = GetResourcesObject(intDebugLevel)
 
-
-		objResources.ValidateCDTAFileIsCentroided("E:\dms_workdir\Biorumen_08__run1_4Jan12_Cougar_11-10-11_dta.txt")
-
-		objResources.ValidateCDTAFileIsCentroided("E:\dms_workdir\TCGA_BH-A18V_A7-A13F_BH-A0E1_117C_W_BI_20130520_H-PM_f03_DTA_Centroided.txt")
-
 		objResources.ValidateCDTAFileIsCentroided("\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt")
 
-		
 	End Sub
 
 	Public Function ValidateSequestNodeCount(ByVal strLogFilePath As String, ByVal blnLogToConsole As Boolean) As Boolean
