@@ -2886,11 +2886,11 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected Function IsDataCentroided(ByVal lstMzValues As List(Of Double), ByVal lstPpmDiffs As List(Of Double)) As Boolean
 
-		Static oComputeMedian As clsComputeMedian = New clsComputeMedian
+        Static oMedianUtils As clsMedianUtilities = New clsMedianUtilities
 
 		Const ppmDiffThreshold As Integer = 50
 
-		Dim medianDelMppm = oComputeMedian.Median(lstPpmDiffs)
+        Dim medianDelMppm = oMedianUtils.Median(lstPpmDiffs)
 
 		If medianDelMppm < ppmDiffThreshold Then
 			' Profile mode data

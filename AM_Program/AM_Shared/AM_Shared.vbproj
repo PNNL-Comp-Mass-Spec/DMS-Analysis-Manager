@@ -120,7 +120,6 @@
     <Compile Include="clsAnalysisToolRunnerBase.vb" />
     <Compile Include="clsAssemblyTools.vb" />
     <Compile Include="clsCDTAUtilities.vb" />
-    <Compile Include="clsComputeMedian.vb" />
     <Compile Include="clsConcatToolWrapper.vb" />
     <Compile Include="clsDBStatusLogger.vb" />
     <Compile Include="clsDBTask.vb" />
@@ -128,6 +127,7 @@
     <Compile Include="clsGlobal.vb" />
     <Compile Include="clsIonicZipTools.vb" />
     <Compile Include="clsLogTools.vb" />
+    <Compile Include="clsMedianUtilities.vb" />
     <Compile Include="clsMemoryUsageLogger.vb" />
     <Compile Include="clsMessageQueueLogger.vb" />
     <Compile Include="clsMessageSender.vb" />
