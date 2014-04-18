@@ -49,12 +49,12 @@ Public Class clsDtaGenToolRunner
 
 		Dim result As IJobParams.CloseOutType
 
-		'do the stuff in the base class
+		' Do the stuff in the base class
 		If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		m_StepNum = m_jobParams.GetJobParameter("Step", 0)
 
-		'Create spectra files
+		' Create spectra files
 		result = CreateMSMSSpectra()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			' Something went wrong
@@ -64,10 +64,10 @@ Public Class clsDtaGenToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		'Stop the job timer
+		' Stop the job timer
 		m_StopTime = DateTime.UtcNow
 
-		'Add the current job data to the summary file
+		' Add the current job data to the summary file
 		Try
 			If Not UpdateSummaryFile() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
@@ -76,18 +76,18 @@ Public Class clsDtaGenToolRunner
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
 		End Try
 
-		'Get rid of raw data file
+		' Get rid of raw data file
 		result = DeleteDataFile()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
 		End If
 
-		'Add all the extensions of the files to delete after run
+		' Add all the extensions of the files to delete after run
 		m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX) ' Unzipped, concatenated DTA
 		m_jobParams.AddResultFileExtensionToSkip(".dta")	 ' DTA files
 		m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt")
 
-		'Add any files that are an exception to the captured files to delete list
+		' Add any files that are an exception to the captured files to delete list
 		m_jobParams.AddResultFileToKeep("lcq_dta.txt")
 
 		result = MakeResultsFolder()
@@ -106,10 +106,6 @@ Public Class clsDtaGenToolRunner
 			' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
 			Return result
 		End If
-
-		'Make results folder and transfer results
-		'result = DispositionResults()
-		'If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return result
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
 
@@ -150,10 +146,9 @@ Public Class clsDtaGenToolRunner
 
 	Protected Function GetDTAGenerator(ByRef SpectraGen As clsDtaGen) As eDTAGeneratorConstants
 
-		Dim eDtaGeneratorType As eDTAGeneratorConstants
 		Dim strErrorMessage As String = String.Empty
 
-		eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
+		Dim eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
 
 		Select Case eDtaGeneratorType
 			Case eDTAGeneratorConstants.MGFtoDTA
@@ -375,15 +370,14 @@ Public Class clsDtaGenToolRunner
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
 
 		Dim SpectraGen As clsDtaGen = Nothing
-		Dim eDTAGenerator As eDTAGeneratorConstants
 
-		eDTAGenerator = GetDTAGenerator(SpectraGen)
+		Dim eDtaGeneratorType = GetDTAGenerator(SpectraGen)
 
-		If eDTAGenerator = eDTAGeneratorConstants.Unknown Then
+		If eDtaGeneratorType = eDTAGeneratorConstants.Unknown Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		If eDTAGenerator = eDTAGeneratorConstants.DeconConsole Then
+		If eDtaGeneratorType = eDTAGeneratorConstants.DeconConsole Then
 			m_CentroidDTAs = False
 		Else
 			m_CentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
@@ -401,11 +395,11 @@ Public Class clsDtaGenToolRunner
 
 		' Store the Version info in the database
 		Dim blnSuccess As Boolean
-		If eDTAGenerator = eDTAGeneratorConstants.MGFtoDTA Then
+		If eDtaGeneratorType = eDTAGeneratorConstants.MGFtoDTA Then
 			' MGFtoDTA Dll
 			blnSuccess = StoreToolVersionInfoDLL(SpectraGen.DtaToolNameLoc)
 		Else
-			If eDTAGenerator = eDTAGeneratorConstants.DeconConsole Then
+			If eDtaGeneratorType = eDTAGeneratorConstants.DeconConsole Then
 
 				' Possibly use a specific version of DeconTools
 				Dim progLoc As String
@@ -419,13 +413,28 @@ Public Class clsDtaGenToolRunner
 
 			End If
 
-			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc, eDTAGenerator)
+			blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc, eDtaGeneratorType)
 		End If
 
 		If Not blnSuccess Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 			m_message = "Error determining " & SpectraGen.DtaToolNameLoc & " version"
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		If eDtaGeneratorType = eDTAGeneratorConstants.DeconMSn AndAlso m_CentroidDTAs Then
+			Dim blnUsingExistingResults = m_jobParams.GetJobParameter(clsDtaGenResources.USING_EXISTING_DECONMSN_RESULTS, False)
+
+			If blnUsingExistingResults Then
+				' Confirm that the existing DeconMSn results are valid
+				' If they are, then we don't need to re-run DeconMSn
+
+				If ValidateDeconMSnResults() Then
+					m_progress = 100
+					Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+				End If
+			End If
+
 		End If
 
 		Try
@@ -490,15 +499,13 @@ Public Class clsDtaGenToolRunner
 		Try
 
 			' Create a centroided _DTA.txt file from the .Raw file (first creates a .MGF file, then converts to _DTA.txt)
-			Dim oMGFtoDTA As clsDtaGenMSConvert
+			Dim oMSConvert As clsDtaGenMSConvert = New clsDtaGenMSConvert()
+			oMSConvert.Setup(GetDtaGenInitParams())
 
-			oMGFtoDTA = New clsDtaGenMSConvert()
-			oMGFtoDTA.Setup(GetDtaGenInitParams())
-
-			oMGFtoDTA.ForceCentroidOn = True
+			oMSConvert.ForceCentroidOn = True
 
 			Dim eResult As IJobParams.CloseOutType
-			eResult = StartAndWaitForDTAGenerator(oMGFtoDTA, "CentroidCDTA", True)
+			eResult = StartAndWaitForDTAGenerator(oMSConvert, "CentroidCDTA", True)
 
 			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return eResult
@@ -686,23 +693,21 @@ Public Class clsDtaGenToolRunner
 		Dim strMsMsDataListCentroid() As String = Nothing
 		Dim intMsMsDataCountCentroid As Integer
 
-		Dim udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-		Dim udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+		Dim udtParentIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+		Dim udtFragIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
 		Dim blnNextSpectrumAvailable As Boolean
 		Dim intSpectrumCountSkipped As Integer
 
 		Try
-			Dim oCDTAReaderParentIons As clsDtaTextFileReader
-			oCDTAReaderParentIons = New clsDtaTextFileReader(False)
+			Dim oCDTAReaderParentIons  = New clsDtaTextFileReader(False)
 			If Not oCDTAReaderParentIons.OpenFile(strCDTAWithParentIonData) Then
 				m_message = "Error opening CDTA file with the parent ion data"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				Return False
 			End If
 
-			Dim oCDTAReaderFragIonData As clsDtaTextFileReader
-			oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
+			Dim oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
 			If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
 				m_message = "Error opening CDTA file with centroided spectra data"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -1008,6 +1013,48 @@ Public Class clsDtaGenToolRunner
 
 	End Function
 
+	Protected Function ValidateDeconMSnResults() As Boolean
+
+		Dim existingResultsAreValid As Boolean = False
+
+		Try
+			Dim fiDeconMSnLogFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_DeconMSn_log.txt"))
+
+			If Not fiDeconMSnLogFile.Exists Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "DeconMSn_log.txt file not found; cannot use pre-existing DeconMSn results")
+				Return False
+			End If
+
+			Dim headerLineFound As Boolean = False
+
+			Using srLogFile = New StreamReader(New FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+				While srLogFile.Peek > -1
+					Dim strLineIn = srLogFile.ReadLine()
+
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						If headerLineFound Then
+							' Found a data line
+							If Char.IsDigit(strLineIn.Chars(0)) Then
+								existingResultsAreValid = True
+								Exit While
+							End If
+						ElseIf strLineIn.StartsWith("MSn_Scan") Then
+							' Found the header line
+							headerLineFound = True
+						End If
+
+					End If
+				End While
+			End Using
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateDeconMSnResults: " & ex.Message)
+			Return False
+		End Try
+
+		Return existingResultsAreValid
+
+	End Function
 	''' <summary>
 	''' Zips concatenated DTA file to reduce size
 	''' </summary>

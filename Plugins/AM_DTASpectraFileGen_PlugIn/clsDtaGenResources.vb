@@ -8,6 +8,7 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsDtaGenResources
 	Inherits clsAnalysisResources
@@ -16,6 +17,10 @@ Public Class clsDtaGenResources
 	'Gets resources necessary for DTA creation
 	'*********************************************************************************************************
 
+#Region "Constants"
+	Public Const USING_EXISTING_DECONMSN_RESULTS As String = "Using_existing_DeconMSn_Results"
+
+#End Region
 #Region "Methods"
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -24,6 +29,8 @@ Public Class clsDtaGenResources
 
 		Dim eDtaGeneratorType As clsDtaGenToolRunner.eDTAGeneratorConstants
 		Dim strErrorMessage As String = String.Empty
+
+		Dim zippedDTAFilePath As String = String.Empty
 
 		eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, strErrorMessage)
 		If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown Then
@@ -61,10 +68,71 @@ Public Class clsDtaGenResources
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			Dim blnCentroidDTAs = False
+			If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole Then
+				blnCentroidDTAs = False
+			Else
+				blnCentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
+			End If
+
+			If blnCentroidDTAs Then
+				' Look for a DTA_Gen_1_26_ folder for this dataset
+				' If it exists, and if we can find a valid _dta.zip file, then use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
+
+				Dim datasetID = m_jobParams.GetJobParameter("DatasetID", 0)
+				Dim folderNameToFind = "DTA_Gen_1_26_" & datasetID
+				Dim fileToFind = m_DatasetName & "_dta.zip"
+				Dim validFolderFound As Boolean
+
+				Dim existingDtaFolder = FindValidFolder(m_DatasetName, fileToFind, folderNameToFind, MaxRetryCount:=1, LogFolderNotFound:=False, RetrievingInstrumentDataFolder:=False, validFolderFound:=validFolderFound)
+
+				If validFolderFound Then
+					' Copy the file locally (or queue it for download from MyEMSL)
+
+					Dim blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
+
+					If blnFileCopiedOrQueued Then
+						zippedDTAFilePath = Path.Combine(m_WorkingDir, fileToFind)
+
+						m_jobParams.AddAdditionalParameter("JobParameters", USING_EXISTING_DECONMSN_RESULTS, "True")
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid")
+
+						fileToFind = m_DatasetName & "_profile.txt"
+						blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
+
+						fileToFind = m_DatasetName & "_DeconMSn_log.txt"
+						blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
+					End If
+
+				End If
+
+			End If
 		End If
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		If Not String.IsNullOrEmpty(zippedDTAFilePath) Then
+
+			Threading.Thread.Sleep(150)
+
+			Dim fiZippedDtaFile = New FileInfo(zippedDTAFilePath)
+			Dim tempZipFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) & "_PreExisting.zip")
+
+			fiZippedDtaFile.MoveTo(tempZipFilePath)
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " + Path.GetFileName(zippedDTAFilePath))
+			If UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", False) Then
+				If m_DebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " + Path.GetFileName(zippedDTAFilePath))
+				End If
+
+				m_jobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath))
+
+			End If
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
