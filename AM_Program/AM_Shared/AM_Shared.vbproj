@@ -120,6 +120,7 @@
     <Compile Include="clsAnalysisToolRunnerBase.vb" />
     <Compile Include="clsAssemblyTools.vb" />
     <Compile Include="clsCDTAUtilities.vb" />
+    <Compile Include="clsComputeMedian.vb" />
     <Compile Include="clsConcatToolWrapper.vb" />
     <Compile Include="clsDBStatusLogger.vb" />
     <Compile Include="clsDBTask.vb" />

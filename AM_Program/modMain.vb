@@ -116,8 +116,10 @@ Module modMain
 
 						'objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
 
-						objTest.TestRunQuery()
-						objTest.TestRunSP()
+						'objTest.TestRunQuery()
+						'objTest.TestRunSP()
+
+						objTest.ValidateCentroided()
 
                         Console.WriteLine(clsGlobal.DecodePassword("Test"))
 

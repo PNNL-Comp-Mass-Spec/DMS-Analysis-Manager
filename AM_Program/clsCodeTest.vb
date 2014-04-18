@@ -65,6 +65,31 @@ Public Class clsCodeTest
 
 	End Sub
 
+	Protected Function GetResourcesObject(ByVal intDebugLevel As Integer) As clsResourceTestClass
+		Dim objResources = New clsResourceTestClass
+
+		Dim objJobParams As IJobParams
+		objJobParams = New clsAnalysisJob(m_mgrParams, 0)
+
+		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+		
+		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+		m_mgrParams.SetParam("MgrName", "Monroe_Test")
+		m_mgrParams.SetParam("debuglevel", "3")
+		m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
+
+		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+
+		objJobParams.SetParam("StepParameters", "Job", "12345")
+		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+
+		objResources.Setup(m_mgrParams, objJobParams)
+
+		Return objResources
+
+	End Function
+
 	''' <summary>
 	''' Initializes m_mgrParams and returns example job params
 	''' </summary>
@@ -878,28 +903,9 @@ Public Class clsCodeTest
 
 		Dim intDebugLevel As Integer = 2
 
-		Dim objResources As New clsResourceTestClass
+		Dim objResources = GetResourcesObject(intDebugLevel)
 
-		Dim objJobParams As IJobParams
-		objJobParams = New clsAnalysisJob(m_mgrParams, 0)
-
-		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-		Dim blnSuccess As Boolean
-
-		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-		m_mgrParams.SetParam("MgrName", "Monroe_Test")
-		m_mgrParams.SetParam("debuglevel", "3")
-		m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
-
-		objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-		objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-		objJobParams.SetParam("StepParameters", "Job", "12345")
-		objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
-
-		objResources.Setup(m_mgrParams, objJobParams)
-
-		blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", False)
+		Dim blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", False)
 		'blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
 		Return blnSuccess
@@ -1977,6 +1983,23 @@ Public Class clsCodeTest
 
 	End Sub
 
+	Public Sub ValidateCentroided()
+
+		Const intDebugLevel As Integer = 2
+
+		Dim objResources As clsResourceTestClass
+		objResources = GetResourcesObject(intDebugLevel)
+
+
+		objResources.ValidateCDTAFileIsCentroided("E:\dms_workdir\Biorumen_08__run1_4Jan12_Cougar_11-10-11_dta.txt")
+
+		objResources.ValidateCDTAFileIsCentroided("E:\dms_workdir\TCGA_BH-A18V_A7-A13F_BH-A0E1_117C_W_BI_20130520_H-PM_f03_DTA_Centroided.txt")
+
+		objResources.ValidateCDTAFileIsCentroided("\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt")
+
+		
+	End Sub
+
 	Public Function ValidateSequestNodeCount(ByVal strLogFilePath As String, ByVal blnLogToConsole As Boolean) As Boolean
 		Const ERROR_CODE_A As Integer = 2
 		Const ERROR_CODE_B As Integer = 4
@@ -2222,7 +2245,7 @@ Public Class clsCodeTest
 
 				intIndex = 0
 				For Each objItem As Generic.KeyValuePair(Of String, Single) In dctHostProcessingRate
-					sngHostProcessingRateSorted(intindex) = objItem.Value
+					sngHostProcessingRateSorted(intIndex) = objItem.Value
 					intIndex += 1
 				Next
 

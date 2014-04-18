@@ -21,6 +21,7 @@ Public Class clsAnalysisToolRunnerBase
 
 #Region "Constants"
 	Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"
+
 	Public Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
 	Public Const PVM_RESET_ERROR_MESSAGE As String = "Error resetting PVM"
 #End Region

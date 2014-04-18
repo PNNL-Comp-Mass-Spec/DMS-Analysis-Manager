@@ -109,6 +109,9 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
 
+	' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
+	Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
+
 	Public Enum eRawDataTypeConstants
 		Unknown = 0
 		ThermoRawFile = 1
@@ -1903,12 +1906,41 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-	Protected Function FindValidFolder(ByVal DSName As String,
-	  ByVal FileNameToFind As String,
-	  ByVal FolderNameToFind As String,
-	  ByVal MaxRetryCount As Integer,
-	  ByVal LogFolderNotFound As Boolean,
-	  ByVal RetrievingInstrumentDataFolder As Boolean) As String
+	Protected Function FindValidFolder(
+	  ByVal dsName As String,
+	  ByVal fileNameToFind As String,
+	  ByVal folderNameToFind As String,
+	  ByVal maxRetryCount As Integer,
+	  ByVal logFolderNotFound As Boolean,
+	  ByVal retrievingInstrumentDataFolder As Boolean) As String
+
+		Dim validFolderFound As Boolean
+		Return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder, validFolderFound)
+
+	End Function
+
+	''' <summary>
+	''' Determines the most appropriate folder to use to obtain dataset files from
+	''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+	''' If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+	''' </summary>
+	''' <param name="DSName">Name of the dataset</param>
+	''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+	''' <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+	''' <param name="MaxRetryCount">Maximum number of attempts</param>
+	''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
+	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+	''' <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
+	''' <returns>Path to the most appropriate dataset folder</returns>
+	''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
+	Protected Function FindValidFolder(
+	  ByVal dsName As String,
+	  ByVal fileNameToFind As String,
+	  ByVal folderNameToFind As String,
+	  ByVal maxRetryCount As Integer,
+	  ByVal logFolderNotFound As Boolean,
+	  ByVal retrievingInstrumentDataFolder As Boolean,
+	  <Out()> ByRef validFolderFound As Boolean) As String
 
 		Dim strBestPath As String = String.Empty
 		Dim lstPathsToCheck = New List(Of String)
@@ -1916,22 +1948,24 @@ Public MustInherit Class clsAnalysisResources
 		Dim blnValidFolder As Boolean
 		Dim blnFileNotFoundEncountered As Boolean
 
+		validFolderFound = False
+
 		Try
-			If FileNameToFind Is Nothing Then FileNameToFind = String.Empty
-			If FolderNameToFind Is Nothing Then FolderNameToFind = String.Empty
+			If fileNameToFind Is Nothing Then fileNameToFind = String.Empty
+			If folderNameToFind Is Nothing Then folderNameToFind = String.Empty
 
 			Dim instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0)
 
-			If RetrievingInstrumentDataFolder AndAlso instrumentDataPurged <> 0 Then
+			If retrievingInstrumentDataFolder AndAlso instrumentDataPurged <> 0 Then
 				' The instrument data is purged and we're retrieving instrument data
 				' Skip the primary dataset folder since the primary data files were most likely purged
 			Else
-				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), DSName))
+				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
 			End If
 
 			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
-			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), DSName))
-			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), DSName))
+			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
+			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName))
 
 			blnFileNotFoundEncountered = False
 
@@ -1944,10 +1978,23 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If pathToCheck = MYEMSL_PATH_FLAG Then
+
 						Const recurseMyEMSL As Boolean = False
-						blnValidFolder = FindValidFolderMyEMSL(DSName, FileNameToFind, FolderNameToFind, False, recurseMyEMSL)
+						blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, False, recurseMyEMSL)
+
 					Else
-						blnValidFolder = FindValidFolderUNC(pathToCheck, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound)
+
+						blnValidFolder = FindValidFolderUNC(pathToCheck, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound)
+						If Not blnValidFolder AndAlso Not String.IsNullOrEmpty(fileNameToFind) AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
+							' Look for a subfolder named folderNameToFind that contains file fileNameToFind
+							Dim pathToCheckAlt = Path.Combine(pathToCheck, folderNameToFind)
+							blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxRetryCount, logFolderNotFound)
+
+							If blnValidFolder Then
+								pathToCheck = pathToCheckAlt
+							End If
+						End If
+
 					End If
 
 					If blnValidFolder Then
@@ -1966,25 +2013,27 @@ Public MustInherit Class clsAnalysisResources
 
 			If blnValidFolder Then
 
+				validFolderFound = True
+
 				If m_DebugLevel >= 4 OrElse m_DebugLevel >= 1 AndAlso blnFileNotFoundEncountered Then
 					Dim Msg As String = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath
-					If FileNameToFind.Length > 0 Then
-						Msg &= " (matched file " + FileNameToFind + ")"
+					If fileNameToFind.Length > 0 Then
+						Msg &= " (matched file " + fileNameToFind + ")"
 					End If
-					If FolderNameToFind.Length > 0 Then
-						Msg &= " (matched folder " + FolderNameToFind + ")"
+					If folderNameToFind.Length > 0 Then
+						Msg &= " (matched folder " + folderNameToFind + ")"
 					End If
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
 				End If
 
 			Else
 				m_message = "Could not find a valid dataset folder"
-				If FileNameToFind.Length > 0 Then
-					m_message &= " containing file " + FileNameToFind
+				If fileNameToFind.Length > 0 Then
+					m_message &= " containing file " + fileNameToFind
 				End If
-				If LogFolderNotFound Then
+				If logFolderNotFound Then
 					If m_DebugLevel >= 1 Then
-						Dim Msg As String = m_message + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + DSName
+						Dim Msg As String = m_message + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
 					End If
 				End If
@@ -1992,7 +2041,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Catch ex As Exception
 			m_message = "Exception looking for a valid dataset folder"
-			Dim ErrMsg As String = m_message + " for dataset " + DSName + "; " + clsGlobal.GetExceptionStackTrace(ex)
+			Dim ErrMsg As String = m_message + " for dataset " + dsName + "; " + clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 		End Try
 
@@ -2316,7 +2365,7 @@ Public MustInherit Class clsAnalysisResources
 					' Ignore errors here
 				End Try
 			End If
-		
+
 		Else
 			m_message = "Error generating ScanStats files with clsScanStatsGenerator"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, objScanStatsGenerator.ErrorMessage)
@@ -2834,6 +2883,26 @@ Public MustInherit Class clsAnalysisResources
 		Return stepNumber - cloneStepRenumStart + 1
 
 	End Function
+
+	Protected Function IsDataCentroided(ByVal lstMzValues As List(Of Double), ByVal lstPpmDiffs As List(Of Double)) As Boolean
+
+		Static oComputeMedian As clsComputeMedian = New clsComputeMedian
+
+		Const ppmDiffThreshold As Integer = 50
+
+		Dim medianDelMppm = oComputeMedian.Median(lstPpmDiffs)
+
+		If medianDelMppm < ppmDiffThreshold Then
+			' Profile mode data
+			Return False
+		Else
+			' Centroided data
+			Return True
+		End If
+
+
+	End Function
+
 
 	Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
 
@@ -5935,6 +6004,122 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		Return blnSuccess
+
+	End Function
+
+	Public Function ValidateCDTAFileIsCentroided(ByVal strCDTAPath As String) As Boolean
+
+		Dim dtLastStatusTime = DateTime.UtcNow()
+
+		Dim splitChars = New Char() {" "c}
+
+		Dim intSpectraCount As Integer = 0
+		Dim intSpectraCountCentroided As Integer = 0
+		Dim fractionCentroided As Double
+
+		Try
+
+			' Read the m/z values in the _dta.txt file
+			' Using a simple text reader here for speed purposes
+
+			Using srDtaFile = New StreamReader(New FileStream(strCDTAPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+				Dim lstMZValues = New List(Of Double)(2000)
+				Dim lstPpmDiffs = New List(Of Double)(2000)
+
+				Dim dblPreviousMZ As Double = 0
+
+				While srDtaFile.Peek > -1
+					Dim strLineIn = srDtaFile.ReadLine
+
+					If Not String.IsNullOrEmpty(strLineIn) Then
+						If strLineIn.StartsWith("=============") Then
+							' DTA header line
+
+							' Process the data for the previous spectrum
+							If lstMZValues.Count > 0 Then
+								If IsDataCentroided(lstMZValues, lstPpmDiffs) Then
+									intSpectraCountCentroided += 1
+								End If
+							End If
+
+							' Reset the previous m/z value and skip the next line
+							If srDtaFile.Peek > -1 Then srDtaFile.ReadLine()
+							dblPreviousMZ = 0
+							lstPpmDiffs.Clear()
+							lstMZValues.Clear()
+							intSpectraCount += 1
+
+							If DateTime.UtcNow.Subtract(dtLastStatusTime).TotalSeconds >= 30 Then
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intSpectraCount & " spectra parsed in the _dta.txt file")
+								dtLastStatusTime = DateTime.UtcNow
+							End If
+
+						Else
+							Dim dataColumns = strLineIn.Split(splitChars, 3)
+
+							Dim dblMZ As Double
+							If Double.TryParse(dataColumns(0), dblMZ) Then
+								If dblPreviousMZ > 0 AndAlso dblMZ > dblPreviousMZ Then
+									Dim delMPPM = 1000000.0 * (dblMZ - dblPreviousMZ) / dblMZ
+									lstPpmDiffs.Add(delMPPM)
+								End If
+								lstMZValues.Add(dblMZ)
+								dblPreviousMZ = dblMZ
+							End If
+						End If
+
+					End If
+
+				End While
+
+				' Process the data for the previous spectrum
+				If lstMZValues.Count > 0 Then
+					If IsDataCentroided(lstMZValues, lstPpmDiffs) Then
+						intSpectraCountCentroided += 1
+					End If
+				End If
+
+				If intSpectraCount > 0 Then
+					fractionCentroided = intSpectraCountCentroided / CDbl(intSpectraCount)
+				Else
+					fractionCentroided = 1
+				End If
+
+			End Using
+
+			Dim commentSuffix = " (" & intSpectraCount & " total spectra)"
+
+			If fractionCentroided > 0.8 Then
+				' At least 80% of the spectra are centroided
+
+				If fractionCentroided > 0.999 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "All of the spectra are centroided" & commentSuffix)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, (fractionCentroided * 100).ToString("0") & "% of the spectra are centroided" & commentSuffix)
+				End If
+
+				Return True
+
+			ElseIf fractionCentroided > 0.001 Then
+				' Less than 80% of the spectra are centroided
+				' Post a message similar to:
+				'   MSGF+ will likely skip 90% of the spectra because they did not appear centroided
+				m_message = "MSGF+ will likely skip " & ((1 - fractionCentroided) * 100).ToString("0") & "% of the spectra because they do not appear centroided"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & commentSuffix)
+				Return False
+			Else
+				' None of the spectra are centroided; unable to process with MSGF+
+				m_message = SPECTRA_ARE_NOT_CENTROIDED & " with MSGF+"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & commentSuffix)
+				Return False
+			End If
+
+		Catch ex As Exception
+			m_message = "Exception in ValidateCDTAFileIsCentroided"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return False
+		End Try
 
 	End Function
 
