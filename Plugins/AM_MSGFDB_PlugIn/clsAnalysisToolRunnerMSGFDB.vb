@@ -93,7 +93,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
 			Dim JavaProgLoc = GetJavaProgLoc()
 			If String.IsNullOrEmpty(JavaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -155,7 +155,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
 
 			If udtHPCOptions.UsingHPC Then
-				javaExePath = "\\winhpcfs\projects\DMS\jre7\bin\java.exe"
+				javaExePath = "\\winhpcfs\projects\DMS\jre8\bin\java.exe"
 				msgfdbJarFilePath = mMSGFDbProgLocHPC
 			End If
 

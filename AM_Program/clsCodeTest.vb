@@ -645,7 +645,7 @@ Public Class clsCodeTest
 			Dim strJobNum As String = "12345"
 			Dim intDebugLevel As Short = CShort(m_mgrParams.GetParam("debuglevel", 1))
 
-			Dim JavaProgLoc As String = "C:\Program Files\Java\jre7\bin\java.exe"
+			Dim JavaProgLoc As String = "C:\Program Files\Java\jre8\bin\java.exe"
 			Dim MSGFDbProgLoc As String = "C:\DMS_Programs\MSGFDB\MSGFPlus.jar"
 			Dim FastaFileIsDecoy As Boolean = False
 			Dim FastaFilePath As String = String.Empty
