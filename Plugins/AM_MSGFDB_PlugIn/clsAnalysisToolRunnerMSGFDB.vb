@@ -277,6 +277,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
+				If udtHPCOptions.UsingHPC And mMSGFPlusComplete Then
+					' Don't treat this as a fatal error; HPC jobs don't always close out cleanly
+					blnProcessingError = False
+					m_EvalMessage = String.Copy(m_message)
+					m_message = String.Empty
+				Else
+					blnProcessingError = True
+				End If
+
 				If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
 					If CmdRunner.ExitCode <> 0 Then
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
@@ -284,8 +293,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strSearchEngineName & " failed (but exit code is 0)")
 					End If
 				End If
-
-				blnProcessingError = True
 
 			End If
 
