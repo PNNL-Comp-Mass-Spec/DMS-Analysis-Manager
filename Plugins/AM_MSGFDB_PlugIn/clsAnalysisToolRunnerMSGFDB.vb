@@ -9,6 +9,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports Microsoft.Hpc.Scheduler
 
 Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
@@ -155,7 +156,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
 
 			If udtHPCOptions.UsingHPC Then
-				javaExePath = "\\winhpcfs\projects\DMS\jre8\bin\java.exe"
+				If udtHPCOptions.SharePath.StartsWith("\\winhpcfs") Then
+					javaExePath = "\\winhpcfs\projects\DMS\jre8\bin\java.exe"
+				Else
+					javaExePath = "\\picfs.pnl.gov\projects\DMS\jre8\bin\java.exe"
+				End If
 				msgfdbJarFilePath = mMSGFDbProgLocHPC
 			End If
 
@@ -411,6 +416,35 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	'Public Shared Function GetHPCReleaseDelayTask() As HPC_Connector.ParametersTask
+
+	'	Dim oNodeReleaseDelay As New HPC_Connector.ParametersTask("Wait")
+	'	oNodeReleaseDelay.TaskTypeOption = HPC_Connector.HPCTaskType.NodeRelease
+	'	Const waitTimeSeconds As Integer = 35
+	'	oNodeReleaseDelay.CommandLine = "ping 1.1.1.1 -n 1 -w " & waitTimeSeconds * 1000 & " > nul"
+
+	'	Return oNodeReleaseDelay
+
+	'End Function
+
+	Public Shared Function MakeHPCBatchFile(ByVal workDirPath As String, ByVal batchFileName As String, ByVal commandToRun As String) As String
+
+		Const waitTimeSeconds As Integer = 35
+
+		Dim batchFilePath = Path.Combine(workDirPath, batchFileName)
+
+		Using swBatchFile = New StreamWriter(New FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+			swBatchFile.WriteLine("@echo off")
+			swBatchFile.WriteLine(commandToRun)
+			'swBatchFile.WriteLine("ping 1.1.1.1 -n 1 -w " & waitTimeSeconds * 1000 & " > nul")
+			swBatchFile.WriteLine("\\picfs.pnl.gov\projects\DMS\DMS_Programs\Utilities\sleep " & waitTimeSeconds)
+			swBatchFile.WriteLine("echo Success")
+		End Using
+
+		Return batchFilePath
+
+	End Function
+
 	Protected Function StartMSGFPlusHPC(
 	  ByVal javaExePath As String,
 	  ByVal msgfdbJarFilePath As String,
@@ -441,13 +475,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		hpcJobInfo.JobParameters.TemplateName = "DMS"		 ' If using 32 cores, could use Template "Single"
 		hpcJobInfo.JobParameters.ProjectName = "DMS"
 
-		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
+		' April 2014 note: If using picfs.pnl.gov  then we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
+		' Each node has two sockets
 
-		' Since we are requesting a socket, there is no need to set the number of cores
+		'hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
+		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node
+		hpcJobInfo.JobParameters.isExclusive = True
+
+		' If requesting a socket or a node, there is no need to set the number of cores
 		' hpcJobInfo.JobParameters.MinNumberOfCores = udtHPCOptions.MinimumCores
 		' hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
 
-		hpcJobInfo.TaskParameters.CommandLine = javaExePath & " " & CmdStr
+		' Make a batch file that will run the java program, then issue a Ping command with a delay, which will allow the file system to release the file handles
+		Dim batchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_MSGFPlus_Task.bat", javaExePath & " " & CmdStr)
+		m_jobParams.AddResultFileToSkip(batchFilePath)
+
+		hpcJobInfo.TaskParameters.CommandLine = batchFilePath
 		hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
 		hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
 		hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
@@ -468,7 +511,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(ResultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
 
-			mzidToTSVTask.CommandLine = javaExePath & " " & cmdStrConvertToTSV
+			Dim tsvBatchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_TSV_Task.bat", javaExePath & " " & cmdStrConvertToTSV)
+			m_jobParams.AddResultFileToSkip(tsvBatchFilePath)
+
+			mzidToTSVTask.CommandLine = tsvBatchFilePath
 			mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath
 			mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MzIDToTsv_ConsoleOutput.txt")
 			mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
@@ -525,7 +571,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			mHPCMonitorInitTimer.Enabled = True
 
 			blnSuccess = mComputeCluster.MonitorJob(hpcJob)
+
 			If Not blnSuccess Then
+
+				'ExamineHPCTasks(hpcJob)
+
 				m_message = "HPC Job Monitor returned false"
 				If Not String.IsNullOrWhiteSpace(mComputeCluster.ErrorMessage) Then
 					m_message &= ": " & mComputeCluster.ErrorMessage
@@ -548,6 +598,32 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Return blnSuccess
 
 	End Function
+
+	Private Sub ExamineHPCTasks(ByVal hpcJob As ISchedulerJob)
+
+		Try
+			Dim properties As Microsoft.Hpc.Scheduler.IPropertyIdCollection = Nothing
+			Dim filter As Microsoft.Hpc.Scheduler.IFilterCollection = Nothing
+			Dim sort As Microsoft.Hpc.Scheduler.ISortCollection = Nothing
+			Dim expandParametric As Boolean
+
+			Dim taskIterator = hpcJob.OpenTaskEnumerator(properties, filter, sort, expandParametric)
+			Dim oTaskEnum = taskIterator.GetEnumerator()
+
+			' Step through the tasks to examine them
+			While oTaskEnum.MoveNext
+				Dim oPropertyEnum = oTaskEnum.Current.GetEnumerator()
+				While oPropertyEnum.MoveNext
+					Console.WriteLine(oPropertyEnum.Current.PropName.ToString() & ": " & oPropertyEnum.Current.Value.ToString())
+				End While
+			End While
+
+		Catch ex As Exception
+			Console.WriteLine("Error examining job tasks: " & ex.Message)
+		End Try
+	
+		
+	End Sub
 
 	Protected Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal strSearchEngineName As String, ByVal CmdStr As String) As Boolean
 
@@ -583,20 +659,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <remarks></remarks>
 	Protected Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal JavaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
 
-		Dim strTSVFilePath As String
+		Dim blnConversionRequired = True
+
+		Dim strTSVFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX)
 
 		If udtHPCOptions.UsingHPC Then
-			' This file should have already been created by the HPC job, the copied locally via SynchronizeFolders
-
-			strTSVFilePath = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX)
+			' The TSV file should have already been created by the HPC job, then copied locally via SynchronizeFolders
 
 			Dim fiTSVFile = New FileInfo(strTSVFilePath)
-			If Not fiTSVFile.Exists Then
-				m_message = "MSGF+ TSV file was not created by HPC; missing " & fiTSVFile.Name
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return String.Empty
+			If fiTSVFile.Exists Then
+				blnConversionRequired = False
+			Else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF+ TSV file was not created by HPC; missing " & fiTSVFile.Name)
 			End If
-		Else
+		End If
+
+		If blnConversionRequired Then
 			strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, mMSGFDbProgLoc, m_Dataset, strMZIDFileName)
 
 			If String.IsNullOrEmpty(strTSVFilePath) Then
@@ -863,7 +941,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		If Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
 
 			' Convert the .mzid file to a .tsv file 
-			' If running on the HPC this will already have happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
+			' If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
 
 			UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
 			strMSGFDBResultsFileName = ConvertMZIDToTSV(ResultsFileName, JavaProgLoc, udtHPCOptions)

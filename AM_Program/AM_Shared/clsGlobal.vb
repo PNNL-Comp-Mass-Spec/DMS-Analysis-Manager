@@ -1073,6 +1073,32 @@ Public Class clsGlobal
 
 	End Function
 
+	Public Shared Function UpdateHostName(ByVal sharePath As String, ByVal newHostName As String) As String
+
+		If Not newHostName.StartsWith("\\") Then
+			Throw New NotSupportedException("\\ not found at the start of newHostName (" & newHostName & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
+		End If
+
+		If Not newHostName.EndsWith("\") Then
+			newHostName &= "\"
+		End If
+
+		If Not sharePath.StartsWith("\\") Then
+			Throw New NotSupportedException("\\ not found at the start of sharePath (" & sharePath & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
+		End If
+
+		Dim slashLoc = sharePath.IndexOf("\", 3, System.StringComparison.Ordinal)
+
+		If slashLoc < 0 Then
+			Throw New Exception("Backslash not found after the 3rd character in SharePath, " & sharePath)
+		End If
+
+		Dim sharePathNew = newHostName & sharePath.Substring(slashLoc + 1)
+
+		Return sharePathNew
+
+	End Function
+
 	''' <summary>
 	''' Returns True if the computer name is Pub-1000 or higher
 	''' </summary>

@@ -46,7 +46,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	Protected Function CopyExistingIndexFilesFromRemote(
 	  ByVal fiFastaFile As FileInfo,
-	  byval blnUsingLegacyFasta as boolean,
+	  ByVal blnUsingLegacyFasta As Boolean,
 	  ByVal strRemoteIndexFolderPath As String,
 	  ByVal blnCheckForLockFile As Boolean,
 	  ByVal intDebugLevel As Integer,
@@ -68,10 +68,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			If blnCheckForLockFile Then
 				' Look for an existing lock file
-                Dim fiRemoteLockFile1 As FileInfo
-                fiRemoteLockFile1 = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
+				Dim fiRemoteLockFile1 As FileInfo
+				fiRemoteLockFile1 = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX & ".lock"))
 
-                WaitForExistingLockfile(fiRemoteLockFile1, intDebugLevel, sngMaxWaitTimeHours)
+				WaitForExistingLockfile(fiRemoteLockFile1, intDebugLevel, sngMaxWaitTimeHours)
 
 			End If
 
@@ -161,51 +161,51 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-            Dim fiRemoteLockFile2 As FileInfo = Nothing
-            Dim blnRemoteLockFileCreated As Boolean
+			Dim fiRemoteLockFile2 As FileInfo = Nothing
+			Dim blnRemoteLockFileCreated As Boolean
 
-            blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, fiFastaFile.Directory.FullName, fiRemoteLockFile2, intDebugLevel, sngMaxWaitTimeHours)
+			blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, fiFastaFile.Directory.FullName, fiRemoteLockFile2, intDebugLevel, sngMaxWaitTimeHours)
 
-            If blnRemoteLockFileCreated Then
-                ' Lock file successfully created
-                ' If this manager ended up waiting while another manager was indexing the files or while another manager was copying files locally, 
-                ' then we should once again check to see if the required files exist
+			If blnRemoteLockFileCreated Then
+				' Lock file successfully created
+				' If this manager ended up waiting while another manager was indexing the files or while another manager was copying files locally, 
+				' then we should once again check to see if the required files exist
 
-                ' Now confirm that each file was successfully copied locally
-                blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
-                If blnSuccess Then
-                    ' Files now exist
-                    DeleteLockFile(fiRemoteLockFile2)
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-                End If
+				' Now confirm that each file was successfully copied locally
+				blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
+				If blnSuccess Then
+					' Files now exist
+					DeleteLockFile(fiRemoteLockFile2)
+					Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+				End If
 
-            End If
+			End If
 
-            For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+			For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
 
-                Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
+				Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
 
-                Dim strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
-                oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
+				Dim strTargetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name)
+				oFileTools.CopyFileUsingLocks(fiSourceFile, strTargetFilePath, strManager, True)
 
-                filesCopied += 1
+				filesCopied += 1
 
-                If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
-                    dtLastStatusUpdate = DateTime.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
-                End If
+				If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
+					dtLastStatusUpdate = DateTime.UtcNow
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
+				End If
 
-            Next
+			Next
 
-            ' Now confirm that each file was successfully copied locally
-            blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
+			' Now confirm that each file was successfully copied locally
+			blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
 
-            DeleteLockFile(fiRemoteLockFile2)
+			DeleteLockFile(fiRemoteLockFile2)
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyExistingIndexFilesFromRemote; " & ex.Message)
-            blnSuccess = False
-        End Try
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyExistingIndexFilesFromRemote; " & ex.Message)
+			blnSuccess = False
+		End Try
 
 		If blnSuccess Then
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -374,7 +374,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		Dim fiLockFile As FileInfo
 		Dim dbSarrayFilename As String
 
-		Const sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
+		Dim sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
 
 		Dim blnMSGFPlus As Boolean
 		Dim strCurrentTask As String = "Initializing"
@@ -393,7 +393,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			blnMSGFPlus = IsMSGFPlus(MSGFDBProgLoc)
 			If Not blnMSGFPlus Then
 				' Running legacy MS-GFDB
-				Throw New exception("Legacy MS-GFDB is no longer supported")
+				Throw New Exception("Legacy MS-GFDB is no longer supported")
 			End If
 
 			' Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
@@ -406,6 +406,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			fiLockFile = New FileInfo(Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & "_csarr.lock"))
 			dbSarrayFilename = Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase & ".csarr")
+
+			If udtHPCOptions.UsingHPC Then
+				' Increase the maximum wait time to 24 hours; useful in case another manager has created a BuildSA job, and that job is stuck in the queue
+				sngMaxWaitTimeHours = 24
+			End If
 
 			' Check to see if another Analysis Manager is already creating the indexed DB files
 			strCurrentTask = "Looking for lock file " & fiLockFile.FullName
@@ -495,26 +500,26 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... missing files: " & strMissingFiles)
 						End If
 					End If
-                ElseIf blnUsingLegacyFasta Then
+				ElseIf blnUsingLegacyFasta Then
 
-                    ' Make sure all of the index files have a file modification date newer than the fasta file
-                    ' We only do this for legacy fasta files, since their file modification date will be the same on all pubs
-                    ' We can't do this for programatically generated fasta files (that use protein collections) 
-                    '   since their modification date will be the time that the file was created
+					' Make sure all of the index files have a file modification date newer than the fasta file
+					' We only do this for legacy fasta files, since their file modification date will be the same on all pubs
+					' We can't do this for programatically generated fasta files (that use protein collections) 
+					'   since their modification date will be the time that the file was created
 
-                    blnReindexingRequired = False
+					blnReindexingRequired = False
 
-                    For Each fiIndexFile In lstExistingFiles
-                        If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
-                              fiIndexFile.FullName & " modified " &
-                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
-                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+					For Each fiIndexFile In lstExistingFiles
+						If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1) Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
+							  fiIndexFile.FullName & " modified " &
+							  fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
+							  fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
 
-                            blnReindexingRequired = True
-                            Exit For
-                        End If
-                    Next
+							blnReindexingRequired = True
+							Exit For
+						End If
+					Next
 				End If
 
 			End If
@@ -749,13 +754,23 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
 				buildSAJobInfo.JobParameters.TemplateName = "DMS"		 ' If using 32 cores, could use Template "Single"
 				buildSAJobInfo.JobParameters.ProjectName = "DMS"
-				buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 
-				' Since we are requesting a socket, there is no need to set the number of cores
+				' April 2014 note: If using picfs.pnl.gov then we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
+				' Furthermore, we must set ".isExclusive" to True
+				' Note that each node has two sockets
+
+				'buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
+				buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node
+				buildSAJobInfo.JobParameters.isExclusive = True
+
+				' If requesting a socket or a node, there is no need to set the number of cores
 				' buildSAJobInfo.JobParameters.MinNumberOfCores = 0
 				' buildSAJobInfo.JobParameters.MaxNumberOfCores = 0
 
-				buildSAJobInfo.TaskParameters.CommandLine = JavaProgLoc & " " & CmdStr
+				' Make a batch file that will run the java program, then issue a Ping command with a delay, which will allow the file system to release the file handles
+				Dim batchFilePath = clsAnalysisToolRunnerMSGFDB.MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_SuffixAray_Task.bat", JavaProgLoc & " " & CmdStr)
+				
+				buildSAJobInfo.TaskParameters.CommandLine = batchFilePath
 				buildSAJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
 				buildSAJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MSGFDB_BuildSA_ConsoleOutput.txt")
 				buildSAJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
@@ -789,6 +804,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage)
 				End If
 
+				Try
+					File.Delete(batchFilePath)
+				Catch ex As Exception
+					' Ignore errors here
+				End Try
+
 			Else
 
 				Dim objBuildSA As clsRunDosProgram
@@ -808,27 +829,27 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 			End If
 
-				If Not success Then
-					mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
-					If udtHPCOptions.UsingHPC Then
-						mErrorMessage &= " using HPC"
-					End If
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
-					DeleteLockFile(fiLockFile)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				Else
-					If intDebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created suffix array files for " & fiFastaFile.Name)
-					End If
+			If Not success Then
+				mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
+				If udtHPCOptions.UsingHPC Then
+					mErrorMessage &= " using HPC"
 				End If
-
-				If intDebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & fiLockFile.FullName)
-				End If
-
-				' Delete the lock file
-				strCurrentTask = "Delete the lock file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
 				DeleteLockFile(fiLockFile)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				If intDebugLevel >= 1 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created suffix array files for " & fiFastaFile.Name)
+				End If
+			End If
+
+			If intDebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & fiLockFile.FullName)
+			End If
+
+			' Delete the lock file
+			strCurrentTask = "Delete the lock file"
+			DeleteLockFile(fiLockFile)
 
 		Catch ex As Exception
 			mErrorMessage = "Exception in .CreateSuffixArrayFilesWork"
@@ -953,30 +974,30 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 	End Function
 
-    ''' <summary>
-    ''' Constructs a list of suffix array files that should exist
-    ''' Looks for each of those files
-    ''' </summary>
-    ''' <param name="blnFastaFileIsDecoy"></param>
-    ''' <param name="blnMSGFPlus"></param>
-    ''' <param name="strOutputNameBase"></param>
-    ''' <param name="strFolderPathToSearch"></param>
-    ''' <param name="lstFilesToFind">Output param: list of files that should exist</param>
-    ''' <returns>A list of the files that currently exist</returns>
-    ''' <remarks></remarks>
-    Protected Function FindExistingSuffixArrayFiles(
-      ByVal blnFastaFileIsDecoy As Boolean,
-      ByVal blnMSGFPlus As Boolean,
-      ByVal strOutputNameBase As String,
-      ByVal strFolderPathToSearch As String,
-      ByRef lstFilesToFind As List(Of String)) As List(Of FileInfo)
+	''' <summary>
+	''' Constructs a list of suffix array files that should exist
+	''' Looks for each of those files
+	''' </summary>
+	''' <param name="blnFastaFileIsDecoy"></param>
+	''' <param name="blnMSGFPlus"></param>
+	''' <param name="strOutputNameBase"></param>
+	''' <param name="strFolderPathToSearch"></param>
+	''' <param name="lstFilesToFind">Output param: list of files that should exist</param>
+	''' <returns>A list of the files that currently exist</returns>
+	''' <remarks></remarks>
+	Protected Function FindExistingSuffixArrayFiles(
+	  ByVal blnFastaFileIsDecoy As Boolean,
+	  ByVal blnMSGFPlus As Boolean,
+	  ByVal strOutputNameBase As String,
+	  ByVal strFolderPathToSearch As String,
+	  ByRef lstFilesToFind As List(Of String)) As List(Of FileInfo)
 
-        Dim strExistingFiles As String = String.Empty
-        Dim strMissingFiles As String = String.Empty
+		Dim strExistingFiles As String = String.Empty
+		Dim strMissingFiles As String = String.Empty
 
-        Return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind, strExistingFiles, strMissingFiles)
+		Return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind, strExistingFiles, strMissingFiles)
 
-    End Function
+	End Function
 
 	''' <summary>
 	''' Constructs a list of suffix array files that should exist

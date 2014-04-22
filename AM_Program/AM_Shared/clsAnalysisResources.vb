@@ -2747,7 +2747,6 @@ Public MustInherit Class clsAnalysisResources
 	Public Shared Function GetHPCOptions(ByVal jobParams As IJobParams, ByVal managerName As String) As udtHPCOptionsType
 
 		Dim stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool")
-		Dim bMSGFPlusHPC = False
 
 		Dim udtHPCOptions = New udtHPCOptionsType
 
@@ -2755,29 +2754,40 @@ Public MustInherit Class clsAnalysisResources
 		If stepTool.ToLower() = "MSGFPlus_HPC".ToLower() AndAlso String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode) Then
 			' Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
 			udtHPCOptions.HeadNode = "deception2.pnnl.gov"
-			bMSGFPlusHPC = True
+			udtHPCOptions.UsingHPC = True
+		Else
+			udtHPCOptions.UsingHPC = Not String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode)
 		End If
-
-		udtHPCOptions.UsingHPC = Not String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode)
 
 		udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket")
 		' Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
 
-		' Note: winhpcfs is a Windows File System wrapper to \\picfs (which is an Isilon FS)
-		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\winhpcfs\projects\DMS")
+		' Share paths used:
+		' \\picfs\projects\DMS
+		' \\winhpcfs\projects\DMS           (this is a Windows File System wrapper to \\picfs, which is an Isilon FS)
+		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs.pnl.gov\projects\DMS")
 
-		If udtHPCOptions.SharePath.StartsWith("\\picfs\", StringComparison.CurrentCultureIgnoreCase) Then
-			udtHPCOptions.SharePath = "\\winhpcfs\" & udtHPCOptions.SharePath.Substring("\\picfs\".Length)
+		' Auto-switched the share path to \\winhpcfs starting April 15, 2014
+		' Stopped doing this April 21, 2014, because the drive was low on space
+		'
+		'If udtHPCOptions.SharePath.StartsWith("\\picfs", StringComparison.CurrentCultureIgnoreCase) Then
+		'	' Auto switch the share path
+		'	udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\winhpcfs\")
+		'End If
+
+		If udtHPCOptions.SharePath.StartsWith("\\winhpcfs", StringComparison.CurrentCultureIgnoreCase) Then
+			' Auto switch the share path
+			udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\picfs.pnl.gov\")
 		End If
 
-		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("MinimumMemoryMB", 0)
-		udtHPCOptions.MinimumCores = jobParams.GetJobParameter("MinimumCores", 0)
+		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("HPCMinMemoryMB", 0)
+		udtHPCOptions.MinimumCores = jobParams.GetJobParameter("HPCMinCores", 0)
 
-		If bMSGFPlusHPC AndAlso udtHPCOptions.MinimumMemoryMB <= 0 Then
+		If udtHPCOptions.UsingHPC AndAlso udtHPCOptions.MinimumMemoryMB <= 0 Then
 			udtHPCOptions.MinimumMemoryMB = 28000
 		End If
 
-		If bMSGFPlusHPC AndAlso udtHPCOptions.MinimumCores <= 0 Then
+		If udtHPCOptions.UsingHPC AndAlso udtHPCOptions.MinimumCores <= 0 Then
 			udtHPCOptions.MinimumCores = 16
 		End If
 
@@ -2791,13 +2801,15 @@ Public MustInherit Class clsAnalysisResources
 			End If
 		Next
 
-		' Example WorkDirPath: \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+		' Example WorkDirPath: 
+		' \\picfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+		' \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
 		udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean)
 
 		Return udtHPCOptions
 
 	End Function
-
+	
 	''' <summary>
 	''' Get the name of the split fasta file to use for this job
 	''' </summary>

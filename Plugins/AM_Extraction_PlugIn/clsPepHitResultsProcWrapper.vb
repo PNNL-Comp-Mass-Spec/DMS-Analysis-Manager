@@ -162,8 +162,8 @@ Public Class clsPepHitResultsProcWrapper
 				.ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
 			End With
 
-			' Abort PHRP if it runs for over 360 minutes (this generally indicates that it's stuck)
-			Const intMaxRuntimeSeconds As Integer = 360 * 60
+			' Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
+			Const intMaxRuntimeSeconds As Integer = 720 * 60
 			blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True, intMaxRuntimeSeconds)
 
 			If mCmdRunnerErrors.Count > 0 Then
