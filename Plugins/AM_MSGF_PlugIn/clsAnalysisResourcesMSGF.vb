@@ -80,10 +80,11 @@ Public Class clsAnalysisResourcesMSGF
 		' Make sure the ResultType is valid
 		eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
 
-		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
 			blnSuccess = True
 		Else
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " & ResultType)
@@ -136,7 +137,7 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		If Not blnOnlyCopyFHTandSYNfiles Then
-			' Get the Sequest, X!Tandem, Inspect, or MSGF-DB parameter file
+			' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa parameter file
 			FileToGet = m_jobParams.GetParam("ParmFileName")
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
@@ -154,7 +155,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _syn.txt file
+		' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa PHRP _syn.txt file
 		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -165,7 +166,7 @@ Public Class clsAnalysisResourcesMSGF
 			strSynFilePath = Path.Combine(m_WorkingDir, FileToGet)
 		End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _fht.txt file
+		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _fht.txt file
 		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -175,7 +176,7 @@ Public Class clsAnalysisResourcesMSGF
 			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _ResultToSeqMap.txt file
+		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _ResultToSeqMap.txt file
 		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -185,8 +186,18 @@ Public Class clsAnalysisResourcesMSGF
 			m_jobParams.AddResultFileToSkip(FileToGet)
 		End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF-DB PHRP _SeqToProteinMap.txt file
+		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _SeqToProteinMap.txt file
 		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
+		If Not String.IsNullOrEmpty(FileToGet) Then
+			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+				'Errors were reported in function call, so just return
+				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+			End If
+			m_jobParams.AddResultFileToSkip(FileToGet)
+		End If
+
+		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _PepToProtMapMTS.txt file
+		FileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 				'Errors were reported in function call, so just return
@@ -328,9 +339,9 @@ Public Class clsAnalysisResourcesMSGF
 		End If
 
 		For Each entry In m_PendingFileRenames
-			Dim sourceFile As New FileInfo(IO.Path.Combine(m_WorkingDir, entry.Key))
+			Dim sourceFile As New FileInfo(Path.Combine(m_WorkingDir, entry.Key))
 			If sourceFile.Exists Then
-				sourceFile.MoveTo(IO.Path.Combine(m_WorkingDir, entry.Value))
+				sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value))
 			End If
 		Next
 
@@ -343,7 +354,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		Try
 			strFilePath = Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
 				swOutfile.WriteLine("Result_ID" & ControlChars.Tab & "Unique_Seq_ID")
 			End Using
 		Catch ex As Exception
@@ -360,7 +371,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		Try
 			strFilePath = Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, IO.FileMode.CreateNew, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
 				swOutfile.WriteLine("Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" & ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" & ControlChars.Tab & "Protein_Intensity_Log(I)")
 			End Using
 		Catch ex As Exception

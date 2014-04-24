@@ -10,6 +10,8 @@
 
 Option Strict On
 
+Imports System.IO
+
 Public Class clsMSGFInputCreatorMSGFDB
 	Inherits clsMSGFInputCreator
 
@@ -60,11 +62,10 @@ Public Class clsMSGFInputCreatorMSGFDB
 				objReader.SkipDuplicatePSMs = False
 
 				' Define the path to write the first-hits MSGF results to
-				strMSGFFilePath = System.IO.Path.Combine(mWorkDir, _
-				 System.IO.Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+				strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
 
 				' Create the output file
-				Using swMSGFFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+				Using swMSGFFile As StreamWriter = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 					' Write out the headers to swMSGFFHTFile
 					WriteMSGFResultsHeaders(swMSGFFile)
@@ -91,7 +92,7 @@ Public Class clsMSGFInputCreatorMSGFDB
 			End Using
 
 		Catch ex As Exception
-			ReportError("Error creating the MSGF file for MSGFDB file " & System.IO.Path.GetFileName(strSourceFilePath) & ": " & ex.Message)
+			ReportError("Error creating the MSGF file for MSGFDB file " & Path.GetFileName(strSourceFilePath) & ": " & ex.Message)
 			Return False
 		End Try
 

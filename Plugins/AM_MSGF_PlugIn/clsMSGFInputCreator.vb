@@ -13,6 +13,8 @@
 
 Option Strict On
 
+Imports System.IO
+
 Public MustInherit Class clsMSGFInputCreator
 
 #Region "Constants"
@@ -25,7 +27,7 @@ Public MustInherit Class clsMSGFInputCreator
 	Protected mWorkDir As String
 	Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
 
-	Protected mSkippedLineInfo As System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
+	Protected mSkippedLineInfo As SortedDictionary(Of Integer, List(Of String))
 
 	Protected mDoNotFilterPeptides As Boolean
 	Protected mMGFInstrumentData As Boolean
@@ -35,16 +37,16 @@ Public MustInherit Class clsMSGFInputCreator
 	' It will contain an entry for every line written to the MSGF input file
 	' It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
 	' Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
-	Protected mMSGFCachedResults As System.Collections.Generic.SortedDictionary(Of String, String)
+	Protected mMSGFCachedResults As SortedDictionary(Of String, String)
 
 	' This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
 	' It is only used if MGFInstrumentData=True
-	Protected mScanAndChargeToMGFIndex As System.Collections.Generic.SortedDictionary(Of String, Integer)
+	Protected mScanAndChargeToMGFIndex As SortedDictionary(Of String, Integer)
 
 	' This dictionary is the inverse of mScanAndChargeToMGFIndex
 	' mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
 	' It is only used if MGFInstrumentData=True
-	Protected mMGFIndexToScan As System.Collections.Generic.SortedDictionary(Of Integer, Integer)
+	Protected mMGFIndexToScan As SortedDictionary(Of Integer, Integer)
 
 	Protected mErrorMessage As String = String.Empty
 
@@ -61,7 +63,7 @@ Public MustInherit Class clsMSGFInputCreator
 	' We declare it here as a classwide variable so that we can attach the event handlers
 	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
 
-	Protected mLogFile As System.IO.StreamWriter
+	Protected mLogFile As StreamWriter
 
 #End Region
 
@@ -143,9 +145,9 @@ Public MustInherit Class clsMSGFInputCreator
 
 		mErrorMessage = String.Empty
 
-		mSkippedLineInfo = New System.Collections.Generic.SortedDictionary(Of Integer, System.Collections.Generic.List(Of String))
+		mSkippedLineInfo = New SortedDictionary(Of Integer, List(Of String))
 
-		mMSGFCachedResults = New System.Collections.Generic.SortedDictionary(Of String, String)
+		mMSGFCachedResults = New SortedDictionary(Of String, String)
 
 		' Initialize the file paths
 		InitializeFilePaths()
@@ -190,13 +192,13 @@ Public MustInherit Class clsMSGFInputCreator
 			mLogFile = Nothing
 
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			System.Threading.Thread.Sleep(100)
+			Threading.Thread.Sleep(100)
 		End If
 	End Sub
 
 	Protected Function CombineIfValidFile(strFolder As String, strFile As String) As String
 		If Not String.IsNullOrWhiteSpace(strFile) Then
-			Return System.IO.Path.Combine(strFolder, strFile)
+			Return Path.Combine(strFolder, strFile)
 		Else
 			Return String.Empty
 		End If
@@ -241,8 +243,8 @@ Public MustInherit Class clsMSGFInputCreator
 				Return False
 			End If
 
-			mScanAndChargeToMGFIndex = New System.Collections.Generic.SortedDictionary(Of String, Integer)
-			mMGFIndexToScan = New System.Collections.Generic.SortedDictionary(Of Integer, Integer)
+			mScanAndChargeToMGFIndex = New SortedDictionary(Of String, Integer)
+			mMGFIndexToScan = New SortedDictionary(Of Integer, Integer)
 
 			udtSpectrumHeaderInfo = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
@@ -267,7 +269,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 				End If
 			Loop While blnSpectrumFound
-			
+
 		Catch ex As Exception
 			ReportError("Error indexing the MGF file: " & ex.Message)
 			Return False
@@ -316,11 +318,11 @@ Public MustInherit Class clsMSGFInputCreator
 			End If
 
 			' Define the path to write the first-hits MSGF results to
-			strMSGFFirstHitsResults = System.IO.Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) & MSGF_RESULT_FILENAME_SUFFIX
-			strMSGFFirstHitsResults = System.IO.Path.Combine(mWorkDir, strMSGFFirstHitsResults)
+			strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) & MSGF_RESULT_FILENAME_SUFFIX
+			strMSGFFirstHitsResults = Path.Combine(mWorkDir, strMSGFFirstHitsResults)
 
 			' Create the output file
-			Using swMSGFFHTFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFFirstHitsResults, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			Using swMSGFFHTFile As StreamWriter = New StreamWriter(New FileStream(strMSGFFirstHitsResults, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 				' Write out the headers to swMSGFFHTFile
 				WriteMSGFResultsHeaders(swMSGFFHTFile)
@@ -398,7 +400,7 @@ Public MustInherit Class clsMSGFInputCreator
 	''' <remarks></remarks>
 	Public Function CreateMSGFInputFileUsingPHRPResultFiles() As Boolean
 
-		Dim strSpectrumFileName As String = String.Empty
+		Dim strSpectrumFileName As String
 		Dim blnSuccess As Boolean = False
 
 		Try
@@ -416,7 +418,7 @@ Public MustInherit Class clsMSGFInputCreator
 				strSpectrumFileName = mDatasetName & ".mgf"
 
 				' Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
-				blnSuccess = CreateMGFScanToIndexMap(System.IO.Path.Combine(mWorkDir, strSpectrumFileName))
+				blnSuccess = CreateMGFScanToIndexMap(Path.Combine(mWorkDir, strSpectrumFileName))
 				If Not blnSuccess Then
 					Return False
 				End If
@@ -429,7 +431,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 
 			' Create the MSGF Input file that we will write data to
-			Using swMSGFInputFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mMSGFInputFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			Using swMSGFInputFile As StreamWriter = New StreamWriter(New FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 				' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source
 				' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
@@ -450,7 +452,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 				mMSGFCachedResults.Clear()
 
-				If Not String.IsNullOrEmpty(mPHRPSynopsisFilePath) AndAlso System.IO.File.Exists(mPHRPSynopsisFilePath) Then
+				If Not String.IsNullOrEmpty(mPHRPSynopsisFilePath) AndAlso File.Exists(mPHRPSynopsisFilePath) Then
 					' Read the synopsis file data
 					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False)
 					mPHRPReader.EchoMessagesToConsole = True
@@ -480,7 +482,7 @@ Public MustInherit Class clsMSGFInputCreator
 					blnSuccess = True
 				End If
 
-				If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) AndAlso System.IO.File.Exists(mPHRPFirstHitsFilePath) Then
+				If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) AndAlso File.Exists(mPHRPFirstHitsFilePath) Then
 					' Now read the first-hits file data
 
 					mPHRPReader = New PHRPReader.clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False)
@@ -513,14 +515,14 @@ Public MustInherit Class clsMSGFInputCreator
 
 	End Function
 
-	Public Function GetSkippedInfoByResultId(ByVal intResultID As Integer) As System.Collections.Generic.List(Of String)
+	Public Function GetSkippedInfoByResultId(ByVal intResultID As Integer) As List(Of String)
 
-		Dim objSkipList As System.Collections.Generic.List(Of String) = Nothing
+		Dim objSkipList As List(Of String) = Nothing
 
 		If mSkippedLineInfo.TryGetValue(intResultID, objSkipList) Then
 			Return objSkipList
 		Else
-			Return New System.Collections.Generic.List(Of String)()
+			Return New List(Of String)()
 		End If
 
 	End Function
@@ -532,13 +534,13 @@ Public MustInherit Class clsMSGFInputCreator
 				Dim strErrorLogFilePath As String
 				Dim blnWriteHeader As Boolean = True
 
-				strErrorLogFilePath = System.IO.Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt")
+				strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt")
 
-				If System.IO.File.Exists(strErrorLogFilePath) Then
+				If File.Exists(strErrorLogFilePath) Then
 					blnWriteHeader = False
 				End If
 
-				mLogFile = New System.IO.StreamWriter(New System.IO.FileStream(strErrorLogFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.ReadWrite))
+				mLogFile = New StreamWriter(New FileStream(strErrorLogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
 				mLogFile.AutoFlush = True
 
 				If blnWriteHeader Then
@@ -546,7 +548,7 @@ Public MustInherit Class clsMSGFInputCreator
 				End If
 			End If
 
-			mLogFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
+			mLogFile.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
 
 		Catch ex As Exception
 			RaiseEvent ErrorEvent("Error writing to MSGFInputCreator log file: " & ex.Message)
@@ -582,7 +584,7 @@ Public MustInherit Class clsMSGFInputCreator
 	''' <param name="blnParsingSynopsisFile"></param>
 	''' <remarks></remarks>
 	Private Sub ReadAndStorePHRPData(ByRef objReader As PHRPReader.clsPHRPReader, _
-	  ByRef swMSGFInputFile As System.IO.StreamWriter, _
+	  ByRef swMSGFInputFile As StreamWriter, _
 	  ByVal strSpectrumFileName As String, _
 	  ByVal blnParsingSynopsisFile As Boolean)
 
@@ -602,7 +604,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 		Dim blnPassesFilters As Boolean
 
-		Dim objSkipList As System.Collections.Generic.List(Of String) = Nothing
+		Dim objSkipList As List(Of String) = Nothing
 
 		If blnParsingSynopsisFile Then
 			strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN
@@ -646,7 +648,7 @@ Public MustInherit Class clsMSGFInputCreator
 						If mSkippedLineInfo.TryGetValue(intResultIDPrevious, objSkipList) Then
 							objSkipList.Add(objPSM.ResultID & ControlChars.Tab & objPSM.ProteinFirst)
 						Else
-							objSkipList = New System.Collections.Generic.List(Of String)
+							objSkipList = New List(Of String)
 							objSkipList.Add(objPSM.ResultID & ControlChars.Tab & objPSM.ProteinFirst)
 							mSkippedLineInfo.Add(intResultIDPrevious, objSkipList)
 						End If
@@ -742,11 +744,11 @@ Public MustInherit Class clsMSGFInputCreator
 	''' </summary>
 	''' <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
 	Protected Sub UpdateMSGFInputOutputFilePaths()
-		mMSGFInputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
-		mMSGFResultsFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+		mMSGFInputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
+		mMSGFResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
 	End Sub
 
-	Public Sub WriteMSGFResultsHeaders(ByRef swOutFile As System.IO.StreamWriter)
+	Public Sub WriteMSGFResultsHeaders(ByRef swOutFile As StreamWriter)
 
 		swOutFile.WriteLine("Result_ID" & ControlChars.Tab & _
 		  "Scan" & ControlChars.Tab & _

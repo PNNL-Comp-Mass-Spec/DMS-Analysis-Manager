@@ -11,6 +11,7 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports AnalysisManagerMsXmlGenPlugIn
 Imports PHRPReader
+Imports System.IO
 
 Public Class clsMSGFRunner
 	Inherits clsAnalysisToolRunnerBase
@@ -176,9 +177,9 @@ Public Class clsMSGFRunner
 
 			Else
 
-				' Parse the Sequest, X!Tandem, or Inspect parameter file to determine if ETD mode was used
+				' Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
 				Dim strSearchToolParamFilePath As String
-				strSearchToolParamFilePath = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
+				strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
 
 				blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath)
 				If Not blnSuccess Then
@@ -240,7 +241,7 @@ Public Class clsMSGFRunner
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
 						End If
 
-						If RetrievePreGeneratedDataFile(System.IO.Path.GetFileName(mMSGFResultsFilePath)) Then
+						If RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)) Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file successfully copied to the work directory")
 							blnSuccess = True
 						Else
@@ -262,7 +263,7 @@ Public Class clsMSGFRunner
 						' MSGF successfully completed
 						If Not mKeepMSGFInputFiles Then
 							' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
-							m_jobParams.AddResultFileToSkip(System.IO.Path.GetFileName(mMSGFInputFilePath))
+							m_jobParams.AddResultFileToSkip(Path.GetFileName(mMSGFInputFilePath))
 						End If
 
 						m_progress = PROGRESS_PCT_MSGF_COMPLETE
@@ -277,7 +278,7 @@ Public Class clsMSGFRunner
 					' If the Instrument Data was a .MGF file, then we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 
 					' Sleep for 1 second to give the MSGF results file a chance to finalize
-					System.Threading.Thread.Sleep(1000)
+					Threading.Thread.Sleep(1000)
 
 					blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData)
 
@@ -295,7 +296,7 @@ Public Class clsMSGFRunner
 			End If
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 			If blnProcessingError Then
 				' Something went wrong
@@ -310,7 +311,7 @@ Public Class clsMSGFRunner
 			End If
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		   '2 second delay
+			Threading.Thread.Sleep(2000)		   '2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			Result = MakeResultsFolder()
@@ -330,7 +331,7 @@ Public Class clsMSGFRunner
 			If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
 				' Try to save whatever files were moved into the results folder
 				Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-				objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+				objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -346,7 +347,7 @@ Public Class clsMSGFRunner
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Msg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
@@ -363,11 +364,11 @@ Public Class clsMSGFRunner
 	End Function
 
 	Protected Function AddFileNameSuffix(ByVal strFilePath As String, ByVal strSuffix As String) As String
-		Dim fiFile As System.IO.FileInfo
+		Dim fiFile As FileInfo
 		Dim strFilePathNew As String
 
-		fiFile = New System.IO.FileInfo(strFilePath)
-		strFilePathNew = System.IO.Path.Combine(fiFile.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & strSuffix & fiFile.Extension)
+		fiFile = New FileInfo(strFilePath)
+		strFilePathNew = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & strSuffix & fiFile.Extension)
 
 		Return strFilePathNew
 
@@ -407,6 +408,10 @@ Public Class clsMSGFRunner
 			Case clsPHRPReader.ePeptideHitResultType.MSGFDB
 				blnSuccess = CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath)
 
+			Case clsPHRPReader.ePeptideHitResultType.MODa
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa does not support ETD data processing; will set mETDMode to False")
+				blnSuccess = True
+
 			Case Else
 				' Unknown result type
 		End Select
@@ -440,7 +445,7 @@ Public Class clsMSGFRunner
 			End If
 
 			' Read the data from the MSGF-DB Param file
-			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+			Using srParamFile As StreamReader = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 
@@ -537,7 +542,7 @@ Public Class clsMSGFRunner
 			End If
 
 			' Read the data from the Sequest Param file
-			Using srParamFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSearchToolParamFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+			Using srParamFile As StreamReader = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 
@@ -620,10 +625,10 @@ Public Class clsMSGFRunner
 	''' <returns>True if success; false if an error</returns>
 	Protected Function CheckETDModeEnabledXTandem(ByVal strSearchToolParamFilePath As String) As Boolean
 
-		Dim objParamFile As System.Xml.XmlDocument
+		Dim objParamFile As Xml.XmlDocument
 
-		Dim objSelectedNodes As System.Xml.XmlNodeList = Nothing
-		Dim objAttributeNode As System.Xml.XmlNode
+		Dim objSelectedNodes As Xml.XmlNodeList = Nothing
+		Dim objAttributeNode As Xml.XmlNode
 
 		Dim intSettingIndex As Integer
 		Dim intMatchIndex As Integer
@@ -640,7 +645,7 @@ Public Class clsMSGFRunner
 			'   <note type="input" label="scoring, c ions">yes</note>
 			'   <note type="input" label="scoring, z ions">yes</note>
 
-			objParamFile = New System.Xml.XmlDocument
+			objParamFile = New Xml.XmlDocument
 			objParamFile.PreserveWhitespace = True
 			objParamFile.Load(strSearchToolParamFilePath)
 
@@ -754,6 +759,11 @@ Public Class clsMSGFRunner
 				' Convert MSGFDB results to input format required for MSGF
 				mMSGFInputCreator = New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
 
+			Case clsPHRPReader.ePeptideHitResultType.MODa
+
+				' Convert MODa results to input format required for MSGF
+				mMSGFInputCreator = New clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir)
+
 			Case Else
 				' Should never get here; invalid result type specified
 				Msg = "Invalid PeptideHit ResultType specified: " & eResultType
@@ -823,11 +833,11 @@ Public Class clsMSGFRunner
 		Dim strSourceFilePath As String
 		Dim blnSuccess As Boolean
 
-		strSourceFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
+		strSourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
 		blnSuccess = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(strSourceFilePath, strSynOrFHT)
 
 		If Not blnSuccess Then
-			m_message = "Error creating MSGF file for " & System.IO.Path.GetFileName(strSourceFilePath)
+			m_message = "Error creating MSGF file for " & Path.GetFileName(strSourceFilePath)
 			If Not String.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage) Then
 				m_message &= ": " & objMSGFInputCreator.ErrorMessage
 			End If
@@ -845,9 +855,9 @@ Public Class clsMSGFRunner
 		m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
 		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-		If System.IO.File.Exists(strMzXmlFilePath) Then
+		If File.Exists(strMzXmlFilePath) Then
 			' File already exists; nothing to do
 			Return True
 		End If
@@ -862,7 +872,7 @@ Public Class clsMSGFRunner
 			End If
 		End If
 
-		CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, IO.Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
+		CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
 
 		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
@@ -1017,8 +1027,8 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Protected Function PostProcessMSGFResults(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String, ByVal blnMGFInstrumentData As Boolean) As Boolean
 
-		Dim fiInputFile As System.IO.FileInfo
-		Dim fiMSGFSynFile As System.IO.FileInfo
+		Dim fiInputFile As FileInfo
+		Dim fiMSGFSynFile As FileInfo
 
 		Dim strMSGFSynopsisResults As String = String.Empty
 		Dim Msg As String
@@ -1039,11 +1049,10 @@ Public Class clsMSGFRunner
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF complete; post-processing the results")
 			End If
 
-			fiInputFile = New System.IO.FileInfo(strMSGFResultsFilePath)
+			fiInputFile = New FileInfo(strMSGFResultsFilePath)
 
 			' Define the path to write the synopsis MSGF results to
-			strMSGFSynopsisResults = System.IO.Path.Combine(fiInputFile.DirectoryName, _
-			 System.IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
+			strMSGFSynopsisResults = Path.Combine(fiInputFile.DirectoryName, Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
 
 			m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
 			m_StatusTools.UpdateAndWrite(m_progress)
@@ -1066,14 +1075,14 @@ Public Class clsMSGFRunner
 			' With the contents of:
 			'   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
 
-			System.Threading.Thread.Sleep(500)
+			Threading.Thread.Sleep(500)
 
 			' Delete the original file
 			fiInputFile.Delete()
 			System.Threading.Thread.Sleep(500)
 
 			' Rename the _PostProcess.txt file
-			fiMSGFSynFile = New System.IO.FileInfo(strMSGFSynopsisResults)
+			fiMSGFSynFile = New FileInfo(strMSGFSynopsisResults)
 
 			fiMSGFSynFile.MoveTo(strMSGFResultsFilePath)
 
@@ -1134,7 +1143,7 @@ Public Class clsMSGFRunner
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
-		Dim objColumnHeaders As System.Collections.Generic.SortedDictionary(Of String, Integer)
+		Dim objColumnHeaders As SortedDictionary(Of String, Integer)
 
 		Dim intLinesRead As Integer
 		Dim intSpecProbErrorCount As Integer
@@ -1159,7 +1168,7 @@ Public Class clsMSGFRunner
 		Dim intIndex As Integer
 		Dim dblSpecProb As Double = 0
 
-		Dim objSkipList As System.Collections.Generic.List(Of String)
+		Dim objSkipList As List(Of String)
 		Dim strSkipInfo() As String
 
 		Dim blnSkipLine As Boolean
@@ -1172,7 +1181,7 @@ Public Class clsMSGFRunner
 
 		' Initialize the column mapping
 		' Using a case-insensitive comparer
-		objColumnHeaders = New System.Collections.Generic.SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+		objColumnHeaders = New SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 		' Define the default column mapping
 		objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0)
@@ -1187,10 +1196,10 @@ Public Class clsMSGFRunner
 		objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
 
 		' Read the data from the MSGF Result file
-		Using srMSGFResults As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+		Using srMSGFResults As StreamReader = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 			' Create a new file for writing the Synopsis MSGF Results
-			Using swMSGFSynFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFSynopsisResults, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			Using swMSGFSynFile As StreamWriter = New StreamWriter(New FileStream(strMSGFSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 				' Write out the headers to swMSGFSynFile
 				mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
@@ -1406,25 +1415,25 @@ Public Class clsMSGFRunner
 			strTransferFolderPath = m_jobParams.GetParam("transferFolderPath")
 			strInputFolderName = m_jobParams.GetParam("inputFolderName")
 
-			strFolderToCheck = System.IO.Path.Combine(System.IO.Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName)
+			strFolderToCheck = Path.Combine(Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName)
 
 			If m_DebugLevel >= 3 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " & strFolderToCheck)
 			End If
 
 			' Look for strFileNameToFind in strFolderToCheck
-			If System.IO.Directory.Exists(strFolderToCheck) Then
-				strFilePathSource = System.IO.Path.Combine(strFolderToCheck, strFileNameToFind)
+			If Directory.Exists(strFolderToCheck) Then
+				strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind)
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for file " & strFilePathSource)
 				End If
 
-				If System.IO.File.Exists(strFilePathSource) Then
-					strFilePathTarget = System.IO.Path.Combine(m_WorkDir, strFileNameToFind)
+				If File.Exists(strFilePathSource) Then
+					strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & strFilePathSource & " to " & strFilePathTarget)
 
-					System.IO.File.Copy(strFilePathSource, strFilePathTarget, True)
+					File.Copy(strFilePathSource, strFilePathTarget, True)
 
 					' File found and successfully copied; return true
 					Return True
@@ -1446,15 +1455,15 @@ Public Class clsMSGFRunner
 		Dim intLinesRead As Integer
 		Dim strSplitLine() As String
 
-		Dim lstCIDData As System.Collections.Generic.List(Of String)
-		Dim lstETDData As System.Collections.Generic.List(Of String)
+		Dim lstCIDData As List(Of String)
+		Dim lstETDData As List(Of String)
 		Dim intCollisionModeColIndex As Integer = -1
 
 		Try
-			lstCIDData = New System.Collections.Generic.List(Of String)
-			lstETDData = New System.Collections.Generic.List(Of String)
+			lstCIDData = New List(Of String)
+			lstETDData = New List(Of String)
 
-			Using srSourceFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srSourceFile As StreamReader = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				intLinesRead = 0
 				Do While srSourceFile.Peek > -1
@@ -1517,8 +1526,8 @@ Public Class clsMSGFRunner
 				mProcessingMSGFDBCollisionModeData = True
 
 				' Make sure the final results file does not exist
-				If System.IO.File.Exists(strMSGFResultsFilePath) Then
-					System.IO.File.Delete(strMSGFResultsFilePath)
+				If File.Exists(strMSGFResultsFilePath) Then
+					File.Delete(strMSGFResultsFilePath)
 				End If
 
 				' Process the CID data
@@ -1551,7 +1560,7 @@ Public Class clsMSGFRunner
 	End Function
 
 	Protected Function RunMSGFonMSGFDBCachedData( _
-	   ByRef lstData As System.Collections.Generic.List(Of String), _
+	   ByRef lstData As List(Of String), _
 	   ByVal strMSGFInputFilePath As String, _
 	   ByVal strMSGFResultsFilePathFinal As String, _
 	   ByVal strCollisionMode As String) As Boolean
@@ -1566,7 +1575,7 @@ Public Class clsMSGFRunner
 			strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode)
 			strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode)
 
-			Using swInputFileTemp As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strInputFileTempPath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swInputFileTemp As StreamWriter = New StreamWriter(New FileStream(strInputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read))
 				For Each strData As String In lstData
 					swInputFileTemp.WriteLine(strData)
 				Next
@@ -1581,11 +1590,11 @@ Public Class clsMSGFRunner
 			System.Threading.Thread.Sleep(500)
 
 			' Append the results of strResultFileTempPath to strMSGFResultsFilePath
-			If Not System.IO.File.Exists(strMSGFResultsFilePathFinal) Then
-				System.IO.File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal)
+			If Not File.Exists(strMSGFResultsFilePathFinal) Then
+				File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal)
 			Else
-				Using srTempResults As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strResultFileTempPath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-					Using swFinalResults As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFResultsFilePathFinal, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+				Using srTempResults As StreamReader = New StreamReader(New FileStream(strResultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+					Using swFinalResults As StreamWriter = New StreamWriter(New FileStream(strMSGFResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read))
 
 						' Read and skip the first line of srTempResults (it's a header)
 						srTempResults.ReadLine()
@@ -1660,10 +1669,10 @@ Public Class clsMSGFRunner
 
 		Else
 
-			Dim lstSegmentFileInfo As New System.Collections.Generic.List(Of udtSegmentFileInfoType)
+			Dim lstSegmentFileInfo As New List(Of udtSegmentFileInfoType)
 			Dim udtSegmentFile As udtSegmentFileInfoType
-			Dim lstResultFiles As System.Collections.Generic.List(Of String)
-			lstResultFiles = New System.Collections.Generic.List(Of String)
+			Dim lstResultFiles As List(Of String)
+			lstResultFiles = New List(Of String)
 
 			' Split strMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
 			blnSuccess = SplitMSGFInputFile(intMSGFInputFileLineCount, strMSGFInputFilePath, intMSGFEntriesPerSegment, lstSegmentFileInfo)
@@ -1713,8 +1722,8 @@ Public Class clsMSGFRunner
 
 		Try
 			' Delete the Console_Output.txt file if it is empty
-			Dim fiConsoleOutputFile As System.IO.FileInfo
-			fiConsoleOutputFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+			Dim fiConsoleOutputFile As FileInfo
+			fiConsoleOutputFile = New FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 			If fiConsoleOutputFile.Exists AndAlso fiConsoleOutputFile.Length = 0 Then
 				fiConsoleOutputFile.Delete()
 			End If
@@ -1744,8 +1753,8 @@ Public Class clsMSGFRunner
 		mMSGFRunner = New clsRunDosProgram(m_WorkDir)
 
 		' Delete the output file if it already exists (MSGFDB will not overwrite it)
-		If System.IO.File.Exists(strResultsFilePath) Then
-			System.IO.File.Delete(strResultsFilePath)
+		If File.Exists(strResultsFilePath) Then
+			File.Delete(strResultsFilePath)
 		End If
 
 		' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
@@ -1755,7 +1764,7 @@ Public Class clsMSGFRunner
 		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF on " & System.IO.Path.GetFileName(strInputFilePath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF on " & Path.GetFileName(strInputFilePath))
 		End If
 
 		mCurrentMSGFResultsFilePath = String.Copy(strResultsFilePath)
@@ -1821,7 +1830,7 @@ Public Class clsMSGFRunner
 			.EchoOutputToConsole = False
 
 			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
+			.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
 		End With
 
 		Dim blnSuccess As Boolean
@@ -1829,12 +1838,12 @@ Public Class clsMSGFRunner
 
 		If Not mToolVersionWritten Then
 			If String.IsNullOrWhiteSpace(mMSGFVersion) Then
-				Dim fiConsoleOutputfile As New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+				Dim fiConsoleOutputfile As New FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 				If fiConsoleOutputfile.Length = 0 Then
 					' File is 0-bytes; delete it
 					DeleteTemporaryfile(fiConsoleOutputfile.FullName)
 				Else
-					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+					ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 				End If
 			End If
 			mToolVersionWritten = StoreToolVersionInfo()
@@ -1853,7 +1862,7 @@ Public Class clsMSGFRunner
 	End Function
 
 	Protected Function CombineMSGFResultFiles(ByVal strMSGFOutputFilePath As String, _
-	   ByRef lstResultFiles As System.Collections.Generic.List(Of String)) As Boolean
+	   ByRef lstResultFiles As List(Of String)) As Boolean
 
 		Try
 
@@ -1862,12 +1871,12 @@ Public Class clsMSGFRunner
 			Dim blnHeaderWritten As Boolean
 
 			' Create the output file
-			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strMSGFOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strMSGFOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 				' Step through the input files and append the results
 				blnHeaderWritten = False
 				For Each strResultFile As String In lstResultFiles
-					Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strResultFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+					Using srInFile As StreamReader = New StreamReader(New FileStream(strResultFile, FileMode.Open, FileAccess.Read, FileShare.Read))
 						intLinesRead = 0
 						Do While srInFile.Peek >= 0
 							strLineIn = srInFile.ReadLine()
@@ -1898,7 +1907,7 @@ Public Class clsMSGFRunner
 
 	End Function
 
-	Protected Function LoadMSGFResults(ByVal strMSGFResultsFilePath As String, ByRef lstMSGFResults As System.Collections.Generic.Dictionary(Of Integer, String)) As Boolean
+	Protected Function LoadMSGFResults(ByVal strMSGFResultsFilePath As String, ByRef lstMSGFResults As Dictionary(Of Integer, String)) As Boolean
 
 		Dim strLineIn As String
 		Dim strSplitLine() As String
@@ -1910,13 +1919,13 @@ Public Class clsMSGFRunner
 
 		Try
 			If lstMSGFResults Is Nothing Then
-				lstMSGFResults = New System.Collections.Generic.Dictionary(Of Integer, String)
+				lstMSGFResults = New Dictionary(Of Integer, String)
 			Else
 				lstMSGFResults.Clear()
 			End If
 
 			intMSGFSpecProbColIndex = -1
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				Do While srInFile.Peek > -1
 					strLineIn = srInFile.ReadLine()
@@ -1982,7 +1991,7 @@ Public Class clsMSGFRunner
 
 		Try
 
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			If Not File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -1997,7 +2006,7 @@ Public Class clsMSGFRunner
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				intLinesRead = 0
 				Do While srInFile.Peek() > -1
@@ -2040,7 +2049,7 @@ Public Class clsMSGFRunner
 	Protected Function SplitMSGFInputFile(ByVal intMSGFinputFileLineCount As Integer, _
 	  ByVal strMSGFInputFilePath As String, _
 	  ByVal intMSGFEntriesPerSegment As Integer, _
-	  ByRef lstSegmentFileInfo As System.Collections.Generic.List(Of udtSegmentFileInfoType)) As Boolean
+	  ByRef lstSegmentFileInfo As List(Of udtSegmentFileInfoType)) As Boolean
 
 		Dim intLinesRead As Integer = 0
 		Dim strLineIn As String
@@ -2053,9 +2062,9 @@ Public Class clsMSGFRunner
 			lstSegmentFileInfo.Clear()
 			If intMSGFEntriesPerSegment < 100 Then intMSGFEntriesPerSegment = 100
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Dim swOutFile As System.IO.StreamWriter = Nothing
+				Dim swOutFile As StreamWriter = Nothing
 
 				udtThisSegment.FilePath = String.Empty
 				udtThisSegment.Entries = 0
@@ -2090,7 +2099,7 @@ Public Class clsMSGFRunner
 							udtThisSegment.Entries = 0
 							udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment)
 
-							swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(udtThisSegment.FilePath, System.IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+							swOutFile = New StreamWriter(New FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 							' Write the header line to the new segment
 							swOutFile.WriteLine(strHeaderLine)
@@ -2135,10 +2144,10 @@ Public Class clsMSGFRunner
 		strToolVersionInfo = String.Copy(mMSGFVersion)
 
 		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mMSGFProgLoc))
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(mMSGFProgLoc))
 
-		ioToolFiles.Add(New System.IO.FileInfo(mMSXmlGeneratorAppPath))
+		ioToolFiles.Add(New FileInfo(mMSXmlGeneratorAppPath))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -2167,8 +2176,8 @@ Public Class clsMSGFRunner
 		End If
 
 		' Store the path to MSGFDB.jar in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mMSGFProgLoc))
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(mMSGFProgLoc))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -2241,10 +2250,10 @@ Public Class clsMSGFRunner
 		Try
 
 			If mMSGFInputFileLineCount <= 0 Then Exit Sub
-			If Not System.IO.File.Exists(strMSGFResultsFilePath) Then Exit Sub
+			If Not File.Exists(strMSGFResultsFilePath) Then Exit Sub
 
 			' Read the data from the results file
-			Using srMSGFResultsFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMSGFResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			Using srMSGFResultsFile As StreamReader = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 				intLineCount = 0
 
 				Do While srMSGFResultsFile.Peek > -1
@@ -2282,12 +2291,12 @@ Public Class clsMSGFRunner
 	Protected Function UpdateProteinModsFile(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strMSGFResultsFilePath As String) As Boolean
 		Dim Msg As String
 
-		Dim fiProteinModsFile As System.IO.FileInfo
-		Dim fiProteinModsFileNew As System.IO.FileInfo
+		Dim fiProteinModsFile As FileInfo
+		Dim fiProteinModsFileNew As FileInfo
 		Dim strLineIn As String
 		Dim strSplitLine() As String
 
-		Dim lstMSGFResults As System.Collections.Generic.Dictionary(Of Integer, String)
+		Dim lstMSGFResults As Dictionary(Of Integer, String)
 
 		Dim intMSGFSpecProbColIndex As Integer
 		Dim intResultID As Integer
@@ -2297,14 +2306,14 @@ Public Class clsMSGFRunner
 		Dim blnSuccess As Boolean
 
 		Try
-			fiProteinModsFile = New System.IO.FileInfo(IO.Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)))
-			fiProteinModsFileNew = New System.IO.FileInfo(fiProteinModsFile.FullName & ".tmp")
+			fiProteinModsFile = New FileInfo(Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)))
+			fiProteinModsFileNew = New FileInfo(fiProteinModsFile.FullName & ".tmp")
 
 			If Not fiProteinModsFile.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PHRP ProteinMods.txt file not found: " & fiProteinModsFile.Name)
 				blnSuccess = True
 			Else
-				lstMSGFResults = New System.Collections.Generic.Dictionary(Of Integer, String)
+				lstMSGFResults = New Dictionary(Of Integer, String)
 				blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, lstMSGFResults)
 				If Not blnSuccess Then
 					Return False
@@ -2313,8 +2322,8 @@ Public Class clsMSGFRunner
 				intMSGFSpecProbColIndex = -1
 				blnSuccess = True
 
-				Using srSource As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiProteinModsFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-					Using swTarget As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(fiProteinModsFileNew.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using srSource As StreamReader = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+					Using swTarget As StreamWriter = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 						Do While srSource.Peek > -1
 							strLineIn = srSource.ReadLine()
 
@@ -2328,7 +2337,7 @@ Public Class clsMSGFRunner
 								Else
 
 									If intMSGFSpecProbColIndex < 0 Then
-										' Assume this is the headerline, look for MSGF_SpecProb
+										' Assume this is the header line, look for MSGF_SpecProb
 										For intIndex As Integer = 0 To strSplitLine.Length - 1
 											If strSplitLine(intIndex).ToLower() = "MSGF_SpecProb".ToLower() Then
 												intMSGFSpecProbColIndex = intIndex
@@ -2467,7 +2476,7 @@ Public Class clsMSGFRunner
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
+			ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
 			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFVersion) Then
 				mToolVersionWritten = StoreToolVersionInfo()
 			End If
