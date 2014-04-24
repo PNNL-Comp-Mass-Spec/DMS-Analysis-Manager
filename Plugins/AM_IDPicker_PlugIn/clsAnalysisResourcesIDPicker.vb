@@ -2,6 +2,7 @@
 
 Imports AnalysisManagerBase
 Imports PHRPReader
+Imports System.IO
 
 Public Class clsAnalysisResourcesIDPicker
 	Inherits clsAnalysisResources
@@ -12,7 +13,7 @@ Public Class clsAnalysisResourcesIDPicker
 	Protected mSynopsisFileIsEmpty As Boolean
 
 	' This dictionary holds any filenames that we need to rename after copying locally
-	Protected mInputFileRenames As System.Collections.Generic.Dictionary(Of String, String)
+	Protected mInputFileRenames As Dictionary(Of String, String)
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -45,7 +46,7 @@ Public Class clsAnalysisResourcesIDPicker
 		End If
 
 		If mSynopsisFileIsEmpty Then
-			' Don't retrieve anymore files
+			' Don't retrieve any additional files
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
@@ -70,7 +71,7 @@ Public Class clsAnalysisResourcesIDPicker
 			' Override the SplitFasta job parameter
 			m_jobParams.SetParam("SplitFasta", "False")
 		End If
-		
+
 		'Retrieve the Fasta file
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
@@ -78,7 +79,7 @@ Public Class clsAnalysisResourcesIDPicker
 			' Restore the setting for SplitFasta
 			m_jobParams.SetParam("SplitFasta", "True")
 		End If
-		
+
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
@@ -93,8 +94,8 @@ Public Class clsAnalysisResourcesIDPicker
 	''' <remarks></remarks>
 	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
 		' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
-		Dim lstFileNamesToGet As System.Collections.Generic.SortedList(Of String, Boolean)
-		Dim lstExtraFilesToGet As System.Collections.Generic.List(Of String)
+		Dim lstFileNamesToGet As SortedList(Of String, Boolean)
+		Dim lstExtraFilesToGet As List(Of String)
 
 		Dim strResultType As String
 
@@ -106,10 +107,11 @@ Public Class clsAnalysisResourcesIDPicker
 		' Make sure the ResultType is valid
 		eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType)
 
-		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse _
-		   eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
+		  eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
 		Else
 			m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -117,7 +119,7 @@ Public Class clsAnalysisResourcesIDPicker
 			Return False
 		End If
 
-		mInputFileRenames = New System.Collections.Generic.Dictionary(Of String, String)
+		mInputFileRenames = New Dictionary(Of String, String)
 
 		lstFileNamesToGet = GetPHRPFileNames(eResultType, strDatasetName)
 		mSynopsisFileIsEmpty = False
@@ -129,7 +131,7 @@ Public Class clsAnalysisResourcesIDPicker
 		Dim synFileName As String
 		synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
 
-		For Each kvEntry As System.Collections.Generic.KeyValuePair(Of String, Boolean) In lstFileNamesToGet
+		For Each kvEntry As KeyValuePair(Of String, Boolean) In lstFileNamesToGet
 
 			If Not FindAndRetrieveMiscFiles(kvEntry.Key, False) Then
 				' File not found; is it required?
@@ -145,7 +147,7 @@ Public Class clsAnalysisResourcesIDPicker
 			If kvEntry.Key = synFileName Then
 				' Check whether the synopsis file is empty
 				Dim strSynFilePath As String
-				strSynFilePath = System.IO.Path.Combine(m_WorkingDir, synFileName)
+				strSynFilePath = Path.Combine(m_WorkingDir, synFileName)
 
 				Dim strErrorMessage As String = String.Empty
 				If Not ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
@@ -166,7 +168,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.XTandem Then
 			' X!Tandem requires a few additional parameter files
-			lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(System.IO.Path.Combine(m_WorkingDir, strSearchEngineParamFileName))
+			lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(m_WorkingDir, strSearchEngineParamFileName))
 			For Each strFileName As String In lstExtraFilesToGet
 
 				If Not FindAndRetrieveMiscFiles(strFileName, False) Then
@@ -183,9 +185,9 @@ Public Class clsAnalysisResourcesIDPicker
 			Return False
 		End If
 
-		For Each item As Collections.Generic.KeyValuePair(Of String, String) In mInputFileRenames
-			Dim fiFile As System.IO.FileInfo
-			fiFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkingDir, item.Key))
+		For Each item As KeyValuePair(Of String, String) In mInputFileRenames
+			Dim fiFile As FileInfo
+			fiFile = New FileInfo(Path.Combine(m_WorkingDir, item.Key))
 			If Not fiFile.Exists Then
 				m_message = "File " & item.Key & " not found; unable to rename to " & item.Value
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -193,7 +195,7 @@ Public Class clsAnalysisResourcesIDPicker
 				Return False
 			Else
 				Try
-					fiFile.MoveTo(System.IO.Path.Combine(m_WorkingDir, item.Value))
+					fiFile.MoveTo(Path.Combine(m_WorkingDir, item.Value))
 				Catch ex As Exception
 					m_message = "Error renaming file " & item.Key & " to " & item.Value
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & ex.Message)
@@ -277,10 +279,10 @@ Public Class clsAnalysisResourcesIDPicker
 	''' <param name="strDatasetName">Dataset name</param>
 	''' <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
 	''' <remarks></remarks>
-	Protected Function GetPHRPFileNames(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strDatasetName As String) As System.Collections.Generic.SortedList(Of String, Boolean)
+	Protected Function GetPHRPFileNames(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strDatasetName As String) As SortedList(Of String, Boolean)
 
-		Dim lstFileNamesToGet As System.Collections.Generic.SortedList(Of String, Boolean)
-		lstFileNamesToGet = New System.Collections.Generic.SortedList(Of String, Boolean)
+		Dim lstFileNamesToGet As SortedList(Of String, Boolean)
+		lstFileNamesToGet = New SortedList(Of String, Boolean)
 
 		Dim synFileName As String
 		synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
@@ -290,6 +292,8 @@ Public Class clsAnalysisResourcesIDPicker
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, strDatasetName), True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, strDatasetName), True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
+
+		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), False)
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
 
