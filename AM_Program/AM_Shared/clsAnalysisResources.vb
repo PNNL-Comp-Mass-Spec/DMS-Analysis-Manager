@@ -5783,6 +5783,8 @@ Public MustInherit Class clsAnalysisResources
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 			Case "msalign_histone"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
+			Case "moda"
+				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
 			Case Else
 				' Did not find an exact match
 				' Try a substring match
@@ -5798,6 +5800,8 @@ Public MustInherit Class clsAnalysisResources
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
 				ElseIf strToolNameLCase.Contains("msalign") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
+				ElseIf strToolNameLCase.StartsWith("moda") Then
+					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
 				Else
 					Return Nothing
 				End If

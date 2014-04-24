@@ -251,6 +251,12 @@ Public Class clsAnalysisResourcesExtraction
 		End If
 		m_jobParams.AddResultFileToSkip(FileToGet)
 
+		FileToGet = m_DatasetName & "_mgf_IndexToScanMap.txt"
+		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+		m_jobParams.AddResultFileToSkip(FileToGet)
+
 		' Note that we'll obtain the MODa parameter file in RetrieveMiscFiles
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

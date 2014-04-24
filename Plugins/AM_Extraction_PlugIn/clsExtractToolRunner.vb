@@ -236,7 +236,7 @@ Public Class clsExtractToolRunner
 			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
 			Dim paramFilePath = Path.Combine(m_WorkDir, paramFileName)
 
-			Dim MODaResultsFilePath = m_Dataset & "_moda.txt"
+			Dim MODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_moda.txt")
 
 			If Math.Abs(fdrThreshold) < Single.Epsilon Then
 				fdrThreshold = 0.05
@@ -926,12 +926,8 @@ Public Class clsExtractToolRunner
 					Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
 				End If
 
-				Try
-					' Delete the _moda.id.txt file
-					File.Delete(strFilteredMODaResultsFilePath)
-				Catch ex As Exception
-					' Ignore errors here
-				End Try
+				' Skip the _moda.id.txt file
+				m_jobParams.AddResultFileToSkip(strFilteredMODaResultsFilePath)
 
 			Catch ex As Exception
 				Msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " & _
@@ -940,8 +936,6 @@ Public Class clsExtractToolRunner
 				m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
-
-			Throw New NotImplementedException("Need new version of PHRP that supports MODa; uncomment the following after updating the DLL")
 
 			'' Validate that the mass errors are within tolerance
 			'Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
@@ -1701,12 +1695,11 @@ Public Class clsExtractToolRunner
 		Try
 
 			Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
-			Dim ioPHRP As DirectoryInfo
-			ioPHRP = New DirectoryInfo(progLoc)
+			Dim diPHRP As DirectoryInfo = New DirectoryInfo(progLoc)
 
 			' verify that program file exists
-			If ioPHRP.Exists Then
-				MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(ioPHRP.FullName, "PeptideHitResultsProcessor.dll"))
+			If diPHRP.Exists Then
+				MyBase.StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(diPHRP.FullName, "PeptideHitResultsProcessor.dll"))
 			Else
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " & progLoc)
 				Return False

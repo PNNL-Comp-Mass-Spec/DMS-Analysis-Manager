@@ -2052,6 +2052,11 @@ Public Class clsAnalysisToolRunnerBase
 				blnSuccess = True
 			End If
 
+		Catch ex As BadImageFormatException
+			' Most likely trying to read a 64-bit DLL
+			' Instead try StoreToolVersionInfoOneFile64Bit
+			blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
+
 		Catch ex As Exception
 			' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
 			'  <startup useLegacyV2RuntimeActivationPolicy="true">

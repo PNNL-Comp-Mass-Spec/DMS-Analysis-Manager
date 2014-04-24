@@ -119,9 +119,11 @@ Module modMain
 						'objTest.TestRunQuery()
 						'objTest.TestRunSP()
 
-						objTest.ValidateCentroided()
+						'objTest.ValidateCentroided()
 
                         Console.WriteLine(clsGlobal.DecodePassword("Test"))
+
+						Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

@@ -130,20 +130,20 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSGFPlugin.clsMSGFRunner".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMSGFPlugin.clsMSGFRunner, IToolRunner)
 
-            'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower()
-            '	myToolRunner = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB, IToolRunner)
+			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB, IToolRunner)
 
-            'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower()
-            '	myToolRunner = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv, IToolRunner)
+			'Case "AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisToolRunnerMSDeconv, IToolRunner)
 
-            'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower()
-            '	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
+			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlign, IToolRunner)
 
-            'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlignHistone".ToLower()
-            '	myToolRunner = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisToolRunnerMSAlignHistone, IToolRunner)
+			'Case "AnalysisManagerMSAlignPlugIn.clsAnalysisToolRunnerMSAlignHistone".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisToolRunnerMSAlignHistone, IToolRunner)
 
-            'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower()
-            '	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
+			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisToolRunnerSMAQC, IToolRunner)
 
 			'Case "DTASpectraFileGen.clsDtaGenToolRunner".ToLower()
 			'    myToolRunner = DirectCast(New DTASpectraFileGen.clsDtaGenToolRunner, IToolRunner)
@@ -252,20 +252,20 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMSGFPlugin.clsAnalysisResourcesMSGF, IAnalysisResources)
 
-            'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower()
-            '	myModule = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB, IAnalysisResources)
+			'Case "AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB".ToLower()
+			'	myModule = DirectCast(New AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB, IAnalysisResources)
 
-            'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()()
-            '	myModule = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisResourcesMSDeconv, IAnalysisResources)
+			'Case "AnalysisManagerMSDeconvPlugin.clsAnalysisResourcesMSDeconv".ToLower()()
+			'	myModule = DirectCast(New AnalysisManagerMSDeconvPlugIn.clsAnalysisResourcesMSDeconv, IAnalysisResources)
 
-            'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()()
-            '	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
+			'Case "AnalysisManagerMSAlignPlugin.clsAnalysisResourcesMSAlign".ToLower()()
+			'	myModule = DirectCast(New AnalysisManagerMSAlignPlugIn.clsAnalysisResourcesMSAlign, IAnalysisResources)
 
-            'Case "AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone".ToLower()()
-            '	myModule = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisResourcesMSAlignHistone, IAnalysisResources)
+			'Case "AnalysisManagerMSAlignHistonePlugin.clsAnalysisResourcesMSAlignHistone".ToLower()()
+			'	myModule = DirectCast(New AnalysisManagerMSAlignHistonePlugIn.clsAnalysisResourcesMSAlignHistone, IAnalysisResources)
 
-            'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower()
-            '	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)
+			'Case "AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC".ToLower()
+			'	myModule = DirectCast(New AnalysisManagerSMAQCPlugIn.clsAnalysisResourcesSMAQC, IAnalysisResources)
 
 			'Case "DTASpectraFileGen.clsDtaGenResources".ToLower()
 			'	myModule = DirectCast(New DTASpectraFileGen.clsDtaGenResources, IAnalysisResources)
