@@ -493,11 +493,17 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		' hpcJobInfo.JobParameters.MinNumberOfCores = udtHPCOptions.MinimumCores
 		' hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
 
-		' Make a batch file that will run the java program, then issue a Ping command with a delay, which will allow the file system to release the file handles
-		Dim batchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_MSGFPlus_Task.bat", javaExePath & " " & CmdStr)
-		m_jobParams.AddResultFileToSkip(batchFilePath)
+		If udtHPCOptions.SharePath.StartsWith("\\picfs") Then
+			' Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
+			Dim batchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_MSGFPlus_Task.bat", javaExePath & " " & CmdStr)
+			m_jobParams.AddResultFileToSkip(batchFilePath)
 
-		hpcJobInfo.TaskParameters.CommandLine = batchFilePath
+			hpcJobInfo.TaskParameters.CommandLine = batchFilePath
+		Else
+			' Simply run java; no need to add a delay
+			hpcJobInfo.TaskParameters.CommandLine = javaExePath & " " & CmdStr
+		End If
+		
 		hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
 		hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
 		hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
@@ -518,10 +524,17 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(ResultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
 
-			Dim tsvBatchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_TSV_Task.bat", javaExePath & " " & cmdStrConvertToTSV)
-			m_jobParams.AddResultFileToSkip(tsvBatchFilePath)
+			If udtHPCOptions.SharePath.StartsWith("\\picfs") Then
+				' Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
+				Dim tsvBatchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_TSV_Task.bat", javaExePath & " " & cmdStrConvertToTSV)
+				m_jobParams.AddResultFileToSkip(tsvBatchFilePath)
 
-			mzidToTSVTask.CommandLine = tsvBatchFilePath
+				mzidToTSVTask.CommandLine = tsvBatchFilePath
+			Else
+				' Simply run java; no need to add a delay
+				mzidToTSVTask.CommandLine = javaExePath & " " & cmdStrConvertToTSV
+			End If
+
 			mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath
 			mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MzIDToTsv_ConsoleOutput.txt")
 			mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
