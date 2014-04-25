@@ -480,7 +480,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim iHitsPerSpectrum As Integer
 
 		Dim CmdStr As String
-		Const intMaxRuntimeMinutes As Integer = 30
+
+		' PepXML file creation should generally be done in less than 10 minutes
+		' However, for huge fasta files, conversion can take several hours
+		Const intMaxRuntimeMinutes As Integer = 240
 
 		Dim blnSuccess As Boolean
 

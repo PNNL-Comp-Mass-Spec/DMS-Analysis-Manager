@@ -29,6 +29,8 @@ Public MustInherit Class clsAnalysisResources
 
 	Public Const MYEMSL_PATH_FLAG As String = "\\MyEMSL"
 
+	Protected Const FORCE_WINHPC_FS As Boolean = True
+
 	' Define the maximum file size to process using IonicZip; 
 	'  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
 	'  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
@@ -2765,19 +2767,29 @@ Public MustInherit Class clsAnalysisResources
 		' Share paths used:
 		' \\picfs\projects\DMS
 		' \\winhpcfs\projects\DMS           (this is a Windows File System wrapper to \\picfs, which is an Isilon FS)
-		udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs.pnl.gov\projects\DMS")
+
+		If FORCE_WINHPC_FS Then
+			udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\winhpcfs\projects\DMS")
+		Else
+			udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs.pnl.gov\projects\DMS")
+		End If
+
 
 		' Auto-switched the share path to \\winhpcfs starting April 15, 2014
 		' Stopped doing this April 21, 2014, because the drive was low on space
+		' Switched back to \\winhpcfs on April 24, because the connection to picfs is unstable
 		'
-		'If udtHPCOptions.SharePath.StartsWith("\\picfs", StringComparison.CurrentCultureIgnoreCase) Then
-		'	' Auto switch the share path
-		'	udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\winhpcfs\")
-		'End If
 
-		If udtHPCOptions.SharePath.StartsWith("\\winhpcfs", StringComparison.CurrentCultureIgnoreCase) Then
-			' Auto switch the share path
-			udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\picfs.pnl.gov\")
+		If FORCE_WINHPC_FS Then
+			If udtHPCOptions.SharePath.StartsWith("\\picfs", StringComparison.CurrentCultureIgnoreCase) Then
+				' Auto switch the share path
+				udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\winhpcfs\")
+			End If
+		Else
+			If udtHPCOptions.SharePath.StartsWith("\\winhpcfs", StringComparison.CurrentCultureIgnoreCase) Then
+				' Auto switch the share path
+				udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\picfs.pnl.gov\")
+			End If
 		End If
 
 		udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("HPCMinMemoryMB", 0)
@@ -2802,7 +2814,7 @@ Public MustInherit Class clsAnalysisResources
 		Next
 
 		' Example WorkDirPath: 
-		' \\picfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+		' \\picfs.pnl.gov\projects\DMS\DMS_Work_Dir\Pub-60-3
 		' \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
 		udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean)
 
