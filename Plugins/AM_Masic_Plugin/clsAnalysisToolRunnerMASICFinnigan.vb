@@ -68,6 +68,11 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		If Not String.IsNullOrEmpty(strParameterFilePath) Then
+			' Make sure the parameter file has IncludeHeaders defined and set to True
+			ValidateParameterFile(strParameterFilePath)
+		End If
+		
 		Dim strScanStatsFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_FILE_SUFFIX)
 		Dim strScanStatsExFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX)
 

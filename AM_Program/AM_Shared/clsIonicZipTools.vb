@@ -205,8 +205,7 @@ Public Class clsIonicZipTools
 				Using outFile As FileStream = File.Create(decompressedFilePath)
 					Using Decompress = New Ionic.Zlib.GZipStream(inFile, Ionic.Zlib.CompressionMode.Decompress)
 
-						' Copy the decompression stream 
-						' into the output file.
+						' Copy the decompression stream into the output file.
 						Decompress.CopyTo(outFile)
 						m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiDecompressedFile.Name, fiDecompressedFile.FullName))
 					End Using

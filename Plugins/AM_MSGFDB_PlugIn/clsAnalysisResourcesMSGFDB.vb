@@ -279,7 +279,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	End Sub
 
-	Protected Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
+	Public Shared Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
 
 		Dim lstColumnNameWithScanType = New List(Of String) From {"ScanTypeName", "Collision Mode", "Scan Filter Text"}
 		Dim lstColumnIndicesToCheck = New List(Of Integer)
@@ -301,6 +301,39 @@ Public Class clsAnalysisResourcesMSGFDB
 					End If
 				Next
 
+				If lstColumnIndicesToCheck.Count = 0 Then
+					Dim sngValue As Single
+					If Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
+						' This file does not have a header line
+						If lstColumns.Count >= 11 Then
+							' Check whether column 11 has ScanTypeName info
+							If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+								Return True
+							End If
+						End If
+
+						If lstColumns.Count >= 16 Then
+							' Check whether column 15 has "Collision Mode" values
+							If lstColumns(15).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(15).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(15).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+								Return True
+							End If
+						End If
+
+						If lstColumns.Count >= 17 Then
+							' Check whether column 15 has "Collision Mode" values
+							If lstColumns(16).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(16).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+							   lstColumns(16).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+								Return True
+							End If
+						End If
+
+					End If
+				End If
 			End If
 
 			If lstColumnIndicesToCheck.Count > 0 Then
@@ -319,7 +352,7 @@ Public Class clsAnalysisResourcesMSGFDB
 							blnDetailedScanTypesDefined = True
 						End If
 					Next
-					
+
 				Loop
 			End If
 
@@ -339,10 +372,21 @@ Public Class clsAnalysisResourcesMSGFDB
 				' Parse the scan headers to look for ScanTypeName
 
 				Dim lstColumns As List(Of String)
+				Dim sngValue As Single
 				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
 				If lstColumns.Contains("ScanTypeName") Then
 					blnScanTypeColumnFound = True
+				ElseIf Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
+					' This file does not have a header line
+					If lstColumns.Count >= 11 Then
+						' Assume column 11 is the ScanTypeName column
+						If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+						 lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+						 lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+							blnScanTypeColumnFound = True
+						End If
+					End If
 				End If
 			End If
 

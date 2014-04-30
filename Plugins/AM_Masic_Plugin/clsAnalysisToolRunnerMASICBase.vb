@@ -12,6 +12,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Xml.Linq
 
 Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Inherits clsAnalysisToolRunnerBase
@@ -424,6 +425,44 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
 		End Try
+
+	End Function
+
+	''' <summary>
+	''' Validate that required options are defined in the MASIC parameter file
+	''' </summary>
+	''' <param name="strParameterFilePath"></param>
+	''' <remarks></remarks>
+	Protected Function ValidateParameterFile(ByVal strParameterFilePath As String) As Boolean
+
+		If String.IsNullOrWhiteSpace(strParameterFilePath) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The MASIC Parameter File path is empty; nothing to validate")
+			Return True
+		End If
+
+		Dim objSettingsFile = New PRISM.Files.XmlSettingsFileAccessor()
+
+		If Not objSettingsFile.LoadSettings(strParameterFilePath) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error loading parameter file " & strParameterFilePath)
+			Return False
+		End If
+
+		If Not objSettingsFile.SectionPresent("MasicExportOptions") Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MasicExportOptions section not found in " & strParameterFilePath)
+			objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True")
+			objSettingsFile.SaveSettings()
+			Return True
+		End If
+
+		Dim includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", False)
+
+		If Not includeHeaders Then
+			' File needs to be updated
+			objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True")
+			objSettingsFile.SaveSettings()			
+		End If
+
+		Return True
 
 	End Function
 

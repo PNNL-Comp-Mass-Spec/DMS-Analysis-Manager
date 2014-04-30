@@ -206,6 +206,8 @@ Public Class clsScanTypeFileCreator
 				Return False
 			End If
 
+			Dim blnDetailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
+
 			' Open the input file
 			Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -228,7 +230,9 @@ Public Class clsScanTypeFileCreator
 							intLinesRead += 1
 							strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-							If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
+							Dim blnFirstColumnIsNumeric = Integer.TryParse(strSplitLine(0), intValue)
+
+							If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not blnFirstColumnIsNumeric Then
 								' This is a header line; define the column mapping
 
 								Const IS_CASE_SENSITIVE As Boolean = False
@@ -237,9 +241,18 @@ Public Class clsScanTypeFileCreator
 								' Keys in this dictionary are column names, values are the 0-based column index
 								Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
 
+
 								intScanNumberColIndex = dctHeaderMapping("ScanNumber")
 								intScanTypeColIndex = dctHeaderMapping("ScanType")
 								intScanTypeNameColIndex = dctHeaderMapping("ScanTypeName")
+
+							ElseIf intLinesRead = 1 AndAlso blnFirstColumnIsNumeric AndAlso strSplitLine.Length >= 11 AndAlso blnDetailedScanTypesDefined Then
+								' ScanStats file that does not have a header line
+								' Assume the column indices are 1, 3, and 10
+
+								intScanNumberColIndex = 1
+								intScanTypeColIndex = 3
+								intScanTypeNameColIndex = 10
 
 							Else
 								If intScanTypeNameColIndex < 0 And Not blnScanStatsExLoaded Then
