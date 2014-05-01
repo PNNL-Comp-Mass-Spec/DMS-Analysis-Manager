@@ -7,14 +7,10 @@ Public Class clsPHRPMassErrorValidator
 #Region "Module variables"
 
 	Protected mErrorMessage As String = String.Empty
-	Protected mDatasetName As String
-	Protected mWorkingDirectory As String
-	Protected mDebugLevel As Integer
+	Protected ReadOnly mDebugLevel As Integer
 
 	' This is a value between 0 and 100
-	Protected mErrorThresholdPercent As Double = 5
-
-	Protected mPSMs As List(Of PHRPReader.clsPSM)
+	Protected Const mErrorThresholdPercent As Double = 5
 
 	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
 
@@ -40,8 +36,6 @@ Public Class clsPHRPMassErrorValidator
 	End Property
 
 	Public Sub New(ByVal strDatasetName As String, ByVal strWorkingDirectoryPath As String, ByVal intDebugLevel As Integer)
-		mDatasetName = strDatasetName
-		mWorkingDirectory = strWorkingDirectoryPath
 		mDebugLevel = intDebugLevel
 	End Sub
 
@@ -69,32 +63,6 @@ Public Class clsPHRPMassErrorValidator
 					objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10")
 				End If
 			End If
-
-			' Make sure mSearchEngineParams.ModInfo is up-to-date
-
-			Dim blnMatchFound As Boolean
-
-			For Each oPSMEntry As PHRPReader.clsPSM In mPSMs
-
-				If oPSMEntry.ModifiedResidues.Count > 0 Then
-					For Each objResidue As PHRPReader.clsAminoAcidModInfo In oPSMEntry.ModifiedResidues
-
-						' Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
-						blnMatchFound = False
-						For Each objKnownMod As PHRPReader.clsModificationDefinition In objSearchEngineParams.ModInfo
-							If objKnownMod Is objResidue.ModDefinition Then
-								blnMatchFound = True
-								Exit For
-							End If
-						Next
-
-						If Not blnMatchFound Then
-							objSearchEngineParams.ModInfo.Add(objResidue.ModDefinition)
-						End If
-					Next
-
-				End If
-			Next
 
 		Catch ex As Exception
 			ShowErrorMessage("Error in LoadSearchEngineParameters", ex)
@@ -135,7 +103,6 @@ Public Class clsPHRPMassErrorValidator
 
 		Try
 			mErrorMessage = String.Empty
-			mPSMs = New List(Of PHRPReader.clsPSM)
 
 			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, eResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False, blnLoadScanStats:=False)
 
@@ -160,21 +127,7 @@ Public Class clsPHRPMassErrorValidator
 
 			mPHRPReader.ClearErrors()
 			mPHRPReader.ClearWarnings()
-
-			While mPHRPReader.MoveNext
-
-				Dim objCurrentPSM As PHRPReader.clsPSM = mPHRPReader.CurrentPSM
-
-				mPSMs.Add(objCurrentPSM)
-
-			End While
-
-			mPHRPReader.Dispose()
-
-			If mPSMs.Count = 0 Then
-				ShowWarningMessage("PHRPReader did not find any records in " & System.IO.Path.GetFileName(strInputFilePath))
-				Return True
-			End If
+			mPHRPReader.SkipDuplicatePSMs = True
 
 			' Load the search engine parameters
 			objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFileName, eResultType)
@@ -191,24 +144,61 @@ Public Class clsPHRPMassErrorValidator
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Will use mass tolerance of " & dblPrecursorMassTolerance.ToString("0.0") & " Da when determining PHRP mass errors")
 			End If
 
-			' Count the number of entries in mPSMs with a mass error greater than dblPrecursorMassTolerance
+			' Count the number of PSMs with a mass error greater than dblPrecursorMassTolerance
 			Dim dblMassError As Double
 			Dim dblToleranceCurrent As Double
 
 			Dim intErrorCount As Integer = 0
+			Dim intPsmCount = 0
+			Dim dtLastProgress As DateTime = DateTime.UtcNow
 
 			Dim strPeptideDescription As String
 			Dim lstLargestMassErrors = New SortedDictionary(Of Double, String)
+			
+			While mPHRPReader.MoveNext
 
-			For Each oPSMEntry As PHRPReader.clsPSM In mPSMs
+				'' This is old code that was in LoadSearchEngineParameters and was called after all PSMs had been cached in memory
+				'' Since we're no longer pre-caching PSMs in memory, this code block was moved to this function
+				'' However, I don't think this code is really needed, so I've commented it out
+				''
+				'' Make sure mSearchEngineParams.ModInfo is up-to-date
+				'If mPHRPReader.CurrentPSM.ModifiedResidues.Count > 0 Then
+				'	For Each objResidue As PHRPReader.clsAminoAcidModInfo In mPHRPReader.CurrentPSM.ModifiedResidues
 
-				If oPSMEntry.PeptideMonoisotopicMass > 0 Then
-					dblMassError = oPSMEntry.PrecursorNeutralMass - oPSMEntry.PeptideMonoisotopicMass
+				'		' Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
+				'		Dim blnMatchFound = False
+				'		For Each objKnownMod As PHRPReader.clsModificationDefinition In objSearchEngineParams.ModInfo
+				'			If objKnownMod Is objResidue.ModDefinition Then
+				'				blnMatchFound = True
+				'				Exit For
+				'			End If
+				'		Next
 
-					dblToleranceCurrent = dblPrecursorMassTolerance + oPSMEntry.Charge - 1
+				'		If Not blnMatchFound Then
+				'			objSearchEngineParams.ModInfo.Add(objResidue.ModDefinition)
+				'		End If
+				'	Next
+
+				'End If
+
+				intPsmCount += 1
+
+				If intPsmCount Mod 100 = 0 AndAlso DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15 Then
+					dtLastProgress = DateTime.UtcNow
+					Dim statusMessage = "Validating mass errors: " & mPHRPReader.PercentComplete.ToString("0.0") & "% complete"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
+					Console.WriteLine(statusMessage)
+				End If
+
+				Dim objCurrentPSM As PHRPReader.clsPSM = mPHRPReader.CurrentPSM
+
+				If objCurrentPSM.PeptideMonoisotopicMass > 0 Then
+					dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
+
+					dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1
 					If Math.Abs(dblMassError) > dblToleranceCurrent Then
 
-						strPeptideDescription = "Scan=" & oPSMEntry.ScanNumberStart & ", charge=" & oPSMEntry.Charge & ", peptide=" & oPSMEntry.PeptideWithNumericMods
+						strPeptideDescription = "Scan=" & objCurrentPSM.ScanNumberStart & ", charge=" & objCurrentPSM.Charge & ", peptide=" & objCurrentPSM.PeptideWithNumericMods
 						intErrorCount += 1
 
 						' Keep track of the 100 largest mass errors
@@ -229,17 +219,24 @@ Public Class clsPHRPMassErrorValidator
 					End If
 
 				End If
-			Next
 
+			End While
+
+			mPHRPReader.Dispose()
+
+			If intPsmCount = 0 Then
+				ShowWarningMessage("PHRPReader did not find any records in " & IO.Path.GetFileName(strInputFilePath))
+				Return True
+			End If
 
 			Dim dblPercentInvalid As Double
-			dblPercentInvalid = intErrorCount / mPSMs.Count * 100
+			dblPercentInvalid = intErrorCount / intPsmCount * 100
 
 			If intErrorCount > 0 Then
 
 				Dim strMessage As String
 				mErrorMessage = dblPercentInvalid.ToString("0.0") & "% of the peptides have a mass error over " & dblPrecursorMassTolerance.ToString("0.0") & " Da"
-				strMessage = mErrorMessage & " (" & intErrorCount & " / " & mPSMs.Count & ")"
+				strMessage = mErrorMessage & " (" & intErrorCount & " / " & intPsmCount & ")"
 
 				If dblPercentInvalid > mErrorThresholdPercent Then
 					ShowErrorMessage(strMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")
@@ -275,14 +272,14 @@ Public Class clsPHRPMassErrorValidator
 
 			Else
 				If mDebugLevel >= 2 Then
-					ShowMessage("All " & mPSMs.Count & " peptides have a mass error below " & dblPrecursorMassTolerance.ToString("0.0") & " Da")
+					ShowMessage("All " & intPsmCount & " peptides have a mass error below " & dblPrecursorMassTolerance.ToString("0.0") & " Da")
 				End If
 				blnSuccess = True
 			End If
 
 		Catch ex As System.Exception
-			ShowErrorMessage("Error in LoadSearchEngineParameters", ex)
-			mErrorMessage = "Exception in LoadSearchEngineParameters"
+			ShowErrorMessage("Error in ValidatePHRPResultMassErrors", ex)
+			mErrorMessage = "Exception in ValidatePHRPResultMassErrors"
 			Return False
 		End Try
 
