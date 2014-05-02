@@ -9,7 +9,6 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
-Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisResourcesMSGFDB
 	Inherits clsAnalysisResources

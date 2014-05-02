@@ -9,7 +9,6 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
-Imports Microsoft.Hpc.Scheduler
 
 Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
@@ -277,8 +276,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-				If udtHPCOptions.UsingHPC And mMSGFPlusComplete Then
-					' Don't treat this as a fatal error; HPC jobs don't always close out cleanly
+				If mMSGFPlusComplete Then
+					' Don't treat this as a fatal error
+					' in particular, HPC jobs don't always close out cleanly
 					blnProcessingError = False
 					m_EvalMessage = String.Copy(m_message)
 					m_message = String.Empty
@@ -594,8 +594,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			If Not blnSuccess Then
 
-				'ExamineHPCTasks(hpcJob)
-
 				m_message = "HPC Job Monitor returned false"
 				If Not String.IsNullOrWhiteSpace(mComputeCluster.ErrorMessage) Then
 					m_message &= ": " & mComputeCluster.ErrorMessage
@@ -618,32 +616,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Return blnSuccess
 
 	End Function
-
-	Private Sub ExamineHPCTasks(ByVal hpcJob As ISchedulerJob)
-
-		Try
-			Dim properties As Microsoft.Hpc.Scheduler.IPropertyIdCollection = Nothing
-			Dim filter As Microsoft.Hpc.Scheduler.IFilterCollection = Nothing
-			Dim sort As Microsoft.Hpc.Scheduler.ISortCollection = Nothing
-			Dim expandParametric As Boolean
-
-			Dim taskIterator = hpcJob.OpenTaskEnumerator(properties, filter, sort, expandParametric)
-			Dim oTaskEnum = taskIterator.GetEnumerator()
-
-			' Step through the tasks to examine them
-			While oTaskEnum.MoveNext
-				Dim oPropertyEnum = oTaskEnum.Current.GetEnumerator()
-				While oPropertyEnum.MoveNext
-					Console.WriteLine(oPropertyEnum.Current.PropName.ToString() & ": " & oPropertyEnum.Current.Value.ToString())
-				End While
-			End While
-
-		Catch ex As Exception
-			Console.WriteLine("Error examining job tasks: " & ex.Message)
-		End Try
-	
-		
-	End Sub
 
 	Protected Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal strSearchEngineName As String, ByVal CmdStr As String) As Boolean
 
@@ -1033,7 +1005,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Make sure the copy of MSGF+ is up-to-date on PICfs
 			Dim fiMSGFDbProg = New FileInfo(mMSGFDbProgLoc)
 			Dim strMSGFDbRelativePath = fiMSGFDbProg.Directory.FullName
-			Dim chDMSProgramsIndex = strMSGFDbRelativePath.ToLower().IndexOf("\dms_programs\", System.StringComparison.Ordinal)
+			Dim chDMSProgramsIndex = strMSGFDbRelativePath.ToLower().IndexOf("\dms_programs\", StringComparison.Ordinal)
 
 			If chDMSProgramsIndex < 0 Then
 				m_message = "Unable to determine the relative path to the MSGF+ program folder; could not find \dms_programs\ in " & strMSGFDbRelativePath
@@ -1118,7 +1090,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <param name="sender"></param>
 	''' <param name="e"></param>
 	''' <remarks>When event mComputeCluster.ProgressEvent fires, it will disable this timer</remarks>
-	Private Sub mHPCMonitorInitTimer_Elapsed(sender As Object, e As System.Timers.ElapsedEventArgs) Handles mHPCMonitorInitTimer.Elapsed
+	Private Sub mHPCMonitorInitTimer_Elapsed(sender As Object, e As Timers.ElapsedEventArgs) Handles mHPCMonitorInitTimer.Elapsed
 		UpdateStatusRunning(m_progress)
 	End Sub
 
