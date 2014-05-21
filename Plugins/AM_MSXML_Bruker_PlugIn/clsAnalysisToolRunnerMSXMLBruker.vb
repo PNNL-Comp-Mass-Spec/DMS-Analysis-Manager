@@ -59,6 +59,8 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
+		Dim processingErrorMessage As String = String.empty
+
 		eResult = CreateMSXmlFile()
 		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			' Something went wrong
@@ -67,6 +69,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 			If String.IsNullOrEmpty(m_message) Then
 				m_message = "Error running CompassXport"
 			End If
+			processingErrorMessage = String.copy(m_message)
 
 			If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
 				eReturnCode = eResult
@@ -86,8 +89,13 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
 		If DeleteRawDataFiles() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " & m_message)
-			m_message = "Error deleting raw data files"
-			' Don't treat this as a critical error; leave eReturnCode unchanged
+
+			If Not String.IsNullOrEmpty(processingErrorMessage) Then
+				m_message = processingErrorMessage
+			Else
+				' Don't treat this as a critical error; leave eReturnCode unchanged
+				m_message = "Error deleting raw data files"
+			End If
 		End If
 
 		'Update the job summary file

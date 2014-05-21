@@ -6,6 +6,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_S
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerExtractionPlugin", "..\Plugins\AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.vbproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_MSXML_Bruker_PlugIn", "..\Plugins\AM_MSXML_Bruker_PlugIn\AM_MSXML_Bruker_PlugIn.vbproj", "{2A46F87F-966D-45AE-BFF2-CDB24AD06143}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,18 @@ Global
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Release|Mixed Platforms.Build.0 = Release|x86
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Release|x86.ActiveCfg = Release|x86
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Release|x86.Build.0 = Release|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|x86.ActiveCfg = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|x86.Build.0 = Debug|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|Mixed Platforms.Build.0 = Release|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|x86.ActiveCfg = Release|x86
+		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

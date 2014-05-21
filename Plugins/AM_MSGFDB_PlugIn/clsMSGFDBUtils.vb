@@ -1719,7 +1719,8 @@ Public Class clsMSGFDBUtils
 			If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
 		ElseIf intParamFileThreadCount <= 0 Then
-			' Set intParamFileThreadCount to the number of cores on this computer, minus 1
+			' Set intParamFileThreadCount to the number of cores on this computer
+			' If more than 4 cores, then use CoreCount - 1
 			' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
 			' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
 
@@ -1728,7 +1729,12 @@ Public Class clsMSGFDBUtils
 				coreCount += Integer.Parse(item("NumberOfCores").ToString())
 			Next
 
-			intParamFileThreadCount = coreCount - 1
+			If coreCount <= 4 Then
+				intParamFileThreadCount = coreCount
+			ElseIf coreCount > 4 Then
+				intParamFileThreadCount = coreCount - 1
+			End If
+
 		End If
 
 		If intParamFileThreadCount > 0 Then
