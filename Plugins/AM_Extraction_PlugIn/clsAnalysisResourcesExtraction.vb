@@ -250,6 +250,7 @@ Public Class clsAnalysisResourcesExtraction
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 		m_jobParams.AddResultFileToSkip(FileToGet)
+		m_jobParams.AddResultFileExtensionToSkip("_moda.txt")
 
 		FileToGet = m_DatasetName & "_mgf_IndexToScanMap.txt"
 		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then

@@ -51,9 +51,33 @@ Public Interface IJobParams
 	Function AddAdditionalParameter(ByVal ParamSection As String, ByVal ParamName As String, ByVal ParamValue As String) As Boolean
 
 	Sub AddDatasetInfo(ByVal DatasetName As String, ByVal DatasetID As Integer)
+
+	''' <summary>
+	''' Add a filename to definitely move to the results folder
+	''' </summary>
+	''' <param name="FileName"></param>
+	''' <remarks></remarks>
 	Sub AddResultFileToKeep(ByVal FileName As String)
-	Sub AddServerFileToDelete(ByVal FileName As String)
+
+	''' <summary>
+	''' Add a file to be deleted from the storage server (requires full file path)
+	''' </summary>
+	''' <param name="FilePath">Full path to the file</param>
+	''' <remarks></remarks>
+	Sub AddServerFileToDelete(ByVal FilePath As String)
+
+	''' <summary>
+	''' Add a filename to not move to the results folder
+	''' </summary>
+	''' <param name="FileName"></param>
+	''' <remarks></remarks>
 	Sub AddResultFileToSkip(ByVal FileName As String)
+
+	''' <summary>
+	''' Add a filename extension to not move to the results folder
+	''' </summary>
+	''' <param name="Extension"></param>
+	''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
 	Sub AddResultFileExtensionToSkip(ByVal Extension As String)
 
 	Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)

@@ -120,7 +120,7 @@ Public Class clsAnalysisResourcesMODa
 				Return False
 			End If
 
-			m_jobParams.AddResultFileExtensionToSkip(".mgf")
+			m_jobParams.AddResultFileExtensionToSkip(".mgf")			
 
 		Catch ex As Exception
 			m_message = "Exception in ConvertCDTAToMGF"

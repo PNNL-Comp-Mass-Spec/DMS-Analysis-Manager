@@ -5,6 +5,7 @@ Imports AnalysisManagerBase
 Imports System.Collections.Generic
 Imports System.Collections.Concurrent
 Imports System.IO
+Imports PHRPReader
 
 Public Class clsAnalysisToolRunnerIDPicker
 	Inherits clsAnalysisToolRunnerBase
@@ -202,7 +203,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			End If
 
 			' Create the PepXML file
-			blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath)
+			blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath, ePHRPResultType)
 			If Not blnSuccess Then
 				If String.IsNullOrEmpty(m_message) Then
 					m_message = "Error creating PepXML file"
@@ -230,7 +231,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 				If blnSuccess Then
 					' Convert the search scores in the pepXML file to q-values
-					blnSuccess = RunQonvert(strFASTAFilePath, strDecoyPrefix)
+					blnSuccess = RunQonvert(strFASTAFilePath, strDecoyPrefix, ePHRPResultType)
 					If Not blnSuccess Then blnProcessingError = True
 				End If
 
@@ -252,6 +253,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 				' Zip the PepXML file
 				ZipPepXMLFile()
 			End If
+
+			m_jobParams.AddResultFileExtensionToSkip(".bat")
 
 			m_progress = PROGRESS_PCT_COMPLETE
 
@@ -473,7 +476,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 	End Sub
 
-	Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String) As Boolean
+	Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
 		Dim strParamFileName As String
 
@@ -496,6 +499,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 			iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3)
 
 			CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
+
+			If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+				CmdStr &= " /NoMSGF"
+			End If
 
 			ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
 
@@ -929,7 +936,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 	''' <param name="strDecoyPrefix"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function RunQonvert(ByVal strFASTAFilePath As String, ByVal strDecoyPrefix As String) As Boolean
+	Protected Function RunQonvert(ByVal strFASTAFilePath As String, ByVal strDecoyPrefix As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
 		Dim progLoc As String
 		Dim CmdStr As String
@@ -945,6 +952,12 @@ Public Class clsAnalysisToolRunnerIDPicker
 		' Define the path to the .Exe
 		progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert)
 
+		' Possibly override some options
+		If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+			mIDPickerOptions("SearchScoreWeights") = "Probability -1"
+			mIDPickerOptions("NormalizedSearchScores") = "Probability"
+		End If
+
 		' Build the command string, for example:
 		'   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
 		CmdStr = String.Empty
@@ -954,6 +967,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		CmdStr = AppendArgument(CmdStr, "SearchScoreWeights", "msgfspecprob -1")
 		CmdStr = AppendArgument(CmdStr, "OptimizeScoreWeights", "1")
 		CmdStr = AppendArgument(CmdStr, "NormalizedSearchScores", "msgfspecprob")
+
 		CmdStr &= " -DecoyPrefix " & PossiblyQuotePath(strDecoyPrefix)
 		CmdStr &= " -dump"				' This tells IDPQonvert to display the processing options that the program is using
 		CmdStr &= " " & mPepXMLFilePath

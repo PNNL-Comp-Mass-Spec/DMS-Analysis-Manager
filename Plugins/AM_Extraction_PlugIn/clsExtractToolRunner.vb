@@ -896,7 +896,7 @@ Public Class clsExtractToolRunner
 
 			Try
 				' The goal:
-				'   Create the _fht.txt and _syn.txt files from the _moda.id.txt file
+				'   Create the _syn.txt files from the _moda.id.txt file
 
 				currentStep = "Determining results file type based on the results file name"
 

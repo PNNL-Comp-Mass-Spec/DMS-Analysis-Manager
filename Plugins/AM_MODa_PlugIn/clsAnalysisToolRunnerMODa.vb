@@ -94,7 +94,9 @@ Public Class clsAnalysisToolRunnerMODa
 					' Zip the output file
 					blnSuccess = ZipOutputFile(fiResultsFile)
 
-					If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
+					If blnSuccess Then
+						m_jobParams.AddResultFileExtensionToSkip("_moda.txt")
+					ElseIf String.IsNullOrEmpty(m_message) Then
 						m_message = "Unknown error zipping the MODa results"
 					End If
 
