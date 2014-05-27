@@ -63,8 +63,14 @@ Public Class clsExtractToolRunner
 		Try
 
 			'Call base class for initial setup
-			MyBase.RunTool()
+			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
 
+			If m_DebugLevel > 4 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter")
+			End If
+			
 			' Store the AnalysisManager version info in the database
 			If Not StoreToolVersionInfo() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
