@@ -540,30 +540,6 @@ Public Class clsAnalysisToolRunnerMODa
 
 	End Sub
 
-	Private Function ReplaceUpdatedFile(ByVal fiOrginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo) As Boolean
-
-		Try
-			Dim finalFilePath = fiOrginalFile.FullName
-
-			Threading.Thread.Sleep(250)
-			fiOrginalFile.Delete()
-
-			Threading.Thread.Sleep(250)
-			fiUpdatedFile.MoveTo(finalFilePath)
-
-		Catch ex As Exception
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReplaceUpdatedFile: " & ex.Message)
-			End If
-
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-
 	Protected Function UpdateParameterFile(ByVal paramFileName As String, ByVal spectrumFileName As String, ByVal fastaFilePath As String) As Boolean
 
 		Const SPEC_FILE_PATH As String = "Spectra"
