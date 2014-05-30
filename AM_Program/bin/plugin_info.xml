@@ -312,6 +312,16 @@
 		Class="AnalysisManagerMODaPlugin.clsAnalysisToolRunnerMODa" 
 		AssemblyFile="AnalysisManagerMODaPlugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="deconpeakdetector" 
+		Class="AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisToolRunnerDeconPeakDetector" 
+		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="glyqiq" 
+		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ" 
+		AssemblyFile="AnalysisManagerGlyQIQPlugIn.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -626,7 +636,17 @@
 		Class="AnalysisManagerMODaPlugin.clsAnalysisResourcesMODa" 
 		AssemblyFile="AnalysisManagerMODaPlugin.dll" 
 	/>
-	
+	<Resourcer 
+		Tool="deconpeakdetector" 
+		Class="AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisResourcesDeconPeakDetector" 
+		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="glyqiq" 
+		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ" 
+		AssemblyFile="AnalysisManagerGlyQIQPlugin.dll" 
+	/>
+		
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

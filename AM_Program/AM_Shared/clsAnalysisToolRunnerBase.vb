@@ -1793,6 +1793,29 @@ Public Class clsAnalysisToolRunnerBase
 		Return True
 
 	End Function
+	
+	Protected Function ReplaceUpdatedFile(ByVal fiOrginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo) As Boolean
+
+		Try
+			Dim finalFilePath = fiOrginalFile.FullName
+
+			Thread.Sleep(250)
+			fiOrginalFile.Delete()
+
+			Thread.Sleep(250)
+			fiUpdatedFile.MoveTo(finalFilePath)
+
+		Catch ex As Exception
+			If m_DebugLevel >= 1 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReplaceUpdatedFile: " & ex.Message)
+			End If
+
+			Return False
+		End Try
+
+		Return True
+
+	End Function
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
 		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
