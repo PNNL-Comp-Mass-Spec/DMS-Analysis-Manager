@@ -146,7 +146,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 	End Function
 
 	''' <summary>
-	''' Parse the DeconPeakDetector console output file to determine the DeconPeakDetector version and to track the search progress
+	''' Parse the DeconPeakDetector console output file to track the search progress
 	''' </summary>
 	''' <param name="strConsoleOutputFilePath"></param>
 	''' <remarks></remarks>
