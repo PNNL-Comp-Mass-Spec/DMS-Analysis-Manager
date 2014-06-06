@@ -4,10 +4,6 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg_Debug",
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_Shared.vbproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerGlyQIQPlugin", "..\Plugins\AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.vbproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSGFDBPlugIn", "..\Plugins\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,18 +24,6 @@ Global
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.ActiveCfg = Release|x86
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|x86.ActiveCfg = Release|x86
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|x86.Build.0 = Release|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.ActiveCfg = Debug|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.Build.0 = Debug|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.ActiveCfg = Release|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.ActiveCfg = Release|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.Build.0 = Release|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|x86.ActiveCfg = Debug|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|x86.Build.0 = Debug|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Any CPU.ActiveCfg = Release|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.ActiveCfg = Release|x86
-		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

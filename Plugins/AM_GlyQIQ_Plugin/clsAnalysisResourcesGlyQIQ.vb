@@ -117,7 +117,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 			' Define the output file path
 			mGlyQIQParams.ConsoleOperatingParametersFileName = "GlyQIQ_Params_" & mGlyQIQParams.DatasetNameTruncated & ".txt"
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the OperatingParameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
 
 			Dim outputFilePath = Path.Combine(mGlyQIQParams.WorkingParametersFolderPathLocal, mGlyQIQParams.ConsoleOperatingParametersFileName)
 
@@ -289,7 +289,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 			' Example path: \\winhpcfs\Projects\DMS\DMS_Work_Dir\Pub-61-3\0y_HPC_OperationParameters_201405291749.bat
 			Dim operationParametersFilePath As String = Path.Combine(m_WorkingDir, mGlyQIQParams.OperationParametersFileName)
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.OperationParametersFileName)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operation Parameters file, " & mGlyQIQParams.OperationParametersFileName)
 
 			mGlyQIQParams.CoreCountActual = m_jobParams.GetJobParameter("HPCMaxCores", 500)
 

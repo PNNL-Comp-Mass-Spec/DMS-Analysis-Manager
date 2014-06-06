@@ -164,6 +164,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
         Try
 
             Dim diFolder As DirectoryInfo = New DirectoryInfo(folderPath)
+            If Not diFolder.Exists Then Return True
 
             Dim lstFiles = diFolder.GetFiles("*")
 
@@ -315,12 +316,14 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Using srInFile = New StreamReader(New FileStream(fiConsoleOutputFileOld.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Dim strLookingForPrefix = "Looking for: " + udtHPCOptions.WorkDirPath
+                Dim strMultiSleepParameterFilePrefix = Path.Combine(udtHPCOptions.WorkDirPath, "WorkingParameters\HPC_MultiSleepParameterFileGlobal")
 
                 Using swOutfile = New StreamWriter(New FileStream(fiConsoleOutputFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
                     While srInFile.Peek > -1
                         Dim strLineIn = srInFile.ReadLine()
 
-                        If strLineIn.StartsWith(strLookingForPrefix) Then
+                        If strLineIn.StartsWith(strLookingForPrefix) OrElse
+                           strLineIn.StartsWith(strMultiSleepParameterFilePrefix) Then
                             ' Skip this line
                             Continue While
                         End If
