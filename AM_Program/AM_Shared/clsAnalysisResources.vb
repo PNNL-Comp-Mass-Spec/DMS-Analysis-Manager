@@ -1168,8 +1168,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Protected Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean) As Boolean
-
-		Return FindAndRetrieveMiscFiles(FileName, Unzip, True)
+		Const SearchArchivedDatasetFolder = True
+		Return FindAndRetrieveMiscFiles(FileName, Unzip, SearchArchivedDatasetFolder)
 	End Function
 
 	''' <summary>

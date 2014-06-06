@@ -187,6 +187,12 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerMODaPlugin.clsAnalysisToolRunnerMODa".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerMODaPlugIn.clsAnalysisToolRunnerMODa, IToolRunner)
 
+			'Case "AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisToolRunnerDeconPeakDetector".ToLower()
+			'	myToolRunner = DirectCast(New AnalysisManagerDeconPeakDetectorPlugIn.clsAnalysisToolRunnerDeconPeakDetector, IToolRunner)
+
+			Case "AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ".ToLower()
+				myToolRunner = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisToolRunnerGlyQIQ, IToolRunner)
+
 		End Select
 
 		Return myToolRunner
@@ -308,6 +314,13 @@ Public Class clsPluginLoader
 
 			'Case "AnalysisManagerMODaPlugin.clsAnalysisResourcesMODa".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerMODaPlugIn.clsAnalysisResourcesMODa, IAnalysisResources)
+
+			'Case "AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisResourcesDeconPeakDetector".ToLower()
+			'	myModule = DirectCast(New AnalysisManagerDeconPeakDetectorPlugIn.clsAnalysisResourcesDeconPeakDetector, IAnalysisResources)
+
+			Case "AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ".ToLower()
+				myModule = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisResourcesGlyQIQ, IAnalysisResources)
+
 
 		End Select
 

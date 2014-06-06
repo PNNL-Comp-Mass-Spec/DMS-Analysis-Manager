@@ -318,7 +318,7 @@
 		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugIn.dll" 
 	/>
 	<ToolRunner 
-		Tool="glyqiq" 
+		Tool="glyq_iq" 
 		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ" 
 		AssemblyFile="AnalysisManagerGlyQIQPlugIn.dll" 
 	/>
@@ -642,7 +642,7 @@
 		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugin.dll" 
 	/>
 	<Resourcer 
-		Tool="glyqiq" 
+		Tool="glyq_iq" 
 		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ" 
 		AssemblyFile="AnalysisManagerGlyQIQPlugin.dll" 
 	/>

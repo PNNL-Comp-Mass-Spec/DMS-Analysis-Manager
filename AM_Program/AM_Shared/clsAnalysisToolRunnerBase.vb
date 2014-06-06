@@ -2276,6 +2276,23 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <param name="sourceFolderPath"></param>
 	''' <param name="targetFolderPath"></param>
+	''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String, ByVal copySubfolders As Boolean) As Boolean
+
+		Dim lstFileNameFilterSpec = New List(Of String) From {"*"}
+		Dim lstFileNameExclusionSpec = New List(Of String)
+		Const maxRetryCount = 3
+
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
 	''' <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks>Will retry failed copies up to 3 times</remarks>
@@ -2287,8 +2304,9 @@ Public Class clsAnalysisToolRunnerBase
 		Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}
 		Dim lstFileNameExclusionSpec = New List(Of String)
 		Const maxRetryCount = 3
+		Const copySubfolders = False
 
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 	End Function
 
 	''' <summary>
@@ -2306,8 +2324,9 @@ Public Class clsAnalysisToolRunnerBase
 
 		Dim lstFileNameExclusionSpec = New List(Of String)
 		Const maxRetryCount = 3
+		Const copySubfolders = False
 
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 	End Function
 
 	''' <summary>
@@ -2326,8 +2345,9 @@ Public Class clsAnalysisToolRunnerBase
 	  ByVal lstFileNameExclusionSpec As List(Of String)) As Boolean
 
 		Const maxRetryCount = 3
+		Const copySubfolders = False
 
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount)
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 	End Function
 
 	''' <summary>
@@ -2346,6 +2366,30 @@ Public Class clsAnalysisToolRunnerBase
 	  ByVal lstFileNameFilterSpec As List(Of String),
 	  ByVal lstFileNameExclusionSpec As List(Of String),
 	  ByVal maxRetryCount As Integer) As Boolean
+
+		Const copySubfolders = False
+		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+
+	End Function
+
+	''' <summary>
+	''' Copies new/changed files from the source folder to the target folder
+	''' </summary>
+	''' <param name="sourceFolderPath"></param>
+	''' <param name="targetFolderPath"></param>
+	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+	''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
+	''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks></remarks>
+	Protected Function SynchronizeFolders(
+	  ByVal sourceFolderPath As String,
+	  ByVal targetFolderPath As String,
+	  ByVal lstFileNameFilterSpec As List(Of String),
+	  ByVal lstFileNameExclusionSpec As List(Of String),
+	  ByVal maxRetryCount As Integer,
+	  ByVal copySubfolders As Boolean) As Boolean
 
 		Try
 			Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
@@ -2389,7 +2433,6 @@ Public Class clsAnalysisToolRunnerBase
 				Next
 			End If
 
-
 			For Each fileName In lstFilesToCopy
 				Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, fileName))
 				Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fileName))
@@ -2425,6 +2468,22 @@ Public Class clsAnalysisToolRunnerBase
 
 				End If
 			Next
+
+			If copySubfolders Then
+				Dim lstSubFolders = diSourceFolder.GetDirectories()
+
+				For Each diSubFolder In lstSubFolders
+					Dim subfolderTargetPath = Path.Combine(targetFolderPath, diSubFolder.Name)
+					Dim success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+
+					If Not success Then
+						m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetFolderPath
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Exit For
+					End If
+
+				Next
+			End If
 
 		Catch ex As Exception
 			m_message = "Error in SynchronizeFolders"
