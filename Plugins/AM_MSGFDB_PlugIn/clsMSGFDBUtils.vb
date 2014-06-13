@@ -1715,7 +1715,7 @@ Public Class clsMSGFDBUtils
 		End If
 
 		If udtHPCOptions.UsingHPC Then
-			' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores
+			' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
 			If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
 		ElseIf intParamFileThreadCount <= 0 Then

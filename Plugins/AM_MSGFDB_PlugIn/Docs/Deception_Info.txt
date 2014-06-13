@@ -1,0 +1,15 @@
+Deception details:
+	One node has two sockets
+	One socket has 16 cores
+	Thus one node has 32 cores
+
+One socket has 32 GB of ram  (2 GB per core)
+Thus, one node has 64 GB of ram
+
+Set up MSGF+ job to use a "Node" resource
+with Min=1 and Max=1
+
+Set max runtime to 3 days
+
+Use job template DMS
+Use project DMS

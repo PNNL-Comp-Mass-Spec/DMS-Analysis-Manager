@@ -482,11 +482,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		hpcJobInfo.JobParameters.TemplateName = "DMS"		 ' If using 32 cores, could use Template "Single"
 		hpcJobInfo.JobParameters.ProjectName = "DMS"
 
-		' April 2014 note: If using picfs.pnl.gov  then we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
-		' Each node has two sockets
-
-		'hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
-		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node
+		hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
 		hpcJobInfo.JobParameters.isExclusive = True
 
 		' If requesting a socket or a node, there is no need to set the number of cores
@@ -494,6 +490,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		' hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
 
 		If udtHPCOptions.SharePath.StartsWith("\\picfs") Then
+			' April 2014 note: When using picfs.pnl.gov we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
+			' Each node has two sockets
+			' Each socket has 16 cores
+			' Thus a node has 32 cores
+			hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node
+
 			' Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
 			Dim batchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_MSGFPlus_Task.bat", javaExePath & " " & CmdStr)
 			m_jobParams.AddResultFileToSkip(batchFilePath)
