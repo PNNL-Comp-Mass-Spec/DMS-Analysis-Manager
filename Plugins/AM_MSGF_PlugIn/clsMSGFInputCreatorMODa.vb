@@ -34,15 +34,15 @@ Public Class clsMSGFInputCreatorMODa
 	End Sub
 
 	Protected Overrides Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
-		Dim dblLogEValue As Double
+		Dim dblProbability As Double
 
 		Dim blnPassesFilters As Boolean
 
-		' Keep MODa results with Probability < 0.1
+		' Keep MODa results with Probability >= 0.2  (higher probability values are better)
 		' This will typically keep all data in the _syn.txt file
 
-		dblLogEValue = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
-		If dblLogEValue <= 0.1 Then
+		dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
+		If dblProbability >= 0.2 Then
 			blnPassesFilters = True
 		End If
 

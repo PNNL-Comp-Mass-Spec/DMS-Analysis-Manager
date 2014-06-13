@@ -137,9 +137,9 @@ Public Class clsExtractToolRunner
 
 				Case clsAnalysisResources.RESULT_TYPE_MODA
 
-					' Convert the MODa results to a tab-delimited file, filtering by FDR when converting
+					' Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
 					Dim strFilteredMODaResultsFilePath As String = String.Empty
-					Result = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath)
+					Result = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath, True)
 					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 						blnProcessingError = True
 						Exit Select
@@ -148,6 +148,16 @@ Public Class clsExtractToolRunner
 					' Run PHRP
 					strCurrentAction = "running peptide hits result processor for MODa"
 					Result = RunPhrpForMODa(strFilteredMODaResultsFilePath)
+					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						blnProcessingError = True
+					End If
+
+					' Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
+					Result = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath, False)
+					If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+						blnProcessingError = True
+						Exit Select
+					End If
 
 				Case Else
 					' Should never get here - invalid result type specified
@@ -231,13 +241,18 @@ Public Class clsExtractToolRunner
 	''' <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
 	''' <returns>The path to the .txt file if successful; empty string if an error</returns>
 	''' <remarks></remarks>
-	Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
+	Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String, ByVal keepAllResults As Boolean) As IJobParams.CloseOutType
 
 		strFilteredMODaResultsFilePath = String.Empty
 
 		Try
 			Dim fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05)
-			Dim decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "XXX_")
+			Dim decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_")
+
+			If keepAllResults Then
+				' Use a fake decoy prefix so that all results will be kept (the top hit for each scan that anal_moda decides to keep)
+				decoyPrefix = "ABC123XYZ_"
+			End If
 
 			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
 			Dim paramFilePath = Path.Combine(m_WorkDir, paramFileName)
@@ -308,7 +323,7 @@ Public Class clsExtractToolRunner
 
 			End If
 
-			' Confirm that the reuslts file was created
+			' Confirm that the results file was created
 			Dim fiFilteredMODaResultsFilePath = New FileInfo(Path.ChangeExtension(MODaResultsFilePath, ".id.txt"))
 
 			If Not fiFilteredMODaResultsFilePath.Exists() Then

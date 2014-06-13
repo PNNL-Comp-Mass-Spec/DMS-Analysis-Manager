@@ -501,6 +501,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 			CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
 
 			If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+				' The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
+				' Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
+				' Therefore, don't include them in the PepXML file
 				CmdStr &= " /NoMSGF"
 			End If
 
@@ -954,7 +957,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		' Possibly override some options
 		If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-			mIDPickerOptions("SearchScoreWeights") = "Probability -1"
+			' Higher MODa probability scores are better
+			mIDPickerOptions("SearchScoreWeights") = "Probability 1"
 			mIDPickerOptions("NormalizedSearchScores") = "Probability"
 		End If
 

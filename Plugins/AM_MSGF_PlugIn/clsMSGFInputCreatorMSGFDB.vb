@@ -36,6 +36,74 @@ Public Class clsMSGFInputCreatorMSGFDB
 	End Sub
 
 	''' <summary>
+	''' Reads a MODa FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
+	''' using the Probability values for the MSGF score
+	''' </summary>
+	''' <param name="strSourceFilePath"></param>
+	''' <param name="strSourceFileDescription"></param>
+	''' <returns></returns>
+	''' <remarks>Note that higher probability values are better.  Also, note that Probability is actually just a score between 0 and 1; not a true probability</remarks>
+	Public Function CreateMSGFFileUsingMODaProbabilities(ByVal strSourceFilePath As String, strSourceFileDescription As String) As Boolean
+
+		Dim strMSGFFilePath As String
+
+		Try
+
+			If String.IsNullOrEmpty(strSourceFilePath) Then
+				' Source file not defined
+				mErrorMessage = "Source file not provided to CreateMSGFFileUsingMODaProbabilities"
+				Console.WriteLine(mErrorMessage)
+				Return False
+			End If
+
+
+			' Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
+			Using objReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSourceFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.MODa, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=False)
+				objReader.SkipDuplicatePSMs = False
+
+				' Define the path to write the first-hits MSGF results to
+				strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+
+				' Create the output file
+				Using swMSGFFile As StreamWriter = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+					' Write out the headers to swMSGFFHTFile
+					WriteMSGFResultsHeaders(swMSGFFile)
+
+					Do While objReader.MoveNext()
+
+						Dim objPSM As PHRPReader.clsPSM
+						objPSM = objReader.CurrentPSM
+
+						' Converting MODa probability to a fake Spectral Probability using 1 - probability
+						Dim dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
+						Dim strProbabilityValue = (1 - dblProbability).ToString("0.0000")
+
+						' objPSM.MSGFSpecProb comes from column Probability
+						swMSGFFile.WriteLine( _
+						   objPSM.ResultID & ControlChars.Tab & _
+						   objPSM.ScanNumber & ControlChars.Tab & _
+						   objPSM.Charge & ControlChars.Tab & _
+						   objPSM.ProteinFirst & ControlChars.Tab & _
+						   objPSM.Peptide & ControlChars.Tab & _
+						   strProbabilityValue & ControlChars.Tab & _
+						   String.Empty)
+					Loop
+
+				End Using
+
+			End Using
+
+		Catch ex As Exception
+			ReportError("Error creating the MSGF file for MODa file " & Path.GetFileName(strSourceFilePath) & ": " & ex.Message)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	''' <summary>
 	''' Reads a MSGFDB FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
 	''' using the MSGFDB_SpecProb values for the MSGF score
 	''' </summary>

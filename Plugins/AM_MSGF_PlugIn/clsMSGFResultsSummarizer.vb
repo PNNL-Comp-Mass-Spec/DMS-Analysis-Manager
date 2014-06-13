@@ -666,8 +666,9 @@ Public Class clsMSGFResultsSummarizer
 			strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(mResultType, mDatasetName)
 
 			If mResultType = clsPHRPReader.ePeptideHitResultType.XTandem Or
-			   mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-				' X!Tandem and MSAlign results don't have first-hits files; use the Synopsis file instead to determine scan counts
+			   mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Or
+			   mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+				' These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
 				strPHRPFirstHitsFileName = strPHRPSynopsisFileName
 			End If
 
@@ -696,7 +697,7 @@ Public Class clsMSGFResultsSummarizer
 
 
 			''''''''''''''''''''
-			' Filter on MSGF or EVAlue and compute the stats
+			' Filter on MSGF or EValue and compute the stats
 			'
 			blnUsingMSGFOrEValueFilter = True
 			blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstPSMs)
@@ -737,9 +738,15 @@ Public Class clsMSGFResultsSummarizer
 		Dim blnSuccess As Boolean
 		Dim udtPSMInfo As udtPSMInfoType
 
+		Dim blnLoadMSGFResults = True
+
 		Try
 
-			Using objPHRPReader As New clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=True)
+			If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+				blnLoadMSGFResults = False
+			End If
+
+			Using objPHRPReader As New clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=blnLoadMSGFResults)
 
 				Do While objPHRPReader.MoveNext()
 
@@ -755,6 +762,10 @@ Public Class clsMSGFResultsSummarizer
 						If objPSM.TryGetScore("EValue", strEValue) Then
 							blnValid = Double.TryParse(strEValue, dblEValue)
 						End If
+
+					ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+						' MODa results don't have spectral probability, but they do have FDR
+						blnValid = True
 
 					Else
 						blnValid = Double.TryParse(objPSM.MSGFSpecProb, dblSpecProb)
@@ -775,6 +786,10 @@ Public Class clsMSGFResultsSummarizer
 								If udtPSMInfo.FDR < 0 Then
 									udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, -1)
 								End If
+
+							ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+								udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, -1)
+
 							Else
 								udtPSMInfo.FDR = -1
 							End If

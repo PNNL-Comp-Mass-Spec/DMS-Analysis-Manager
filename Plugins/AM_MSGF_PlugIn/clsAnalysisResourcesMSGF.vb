@@ -118,6 +118,9 @@ Public Class clsAnalysisResourcesMSGF
 					blnOnlyCopyFHTandSYNfiles = True
 				End If
 			End If
+		ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+			' We do not need any raw data files for MODa
+			blnOnlyCopyFHTandSYNfiles = True
 
 		Else
 			' Not running MSGFDB or running MSFDB but using legacy msgf
