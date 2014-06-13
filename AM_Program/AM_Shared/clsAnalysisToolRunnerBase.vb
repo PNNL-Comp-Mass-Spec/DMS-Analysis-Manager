@@ -938,8 +938,9 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
 	''' <returns>The path to the program, or an empty string if there is a problem</returns>
 	''' <remarks></remarks>
-	Protected Function DetermineProgramLocation(ByVal strStepToolName As String, _
-	  ByVal strProgLocManagerParamName As String, _
+	Protected Function DetermineProgramLocation(
+	  ByVal strStepToolName As String,
+	  ByVal strProgLocManagerParamName As String,
 	  ByVal strExeName As String) As String
 
 		' Check whether the settings file specifies that a specific version of the step tool be used
@@ -1348,8 +1349,8 @@ Public Class clsAnalysisToolRunnerBase
 				strLogMessage = "Move Result Files to " & ResFolderNamePath
 				If m_DebugLevel >= 3 Then
 					strLogMessage &= "; ResultFilesToSkip contains " & m_jobParams.ResultFilesToSkip.Count.ToString & " entries" & _
-					   "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" & _
-					   "; ResultFilesToKeep contains " & m_jobParams.ResultFilesToKeep.Count.ToString & " entries"
+					  "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" & _
+					  "; ResultFilesToKeep contains " & m_jobParams.ResultFilesToKeep.Count.ToString & " entries"
 				End If
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strLogMessage)
 			End If
@@ -1360,9 +1361,6 @@ Public Class clsAnalysisToolRunnerBase
 
 			' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
 			For Each TmpFile In Files
-				If TmpFile = "IDPicker_AnalysisSummary.txt" Then
-					Console.WriteLine("Check this file")
-				End If
 
 				OkToMove = True
 				TmpFileNameLcase = Path.GetFileName(TmpFile).ToLower()
@@ -1530,7 +1528,11 @@ Public Class clsAnalysisToolRunnerBase
 
 		objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
 
-		m_SummaryFile.SaveSummaryFile(Path.Combine(OutputPath, m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"))
+		Dim summaryFileName = m_jobParams.GetParam("StepTool") & "_AnalysisSummary.txt"
+
+		If Not m_jobParams.ResultFilesToSkip.Contains(summaryFileName) Then
+			m_SummaryFile.SaveSummaryFile(Path.Combine(OutputPath, summaryFileName))
+		End If
 
 	End Sub
 
