@@ -1,0 +1,79 @@
+After the Mage step in the MAC pipeline completes, run these checks if the script name is MAC_iTRAQ
+
+0) Make sure the T_alias.txt file is capitalized precisely correctly:
+	T_alias.txt
+
+1) Make sure Mage created table T_alias (using file T_alias.txt at \\protoapps\DataPkgs\Public\2014\1001_Mouse_Muscle_Aging\ImportFiles )
+
+2) Query the SQLite DB to confirm that table T_alias contains columns Sample and Ion
+
+	SELECT *
+	From T_alias
+
+
+3) Make sure the jobs in T_Results_Quantifiable have a factor named Sample for the associated datasets
+	If not, point the user to page http://dms2.pnl.gov/requested_run_factors/param
+	where the factor can be defined
+
+	a. Construct a unique list of Dataset_ID values
+
+		SELECT DISTINCT DPJ.dataset_id
+		FROM t_results R
+		     INNER JOIN t_data_package_analysis_jobs DPJ
+		       ON R.job = DPJ.job
+
+
+	b. Query the factors table
+		SELECT Dataset_ID, Sample
+		From t_factors
+		where Dataset_ID=364902
+
+
+4) Make sure sample factors defined correspond to entries in T_alias.txt (imported as table T_Alias)
+   and that each sample defined in T_alias.txt has the same number of ions
+	If not, point the user to \\protoapps\DataPkgs\Public\2014\1001_Mouse_Muscle_Aging\ImportFiles to fix the problem
+
+	a. Muscle
+		SELECT Sample, Count(Ion) as Ions
+		FROM T_alias
+		WHERE Sample in ('Muscle')
+		GROUP BY Sample
+
+
+
+5) Make sure the reporter ions present in T_Reporter_Ions match the expected reporter ion names based on ApeWorkflowStepList
+	SELECT *
+	From T_Reporter_Ions
+	Limit 1
+
+	SELECT *
+	From T_Reporter_Ions_Typed
+	Limit 1
+
+	If column names don't match, then user likely used the wrong setting for ApeWorkflowStepList
+		4plex is iTRAQ 4-plex, should have
+			expectedIons.Add("Ion_114");
+			expectedIons.Add("Ion_115");
+			expectedIons.Add("Ion_116");
+			expectedIons.Add("Ion_117");
+
+		6plex is TMT 6-plex, should have 
+			expectedIons.Add("Ion_126");
+			expectedIons.Add("Ion_127");
+			expectedIons.Add("Ion_128");
+			expectedIons.Add("Ion_129");
+			expectedIons.Add("Ion_130");
+			expectedIons.Add("Ion_131");
+
+		8plex is iTRAQ 8-plex, should have
+			expectedIons.Add("Ion_113");
+			expectedIons.Add("Ion_114");
+			expectedIons.Add("Ion_115");
+			expectedIons.Add("Ion_116");
+			expectedIons.Add("Ion_117");
+			expectedIons.Add("Ion_118");
+			expectedIons.Add("Ion_119");
+			expectedIons.Add("Ion_121");
+
+
+
