@@ -101,10 +101,19 @@ namespace AnalysisManager_RepoPkgr_Plugin
 						}
 						else
 						{
-							m_message = "mzXML file not found for dataset " + udtJobInfo.Dataset +
-										" and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
-							return false;
+							if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_UIMF_FILES)
+							{
+								// Don't create .mzXML files from .UIMF files
+								// Instead simply add the .uimf path to dctDatasetRawFilePaths
+								;
+							}
+							else
+							{
+								m_message = "mzXML file not found for dataset " + udtJobInfo.Dataset +
+											" and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+								return false;
+							}
 						}
 					}
 					else
