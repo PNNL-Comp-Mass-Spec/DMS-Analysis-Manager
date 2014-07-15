@@ -69,7 +69,7 @@ Public Class clsMSGFDBUtils
 	Protected mPhosphorylationSearch As Boolean
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
-	' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
+	' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
 	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
 
@@ -650,34 +650,6 @@ Public Class clsMSGFDBUtils
 		End If
 	End Function
 
-	Protected Function GetKeyValueSetting(ByVal strText As String) As KeyValuePair(Of String, String)
-
-		Dim strKey As String = String.Empty
-		Dim strValue As String = String.Empty
-
-		If Not String.IsNullOrWhiteSpace(strText) Then
-			strText = strText.Trim()
-
-			If Not strText.StartsWith("#") AndAlso strText.Contains("="c) Then
-
-				Dim intCharIndex As Integer
-				intCharIndex = strText.IndexOf("=", StringComparison.Ordinal)
-
-				If intCharIndex > 0 Then
-					strKey = strText.Substring(0, intCharIndex).Trim()
-					If intCharIndex < strText.Length - 1 Then
-						strValue = strText.Substring(intCharIndex + 1).Trim()
-					Else
-						strValue = String.Empty
-					End If
-				End If
-			End If
-
-		End If
-
-		Return New KeyValuePair(Of String, String)(strKey, strValue)
-	End Function
-
 	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String) As String
 		Return GetSettingFromMSGFDbParamFile(strParameterFilePath, strSettingToFind, String.Empty)
 	End Function
@@ -699,7 +671,7 @@ Public Class clsMSGFDBUtils
 				Do While srParamFile.Peek > -1
 					strLineIn = srParamFile.ReadLine()
 
-					kvSetting = GetKeyValueSetting(strLineIn)
+					kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
 					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso IsMatch(kvSetting.Key, strSettingToFind) Then
 						Return kvSetting.Value
@@ -1431,7 +1403,7 @@ Public Class clsMSGFDBUtils
 				Do While srParamFile.Peek > -1
 					strLineIn = srParamFile.ReadLine()
 
-					kvSetting = GetKeyValueSetting(strLineIn)
+					kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
 					If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
@@ -1787,7 +1759,7 @@ Public Class clsMSGFDBUtils
 	''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
 	''' <returns>True if valid; false if invalid</returns>
 	''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-	Protected Function ParseMSGFDbValidateMod(ByVal strMod As String, ByRef strModClean As String) As Boolean
+	Protected Function ParseMSGFDbValidateMod(ByVal strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
 		Dim intPoundIndex As Integer
 		Dim strSplitMod() As String

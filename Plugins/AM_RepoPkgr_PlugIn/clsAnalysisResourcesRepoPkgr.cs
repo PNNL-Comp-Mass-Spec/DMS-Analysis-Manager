@@ -75,7 +75,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// Cache the current dataset and job info
 			var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-			foreach (udtDataPackageJobInfoType udtJobInfo in lstDataPackagePeptideHitJobs.Concat(lstAdditionalJobs))
+			int missingInstrumentDataCount = 0;
+			int jobsToProcess = lstAdditionalJobs.Count();
+			int jobsProcessed = 0;
+			
+			DateTime dtLastProgressUpdate = DateTime.UtcNow;
+
+			foreach (udtDataPackageJobInfoType udtJobInfo in lstAdditionalJobs)
 			{
 				if (!OverrideCurrentDatasetAndJobInfo(udtJobInfo))
 				{
@@ -85,27 +91,26 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 				if (includeMzXmlFiles)
 				{
-
-					// See if a .mzXML file already exists for this dataset
-					string strHashcheckFilePath = string.Empty;
-
-					string strMzXMLFilePath = FindMZXmlFile(ref strHashcheckFilePath);
-
-					if (string.IsNullOrEmpty(strMzXMLFilePath))
+					if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_UIMF_FILES)
 					{
-						// mzXML file not found
-						if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
+						// Don't create .mzXML files for .UIMF files
+						// Instead simply add the .uimf path to dctDatasetRawFilePaths
+						;
+					}
+					else
+					{
+						// See if a .mzXML file already exists for this dataset
+						string strHashcheckFilePath = string.Empty;
+
+						string strMzXMLFilePath = FindMZXmlFile(ref strHashcheckFilePath);
+
+						if (string.IsNullOrEmpty(strMzXMLFilePath))
 						{
-							// Will need to retrieve the .Raw file for this dataset
-							dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(String.Empty, String.Empty));
-						}
-						else
-						{
-							if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_UIMF_FILES)
+							// mzXML file not found
+							if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
 							{
-								// Don't create .mzXML files from .UIMF files
-								// Instead simply add the .uimf path to dctDatasetRawFilePaths
-								;
+								// Will need to retrieve the .Raw file for this dataset
+								dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(String.Empty, String.Empty));
 							}
 							else
 							{
@@ -115,16 +120,36 @@ namespace AnalysisManager_RepoPkgr_Plugin
 								return false;
 							}
 						}
+						else
+						{
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(strMzXMLFilePath, strHashcheckFilePath));
+						}
+						
 					}
-					else
-					{
-						dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(strMzXMLFilePath, strHashcheckFilePath));
-					}
+					
 				}
 
 
 				bool blnIsFolder = false;
-				string strRawFilePath = FindDatasetFileOrFolder(ref blnIsFolder);
+
+				// Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
+				// Therefore, we need to check that strRawFilePath actually exists
+				string strRawFilePath = FindDatasetFileOrFolder(out blnIsFolder);
+
+				if (!strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
+				{
+					if (!File.Exists(strRawFilePath))
+					{
+						strRawFilePath = string.Empty;
+						missingInstrumentDataCount++;
+
+						if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
+						{
+							string msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						}											
+					}
+				}
 
 				if (!string.IsNullOrEmpty(strRawFilePath))
 				{
@@ -139,6 +164,37 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					dctDatasetRawDataTypes.Add(udtJobInfo.Dataset, udtJobInfo.RawDataType);
 				}
 
+				jobsProcessed++;
+
+				// Compute a % complete value between 0 and 2%
+				float percentComplete = (float)jobsProcessed / jobsToProcess * 2;
+				m_StatusTools.UpdateAndWrite(percentComplete);
+
+				if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)
+				{
+					dtLastProgressUpdate = DateTime.UtcNow;
+
+					string progressMsg = "Finding instrument data";
+					if (includeMzXmlFiles)
+						progressMsg += " and mzXML files";
+
+					progressMsg += ": " + jobsProcessed + " / " + jobsToProcess + " jobs";
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, progressMsg);
+				}
+				
+			 
+			}
+
+			if (missingInstrumentDataCount > 0)
+			{
+				string jobId = m_jobParams.GetJobParameter("Job", "??");
+				string dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
+				string msg = "Instrument data file not found for " + missingInstrumentDataCount + clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
+				m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
+
+				msg += " (pipeline job " + jobId + ")";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);				
 			}
 
 			// Restore the dataset and job info for this aggregation job

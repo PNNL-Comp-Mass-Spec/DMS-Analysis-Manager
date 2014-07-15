@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/20/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -421,6 +420,34 @@ Public Class clsGlobal
 
 		Return strStackTrace
 
+	End Function
+
+	Public Shared Function GetKeyValueSetting(ByVal strText As String) As KeyValuePair(Of String, String)
+
+		Dim strKey As String = String.Empty
+		Dim strValue As String = String.Empty
+
+		If Not String.IsNullOrWhiteSpace(strText) Then
+			strText = strText.Trim()
+
+			If Not strText.StartsWith("#") AndAlso strText.Contains("="c) Then
+
+				Dim intCharIndex As Integer
+				intCharIndex = strText.IndexOf("=", StringComparison.Ordinal)
+
+				If intCharIndex > 0 Then
+					strKey = strText.Substring(0, intCharIndex).Trim()
+					If intCharIndex < strText.Length - 1 Then
+						strValue = strText.Substring(intCharIndex + 1).Trim()
+					Else
+						strValue = String.Empty
+					End If
+				End If
+			End If
+
+		End If
+
+		Return New KeyValuePair(Of String, String)(strKey, strValue)
 	End Function
 
 	''' <summary>

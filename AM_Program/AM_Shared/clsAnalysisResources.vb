@@ -1468,7 +1468,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
 	''' <returns>The full path to the dataset file or folder</returns>
 	''' <remarks></remarks>
-	Protected Function FindDatasetFileOrFolder(ByRef blnIsFolder As Boolean) As String
+	Protected Function FindDatasetFileOrFolder(<Out()> ByRef blnIsFolder As Boolean) As String
 
 		Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
 		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -4124,7 +4124,7 @@ Public MustInherit Class clsAnalysisResources
 		Try
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)			' Raw file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)				' Raw file
 			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' mzXML file
 
 			If udtOptions.CreateJobPathFiles Then
@@ -4138,24 +4138,12 @@ Public MustInherit Class clsAnalysisResources
 			' Cache the current dataset and job info
 			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
-			Dim dctInstrumentDataUNC = New Dictionary(Of udtDataPackageJobInfoType, KeyValuePair(Of String, String))
+			Dim dtLastProgressUpdate = DateTime.UtcNow
+			Dim datasetsProcessed = 0
+			Dim datasetsToProcess = dctInstrumentDataToRetrieve.Count
 
-			' First retrieve files from MyEMSL
-			For Each kvItem As KeyValuePair(Of udtDataPackageJobInfoType, KeyValuePair(Of String, String)) In dctInstrumentDataToRetrieve
-				' The key in kvMzXMLFileInfo is the path to the .mzXML file
-				' The value in kvMzXMLFileInfo is the path to the .hashcheck file
-				Dim kvMzXMLFileInfo As KeyValuePair(Of String, String) = kvItem.Value
-				Dim strMzXMLFilePath As String = kvMzXMLFileInfo.Key
-
-				If Not strMzXMLFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-					dctInstrumentDataUNC.Add(kvItem.Key, kvItem.Value)
-					Continue For
-				End If
-
-
-			Next
-
-			' Next retrieve the remaining files
+			' Retrieve the instrument data
+			' Note that RetrieveMZXmlFileUsingSourceFile will add MyEMSL files to the download queue
 			For Each kvItem In dctInstrumentDataToRetrieve
 
 				' The key in kvMzXMLFileInfo is the path to the .mzXML file
@@ -4192,7 +4180,7 @@ Public MustInherit Class clsAnalysisResources
 
 						End If
 					Else
-						' .mzXML file not found
+						' .mzXML file not found (or problem adding to the MyEMSL download queue)
 						' Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
 
 						If Not RetrieveSpectra(kvItem.Key.RawDataType, CreateStoragePathInfoOnly) Then
@@ -4204,6 +4192,21 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					lstDatasetsProcessed.Add(kvItem.Key.Dataset)
+				End If
+
+				datasetsProcessed += 1
+
+				' Compute a % complete value between 0 and 2%
+				Dim percentComplete = CSng(datasetsProcessed) / datasetsToProcess * 2
+				m_StatusTools.UpdateAndWrite(percentComplete)
+
+				If (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30) Then
+
+					dtLastProgressUpdate = DateTime.UtcNow
+
+					Dim progressMsg = "Retrieving mzXML files: " & datasetsProcessed & " / " & datasetsToProcess & " datasets"
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, progressMsg)
 				End If
 
 			Next kvItem

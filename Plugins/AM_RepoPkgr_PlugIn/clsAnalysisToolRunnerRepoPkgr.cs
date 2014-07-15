@@ -24,6 +24,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		protected const int PROGRESS_PCT_MZID_RESULTS_COPIED = 50;
 		protected const int PROGRESS_PCT_INSTRUMENT_DATA_COPIED = 95;
 
+		public const string WARNING_INSTRUMENT_DATA_MISSING = "WarningInstrumentDataMissing";
 		#endregion
 
 		#region Fields
@@ -61,6 +62,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					m_message = "Error determining RepoPkgr version";
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
+
+				string instrumentDataWarning = m_jobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
+				if (!string.IsNullOrEmpty(instrumentDataWarning))
+					m_EvalMessage = instrumentDataWarning;
 
 				result = BuildRepoCache();
 				return result;
@@ -294,7 +299,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		//private void GenerateMzXMLFilesFromDataFiles(string instrumentDataFolderPath)
 		//{
 		//    // under construction
-		//    m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", "dot_raw_files"); // use packed list from resourcer?
+		//    m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES); // use packed list from resourcer?
 
 		//    var dir = new DirectoryInfo(instrumentDataFolderPath);
 		//    foreach (var fi in dir.GetFiles("*.raw"))
@@ -397,7 +402,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 				string rawDataType;
 				if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out rawDataType))
-					rawDataType = "dot_raw_files";
+					rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 				
 				m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", rawDataType); 
 
@@ -561,7 +566,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 				var instrumentDataFolderPath = Path.Combine(_outputResultsFolderPath, "Instrument_Data");
 
-				if (_bIncludeMzXMLFiles)
+				string rawDataType;
+				if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out rawDataType))
+					rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
+
+				if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && _bIncludeMzXMLFiles)
 				{
 
 					// Create the .mzXML file if it is missing
@@ -653,7 +662,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// Extract the packed parameters
 			var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
 			var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
-			var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
+			var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
 			datasetsProcessed = 0;
 
@@ -668,14 +677,19 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			objMSXmlCreator.ErrorEvent += objMSXmlCreator_ErrorEvent;
 			objMSXmlCreator.WarningEvent += objMSXmlCreator_WarningEvent;
 
+			int successCount = 0;
+			int errorCount= 0;
+
 			// Process each dataset
 			foreach (var datasetName in dctDatasetRawFilePaths.Keys)
 			{
 
 				bool success = ProcessDataset(objAnalysisResults, objMSXmlCreator, datasetName, dctDatasetRawFilePaths, dctDatasetYearQuarter ,dctDatasetRawDataTypes);
 
-				if (!success)
-					return false;
+				if (success)
+					successCount++;
+				else
+					errorCount++;
 
 				datasetsProcessed += 1;
 				m_progress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
@@ -683,7 +697,18 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			}
 
-			return true;
+			if (successCount > 0)
+			{
+				if (errorCount == 0)
+					return true;
+								
+				m_message = "Could not retrieve instrument data for one or more datasets in Data package " + _mgr.DataPkgId + "; SuccessCount = " + successCount + "; FailCount = " + errorCount;
+				return false;
+			}
+
+			m_message = "Could not retrieve instrument data for any of the datasets in Data package " + _mgr.DataPkgId + "; FailCount = " + errorCount;
+			return false;
+
 		}	
 
 		protected bool RetrieveStoragePathInfoTargetFile(string strStoragePathInfoFilePath, clsAnalysisResults objAnalysisResults, ref string strDestPath)
