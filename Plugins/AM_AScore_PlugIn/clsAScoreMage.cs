@@ -18,14 +18,15 @@ namespace AnalysisManager_AScore_PlugIn
 		protected string mResultsDBFileName = string.Empty;
 		protected string mWorkingDir;
 
-		protected JobParameters mJP;
-		protected ManagerParameters mMP;
+		protected JobParameters m_jobParams;
+		protected ManagerParameters m_mgrParams;
 		protected static clsIonicZipTools m_IonicZipTools;
 		protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
 		protected static string mMessage = string.Empty;
 
 		protected string mSearchType = string.Empty;
 		protected string mParamFilename = string.Empty;
+		protected string mFastaFilePath = string.Empty;
 		protected string mErrorMessage = string.Empty;
 
 		protected clsIonicZipTools mIonicZipTools;
@@ -50,7 +51,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 		public clsAScoreMagePipeline(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
 		{
-			Intialize(jobParms, mgrParms, ionicZipTools);
+			Initialize(jobParms, mgrParms, ionicZipTools);
 
 			if (mMyEMSLDatasetInfo == null)
 			{
@@ -70,18 +71,34 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <param name="jobParms"></param>
 		/// <param name="mgrParms"></param>
 		/// <param name="ionicZipTools"></param>
-		private void Intialize(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
+		private void Initialize(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
 		{
-			mJP = new JobParameters(jobParms);
-			mMP = new ManagerParameters(mgrParms);
-			mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName") + ".db3";
-			mWorkingDir = mMP.RequireMgrParam("workdir");
+			m_jobParams = new JobParameters(jobParms);
+			m_mgrParams = new ManagerParameters(mgrParms);
+			mResultsDBFileName = m_jobParams.RequireJobParam("ResultsBaseName") + ".db3";
+			mWorkingDir = m_mgrParams.RequireMgrParam("workdir");
 
-			mSearchType = mJP.RequireJobParam("AScoreSearchType");
+			mSearchType = m_jobParams.RequireJobParam("AScoreSearchType");
 
 			if (mSearchType == "msgfdb")
 				mSearchType = "msgfplus";
-			mParamFilename = mJP.GetJobParam("AScoreParamFilename");
+			mParamFilename = m_jobParams.GetJobParam("AScoreParamFilename");
+
+
+			// Define the path to the fasta file
+			mFastaFilePath = string.Empty;
+
+			var localOrgDbFolder = m_mgrParams.RequireMgrParam("orgdbdir");
+			var fastaFileName = jobParms.GetParam("PeptideSearch", "generatedFastaName");
+			if (!string.IsNullOrEmpty(fastaFileName))
+			{
+				var FastaFilePath = Path.Combine(localOrgDbFolder, fastaFileName);
+
+				var fiFastaFile = new FileInfo(FastaFilePath);
+
+				if (fiFastaFile.Exists)
+					mFastaFilePath = fiFastaFile.FullName;					
+			}
 
 			// Remove the file extension from mParamFilename
 			mParamFilename = Path.GetFileNameWithoutExtension(mParamFilename);
@@ -98,7 +115,7 @@ namespace AnalysisManager_AScore_PlugIn
 		/// </summary>
 		public bool Run()
 		{
-			string dataPackageID = mJP.RequireJobParam("DataPackageID");
+			string dataPackageID = m_jobParams.RequireJobParam("DataPackageID");
 
 			if (mParamFilename == string.Empty)
 				return true;
@@ -133,7 +150,7 @@ namespace AnalysisManager_AScore_PlugIn
 			}
 
 			const string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
-			string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
+			string strMAParameterFileStoragePath = m_mgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
 			if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
 			{
 				strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
@@ -181,7 +198,7 @@ namespace AnalysisManager_AScore_PlugIn
 		private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
 		{
 			const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
-			string connStr = mMP.RequireMgrParam("ConnectionString");
+			string connStr = m_mgrParams.RequireMgrParam("ConnectionString");
 			string sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
 			SimpleSink jobList = GetListOfItemsFromDB(sql, connStr);
 			return jobList;
@@ -202,9 +219,13 @@ namespace AnalysisManager_AScore_PlugIn
 			ascoreModule.ascoreParamFileName = mParamFilename;
 			ascoreModule.searchType = mSearchType;
 
+			ascoreModule.FastaFilePath = mFastaFilePath;
+
 			ascoreModule.Initialize(mIonicZipTools);
 
-			ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule).RunRoot(null);
+			var pipeline = ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule);
+			pipeline.RunRoot(null);
+
 		}
 
 		// <summary>
@@ -226,7 +247,8 @@ namespace AnalysisManager_AScore_PlugIn
 		//        ImportColumnList = "Dataset_ID|+|text, *"
 		//    };
 
-		//    ProcessingPipeline.Assemble("File_Import", fileList, importer).RunRoot(null);
+		//    var pipeline = ProcessingPipeline.Assemble("File_Import", fileList, importer);
+		//    pipeline.RunRoot(null);
 		//}
 
 		/// <summary>
@@ -239,7 +261,7 @@ namespace AnalysisManager_AScore_PlugIn
 		{
 			var itemList = new SimpleSink();
 			MSSQLReader reader = MakeDBReaderModule(sql, connectionString);
-			ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
+			var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
 			pipeline.RunRoot(null);
 			return itemList;
 		}
@@ -284,7 +306,9 @@ namespace AnalysisManager_AScore_PlugIn
 			};
 
 			// build, wire, and run pipeline
-			ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
+			var pipeline = ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject);
+			pipeline.RunRoot(null);
+			
 			return sinkObject;
 		}
 
@@ -306,7 +330,9 @@ namespace AnalysisManager_AScore_PlugIn
 			writer.DbPath = dbFilePath;
 			writer.TableName = tableName;
 
-			ProcessingPipeline.Assemble("ImportFileToSQLitePipeline", reader, writer).RunRoot(null);
+			var pipeline = ProcessingPipeline.Assemble("ImportFileToSQLitePipeline", reader, writer);
+			pipeline.RunRoot(null);
+
 		}
 		/*--*/
 		/// <summary>
@@ -334,7 +360,8 @@ namespace AnalysisManager_AScore_PlugIn
 			writer.DbPath = dbFilePath;
 			writer.TableName = tableName;
 
-			ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer).RunRoot(null);
+			var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
+			pipeline.RunRoot(null);
 		}
 
 		/// <summary>
@@ -346,7 +373,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 			// extractionType should be 'Sequest First Hits' or 'MSGF+ First Hits'
 			// Legacy jobs may have 'MSGFDB First Hits'
-			String extractionType = mJP.RequireJobParam("ExtractionType");
+			String extractionType = m_jobParams.RequireJobParam("ExtractionType");
 
 			if (extractionType == "MSGFDB First Hits")
 				extractionType = "MSGF+ First Hits";
@@ -355,9 +382,9 @@ namespace AnalysisManager_AScore_PlugIn
 				throw new Exception("Invalid extractionType not supported by Mage: " + extractionType);
 
 			extractionParms.RType = ResultType.TypeList[extractionType];
-			extractionParms.KeepAllResults = mJP.GetJobParam("KeepAllResults", "Yes");
-			extractionParms.ResultFilterSetID = mJP.GetJobParam("ResultFilterSetID", "All Pass");
-			extractionParms.MSGFCutoff = mJP.GetJobParam("MSGFCutoff", "All Pass");
+			extractionParms.KeepAllResults = m_jobParams.GetJobParam("KeepAllResults", "Yes");
+			extractionParms.ResultFilterSetID = m_jobParams.GetJobParam("ResultFilterSetID", "All Pass");
+			extractionParms.MSGFCutoff = m_jobParams.GetJobParam("MSGFCutoff", "All Pass");
 			return extractionParms;
 		}
 
@@ -383,6 +410,17 @@ namespace AnalysisManager_AScore_PlugIn
 		}
 
 		#endregion
-	
+
+		public IEnumerable<string> GetTempFileNames()
+		{
+			var tempFileNames = new List<string>
+			{
+				MageAScoreModule.ASCORE_OUTPUT_FILE_NAME_BASE + "_Peptides.txt",
+				MageAScoreModule.ASCORE_OUTPUT_FILE_NAME_BASE + "_ProteinMap.txt",
+				MageAScoreModule.ASCORE_OUTPUT_FILE_NAME_BASE + "_Peptides_ProteinToPeptideMapping.txt"
+			};
+
+			return tempFileNames;
+		}
 	}
 }

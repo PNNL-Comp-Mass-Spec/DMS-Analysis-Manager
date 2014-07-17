@@ -12,6 +12,11 @@ namespace AnalysisManager_AScore_PlugIn
 
         public override IJobParams.CloseOutType GetResources()
         {
+			// WARNING: AScore access the files over the network, retrieving the files using Mage
+			//          If the files have been purged, they may not be accessible 
+			//          (Mage supports retrieving files from Aurora or MyEmsl, 
+			//           but this has not be tested as of July 16, 2014)
+			//
             // bool blnSuccess = true;
 			//  blnSuccess = RunAScoreGetResources();
 			//
@@ -19,12 +24,47 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (m_DebugLevel > 2)
             {
-				// ToDo: Change this in the future
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+	        if (!RetrieveFastaFile())
+	        {
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to retrieve the fasta file; AScore results will not have protein information");		        
+	        }
+
+	        return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
+
+		/// <summary>
+		/// Retrieve the fasta file (if defined)
+		/// </summary>
+		/// <returns></returns>
+		private bool RetrieveFastaFile()
+		{
+
+			string currentTask = "Initializing";
+
+
+			try
+			{
+				// Retrieve the Fasta file
+				var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+
+				currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+
+				var success = RetrieveOrgDB(localOrgDbFolder);
+				
+				return success;
+
+			}
+			catch (Exception ex)
+			{
+				m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+				return false;
+			}
+
+		}
 
 
         /// <summary>
@@ -142,87 +182,7 @@ namespace AnalysisManager_AScore_PlugIn
             return blnSuccess;
         }
 
-		// Old method
-		//
-		//private bool BuildInputFile()
-		//{
-		//    string[] DatasetFiles = null;
-		//    string DatasetType = null;
-		//    string DatasetName = null;
-		//    string DatasetFileName = null;
-		//    string DatasetID = null;
-		//    string WorkDir = m_mgrParams.GetParam("workdir");
-		//    StreamWriter inputFile = new StreamWriter(Path.Combine(WorkDir, ASCORE_INPUT_FILE));
-
-		//    try
-		//    {
-		//        inputFile.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-		//        inputFile.WriteLine("<ascore_batch>");
-		//        inputFile.WriteLine("  <settings>");
-		//        inputFile.WriteLine("    <max_threads>4</max_threads>");
-		//        inputFile.WriteLine("  </settings>");
-
-		//        //update list of files to be deleted after run
-		//        DatasetFiles = Directory.GetFiles(WorkDir, "*_syn*.txt");
-		//        foreach (string Dataset in DatasetFiles)
-		//        {
-		//            DatasetFileName = Path.GetFileName(Dataset);
-
-		//            // Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
-		//            //  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
-		//            //  The suffix to use is based on text present in the settings file name for each job
-		//            // However, if the settings file name did not contain HCD, ETD, or CID, then the dta, fht, and syn files
-		//            //  will not have had a suffix added; in that case, DatasetType will be ".txt"
-		//            DatasetType = DatasetFileName.Substring(DatasetFileName.ToLower().IndexOf("_syn") + 4, 4);
-
-		//            // If DatasetType is ".txt" then change it to an empty string
-		//            if (DatasetType.ToLower() == ".txt")
-		//                DatasetType = string.Empty;
-
-		//            DatasetName = DatasetFileName.Substring(0, DatasetFileName.Length - (DatasetFileName.Length - DatasetFileName.ToLower().IndexOf("_syn")));
-		//            inputFile.WriteLine("  <run>");
-
-		//            DatasetID = GetDatasetID(DatasetName);
-
-		//            if (string.IsNullOrEmpty(DatasetType) || DatasetType == "_cid")
-		//            {
-		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) + "</param_file>");
-		//            }
-		//            else if (DatasetType == "_hcd")
-		//            {
-		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) + "</param_file>");
-		//            }
-		//            else if (DatasetType == "_etd")
-		//            {
-		//                inputFile.WriteLine("    <param_file>" + Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) + "</param_file>");
-		//            }
-		//            inputFile.WriteLine("    <output_path>" + WorkDir + "</output_path>");
-		//            inputFile.WriteLine("    <dta_file>" + Path.Combine(WorkDir, DatasetName + "_dta" + DatasetType + ".txt") + "</dta_file>");
-		//            inputFile.WriteLine("    <fht_file>" + Path.Combine(WorkDir, DatasetName + "_fht" + DatasetType + ".txt") + "</fht_file>");
-		//            inputFile.WriteLine("    <syn_file>" + Path.Combine(WorkDir, DatasetName + "_syn" + DatasetType + ".txt") + "</syn_file>");
-		//            inputFile.WriteLine("    <scan_stats_file>" + Path.Combine(WorkDir, DatasetName + "_ScanStatsEx" + ".txt") + "</scan_stats_file>");
-		//            inputFile.WriteLine("    <dataset_id>" + DatasetID + "</dataset_id>");
-		//            inputFile.WriteLine("  </run>");
-		//        }
-
-		//        inputFile.WriteLine("</ascore_batch>");
-
-		//    }
-		//    catch (Exception ex)
-		//    {
-		//        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating AScore input file" + ex.Message);
-
-		//    }
-		//    finally
-		//    {
-		//        inputFile.Close();
-		//    }
-
-		//    return true;
-
-		//}
-
-        protected string GetDatasetID(string DatasetName)
+		protected string GetDatasetID(string DatasetName)
         {
 			int DatasetID;
 				

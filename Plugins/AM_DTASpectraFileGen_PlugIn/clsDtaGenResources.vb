@@ -19,8 +19,8 @@ Public Class clsDtaGenResources
 
 #Region "Constants"
 	Public Const USING_EXISTING_DECONMSN_RESULTS As String = "Using_existing_DeconMSn_Results"
-
 #End Region
+
 #Region "Methods"
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 

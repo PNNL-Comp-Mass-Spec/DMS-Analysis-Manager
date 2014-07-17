@@ -151,6 +151,31 @@ namespace AnalysisManager_AScore_PlugIn
            var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_IonicZipTools);
 		   var success = ascoreMage.Run();
 
+		   // Delete any PeptideToProteinMapEngine_log files
+		   var diWorkDir = new DirectoryInfo(m_WorkDir);
+		   var fiFiles = diWorkDir.GetFiles("PeptideToProteinMapEngine_log*");
+		   if (fiFiles.Length > 0)
+		   {
+			   foreach (var fiFile in fiFiles)
+			   {
+				   try
+				   {					   
+					   DeleteFileWithRetries(fiFile.FullName, 1, 2);
+				   }
+				   // ReSharper disable once EmptyGeneralCatchClause
+				   catch (Exception ex)
+				   {
+					   // Igore errors here
+				   }
+				   
+			   }
+		   }
+
+	       foreach (var filename in ascoreMage.GetTempFileNames())
+	       {
+		       m_jobParams.AddResultFileToSkip(filename);
+	       }
+
 	       if (!string.IsNullOrEmpty(ascoreMage.ErrorMessage))
 	       {
 		       m_message = ascoreMage.ErrorMessage;

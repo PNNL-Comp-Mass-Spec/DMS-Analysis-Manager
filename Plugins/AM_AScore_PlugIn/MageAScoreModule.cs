@@ -22,6 +22,11 @@ namespace AnalysisManager_AScore_PlugIn
 	/// </summary>
 	public class MageAScoreModule : ContentFilter
 	{
+		#region Constants
+
+		public const string ASCORE_OUTPUT_FILE_NAME_BASE = "AScoreFile";
+
+		#endregion
 
 		#region Member Variables
 
@@ -47,6 +52,8 @@ namespace AnalysisManager_AScore_PlugIn
 		public string ResultsDBFileName { get; set; }
 		public string searchType { get; set; }
 		public string ascoreParamFileName { get; set; }
+
+		public string FastaFilePath { get; set; }
 
 		#endregion
 
@@ -131,7 +138,7 @@ namespace AnalysisManager_AScore_PlugIn
 			
 
 				// process extracted results file and DTA file with AScore
-				const string ascoreOutputFile = "AScoreFile.txt"; 
+				const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt"; 
 				string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
 				string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
@@ -186,20 +193,31 @@ namespace AnalysisManager_AScore_PlugIn
 				}
 
 				// Make the call to AScore
-				var ascoreAlgorithm = new Algorithm();
+				var ascoreEngine = new Algorithm();
 
-				// Attach the eventes
-				ascoreAlgorithm.ErrorEvent += ascoreAlgorithm_ErrorEvent;
-				ascoreAlgorithm.WarningEvent += ascoreAlgorithm_WarningEvent;
-				ascoreAlgorithm.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath);
+				// Attach the events
+				ascoreEngine.ErrorEvent += ascoreAlgorithm_ErrorEvent;
+				ascoreEngine.WarningEvent += ascoreAlgorithm_WarningEvent;
+				ascoreEngine.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
 
 				Console.WriteLine();
 
-				// load AScore results into SQLite database
-				const string tableName = "t_results_ascore";
-				string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-				clsAScoreMagePipeline.ImportFileToSQLite(ascoreOutputFilePath, dbFilePath, tableName);
+				// Confirm that AScore created the output file
+				var fiAScoreFile = new FileInfo(ascoreOutputFilePath);
+				if (fiAScoreFile.Exists)
+				{
+					// Look for the _ProteinMap.txt file
+					// Ascore will create that file if a valid FastaFile is defined
+					var fiProteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(fiAScoreFile.Name) + "_ProteinMap.txt"));
+					if (fiProteinMap.Exists && fiProteinMap.Length > fiAScoreFile.Length)
+						fiAScoreFile = fiProteinMap;
 
+					// load AScore results into SQLite database
+					const string tableName = "t_results_ascore";
+					string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
+					clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
+				}
+				
 				dtaManager.Abort();
 				if (File.Exists(ascoreOutputFilePath))
 				{
@@ -245,23 +263,25 @@ namespace AnalysisManager_AScore_PlugIn
 		{
 			// search job results folders for list of results files to process and accumulate into buffer module
 			var fileList = new SimpleSink();
-			ProcessingPipeline plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
-			plof.RunRoot(null);
+			ProcessingPipeline pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
+			pgFileList.RunRoot(null);
 
 			// add job metadata to results database via a Mage pipeline
 			string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
 			var resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
-			ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB).RunRoot(null);
+			var peJobMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB);
+			peJobMetadata.RunRoot(null);
 
 			// add file metadata to results database via a Mage pipeline
 			resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_file_list");
-			ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB).RunRoot(null);
+			var peFileMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB);
+			peFileMetadata.RunRoot(null);
 
 			// extract contents of files
 			//DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
 			var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-			ProcessingPipeline pefc = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
-			pefc.RunRoot(null);
+			ProcessingPipeline peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
+			peFileContents.RunRoot(null);
 		}
 
 		#endregion
