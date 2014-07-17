@@ -97,6 +97,8 @@ Public MustInherit Class clsAnalysisResources
 	Public Const DOT_MGF_EXTENSION As String = ".mgf"
 	Public Const DOT_CDF_EXTENSION As String = ".cdf"
 
+	Public Const DOT_PBF_EXTENSION As String = ".pbf"
+
 	Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
 	Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
@@ -5584,6 +5586,35 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
+	''' Finds the .pbf (PNNL Binary Format) file for this dataset
+	''' </summary>
+	''' <returns>The path to the .pbf file</returns>
+	''' <remarks></remarks>
+	Protected Function FindPBFFile(ByRef strErrorMessage As String) As String
+
+		Dim SourceFileName As String
+		Dim SourceFolderPath As String
+
+		strErrorMessage = String.Empty
+
+		SourceFileName = m_DatasetName + DOT_PBF_EXTENSION
+		SourceFolderPath = FindDataFile(SourceFileName)
+
+		If Not String.IsNullOrEmpty(SourceFolderPath) Then
+			If SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+				Return SourceFolderPath
+			Else
+				' Return the path to the .pbf file
+				Return Path.Combine(SourceFolderPath, SourceFileName)
+			End If
+		End If
+
+		strErrorMessage = "Could not find " + SourceFileName + " using FindDataFile"
+		Return String.Empty
+
+	End Function
+
+	''' <summary>
 	''' Retrieves the _DTA.txt file (either zipped or unzipped).  
 	''' </summary>
 	''' <returns>TRUE for success, FALSE for error</returns>
@@ -5719,6 +5750,61 @@ Public MustInherit Class clsAnalysisResources
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated OUT file")
 			End If
+		End If
+
+		Return True
+
+	End Function
+
+	''' <summary>
+	''' Retrieves the .pbf file
+	''' </summary>
+	''' <returns>TRUE for success, FALSE for error</returns>
+	''' <remarks>If the .pbf file already exists in the working folder then will not re-copy it from the remote folder</remarks>
+	Public Function RetrievePBFFile() As Boolean
+
+		Dim TargetFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + DOT_PBF_EXTENSION)
+
+		If Not File.Exists(TargetFilePath) Then
+
+			Dim SourceFilePath As String
+			Dim strErrorMessage As String = String.Empty
+
+			' Find the PBF file
+			SourceFilePath = FindPBFFile(strErrorMessage)
+
+			If String.IsNullOrEmpty(SourceFilePath) Then
+				m_message = strErrorMessage
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
+				If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+					End If
+				Else
+					Return False
+				End If
+			Else
+
+				Dim fiSourceFile As FileInfo = New FileInfo(SourceFilePath)
+
+				' Copy the file locally
+				If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+					m_message = "Error copying " + fiSourceFile.Name
+					If m_DebugLevel >= 2 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName)
+					End If
+					Return False
+				Else
+					If m_DebugLevel >= 1 Then
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
+					End If
+				End If
+			End If
+
 		End If
 
 		Return True

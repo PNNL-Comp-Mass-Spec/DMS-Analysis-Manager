@@ -322,6 +322,16 @@
 		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ" 
 		AssemblyFile="AnalysisManagerGlyQIQPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="pbf_gen" 
+		Class="AnalysisManagerPBFGenerator.clsAnalysisToolRunnerPBFGenerator" 
+		AssemblyFile="AnalysisManagerPBFGenerator.dll" 
+	/>
+	<ToolRunner 
+		Tool="mspathfinder" 
+		Class="AnalysisManagerMSPathFinderPlugIn.clsAnalysisToolRunnerMSPathFinder" 
+		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -646,7 +656,16 @@
 		Class="AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ" 
 		AssemblyFile="AnalysisManagerGlyQIQPlugin.dll" 
 	/>
-		
+	<Resourcer 
+		Tool="pbf_gen" 
+		Class="AnalysisManagerPBFGenerator.clsAnalysisResourcesPBFGenerator" 
+		AssemblyFile="AnalysisManagerPBFGenerator.dll" 
+	/>
+	<Resourcer 
+		Tool="mspathfinder" 
+		Class="AnalysisManagerMSPathFinderPlugIn.clsAnalysisResourcesMSPathFinder" 
+		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" 
+	/>		
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
