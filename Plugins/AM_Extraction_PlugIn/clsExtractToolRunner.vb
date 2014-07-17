@@ -159,6 +159,10 @@ Public Class clsExtractToolRunner
 						Exit Select
 					End If
 
+				Case clsAnalysisResources.RESULT_TYPE_MSPATHFINDER
+					' ToDo: Run PHRP
+					blnProcessingError = False
+
 				Case Else
 					' Should never get here - invalid result type specified
 					Msg = "Invalid ResultType specified: " & m_jobParams.GetParam("ResultType")

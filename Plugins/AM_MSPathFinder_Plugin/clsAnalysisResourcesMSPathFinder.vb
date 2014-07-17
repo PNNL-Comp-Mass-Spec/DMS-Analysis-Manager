@@ -56,7 +56,6 @@ Public Class clsAnalysisResourcesMSPathFinder
 				Return False
 			End If
 
-
 			Return True
 
 		Catch ex As Exception

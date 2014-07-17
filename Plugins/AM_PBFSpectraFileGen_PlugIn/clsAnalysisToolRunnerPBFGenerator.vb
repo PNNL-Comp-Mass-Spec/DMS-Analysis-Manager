@@ -10,7 +10,6 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
-Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisToolRunnerPBFGenerator
 	Inherits clsAnalysisToolRunnerBase
@@ -33,6 +32,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 	Private mInstrumentFileSizeBytes As Int64
 	Protected mResultsFilePath As String
+	Protected mPbfFormatVersion As String
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -60,9 +60,9 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPBFGenerator.RunTool(): Enter")
 			End If
 
-			' Determine the path to the PBFGen program (it resides in the MSPathFinder folder)
+			' Determine the path to the PbfGen program
 			Dim progLoc As String
-			progLoc = DetermineProgramLocation("PBF_Gen", "MSPathFinderProgLoc", "PBFGen.exe")
+			progLoc = DetermineProgramLocation("PBF_Gen", "PbfGenProgLoc", "PbfGen.exe")
 
 			If String.IsNullOrWhiteSpace(progLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -84,7 +84,26 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 				Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION))
 
 				If fiResultsFile.Exists Then
-					' Success
+					' Success; validate mPbfFormatVersion
+					If String.IsNullOrEmpty(mPbfFormatVersion) Then mPbfFormatVersion = String.Empty
+
+					Select Case mPbfFormatVersion
+						Case "150601"
+							' This version is created by Pbf_Gen.exe v1.0.5311
+							' Make sure the output folder starts with PBF_Gen_1_191
+							' (which will be the case if the settings file has <item key="PbfFormatVersion" value="110569"/>)
+							If Not m_ResFolderName.StartsWith("PBF_Gen_1_191") Then
+								blnSuccess = False
+							End If
+						Case Else
+							blnSuccess = False
+					End Select
+
+					If Not blnSuccess Then
+						m_message = "Unrecognized PbfFormatVersion.  Create a new Settings file with PbfFormatVersion " & mPbfFormatVersion
+						m_message &= "; next, delete the job from the DMS_Pipeline database then update the job to use the new settings file"
+					End If
+
 				Else
 					If String.IsNullOrEmpty(m_message) Then
 						m_message = "PBF_Gen results file not found: " & fiResultsFile.Name
@@ -115,6 +134,8 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 				CopyFailedResultsToArchiveFolder()
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+			m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt")
 
 			result = MakeResultsFolder()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -162,11 +183,8 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		Dim strFolderPathToArchive As String
 		strFolderPathToArchive = String.Copy(m_WorkDir)
 
-		Try
-			File.Delete(Path.Combine(m_WorkDir, m_Dataset & ".raw"))
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION)
+		m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
 
 		' Make the results folder
 		result = MakeResultsFolder()
@@ -187,6 +205,9 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 	''' <summary>
 	''' Computes a crude estimate of % complete based on the input dataset file size and the file size of the result file
+	''' This will always vastly underestimate the progress since the PBF file is always smaller than the .raw file
+	''' Furthermore, it looks like all of the data in the .raw file is cached in memory and the .PBF file is not created until the very end
+	'''  and thus this progress estimation is useless
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
@@ -218,10 +239,8 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 		' Example Console output
 		'
-		' ???????????????????????????
-		' ???????????????????????????
-		' ???????????????????????????
-		' ???????????????????????????
+		' Creating E:\DMS_WorkDir\Synocho_L2_1.pbf from E:\DMS_WorkDir\Synocho_L2_1.raw
+		' PbfFormatVersion: 150601
 
 		Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
@@ -253,6 +272,13 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 							End If
 							mConsoleOutputErrorMsg &= "; " & strLineIn
 							Continue Do						
+						End If
+
+						If strLineIn.StartsWith("PbfFormatVersion:") Then
+							' Parse out the version number
+							Dim strVersion = strLineIn.Substring("PbfFormatVersion:".Length).Trim()
+
+							mPbfFormatVersion = strVersion
 						End If
 
 					End If
@@ -319,6 +345,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		End If
 
 		mInstrumentFileSizeBytes = fiInstrumentFile.Length
+		mPbfFormatVersion = String.Empty
 
 		' Cache the full path to the expected output file
 		mResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
@@ -327,7 +354,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 		'Set up and execute a program runner to run PBFGen
 		CmdStr = " -s " & rawFilePath
-		CmdStr &= " -pbf"
+		' CmdStr &= " -o " & m_WorkDir
 
 		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
@@ -346,11 +373,11 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 		m_progress = PROGRESS_PCT_STARTING
 
-		blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PBFGen", True)
+		blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PbfGen", True)
 
 		If Not CmdRunner.WriteConsoleOutputToFile Then
 			' Write the console output to a text file
-			System.Threading.Thread.Sleep(250)
+			Threading.Thread.Sleep(250)
 
 			Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 			swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
@@ -361,8 +388,8 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
 		End If
 
-		' Parse the console output file one more time to check for errors
-		System.Threading.Thread.Sleep(250)
+		' Parse the console output file one more time to check for errors and to update mPbfFormatVersion
+		Threading.Thread.Sleep(250)
 		ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then

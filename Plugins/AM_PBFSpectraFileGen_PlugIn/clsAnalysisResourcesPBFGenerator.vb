@@ -34,7 +34,7 @@ Public Class clsAnalysisResourcesPBFGenerator
 			If eRawDataType = eRawDataTypeConstants.ThermoRawFile Then
 				m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
 			Else
-				m_message = "MSPathFinder presently only supports Thermo .Raw files"
+				m_message = "PbfGen presently only supports Thermo .Raw files"
 				Return False
 			End If
 
@@ -46,7 +46,7 @@ Public Class clsAnalysisResourcesPBFGenerator
 					m_message = "Error retrieving instrument data file"
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSPathFinder.GetResources: " & m_message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesPBFGenerator.GetResources: " & m_message)
 				Return False
 			End If
 

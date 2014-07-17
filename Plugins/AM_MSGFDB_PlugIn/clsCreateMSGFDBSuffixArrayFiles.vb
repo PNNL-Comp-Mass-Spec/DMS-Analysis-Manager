@@ -1048,6 +1048,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		lstFilesToFind.Add(".csarr")
 		lstFilesToFind.Add(".cseq")
 
+		' Note: Suffixes for MSPathFinder
+		' lstFilesToFind.Add(".icanno")
+		' lstFilesToFind.Add(".icplcp")
+		' lstFilesToFind.Add(".icseq")
+
 		If Not blnFastaFileIsDecoy Then
 			If blnMSGFPlus Then
 				lstFilesToFind.Add(".revCat.canno")

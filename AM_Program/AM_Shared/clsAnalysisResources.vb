@@ -86,6 +86,7 @@ Public MustInherit Class clsAnalysisResources
 	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Used for MSGFDB and MSGF+
 	Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
 	Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
+	Public Const RESULT_TYPE_MSPATHFINDER As String = "MSP_Peptide_Hit"
 
 	Public Const DOT_WIFF_EXTENSION As String = ".wiff"
 	Public Const DOT_D_EXTENSION As String = ".d"
@@ -5886,6 +5887,9 @@ Public MustInherit Class clsAnalysisResources
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
 			Case "moda"
 				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
+			Case "mspathfinder"
+				Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSPathFinder
+
 			Case Else
 				' Did not find an exact match
 				' Try a substring match
@@ -5903,6 +5907,8 @@ Public MustInherit Class clsAnalysisResources
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
 				ElseIf strToolNameLCase.StartsWith("moda") Then
 					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
+				ElseIf strToolNameLCase.StartsWith("mspathfinder") Then
+					Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSPathFinder
 				Else
 					Return Nothing
 				End If

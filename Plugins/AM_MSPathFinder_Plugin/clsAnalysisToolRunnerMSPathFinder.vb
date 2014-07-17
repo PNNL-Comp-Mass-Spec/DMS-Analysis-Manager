@@ -50,7 +50,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		Dim result As IJobParams.CloseOutType
 
 		Try
-			'Call base class for initial setup
+			' Call base class for initial setup
 			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -59,9 +59,9 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter")
 			End If
 
-			' Determine the path to the MSPathFinder program
+			' Determine the path to the MSPathFinder program (Top-down version)
 			Dim progLoc As String
-			progLoc = DetermineProgramLocation("MSPathFinder", "MSPathFinderProgLoc", "MSPathFinder.exe")
+			progLoc = DetermineProgramLocation("MSPathFinder", "MSPathFinderProgLoc", "MSPathFinderT.exe")
 
 			If String.IsNullOrWhiteSpace(progLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -72,7 +72,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 				m_message = "Error determining MSPathFinder version"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
 			End If
 
 			Dim fastaFileIsDecoy As Boolean
@@ -81,16 +80,27 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			End If
 
 			' Run MSPathFinder
-			Dim blnSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy)
+			Dim tdaEnabled As Boolean
+			Dim blnSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy, tdaEnabled)
 
 			If blnSuccess Then
 				' Look for the results file
 
-				Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_results.txt"))
+				Dim fiResultsFile As FileInfo
+
+				If tdaEnabled Then
+					fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_IcTda.tsv"))
+				Else
+					fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_IcTarget.tsv"))
+				End If
 
 				If fiResultsFile.Exists Then
-					' Success
-					' Perform post-processing if necessary
+					blnSuccess = PostProcessMSPathFinderResults()
+					If Not blnSuccess Then
+						If String.IsNullOrEmpty(m_message) Then
+							m_message = "Unknown error post-processing the MSPathFinder results"
+						End If
+					End If
 
 				Else
 					If String.IsNullOrEmpty(m_message) Then
@@ -152,7 +162,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
-
 
 	Protected Sub CopyFailedResultsToArchiveFolder()
 
@@ -276,10 +285,38 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		' Example Console output
 		'
-		' ???????????????????????????
-		' ???????????????????????????
-		' ???????????????????????????
-		' ???????????????????????????
+		' MSPathFinderT 0.12 (June 17, 2014)
+		' SpecFilePath: E:\DMS_WorkDir\Synocho_L2_1.pbf
+		' DatabaseFilePath: C:\DMS_Temp_Org\ID_003962_71E1A1D4.fasta
+		' OutputDir: E:\DMS_WorkDir
+		' SearchMode: 1
+		' Tda: True
+		' PrecursorIonTolerancePpm: 10
+		' ProductIonTolerancePpm: 10
+		' MinSequenceLength: 21
+		' MaxSequenceLength: 300
+		' MinPrecursorIonCharge: 2
+		' MaxPrecursorIonCharge: 30
+		' MinProductIonCharge: 1
+		' MaxProductIonCharge: 15
+		' MinSequenceMass: 3000
+		' MaxSequenceMass: 50000
+		' MaxDynamicModificationsPerSequence: 4
+		' Modifications:
+		' C(2) H(3) N(1) O(1) S(0),C,fix,Everywhere,Carbamidomethyl
+		' C(0) H(0) N(0) O(1) S(0),M,opt,Everywhere,Oxidation
+		' C(0) H(1) N(0) O(3) S(0) P(1),S,opt,Everywhere,Phospho
+		' C(0) H(1) N(0) O(3) S(0) P(1),T,opt,Everywhere,Phospho
+		' C(0) H(1) N(0) O(3) S(0) P(1),Y,opt,Everywhere,Phospho
+		' C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
+		' C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
+		' Reading raw file...Elapsed Time: 4.4701 sec
+		' Determining precursor masses...Elapsed Time: 59.2987 sec
+		' Deconvoluting MS2 spectra...Elapsed Time: 9.5820 sec
+		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icseq and C:\DMS_Temp_Org\ID_003962_71E1A1D4.icanno...    Done.
+		' Reading the target database...Elapsed Time: 0.0074 sec
+		' Searching the target database
+		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icplcp... Done.
 
 		Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
 		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
@@ -447,7 +484,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	''' <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
 	''' <returns>Options string if success; empty string if an error</returns>
 	''' <remarks></remarks>
-	Public Function ParseMSPathFinderParameterFile(ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef strCmdLineOptions As String) As IJobParams.CloseOutType
+	Public Function ParseMSPathFinderParameterFile(ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef strCmdLineOptions As String, <Out()> tdaEnabled As Boolean) As IJobParams.CloseOutType
 
 		Dim intNumMods As Integer = 0
 		Dim lstStaticMods As List(Of String) = New List(Of String)
@@ -456,6 +493,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		Dim errMsg As String
 
 		strCmdLineOptions = String.Empty
+		tdaEnabled = False
+
 		Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
 		If Not File.Exists(strParameterFilePath) Then
@@ -529,6 +568,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		strCmdLineOptions = sbOptions.ToString()
 
 		If strCmdLineOptions.Contains("-tda 1") Then
+			tdaEnabled = True
 			' Make sure the .Fasta file is not a Decoy fasta
 			If fastaFileIsDecoy Then
 				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
@@ -593,6 +633,71 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 	End Function
 
+	Private Function PostProcessMSPathFinderResults() As Boolean
+
+		' Move the output files into a subfolder so that we can zip them
+		Dim compressDirPath As String = String.Empty
+
+		Try
+			Dim diWorkDir = New DirectoryInfo(m_WorkDir)
+
+			' Make sure MSPathFinder has released the file handles
+			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+			Threading.Thread.Sleep(500)
+
+			Dim diCompressDir = New DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"))
+			If diCompressDir.Exists Then
+				For Each fiFile In diCompressDir.GetFiles()
+					fiFile.Delete()
+				Next
+			Else
+				diCompressDir.Create()
+			End If
+
+			Dim fiResultFiles = diWorkDir.GetFiles(m_Dataset & "*_Ic*.tsv").ToList()
+
+			If fiResultFiles.Count = 0 Then
+				m_message = "Did not find any _Ic*.tsv files"
+				Return False
+			End If
+
+			For Each fiFile In fiResultFiles
+				Dim targetFilePath = Path.Combine(diCompressDir.FullName, fiFile.Name)
+				fiFile.MoveTo(targetFilePath)
+			Next
+
+			compressDirPath = diCompressDir.FullName
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception preparing the MSPathFinder results for zipping: " & ex.Message)
+			Return False
+		End Try
+
+		Try
+
+			m_IonicZipTools.DebugLevel = m_DebugLevel
+
+			Dim resultsZipFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_IcTsv.zip")
+			Dim blnSuccess = m_IonicZipTools.ZipDirectory(compressDirPath, resultsZipFilePath)
+
+			If Not blnSuccess Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = m_IonicZipTools.Message
+					If String.IsNullOrEmpty(m_message) Then
+						m_message = "Unknown error zipping the MSPathFinder results"
+					End If
+				End If
+			End If
+
+			Return blnSuccess
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception zipping the MSPathFinder results: " & ex.Message)
+			Return False
+		End Try
+
+	End Function
+
 	Private Sub ReportError(ByVal errorMessage As String)
 		ReportError(errorMessage, String.Empty)
 	End Sub
@@ -606,7 +711,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		End If
 	End Sub
 
-	Protected Function StartMSPathFinder(ByVal progLoc As String, fastaFileIsDecoy As Boolean) As Boolean
+	Protected Function StartMSPathFinder(ByVal progLoc As String, ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
 
 		Dim CmdStr As String
 		Dim blnSuccess As Boolean
@@ -617,7 +722,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		' The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
 		Dim strCmdLineOptions As String = String.Empty
-		Dim eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, strCmdLineOptions)
+
+		Dim eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, strCmdLineOptions, tdaEnabled)
 
 		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return False

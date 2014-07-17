@@ -117,6 +117,9 @@ Public Class clsAnalysisResourcesExtraction
 				Case RESULT_TYPE_MODA
 					eResult = GetMODaFiles()
 
+				Case RESULT_TYPE_MSPATHFINDER
+					eResult = GetMSPathFinderFiles()
+
 				Case Else
 					m_message = "Invalid tool result type: " & strResultType
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -449,6 +452,26 @@ Public Class clsAnalysisResourcesExtraction
 		m_jobParams.AddResultFileToSkip(FileToGet)
 
 		' Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+
+	Private Function GetMSPathFinderFiles() As IJobParams.CloseOutType
+
+		Dim FileToGet As String
+
+		FileToGet = m_DatasetName & "_IcTsv.zip"
+
+		If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+			'Errors were reported in function call, so just return
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		End If
+		m_jobParams.AddResultFileToSkip(FileToGet)
+		m_jobParams.AddResultFileExtensionToSkip(".tsv")
+
+		' Note that we'll obtain the MSPathFinder parameter file in RetrieveMiscFiles
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
