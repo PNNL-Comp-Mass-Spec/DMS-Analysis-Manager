@@ -1137,10 +1137,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
-		' Lookup the version of DeconEngine (in the DeconTools folder)
-		strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
-		If Not blnSuccess Then Return False
+		' Old: Lookup the version of DeconEngine (in the DeconTools folder)
+		' Disabled July 31, 2014 because support for Rapid was removed from DeconTools.Backend.dll and thus DeconEngine.dll is no longer required
+		' strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
+		' blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+		' If Not blnSuccess Then Return False
 
 		' Lookup the version of DeconEngineV2 (in the DeconTools folder)
 		strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
