@@ -95,7 +95,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' </summary>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
+	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
 
 		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
 		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)
@@ -165,8 +165,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	End Function
 
-
-	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)) As Boolean
+	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
 
 		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
@@ -398,7 +397,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' </summary>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType))
+	Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
 		Dim lstDataPackageJobs As List(Of String) = New List(Of String)
 
 		For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
@@ -406,7 +405,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 		Next
 
 		If lstDataPackageJobs.Count > 0 Then
-			StorePackedJobParameterList(lstDataPackageJobs.ToList(), JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
+			StorePackedJobParameterList(lstDataPackageJobs, JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
 		End If
 
 	End Sub

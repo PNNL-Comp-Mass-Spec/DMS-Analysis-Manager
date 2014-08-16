@@ -4,13 +4,14 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/06
 '
-' Last modified 09/18/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Collections.Generic
+Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisResourcesSeq
 	Inherits clsAnalysisResources
@@ -25,13 +26,23 @@ Public Class clsAnalysisResourcesSeq
 
 #Region "Methods"
 
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
 	Protected Sub ArchiveSequestParamFile()
 
 		Dim strSrcFilePath As String = ""
 		Dim strTargetFolderPath As String = ""
 
 		Try
-			strSrcFilePath = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("ParmFileName"))
+			strSrcFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("ParmFileName"))
 			strTargetFolderPath = m_jobParams.GetParam("ParmFileStoragePath")
 
 			If m_DebugLevel >= 3 Then
@@ -62,16 +73,16 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim intRevisionNumber As Integer
 
-		Dim fiArchivedFile As System.IO.FileInfo
+		Dim fiArchivedFile As FileInfo
 
 		ReDim strLineIgnoreRegExList(0)
 		strLineIgnoreRegExList(0) = "mass_type_parent *=.*"
 
 		blnNeedToArchiveFile = False
 
-		strTargetFilePath = System.IO.Path.Combine(strTargetFolderPath, System.IO.Path.GetFileName(strSrcFilePath))
+		strTargetFilePath = Path.Combine(strTargetFolderPath, Path.GetFileName(strSrcFilePath))
 
-		If Not System.IO.File.Exists(strTargetFilePath) Then
+		If Not File.Exists(strTargetFilePath) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest parameter file not found in archive folder; copying to " & strTargetFilePath)
 			End If
@@ -89,21 +100,21 @@ Public Class clsAnalysisResourcesSeq
 				End If
 
 				' Files don't match; rename the old file
-				fiArchivedFile = New System.IO.FileInfo(strTargetFilePath)
+				fiArchivedFile = New FileInfo(strTargetFilePath)
 
-				strNewNameBase = System.IO.Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
-				strNewName = strNewNameBase & System.IO.Path.GetExtension(strTargetFilePath)
+				strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
+				strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
 
 				' See if the renamed file exists; if it does, we'll have to tweak the name
 				intRevisionNumber = 1
 				Do
-					strNewPath = System.IO.Path.Combine(strTargetFolderPath, strNewName)
-					If Not System.IO.File.Exists(strNewPath) Then
+					strNewPath = Path.Combine(strTargetFolderPath, strNewName)
+					If Not File.Exists(strNewPath) Then
 						Exit Do
 					End If
 
 					intRevisionNumber += 1
-					strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & System.IO.Path.GetExtension(strTargetFilePath)
+					strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
 				Loop
 
 				If m_DebugLevel >= 2 Then
@@ -123,7 +134,7 @@ Public Class clsAnalysisResourcesSeq
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strSrcFilePath & " to " & strTargetFilePath)
 			End If
 
-			System.IO.File.Copy(strSrcFilePath, strTargetFilePath, True)
+			File.Copy(strSrcFilePath, strTargetFilePath, True)
 		End If
 
 	End Sub
@@ -145,9 +156,9 @@ Public Class clsAnalysisResourcesSeq
 		Dim strLocalFilePath As String
 		Dim blnFilesMatch As Boolean
 
-		Dim ioSourceFolder As System.IO.DirectoryInfo
-		Dim ioFileList() As System.IO.FileInfo
-		Dim ioTempOutFile As System.IO.FileInfo
+		Dim ioSourceFolder As DirectoryInfo
+		Dim ioFileList() As FileInfo
+		Dim ioTempOutFile As FileInfo
 
 		Dim blnExistingOutfileFound As Boolean
 
@@ -161,15 +172,15 @@ Public Class clsAnalysisResourcesSeq
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
 				Exit Try
 			Else
-				strTransferFolderPath = System.IO.Path.Combine(strTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
-				strTransferFolderPath = System.IO.Path.Combine(strTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
+				strTransferFolderPath = Path.Combine(strTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
+				strTransferFolderPath = Path.Combine(strTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
 			End If
 
 			If m_DebugLevel >= 4 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking for " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file at " & strTransferFolderPath)
 			End If
 
-			ioSourceFolder = New System.IO.DirectoryInfo(strTransferFolderPath)
+			ioSourceFolder = New DirectoryInfo(strTransferFolderPath)
 
 			If Not ioSourceFolder.Exists Then
 				' Transfer folder not found; return false
@@ -179,9 +190,9 @@ Public Class clsAnalysisResourcesSeq
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 
-			strConcatenatedTempFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
+			strConcatenatedTempFilePath = Path.Combine(ioSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
 
-			ioTempOutFile = New System.IO.FileInfo(strConcatenatedTempFilePath)
+			ioTempOutFile = New FileInfo(strConcatenatedTempFilePath)
 			If Not ioTempOutFile.Exists Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file not found")
@@ -195,8 +206,8 @@ Public Class clsAnalysisResourcesSeq
 
 			' Compare the remote and local copies of the JobParameters file
 			strFileNameToCompare = "JobParameters_" & strJob & ".xml"
-			strRemoteFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
-			strLocalFilePath = System.IO.Path.Combine(m_WorkingDir, strFileNameToCompare)
+			strRemoteFilePath = Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
+			strLocalFilePath = Path.Combine(m_WorkingDir, strFileNameToCompare)
 
 			blnFilesMatch = CompareRemoteAndLocalFilesForResume(strRemoteFilePath, strLocalFilePath, "JobParameters")
 			If Not blnFilesMatch Then
@@ -206,8 +217,8 @@ Public Class clsAnalysisResourcesSeq
 
 			' Compare the remote and local copies of the Sequest Parameter file
 			strFileNameToCompare = m_jobParams.GetParam("ParmFileName")
-			strRemoteFilePath = System.IO.Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
-			strLocalFilePath = System.IO.Path.Combine(m_WorkingDir, strFileNameToCompare)
+			strRemoteFilePath = Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
+			strLocalFilePath = Path.Combine(m_WorkingDir, strFileNameToCompare)
 
 			blnFilesMatch = CompareRemoteAndLocalFilesForResume(strRemoteFilePath, strLocalFilePath, "Sequest Parameter")
 			If Not blnFilesMatch Then
@@ -217,7 +228,7 @@ Public Class clsAnalysisResourcesSeq
 
 			' Everything matches up; copy ioTempOutFile locally
 			Try
-				ioTempOutFile.CopyTo(System.IO.Path.Combine(m_WorkingDir, ioTempOutFile.Name), True)
+				ioTempOutFile.CopyTo(Path.Combine(m_WorkingDir, ioTempOutFile.Name), True)
 
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & ioTempOutFile.Name & " locally; will resume Sequest analysis")
@@ -241,23 +252,23 @@ Public Class clsAnalysisResourcesSeq
 
 				With ioFileList(0)
 					' Copy the sequest.log.tmp file to the work directory, but rename it to include a time stamp
-					strExistingSeqLogFileRenamed = System.IO.Path.GetFileNameWithoutExtension(.Name)
-					strExistingSeqLogFileRenamed = System.IO.Path.GetFileNameWithoutExtension(strExistingSeqLogFileRenamed)
+					strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(.Name)
+					strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(strExistingSeqLogFileRenamed)
 					strExistingSeqLogFileRenamed &= "_" & .LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
 				End With
 
 				Try
-					strLocalFilePath = System.IO.Path.Combine(m_WorkingDir, strExistingSeqLogFileRenamed)
+					strLocalFilePath = Path.Combine(m_WorkingDir, strExistingSeqLogFileRenamed)
 					ioFileList(0).CopyTo(strLocalFilePath, True)
 
 					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & System.IO.Path.GetFileName(ioFileList(0).Name) & " locally, renaming to " & strExistingSeqLogFileRenamed)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & Path.GetFileName(ioFileList(0).Name) & " locally, renaming to " & strExistingSeqLogFileRenamed)
 					End If
 
 					m_jobParams.AddServerFileToDelete(ioFileList(0).FullName)
 
 					' Copy the new file back to the transfer folder (necessary in case this job fails)
-					System.IO.File.Copy(strLocalFilePath, System.IO.Path.Combine(strTransferFolderPath, strExistingSeqLogFileRenamed))
+					File.Copy(strLocalFilePath, Path.Combine(strTransferFolderPath, strExistingSeqLogFileRenamed))
 
 				Catch ex As Exception
 					' Ignore errors here
@@ -282,14 +293,14 @@ Public Class clsAnalysisResourcesSeq
 
 	Protected Function CompareRemoteAndLocalFilesForResume(ByVal strRemoteFilePath As String, ByVal strLocalFilePath As String, ByVal strFileDescription As String) As Boolean
 
-		If Not System.IO.File.Exists(strRemoteFilePath) Then
+		If Not File.Exists(strRemoteFilePath) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & strFileDescription & " file not found remotely; unable to resume: " & strRemoteFilePath)
 			End If
 			Return False
 		End If
 
-		If Not System.IO.File.Exists(strLocalFilePath) Then
+		If Not File.Exists(strLocalFilePath) Then
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & strFileDescription & " file not found locally; unable to resume: " & strLocalFilePath)
 			End If
@@ -319,8 +330,8 @@ Public Class clsAnalysisResourcesSeq
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-			  ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-			  ByVal blnIgnoreWhitespace As Boolean) As Boolean
+		ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
+		ByVal blnIgnoreWhitespace As Boolean) As Boolean
 
 		Return TextFilesMatch(strFile1, strFile2, intComparisonStartLine, intComparisonEndLine, blnIgnoreWhitespace, Nothing)
 
@@ -338,9 +349,9 @@ Public Class clsAnalysisResourcesSeq
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-			  ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-			  ByVal blnIgnoreWhitespace As Boolean, _
-			  ByRef strLineIgnoreRegExList() As String) As Boolean
+		ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
+		ByVal blnIgnoreWhitespace As Boolean, _
+		ByRef strLineIgnoreRegExList() As String) As Boolean
 
 		Dim strLineIn1 As String
 		Dim strLineIn2 As String
@@ -352,7 +363,7 @@ Public Class clsAnalysisResourcesSeq
 		Dim intLineNumber As Integer = 0
 
 		Dim intLineIgnoreListCount As Integer
-		Dim reLineIgnoreList() As System.Text.RegularExpressions.Regex
+		Dim reLineIgnoreList() As Text.RegularExpressions.Regex
 
 		ReDim chWhiteSpaceChars(1)
 		chWhiteSpaceChars(0) = ControlChars.Tab
@@ -367,7 +378,7 @@ Public Class clsAnalysisResourcesSeq
 
 				For intIndex = 0 To strLineIgnoreRegExList.Length - 1
 					If Not strLineIgnoreRegExList(intIndex) Is Nothing AndAlso strLineIgnoreRegExList(intIndex).Length > 0 Then
-						reLineIgnoreList(intLineIgnoreListCount) = New System.Text.RegularExpressions.Regex(strLineIgnoreRegExList(intIndex), System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+						reLineIgnoreList(intLineIgnoreListCount) = New Regex(strLineIgnoreRegExList(intIndex), RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 						intLineIgnoreListCount += 1
 					End If
 				Next
@@ -375,9 +386,9 @@ Public Class clsAnalysisResourcesSeq
 				ReDim reLineIgnoreList(0)
 			End If
 
-			Using srFile1 As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strFile1, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srFile1 As StreamReader = New StreamReader(New FileStream(strFile1, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Using srFile2 As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strFile2, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+				Using srFile2 As StreamReader = New StreamReader(New FileStream(strFile2, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 
 					Do While srFile1.Peek > -1
@@ -481,7 +492,7 @@ Public Class clsAnalysisResourcesSeq
 
 	End Function
 
-	Protected Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal intLineIgnoreListCount As Integer, ByRef reLineIgnoreList() As System.Text.RegularExpressions.Regex) As Boolean
+	Protected Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal intLineIgnoreListCount As Integer, ByRef reLineIgnoreList() As Regex) As Boolean
 
 		Dim intIndex As Integer
 		Dim blnIgnoreLine As Boolean = False
@@ -582,12 +593,12 @@ Public Class clsAnalysisResourcesSeq
 	Private Function VerifyDatabase(ByVal OrgDBName As String, ByVal OrgDBPath As String) As Boolean
 
 		Dim HostFilePath As String = m_mgrParams.GetParam("hostsfilelocation")
-		Dim Nodes As System.Collections.Generic.List(Of String)
+		Dim Nodes As List(Of String)
 		Dim NodeDbLoc As String = m_mgrParams.GetParam("nodedblocation")
 
 		Dim strLogMessage As String
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & System.IO.Path.GetFileName(OrgDBName))
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database to nodes: " & Path.GetFileName(OrgDBName))
 
 		'Get the list of nodes from the hosts file
 		Nodes = GetHostList(HostFilePath)
@@ -599,8 +610,8 @@ Public Class clsAnalysisResourcesSeq
 
 
 		' Define the path to the database on the head node
-		Dim OrgDBFilePath As String = System.IO.Path.Combine(OrgDBPath, OrgDBName)
-		If Not IO.File.Exists(OrgDBFilePath) Then
+		Dim OrgDBFilePath As String = Path.Combine(OrgDBPath, OrgDBName)
+		If Not File.Exists(OrgDBFilePath) Then
 			m_message = "Database file can't be found on master"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & OrgDBFilePath)
 			Return False
@@ -691,15 +702,15 @@ Public Class clsAnalysisResourcesSeq
 	''' <param name="HostFilePath">Name of hosts file on cluster head node</param>
 	''' <returns>returns a string collection containing IP addresses for each node</returns>
 	''' <remarks></remarks>
-	Private Function GetHostList(ByVal HostFilePath As String) As System.Collections.Generic.List(Of String)
+	Private Function GetHostList(ByVal HostFilePath As String) As List(Of String)
 
-		Dim lstNodes As New System.Collections.Generic.List(Of String)
+		Dim lstNodes As New List(Of String)
 		Dim InpLine As String
 		Dim LineFields() As String
 		Dim Separators() As String = {" "}
 
 		Try
-			Using srHostFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(HostFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srHostFile As StreamReader = New StreamReader(New FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				Do While srHostFile.Peek > -1
 					'Read the line from the file and check to see if it contains a node IP address. 
@@ -736,15 +747,15 @@ Public Class clsAnalysisResourcesSeq
 		Const DETAILED_LOG_THRESHOLD As Integer = 3
 
 		Dim blnFilesMatch As Boolean
-		Dim ioFileA As System.IO.FileInfo
-		Dim ioFileB As System.IO.FileInfo
+		Dim ioFileA As FileInfo
+		Dim ioFileB As FileInfo
 		Dim dblSecondDiff As Double
 
 		blnFilesMatch = False
-		If System.IO.File.Exists(FileA) AndAlso System.IO.File.Exists(FileB) Then
+		If File.Exists(FileA) AndAlso File.Exists(FileB) Then
 			' Files both exist
-			ioFileA = New System.IO.FileInfo(FileA)
-			ioFileB = New System.IO.FileInfo(FileB)
+			ioFileA = New FileInfo(FileA)
+			ioFileB = New FileInfo(FileB)
 
 			If m_DebugLevel > DETAILED_LOG_THRESHOLD Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Comparing files: " & ioFileA.FullName & " vs. " & ioFileB.FullName)
@@ -811,7 +822,7 @@ Public Class clsAnalysisResourcesSeq
 	''' <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
 	Private Function VerifyRemoteDatabase(ByVal OrgDBFilePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean, ByRef blnNotEnoughFreeSpace As Boolean) As Boolean
 
-		Dim CopyNeeded As Boolean = False
+		Dim CopyNeeded As Boolean
 
 		blnFileAlreadyExists = False
 		blnNotEnoughFreeSpace = False
@@ -820,9 +831,9 @@ Public Class clsAnalysisResourcesSeq
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " & DestPath)
 		End If
 
-		Dim DestFile As String = System.IO.Path.Combine(DestPath, System.IO.Path.GetFileName(OrgDBFilePath))
+		Dim DestFile As String = Path.Combine(DestPath, Path.GetFileName(OrgDBFilePath))
 		Try
-			If System.IO.File.Exists(DestFile) Then
+			If File.Exists(DestFile) Then
 				'File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
 				If VerifyFilesMatchSizeAndDate(OrgDBFilePath, DestFile) Then
 					blnFileAlreadyExists = True
@@ -841,7 +852,7 @@ Public Class clsAnalysisResourcesSeq
 				If m_DebugLevel > 3 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database file " & DestFile)
 				End If
-				System.IO.File.Copy(OrgDBFilePath, DestFile, True)
+				File.Copy(OrgDBFilePath, DestFile, True)
 				'Now everything is in its proper place, so return
 				Return True
 			Else

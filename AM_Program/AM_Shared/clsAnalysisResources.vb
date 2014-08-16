@@ -252,6 +252,8 @@ Public MustInherit Class clsAnalysisResources
 
 	Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
 
+	Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
+
 	Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
 #End Region
 
@@ -355,11 +357,39 @@ Public MustInherit Class clsAnalysisResources
 
 		m_RecentlyFoundMyEMSLFiles = New List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 
+		m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, False)
+
 		m_StatusTools = statusTools
 
 	End Sub
 
 	Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
+
+	Public Function GetOption(ByVal resourceOption As clsGlobal.eAnalysisResourceOptions) As Boolean Implements IAnalysisResources.GetOption
+		If m_ResourceOptions Is Nothing Then Return False
+
+		Dim enabled As Boolean
+		If m_ResourceOptions.TryGetValue(resourceOption, enabled) Then
+			Return enabled
+		Else
+			Return False
+		End If
+
+	End Function
+
+	Public Sub SetOption(ByVal resourceOption As clsGlobal.eAnalysisResourceOptions, ByVal enabled As Boolean) Implements IAnalysisResources.SetOption
+		If m_ResourceOptions Is Nothing Then
+			m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
+		End If
+
+		If m_ResourceOptions.ContainsKey(resourceOption) Then
+			m_ResourceOptions(resourceOption) = enabled
+		Else
+			m_ResourceOptions.Add(resourceOption, enabled)
+		End If
+
+	End Sub
 
 	Protected Function AddFileToMyEMSLDownloadQueue(ByVal encodedFilePath As String) As Boolean
 
@@ -1716,7 +1746,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Look for the MSXmlFolder
 			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False, RetrievingInstrumentDataFolder:=False)
+			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False, retrievingInstrumentDataFolder:=False)
 
 			If String.IsNullOrEmpty(ServerPath) Then
 				Continue For
@@ -1820,7 +1850,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
 	Protected Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
+		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
 
 	End Function
 
@@ -1836,7 +1866,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
 	Protected Function FindValidFolder(ByVal DSName As String, ByVal FileNameToFind As String, RetrievingInstrumentDataFolder As Boolean) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
+		Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
 
 	End Function
 
@@ -1855,7 +1885,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal FileNameToFind As String,
 	  ByVal FolderNameToFind As String) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
 
 	End Function
 
@@ -1875,7 +1905,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal FolderNameToFind As String,
 	  ByVal RetrievingInstrumentDataFolder As Boolean) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
 
 	End Function
 
@@ -1895,7 +1925,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal FolderNameToFind As String,
 	  ByVal MaxRetryCount As Integer) As String
 
-		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, LogFolderNotFound:=True, RetrievingInstrumentDataFolder:=False)
+		Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
 
 	End Function
 
@@ -2824,7 +2854,7 @@ Public MustInherit Class clsAnalysisResources
 		Return udtHPCOptions
 
 	End Function
-	
+
 	''' <summary>
 	''' Get the name of the split fasta file to use for this job
 	''' </summary>
@@ -4555,7 +4585,7 @@ Public MustInherit Class clsAnalysisResources
 		' Look for the MASIC Results folder
 		' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
 		ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX
-		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, LogFolderNotFound:=False, RetrievingInstrumentDataFolder:=False)
+		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, logFolderNotFound:=False, retrievingInstrumentDataFolder:=False)
 
 		If String.IsNullOrEmpty(ServerPath) Then
 			m_message = "Dataset folder path not defined"
@@ -6127,12 +6157,12 @@ Public MustInherit Class clsAnalysisResources
 					m_message = "SpectraTypeClassifier encountered an error while parsing the _dta.txt file"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				End If
-				
+
 				Return False
 			End If
 
 			Dim fractionCentroided = mSpectraTypeClassifier.FractionCentroided
-			
+
 			Dim commentSuffix = " (" & mSpectraTypeClassifier.TotalSpectra & " total spectra)"
 
 			If fractionCentroided > 0.8 Then
@@ -6425,6 +6455,7 @@ Public MustInherit Class clsAnalysisResources
 	Private Sub mSpectraTypeClassifier_ReadingSpectra(ByVal spectraProcessed As Integer) Handles mSpectraTypeClassifier.ReadingSpectra
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & spectraProcessed & " spectra parsed in the _dta.txt file")
 	End Sub
+
 End Class
 
 

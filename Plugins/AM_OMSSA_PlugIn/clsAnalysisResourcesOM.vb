@@ -1,6 +1,8 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Xml
 
 Public Class clsAnalysisResourcesOM
     Inherits clsAnalysisResources
@@ -8,6 +10,16 @@ Public Class clsAnalysisResourcesOM
     Friend Const OMSSA_DEFAULT_INPUT_FILE As String = "OMSSA_default_input.xml"
     Friend Const OMSSA_INPUT_FILE As String = "OMSSA_input.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
+
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -31,7 +43,7 @@ Public Class clsAnalysisResourcesOM
         'convert the .fasta file to OMSSA format using formatdb.exe
         blnSuccess = ConvertOMSSAFastaFile()
         If Not blnSuccess Then
-            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
+			Const Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -53,7 +65,7 @@ Public Class clsAnalysisResourcesOM
 
         blnSuccess = ConvertDtaToXml()
         If Not blnSuccess Then
-            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
+			Const Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -79,7 +91,6 @@ Public Class clsAnalysisResourcesOM
 
 	Protected Function ConvertOMSSAFastaFile() As Boolean
 		Dim CmdStr As String
-		Dim result As Boolean = True
 
 		Try
 			' set up formatdb.exe to reference the organsim DB file (fasta)
@@ -96,7 +107,7 @@ Public Class clsAnalysisResourcesOM
 
 			' verify that program formatdb.exe file exists
 			Dim progLoc As String = m_mgrParams.GetParam("formatdbprogloc")
-			If Not System.IO.File.Exists(progLoc) Then
+			If Not File.Exists(progLoc) Then
 				If progLoc.Length = 0 Then progLoc = "Parameter 'formatdbprogloc' not defined for this manager"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
 				Return False
@@ -104,7 +115,7 @@ Public Class clsAnalysisResourcesOM
 
 			'Set up and execute a program runner to run FormatDb.exe
 			'formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
-			CmdStr = "-i" & System.IO.Path.Combine(LocalOrgDBFolder, OrgDBName) & " -p T -o T"
+			CmdStr = "-i" & Path.Combine(LocalOrgDBFolder, OrgDBName) & " -p T -o T"
 
 			If m_DebugLevel >= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " & progLoc & " " & CmdStr)
@@ -115,11 +126,12 @@ Public Class clsAnalysisResourcesOM
 				Return False
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " & ex.Message)
 		End Try
 
-		Return result
+		Return True
+
 	End Function
 
 	Protected Function ConvertDtaToXml() As Boolean
@@ -132,7 +144,7 @@ Public Class clsAnalysisResourcesOM
 
 		Try
 			' Convert the _DTA.txt file to a DTA .XML file
-			SourceFilePath = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+			SourceFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 
 			objDtaConverter = New DtaTextConverter.clsDtaTextToDtaXML
 
@@ -151,11 +163,11 @@ Public Class clsAnalysisResourcesOM
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling DtaTextConverter: " & objDtaConverter.GetErrorMessage())
 			Else
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DTA XML file created for " & System.IO.Path.GetFileName(SourceFilePath))
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DTA XML file created for " & Path.GetFileName(SourceFilePath))
 				End If
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " & ex.Message)
 		End Try
 
@@ -165,47 +177,45 @@ Public Class clsAnalysisResourcesOM
 
 	Protected Function MakeInputFile(ByRef strErrorMessage As String) As Boolean
 
-		Dim OmssaDefaultInput As String = System.IO.Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE)
-		Dim OmssaInput As String = System.IO.Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE)
-		Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
-		Dim FastaFilename As String = System.IO.Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
+		Dim OmssaDefaultInput As String = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE)
+		Dim OmssaInput As String = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE)
+		Dim ParamFilePath As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
+		Dim FastaFilename As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 
-		Dim SearchSettings As String = System.IO.Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-		Dim MSInfilename As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & ".xml")
-		Dim MSOmxOutFilename As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_om.omx")
-		Dim MSOmxLargeOutFilename As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_om_large.omx")
-		m_JobParams.AddResultFileExtensionToSkip(m_DatasetName & "_om_large.omx")
-		Dim MSCsvOutFilename As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & "_om.csv")
-
-		Dim result As Boolean = True
+		Dim SearchSettings As String = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		Dim MSInfilename As String = Path.Combine(m_WorkingDir, m_DatasetName & ".xml")
+		Dim MSOmxOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om.omx")
+		Dim MSOmxLargeOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om_large.omx")
+		m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & "_om_large.omx")
+		Dim MSCsvOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om.csv")
 
 		Dim strOutputFilePath As String
 
-		Dim fiTemplateFile As System.IO.FileInfo
-		Dim fiFileToMerge As System.IO.FileInfo
+		Dim fiTemplateFile As FileInfo
+		Dim fiFileToMerge As FileInfo
 
-		Dim objNamespaceMgr As System.Xml.XmlNamespaceManager
+		Dim objNamespaceMgr As XmlNamespaceManager
 
-		Dim objTemplate As System.Xml.XmlDocument
-		Dim objFileToMerge As System.Xml.XmlDocument
+		Dim objTemplate As XmlDocument
+		Dim objFileToMerge As XmlDocument
 
-		Dim objNodeToMerge As System.Xml.XmlNode
-		Dim objImportedNode As System.Xml.XmlNode
+		Dim objNodeToMerge As XmlNode
+		Dim objImportedNode As XmlNode
 
-		Dim objSelectedNodes As System.Xml.XmlNodeList
+		Dim objSelectedNodes As XmlNodeList
 		Dim intMatchCount As Integer
 
-		Dim objMostRecentComment As System.Xml.XmlNode = Nothing
+		Dim objMostRecentComment As XmlNode = Nothing
 		Dim blnCopyThisComment As Boolean
 
-		Dim objFrag As System.Xml.XmlDocumentFragment
+		Dim objFrag As XmlDocumentFragment
 
-		Dim objWriterSettings As System.Xml.XmlWriterSettings
-		Dim objWriter As System.Xml.XmlWriter
+		Dim objWriterSettings As XmlWriterSettings
+		Dim objWriter As XmlWriter
 
 		Try
-			fiTemplateFile = New System.IO.FileInfo(OmssaDefaultInput)
-			fiFileToMerge = New System.IO.FileInfo(ParamFilePath)
+			fiTemplateFile = New FileInfo(OmssaDefaultInput)
+			fiFileToMerge = New FileInfo(ParamFilePath)
 
 			If Not fiTemplateFile.Exists Then
 				strErrorMessage = "File not found: " & fiTemplateFile.FullName
@@ -221,7 +231,7 @@ Public Class clsAnalysisResourcesOM
 			strOutputFilePath = OmssaInput
 
 			' Open the template XML file
-			objTemplate = New System.Xml.XmlDocument
+			objTemplate = New XmlDocument
 			objTemplate.PreserveWhitespace = True
 			Try
 				objTemplate.Load(fiTemplateFile.FullName)
@@ -231,7 +241,7 @@ Public Class clsAnalysisResourcesOM
 			End Try
 
 			' Open the file to be merged
-			objFileToMerge = New System.Xml.XmlDocument
+			objFileToMerge = New XmlDocument
 			objFileToMerge.PreserveWhitespace = True
 			Try
 				objFileToMerge.Load(fiFileToMerge.FullName)
@@ -242,13 +252,13 @@ Public Class clsAnalysisResourcesOM
 
 			' Define the namespace manager
 			' Required because the template uses namespace "http://www.ncbi.nlm.nih.gov"
-			objNamespaceMgr = New System.Xml.XmlNamespaceManager(objTemplate.NameTable)
+			objNamespaceMgr = New XmlNamespaceManager(objTemplate.NameTable)
 			objNamespaceMgr.AddNamespace("ncbi", "http://www.ncbi.nlm.nih.gov")
 
 			' Read each node objFileToMerge
 			For Each objNodeToMerge In objFileToMerge.DocumentElement.ChildNodes
 
-				If objNodeToMerge.NodeType = Xml.XmlNodeType.Comment Then
+				If objNodeToMerge.NodeType = XmlNodeType.Comment Then
 					' Save the most recent comment to possibly be included later
 
 					' Note that we have to use .ImportNode, otherwise we'll get a namespace error when we try to add the new node
@@ -256,7 +266,7 @@ Public Class clsAnalysisResourcesOM
 
 					objMostRecentComment = objImportedNode.CloneNode(True)
 
-				ElseIf objNodeToMerge.NodeType = Xml.XmlNodeType.Element Then
+				ElseIf objNodeToMerge.NodeType = XmlNodeType.Element Then
 
 					' Note that we have to use .ImportNode, otherwise we'll get a namespace error when we try to add the new node
 					objImportedNode = objTemplate.ImportNode(objNodeToMerge, True)
@@ -330,17 +340,17 @@ Public Class clsAnalysisResourcesOM
 							Try
 								' Possibly add this comment just before the current node
 								' However, see if a duplicate comment already exists
-								Dim objPrevNode As System.Xml.XmlNode
+								Dim objPrevNode As XmlNode
 								objPrevNode = objSelectedNodes.Item(0).PreviousSibling
 
-								Do While Not objPrevNode Is Nothing AndAlso objPrevNode.NodeType = Xml.XmlNodeType.Whitespace
+								Do While Not objPrevNode Is Nothing AndAlso objPrevNode.NodeType = XmlNodeType.Whitespace
 									' objPrevNode is currently whitespace
 									' Move back one node
 									objPrevNode = objPrevNode.PreviousSibling
 								Loop
 
 								blnCopyThisComment = True
-								If Not objPrevNode Is Nothing AndAlso objPrevNode.NodeType = Xml.XmlNodeType.Comment Then
+								If Not objPrevNode Is Nothing AndAlso objPrevNode.NodeType = XmlNodeType.Comment Then
 									If objPrevNode.InnerText = objMostRecentComment.InnerText Then
 										' The comments match; skip this comment
 										blnCopyThisComment = False
@@ -385,8 +395,8 @@ Public Class clsAnalysisResourcesOM
 			' Now override the values for MSInFile_infile and MSSpectrumFileType
 			Try
 
-				Dim objFileNameNodes As System.Xml.XmlNodeList
-				Dim objFileTypeNodes As System.Xml.XmlNodeList
+				Dim objFileNameNodes As XmlNodeList
+				Dim objFileTypeNodes As XmlNodeList
 
 				objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile", objNamespaceMgr)
 
@@ -423,7 +433,7 @@ Public Class clsAnalysisResourcesOM
 			' Now override the values for MSSearchSettings_db
 			Try
 
-				Dim objFileNameNodes As System.Xml.XmlNodeList
+				Dim objFileNameNodes As XmlNodeList
 
 				objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_db", objNamespaceMgr)
 
@@ -449,11 +459,11 @@ Public Class clsAnalysisResourcesOM
 			' Now override the values for MSOutFile_outfile and MSSerialDataFormat
 			Try
 
-				Dim objFileNameNodes As System.Xml.XmlNodeList
-				Dim objFileTypeNodes As System.Xml.XmlNodeList
+				Dim objFileNameNodes As XmlNodeList
+				Dim objFileTypeNodes As XmlNodeList
 
 				'If we ever have to change the value of the MSOutFile_includerequest value 
-				'Dim objFileIncludeRequestNodes As System.Xml.XmlNodeList
+				'Dim objFileIncludeRequestNodes As XmlNodeList
 				'objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']", objNamespaceMgr)
 				'objFileIncludeRequestNodes.Item(1).InnerXml = "true"
 
@@ -508,18 +518,18 @@ Public Class clsAnalysisResourcesOM
 			' Write out the new file
 
 			Try
-				objWriterSettings = New System.Xml.XmlWriterSettings
+				objWriterSettings = New XmlWriterSettings
 				objWriterSettings.Indent = True
 				objWriterSettings.IndentChars = "  "
 				objWriterSettings.NewLineOnAttributes = True
 
 
-				objWriter = System.Xml.XmlTextWriter.Create(strOutputFilePath, objWriterSettings)
+				objWriter = XmlTextWriter.Create(strOutputFilePath, objWriterSettings)
 
 				objWriter.WriteRaw(objTemplate.DocumentElement.OuterXml)
 				objWriter.Close()
 			Catch ex As Exception
-				strErrorMessage = "Error creating new XML file (" & System.IO.Path.GetFileName(strOutputFilePath) & "): " & ex.Message
+				strErrorMessage = "Error creating new XML file (" & Path.GetFileName(strOutputFilePath) & "): " & ex.Message
 				Return False
 			End Try
 

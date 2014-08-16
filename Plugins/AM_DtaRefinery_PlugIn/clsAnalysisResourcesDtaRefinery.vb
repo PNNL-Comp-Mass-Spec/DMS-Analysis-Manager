@@ -2,6 +2,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Xml
 
 Public Class clsAnalysisResourcesDtaRefinery
     Inherits clsAnalysisResources
@@ -10,6 +11,16 @@ Public Class clsAnalysisResourcesDtaRefinery
     Friend Const XTANDEM_TAXONOMY_LIST_FILE As String = "xtandem_taxonomy_list.xml"
     Friend Const DTA_REFINERY_INPUT_FILE As String = "DtaRefinery_input.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
+
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
@@ -221,11 +232,8 @@ Public Class clsAnalysisResourcesDtaRefinery
 		Dim ParamFilePath As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"))
 		Dim DtaRefineryDirectory As String = Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"))
 
-		Dim SearchSettings As String = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-		Dim result As Boolean = True
 		Dim fiTemplateFile As FileInfo
-		Dim objTemplate As System.Xml.XmlDocument
+		Dim objTemplate As XmlDocument
 		strErrorMessage = String.Empty
 
 		Try
@@ -237,7 +245,7 @@ Public Class clsAnalysisResourcesDtaRefinery
 			End If
 
 			' Open the template XML file
-			objTemplate = New System.Xml.XmlDocument
+			objTemplate = New XmlDocument
 			objTemplate.PreserveWhitespace = True
 			Try
 				objTemplate.Load(fiTemplateFile.FullName)
@@ -248,8 +256,8 @@ Public Class clsAnalysisResourcesDtaRefinery
 
 			' Now override the values for xtandem parameters file
 			Try
-				Dim par As System.Xml.XmlNode
-				Dim root As System.Xml.XmlElement = objTemplate.DocumentElement
+				Dim par As XmlNode
+				Dim root As XmlElement = objTemplate.DocumentElement
 
 				XTandemExePath = Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\tandem_5digit_precision.exe")
 				par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']")

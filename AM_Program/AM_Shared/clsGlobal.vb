@@ -27,6 +27,12 @@ Public Class clsGlobal
 
 #End Region
 
+#Region "Enums"
+	Public Enum eAnalysisResourceOptions
+		OrgDbRequired = 0
+	End Enum
+#End Region
+
 #Region "Module variables"
 	Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
 	  ByVal lpRootPathName As String, _
@@ -1288,6 +1294,7 @@ Public Class clsGlobal
 
 		diDirectory = New DirectoryInfo(directoryPath)
 		If Not diDirectory.Exists Then
+			' Example error message: Organism DB directory not found: G:\DMS_Temp_Org
 			errorMessage = directoryDescription & " not found: " & directoryPath
 			clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage)
 			Return False
@@ -1313,6 +1320,7 @@ Public Class clsGlobal
 
 
 		If freeSpaceMB < minFreeSpaceMB Then
+			' Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
 			errorMessage = directoryDescription & " drive has less than " & minFreeSpaceMB.ToString & " MB free: " & CInt(freeSpaceMB).ToString() & " MB"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 			Return False

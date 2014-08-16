@@ -15,6 +15,16 @@ Public Class clsAnalysisResourcesMODa
 
 	Protected WithEvents mDTAtoMGF As DTAtoMGF.clsDTAtoMGF
 
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		' Make sure the machine has enough free memory to run MODa

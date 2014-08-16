@@ -144,8 +144,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
 			strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-			Dim fiFastaFile As FileInfo
-			fiFastaFile = New FileInfo(strFASTAFilePath)
+			Dim fiFastaFile = New FileInfo(strFASTAFilePath)
 
 			If Not fiFastaFile.Exists Then
 				' Fasta file not found

@@ -1715,14 +1715,10 @@ Public Class clsMainProcess
 				Return False
 			End If
 
-			' Possibly verify that the local fasta file cache directory hsa sufficient free space
-			If strStepToolNameLCase.Contains("sequest") OrElse _
-			   strStepToolNameLCase.Contains("xtandem") OrElse _
-			   strStepToolNameLCase.Contains("inspect") OrElse _
-			   strStepToolNameLCase.Contains("msgfdb") OrElse _
-			   strStepToolNameLCase.Contains("msgfplus") OrElse _
-			   strStepToolNameLCase.Contains("msalign") OrElse _
-			   strStepToolNameLCase.Contains("omssa") Then
+			Dim orgDbRequired As Boolean = m_Resource.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired)
+
+			If orgDbRequired Then
+				' Verify that the local fasta file cache directory has sufficient free space
 
 				If Not ValidateFreeDiskSpaceWork("Organism DB directory", OrgDbDir, OrgDbDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogFile) Then
 					DisableManagerLocally()

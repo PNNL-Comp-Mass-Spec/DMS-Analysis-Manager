@@ -15,11 +15,18 @@ Public Class clsAnalysisResourcesIDPicker
 	' This dictionary holds any filenames that we need to rename after copying locally
 	Protected mInputFileRenames As Dictionary(Of String, String)
 
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim RawDataType As String
-		Dim eRawDataType As eRawDataTypeConstants
-		Dim blnMGFInstrumentData As Boolean
 		Dim eReturnCode As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
@@ -35,9 +42,9 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-		RawDataType = m_jobParams.GetParam("RawDataType")
-		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
-		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+		Dim RawDataType = m_jobParams.GetParam("RawDataType")
+		Dim eRawDataType = GetRawDataType(RawDataType)
+		Dim blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		' Retrieve the PSM result files, PHRP files, and MSGF file
 		If Not GetInputFiles(m_DatasetName, strParamFileName, eReturnCode) Then
@@ -99,7 +106,7 @@ Public Class clsAnalysisResourcesIDPicker
 
 		Dim strResultType As String
 
-		Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+		Dim eResultType As clsPHRPReader.ePeptideHitResultType
 		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		strResultType = m_jobParams.GetParam("ResultType")

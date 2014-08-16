@@ -14,11 +14,22 @@ Public Class clsAnalysisResourcesIN
     '*********************************************************************************************************
 
 #Region "Methods"
-    ''' <summary>
-    ''' Retrieves files necessary for performance of Inspect analysis
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
+
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		MyBase.Setup(mgrParams, jobParams)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+	End Sub
+
+	''' <summary>
+	''' Retrieves files necessary for performance of Inspect analysis
+	''' </summary>
+	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+	''' <remarks></remarks>
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		'Retrieve Fasta file
@@ -46,17 +57,15 @@ Public Class clsAnalysisResourcesIN
 
 	End Function
 
-    ''' <summary>
-    ''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
-    ''' </summary>
+	''' <summary>
+	''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
+	''' </summary>
 	''' <returns>TRUE for success, FALSE for error</returns>
-    ''' <remarks></remarks>
+	''' <remarks></remarks>
 	Public Shadows Function RetrieveDtaFiles() As Boolean
 
 		'Retrieve zipped DTA file
 		Dim DtaResultFileName As String
-		Dim strUnzippedFileNameRoot As String
-		Dim strPathToDelete As String = String.Empty
 
 		Dim CloneStepRenum As String
 		Dim stepNum As String
@@ -69,11 +78,9 @@ Public Class clsAnalysisResourcesIN
 		'Determine if this is parallelized inspect job
 		If System.String.IsNullOrEmpty(CloneStepRenum) Then
 			DtaResultFileName = m_DatasetName & "_dta.zip"
-			strUnzippedFileNameRoot = m_DatasetName
 		Else
 			parallelZipNum = CInt(stepNum) - CInt(CloneStepRenum) + 1
 			DtaResultFileName = m_DatasetName & "_" & CStr(parallelZipNum) & "_dta.txt"
-			strUnzippedFileNameRoot = m_DatasetName & "_" & CStr(parallelZipNum)
 			isParallelized = True
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing parallelized Inspect segment " & parallelZipNum.ToString)
 		End If
@@ -106,19 +113,19 @@ Public Class clsAnalysisResourcesIN
 				Return False
 			End If
 		End If
-		
+
 		' Check to see if the job is parallelized
 		'  If it is parallelized, we do not need to unzip the concatenated DTA file (since it is already unzipped)
 		'  If not parallelized, then we do need to unzip
-		If Not isParallelized OrElse System.IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
+		If Not isParallelized OrElse IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
 			'Unzip concatenated DTA file
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-			If UnzipFileStart(System.IO.Path.Combine(m_WorkingDir, DtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", False) Then
+			If UnzipFileStart(IO.Path.Combine(m_WorkingDir, DtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", False) Then
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
 				End If
 			End If
-		End If		
+		End If
 
 		Return True
 

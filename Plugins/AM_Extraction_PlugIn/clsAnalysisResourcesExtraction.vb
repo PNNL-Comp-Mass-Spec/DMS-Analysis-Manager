@@ -4,8 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 009/22/2008
 '
-' Last modified 09/25/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
@@ -30,13 +28,27 @@ Public Class clsAnalysisResourcesExtraction
 	Protected m_PendingFileRenames As Dictionary(Of String, String)
 #End Region
 
-#Region "Events"
-#End Region
-
-#Region "Properties"
-#End Region
-
 #Region "Methods"
+
+	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+		Dim statusTools As IStatusFile = Nothing
+		Setup(mgrParams, jobParams, statusTools)		
+	End Sub
+
+	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
+		MyBase.Setup(mgrParams, jobParams, statusTools)
+
+		Dim orgDbRequired As Boolean = True
+		Dim strResultType As String = m_jobParams.GetParam("ResultType")
+
+		If strResultType = RESULT_TYPE_MSGFDB Then
+			' Extraction of MSGF+ results typically does not require a fasta file
+			orgDbRequired = False
+		End If
+
+		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, orgDbRequired)
+	End Sub
+
 	''' <summary>
 	''' Gets all files needed to perform data extraction
 	''' </summary>
@@ -79,7 +91,7 @@ Public Class clsAnalysisResourcesExtraction
 				If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
-			End If			
+			End If
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -244,7 +256,7 @@ Public Class clsAnalysisResourcesExtraction
 	End Function
 
 	Private Function GetMODaFiles() As IJobParams.CloseOutType
-	
+
 		Dim FileToGet As String
 
 		FileToGet = m_DatasetName & "_moda.zip"

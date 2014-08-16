@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+August 15, 2014
+	- Updated IAnalysisResources to include methods GetOption and SetOption 
+
 January 9, 2013
 	- New version of PRISM.dll; requires instantiating PRISM.Files.clsFileTools to use most of the functions
 		- Includes function CopyFileUsingLocks
