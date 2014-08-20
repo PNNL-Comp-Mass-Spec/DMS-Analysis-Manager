@@ -76,13 +76,24 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
 			int missingInstrumentDataCount = 0;
-			int jobsToProcess = lstAdditionalJobs.Count();
+
+			// Combine the two job lists provided to this function to determine the master list of jobs to process
+			var jobsToProcess = lstDataPackagePeptideHitJobs.ToList();
+			jobsToProcess.AddRange(lstAdditionalJobs.ToList());
+
+			int jobCountToProcess = jobsToProcess.Count();
 			int jobsProcessed = 0;
 			
 			DateTime dtLastProgressUpdate = DateTime.UtcNow;
 
-			foreach (udtDataPackageJobInfoType udtJobInfo in lstAdditionalJobs)
+			foreach (udtDataPackageJobInfoType udtJobInfo in jobsToProcess)
 			{
+				jobsProcessed++;
+				if (dctDatasetRawDataTypes.ContainsKey(udtJobInfo.Dataset))
+					continue;
+
+				dctDatasetRawDataTypes.Add(udtJobInfo.Dataset, udtJobInfo.RawDataType);
+
 				if (!OverrideCurrentDatasetAndJobInfo(udtJobInfo))
 				{
 					// Error message has already been logged
@@ -129,8 +140,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					
 				}
 
-
-				bool blnIsFolder = false;
+				bool blnIsFolder;
 
 				// Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
 				// Therefore, we need to check that strRawFilePath actually exists
@@ -159,15 +169,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					}
 				}
 
-				if (!dctDatasetRawDataTypes.ContainsKey(udtJobInfo.Dataset))
-				{
-					dctDatasetRawDataTypes.Add(udtJobInfo.Dataset, udtJobInfo.RawDataType);
-				}
-
-				jobsProcessed++;
-
 				// Compute a % complete value between 0 and 2%
-				float percentComplete = (float)jobsProcessed / jobsToProcess * 2;
+				float percentComplete = (float)jobsProcessed / jobCountToProcess * 2;
 				m_StatusTools.UpdateAndWrite(percentComplete);
 
 				if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)
@@ -178,7 +181,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					if (includeMzXmlFiles)
 						progressMsg += " and mzXML files";
 
-					progressMsg += ": " + jobsProcessed + " / " + jobsToProcess + " jobs";
+					progressMsg += ": " + jobsProcessed + " / " + jobCountToProcess + " jobs";
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, progressMsg);
 				}

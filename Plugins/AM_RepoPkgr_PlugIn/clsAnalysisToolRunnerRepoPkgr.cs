@@ -680,6 +680,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			int successCount = 0;
 			int errorCount= 0;
 
+			if (dctDatasetRawFilePaths.Keys.Count == 0)
+			{
+				m_message = "Could not retrieve instrument data since dctDatasetRawFilePaths is empty";
+				return false;
+			}
+
 			// Process each dataset
 			foreach (var datasetName in dctDatasetRawFilePaths.Keys)
 			{
