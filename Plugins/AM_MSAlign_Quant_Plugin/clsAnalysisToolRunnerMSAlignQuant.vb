@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisToolRunnerMSAlignQuant
 	Inherits clsAnalysisToolRunnerBase
@@ -26,10 +27,9 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 	Protected Const PROGRESS_PCT_COMPLETE As Integer = 99
 
 	Protected mConsoleOutputErrorMsg As String
-	Protected mDatasetID As Integer = 0
 
 	Protected mTargetedWorkflowsProgLoc As String
-	Protected mConsoleOutputProgressMap As System.Collections.Generic.Dictionary(Of String, Integer)
+	Protected mConsoleOutputProgressMap As Dictionary(Of String, Integer)
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 #End Region
@@ -99,10 +99,10 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
 			Select Case strRawDataType.ToLower
 				Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
-					CmdStr = " " & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
-				Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER
+					CmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
+				Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
 					' Bruker_FT folders are actually .D folders
-					CmdStr = " " & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION)
+					CmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION)
 				Case Else
 					m_message = "Dataset type " & strRawDataType & " is not supported"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
@@ -123,7 +123,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				.CacheStandardOutput = True
 				.EchoOutputToConsole = True
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT)
+				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT)
 			End With
 
 			m_progress = PROGRESS_TARGETED_WORKFLOWS_STARTING
@@ -132,16 +132,16 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
 			If Not CmdRunner.WriteConsoleOutputToFile Then
 				' Write the console output to a text file
-				System.Threading.Thread.Sleep(250)
+				Threading.Thread.Sleep(250)
 
-				Using swConsoleOutputfile As New System.IO.StreamWriter(New System.IO.FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Using swConsoleOutputfile As New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 					swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
 				End Using
 
 			End If
 
 			' Parse the console output file one more time to check for errors
-			System.Threading.Thread.Sleep(250)
+			Threading.Thread.Sleep(250)
 			ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
 			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -152,7 +152,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				' Make sure that the quantitation output file was created
 				Dim strOutputFileName As String = m_Dataset & "_quant.txt"
 
-				If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, strOutputFileName)) Then
+				If Not File.Exists(Path.Combine(m_WorkDir, strOutputFileName)) Then
 					m_message = "MSAlign_Quant result file not found (" & strOutputFileName & ")"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					blnSuccess = False
@@ -187,10 +187,10 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "TargetedWorkflowsConsole Quantitation Complete")
 				End If
 
-				Dim fiConsoleOutputfile As System.IO.FileInfo
-				Dim fiDeconWorkflowsLogFile As System.IO.FileInfo
-				fiConsoleOutputfile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
-				fiDeconWorkflowsLogFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_log.txt"))
+				Dim fiConsoleOutputfile As FileInfo
+				Dim fiDeconWorkflowsLogFile As FileInfo
+				fiConsoleOutputfile = New FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
+				fiDeconWorkflowsLogFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_log.txt"))
 
 				If fiConsoleOutputfile.Exists AndAlso fiDeconWorkflowsLogFile.Exists AndAlso fiConsoleOutputfile.Length > fiDeconWorkflowsLogFile.Length Then
 					' Don't keep the _log.txt file since the Console_Output file has all of the same information
@@ -204,7 +204,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			m_progress = PROGRESS_PCT_COMPLETE
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 			'Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
@@ -212,7 +212,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			End If
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		   '2 second delay
+			Threading.Thread.Sleep(2000)		   '2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -276,7 +276,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			result = MoveResultFiles()
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
 			End If
 		End If
 
@@ -293,15 +293,13 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 	''' <remarks></remarks>
 	Protected Function CreateTargetedQuantParamFile() As String
 
-		Dim strTargetedQuantParamFilePath As String = String.Empty
-		Dim strMSAlignResultTableName As String
-		Dim strWorkflowParamFileName As String
+		Dim strTargetedQuantParamFilePath As String
 
 		Try
-			strTargetedQuantParamFilePath = System.IO.Path.Combine(m_WorkDir, TARGETED_QUANT_XML_FILE_NAME)
-			strMSAlignResultTableName = m_Dataset & clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX
+			strTargetedQuantParamFilePath = Path.Combine(m_WorkDir, TARGETED_QUANT_XML_FILE_NAME)
+			Dim strMSAlignResultTableName = m_Dataset & clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX
 
-			strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile")
+			Dim strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile")
 			If String.IsNullOrEmpty(strWorkflowParamFileName) Then
 				m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile")
 				Return String.Empty
@@ -319,10 +317,10 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				WriteXMLSetting(swTargetedQuantXMLFile, "FileContainingDatasetPaths", "")
 				WriteXMLSetting(swTargetedQuantXMLFile, "FolderPathForCopiedRawDataset", "")
 				WriteXMLSetting(swTargetedQuantXMLFile, "LoggingFolder", m_WorkDir)
-				WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", System.IO.Path.Combine(m_WorkDir, strMSAlignResultTableName))
+				WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", Path.Combine(m_WorkDir, strMSAlignResultTableName))
 				WriteXMLSetting(swTargetedQuantXMLFile, "TargetType", "LcmsFeature")
 				WriteXMLSetting(swTargetedQuantXMLFile, "ResultsFolder", m_WorkDir)
-				WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", System.IO.Path.Combine(m_WorkDir, strWorkflowParamFileName))
+				WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", Path.Combine(m_WorkDir, strWorkflowParamFileName))
 				WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowType", "TopDownTargetedWorkflowExecutor1")
 
 				swTargetedQuantXMLFile.WriteEndElement()	' WorkflowParameters
@@ -385,7 +383,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 				mConsoleOutputProgressMap.Add("---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE)
 			End If
 
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			If Not File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -398,7 +396,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
+			Dim srInFile As StreamReader
 			Dim strLineIn As String
 			Dim strLineInLCase As String
 
@@ -411,7 +409,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 			Dim intEffectiveProgress As Integer
 			intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			intLinesRead = 0
 			Do While srInFile.Peek() >= 0
@@ -459,7 +457,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 							strNewError = "Error: every peptide in the mass tags file had an unknown modification"
 						End If
 
-						mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError)						
+						mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError)
 					End If
 
 				End If
@@ -499,18 +497,18 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 	Protected Function StoreToolVersionInfo(ByVal strTargetedWorkflowsConsoleProgLoc As String) As Boolean
 
 		Dim strToolVersionInfo As String = String.Empty
-		Dim ioTargetedWorkflowsConsole As System.IO.FileInfo
+		Dim ioTargetedWorkflowsConsole As FileInfo
 		Dim blnSuccess As Boolean
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
 		End If
 
-		ioTargetedWorkflowsConsole = New System.IO.FileInfo(strTargetedWorkflowsConsoleProgLoc)
+		ioTargetedWorkflowsConsole = New FileInfo(strTargetedWorkflowsConsoleProgLoc)
 		If Not ioTargetedWorkflowsConsole.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -524,11 +522,11 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
 		ioToolFiles.Add(ioTargetedWorkflowsConsole)
 
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll")))
+		ioToolFiles.Add(New FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")))
+		ioToolFiles.Add(New FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll")))
 
 		Try
 			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -575,7 +573,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
+			ParseConsoleOutputFile(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
 
 		End If
 
