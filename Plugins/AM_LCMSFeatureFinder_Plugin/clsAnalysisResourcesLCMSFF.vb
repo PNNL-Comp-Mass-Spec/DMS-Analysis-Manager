@@ -8,6 +8,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisResourcesLCMSFF
     Inherits clsAnalysisResources
@@ -133,28 +134,28 @@ Public Class clsAnalysisResourcesLCMSFF
         ' In addition, look for an entry for DeconToolsFilterFileName; 
         '  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-        Dim SrcFilePath As String = System.IO.Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
-        Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
-		Dim IsosFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
+		Dim SrcFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
+		Dim TargetFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
+		Dim IsosFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
 
-        Dim strLineIn As String
-        Dim strLineInLCase As String
+		Dim strLineIn As String
+		Dim strLineInLCase As String
 
-        Dim blnInputFileDefined As Boolean
-        Dim blnOutputDirectoryDefined As Boolean
+		Dim blnInputFileDefined As Boolean
+		Dim blnOutputDirectoryDefined As Boolean
 
-        blnInputFileDefined = False
-        blnOutputDirectoryDefined = False
-        result = True
+		blnInputFileDefined = False
+		blnOutputDirectoryDefined = False
+		result = True
 
 
-        Try
+		Try
 			' Create the output file (temporary name ending in "_new"; we'll swap the files later)
-			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 				Try
 					' Open the input file
-					Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+					Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 						Do While srInFile.Peek >= 0
 							strLineIn = srInFile.ReadLine
@@ -181,7 +182,7 @@ Public Class clsAnalysisResourcesLCMSFF
 									strValue = GetValue(strLineIn)
 
 									If Not String.IsNullOrEmpty(strValue) Then
-										Dim fiFileInfo As System.IO.FileInfo = New System.IO.FileInfo(strValue)
+										Dim fiFileInfo As FileInfo = New FileInfo(strValue)
 										If Not fiFileInfo.Exists Then
 											m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
 											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -189,7 +190,7 @@ Public Class clsAnalysisResourcesLCMSFF
 											Exit Do
 										Else
 											' Copy the file locally
-											Dim strTargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, fiFileInfo.Name)
+											Dim strTargetFilePath As String = Path.Combine(m_WorkingDir, fiFileInfo.Name)
 											fiFileInfo.CopyTo(strTargetFilePath)
 										End If
 									End If
@@ -222,14 +223,14 @@ Public Class clsAnalysisResourcesLCMSFF
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Delete the input file
-			System.IO.File.Delete(SrcFilePath)
+			File.Delete(SrcFilePath)
 
 			' Wait another 250 milliseconds before renaming the output file
 			System.Threading.Thread.Sleep(50)
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Rename the newly created output file to have the name of the input file
-			System.IO.File.Move(TargetFilePath, SrcFilePath)
+			File.Move(TargetFilePath, SrcFilePath)
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)

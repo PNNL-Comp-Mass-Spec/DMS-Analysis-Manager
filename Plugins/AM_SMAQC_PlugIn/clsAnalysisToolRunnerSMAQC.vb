@@ -123,7 +123,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 				' Write the console output to a text file
 				System.Threading.Thread.Sleep(250)
 
-				Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 				swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
 				swConsoleOutputfile.Close()
 			End If
@@ -492,7 +492,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		Dim blnMeasurementsFound As Boolean
 		Dim blnHeadersFound As Boolean
 
-		Using srInFile = New StreamReader(New FileStream(ResultsFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+		Using srInFile = New StreamReader(New FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			Do While srInFile.Peek() > -1
 				strLineIn = srInFile.ReadLine()
@@ -583,7 +583,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			Dim sngEffectiveProgress As Single
 			sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING
 
-			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 			intLinesRead = 0
 			Do While srInFile.Peek() >= 0

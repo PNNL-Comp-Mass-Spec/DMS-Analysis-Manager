@@ -582,7 +582,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 		If Not ioIonMobilityMsMs.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo))
+				MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of System.IO.FileInfo), blnSaveToolVersionTextFile:=False)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -602,12 +602,12 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 		If Not blnSuccess Then Return False
 
 		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+		Dim ioToolFiles As New List(Of System.IO.FileInfo)
 		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioIonMobilityMsMs.DirectoryName, MSGFDB_JAR_NAME)))
 		ioToolFiles.Add(ioIonMobilityMsMs)
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False

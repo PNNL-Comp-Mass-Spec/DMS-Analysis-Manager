@@ -543,7 +543,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Const appFolderSource As String = MASTER_SOURCE_APPLICATION_FOLDER
             Dim appFolderTarget = mGlyQIQApplicationFilesFolderPath
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Synchronizing GlyQ-IQ application files using " & appFolderSource)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Synchronizing GlyQ-IQ application files at " & appFolderTarget & " using " & appFolderSource)
 
             Dim success = SynchronizeFolders(appFolderSource, appFolderTarget, True)
 

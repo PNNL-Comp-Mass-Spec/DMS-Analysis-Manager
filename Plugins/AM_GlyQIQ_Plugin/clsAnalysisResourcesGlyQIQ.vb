@@ -519,15 +519,24 @@ Public Class clsAnalysisResourcesGlyQIQ
 			End If
 
 			' Retrieve the _peaks.txt file
-			Dim FileToGet As String
+			Dim fileToFind As String
+			Dim sourceFolderPath As String = String.Empty
 
-			FileToGet = m_DatasetName & "_peaks.txt"
-			If Not FindAndRetrieveMiscFiles(FileToGet, Unzip:=False, SearchArchivedDatasetFolder:=False) Then
+			fileToFind = m_DatasetName & "_peaks.txt"
+			If Not FindAndRetrieveMiscFiles(fileToFind, Unzip:=False, SearchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
 				'Errors were reported in function call, so just return
 				Return False
 			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
+			m_jobParams.AddResultFileToSkip(fileToFind)
 			m_jobParams.AddResultFileExtensionToSkip("_peaks.txt")
+
+			Dim diTransferFolder = New DirectoryInfo(m_jobParams.GetParam("transferFolderPath"))
+			Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
+			If String.Compare(diTransferFolder.FullName, diSourceFolder.FullName, True) = 0 Then
+				' The Peaks.txt file is in the transfer folder
+				' If the analysis finishes successfully, then we can delete the file from the transfer folder
+				m_jobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind))
+			End If
 
 			' Retrieve the instrument data file
 			If Not RetrieveSpectra(rawDataType) Then

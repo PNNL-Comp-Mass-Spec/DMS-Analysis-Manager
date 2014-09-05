@@ -11,6 +11,8 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Collections.Generic
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerDecon2ls
 	Inherits clsAnalysisToolRunnerBase
@@ -42,12 +44,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 #Region "Enums and Structures"
 	'Used for result file type
-	Enum Decon2LSResultFileType
+	Protected Enum Decon2LSResultFileType
 		DECON2LS_ISOS = 0
 		DECON2LS_SCANS = 1
 	End Enum
 
-	Enum DeconToolsStateType
+	Protected Enum DeconToolsStateType
 		Idle = 0
 		Running = 1
 		Complete = 2
@@ -55,7 +57,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		BadErrorLogFile = 4
 	End Enum
 
-	Enum DeconToolsFileTypeConstants
+	Protected Enum DeconToolsFileTypeConstants
 		Undefined = 0
 		Agilent_WIFF = 1
 		Agilent_D = 2
@@ -94,7 +96,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function AssembleResults(ByVal oDeconToolsParamFileReader As AnalysisManagerBase.clsXMLParamFileReader) As IJobParams.CloseOutType
+	Private Function AssembleResults(ByVal oDeconToolsParamFileReader As clsXMLParamFileReader) As IJobParams.CloseOutType
 
 		Dim ScansFilePath As String
 		Dim IsosFilePath As String
@@ -208,7 +210,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			End If
 
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
@@ -217,12 +219,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	End Function
 
-	Protected Function CacheDeconToolsParamFile(ByVal strParamFilePath As String) As AnalysisManagerBase.clsXMLParamFileReader
+	Protected Function CacheDeconToolsParamFile(ByVal strParamFilePath As String) As clsXMLParamFileReader
 
-		Dim oDeconToolsParamFileReader As AnalysisManagerBase.clsXMLParamFileReader
+		Dim oDeconToolsParamFileReader As clsXMLParamFileReader
 
 		Try
-			oDeconToolsParamFileReader = New AnalysisManagerBase.clsXMLParamFileReader(strParamFilePath)
+			oDeconToolsParamFileReader = New clsXMLParamFileReader(strParamFilePath)
 
 			If oDeconToolsParamFileReader.ParameterCount = 0 Then
 				m_message = "DeconTools parameter file is empty (or could not be parsed)"
@@ -247,7 +249,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <remarks></remarks>
 	Protected Function CreateQCPlots() As IJobParams.CloseOutType
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 
@@ -376,7 +378,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				srInFile.Close()
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			' Ignore errors here
 		End Try
 
@@ -499,14 +501,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 	Protected Function RunDecon2Ls() As IJobParams.CloseOutType
 
-		Dim blnLoopingEnabled As Boolean = False
-
 		Dim strParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
 		Dim blnDecon2LSError As Boolean
 
 		' Cache the parameters in the DeconTools parameter file
 
-		Dim oDeconToolsParamFileReader As AnalysisManagerBase.clsXMLParamFileReader
+		Dim oDeconToolsParamFileReader As clsXMLParamFileReader
 		oDeconToolsParamFileReader = CacheDeconToolsParamFile(strParamFilePath)
 
 		If oDeconToolsParamFileReader Is Nothing Then
@@ -568,10 +568,10 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, strParamFilePath, filetype)
 
 		' Stop the job timer
-		m_StopTime = System.DateTime.UtcNow
+		m_StopTime = DateTime.UtcNow
 
 		'Make sure objects are released
-		System.Threading.Thread.Sleep(2000)		   '2 second delay
+		Threading.Thread.Sleep(2000)		   '2 second delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		If m_DebugLevel > 3 Then
@@ -599,7 +599,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 					' Sleep for 1 minute
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sleeping for 1 minute")
-					System.Threading.Thread.Sleep(60 * 1000)
+					Threading.Thread.Sleep(60 * 1000)
 
 				Case DeconToolsStateType.Idle
 					' DeconTools never actually started
@@ -698,7 +698,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 			' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
-			Dim dtFinishTime As System.DateTime
+			Dim dtFinishTime As DateTime
 			Dim blnFinishedProcessing As Boolean
 
 			ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
@@ -726,7 +726,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				Exit For
 			Next
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling DeconConsole: " & ex.Message)
 			eDeconToolsStatus = DeconToolsStateType.ErrorCode
 		End Try
@@ -831,7 +831,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	End Function
 
 
-	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As System.DateTime)
+	Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As DateTime)
 
 		Dim fiFileInfo As FileInfo
 
@@ -862,13 +862,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
 						strLineIn = srInFile.ReadLine
 
 						If Not String.IsNullOrWhiteSpace(strLineIn) Then
-							intCharIndex = strLineIn.ToLower().IndexOf("finished file processing")
+							intCharIndex = strLineIn.ToLower().IndexOf("finished file processing", StringComparison.Ordinal)
 							If intCharIndex >= 0 Then
 
 								blnDateValid = False
 								If intCharIndex > 1 Then
 									' Parse out the date from strLineIn
-									If System.DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+									If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
 										blnDateValid = True
 									Else
 										' Unable to parse out the date
@@ -889,12 +889,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 								Exit Do
 							End If
 
-							intCharIndex = strLineIn.ToLower.IndexOf("scan/frame")
+							intCharIndex = strLineIn.ToLower.IndexOf("scan/frame", StringComparison.Ordinal)
 							If intCharIndex >= 0 Then
 								strScanFrameLine = strLineIn.Substring(intCharIndex)
 							End If
 
-							intCharIndex = strLineIn.IndexOf("ERROR THROWN")
+							intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal)
 							If intCharIndex > 0 Then
 								' An exception was reported in the log file; treat this as a fatal error
 								m_message = "Error thrown by DeconTools"
@@ -910,7 +910,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				End Using
 			End If
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			' Ignore errors here		
 			If m_DebugLevel >= 4 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exception in ParseDeconToolsLogFile: " & ex.Message)
@@ -924,7 +924,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 			' Scan/Frame= 347; PercentComplete= 2.7; AccumlatedFeatures= 614
 
 			Dim strProgressStats() As String
-			Dim kvStat As System.Collections.Generic.KeyValuePair(Of String, String)
+			Dim kvStat As KeyValuePair(Of String, String)
 
 			strProgressStats = strScanFrameLine.Split(";"c)
 
@@ -956,20 +956,20 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <param name="strData"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function ParseKeyValue(ByVal strData As String) As System.Collections.Generic.KeyValuePair(Of String, String)
+	Protected Function ParseKeyValue(ByVal strData As String) As KeyValuePair(Of String, String)
 		Dim intCharIndex As Integer
 		intCharIndex = strData.IndexOf("="c)
 
 		If intCharIndex > 0 Then
 			Try
-				Return New System.Collections.Generic.KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
+				Return New KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
 				 strData.Substring(intCharIndex + 1).Trim())
 			Catch ex As Exception
 				' Ignore errors here
 			End Try
 		End If
 
-		Return New System.Collections.Generic.KeyValuePair(Of String, String)(String.Empty, String.Empty)
+		Return New KeyValuePair(Of String, String)(String.Empty, String.Empty)
 
 	End Function
 
@@ -1084,8 +1084,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		Dim ioDeconToolsInfo As FileInfo
 		Dim blnSuccess As Boolean
 
-		Dim reParseVersion As System.Text.RegularExpressions.Regex
-		Dim reMatch As System.Text.RegularExpressions.Match
+		Dim reParseVersion As Regex
+		Dim reMatch As Match
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
@@ -1095,13 +1095,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		If Not ioDeconToolsInfo.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
 			End Try
 
-			Return False
 		End If
 
 		' Lookup the version of the DeconConsole application
@@ -1112,7 +1111,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		' strToolVersionInfo should look like: DeconConsole, Version=1.0.4400.22961
 
 		mDeconConsoleBuild = 0
-		reParseVersion = New System.Text.RegularExpressions.Regex("Version=\d+\.\d+\.(\d+)")
+		reParseVersion = New Regex("Version=\d+\.\d+\.(\d+)")
 		reMatch = reParseVersion.Match(strToolVersionInfo)
 		If reMatch.Success Then
 			If Not Integer.TryParse(reMatch.Groups.Item(1).Value, mDeconConsoleBuild) Then
@@ -1149,12 +1148,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+		Dim ioToolFiles As New List(Of FileInfo)
 		ioToolFiles.Add(New FileInfo(strDeconToolsProgLoc))
 		ioToolFiles.Add(New FileInfo(strDeconToolsBackendPath))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
@@ -1171,8 +1170,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Private Function GetScanValues(ByVal strParamFileCurrent As String, ByRef MinScanValueFromParamFile As Integer, ByRef MaxScanValueFromParamFile As Integer) As Boolean
-		Dim objParamFile As System.Xml.XmlDocument
-		Dim objNode As System.Xml.XmlNode
+		Dim objParamFile As Xml.XmlDocument
+		Dim objNode As Xml.XmlNode
 
 		Dim blnMinScanFound As Boolean
 		Dim blnMaxScanFound As Boolean
@@ -1188,7 +1187,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				Return False
 			Else
 				' Open the file and parse the XML
-				objParamFile = New System.Xml.XmlDocument
+				objParamFile = New Xml.XmlDocument
 				objParamFile.Load(New FileStream(strParamFileCurrent, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Look for the XML: <MinScan></MinScan>
@@ -1197,7 +1196,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				If Not objNode Is Nothing AndAlso objNode.HasChildNodes Then
 					' Match found
 					' Read the value of MinScan
-					If System.Int32.TryParse(objNode.ChildNodes(0).Value, MinScanValueFromParamFile) Then
+					If Int32.TryParse(objNode.ChildNodes(0).Value, MinScanValueFromParamFile) Then
 						blnMinScanFound = True
 					End If
 				End If
@@ -1208,12 +1207,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				If Not objNode Is Nothing AndAlso objNode.HasChildNodes Then
 					' Match found
 					' Read the value of MinScan
-					If System.Int32.TryParse(objNode.ChildNodes(0).Value, MaxScanValueFromParamFile) Then
+					If Int32.TryParse(objNode.ChildNodes(0).Value, MaxScanValueFromParamFile) Then
 						blnMaxScanFound = True
 					End If
 				End If
 			End If
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetScanValues: " & ex.Message)
 			Return False
 		End Try
@@ -1236,9 +1235,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Private Function WriteTempParamFile(ByVal strParamFile As String, ByVal strParamFileTemp As String, ByVal NewMinScanValue As Integer, ByRef NewMaxScanValue As Integer) As Boolean
-		Dim objParamFile As System.Xml.XmlDocument
+		Dim objParamFile As Xml.XmlDocument
 		Dim swTempParamFile As StreamWriter
-		Dim objTempParamFile As System.Xml.XmlTextWriter
+		Dim objTempParamFile As Xml.XmlTextWriter
 
 		Try
 			If Not File.Exists(strParamFile) Then
@@ -1248,7 +1247,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				Return False
 			Else
 				' Open the file and parse the XML
-				objParamFile = New System.Xml.XmlDocument
+				objParamFile = New Xml.XmlDocument
 				objParamFile.Load(New FileStream(strParamFile, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Look for the XML: <UseScanRange></UseScanRange> in the Miscellaneous section
@@ -1265,7 +1264,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 					' Now write out the XML to strParamFileTemp
 					swTempParamFile = New StreamWriter(New FileStream(strParamFileTemp, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-					objTempParamFile = New System.Xml.XmlTextWriter(swTempParamFile)
+					objTempParamFile = New Xml.XmlTextWriter(swTempParamFile)
 					objTempParamFile.Indentation = 1
 					objTempParamFile.IndentChar = ControlChars.Tab
 					objTempParamFile.Formatting = Xml.Formatting.Indented
@@ -1274,14 +1273,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 					swTempParamFile.Close()
 
-				Catch ex As System.Exception
+				Catch ex As Exception
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error writing new param file in WriteTempParamFile: " & ex.Message)
 					Return False
 
 				End Try
 
 			End If
-		Catch ex As System.Exception
+		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading existing param file in WriteTempParamFile: " & ex.Message)
 			Return False
 		End Try
@@ -1299,9 +1298,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <param name="ElementName">Element name to find (or add)</param>
 	''' <param name="NewElementValue">New value for this element</param>
 	''' <remarks></remarks>
-	Private Sub WriteTempParamFileUpdateElementValue(ByRef objXMLDocument As System.Xml.XmlDocument, ByVal XPathForSection As String, ByVal ElementName As String, ByVal NewElementValue As String)
-		Dim objNode As System.Xml.XmlNode
-		Dim objNewChild As System.Xml.XmlElement
+	Private Sub WriteTempParamFileUpdateElementValue(ByRef objXMLDocument As Xml.XmlDocument, ByVal XPathForSection As String, ByVal ElementName As String, ByVal NewElementValue As String)
+		Dim objNode As Xml.XmlNode
+		Dim objNewChild As Xml.XmlElement
 
 		objNode = objXMLDocument.SelectSingleNode(XPathForSection & "/" & ElementName)
 
@@ -1367,25 +1366,25 @@ Public Class clsAnalysisToolRunnerDecon2ls
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
-		Static dtLastLogCheckTime As System.DateTime = System.DateTime.UtcNow
+		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+		Static dtLastLogCheckTime As DateTime = DateTime.UtcNow
 
 		' Synchronize the stored Debug level with the value stored in the database
 		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
 		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
 		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+			dtLastStatusUpdate = DateTime.UtcNow
 			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
 		End If
 
 
 		' Parse the log file every 30 seconds to determine the % complete
-		If System.DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
-			dtLastLogCheckTime = System.DateTime.UtcNow
+		If DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds >= 30 Then
+			dtLastLogCheckTime = DateTime.UtcNow
 
-			Dim dtFinishTime As System.DateTime
+			Dim dtFinishTime As DateTime
 			Dim blnFinishedProcessing As Boolean
 
 			ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
@@ -1410,7 +1409,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 				' The Decon2LS Log File reports that the task is complete
 				' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
 
-				If System.DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
+				If DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, but the DeconTools CmdRunner is still active")
 
 					mDeconToolsFinishedDespiteProgRunnerError = True
@@ -1418,7 +1417,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 					' Abort processing
 					CmdRunner.AbortProgramNow()
 
-					System.Threading.Thread.Sleep(3000)
+					Threading.Thread.Sleep(3000)
 				End If
 			End If
 

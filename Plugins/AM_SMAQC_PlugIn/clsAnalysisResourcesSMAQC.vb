@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 Imports PHRPReader
 
 Public Class clsAnalysisResourcesSMAQC
@@ -48,7 +49,7 @@ Public Class clsAnalysisResourcesSMAQC
 		lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS)
 
 		For Each strFileName As String In lstFilesToCopy
-			Dim fiSourceFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(strLLRCRunnerProgLoc, strFileName))
+			Dim fiSourceFile As FileInfo = New FileInfo(IO.Path.Combine(strLLRCRunnerProgLoc, strFileName))
 
 			If Not fiSourceFile.Exists Then
 				m_message = "LLRC RData file not found: " & fiSourceFile.FullName
@@ -105,7 +106,7 @@ Public Class clsAnalysisResourcesSMAQC
 
 				If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
-					Dim BestSICFolderPath = IO.Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName)
+					Dim BestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName)
 
 					Return RetrieveScanAndSICStatsFiles(
 					  BestSICFolderPath,
@@ -116,16 +117,16 @@ Public Class clsAnalysisResourcesSMAQC
 					  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 				End If
 
-				Dim diFolderInfo As System.IO.DirectoryInfo
-				Dim diMASICFolderInfo As System.IO.DirectoryInfo
-				diFolderInfo = New System.IO.DirectoryInfo(ServerPath)
+				Dim diFolderInfo As DirectoryInfo
+				Dim diMASICFolderInfo As DirectoryInfo
+				diFolderInfo = New DirectoryInfo(ServerPath)
 
 				If Not diFolderInfo.Exists Then
 					m_message = "Dataset folder not found: " & diFolderInfo.FullName
 				Else
 
 					'See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
-					diMASICFolderInfo = New System.IO.DirectoryInfo(System.IO.Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName))
+					diMASICFolderInfo = New DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName))
 
 					If Not diMASICFolderInfo.Exists Then
 						m_message = "Unable to find MASIC results folder " & strMASICResultsFolderName

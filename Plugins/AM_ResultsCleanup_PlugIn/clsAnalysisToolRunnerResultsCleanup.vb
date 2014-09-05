@@ -6,6 +6,7 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsAnalysisToolRunnerResultsCleanup
 	Inherits clsAnalysisToolRunnerBase
@@ -199,12 +200,12 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 		End If
 
 		' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll")))
+		Dim ioToolFiles As New List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
+		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll")))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
