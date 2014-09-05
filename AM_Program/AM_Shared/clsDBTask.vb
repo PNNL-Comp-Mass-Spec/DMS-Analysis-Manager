@@ -170,7 +170,7 @@ Public MustInherit Class clsDBTask
 
 	End Sub
 
-	Protected Function FillParamDictXml(ByVal InpXml As String) As List(Of udtParameterInfoType)
+	Protected Function FillParamDictXml(ByVal InpXml As String) As IEnumerable(Of udtParameterInfoType)
 
 		Dim ErrMsg As String
 

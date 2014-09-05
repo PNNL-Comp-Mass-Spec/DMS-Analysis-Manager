@@ -1214,26 +1214,42 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Protected Function FindAndRetrieveMiscFiles(ByVal FileName As String, ByVal Unzip As Boolean, ByVal SearchArchivedDatasetFolder As Boolean) As Boolean
+		Return FindAndRetrieveMiscFiles(FileName, Unzip, SearchArchivedDatasetFolder, "")
+	End Function
 
-		'Find file location
-		Dim FolderName As String
+	''' <summary>
+	''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+	''' </summary>
+	''' <param name="FileName">Name of file to be retrieved</param>
+	''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+	''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+	''' <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Function FindAndRetrieveMiscFiles(
+	 ByVal FileName As String,
+	 ByVal Unzip As Boolean,
+	 ByVal SearchArchivedDatasetFolder As Boolean,
+	 <Out()> ByRef sourceFolderPath As String) As Boolean
+
 		Const CreateStoragePathInfoFile As Boolean = False
 
 		' Look for the file in the various folders
-		FolderName = FindDataFile(FileName, SearchArchivedDatasetFolder)
+		sourceFolderPath = FindDataFile(FileName, SearchArchivedDatasetFolder)
 
 		' Exit if file was not found
-		If String.IsNullOrEmpty(FolderName) Then
+		If String.IsNullOrEmpty(sourceFolderPath) Then
 			' No folder found containing the specified file
+			sourceFolderPath = String.Empty
 			Return False
 		End If
 
-		If FolderName.StartsWith(MYEMSL_PATH_FLAG) Then
-			Return AddFileToMyEMSLDownloadQueue(FolderName)
+		If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+			Return AddFileToMyEMSLDownloadQueue(sourceFolderPath)
 		End If
 
 		' Copy the file
-		If Not CopyFileToWorkDir(FileName, FolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
+		If Not CopyFileToWorkDir(FileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
 			Return False
 		End If
 

@@ -1200,7 +1200,7 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Gzips SourceFilePath, creating a new file in the same folder, but with extension .gz appended
+	''' Gzips SourceFilePath, creating a new file in the same folder, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
 	''' </summary>
 	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
@@ -1520,10 +1520,12 @@ Public Class clsAnalysisToolRunnerBase
 	''' Adds manager assembly data to job summary file
 	''' </summary>
 	''' <param name="OutputPath">Path to summary file</param>
-	''' <remarks></remarks>
+	''' <remarks>Skipped if the debug level is less than 4</remarks>
 	Protected Sub OutputSummary(ByVal OutputPath As String)
 
-		'Saves the summary file in the results folder
+		If m_DebugLevel < 4 Then Exit Sub
+
+		' Saves the summary file in the results folder
 		Dim objAssemblyTools As clsAssemblyTools = New clsAssemblyTools
 
 		objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
@@ -1906,7 +1908,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As List(Of FileInfo)) As Boolean
+	   ByVal ioToolFiles As IEnumerable(Of FileInfo)) As Boolean
 
 		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
 	End Function
@@ -1920,7 +1922,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As List(Of FileInfo), _
+	   ByVal ioToolFiles As IEnumerable(Of FileInfo), _
 	   ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
 
 		Dim strExeInfo As String = String.Empty

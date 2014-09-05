@@ -11,6 +11,8 @@ Option Strict On
 
 Imports System.Data.SqlClient
 Imports System.IO
+Imports System.Xml
+Imports System.Text
 
 Public Class clsAnalysisJob
 	Inherits clsDBTask
@@ -526,6 +528,54 @@ Public Class clsAnalysisJob
 		End If
 
 	End Sub
+	
+	Private Function RemoveXmlSection(ByVal paramXml As String, ByVal sectionName As String) As String
+
+		Try
+
+			Dim doc = New XmlDocument()
+
+			doc.LoadXml(paramXml)
+
+			Dim lstSections = doc.GetElementsByTagName("section")
+
+			Dim intindex = 0
+			While intindex < lstSections.Count
+
+				Dim section As XmlNode = lstSections(intindex)
+
+				Dim removeNode = (From item As XmlAttribute In section.Attributes.Cast(Of XmlAttribute)()
+				   Where item.Name = "name" And item.Value = sectionName
+				   Select item).ToList().Any()
+
+				If removeNode Then
+					section.ParentNode.RemoveChild(section)
+				Else
+					intindex += 1
+				End If
+			End While
+
+			Dim sbOutput = New StringBuilder
+
+			Dim settings = New XmlWriterSettings()
+			settings.Indent = True
+			settings.IndentChars = "  "
+			settings.OmitXmlDeclaration = True
+
+			Using writer As XmlWriter = XmlWriter.Create(sbOutput, settings)
+				doc.Save(writer)
+			End Using
+
+			Dim filteredXML = sbOutput.ToString()
+
+			Return filteredXML
+
+		Catch ex As Exception
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RemoveXmlSection: " & ex.Message)
+			Return paramXml
+		End Try
+
+	End Function
 
 	''' <summary>
 	''' Requests a task from the database
@@ -616,7 +666,7 @@ Public Class clsAnalysisJob
 					paramXml = CStr(MyCmd.Parameters("@parameters").Value)
 
 					'Step task was found; get the data for it
-					Dim dctParameters = FillParamDictXml(paramXml)
+					Dim dctParameters As IEnumerable(Of udtParameterInfoType) = FillParamDictXml(paramXml)
 
 					If dctParameters IsNot Nothing Then
 
@@ -686,6 +736,7 @@ Public Class clsAnalysisJob
 	''' <param name="WorkDir">Full path to work directory</param>
 	''' <param name="paramXml">Contains the xml for all the job parameters</param>
 	''' <param name="jobNum">Contains the job number</param>
+	''' <remarks>Skipped if the debug level is less than 4</remarks>
 	Private Sub SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer)
 
 		Dim xmlWriter As New clsFormattedXMLWriter
@@ -696,7 +747,10 @@ Public Class clsAnalysisJob
 			xmlParameterFilename = JobParametersFilename(jobNum.ToString())
 			xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
 
-			xmlWriter.WriteXMLToFile(paramXml, xmlParameterFilePath)
+			' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
+			Dim filteredXML = RemoveXmlSection(paramXml, "StepParameters")
+
+			xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFilePath)
 
 			If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
 

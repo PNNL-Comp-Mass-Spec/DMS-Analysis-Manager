@@ -238,7 +238,7 @@ Public Class clsIonicZipTools
 	End Function
 
 	''' <summary>
-	''' Stores SourceFilePath in a zip file with the same name, but extension .gz
+	''' Stores SourceFilePath in a zip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
 	''' </summary>
 	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
 	''' <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
@@ -249,7 +249,7 @@ Public Class clsIonicZipTools
 	End Function
 
 	''' <summary>
-	''' Stores SourceFilePath in a zip file with the same name, but extension .gz
+	''' Stores SourceFilePath in a zip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
 	''' </summary>
 	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
 	''' <param name="TargetFolderPath">Target directory to create the .gz file</param>
