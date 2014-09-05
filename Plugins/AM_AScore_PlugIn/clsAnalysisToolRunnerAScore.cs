@@ -163,7 +163,7 @@ namespace AnalysisManager_AScore_PlugIn
 					   DeleteFileWithRetries(fiFile.FullName, 1, 2);
 				   }
 				   // ReSharper disable once EmptyGeneralCatchClause
-				   catch (Exception ex)
+				   catch (Exception)
 				   {
 					   // Igore errors here
 				   }
