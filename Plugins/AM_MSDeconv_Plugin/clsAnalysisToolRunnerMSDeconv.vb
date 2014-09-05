@@ -8,6 +8,10 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Linq
+Imports MSDataFileReader
+Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerMSDeconv
 	Inherits clsAnalysisToolRunnerBase
@@ -40,17 +44,6 @@ Public Class clsAnalysisToolRunnerMSDeconv
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
-		Dim CmdStr As String
-		Dim intJavaMemorySize As Integer
-		Dim blnIncludeMS1Spectra As Boolean
-		Dim strOutputFormat As String
-
-		Dim result As IJobParams.CloseOutType
-		Dim blnProcessingError As Boolean = False
-
-		Dim blnSuccess As Boolean
-
-		Dim ResultsFileName As String
 
 		Try
 			'Call base class for initial setup
@@ -64,96 +57,56 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+			' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
 			' Note that we need to run MSDeconv with a 64-bit version of Java since it prefers to use 2 or more GB of ram
 			Dim JavaProgLoc = GetJavaProgLoc()
 			If String.IsNullOrEmpty(JavaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
+			' Examine the mzXML file to look for large scan gaps (common for data from Agilent IMS TOFs, e.g. AgQTOF05)
+			' Possibly generate a new mzXML file with renumbered scans
+			Dim blnSuccess = RenumberMzXMLIfRequired()
+			If Not blnSuccess Then
+				If String.IsNullOrEmpty(m_message) Then
+					m_message = "RenumberMzXMLIfRequired returned false"
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 			' Determine the path to the MSDeconv program
-			mMSDeconvProgLoc = DetermineProgramLocation("MSDeconv", "MSDeconvProgLoc", MSDeconv_JAR_NAME)
+			mMSDeconvProgLoc = DetermineProgramLocation("MSDeconv", "MSDeconvProgLoc", MSDECONV_JAR_NAME)
 
 			If String.IsNullOrWhiteSpace(mMSDeconvProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Store the MSDeconv version info in the database after the first line is written to file MSDeconv_ConsoleOutput.txt
-			mToolVersionWritten = False
-			mMSDeconvVersion = String.Empty
-			mConsoleOutputErrorMsg = String.Empty
-
-			ResultsFileName = m_Dataset & "_msdeconv.msalign"
-
-			blnIncludeMS1Spectra = m_jobParams.GetJobParameter("MSDeconvIncludeMS1", False)
-			strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat")
+			Dim strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat")
+			Dim resultsFileName As String = "unknown"
 
 			If String.IsNullOrEmpty(strOutputFormat) Then
 				strOutputFormat = "msalign"
-			Else
-				Select Case strOutputFormat.ToLower()
-					Case "mgf"
-						strOutputFormat = "mgf"
-						ResultsFileName = m_Dataset & "_msdeconv.mgf"
-					Case "text"
-						strOutputFormat = "text"
-						ResultsFileName = m_Dataset & "_msdeconv.txt"
-					Case "msalign"
-						strOutputFormat = "msalign"
-					Case Else
-						m_message = "Invalid output format: " & strOutputFormat
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End Select
 			End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDeconv")
+			Select Case strOutputFormat.ToLower()
+				Case "mgf"
+					strOutputFormat = "mgf"
+					resultsFileName = m_Dataset & "_msdeconv.mgf"
+				Case "text"
+					strOutputFormat = "text"
+					resultsFileName = m_Dataset & "_msdeconv.txt"
+				Case "msalign"
+					strOutputFormat = "msalign"
+					resultsFileName = m_Dataset & "_msdeconv.msalign"
+				Case Else
+					m_message = "Invalid output format: " & strOutputFormat
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End Select
 
-			' Lookup the amount of memory to reserve for Java; default to 2 GB 
-			intJavaMemorySize = m_jobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000)
-			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+			blnSuccess = StartMSDeconv(JavaProgLoc, strOutputFormat)
 
-			'Set up and execute a program runner to run MSDeconv
-			CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMSDeconvProgLoc
-
-
-			' Define the input file and processing options
-			' Note that capitalization matters for the extension; it must be .mzXML
-			CmdStr &= " " & m_Dataset & ".mzXML"
-			CmdStr &= " -o " & strOutputFormat & " -t centroided"
-
-			If blnIncludeMS1Spectra Then
-				CmdStr &= " -l"
-			End If
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
-
-			CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-			With CmdRunner
-				.CreateNoWindow = True
-				.CacheStandardOutput = False
-				.EchoOutputToConsole = True
-
-				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT)
-			End With
-
-			m_progress = PROGRESS_PCT_STARTING
-
-			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSDeconv", True)
-
-			If Not mToolVersionWritten Then
-				If String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
-					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
-				End If
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
-
-			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-			End If
-
+			Dim blnProcessingError = False
 
 			If Not blnSuccess Then
 				Dim Msg As String
@@ -173,14 +126,14 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			Else
 				' Make sure the output file was created and is not zero-bytes
 				' If the input .mzXML file only has MS spectra and no MS/MS spectra, then the output file will be empty
-				Dim ioResultsFile As System.IO.FileInfo
-				ioResultsFile = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, ResultsFileName))
+				Dim ioResultsFile As FileInfo
+				ioResultsFile = New FileInfo(Path.Combine(m_WorkDir, resultsFileName))
 				If Not ioResultsFile.Exists() Then
 					Dim Msg As String
 					Msg = "MSDeconv results file not found"
 					m_message = clsGlobal.AppendToComment(m_message, Msg)
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & resultsFileName & ")" & ", job " & m_JobNum)
 
 					blnProcessingError = True
 				ElseIf ioResultsFile.Length = 0 Then
@@ -188,7 +141,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 					Msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra"
 					m_message = clsGlobal.AppendToComment(m_message, Msg)
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & ResultsFileName & ")" & ", job " & m_JobNum)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & resultsFileName & ")" & ", job " & m_JobNum)
 
 					blnProcessingError = True
 				Else
@@ -203,7 +156,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			m_progress = PROGRESS_PCT_COMPLETE
 
 			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+			m_StopTime = DateTime.UtcNow
 
 			'Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
@@ -213,11 +166,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			CmdRunner = Nothing
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		'2 second delay
+			Threading.Thread.Sleep(2000)		'2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Trim the console output file to remove the majority of the % finished messages
-			TrimConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
+			TrimConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
 
 			If blnProcessingError Then
 				' Something went wrong
@@ -227,7 +180,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			result = MakeResultsFolder()
+			Dim result = MakeResultsFolder()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				'MakeResultsFolder handles posting to local log, so set database error message and exit
 				m_message = "Error making results folder"
@@ -274,7 +227,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 		strFolderPathToArchive = String.Copy(m_WorkDir)
 
 		Try
-			System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
+			File.Delete(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION))
 		Catch ex As Exception
 			' Ignore errors here
 		End Try
@@ -286,7 +239,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			result = MoveResultFiles()
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+				strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
 			End If
 		End If
 
@@ -322,13 +275,13 @@ Public Class clsAnalysisToolRunnerMSDeconv
 		' Deconvolution finished.
 		' Result is in Syne_LI_CID_09092011_msdeconv.msalign
 
-		Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+		Static reExtractPercentFinished As New Regex("(\d+)% finished", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Static dtLastProgressWriteTime As DateTime = System.DateTime.UtcNow
 
-		Dim oMatch As System.Text.RegularExpressions.Match
+		Dim oMatch As Match
 
 		Try
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			If Not File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -341,14 +294,14 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
+			Dim srInFile As StreamReader
 			Dim strLineIn As String
 			Dim intLinesRead As Integer
 
 			Dim intProgress As Int16
 			Dim intActualProgress As Int16
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 			intLinesRead = 0
 			Do While srInFile.Peek() >= 0
@@ -413,6 +366,142 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 	End Sub
 
+	Private Function RenumberMzXMLIfRequired() As Boolean
+		Try
+			Dim mzXmlFileName = m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
+			Dim fiMzXmlFile = New FileInfo(Path.Combine(m_WorkDir, mzXmlFileName))
+
+			If Not fiMzXmlFile.Exists Then
+				m_message = "mzXML file not found, " & fiMzXmlFile.FullName
+				Return False
+			End If
+
+			Dim reader = New clsMzXMLFileReader()
+			reader.OpenFile(fiMzXmlFile.FullName)
+
+			' Read the spectra and examine the scan gaps
+
+			Dim lstScanGaps = New List(Of Integer)
+			Dim objSpectrumInfo As clsSpectrumInfo = Nothing
+			Dim lastScanNumber = 0
+
+			While reader.ReadNextSpectrum(objSpectrumInfo)
+				If lastScanNumber > 0 Then
+					lstScanGaps.Add(objSpectrumInfo.ScanNumber - lastScanNumber)
+				End If
+
+				lastScanNumber = objSpectrumInfo.ScanNumber
+			End While
+
+			reader.CloseFile()
+
+			If lstScanGaps.Count > 0 Then
+				' Compute the average scan gap
+				Dim scanGapSum As Integer = lstScanGaps.Sum()
+				Dim scanGapAverage = scanGapSum / CDbl(lstScanGaps.Count())
+
+				If scanGapAverage >= 2 Then
+					' Renumber the .mzXML file
+					' May need to renumber if the scan gap is every greater than one; not sure
+
+					Threading.Thread.Sleep(200)
+
+					' Rename the file 
+					fiMzXmlFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset & "_old" & clsAnalysisResources.DOT_MZXML_EXTENSION))
+					fiMzXmlFile.Refresh()
+					m_jobParams.AddResultFileToSkip(fiMzXmlFile.Name)
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The mzXML file has an average scan gap of " & scanGapAverage.ToString("0.0") & " scans; will update the file's scan numbers to be 1, 2, 3, etc.")
+
+					Dim converter = New clsRenumberMzXMLScans(fiMzXmlFile.FullName)
+					Dim targetFilePath = Path.Combine(m_WorkDir, mzXmlFileName)
+					Dim blnSuccess = converter.Process(targetFilePath)
+
+					If Not blnSuccess Then
+						m_message = converter.ErrorMessage
+						If String.IsNullOrEmpty(m_message) Then
+							m_message = "clsRenumberMzXMLScans returned false while renumbering the scans in the .mzXML file"
+						End If
+
+						Return False
+					End If
+
+					m_jobParams.AddResultFileToSkip(targetFilePath)
+
+				End If
+			End If
+
+
+			Return True
+
+		Catch ex As Exception
+			m_message = "Error renumbering the mzXML file: " & ex.Message
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RenumberMzXMLIfRequired", ex)
+			Return False
+		End Try
+
+	End Function
+
+	Private Function StartMSDeconv(ByVal JavaProgLoc As String, ByVal strOutputFormat As String) As Boolean
+
+		' Store the MSDeconv version info in the database after the first line is written to file MSDeconv_ConsoleOutput.txt
+		mToolVersionWritten = False
+		mMSDeconvVersion = String.Empty
+		mConsoleOutputErrorMsg = String.Empty
+
+		Dim blnIncludeMS1Spectra = m_jobParams.GetJobParameter("MSDeconvIncludeMS1", False)
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDeconv")
+
+		' Lookup the amount of memory to reserve for Java; default to 2 GB 
+		Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000)
+		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+
+		'Set up and execute a program runner to run MSDeconv
+		Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & mMSDeconvProgLoc
+
+
+		' Define the input file and processing options
+		' Note that capitalization matters for the extension; it must be .mzXML
+		CmdStr &= " " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
+		CmdStr &= " -o " & strOutputFormat & " -t centroided"
+
+		If blnIncludeMS1Spectra Then
+			CmdStr &= " -l"
+		End If
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+
+		CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+		With CmdRunner
+			.CreateNoWindow = True
+			.CacheStandardOutput = False
+			.EchoOutputToConsole = True
+
+			.WriteConsoleOutputToFile = True
+			.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT)
+		End With
+
+		m_progress = PROGRESS_PCT_STARTING
+
+		Dim blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSDeconv", True)
+
+		If Not mToolVersionWritten Then
+			If String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
+				ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
+			End If
+			mToolVersionWritten = StoreToolVersionInfo()
+		End If
+
+		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+		End If
+
+		Return blnSuccess
+
+	End Function
+
 	''' <summary>
 	''' Stores the tool version info in the database
 	''' </summary>
@@ -429,11 +518,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
 		strToolVersionInfo = String.Copy(mMSDeconvVersion)
 
 		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mMSDeconvProgLoc))
+		Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+		ioToolFiles.Add(New FileInfo(mMSDeconvProgLoc))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False
@@ -448,11 +537,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
 	''' <remarks></remarks>
 	Private Sub TrimConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
-		Static reExtractScan As New System.Text.RegularExpressions.Regex("Processing spectrum Scan_(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Dim oMatch As System.Text.RegularExpressions.Match
+		Static reExtractScan As New Regex("Processing spectrum Scan_(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Dim oMatch As Match
 
 		Try
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+			If Not File.Exists(strConsoleOutputFilePath) Then
 				If m_DebugLevel >= 4 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
 				End If
@@ -464,8 +553,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
 			End If
 
-			Dim srInFile As System.IO.StreamReader
-			Dim swOutFile As System.IO.StreamWriter
+			Dim srInFile As StreamReader
+			Dim swOutFile As StreamWriter
 
 			Dim strLineIn As String
 			Dim blnKeepLine As Boolean
@@ -479,8 +568,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			Dim strTrimmedFilePath As String
 			strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			swOutFile = New StreamWriter(New FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
 			intScanNumberOutputThreshold = 0
 			Do While srInFile.Peek() >= 0
@@ -519,8 +608,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			System.Threading.Thread.Sleep(500)
 
 			Try
-				System.IO.File.Delete(strConsoleOutputFilePath)
-				System.IO.File.Move(strTrimmedFilePath, strConsoleOutputFilePath)
+				File.Delete(strConsoleOutputFilePath)
+				File.Move(strTrimmedFilePath, strConsoleOutputFilePath)
 			Catch ex As Exception
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error replacing original console output file (" & strConsoleOutputFilePath & ") with trimmed version: " & ex.Message)
@@ -566,7 +655,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
+			ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
 
 			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
 				mToolVersionWritten = StoreToolVersionInfo()

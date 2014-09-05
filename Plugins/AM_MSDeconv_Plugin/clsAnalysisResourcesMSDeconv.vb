@@ -29,12 +29,12 @@ Public Class clsAnalysisResourcesMSDeconv
 		' Instead, use FindAndRetrieveMiscFiles 
 
 		' Note that capitalization matters for the extension; it must be .mzXML
-		FileToGet = m_DatasetName & ".mzXML"
+		FileToGet = m_DatasetName & DOT_MZXML_EXTENSION
 		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
 			'Errors were reported in function call, so just return
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
-		m_jobParams.AddResultFileToSkip(FileToGet)
+		m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
