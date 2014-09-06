@@ -11,6 +11,7 @@ Option Strict On
 
 Imports System.IO
 Imports System.Threading
+Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisToolRunnerBase
 	Implements IToolRunner
@@ -245,48 +246,78 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Copies a file (typically a mzXML file) to a server cache folder
+	''' Copies a file (typically a mzXML or mzML file) to a server cache folder
 	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2, based on the DatasetStoragePath job parameter
 	''' </summary>
-	''' <param name="strCacheFolderPath">Cache folder base path</param>
-	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional)</param>
+	''' <param name="strCacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
+	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="strSourceFilePath">Path to the data file</param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
 	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function CopyFileToServerCache(ByVal strCacheFolderPath As String, ByVal strSubfolderInTarget As String, ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
+	''' <remarks>True if success, false if an error</remarks>
+	Protected Function CopyFileToServerCache(
+	  ByVal strCacheFolderPath As String,
+	  ByVal strSubfolderInTarget As String,
+	  ByVal strSourceFilePath As String,
+	  ByVal strDatasetYearQuarter As String,
+	  ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
+
+		Return CopyFileToServerCache(strCacheFolderPath, strSubfolderInTarget, strSourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded, String.Empty)
+
+	End Function
+
+	''' <summary>
+	''' Copies a file (typically a mzXML or mzML file) to a server cache folder
+	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2, based on the DatasetStoragePath job parameter
+	''' </summary>
+	''' <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
+	''' <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+	''' <param name="sourceFilePath">Path to the data file</param>
+	''' <param name="datasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
+	''' <returns></returns>
+	''' <remarks>True if success, false if an error</remarks>
+	Protected Function CopyFileToServerCache(
+	  ByVal cacheFolderPath As String,
+	  ByVal subfolderInTarget As String,
+	  ByVal sourceFilePath As String,
+	  ByVal datasetYearQuarter As String,
+	  ByVal purgeOldFilesIfNeeded As Boolean,
+	  <Out()> ByRef remoteCacheFilePath As String) As Boolean
 
 		Dim blnSuccess As Boolean
+		remoteCacheFilePath = String.Empty
 
 		Try
 
-			Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(strCacheFolderPath)
+			Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(cacheFolderPath)
 
 			If Not diCacheFolder.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & strCacheFolderPath)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & cacheFolderPath)
 			Else
 
 				Dim diTargetFolder As DirectoryInfo
 
 				' Define the target folder
-				If String.IsNullOrEmpty(strSubfolderInTarget) Then
+				If String.IsNullOrEmpty(subfolderInTarget) Then
 					diTargetFolder = diCacheFolder
 				Else
-					diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, strSubfolderInTarget))
+					diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget))
 					If Not diTargetFolder.Exists Then diTargetFolder.Create()
 				End If
 
-				If String.IsNullOrEmpty(strDatasetYearQuarter) Then
+				If String.IsNullOrEmpty(datasetYearQuarter) Then
 					' Determine the year_quarter text for this dataset
 					Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
 					If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
 
-					strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
+					datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
 				End If
 
-				If Not String.IsNullOrEmpty(strDatasetYearQuarter) Then
-					diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, strDatasetYearQuarter))
+				If Not String.IsNullOrEmpty(datasetYearQuarter) Then
+					diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, datasetYearQuarter))
 					If Not diTargetFolder.Exists Then diTargetFolder.Create()
 				End If
 
@@ -294,26 +325,32 @@ Public Class clsAnalysisToolRunnerBase
 
 				' Create the .hashcheck file
 				Dim strHashcheckFilePath As String
-				strHashcheckFilePath = clsGlobal.CreateHashcheckFile(strSourceFilePath, blnComputeMD5Hash:=True)
+				strHashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, blnComputeMD5Hash:=True)
 
 				If String.IsNullOrEmpty(strHashcheckFilePath) Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: Hashcheck file was not created")
+					m_message = "Error in CopyFileToServerCache: Hashcheck file was not created"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					Return False
 				End If
 
-				Dim diTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(strSourceFilePath)))
+				Dim fiTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
 
 				ResetTimestampForQueueWaitTimeLogging()
-				blnSuccess = m_FileTools.CopyFileUsingLocks(strSourceFilePath, diTargetFile.FullName, m_MachName, True)
+				blnSuccess = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, True)
 
-				If blnSuccess Then
-					' Copy over the .Hashcheck file
-					m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(diTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
+				If Not blnSuccess Then
+					m_message = "CopyFileUsingLocks returned false copying " & Path.GetFileName(sourceFilePath) & " to " & fiTargetFile.FullName
+					Return False
 				End If
 
-				If blnSuccess AndAlso blnPurgeOldFilesIfNeeded Then
+				remoteCacheFilePath = fiTargetFile.FullName
+
+				' Copy over the .Hashcheck file
+				m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
+
+				If purgeOldFilesIfNeeded Then
 					Const intSpaceUsageThresholdGB As Integer = 300
-					PurgeOldServerCacheFiles(strCacheFolderPath, intSpaceUsageThresholdGB)
+					PurgeOldServerCacheFiles(cacheFolderPath, intSpaceUsageThresholdGB)
 				End If
 			End If
 
@@ -327,14 +364,17 @@ Public Class clsAnalysisToolRunnerBase
 	End Function
 
 	''' <summary>
-	''' Copies the .mzXML file to the MSXML_Cache
+	''' Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
 	''' </summary>
 	''' <param name="strSourceFilePath"></param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
 	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
 	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
+	''' <remarks>
+	''' Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is 
+	''' of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
+	''' </remarks>
 	Protected Function CopyMzXMLFileToServerCache(ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal strMSXmlGeneratorName As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
 
 		Dim blnSuccess As Boolean
@@ -616,7 +656,7 @@ Public Class clsAnalysisToolRunnerBase
 
 		' Verify transfer directory exists
 		' First make sure TransferFolderPath is defined
-		If String.IsNullOrEmpty(TransferFolderPath) Then
+		If String.IsNullOrEmpty(transferFolderPath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
 			m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
 			Return String.Empty
@@ -643,10 +683,10 @@ Public Class clsAnalysisToolRunnerBase
 
 		' Now verify transfer directory exists
 		Try
-			objAnalysisResults.FolderExistsWithRetry(TransferFolderPath)
+			objAnalysisResults.FolderExistsWithRetry(transferFolderPath)
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & Path.GetPathRoot(TransferFolderPath) & ": " & ex.Message)
-			m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & Path.GetPathRoot(TransferFolderPath))
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & Path.GetPathRoot(transferFolderPath) & ": " & ex.Message)
+			m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & Path.GetPathRoot(transferFolderPath))
 			Return String.Empty
 		End Try
 
@@ -662,10 +702,10 @@ Public Class clsAnalysisToolRunnerBase
 
 		If m_Dataset.ToLower() = "Aggregation".ToLower() Then
 			' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
-			strRemoteTransferFolderPath = String.Copy(TransferFolderPath)
+			strRemoteTransferFolderPath = String.Copy(transferFolderPath)
 		Else
 			' Append the dataset name to the transfer folder path
-			strRemoteTransferFolderPath = Path.Combine(TransferFolderPath, m_Dataset)
+			strRemoteTransferFolderPath = Path.Combine(transferFolderPath, m_Dataset)
 		End If
 
 		' Create the target folder if it doesn't exist
@@ -1523,7 +1563,10 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks>Skipped if the debug level is less than 4</remarks>
 	Protected Sub OutputSummary(ByVal OutputPath As String)
 
-		If m_DebugLevel < 4 Then Exit Sub
+		If m_DebugLevel < 4 Then
+			' Do not create the AnalysisSummary file
+			Exit Sub
+		End If
 
 		' Saves the summary file in the results folder
 		Dim objAssemblyTools As clsAssemblyTools = New clsAssemblyTools
@@ -1797,7 +1840,7 @@ Public Class clsAnalysisToolRunnerBase
 		Return True
 
 	End Function
-	
+
 	Protected Function ReplaceUpdatedFile(ByVal fiOrginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo) As Boolean
 
 		Try
@@ -1898,6 +1941,19 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
 		Return SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
+	End Function
+
+	''' <summary>
+	''' Communicates with database to record the tool version(s) for the current step task
+	''' </summary>
+	''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+	''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+	''' <returns>True for success, False for failure</returns>
+	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+	   ByVal ioToolFiles As List(Of FileInfo)) As Boolean
+
+		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
 	End Function
 
 	''' <summary>
@@ -2062,7 +2118,7 @@ Public Class clsAnalysisToolRunnerBase
 		Dim blnSuccess As Boolean
 
 		Try
-            ioFileInfo = New FileInfo(strDLLFilePath)
+			ioFileInfo = New FileInfo(strDLLFilePath)
 
 			If Not ioFileInfo.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)

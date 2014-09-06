@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public MustInherit Class clsMSXmlGen
 
@@ -12,15 +13,15 @@ Public MustInherit Class clsMSXmlGen
 #End Region
 
 #Region "Module Variables"
-	Protected mWorkDir As String
-	Protected mProgramPath As String
-	Protected mDatasetName As String
-	Protected mRawDataType As clsAnalysisResources.eRawDataTypeConstants
+	Protected ReadOnly mWorkDir As String
+	Protected ReadOnly mProgramPath As String
+	Protected ReadOnly mDatasetName As String
+	Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
 	Protected mSourceFilePath As String = String.Empty
-	Protected mOutputType As MSXMLOutputTypeConstants
+	Protected ReadOnly mOutputType As MSXMLOutputTypeConstants
 
-	Protected mCentroidMS1 As Boolean
-	Protected mCentroidMS2 As Boolean
+	Protected ReadOnly mCentroidMS1 As Boolean
+	Protected ReadOnly mCentroidMS2 As Boolean
 
 	Protected mUseProgRunnerResultCode As Boolean		' When true, then return an error if the progrunner returns a non-zero exit code
 
@@ -62,12 +63,13 @@ Public MustInherit Class clsMSXmlGen
 #End Region
 
 
-	Public Sub New(ByVal WorkDir As String,
-	ByVal ProgramPath As String,
-	ByVal DatasetName As String,
-	ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	ByVal eOutputType As MSXMLOutputTypeConstants,
-	ByVal CentroidMSXML As Boolean)
+	Public Sub New(
+	  ByVal WorkDir As String,
+	  ByVal ProgramPath As String,
+	  ByVal DatasetName As String,
+	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal CentroidMSXML As Boolean)
 
 		mWorkDir = WorkDir
 		mProgramPath = ProgramPath
@@ -80,7 +82,8 @@ Public MustInherit Class clsMSXmlGen
 		mErrorMessage = String.Empty
 	End Sub
 
-	Public Sub New(ByVal WorkDir As String,
+	Public Sub New(
+	  ByVal WorkDir As String,
 	  ByVal ProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
@@ -113,9 +116,9 @@ Public MustInherit Class clsMSXmlGen
 
 		Select Case mRawDataType
 			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+				mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
 			Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-				mSourceFilePath = IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+				mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
 			Case Else
 				Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
 		End Select
@@ -132,10 +135,10 @@ Public MustInherit Class clsMSXmlGen
 				msXmlFormat = "mzML"
 		End Select
 
-		CmdRunner = New clsRunDosProgram(IO.Path.GetDirectoryName(mProgramPath))
+		CmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mProgramPath))
 
 		' Verify that program file exists
-		If Not IO.File.Exists(mProgramPath) Then
+		If Not File.Exists(mProgramPath) Then
 			mErrorMessage = "Cannot find MSXmlGenerator exe program file: " & mProgramPath
 			Return False
 		End If
@@ -161,27 +164,27 @@ Public MustInherit Class clsMSXmlGen
 			.EchoOutputToConsole = True
 
 			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = IO.Path.Combine(mWorkDir, IO.Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
+			.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
 
 			.WorkDir = mWorkDir
 		End With
 
-		blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, IO.Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode)
+		blnSuccess = CmdRunner.RunProgram(mProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode)
 
 		If Not blnSuccess Then
 			If CmdRunner.ExitCode <> 0 Then
-				mErrorMessage = IO.Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
+				mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
 				blnSuccess = False
 			Else
-				mErrorMessage = "Call to " & IO.Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
+				mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
 				blnSuccess = True
 			End If
 		Else
 			' Make sure the output file was created and is non-zero
 			Dim strOutputFilePath As String
-			strOutputFilePath = IO.Path.ChangeExtension(mSourceFilePath, msXmlFormat)
+			strOutputFilePath = Path.ChangeExtension(mSourceFilePath, msXmlFormat)
 
-			If Not IO.File.Exists(strOutputFilePath) Then
+			If Not File.Exists(strOutputFilePath) Then
 				mErrorMessage = "Output file not found: " & strOutputFilePath
 				blnSuccess = False
 			End If
@@ -194,8 +197,8 @@ Public MustInherit Class clsMSXmlGen
 
 	Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
 
-		Dim strSourceFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-		Dim strMsXmlFilePath As String = IO.Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		Dim strSourceFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+		Dim strMsXmlFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
 		LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMsXmlFilePath)
 
@@ -207,21 +210,21 @@ Public MustInherit Class clsMSXmlGen
 			' Save some stats to the log
 
 			Dim strMessage As String
-			Dim ioFileInfo As IO.FileInfo
+			Dim ioFileInfo As FileInfo
 			Dim dblSourceFileSizeMB As Double, dblMsXmlSizeMB As Double
 			Dim dblTotalMinutes As Double
 
-			Dim strSourceFileExtension As String = IO.Path.GetExtension(strSourceFilePath)
-			Dim strTargetFileExtension As String = IO.Path.GetExtension(strMsXmlFilePath)
+			Dim strSourceFileExtension As String = Path.GetExtension(strSourceFilePath)
+			Dim strTargetFileExtension As String = Path.GetExtension(strMsXmlFilePath)
 
 			dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
 
-			ioFileInfo = New IO.FileInfo(strSourceFilePath)
+			ioFileInfo = New FileInfo(strSourceFilePath)
 			If ioFileInfo.Exists Then
 				dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
 			End If
 
-			ioFileInfo = New IO.FileInfo(strMsXmlFilePath)
+			ioFileInfo = New FileInfo(strMsXmlFilePath)
 			If ioFileInfo.Exists Then
 				dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024
 			End If

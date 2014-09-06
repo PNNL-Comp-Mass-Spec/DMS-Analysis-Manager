@@ -900,7 +900,7 @@ Public Class clsGlobal
 			strOutput.Append(arrInput(i).ToString("X2"))
 		Next
 
-		Return strOutput.ToString().ToLower
+		Return strOutput.ToString().ToLower()
 
 	End Function
 
@@ -912,7 +912,6 @@ Public Class clsGlobal
 	''' <remarks></remarks>
 	Public Shared Function ComputeFileHashMD5(ByVal strPath As String) As String
 		' Calculates the MD5 hash of a given file
-		' Code from Tim Hastings, at http://www.nonhostile.com/page000017.asp
 
 		Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
 		Dim arrHash() As Byte

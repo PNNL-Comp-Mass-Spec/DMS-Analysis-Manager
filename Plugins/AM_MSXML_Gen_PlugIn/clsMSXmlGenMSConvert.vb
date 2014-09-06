@@ -14,8 +14,12 @@ Imports AnalysisManagerBase
 Public Class clsMSXmlGenMSConvert
 	Inherits clsMSXmlGen
 
-	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
+	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 500
 
+	''' <summary>
+	''' Number of data points to keep when centroiding
+	''' </summary>
+	''' <remarks>0 to keep default (500); -1 to keep all</remarks>
 	Protected mCentroidPeakCountToRetain As Integer
 
 	''' <summary>
@@ -99,13 +103,18 @@ Public Class clsMSXmlGenMSConvert
 					CmdStr &= " --filter ""peakPicking true 1-"""
 				End If
 
-				If mCentroidPeakCountToRetain = 0 Then
-					mCentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
-				ElseIf mCentroidPeakCountToRetain < 25 Then
-					mCentroidPeakCountToRetain = 25
-				End If
+				If mCentroidPeakCountToRetain < 0 Then
+					' Keep all points
+				Else
+					If mCentroidPeakCountToRetain = 0 Then
+						mCentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
+					ElseIf mCentroidPeakCountToRetain < 25 Then
+						mCentroidPeakCountToRetain = 25
+					End If
 
-				CmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
+					CmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
+				End If
+				
 			End If
 
 			CmdStr &= " --" & msXmlFormat & " --32"

@@ -988,7 +988,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		ioToolFiles.Add(New FileInfo(mMSGFDbProgLoc))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+			' Need to pass blnSaveToolVersionTextFile to True so that the ToolVersionInfo file gets created
+			' The PeptideListToXML program uses that file when creating .pepXML files
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False

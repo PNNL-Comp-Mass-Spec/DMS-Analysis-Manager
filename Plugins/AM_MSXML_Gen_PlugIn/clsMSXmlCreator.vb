@@ -10,15 +10,16 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsMSXMLCreator
 
 #Region "Classwide variables"
-	Protected mMSXmlGeneratorAppPath As String
-	Protected m_jobParams As IJobParams
-	Protected m_WorkDir As String
+	Protected ReadOnly mMSXmlGeneratorAppPath As String
+	Protected ReadOnly m_jobParams As IJobParams
+	Protected ReadOnly m_WorkDir As String
 	Protected m_Dataset As String
-	Protected m_DebugLevel As Short
+	Protected ReadOnly m_DebugLevel As Short
 
 	Protected m_ErrorMessage As String
 
@@ -61,24 +62,24 @@ Public Class clsMSXMLCreator
 
 		' mzXML filename is dataset plus .mzXML
 		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-		If IO.File.Exists(strMzXmlFilePath) OrElse IO.File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
+		If File.Exists(strMzXmlFilePath) OrElse File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
 			' File already exists; nothing to do
 			Return True
 		End If
 
-		strSourceFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+		strSourceFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 
 		ProgLoc = mMSXmlGeneratorAppPath
-		If Not IO.File.Exists(ProgLoc) Then
+		If Not File.Exists(ProgLoc) Then
 			m_ErrorMessage = "MSXmlGenerator not found; unable to convert .mzML file to .mzXML"
 			ReportError(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
 			Return False
 		End If
 
 		If m_DebugLevel >= 2 Then
-			ReportDebugInfo("Creating the .mzXML file for " & m_Dataset & " using " & IO.Path.GetFileName(strSourceFilePath))
+			ReportDebugInfo("Creating the .mzXML file for " & m_Dataset & " using " & Path.GetFileName(strSourceFilePath))
 		End If
 
 		'Setup a program runner tool to call MSConvert
@@ -105,7 +106,7 @@ Public Class clsMSXMLCreator
 
 		If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
 			' .RunProgram returned False
-			m_ErrorMessage = "Error running " & IO.Path.GetFileNameWithoutExtension(ProgLoc) & " to convert the .mzML file to a .mzXML file"
+			m_ErrorMessage = "Error running " & Path.GetFileNameWithoutExtension(ProgLoc) & " to convert the .mzML file to a .mzXML file"
 			ReportError(m_ErrorMessage)
 			Return False
 		End If
@@ -115,7 +116,7 @@ Public Class clsMSXMLCreator
 		End If
 
 		' Validate that the .mzXML file was actually created
-		If Not IO.File.Exists(strMzXmlFilePath) Then
+		If Not File.Exists(strMzXmlFilePath) Then
 			m_ErrorMessage = ".mzXML file was not created by MSConvert"
 			ReportError(m_ErrorMessage & ": " & strMzXmlFilePath)
 			Return False
@@ -147,9 +148,9 @@ Public Class clsMSXMLCreator
 
 		' mzXML filename is dataset plus .mzXML
 		Dim strMzXmlFilePath As String
-		strMzXmlFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+		strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-		If IO.File.Exists(strMzXmlFilePath) OrElse IO.File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
+		If File.Exists(strMzXmlFilePath) OrElse File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
 			' File already exists; nothing to do
 			Return True
 		End If
@@ -159,9 +160,9 @@ Public Class clsMSXMLCreator
 		' Instantiate the processing class
 		' Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
 		Dim strMSXmlGeneratorExe As String
-		strMSXmlGeneratorExe = IO.Path.GetFileName(mMSXmlGeneratorAppPath)
+		strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath)
 
-		If Not IO.File.Exists(mMSXmlGeneratorAppPath) Then
+		If Not File.Exists(mMSXmlGeneratorAppPath) Then
 			m_ErrorMessage = "MSXmlGenerator not found; unable to create .mzXML file"
 			ReportError(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
 			Return False
@@ -231,7 +232,7 @@ Public Class clsMSXMLCreator
 		End If
 
 		' Validate that the .mzXML file was actually created
-		If Not IO.File.Exists(strMzXmlFilePath) Then
+		If Not File.Exists(strMzXmlFilePath) Then
 			m_ErrorMessage = ".mzXML file was not created by " & strMSXmlGeneratorExe
 			ReportError(m_ErrorMessage & ": " & strMzXmlFilePath)
 			Return False

@@ -79,7 +79,9 @@ Public Class clsAnalysisResourcesMSGFDB
 
 			If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+			End If
 
 			' Retrieve param file
 			' This will also obtain the _ModDefs.txt file using query 

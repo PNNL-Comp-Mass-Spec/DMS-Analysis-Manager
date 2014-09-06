@@ -14,7 +14,6 @@ Public Class clsAnalysisResourcesMSDeconv
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim FileToGet As String
 
 		' Make sure the machine has enough free memory to run MSDeconv
 		If Not ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv") Then
@@ -26,22 +25,36 @@ Public Class clsAnalysisResourcesMSDeconv
 
 		' Retrieve the .mzXML file for this dataset
 		' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-		' Instead, use FindAndRetrieveMiscFiles 
+		' Instead, use RetrieveCachedMzXMLFile 
 
-		' Note that capitalization matters for the extension; it must be .mzXML
-		FileToGet = m_DatasetName & DOT_MZXML_EXTENSION
-		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-			'Errors were reported in function call, so just return
+		Dim errorMessage = String.Empty
+		Dim fileMissingFromCache = False
+		Const unzipFile = True
+
+		Dim success = RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
+		If Not success Then
+			If fileMissingFromCache Then
+				If String.IsNullOrEmpty(errorMessage) Then
+					errorMessage = "Cached .mzXML file does not exist; will re-generate it"
+				End If
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
+				Return IJobParams.CloseOutType.CLOSEOUT_MZML_FILE_NOT_IN_CACHE
+			End If
+
+			If String.IsNullOrEmpty(errorMessage) Then
+				errorMessage = "Unknown error in RetrieveCachedMzXMLFile"
+			End If
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
+
+		' Make sure we don't move the .mzXML file into the results folder
 		m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
-
-		' Make sure we don't move the .mzXML file into the results folder
-		m_JobParams.AddResultFileExtensionToSkip(".mzXML")
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

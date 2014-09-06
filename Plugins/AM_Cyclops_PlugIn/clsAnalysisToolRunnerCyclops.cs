@@ -238,7 +238,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 			};
 
 	        try {
-				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 			} catch (Exception ex) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;

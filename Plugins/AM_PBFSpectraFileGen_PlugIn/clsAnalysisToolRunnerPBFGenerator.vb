@@ -440,7 +440,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		If Not fiProgram.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
+				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), False)
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -461,7 +461,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")))
 
 		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 			Return False

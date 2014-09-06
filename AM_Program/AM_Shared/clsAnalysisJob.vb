@@ -747,9 +747,14 @@ Public Class clsAnalysisJob
 			xmlParameterFilename = JobParametersFilename(jobNum.ToString())
 			xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
 
-			' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
-			Dim filteredXML = RemoveXmlSection(paramXml, "StepParameters")
-
+			Dim filteredXML As String
+			If m_DebugLevel < 4 Then
+				' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
+				filteredXML = RemoveXmlSection(paramXml, "StepParameters")
+			Else
+				filteredXML = paramXml
+			End If
+			
 			xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFilePath)
 
 			If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
