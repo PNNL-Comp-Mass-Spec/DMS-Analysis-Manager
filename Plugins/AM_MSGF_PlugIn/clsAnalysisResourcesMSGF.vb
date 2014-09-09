@@ -97,7 +97,7 @@ Public Class clsAnalysisResourcesMSGF
 
 		' Make sure the dataset type is valid
 		RawDataType = m_jobParams.GetParam("RawDataType")
-		eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+		eRawDataType = GetRawDataType(RawDataType)
 		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
@@ -306,7 +306,7 @@ Public Class clsAnalysisResourcesMSGF
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: " & m_message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Else
-				m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+				m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION)
 			End If
 
 		ElseIf Not blnOnlyCopyFHTandSYNfiles Then
@@ -321,6 +321,18 @@ Public Class clsAnalysisResourcesMSGF
 				' .mzXML file found and copied locally; no need to retrieve the .Raw file
 				If m_DebugLevel >= 1 Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Existing .mzXML file found: " & strMzXMLFilePath)
+				End If
+
+				' Possibly unzip the .mzXML file
+				Dim fiMzXMLFile = New FileInfo(Path.Combine(m_WorkingDir & DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION))
+				If fiMzXMLFile.Exists Then
+					m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
+
+					If Not m_IonicZipTools.GUnzipFile(fiMzXMLFile.FullName) Then
+						m_message = "Error decompressing .mzXML.gz file"
+						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					End If
+
 				End If
 			Else
 				' .mzXML file not found

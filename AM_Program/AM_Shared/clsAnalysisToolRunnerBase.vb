@@ -253,7 +253,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="strSourceFilePath">Path to the data file</param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
-	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
 	''' <returns></returns>
 	''' <remarks>True if success, false if an error</remarks>
 	Protected Function CopyFileToServerCache(
@@ -275,7 +275,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="sourceFilePath">Path to the data file</param>
 	''' <param name="datasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
-	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
 	''' <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
 	''' <returns></returns>
 	''' <remarks>True if success, false if an error</remarks>
@@ -349,8 +349,8 @@ Public Class clsAnalysisToolRunnerBase
 				m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
 
 				If purgeOldFilesIfNeeded Then
-					Const intSpaceUsageThresholdGB As Integer = 300
-					PurgeOldServerCacheFiles(cacheFolderPath, intSpaceUsageThresholdGB)
+					Const spaceUsageThresholdGB As Integer = 3000
+					PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
 				End If
 			End If
 
@@ -369,13 +369,17 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strSourceFilePath"></param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
-	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 300 GB</param>
+	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks>
 	''' Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is 
 	''' of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
 	''' </remarks>
-	Protected Function CopyMzXMLFileToServerCache(ByVal strSourceFilePath As String, ByVal strDatasetYearQuarter As String, ByVal strMSXmlGeneratorName As String, ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
+	Protected Function CopyMzXMLFileToServerCache(
+	  ByVal strSourceFilePath As String,
+	  ByVal strDatasetYearQuarter As String,
+	  ByVal strMSXmlGeneratorName As String,
+	  ByVal blnPurgeOldFilesIfNeeded As Boolean) As Boolean
 
 		Dim blnSuccess As Boolean
 
@@ -1612,9 +1616,9 @@ Public Class clsAnalysisToolRunnerBase
 	''' If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
 	''' </summary>
 	''' <param name="strCacheFolderPath">Path to the file cache</param>
-	''' <param name="intSpaceUsageThresholdGB">Maximum space usage (cannot be less than 1)</param>
+	''' <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 10)</param>
 	''' <remarks></remarks>
-	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal intSpaceUsageThresholdGB As Integer)
+	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal spaceUsageThresholdGB As Integer)
 
 		Const PURGE_INTERVAL_MINUTES As Integer = 10
 		Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
@@ -1630,7 +1634,7 @@ Public Class clsAnalysisToolRunnerBase
 
 		Dim dctErrorSummary As Dictionary(Of String, Integer) = New Dictionary(Of String, Integer)
 
-		If intSpaceUsageThresholdGB < 1 Then intSpaceUsageThresholdGB = 1
+		If spaceUsageThresholdGB < 10 Then spaceUsageThresholdGB = 10
 
 		Try
 			If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
@@ -1660,7 +1664,7 @@ Public Class clsAnalysisToolRunnerBase
 				Next
 			End If
 
-			If dblTotalSizeMB / 1024.0 > intSpaceUsageThresholdGB Then
+			If dblTotalSizeMB / 1024.0 > spaceUsageThresholdGB Then
 				' Purge files until the space usage falls below the threshold
 
 				For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstDataFiles
@@ -1692,7 +1696,7 @@ Public Class clsAnalysisToolRunnerBase
 
 					End Try
 
-					If dblTotalSizeMB / 1024.0 < intSpaceUsageThresholdGB Then
+					If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB Then
 						Exit For
 					End If
 				Next

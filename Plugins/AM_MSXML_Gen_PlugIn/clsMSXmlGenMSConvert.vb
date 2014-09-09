@@ -34,7 +34,7 @@ Public Class clsMSXmlGenMSConvert
 	  ByVal MSConvertProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CustomMSConvertArguments As String)
 
 		MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML:=False)
@@ -49,7 +49,7 @@ Public Class clsMSXmlGenMSConvert
 	  ByVal MSConvertProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CentroidMSXML As Boolean,
 	  ByVal CentroidPeakCountToRetain As Integer)
 
@@ -65,7 +65,7 @@ Public Class clsMSXmlGenMSConvert
 	  ByVal MSConvertProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CentroidMS1 As Boolean,
 	  ByVal CentroidMS2 As Boolean,
 	  ByVal CentroidPeakCountToRetain As Integer)

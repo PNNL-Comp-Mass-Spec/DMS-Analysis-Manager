@@ -19,7 +19,7 @@ Public Class clsMSXMLGenReadW
 	  ByVal ReadWProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CentroidMSXML As Boolean)
 
 		MyBase.New(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)

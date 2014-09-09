@@ -27,7 +27,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 	Protected mMSXmlGeneratorAppPath As String = String.Empty
 
-	Protected mMSXmlOutputFileType As clsMSXmlGen.MSXMLOutputTypeConstants
+	Protected mMSXmlOutputFileType As clsAnalysisResources.MSXMLOutputTypeConstants
 
 	Protected mMSXmlCacheFolder As DirectoryInfo
 
@@ -198,12 +198,12 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			' Determine the output type
 			Select Case msXmlFormat.ToLower
 				Case "mzxml"
-					mMSXmlOutputFileType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
+					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
 				Case "mzml"
-					mMSXmlOutputFileType = clsMSXmlGen.MSXMLOutputTypeConstants.mzML
+					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
 				Case Else
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not mzXML or mzML (" & msXmlFormat & "); will default to mzXML")
-					mMSXmlOutputFileType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
+					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
 			End Select
 
 			' Lookup Centroid Settings
@@ -324,9 +324,9 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Dim resultFileExtension As String
 
 			Select Case mMSXmlOutputFileType
-				Case clsMSXmlGen.MSXMLOutputTypeConstants.mzML
+				Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
 					resultFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION
-				Case clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
+				Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
 					resultFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION
 				Case Else
 					Throw New Exception("Unrecognized MSXMLOutputType value")

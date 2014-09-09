@@ -33,7 +33,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 			List<udtDataPackageJobInfoType> lstAdditionalJobs;
 
-			List<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs );
+			List<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs);
 			bool success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
 			if (!success)
@@ -58,11 +58,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 		private bool FindInstrumentDataFiles(
 			IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs,
-			IEnumerable<udtDataPackageJobInfoType> lstAdditionalJobs, 
+			IEnumerable<udtDataPackageJobInfoType> lstAdditionalJobs,
 			bool includeMzXmlFiles)
 		{
 
-			// The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
+			// The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
 			// The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
 			var dctInstrumentDataToRetrieve = new Dictionary<udtDataPackageJobInfoType, KeyValuePair<string, string>>();
 
@@ -83,7 +83,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			int jobCountToProcess = jobsToProcess.Count();
 			int jobsProcessed = 0;
-			
+
 			DateTime dtLastProgressUpdate = DateTime.UtcNow;
 
 			foreach (udtDataPackageJobInfoType udtJobInfo in jobsToProcess)
@@ -110,14 +110,28 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					}
 					else
 					{
-						// See if a .mzXML file already exists for this dataset
+						// See if a .mzXML or .mzML file already exists for this dataset
 						string strHashcheckFilePath = string.Empty;
 
-						string strMzXMLFilePath = FindMZXmlFile(ref strHashcheckFilePath);
+						string mzXMLFilePath = FindMZXmlFile(ref strHashcheckFilePath);
+						string mzMLFilePath = string.Empty;
 
-						if (string.IsNullOrEmpty(strMzXMLFilePath))
+						if (string.IsNullOrEmpty(mzXMLFilePath))
 						{
-							// mzXML file not found
+							mzMLFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, ref strHashcheckFilePath);
+						}
+
+						if (!string.IsNullOrEmpty(mzXMLFilePath))
+						{
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(mzXMLFilePath, strHashcheckFilePath));
+						}
+						else if (!string.IsNullOrEmpty(mzMLFilePath))
+						{
+							dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(mzMLFilePath, strHashcheckFilePath));
+						}
+						else
+						{
+							// mzXML or mzML file not found
 							if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
 							{
 								// Will need to retrieve the .Raw file for this dataset
@@ -125,19 +139,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 							}
 							else
 							{
-								m_message = "mzXML file not found for dataset " + udtJobInfo.Dataset +
+								m_message = "mzXML/mzML file not found for dataset " + udtJobInfo.Dataset +
 											" and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
 								return false;
 							}
 						}
-						else
-						{
-							dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(strMzXMLFilePath, strHashcheckFilePath));
-						}
-						
+
 					}
-					
+
 				}
 
 				bool blnIsFolder;
@@ -157,7 +167,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 						{
 							string msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-						}											
+						}
 					}
 				}
 
@@ -185,8 +195,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, progressMsg);
 				}
-				
-			 
+
+
 			}
 
 			if (missingInstrumentDataCount > 0)
@@ -197,7 +207,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
 				msg += " (pipeline job " + jobId + ")";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);				
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 			}
 
 			// Restore the dataset and job info for this aggregation job
@@ -238,21 +248,39 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			{
 				foreach (var udtJob in lstDataPackagePeptideHitJobs)
 				{
-					string strMzXmlFilePath = Path.Combine(m_WorkingDir, udtJob.Dataset + DOT_MZXML_EXTENSION);
-
-					if (!File.Exists(strMzXmlFilePath))
+					var candidateFileNames = new List<string>
 					{
-						// Look for a StoragePathInfo file
-						strMzXmlFilePath += STORAGE_PATH_INFO_FILE_SUFFIX;
-						if (!File.Exists(strMzXmlFilePath))
+						udtJob.Dataset + DOT_MZXML_EXTENSION,
+						udtJob.Dataset + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION,
+						udtJob.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION
+					};
+
+					bool matchFound = false;
+
+					foreach (var candidateFile in candidateFileNames)
+					{
+						string filePath = Path.Combine(m_WorkingDir, candidateFile);
+
+						if (File.Exists(filePath))
 						{
-							if (!lstDatasets.Contains(udtJob.Dataset))
-							{
-								lstDatasets.Add(udtJob.Dataset);
-								lstDatasetYearQuarter.Add(udtJob.Dataset + "=" + GetDatasetYearQuarter(udtJob.ServerStoragePath));
-							}
+							matchFound = true;
+							break;
 						}
 
+						// Look for a StoragePathInfo file
+						filePath += STORAGE_PATH_INFO_FILE_SUFFIX;
+
+						if (File.Exists(filePath))
+						{
+							matchFound = true;
+							break;
+						}
+					}
+					
+					if (!matchFound && !lstDatasets.Contains(udtJob.Dataset))
+					{
+						lstDatasets.Add(udtJob.Dataset);
+						lstDatasetYearQuarter.Add(udtJob.Dataset + "=" + GetDatasetYearQuarter(udtJob.ServerStoragePath));
 					}
 				}
 
@@ -289,7 +317,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				foreach (var udtJob in lstDataPackagePeptideHitJobs)
 				{
 					string strDictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
-					                                        udtJob.ProteinOptions);
+															udtJob.ProteinOptions);
 					string strOrgDBNameGenerated;
 					if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out strOrgDBNameGenerated))
 					{
@@ -310,30 +338,30 @@ namespace AnalysisManager_RepoPkgr_Plugin
 						{
 							m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-							                     m_message + " (class clsAnalysisResourcesRepoPkgr)");
+												 m_message + " (class clsAnalysisResourcesRepoPkgr)");
 							return false;
 						}
 						if (strOrgDBNameGenerated != udtJob.OrganismDBName)
 						{
 							m_message = "Generated FASTA file name (" + strOrgDBNameGenerated + ") does not match expected fasta file name (" +
-							            udtJob.OrganismDBName + "); aborting";
+										udtJob.OrganismDBName + "); aborting";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-							                     m_message + " (class clsAnalysisResourcesRepoPkgr)");
+												 m_message + " (class clsAnalysisResourcesRepoPkgr)");
 							return false;
 						}
 						dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, strOrgDBNameGenerated);
-						
+
 						lstGeneratedOrgDBNames.Add(strOrgDBNameGenerated);
 					}
 					// Add a new job parameter that associates strOrgDBNameGenerated with this job
 					m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
-					                                   strOrgDBNameGenerated);
+													   strOrgDBNameGenerated);
 				}
 
 				// Store the names of the generated fasta files
 				// This is a tab separated list of filenames
 				StorePackedJobParameterList(lstGeneratedOrgDBNames, FASTA_FILES_FOR_DATA_PACKAGE);
-				
+
 				// Restore the dataset and job info for this aggregation job
 				OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
 			}
@@ -345,9 +373,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			}
 			return true;
 		}
-	
 
-	private static string GetGeneratedFastaParamNameForJob(int job)
+
+		private static string GetGeneratedFastaParamNameForJob(int job)
 		{
 			return "Job" + job + "_GeneratedFasta";
 		}

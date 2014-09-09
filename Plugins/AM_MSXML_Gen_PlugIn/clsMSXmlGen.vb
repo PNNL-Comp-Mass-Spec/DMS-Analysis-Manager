@@ -6,10 +6,7 @@ Imports System.IO
 Public MustInherit Class clsMSXmlGen
 
 #Region "Enums"
-	Public Enum MSXMLOutputTypeConstants
-		mzXML = 0
-		mzML = 1
-	End Enum
+	
 #End Region
 
 #Region "Module Variables"
@@ -18,7 +15,7 @@ Public MustInherit Class clsMSXmlGen
 	Protected ReadOnly mDatasetName As String
 	Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
 	Protected mSourceFilePath As String = String.Empty
-	Protected ReadOnly mOutputType As MSXMLOutputTypeConstants
+	Protected ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
 	Protected ReadOnly mCentroidMS1 As Boolean
 	Protected ReadOnly mCentroidMS2 As Boolean
@@ -68,7 +65,7 @@ Public MustInherit Class clsMSXmlGen
 	  ByVal ProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CentroidMSXML As Boolean)
 
 		mWorkDir = WorkDir
@@ -87,7 +84,7 @@ Public MustInherit Class clsMSXmlGen
 	  ByVal ProgramPath As String,
 	  ByVal DatasetName As String,
 	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As MSXMLOutputTypeConstants,
+	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
 	  ByVal CentroidMS1 As Boolean,
 	  ByVal CentroidMS2 As Boolean)
 
@@ -129,9 +126,9 @@ Public MustInherit Class clsMSXmlGen
 		mErrorMessage = String.Empty
 
 		Select Case mOutputType
-			Case MSXMLOutputTypeConstants.mzXML
+			Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
 				msXmlFormat = "mzXML"
-			Case MSXMLOutputTypeConstants.mzML
+			Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
 				msXmlFormat = "mzML"
 		End Select
 

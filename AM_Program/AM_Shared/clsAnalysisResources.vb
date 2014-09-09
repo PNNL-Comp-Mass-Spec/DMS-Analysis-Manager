@@ -136,6 +136,11 @@ Public MustInherit Class clsAnalysisResources
 		BrukerTOFBaf = 12				' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
 	End Enum
 
+	Public Enum MSXMLOutputTypeConstants
+		mzXML = 0
+		mzML = 1
+	End Enum
+
 #End Region
 
 #Region "Structures"
@@ -1479,25 +1484,25 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>Full path to the file, if found; empty string if no match</returns>
 	''' <remarks></remarks>
 	Public Shared Function FindFileInDirectoryTree(ByVal strFolderPath As String, ByVal strFileName As String, ByVal lstFolderNamesToSkip As SortedSet(Of String)) As String
-		Dim ioFolder As DirectoryInfo
-		Dim ioFile As FileSystemInfo
+		Dim diFolder As DirectoryInfo
+		Dim fiFile As FileSystemInfo
 		Dim ioSubFolder As FileSystemInfo
 
 		Dim strFilePathMatch As String
 
-		ioFolder = New DirectoryInfo(strFolderPath)
+		diFolder = New DirectoryInfo(strFolderPath)
 
-		If ioFolder.Exists Then
+		If diFolder.Exists Then
 			' Examine the files for this folder
-			For Each ioFile In ioFolder.GetFiles(strFileName)
-				strFilePathMatch = ioFile.FullName
+			For Each fiFile In diFolder.GetFiles(strFileName)
+				strFilePathMatch = fiFile.FullName
 				Return strFilePathMatch
 			Next
 
 			' Match not found
 			' Recursively call this function with the subdirectories in this folder
 
-			For Each ioSubFolder In ioFolder.GetDirectories
+			For Each ioSubFolder In diFolder.GetDirectories
 				If Not lstFolderNamesToSkip.Contains(ioSubFolder.Name) Then
 					strFilePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, strFileName)
 					If Not String.IsNullOrEmpty(strFilePathMatch) Then
@@ -1734,10 +1739,18 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
 	''' <returns>Full path to the file, if found; empty string if no match</returns>
-	''' <remarks></remarks>
+	''' <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
 	Protected Function FindMZXmlFile(ByRef strHashcheckFilePath As String) As String
 
-		' Finds this dataset's .mzXML file		
+		' First look in the MsXML cache folder
+		Dim strMatchingFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzXML, strHashcheckFilePath)
+
+		If Not String.IsNullOrEmpty(strMatchingFilePath) Then
+			Return strMatchingFilePath
+		End If
+
+		' Not found in the cache; look in the dataset folder
+
 		Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
 
 		Const MSXmlFoldernameBase As String = "MSXML_Gen_1_"
@@ -1812,49 +1825,104 @@ Public MustInherit Class clsAnalysisResources
 		Next
 
 		' If we get here, then no match was found
+		Return String.Empty
+
+	End Function
+
+	''' <summary>
+	''' Looks for the mzXML or mzML file for this dataset
+	''' </summary>
+	''' <param name="msXmlType">File type to find (mzXML or mzML)</param>
+	''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+	''' <returns>Full path to the file if a match; empty string if no match</returns>
+	''' <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
+	Protected Function FindMsXmlFileInCache(ByVal msXmlType As MSXMLOutputTypeConstants, ByRef strHashcheckFilePath As String) As String
+
+		Dim MsXMLFilename As String = m_DatasetName
+		strHashcheckFilePath = String.Empty
+
+		Select Case msXmlType
+			Case MSXMLOutputTypeConstants.mzXML
+				MsXMLFilename &= DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION
+			Case MSXMLOutputTypeConstants.mzML
+				' All MzML files should be gzipped
+				MsXMLFilename &= DOT_MZML_EXTENSION & DOT_GZ_EXTENSION
+			Case Else
+				Throw New Exception("Unsupported enum value for MSXMLOutputTypeConstants: " & msXmlType)
+		End Select
+
 		' Lookup the MSXML cache path (typically \\proto-6\MSXML_Cache\ )
 		Dim strMSXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
 		Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(strMSXMLCacheFolderPath)
 
-		If diCacheFolder.Exists Then
-			' Look for the file in folders in the MSXML file cache
+		If Not diCacheFolder.Exists Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & strMSXMLCacheFolderPath)
+			Return String.Empty
+		End If
 
-			Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-			If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+		' Determine the YearQuarter code for this dataset
+		Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
+		If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
 
-			Dim strSubfolderToCheck As String
-			Dim strMatchedFile As String
-			Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
+		Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
 
-			Dim strMSXmlGeneratorName As String = m_jobParams.GetJobParameter("MSXMLGenerator", String.Empty)
-			If String.IsNullOrWhiteSpace(strMSXmlGeneratorName) Then
-				strSubfolderToCheck = diCacheFolder.FullName
-			Else
-				strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(strMSXmlGeneratorName)
-				strSubfolderToCheck = Path.Combine(diCacheFolder.FullName, strMSXmlGeneratorName, strYearQuarter)
+		Dim lstMatchingFiles = New List(Of FileInfo)
+
+		If String.IsNullOrEmpty(strYearQuarter) Then
+
+			' Perform an exhaustive recursive search of the MSXML file cache
+			Dim lstFilesToAppend = diCacheFolder.GetFiles(MsXMLFilename, SearchOption.AllDirectories)
+
+			If lstFilesToAppend.Count = 0 AndAlso msXmlType = MSXMLOutputTypeConstants.mzXML Then
+				' Older .mzXML files were not gzipped
+				lstFilesToAppend = diCacheFolder.GetFiles(m_DatasetName & DOT_MZXML_EXTENSION, SearchOption.AllDirectories)
 			End If
 
-			strMatchedFile = FindFileInDirectoryTree(strSubfolderToCheck, MzXMLFilename)
+			Dim query = (From item In lstFilesToAppend Select item Order By item.LastWriteTimeUtc Descending).Take(1)
 
-			If Not String.IsNullOrEmpty(strMatchedFile) Then
-				' Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
+			lstMatchingFiles.AddRange(query)
 
-				Dim strErrorMessage As String = String.Empty
-				strHashcheckFilePath = strMatchedFile & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+		Else
 
-				If clsGlobal.ValidateFileVsHashcheck(strMatchedFile, strHashcheckFilePath, strErrorMessage) Then
+			' Look for the file in the top level subfolders of the MSXML file cache
+			For Each diToolFolder In diCacheFolder.GetDirectories()
+				Dim lstSubFolders = diToolFolder.GetDirectories(strYearQuarter)
 
-					Return strMatchedFile
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
-					Return String.Empty
+				If lstSubFolders.Count > 0 Then
+
+					Dim lstFilesToAppend = lstSubFolders.First.GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly)
+					If lstFilesToAppend.Count = 0 AndAlso msXmlType = MSXMLOutputTypeConstants.mzXML Then
+						' Older .mzXML files were not gzipped
+						lstFilesToAppend = lstSubFolders.First.GetFiles(m_DatasetName & DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly)
+					End If
+
+					Dim query = (From item In lstFilesToAppend Select item Order By item.LastWriteTimeUtc Descending).Take(1)
+					lstMatchingFiles.AddRange(query)
+
 				End If
 
-			End If
+			Next
 
 		End If
 
-		Return String.Empty
+		If lstMatchingFiles.Count = 0 Then
+			Return String.Empty
+		End If
+
+		' One or more matches were found; select the newest one 
+		Dim sortQuery = (From item In lstMatchingFiles Select item Order By item.LastWriteTimeUtc Descending).Take(1)
+		Dim strMatchedFile = sortQuery.First().FullName
+
+		' Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
+		Dim strErrorMessage As String = String.Empty
+		strHashcheckFilePath = strMatchedFile & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+
+		If clsGlobal.ValidateFileVsHashcheck(strMatchedFile, strHashcheckFilePath, strErrorMessage) Then
+			Return strMatchedFile
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+			Return String.Empty
+		End If
 
 	End Function
 
@@ -2018,7 +2086,9 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
 			End If
 
+			' Optional Temp Debug: Comment this out to disable checking MyEMSL (and thus speed things up)
 			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
+			
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName))
 
@@ -2642,7 +2712,6 @@ Public MustInherit Class clsAnalysisResources
 
 		If String.IsNullOrEmpty(strFolderPath) Then
 			Return String.Empty
-
 		End If
 
 		' RegEx to find the year_quarter folder name 
@@ -2762,10 +2831,18 @@ Public MustInherit Class clsAnalysisResources
 		End If
 	End Function
 
+	''' <summary>
+	''' Get the MSXML Cache Folder path that is appropriate for this job
+	''' </summary>
+	''' <param name="cacheFolderPathBase"></param>
+	''' <param name="jobParams"></param>
+	''' <param name="errorMessage"></param>
+	''' <returns></returns>
+	''' <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
 	Public Shared Function GetMSXmlCacheFolderPath(
-	  ByVal cacheFolderPathBase As String,
-	  ByVal jobParams As IJobParams,
-	  ByRef errorMessage As String) As String
+   ByVal cacheFolderPathBase As String,
+   ByVal jobParams As IJobParams,
+   ByRef errorMessage As String) As String
 
 		' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
 		Dim outputFolderName = jobParams.GetJobParameter("OutputFolderName", String.Empty)
@@ -2787,13 +2864,14 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
-	''' Get the path to the cache folder; used for retrieving caching .mzML files that are stored in ToolName_Version folders
+	''' Get the path to the cache folder; used for retrieving cached .mzML files that are stored in ToolName_Version folders
 	''' </summary>
 	''' <param name="cacheFolderPathBase">Cache folder base, e.g. \\proto-6\MSXML_Cache</param>
 	''' <param name="jobParams">Job parameters</param>
 	''' <param name="msXmlToolNameVersionFolder">ToolName_Version folder, e.g. MSXML_Gen_1_93</param>
 	''' <param name="errorMessage">Output parameter: error message</param>
-	''' <returns>Path to the cache folder</returns>
+	''' <returns>Path to the cache folder; empty string if an error</returns>
+	''' <remarks>Uses job parameter DatasetStoragePath to determine the Year_Quarter string to append to the end of the path</remarks>
 	Public Shared Function GetMSXmlCacheFolderPath(
 	  ByVal cacheFolderPathBase As String,
 	  ByVal jobParams As IJobParams,
@@ -2827,15 +2905,15 @@ Public MustInherit Class clsAnalysisResources
 	''' Examine a folder of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
 	''' </summary>
 	''' <param name="toolNameVersionDatasetIDFolder">Shared results folder name</param>
-	''' <returns></returns>
+	''' <returns>The trimmed folder name if a valid folder; throws an exception if the folder name is not the correct format</returns>
 	''' <remarks></remarks>
 	Public Shared Function GetMSXmlToolNameVersionFolder(ByVal toolNameVersionDatasetIDFolder As String) As String
 
 		' Remove the dataset ID from the end of the folder name
-		Dim reToolNameAndVersion = New Regex("^(.+\d+)_\d+$")
+		Dim reToolNameAndVersion = New Regex("^(.+\d+_\d+)_\d+$")
 		Dim reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIDFolder)
 		If Not reMatch.Success Then
-			Throw New Exception("Folder name is not in the expected form of ToolName_Version_DatasetID; strip out the dataset ID")
+			Throw New Exception("Folder name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID")
 		End If
 
 		Return reMatch.Groups.Item(1).ToString
@@ -3542,8 +3620,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
 
-		Dim ioFolder As DirectoryInfo
-		Dim ioFile As FileInfo
+		Dim diFolder As DirectoryInfo
+		Dim fiFile As FileInfo
 
 		Dim srInFile As StreamReader
 		Dim strPhysicalFilePath As String
@@ -3569,13 +3647,13 @@ Public MustInherit Class clsAnalysisResources
 
 			' Look for a ser file in the dataset folder
 			strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE)
-			ioFile = New FileInfo(strPhysicalFilePath)
+			fiFile = New FileInfo(strPhysicalFilePath)
 
-			If Not ioFile.Exists Then
+			If Not fiFile.Exists Then
 				' See if a folder named 0.ser exists in FolderPath
 				strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
-				ioFolder = New DirectoryInfo(strPhysicalFilePath)
-				If Not ioFolder.Exists Then
+				diFolder = New DirectoryInfo(strPhysicalFilePath)
+				If Not diFolder.Exists Then
 					strPhysicalFilePath = ""
 				End If
 			End If
@@ -3777,14 +3855,48 @@ Public MustInherit Class clsAnalysisResources
 		Return
 	End Sub
 
+	''' <summary>
+	''' Retrieve the dataset's cached .mzXML file from the MsXML Cache
+	''' </summary>
+	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+	''' <param name="errorMessage">Output parameter: Error message</param>
+	''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+	''' <returns>True if success, false if an error or file not found</returns>
+	''' <remarks>
+	''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
+	''' InputFolderName should be in the form MSXML_Gen_1_93_367204
+	''' </remarks>
 	Protected Function RetrieveCachedMzMLFile(ByVal unzip As Boolean, <Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
 		Return RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, unzip, errorMessage, fileMissingFromCache)
 	End Function
 
+	''' <summary>
+	''' Retrieve the dataset's cached .mzML file from the MsXML Cache
+	''' </summary>
+	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+	''' <param name="errorMessage">Output parameter: Error message</param>
+	''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+	''' <returns>True if success, false if an error or file not found</returns>
+	''' <remarks>
+	''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
+	''' InputFolderName should be in the form MSXML_Gen_1_105_367204
+	''' </remarks>
 	Protected Function RetrieveCachedMzXMLFile(ByVal unzip As Boolean, <Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
 		Return RetrieveCachedMSXMLFile(DOT_MZXML_EXTENSION, unzip, errorMessage, fileMissingFromCache)
 	End Function
 
+	''' <summary>
+	''' Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache
+	''' </summary>
+	''' <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
+	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+	''' <param name="errorMessage">Output parameter: Error message</param>
+	''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+	''' <returns>True if success, false if an error or file not found</returns>
+	''' <remarks>
+	''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
+	''' InputFolderName should be in the form MSXML_Gen_1_93_367204
+	''' </remarks>
 	Protected Function RetrieveCachedMSXMLFile(
 	  ByVal resultFileExtension As String,
 	  ByVal unzip As Boolean,
@@ -4353,8 +4465,10 @@ Public MustInherit Class clsAnalysisResources
 		Try
 
 			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)				' Raw file
-			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' mzXML file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)				' .Raw file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' .mzXML file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)			' .mzML file
+			m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)				' .gz file
 
 			If udtOptions.CreateJobPathFiles Then
 				CreateStoragePathInfoOnly = True
@@ -4375,7 +4489,7 @@ Public MustInherit Class clsAnalysisResources
 			' Note that RetrieveMZXmlFileUsingSourceFile will add MyEMSL files to the download queue
 			For Each kvItem In dctInstrumentDataToRetrieve
 
-				' The key in kvMzXMLFileInfo is the path to the .mzXML file
+				' The key in kvMzXMLFileInfo is the path to the .mzXML or .mzML file
 				' The value in kvMzXMLFileInfo is the path to the .hashcheck file
 				Dim kvMzXMLFileInfo As KeyValuePair(Of String, String) = kvItem.Value
 				Dim strMzXMLFilePath As String = kvMzXMLFileInfo.Key
@@ -4391,20 +4505,28 @@ Public MustInherit Class clsAnalysisResources
 					End If
 
 					If String.IsNullOrEmpty(strMzXMLFilePath) Then
-						' The .mzXML file was not found; we will need to obtain the .Raw file
+						' The .mzXML or .mzML file was not found; we will need to obtain the .Raw file
 						blnSuccess = False
 					Else
-						' mzXML file exists; either retrieve it or create a StoragePathInfo file
+						' mzXML or .mzML file exists; either retrieve it or create a StoragePathInfo file
 						blnSuccess = RetrieveMZXmlFileUsingSourceFile(CreateStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath)
 					End If
 
 					If blnSuccess Then
-						' .mzXML file found and copied locally
+						' .mzXML or .mzML file found and copied locally
+						Dim msXmlFileExtension = String.Empty
+
+						If strMzXMLFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION) Then
+							msXmlFileExtension = Path.GetExtension(strMzXMLFilePath.Substring(0, strMzXMLFilePath.Length - 3))
+						Else
+							msXmlFileExtension = Path.GetExtension(strMzXMLFilePath)
+						End If
+
 						If m_DebugLevel >= 1 Then
 							If udtOptions.CreateJobPathFiles Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, ".mzXML file found for job " & intCurrentJob & " at " & strMzXMLFilePath)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msXmlFileExtension & " file found for job " & intCurrentJob & " at " & strMzXMLFilePath)
 							Else
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied .mzXML file for job " & intCurrentJob & " from " & strMzXMLFilePath)
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " & msXmlFileExtension & " file for job " & intCurrentJob & " from " & strMzXMLFilePath)
 							End If
 
 						End If
@@ -4420,8 +4542,8 @@ Public MustInherit Class clsAnalysisResources
 
 					End If
 
-					lstDatasetsProcessed.Add(kvItem.Key.Dataset)
-				End If
+						lstDatasetsProcessed.Add(kvItem.Key.Dataset)
+					End If
 
 				datasetsProcessed += 1
 
@@ -4595,37 +4717,45 @@ Public MustInherit Class clsAnalysisResources
 	''' If the .mzXML file cannot be found, then returns False
 	''' </summary>
 	''' <param name="CreateStoragePathInfoOnly"></param>
-	''' <param name="SourceFilePath">Returns the full path to the file that was retrieved</param>
+	''' <param name="SourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
-	''' <remarks></remarks>
-	Protected Function RetrieveMZXmlFile(ByVal CreateStoragePathInfoOnly As Boolean, ByRef SourceFilePath As String) As Boolean
+	''' <remarks>The retrieved file might be gzipped</remarks>
+	Protected Function RetrieveMZXmlFile(ByVal createStoragePathInfoOnly As Boolean, ByRef sourceFilePath As String) As Boolean
 
-		Dim strHashcheckFilePath As String = String.Empty
-		SourceFilePath = FindMZXmlFile(strHashcheckFilePath)
+		Dim hashcheckFilePath As String = String.Empty
+		sourceFilePath = FindMZXmlFile(hashcheckFilePath)
 
-		If String.IsNullOrEmpty(SourceFilePath) Then
+		If String.IsNullOrEmpty(sourceFilePath) Then
 			Return False
 		Else
-			Return RetrieveMZXmlFileUsingSourceFile(CreateStoragePathInfoOnly, SourceFilePath, strHashcheckFilePath)
+			Return RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, sourceFilePath, hashcheckFilePath)
 		End If
 
 	End Function
 
-	Protected Function RetrieveMZXmlFileUsingSourceFile(ByVal CreateStoragePathInfoOnly As Boolean, ByVal SourceFilePath As String, ByVal HashcheckFilePath As String) As Boolean
+	''' <summary>
+	''' Retrieves this dataset's mzXML file
+	''' </summary>
+	''' <param name="CreateStoragePathInfoOnly"></param>
+	''' <param name="SourceFilePath">Full path to the file that should be retrieved</param>
+	''' <param name="HashcheckFilePath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveMZXmlFileUsingSourceFile(ByVal createStoragePathInfoOnly As Boolean, ByVal sourceFilePath As String, ByVal hashcheckFilePath As String) As Boolean
 
 		Dim fiSourceFile As FileInfo
 
-		If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-			Return AddFileToMyEMSLDownloadQueue(SourceFilePath)
+		If sourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
+			Return AddFileToMyEMSLDownloadQueue(sourceFilePath)
 		End If
 
-		fiSourceFile = New FileInfo(SourceFilePath)
+		fiSourceFile = New FileInfo(sourceFilePath)
 
 		If fiSourceFile.Exists Then
-			If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+			If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly) Then
 
-				If Not String.IsNullOrEmpty(HashcheckFilePath) AndAlso File.Exists(HashcheckFilePath) Then
-					RetrieveMzXMLFileVerifyHash(fiSourceFile, HashcheckFilePath, CreateStoragePathInfoOnly)
+				If Not String.IsNullOrEmpty(hashcheckFilePath) AndAlso File.Exists(hashcheckFilePath) Then
+					Return RetrieveMzXMLFileVerifyHash(fiSourceFile, hashcheckFilePath, createStoragePathInfoOnly)
 				Else
 					Return True
 				End If
@@ -4641,6 +4771,14 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	''' <summary>
+	''' Verify the hash value of a given .mzXML file
+	''' </summary>
+	''' <param name="fiSourceFile"></param>
+	''' <param name="HashcheckFilePath"></param>
+	''' <param name="CreateStoragePathInfoOnly"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Protected Function RetrieveMzXMLFileVerifyHash(ByVal fiSourceFile As FileInfo, ByVal HashcheckFilePath As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim strTargetFilePath As String
@@ -4660,7 +4798,7 @@ Public MustInherit Class clsAnalysisResources
 			Return True
 		End If
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MzXML file validation error in RetrieveMZXmlFileUsingSourceFile: " & strErrorMessage)
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MzXML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage)
 
 		Try
 			If CreateStoragePathInfoOnly Then

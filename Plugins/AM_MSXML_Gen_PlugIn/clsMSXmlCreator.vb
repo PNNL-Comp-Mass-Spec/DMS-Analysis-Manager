@@ -142,7 +142,7 @@ Public Class clsMSXMLCreator
 		' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
 		Dim CentroidMSXML As Boolean = True
 
-		Dim eOutputType As clsMSXmlGen.MSXMLOutputTypeConstants
+		Dim eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
 		Dim blnSuccess As Boolean
 
@@ -155,7 +155,7 @@ Public Class clsMSXMLCreator
 			Return True
 		End If
 
-		eOutputType = clsMSXmlGen.MSXMLOutputTypeConstants.mzXML
+		eOutputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
 
 		' Instantiate the processing class
 		' Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()

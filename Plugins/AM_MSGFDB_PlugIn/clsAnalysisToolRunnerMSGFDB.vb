@@ -209,7 +209,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Define the input file, output file, and fasta file
 			If blnUsingMzXML Then
-				CmdStr &= " -s " & m_Dataset & ".mzXML"
+				CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
 			Else
 				CmdStr &= " -s " & m_Dataset & "_dta.txt"
 			End If
