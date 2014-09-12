@@ -141,7 +141,7 @@ Public Class clsMSGFDBUtils
 		If blnMSGFPlus Then
 			' MSGF+
 
-			If IsMatch(strArgumentSwitch, "nnet") Then
+			If clsGlobal.IsMatch(strArgumentSwitch, "nnet") Then
 				' Auto-switch to ntt
 				strArgumentSwitch = "ntt"
 				If Integer.TryParse(strValue, intValue) Then
@@ -155,7 +155,7 @@ Public Class clsMSGFDBUtils
 					End Select
 				End If
 
-			ElseIf IsMatch(strArgumentSwitch, "c13") Then
+			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "c13") Then
 				' Auto-switch to ti
 				strArgumentSwitch = "ti"
 				If Integer.TryParse(strValue, intValue) Then
@@ -172,7 +172,7 @@ Public Class clsMSGFDBUtils
 					strValue = "0,1"
 				End If
 
-			ElseIf IsMatch(strArgumentSwitch, "showDecoy") Then
+			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
 				' Not valid for MSGF+; skip it
 				strArgumentSwitch = String.Empty
 			End If
@@ -180,7 +180,7 @@ Public Class clsMSGFDBUtils
 		Else
 			' MS-GFDB
 
-			If IsMatch(strArgumentSwitch, "ntt") Then
+			If clsGlobal.IsMatch(strArgumentSwitch, "ntt") Then
 				' Auto-switch to nnet
 				strArgumentSwitch = "nnet"
 				If Integer.TryParse(strValue, intValue) Then
@@ -194,7 +194,7 @@ Public Class clsMSGFDBUtils
 					End Select
 				End If
 
-			ElseIf IsMatch(strArgumentSwitch, "ti") Then
+			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "ti") Then
 				' Auto-switch to c13
 				' Use the digit after the comma in the "ti" specification
 				strArgumentSwitch = "c13"
@@ -211,7 +211,7 @@ Public Class clsMSGFDBUtils
 
 				End If
 
-			ElseIf IsMatch(strArgumentSwitch, "addFeatures") Then
+			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "addFeatures") Then
 				' Not valid for MS-GFDB; skip it
 				strArgumentSwitch = String.Empty
 
@@ -221,7 +221,7 @@ Public Class clsMSGFDBUtils
 
 	End Sub
 
-	Public Function ConvertMZIDToTSV(ByVal JavaProgLoc As String, ByVal MSGFDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
+	Public Function ConvertMZIDToTSV(ByVal javaProgLoc As String, ByVal msgfDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
 
 		Dim strTSVFilePath As String
 		Dim javaMemorySizeMB As Integer
@@ -238,7 +238,7 @@ Public Class clsMSGFDBUtils
 			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
 
 			javaMemorySizeMB = 2000
-			CmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, MSGFDbProgLoc, javaMemorySizeMB)
+			CmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB)
 
 			' Make sure the machine has enough free memory to run MSGFPlus
 			Const LOG_FREE_MEMORY_ON_SUCCESS As Boolean = False
@@ -249,7 +249,7 @@ Public Class clsMSGFDBUtils
 			End If
 
 			If m_DebugLevel >= 1 Then
-				ReportMessage(JavaProgLoc & " " & CmdStr)
+				ReportMessage(javaProgLoc & " " & CmdStr)
 			End If
 
 			Dim objCreateTSV As clsRunDosProgram
@@ -264,7 +264,7 @@ Public Class clsMSGFDBUtils
 				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
 			End With
 
-			blnSuccess = objCreateTSV.RunProgram(JavaProgLoc, CmdStr, "MzIDToTsv", True)
+			blnSuccess = objCreateTSV.RunProgram(javaProgLoc, CmdStr, "MzIDToTsv", True)
 
 			If Not blnSuccess Then
 				ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
@@ -292,12 +292,12 @@ Public Class clsMSGFDBUtils
 	  ByVal mzidFileName As String,
 	  ByVal tsvFileName As String,
 	  ByVal workingDirectory As String,
-	  ByVal MSGFDbProgLoc As String,
+	  ByVal msgfDbProgLoc As String,
 	  ByVal javaMemorySizeMB As Integer) As String
 
 		Dim CmdStr As String
 
-		CmdStr = " -Xmx" & javaMemorySizeMB & "M -cp " & MSGFDbProgLoc
+		CmdStr = " -Xmx" & javaMemorySizeMB & "M -cp " & msgfDbProgLoc
 		CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
 
 		CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))
@@ -504,6 +504,101 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
+	''' <summary>
+	''' Create a trimmed version of fastaFilePath, with max size maxFastaFileSizeMB
+	''' </summary>
+	''' <param name="fastaFilePath">Fasta file to trim</param>
+	''' <param name="maxFastaFileSizeMB">Maximum file size</param>
+	''' <returns>Full path to the trimmed fasta; empty string if a problem</returns>
+	''' <remarks></remarks>
+	Protected Function CreateTrimmedFasta(ByVal fastaFilePath As String, ByVal maxFastaFileSizeMB As Integer) As String
+		Dim trimmedFastaFilePath = String.Empty
+
+		Try
+			Dim fiFastaFile = New FileInfo(fastaFilePath)
+
+			Dim fiTrimmedFasta = New FileInfo(Path.Combine(fiFastaFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFastaFile.Name) & "_Trim" & maxFastaFileSizeMB & "MB.fasta"))
+
+			If fiTrimmedFasta.Exists Then
+				' Verify that the file matches the .hashcheck value
+				Dim hashcheckFilePath = fiTrimmedFasta.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+
+				Dim hashCheckError = String.Empty
+				If clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, hashCheckError) Then
+					' The trimmed fasta file is valid
+					ReportMessage("Using existing trimmed fasta: " & fiTrimmedFasta.Name)
+					Return fiTrimmedFasta.FullName
+				End If
+
+			End If
+
+			ReportMessage("Creating trimmed fasta: " & fiTrimmedFasta.Name)
+
+			Dim contaminantUtility = New clsFastaContaminantUtility()
+
+			Dim dctRequiredContaminants = New Dictionary(Of String, Boolean)
+			For Each proteinName In contaminantUtility.ProteinNames()
+				dctRequiredContaminants.Add(proteinName, False)
+			Next
+
+			Dim maxSizeBytes As Int64 = maxFastaFileSizeMB * 1024 * 1024
+			Dim bytesWritten As Int64 = 0
+			Dim proteinCount As Integer = 0
+
+			Using srSourceFasta = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+				Using swTrimmedFasta = New StreamWriter(New FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+					While srSourceFasta.Peek() > -1
+						Dim dataLine = srSourceFasta.ReadLine()
+
+						If String.IsNullOrWhiteSpace(dataLine) Then Continue While
+
+						If dataLine.StartsWith(">") Then
+							' Protein header
+							If bytesWritten > maxSizeBytes Then
+								' Do not write out any more proteins
+								Exit While
+							End If
+
+							Dim spaceIndex = dataLine.IndexOf(" "c, 1)
+							If spaceIndex < 0 Then spaceIndex = dataLine.Length - 1
+							Dim proteinName = dataLine.Substring(1, spaceIndex - 1)
+
+							If dctRequiredContaminants.ContainsKey(proteinName) Then
+								dctRequiredContaminants(proteinName) = True
+							End If
+
+							proteinCount += 1
+						End If
+
+						swTrimmedFasta.WriteLine(dataLine)
+						bytesWritten += dataLine.Length + 2
+					End While
+
+					' Add any missing contaminants
+					For Each protein In dctRequiredContaminants
+						If Not protein.Value Then
+							contaminantUtility.WriteProteinToFasta(swTrimmedFasta, protein.Key)
+						End If
+					Next
+					
+				End Using
+
+			End Using
+
+			ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
+
+			clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
+
+		Catch ex As Exception
+			mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMb & " MB"
+			ReportError(mErrorMessage, "CreateTrimmedFasta, " & mErrorMessage & ": " & ex.Message)
+			Return String.Empty
+		End Try
+
+		Return trimmedFastaFilePath
+
+	End Function
+
 	Public Sub DeleteFileInWorkDir(ByVal strFilename As String)
 
 		Dim fiFile As FileInfo
@@ -673,7 +768,7 @@ Public Class clsMSGFDBUtils
 
 					kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
-					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso IsMatch(kvSetting.Key, strSettingToFind) Then
+					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso clsGlobal.IsMatch(kvSetting.Key, strSettingToFind) Then
 						Return kvSetting.Value
 					End If
 				Loop
@@ -690,28 +785,43 @@ Public Class clsMSGFDBUtils
 	End Function
 
 	Public Function InitializeFastaFile(
-	  ByVal JavaProgLoc As String,
-	  ByVal MSGFDbProgLoc As String,
-	  <Out()> ByRef FastaFileSizeKB As Single,
-	  <Out()> ByRef FastaFileIsDecoy As Boolean,
-	  <Out()> ByRef FastaFilePath As String) As IJobParams.CloseOutType
+	  ByVal javaProgLoc As String,
+	  ByVal msgfDbProgLoc As String,
+	  <Out()> ByRef fastaFileSizeKB As Single,
+	  <Out()> ByRef fastaFileIsDecoy As Boolean,
+	  <Out()> ByRef fastaFilePath As String) As IJobParams.CloseOutType
 
 		Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
 
-		Return InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, String.Empty, udtHPCOptions)
+		Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, String.Empty, udtHPCOptions)
 
 	End Function
 
 	Public Function InitializeFastaFile(
-	  ByVal JavaProgLoc As String,
-	  ByVal MSGFDbProgLoc As String,
-	  <Out()> ByRef FastaFileSizeKB As Single,
-	  <Out()> ByRef FastaFileIsDecoy As Boolean,
-	  <Out()> ByRef FastaFilePath As String,
+	 ByVal javaProgLoc As String,
+	 ByVal msgfDbProgLoc As String,
+	 <Out()> ByRef fastaFileSizeKB As Single,
+	 <Out()> ByRef fastaFileIsDecoy As Boolean,
+	 <Out()> ByRef fastaFilePath As String,
+	 ByVal strMSGFDBParameterFilePath As String,
+	 ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+
+		Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, strMSGFDBParameterFilePath, udtHPCOptions, 0)
+
+	End Function
+
+	Public Function InitializeFastaFile(
+	  ByVal javaProgLoc As String,
+	  ByVal msgfDbProgLoc As String,
+	  <Out()> ByRef fastaFileSizeKB As Single,
+	  <Out()> ByRef fastaFileIsDecoy As Boolean,
+	  <Out()> ByRef fastaFilePath As String,
 	  ByVal strMSGFDBParameterFilePath As String,
-	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+	  ByVal maxFastaFileSizeMB As Integer) As IJobParams.CloseOutType
 
 		Dim result As IJobParams.CloseOutType
+		Dim oRand = New Random()
 
 		Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
 		Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
@@ -726,13 +836,13 @@ Public Class clsMSGFDBUtils
 			' Override the OrgDB folder to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
 			localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
 		End If
-		FastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+		fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-		FastaFileSizeKB = 0
-		FastaFileIsDecoy = False
+		fastaFileSizeKB = 0
+		fastaFileIsDecoy = False
 
 		Dim fiFastaFile As FileInfo
-		fiFastaFile = New FileInfo(FastaFilePath)
+		fiFastaFile = New FileInfo(fastaFilePath)
 
 		If Not fiFastaFile.Exists Then
 			' Fasta file not found
@@ -740,26 +850,26 @@ Public Class clsMSGFDBUtils
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-		FastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
+		fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
 
 		Dim strProteinOptions As String
 		strProteinOptions = m_jobParams.GetParam("ProteinOptions")
 		If Not String.IsNullOrEmpty(strProteinOptions) Then
 			If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
-				FastaFileIsDecoy = True
+				fastaFileIsDecoy = True
 			End If
 		End If
 
-		If Not FastaFileIsDecoy AndAlso FastaFileSizeKB / 1024.0 / 1024.0 > 1 AndAlso Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
+		If Not fastaFileIsDecoy AndAlso fastaFileSizeKB / 1024.0 / 1024.0 > 1 AndAlso Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
 			' If the Fasta file is large (over 1 GB in size) then look for "TDA=0" in the MSGF+ parameter file
-			' If TDA=0 exists, then we're performing a forward-only search and we will auto-change FastaFileIsDecoy to True
+			' If TDA=0 exists, then we're performing a forward-only search and we will auto-change fastaFileIsDecoy to True
 			'   to prevent the reverse indices from being created
 
 			Dim strTDASetting As String
 			strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
 
 			If strTDASetting.Trim() = "0" Then
-				FastaFileIsDecoy = True
+				fastaFileIsDecoy = True
 				If m_DebugLevel >= 1 Then
 					ReportMessage("Processing large FASTA file with forward-only search; auto switching to -tda 0")
 				End If
@@ -767,31 +877,68 @@ Public Class clsMSGFDBUtils
 
 		End If
 
-		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And FastaFileSizeKB > 1000) Then
+		If maxFastaFileSizeMB > 0 AndAlso fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB Then
+			' Create a trimmed version of the fasta file
+			ReportMessage("Fasta file is over " & maxFastaFileSizeMB & " MB; creating a trimmed version of the fasta file")
+
+			Dim fastaFilePathTrimmed = String.Empty
+
+			' Allow for up to 3 attempts since multiple processes might potentially try to do this at the same time
+			Dim trimIteration As Integer = 0
+
+			While trimIteration <= 2
+				trimIteration += 1
+				fastaFilePathTrimmed = CreateTrimmedFasta(fastaFilePath, maxFastaFileSizeMB)
+
+				If Not String.IsNullOrEmpty(fastaFilePathTrimmed) Then
+					Exit While
+				End If
+
+				If trimIteration <= 2 Then					
+					Dim sleepTimeSec = oRand.Next(10, 19)
+
+					ReportMessage("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
+					Threading.Thread.Sleep(sleepTimeSec * 1000)
+				End If
+
+			End While
+
+			If String.IsNullOrEmpty(fastaFilePathTrimmed) Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			' Update fastaFilePath to use the path to the trimmed version
+			fastaFilePath = fastaFilePathTrimmed
+
+		End If
+
+		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 1000) Then
 			ReportMessage("Indexing Fasta file to create Suffix Array files")
 		End If
 
 		' Look for the suffix array files that should exist for the fasta file
 		' Either copy them from Gigasax (or Proto-7) or re-create them
 		' 
-		Dim intIteration As Integer = 1
+		Dim indexIteration = 0
 		Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
 		Dim strMSGFPlusIndexFilesFolderPathLegacyDB As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
 
-		Do While intIteration <= 2
+		While indexIteration <= 2
 
-			' Note that FastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
+			indexIteration += 1
+
+			' Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
 			result = objIndexedDBCreator.CreateSuffixArrayFiles(
 			  m_WorkDir, m_DebugLevel, m_JobNum,
-			  JavaProgLoc, MSGFDbProgLoc,
-			  FastaFilePath, FastaFileIsDecoy,
+			  javaProgLoc, msgfDbProgLoc,
+			  fastaFilePath, fastaFileIsDecoy,
 			  strMSGFPlusIndexFilesFolderPath,
 			  strMSGFPlusIndexFilesFolderPathLegacyDB,
 			  udtHPCOptions)
 
 			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Exit Do
-			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And intIteration >= 2) Then
+				Exit While
+			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
 
 				If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
 					ReportError(objIndexedDBCreator.ErrorMessage)
@@ -799,29 +946,17 @@ Public Class clsMSGFDBUtils
 					ReportError("Error creating Suffix Array files")
 				End If
 				Return result
+			Else
+				Dim sleepTimeSec = oRand.Next(10, 19)
+
+				ReportMessage("Fasta file indexing failed; waiting " & sleepTimeSec & " seconds then trying again")
+				Threading.Thread.Sleep(sleepTimeSec * 1000)
 			End If
 
-			intIteration += 1
-
-		Loop
+		End While
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
-
-	''' <summary>
-	''' Compare two strings (not case sensitive)
-	''' </summary>
-	''' <param name="strText1"></param>
-	''' <param name="strText2"></param>
-	''' <returns>True if they match; false if not</returns>
-	''' <remarks></remarks>
-	Protected Function IsMatch(ByVal strText1 As String, ByVal strText2 As String) As Boolean
-		If String.Compare(strText1, strText2, True) = 0 Then
-			Return True
-		Else
-			Return False
-		End If
 	End Function
 
 	''' <summary>
@@ -1328,8 +1463,8 @@ Public Class clsMSGFDBUtils
 	''' <summary>
 	''' Read the MSGFDB options file and convert the options to command line switches
 	''' </summary>
-	''' <param name="FastaFileSizeKB">Size of the .Fasta file, in KB</param>
-	''' <param name="FastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+	''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+	''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
 	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
 	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
 	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
@@ -1337,17 +1472,43 @@ Public Class clsMSGFDBUtils
 	''' <returns>Options string if success; empty string if an error</returns>
 	''' <remarks></remarks>
 	Public Function ParseMSGFDBParameterFile(
-	  ByVal FastaFileSizeKB As Single,
-	  ByVal FastaFileIsDecoy As Boolean,
+	  ByVal fastaFileSizeKB As Single,
+	  ByVal fastaFileIsDecoy As Boolean,
 	  ByVal strAssumedScanType As String,
 	  ByVal strScanTypeFilePath As String,
 	  ByVal strInstrumentGroup As String,
 	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
 	  <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
+		Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+
+		Return ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
+	End Function
+
+	''' <summary>
+	''' Read the MSGFDB options file and convert the options to command line switches
+	''' </summary>
+	''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+	''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
+	''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
+	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+	''' <returns>Options string if success; empty string if an error</returns>
+	''' <remarks></remarks>
+	Public Function ParseMSGFDBParameterFile(
+	  ByVal fastaFileSizeKB As Single,
+	  ByVal fastaFileIsDecoy As Boolean,
+	  ByVal strAssumedScanType As String,
+	  ByVal strScanTypeFilePath As String,
+	  ByVal strInstrumentGroup As String,
+	  ByVal strParameterFilePath As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+	  <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+
 		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
-		Dim strParameterFilePath As String
 		Dim strLineIn As String
 		Dim sbOptions As Text.StringBuilder
 
@@ -1371,7 +1532,6 @@ Public Class clsMSGFDBUtils
 		Dim strSearchEngineName As String
 
 		strMSGFDbCmdLineOptions = String.Empty
-		strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
 		If Not File.Exists(strParameterFilePath) Then
 			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
@@ -1415,7 +1575,7 @@ Public Class clsMSGFDBUtils
 						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-							If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+							If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 
 								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
 									' Override FragmentationMethodID to always be 0
@@ -1439,7 +1599,7 @@ Public Class clsMSGFDBUtils
 
 								End If
 
-							ElseIf IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
+							ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
 
 								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
 									' Override Instrument ID based on the instrument class and scan types in the _ScanType file
@@ -1454,19 +1614,19 @@ Public Class clsMSGFDBUtils
 									Dim strAutoSwitchReason As String
 
 									' Thermo Instruments
-									If IsMatch(strInstrumentGroup, "QExactive") Then
+									If clsGlobal.IsMatch(strInstrumentGroup, "QExactive") Then
 										strNewInstrumentID = "3"
 										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
 
-									ElseIf IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
+									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
 										strNewInstrumentID = "0"
 										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
 
-									ElseIf IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
+									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
 										strNewInstrumentID = "1"
 										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
 
-									ElseIf IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
+									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
 										strNewInstrumentID = "1"
 										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
 
@@ -1558,7 +1718,7 @@ Public Class clsMSGFDBUtils
 							AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
 
 							If String.IsNullOrEmpty(strArgumentSwitch) Then
-								If m_DebugLevel >= 1 And Not IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
+								If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
 									ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
 								End If
 							ElseIf String.IsNullOrEmpty(strValue) Then
@@ -1570,14 +1730,14 @@ Public Class clsMSGFDBUtils
 							End If
 
 
-							If IsMatch(strArgumentSwitch, "showDecoy") Then
+							If clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
 								blnShowDecoyParamPresent = True
 								If Integer.TryParse(strValue, intValue) Then
 									If intValue > 0 Then
 										blnShowDecoy = True
 									End If
 								End If
-							ElseIf IsMatch(strArgumentSwitch, "tda") Then
+							ElseIf clsGlobal.IsMatch(strArgumentSwitch, "tda") Then
 								If Integer.TryParse(strValue, intValue) Then
 									If intValue > 0 Then
 										blnTDA = True
@@ -1585,14 +1745,14 @@ Public Class clsMSGFDBUtils
 								End If
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "uniformAAProb") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb") Then
 
 							If mMSGFPlus Then
 								' Not valid for MSGF+; skip it
 							Else
 
-								If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "auto") Then
-									If FastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
+								If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "auto") Then
+									If fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
 										sbOptions.Append(" -uniformAAProb 1")
 									Else
 										sbOptions.Append(" -uniformAAProb 0")
@@ -1609,8 +1769,8 @@ Public Class clsMSGFDBUtils
 								End If
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "NumThreads") Then
-							If String.IsNullOrWhiteSpace(strValue) OrElse IsMatch(strValue, "all") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumThreads") Then
+							If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "all") Then
 								' Do not append -thread to the command line; MSGFDB will use all available cores by default
 							Else
 								If Integer.TryParse(strValue, intParamFileThreadCount) Then
@@ -1621,7 +1781,7 @@ Public Class clsMSGFDBUtils
 							End If
 
 
-						ElseIf IsMatch(kvSetting.Key, "NumMods") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
 							If Integer.TryParse(strValue, intValue) Then
 								intNumMods = intValue
 							Else
@@ -1631,18 +1791,18 @@ Public Class clsMSGFDBUtils
 								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "StaticMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
 								lstStaticMods.Add(strValue)
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "DynamicMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
 								lstDynamicMods.Add(strValue)
 							End If
 						End If
 
-						'If IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+						'If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 						'	If Integer.TryParse(strValue, intValue) Then
 						'		If intValue = 3 Then
 						'			blnHCD = True
@@ -1741,7 +1901,7 @@ Public Class clsMSGFDBUtils
 
 		If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
 			' Make sure the .Fasta file is not a Decoy fasta
-			If FastaFileIsDecoy Then
+			If fastaFileIsDecoy Then
 				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -1833,7 +1993,7 @@ Public Class clsMSGFDBUtils
 	   ByVal strParameterName As String, _
 	   ByVal strCommandLineSwitchName As String) As Boolean
 
-		If IsMatch(strKeyName, strParameterName) Then
+		If clsGlobal.IsMatch(strKeyName, strParameterName) Then
 			sbOptions.Append(" -" & strCommandLineSwitchName & " " & strValue)
 			Return True
 		Else

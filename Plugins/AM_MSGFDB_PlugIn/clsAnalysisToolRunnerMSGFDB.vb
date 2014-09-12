@@ -9,6 +9,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisToolRunnerMSGFDB
 	Inherits clsAnalysisToolRunnerBase
@@ -27,6 +28,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	Protected mMSGFDbProgLocHPC As String
 
 	Protected mMSGFPlus As Boolean
+	Protected mSearchEngineName As String = "Unknown Search Engine"
 
 	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 
@@ -55,25 +57,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
-		Dim CmdStr As String
-		Dim intJavaMemorySize As Integer
-		Dim strMSGFDbCmdLineOptions As String = String.Empty
 
 		Dim result As IJobParams.CloseOutType
-		Dim blnProcessingError As Boolean = False
 		Dim blnTooManySkippedSpectra As Boolean = False
-		Dim blnSuccess As Boolean
-
-		Dim FastaFilePath As String = String.Empty
-		Dim FastaFileSizeKB As Single
-		Dim FastaFileIsDecoy As Boolean
-
-		Dim blnUsingMzXML As Boolean
-		Dim strScanTypeFilePath As String = String.Empty
-		Dim strAssumedScanType As String = String.Empty
-		Dim ResultsFileName As String
-
-		Dim Msg As String
 
 		Try
 			'Call base class for initial setup
@@ -93,267 +79,39 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 			' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
-			Dim JavaProgLoc = GetJavaProgLoc()
-			If String.IsNullOrEmpty(JavaProgLoc) Then
+			' javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+			Dim javaProgLoc = GetJavaProgLoc()
+			If String.IsNullOrEmpty(javaProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			Dim strMSGFJarfile As String
-			Dim strSearchEngineName As String
+			' Run MSGF+ (includes indexing the fasta file)
+			Dim fiMSGFPlusResults As FileInfo = Nothing
+			Dim blnProcessingError As Boolean = False
 
-			' Obsolete setting:
-			'Dim blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
-
-			'If blnUseLegacyMSGFDB Then
-			'	mMSGFPlus = False
-			'	strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
-			'	strSearchEngineName = "MS-GFDB"
-			'Else
-			'	mMSGFPlus = True
-			'End If
-
-			mMSGFPlus = True
-			strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
-			strSearchEngineName = "MSGF+"
-
-
-			' Determine the path to MSGFDB (or MSGF+)
-			' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
-			' The reason?  The PeptideHitResultsProcessor (and possibly other software) expects the Tool Version file to be named Tool_Version_Info_MSGFDB.txt
-			mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
-
-			If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			If udtHPCOptions.UsingHPC Then
-				' Make sure the MSGF+ program is up-to-date on the HPC share
-				' Warning: if MSGF+ is running and the .jar file gets updated, then the running jobs will fail because MSGF+ will throw an exception
-				' This function will store the path to the MSGF+ jar file in mMSGFDbProgLocHPC
-				VerifyHPCMSGFDb(udtHPCOptions)
-			End If
-
-			' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
-			mToolVersionWritten = False
-
-			mUsingHPC = False
-			mMSGFPlusComplete = False
-
-			result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, strScanTypeFilePath)
+			result = RunMSGFPlus(javaProgLoc, udtHPCOptions, fiMSGFPlusResults, blnProcessingError, blnTooManySkippedSpectra)
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return result
-			End If
-
-			' Initialize mMSGFDBUtils
-			mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
-
-			' Get the FASTA file and index it if necessary
-			' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-			Dim strParameterFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-			Dim javaExePath = String.Copy(JavaProgLoc)
-			Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
-
-			If udtHPCOptions.UsingHPC Then
-				If udtHPCOptions.SharePath.StartsWith("\\winhpcfs") Then
-					javaExePath = "\\winhpcfs\projects\DMS\jre8\bin\java.exe"
-				Else
-					javaExePath = "\\picfs.pnl.gov\projects\DMS\jre8\bin\java.exe"
-				End If
-				msgfdbJarFilePath = mMSGFDbProgLocHPC
-			End If
-
-			result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, strParameterFilePath, udtHPCOptions)
-
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return result
-			End If
-
-			Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
-
-			' Read the MSGFDB Parameter File
-			result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return result
-			ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Problem parsing " & strSearchEngineName & " parameter file"
+					m_message = "Unknown error running MSGF+"
 				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-			mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
-
-			If mMSGFPlus Then
-				ResultsFileName = m_Dataset & "_msgfplus.mzid"
-			Else
-				ResultsFileName = m_Dataset & "_msgfdb.txt"
-			End If
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & strSearchEngineName)
-
-			' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
-			' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
-			' (job 611216 succeeded with a value of 5000)
-			intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
-			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
-
-			If udtHPCOptions.UsingHPC AndAlso intJavaMemorySize < 10000 Then
-				' Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
-				intJavaMemorySize = 28000
-			End If
-
-			'Set up and execute a program runner to run MSGFDB
-			CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
-
-			' Define the input file, output file, and fasta file
-			If blnUsingMzXML Then
-				CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
-			Else
-				CmdStr &= " -s " & m_Dataset & "_dta.txt"
-			End If
-
-			CmdStr &= " -o " & ResultsFileName
-			CmdStr &= " -d " & PossiblyQuotePath(FastaFilePath)
-
-			' Append the remaining options loaded from the parameter file
-			CmdStr &= " " & strMSGFDbCmdLineOptions
-
-			' Make sure the machine has enough free memory to run MSGFDB
-			Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
-
-			If Not udtHPCOptions.UsingHPC Then
-				If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
-					m_message = "Not enough free memory to run " & strSearchEngineName
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			End If
-
-			mWorkingDirectoryInUse = String.Copy(m_WorkDir)
-
-			If udtHPCOptions.UsingHPC Then
-				Dim criticalError As Boolean
-
-				blnSuccess = StartMSGFPlusHPC(javaExePath, msgfdbJarFilePath, strSearchEngineName, ResultsFileName, CmdStr, udtHPCOptions, criticalError)
-
-				If criticalError Then
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-
-			Else
-				blnSuccess = StartMSGFPlusLocal(javaExePath, strSearchEngineName, CmdStr)
-			End If
-
-			If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
-				' Parse the console output file one more time in hopes of finding an error message
-				ParseConsoleOutputFile(mWorkingDirectoryInUse)
-			End If
-
-			If Not mToolVersionWritten Then
-				If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
-					ParseConsoleOutputFile(mWorkingDirectoryInUse)
-				End If
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
-
-			If Not String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
-			End If
-
-			If blnSuccess Then
-				If Not mMSGFPlusComplete Then
-					mMSGFPlusComplete = True
-					mMSGFPlusCompletionTime = DateTime.UtcNow
-				End If
-			Else
-				If mMSGFPlusComplete Then
-					Msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen"
-				Else
-					Msg = "Error running " & strSearchEngineName
-				End If
-				m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-				If mMSGFPlusComplete Then
-					' Don't treat this as a fatal error
-					' in particular, HPC jobs don't always close out cleanly
-					blnProcessingError = False
-					m_EvalMessage = String.Copy(m_message)
-					m_message = String.Empty
-				Else
-					blnProcessingError = True
-				End If
-
-				If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
-					If CmdRunner.ExitCode <> 0 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strSearchEngineName & " failed (but exit code is 0)")
-					End If
-				End If
-
-			End If
-
-			If mMSGFPlusComplete Then
-				m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
-				m_StatusTools.UpdateAndWrite(m_progress)
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
-				End If
-
-				If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
-					' See if any spectra were processed
-					If Not File.Exists(Path.Combine(m_WorkDir, ResultsFileName)) Then
-						' Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
-						'   "None of the spectra are centroided; unable to process"
-						'   "skipped xx% of the spectra because they did not appear centroided"
-						'   "skip xx% of the spectra because they did not appear centroided"
-						'
-						' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
-
-						m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & strSearchEngineName
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						blnProcessingError = True
-					Else
-						' Compute the fraction of all potential spectra that were skipped
-						Dim dblFractionSkipped As Double
-						Dim strPercentSkipped As String
-
-						dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
-						strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
-
-						If dblFractionSkipped > 0.2 Then
-							m_message = strSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-							blnTooManySkippedSpectra = True
-						Else
-							m_EvalMessage = strSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-						End If
-
-					End If
-
-				End If
-
+				Return result
 			End If
 
 			' Look for the .mzid file
 			' If it exists, then call PostProcessMSGFDBResults even if blnProcessingError is true
-			Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, ResultsFileName))
 
-			If fiResultsFile.Exists Then
-				result = PostProcessMSGFDBResults(ResultsFileName, JavaProgLoc, udtHPCOptions)
+			fiMSGFPlusResults.Refresh()
+			If fiMSGFPlusResults.Exists Then
+				result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, javaProgLoc, udtHPCOptions)
 				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Unknown error post-processing the " & strSearchEngineName & " results"
+						m_message = "Unknown error post-processing the " & mSearchEngineName & " results"
 					End If
 					blnProcessingError = True
 				End If
 			Else
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "MSGF+ results file not found: " & ResultsFileName
+					m_message = "MSGF+ results file not found: " & fiMSGFPlusResults.Name
 					blnProcessingError = True
 				End If
 			End If
@@ -452,11 +210,281 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	Protected Function RunMSGFPlus(
+	  ByVal javaProgLoc As String,
+	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+	  <Out()> ByRef fiMSGFPlusResults As FileInfo,
+	  <Out()> ByRef blnProcessingError As Boolean,
+	  <Out()> ByRef blnTooManySkippedSpectra As Boolean) As IJobParams.CloseOutType
+
+		Dim strMSGFJarfile As String
+
+		' Obsolete setting:
+		'Dim blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
+
+		'If blnUseLegacyMSGFDB Then
+		'	mMSGFPlus = False
+		'	strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
+		'	mSearchEngineName = "MS-GFDB"
+		'Else
+		'	mMSGFPlus = True
+		'End If
+
+		mMSGFPlus = True
+		strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+		mSearchEngineName = "MSGF+"
+
+		If mMSGFPlus Then
+			fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.mzid"))
+		Else
+			fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt"))
+		End If
+
+		blnProcessingError = False
+		blnTooManySkippedSpectra = False
+
+		' Determine the path to MSGFDB (or MSGF+)
+		' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
+		' The reason?  The PeptideHitResultsProcessor (and possibly other software) expects the Tool Version file to be named Tool_Version_Info_MSGFDB.txt
+		mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
+
+		If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		If udtHPCOptions.UsingHPC Then
+			' Make sure the MSGF+ program is up-to-date on the HPC share
+			' Warning: if MSGF+ is running and the .jar file gets updated, then the running jobs will fail because MSGF+ will throw an exception
+			' This function will store the path to the MSGF+ jar file in mMSGFDbProgLocHPC
+			VerifyHPCMSGFDb(udtHPCOptions)
+		End If
+
+		' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
+		mToolVersionWritten = False
+
+		mUsingHPC = False
+		mMSGFPlusComplete = False
+
+		Dim blnUsingMzXML As Boolean
+		Dim strScanTypeFilePath As String = String.Empty
+		Dim strAssumedScanType As String = String.Empty
+
+		Dim result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, strScanTypeFilePath)
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return result
+		End If
+
+		' Initialize mMSGFDBUtils
+		mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
+
+		' Get the FASTA file and index it if necessary
+		' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+		Dim strParameterFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+		Dim javaExePath = String.Copy(javaProgLoc)
+		Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
+
+		If udtHPCOptions.UsingHPC Then
+			If udtHPCOptions.SharePath.StartsWith("\\winhpcfs") Then
+				javaExePath = "\\winhpcfs\projects\DMS\jre8\bin\java.exe"
+			Else
+				javaExePath = "\\picfs.pnl.gov\projects\DMS\jre8\bin\java.exe"
+			End If
+			msgfdbJarFilePath = mMSGFDbProgLocHPC
+		End If
+
+		Dim fastaFilePath As String = String.Empty
+		Dim fastaFileSizeKB As Single
+		Dim fastaFileIsDecoy As Boolean
+
+		result = mMSGFDBUtils.InitializeFastaFile(
+		  javaExePath, msgfdbJarFilePath,
+		  fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath,
+		  strParameterFilePath, udtHPCOptions)
+
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return result
+		End If
+
+		Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+
+		' Read the MSGFDB Parameter File
+		Dim strMSGFDbCmdLineOptions As String = String.Empty
+
+		result = mMSGFDBUtils.ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
+		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return result
+		ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = "Problem parsing " & mSearchEngineName & " parameter file"
+			End If
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
+		mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
+
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & mSearchEngineName)
+
+		' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
+		' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
+		' (job 611216 succeeded with a value of 5000)
+		Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
+		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+
+		If udtHPCOptions.UsingHPC AndAlso intJavaMemorySize < 10000 Then
+			' Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
+			intJavaMemorySize = 28000
+		End If
+
+		'Set up and execute a program runner to run MSGFDB
+		Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
+
+		' Define the input file, output file, and fasta file
+		If blnUsingMzXML Then
+			CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
+		Else
+			CmdStr &= " -s " & m_Dataset & "_dta.txt"
+		End If
+
+		CmdStr &= " -o " & fiMSGFPlusResults.Name
+		CmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
+
+		' Append the remaining options loaded from the parameter file
+		CmdStr &= " " & strMSGFDbCmdLineOptions
+
+		' Make sure the machine has enough free memory to run MSGFDB
+		Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
+
+		If Not udtHPCOptions.UsingHPC Then
+			If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, mSearchEngineName, blnLogFreeMemoryOnSuccess) Then
+				m_message = "Not enough free memory to run " & mSearchEngineName
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+		End If
+
+		mWorkingDirectoryInUse = String.Copy(m_WorkDir)
+
+		Dim blnSuccess = False
+
+		If udtHPCOptions.UsingHPC Then
+			Dim criticalError As Boolean
+
+			blnSuccess = StartMSGFPlusHPC(javaExePath, msgfdbJarFilePath, fiMSGFPlusResults.Name, CmdStr, udtHPCOptions, criticalError)
+
+			If criticalError Then
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+		Else
+			blnSuccess = StartMSGFPlusLocal(javaExePath, CmdStr)
+		End If
+
+		If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
+			' Parse the console output file one more time in hopes of finding an error message
+			ParseConsoleOutputFile(mWorkingDirectoryInUse)
+		End If
+
+		If Not mToolVersionWritten Then
+			If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+				ParseConsoleOutputFile(mWorkingDirectoryInUse)
+			End If
+			mToolVersionWritten = StoreToolVersionInfo()
+		End If
+
+		If Not String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
+		End If
+
+		fiMSGFPlusResults.Refresh()
+
+		If blnSuccess Then
+			If Not mMSGFPlusComplete Then
+				mMSGFPlusComplete = True
+				mMSGFPlusCompletionTime = DateTime.UtcNow
+			End If
+		Else
+			Dim msg As String
+			If mMSGFPlusComplete Then
+				msg = mSearchEngineName & " log file reported it was complete, but aborted the ProgRunner since Java was frozen"
+			Else
+				msg = "Error running " & mSearchEngineName
+			End If
+			m_message = clsGlobal.AppendToComment(m_message, msg)
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
+
+			If mMSGFPlusComplete Then
+				' Don't treat this as a fatal error
+				' in particular, HPC jobs don't always close out cleanly
+				blnProcessingError = False
+				m_EvalMessage = String.Copy(m_message)
+				m_message = String.Empty
+			Else
+				blnProcessingError = True
+			End If
+
+			If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
+				If CmdRunner.ExitCode <> 0 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+				Else
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & mSearchEngineName & " failed (but exit code is 0)")
+				End If
+			End If
+
+		End If
+
+		If mMSGFPlusComplete Then
+			m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+			m_StatusTools.UpdateAndWrite(m_progress)
+			If m_DebugLevel >= 3 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
+			End If
+
+			If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
+				' See if any spectra were processed
+				If Not fiMSGFPlusResults.Exists Then
+					' Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
+					'   "None of the spectra are centroided; unable to process"
+					'   "skipped xx% of the spectra because they did not appear centroided"
+					'   "skip xx% of the spectra because they did not appear centroided"
+					'
+					' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
+
+					m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & mSearchEngineName
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+					blnProcessingError = True
+				Else
+					' Compute the fraction of all potential spectra that were skipped
+					Dim dblFractionSkipped As Double
+					Dim strPercentSkipped As String
+
+					dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
+					strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
+
+					If dblFractionSkipped > 0.2 Then
+						m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						blnTooManySkippedSpectra = True
+					Else
+						m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+					End If
+
+				End If
+
+			End If
+
+		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
 	Protected Function StartMSGFPlusHPC(
 	  ByVal javaExePath As String,
 	  ByVal msgfdbJarFilePath As String,
-	  ByVal strSearchEngineName As String,
-	  ByVal ResultsFileName As String,
+	  ByVal resultsFileName As String,
 	  ByVal CmdStr As String,
 	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
 	  ByRef criticalError As Boolean) As Boolean
@@ -474,9 +502,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		Dim jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
 
-		Dim jobName As String = strSearchEngineName & "_Job" & m_JobNum & "_Step" & jobStep
+		Dim jobName As String = mSearchEngineName & "_Job" & m_JobNum & "_Step" & jobStep
 
-		Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=strSearchEngineName)
+		Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=mSearchEngineName)
 
 		hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
 		hpcJobInfo.JobParameters.TemplateName = "DMS"		 ' If using 32 cores, could use Template "Single"
@@ -505,7 +533,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			' Simply run java; no need to add a delay
 			hpcJobInfo.TaskParameters.CommandLine = javaExePath & " " & CmdStr
 		End If
-		
+
 		hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
 		hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
 		hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
@@ -524,7 +552,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 			Dim tsvFileName = m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX
 			Const tsvConversionJavaMemorySizeMB As Integer = 4000
 
-			Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(ResultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
+			Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(resultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
 
 			If udtHPCOptions.SharePath.StartsWith("\\picfs") Then
 				' Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
@@ -572,7 +600,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim blnSuccess As Boolean
 
 		If mHPCJobID <= 0 Then
-			m_message = strSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
+			m_message = mSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 			blnSuccess = False
 		Else
@@ -581,7 +609,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		If blnSuccess Then
 			If mComputeCluster.Scheduler Is Nothing Then
-				m_message = "Error: HPC Scheduler is null for " & strSearchEngineName
+				m_message = "Error: HPC Scheduler is null for " & mSearchEngineName
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				blnSuccess = False
 			End If
@@ -619,7 +647,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	Protected Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal strSearchEngineName As String, ByVal CmdStr As String) As Boolean
+	Protected Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal CmdStr As String) As Boolean
 
 		If m_DebugLevel >= 1 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
@@ -638,7 +666,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 		m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
 
-		Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
+		Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, mSearchEngineName, True)
 
 		Return blnSuccess
 
@@ -648,10 +676,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' Convert the .mzid file created by MSGF+ to a .tsv file
 	''' </summary>
 	''' <param name="strMZIDFileName"></param>
-	''' <param name="JavaProgLoc"></param>
+	''' <param name="javaProgLoc"></param>
 	''' <returns>The name of the .tsv file if successful; empty string if an error</returns>
 	''' <remarks></remarks>
-	Protected Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal JavaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
+	Protected Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal javaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
 
 		Dim blnConversionRequired = True
 
@@ -669,7 +697,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		End If
 
 		If blnConversionRequired Then
-			strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, mMSGFDbProgLoc, m_Dataset, strMZIDFileName)
+			strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(javaProgLoc, mMSGFDbProgLoc, m_Dataset, strMZIDFileName)
 
 			If String.IsNullOrEmpty(strTSVFilePath) Then
 				If String.IsNullOrEmpty(m_message) Then
@@ -903,49 +931,49 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' <summary>
 	''' Convert the .mzid file to a TSV file and create the PeptideToProtein map file
 	''' </summary>
-	''' <param name="ResultsFileName"></param>
-	''' <param name="JavaProgLoc"></param>
+	''' <param name="resultsFileName"></param>
+	''' <param name="javaProgLoc"></param>
 	''' <param name="udtHPCOptions"></param>
 	''' <returns>True if success, false if an error</returns>
-	''' <remarks>Assumes that the calling function has verified that ResultsFileName exists</remarks>
+	''' <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
 	Protected Function PostProcessMSGFDBResults(
-	  ByVal ResultsFileName As String,
-	  ByVal JavaProgLoc As String,
+	  ByVal resultsFileName As String,
+	  ByVal javaProgLoc As String,
 	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
 		Dim result As IJobParams.CloseOutType
 		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
 
 		If splitFastaEnabled Then
-			ResultsFileName = ParallelMSGFPlusRenameFile(ResultsFileName)
+			resultsFileName = ParallelMSGFPlusRenameFile(resultsFileName)
 			ParallelMSGFPlusRenameFile("MSGFDB_ConsoleOutput.txt")
 		End If
 
 		' Zip the output file
-		result = mMSGFDBUtils.ZipOutputFile(Me, ResultsFileName)
+		result = mMSGFDBUtils.ZipOutputFile(Me, resultsFileName)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
 		End If
 
 		If Not mMSGFPlus Then
-			m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
+			m_jobParams.AddResultFileToSkip(resultsFileName & ".temp.tsv")
 		End If
 
 		Dim strMSGFDBResultsFileName As String
-		If Path.GetExtension(ResultsFileName).ToLower() = ".mzid" Then
+		If Path.GetExtension(resultsFileName).ToLower() = ".mzid" Then
 
 			' Convert the .mzid file to a .tsv file 
 			' If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
 
 			UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
-			strMSGFDBResultsFileName = ConvertMZIDToTSV(ResultsFileName, JavaProgLoc, udtHPCOptions)
+			strMSGFDBResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
 
 			If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
 		Else
-			strMSGFDBResultsFileName = String.Copy(ResultsFileName)
+			strMSGFDBResultsFileName = String.Copy(resultsFileName)
 		End If
 
 		' Create the Peptide to Protein map file
@@ -1003,7 +1031,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
 	End Sub
 
-	Protected Function VerifyHPCMSGFDb(udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
+	Protected Function VerifyHPCMSGFDb(ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
 
 		Try
 			' Make sure the copy of MSGF+ is up-to-date on PICfs

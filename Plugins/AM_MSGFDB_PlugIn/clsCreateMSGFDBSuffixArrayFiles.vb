@@ -347,8 +347,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	''' <param name="strLogfileDir"></param>
 	''' <param name="intDebugLevel"></param>
 	''' <param name="JobNum"></param>
-	''' <param name="JavaProgLoc"></param>
-	''' <param name="MSGFDBProgLoc"></param>
+	''' <param name="javaProgLoc"></param>
+	''' <param name="msgfDbProgLoc"></param>
 	''' <param name="strFASTAFilePath">Input/output parameter; will get updated if running Legacy MSGFDB</param>
 	''' <param name="blnFastaFileIsDecoy">When True, then only creates the forward-based index files.  When False, then creates both the forward and reverse index files</param>
 	''' <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
@@ -359,8 +359,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal strLogFileDir As String,
 	  ByVal intDebugLevel As Integer,
 	  ByVal JobNum As String,
-	  ByVal JavaProgLoc As String,
-	  ByVal MSGFDBProgLoc As String,
+	  ByVal javaProgLoc As String,
+	  ByVal msgfDbProgLoc As String,
 	  ByRef strFASTAFilePath As String,
 	  ByVal blnFastaFileIsDecoy As Boolean,
 	  ByVal strMSGFPlusIndexFilesFolderPathBase As String,
@@ -390,7 +390,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			Dim fiFastaFile As FileInfo
 			fiFastaFile = New FileInfo(strFASTAFilePath)
 
-			blnMSGFPlus = IsMSGFPlus(MSGFDBProgLoc)
+			blnMSGFPlus = IsMSGFPlus(msgfDbProgLoc)
 			If Not blnMSGFPlus Then
 				' Running legacy MS-GFDB
 				Throw New Exception("Legacy MS-GFDB is no longer supported")
@@ -580,7 +580,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						eResult = CreateSuffixArrayFilesWork(
 						  strLogFileDir, intDebugLevel, JobNum,
 						  fiFastaFile, fiLockFile,
-						  JavaProgLoc, MSGFDBProgLoc,
+						  javaProgLoc, msgfDbProgLoc,
 						  blnFastaFileIsDecoy, blnMSGFPlus,
 						  dbSarrayFilename,
 						  udtHPCOptions)
@@ -620,7 +620,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	  ByVal fiFastaFile As FileInfo,
 	  ByVal fiLockFile As FileInfo,
 	  ByVal JavaProgLoc As String,
-	  ByVal MSGFDBProgLoc As String,
+	  ByVal msgfDbProgLoc As String,
 	  ByVal blnFastaFileIsDecoy As Boolean,
 	  ByVal blnMSGFPlus As Boolean,
 	  ByVal dbSarrayFilename As String,
@@ -641,9 +641,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			End If
 
 			' Verify that the MSGFDB.Jar or MSGFPlus.jar file exists
-			If Not File.Exists(MSGFDBProgLoc) Then
-				mErrorMessage = "Cannot find " + Path.GetFileName(MSGFDBProgLoc) & " file"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & MSGFDBProgLoc)
+			If Not File.Exists(msgfDbProgLoc) Then
+				mErrorMessage = "Cannot find " + Path.GetFileName(msgfDbProgLoc) & " file"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & msgfDbProgLoc)
 				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 			End If
 
@@ -727,7 +727,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)          
 			strCurrentTask = "Construct BuildSA command line"
 			Dim CmdStr As String
-			CmdStr = " -Xmx" & intJavaMemorySizeMB.ToString & "M -cp " & MSGFDBProgLoc
+			CmdStr = " -Xmx" & intJavaMemorySizeMB.ToString & "M -cp " & msgfDbProgLoc
 
 			If blnMSGFPlus Then
 				CmdStr &= " edu.ucsd.msjava.msdbsearch.BuildSA -d " & fiFastaFile.FullName
@@ -769,7 +769,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 				' Make a batch file that will run the java program, then issue a Ping command with a delay, which will allow the file system to release the file handles
 				Dim batchFilePath = clsAnalysisToolRunnerMSGFDB.MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_SuffixAray_Task.bat", JavaProgLoc & " " & CmdStr)
-				
+
 				buildSAJobInfo.TaskParameters.CommandLine = batchFilePath
 				buildSAJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
 				buildSAJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MSGFDB_BuildSA_ConsoleOutput.txt")
@@ -830,7 +830,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 			End If
 
 			If Not success Then
-				mErrorMessage = "Error running BuildSA with " & Path.GetFileName(MSGFDBProgLoc) & " for " & fiFastaFile.Name
+				mErrorMessage = "Error running BuildSA with " & Path.GetFileName(msgfDbProgLoc) & " for " & fiFastaFile.Name
 				If udtHPCOptions.UsingHPC Then
 					mErrorMessage &= " using HPC"
 				End If

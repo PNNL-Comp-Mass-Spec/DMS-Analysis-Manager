@@ -23,6 +23,11 @@ Public Class clsAnalysisResourcesMSGFDB
 		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
 	End Sub
 
+	''' <summary>
+	''' Retrieves files necessary for running MSGF+
+	''' </summary>
+	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+	''' <remarks></remarks>
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
 		Dim currentTask As String = "Initializing"
