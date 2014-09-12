@@ -13,6 +13,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports AnalysisManagerBase
+Imports System.Runtime.InteropServices
 
 Public Class clsMainProcess
 
@@ -274,7 +275,7 @@ Public Class clsMainProcess
 				' Check for configuration change
 				' This variable will be true if the CaptureTaskManager.exe.config file has been updated
 				If m_ConfigChanged Then
-					'Local config file has changed
+					' Local config file has changed
 					m_ConfigChanged = False
 
 					If Me.TraceMode Then ShowTraceMessage("Reloading manager settings since config file has changed")
@@ -295,7 +296,7 @@ Public Class clsMainProcess
 
 				End If
 
-				'Check to see if manager is still active
+				' Check to see if manager is still active
 				Dim MgrActive As Boolean = m_MgrSettings.GetParam("mgractive", False)
 				Dim MgrActiveLocal As Boolean = m_MgrSettings.GetParam("mgractive_local", False)
 				Dim strManagerDisableReason As String
@@ -325,10 +326,10 @@ Public Class clsMainProcess
 				End If
 
 				If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
-					'Delete the Error Deleting status flag file first, so next time through this step is skipped
+					' Delete the Error Deleting status flag file first, so next time through this step is skipped
 					m_MgrErrorCleanup.DeleteErrorDeletingFilesFlagFile()
 
-					'There was a problem deleting non result files with the last job.  Attempt to delete files again
+					' There was a problem deleting non result files with the last job.  Attempt to delete files again
 					If Not m_MgrErrorCleanup.CleanWorkDir() Then
 						If blnOneTaskStarted Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & m_WorkDirPath)
@@ -340,7 +341,7 @@ Public Class clsMainProcess
 						UpdateStatusFlagFileExists()
 						Exit Sub
 					End If
-					'successful delete of files in working directory, so delete the status flag file
+					' Successful delete of files in working directory, so delete the status flag file
 					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 				End If
 
@@ -357,7 +358,7 @@ Public Class clsMainProcess
 					Exit Sub
 				End If
 
-				'Check to see if an excessive number of errors have occurred
+				' Check to see if an excessive number of errors have occurred
 				If intErrorCount > MAX_ERROR_COUNT Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager via flag file")
 
@@ -371,7 +372,7 @@ Public Class clsMainProcess
 					Exit While
 				End If
 
-				'Verify working directory properly specified and empty
+				' Verify working directory properly specified and empty
 				If Not ValidateWorkingDir() Then
 					If blnOneTaskStarted Then
 						' Working directory problem due to the most recently processed job
@@ -385,6 +386,13 @@ Public Class clsMainProcess
 						m_MgrErrorCleanup.CreateStatusFlagFile()
 						UpdateStatusFlagFileExists()
 					End If
+					Exit While
+				End If
+
+				' Check whether the computer is likely to install the monthly Windows Updates within the next few hours
+				Dim pendingWindowsUpdateMessage As String = String.Empty
+				If WindowsUpdatesArePending(DateTime.Now, pendingWindowsUpdateMessage) Then
+					UpdateStatusIdle(pendingWindowsUpdateMessage)
 					Exit While
 				End If
 
@@ -1802,6 +1810,56 @@ Public Class clsMainProcess
 
 		'No problems found
 		Return True
+
+	End Function
+
+	Private Function WindowsUpdatesArePending(ByVal currentTime As DateTime, <Out()> ByRef pendingWindowsUpdateMessage As String) As Boolean
+
+		pendingWindowsUpdateMessage = "No pending update"
+
+		' Determine the second Tuesday in the current month
+		Dim firstTuesdayInMonth = New DateTime(currentTime.Year, currentTime.Month, 1)
+		While firstTuesdayInMonth.DayOfWeek <> DayOfWeek.Tuesday
+			firstTuesdayInMonth = firstTuesdayInMonth.AddDays(1)
+		End While
+
+		Dim secondTuesdayInMonth = firstTuesdayInMonth.AddDays(7)
+
+		' Windows 7 / Windows 8 Pubs install updates around 3 am on the Thursday after the second Tuesday of the month
+		' Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
+		Dim dtExclusionStart = secondTuesdayInMonth.AddDays(2)
+		Dim dtExclusionEnd = secondTuesdayInMonth.AddDays(2).AddHours(6)
+
+		If currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd Then
+			Dim dtPendingUpdateTime = secondTuesdayInMonth.AddDays(2).AddHours(3)
+
+			If currentTime < dtPendingUpdateTime Then
+				pendingWindowsUpdateMessage = "Processing boxes expected to install Windows Updates around " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
+			Else
+				pendingWindowsUpdateMessage = "Processing boxes should have installed Windows Updates at " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
+			End If
+
+			Return True
+		End If
+
+		' Windows servers install updates around 10 am on the Sunday after the second Tuesday of the month
+		' Do not request a job between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
+		dtExclusionStart = secondTuesdayInMonth.AddDays(5).AddHours(9)
+		dtExclusionEnd = secondTuesdayInMonth.AddDays(5).AddHours(11)
+
+		If currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd Then
+			Dim dtPendingUpdateTime = secondTuesdayInMonth.AddDays(5).AddHours(10)
+
+			If currentTime < dtPendingUpdateTime Then
+				pendingWindowsUpdateMessage = "Servers expected to install Windows Updates around " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
+			Else
+				pendingWindowsUpdateMessage = "Servers should have installed Windows Updates at " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
+			End If
+
+			Return True
+		End If
+
+		Return False
 
 	End Function
 

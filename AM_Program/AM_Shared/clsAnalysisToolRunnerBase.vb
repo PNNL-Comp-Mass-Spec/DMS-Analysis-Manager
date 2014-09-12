@@ -1981,9 +1981,10 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
 	''' <returns>True for success, False for failure</returns>
 	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As IEnumerable(Of FileInfo), _
-	   ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
+	Protected Function SetStepTaskToolVersion(
+	  ByVal strToolVersionInfo As String,
+	  ByVal ioToolFiles As IEnumerable(Of FileInfo),
+	  ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
 
 		Dim strExeInfo As String = String.Empty
 		Dim strToolVersionInfoCombined As String

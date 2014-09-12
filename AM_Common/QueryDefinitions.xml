@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<queries>
+
+  <query name='Jobs'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Analysis_Jobs' cols='*'/>
+    <predicate rel='AND' col='Dataset' cmp='ContainsText' val=''/>
+    <predicate rel='AND' col='Tool' cmp='ContainsText' val=''/>
+    <predicate rel='AND' col='Parameter_File' cmp='ContainsText' val=''/>
+    <predicate rel='AND' col='Settings_File' cmp='ContainsText' val=''/>
+  </query>
+
+  <query name='Job_Flex_Query'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Analysis_Jobs' cols='*'/>
+  </query>
+
+  <query name='Job_ID_List'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Analysis_Jobs' cols='*'/>
+    <predicate rel='AND' col='Job' cmp='InList' val=''/>
+  </query>
+
+  <query name='Data_Package'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Data_Package_Analysis_Jobs' cols='*'/>
+    <predicate rel='AND' col='Data_Package_ID' cmp='Equals' val=''/>
+  </query>
+
+  <query name='Datasets'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Dataset_List' cols='*' />
+    <predicate rel='AND' col='Dataset' cmp='ContainsText' val=''/>
+  </query>
+
+  <query name='Dataset_List'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Dataset_List' cols='*' />
+    <predicate rel='AND' col='Dataset_ID' cmp='InList' val='' />
+  </query>
+
+  <query name='Jobs_From_Dataset_List'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Analysis_Jobs' cols='*'/>
+    <predicate rel='AND' col='Dataset_ID' cmp='InList' val='' />
+  </query>
+
+  <query name='Extraction_Filter_Set_List'>
+    <connection server='gigasax' database='DMS5'/>
+    <table name='V_Mage_Filter_Set_Criteria' cols='Filter_Criteria_Group_ID, Criterion_Name, Criterion_Comparison, Criterion_Value, Criterion_ID'/>
+    <predicate rel='AND' col='Filter_Set_ID' cmp='Equals' val='' />
+  </query>
+  
+</queries>

@@ -23,9 +23,10 @@ Public Class clsAnalysisResourcesMSDeconv
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
 
-		' Retrieve the .mzXML file for this dataset
-		' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-		' Instead, use RetrieveCachedMzXMLFile 
+		'Dim eResult = GetMzXMLFile()
+		'If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+		'	Return eResult
+		'End If
 
 		Dim errorMessage = String.Empty
 		Dim fileMissingFromCache = False
@@ -33,20 +34,7 @@ Public Class clsAnalysisResourcesMSDeconv
 
 		Dim success = RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
 		If Not success Then
-			If fileMissingFromCache Then
-				If String.IsNullOrEmpty(errorMessage) Then
-					errorMessage = "Cached .mzXML file does not exist; will re-generate it"
-				End If
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
-				Return IJobParams.CloseOutType.CLOSEOUT_MZML_FILE_NOT_IN_CACHE
-			End If
-
-			If String.IsNullOrEmpty(errorMessage) Then
-				errorMessage = "Unknown error in RetrieveCachedMzXMLFile"
-			End If
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+			Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION)
 		End If
 
 		' Make sure we don't move the .mzXML file into the results folder

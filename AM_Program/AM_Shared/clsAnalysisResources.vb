@@ -831,7 +831,7 @@ Public MustInherit Class clsAnalysisResources
 			Directory.CreateDirectory(DestFolder)
 		End If
 
-		'Instantiate fasta tool if not already done
+		' Instantiate fasta tool if not already done
 		If m_FastaTools Is Nothing Then
 			If String.IsNullOrWhiteSpace(m_FastaToolsCnStr) Then
 				m_message = "Protein database connection string not specified"
@@ -841,12 +841,12 @@ Public MustInherit Class clsAnalysisResources
 			m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
 		End If
 
-		'Initialize fasta generation state variables
+		' Initialize fasta generation state variables
 		m_GenerationStarted = False
 		m_GenerationComplete = False
 		m_FastaFileName = String.Empty
 
-		'Set up variables for fasta creation call
+		' Set up variables for fasta creation call
 		Dim LegacyFasta As String = m_jobParams.GetParam("LegacyFastaFileName")
 		Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
 		Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
@@ -1911,16 +1911,16 @@ Public MustInherit Class clsAnalysisResources
 
 		' One or more matches were found; select the newest one 
 		Dim sortQuery = (From item In lstMatchingFiles Select item Order By item.LastWriteTimeUtc Descending).Take(1)
-		Dim strMatchedFile = sortQuery.First().FullName
+		Dim matchedFilePath = sortQuery.First().FullName
 
 		' Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
-		Dim strErrorMessage As String = String.Empty
-		strHashcheckFilePath = strMatchedFile & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+		Dim errorMessage As String = String.Empty
+		strHashcheckFilePath = matchedFilePath & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
 
-		If clsGlobal.ValidateFileVsHashcheck(strMatchedFile, strHashcheckFilePath, strErrorMessage) Then
-			Return strMatchedFile
+		If clsGlobal.ValidateFileVsHashcheck(matchedFilePath, strHashcheckFilePath, errorMessage) Then
+			Return matchedFilePath
 		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
 			Return String.Empty
 		End If
 
@@ -2840,9 +2840,9 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns></returns>
 	''' <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
 	Public Shared Function GetMSXmlCacheFolderPath(
-   ByVal cacheFolderPathBase As String,
-   ByVal jobParams As IJobParams,
-   ByRef errorMessage As String) As String
+	  ByVal cacheFolderPathBase As String,
+	  ByVal jobParams As IJobParams,
+	  ByRef errorMessage As String) As String
 
 		' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
 		Dim outputFolderName = jobParams.GetJobParameter("OutputFolderName", String.Empty)
@@ -2917,6 +2917,79 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		Return reMatch.Groups.Item(1).ToString
+
+	End Function
+
+	Protected Function GetMzMLFile() As IJobParams.CloseOutType
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzML file")
+
+		Dim errorMessage = String.Empty
+		Dim fileMissingFromCache = False
+		Const unzipFile = True
+
+		Dim success = RetrieveCachedMzMLFile(unzipFile, errorMessage, fileMissingFromCache)
+		If Not success Then
+			Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION)
+		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function GetMzXMLFile() As IJobParams.CloseOutType
+
+		' Retrieve the .mzXML file for this dataset
+		' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
+		' Instead, use FindAndRetrieveMiscFiles 
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
+
+		' Note that capitalization matters for the extension; it must be .mzXML
+		Dim FileToGet As String = m_DatasetName & DOT_MZXML_EXTENSION
+		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+
+			' Look for a .mzXML file in the cache instead
+
+			Dim errorMessage = String.Empty
+			Dim fileMissingFromCache = False
+			Const unzipFile = True
+
+			Dim success = RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
+			If Not success Then
+				Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION)
+			End If
+
+		End If
+		m_jobParams.AddResultFileToSkip(FileToGet)
+
+		If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Protected Function HandleMsXmlRetrieveFailure(
+	  ByVal fileMissingFromCache As Boolean,
+	  ByRef errorMessage As String,
+	  ByVal msXmlExtension As String) As IJobParams.CloseOutType
+
+		If fileMissingFromCache Then
+			If String.IsNullOrEmpty(errorMessage) Then
+				errorMessage = "Cached " & msXmlExtension & " file does not exist; will re-generate it"
+			End If
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
+			Return IJobParams.CloseOutType.CLOSEOUT_MZML_FILE_NOT_IN_CACHE
+		End If
+
+		If String.IsNullOrEmpty(errorMessage) Then
+			errorMessage = "Unknown error in RetrieveCached" & msXmlExtension.TrimStart("."c) & "File"
+		End If
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+		Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 
 	End Function
 
@@ -3076,11 +3149,18 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim iteration = GetSplitFastaIteration(jobParams, errorMessage)
 		If iteration < 1 Then
-			If String.IsNullOrEmpty(errorMessage) Then
-				errorMessage = "GetSplitFastaIteration computed an iteration value of " & iteration & "; cannot determine the SplitFasta file name for this job step"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+			Dim toolName = jobParams.GetJobParameter("ToolName", String.Empty)
+			If String.Compare(toolName, "Mz_Refinery", True) = 0 Then
+				' Running MzRefinery
+				' Override iteration to be 1
+				iteration = 1
+			Else
+				If String.IsNullOrEmpty(errorMessage) Then
+					errorMessage = "GetSplitFastaIteration computed an iteration value of " & iteration & "; cannot determine the SplitFasta file name for this job step"
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+				End If
+				Return String.Empty
 			End If
-			Return String.Empty
 		End If
 
 		Dim fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName)
@@ -3886,7 +3966,7 @@ Public MustInherit Class clsAnalysisResources
 	End Function
 
 	''' <summary>
-	''' Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache
+	''' Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache (assumes the file is gzipped)
 	''' </summary>
 	''' <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
 	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
@@ -3894,7 +3974,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
 	''' <returns>True if success, false if an error or file not found</returns>
 	''' <remarks>
-	''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
+	''' Uses the job's InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
 	''' InputFolderName should be in the form MSXML_Gen_1_93_367204
 	''' </remarks>
 	Protected Function RetrieveCachedMSXMLFile(
@@ -3940,14 +4020,14 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim diSourceFolder = New DirectoryInfo(sourceFolder)
 		If Not diSourceFolder.Exists Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cache folder does not exist (" & sourceFolder & "); will re-generate the " & resultFileExtension & " file")
+			errorMessage = "Cache folder does not exist (" & sourceFolder & "); will re-generate the " & resultFileExtension & " file"
 			fileMissingFromCache = True
 			Return False
 		End If
 
 		Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension & DOT_GZ_EXTENSION))
 		If Not fiSourceFile.Exists Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cached " & resultFileExtension & " file does not exist in " & sourceFolder & "; will re-generate it")
+			errorMessage = "Cached " & resultFileExtension & " file does not exist in " & sourceFolder & "; will re-generate it"
 			fileMissingFromCache = True
 			Return False
 		End If
@@ -3958,7 +4038,6 @@ Public MustInherit Class clsAnalysisResources
 
 		errorMessage = String.Empty
 		If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 			errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in" & sourceFolder & "; will re-generate it"
 			fileMissingFromCache = True
 			Return False
@@ -3972,11 +4051,10 @@ Public MustInherit Class clsAnalysisResources
 		m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
 
 		If unzip Then
-			Dim oZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 			Dim zippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
 
-			If Not oZipTools.GUnzipFile(zippedFile) Then
-				errorMessage = oZipTools.Message
+			If Not m_IonicZipTools.GUnzipFile(zippedFile) Then
+				errorMessage = m_IonicZipTools.Message
 				Return False
 			End If
 		End If

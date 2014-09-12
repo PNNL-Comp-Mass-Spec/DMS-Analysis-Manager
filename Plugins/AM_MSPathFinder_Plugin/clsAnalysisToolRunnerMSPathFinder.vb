@@ -838,7 +838,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 				Return False
 			End Try
 
-			Return False
 		End If
 
 		' Lookup the version of the .NET application

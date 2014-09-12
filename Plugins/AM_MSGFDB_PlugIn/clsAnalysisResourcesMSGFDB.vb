@@ -277,60 +277,6 @@ Public Class clsAnalysisResourcesMSGFDB
 
 	End Function
 
-	Private Function GetMzXMLFile() As IJobParams.CloseOutType
-
-		' Retrieve the .mzXML file for this dataset
-		' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-		' Instead, use FindAndRetrieveMiscFiles 
-
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
-
-		' Note that capitalization matters for the extension; it must be .mzXML
-		Dim FileToGet As String = m_DatasetName & DOT_MZXML_EXTENSION
-		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-			' Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
-		m_jobParams.AddResultFileToSkip(FileToGet)
-
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
-
-	Private Function GetMzMLFile() As IJobParams.CloseOutType
-
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzML file")
-
-		Dim errorMessage = String.Empty
-		Dim fileMissingFromCache = False
-		Const unzipFile = True
-
-		Dim success = RetrieveCachedMzMLFile(unzipFile, errorMessage, fileMissingFromCache)
-		If Not success Then
-			If fileMissingFromCache Then
-				If String.IsNullOrEmpty(errorMessage) Then
-					errorMessage = "Cached .mzML file does not exist; will re-generate it"
-				End If
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
-				Return IJobParams.CloseOutType.CLOSEOUT_MZML_FILE_NOT_IN_CACHE
-			End If
-
-			If String.IsNullOrEmpty(errorMessage) Then
-				errorMessage = "Unknown error in RetrieveCachedMzMLFile"
-			End If
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
-
 	Private Function ValidateCDTAFile() As IJobParams.CloseOutType
 
 		' If the _dta.txt file is over 2 GB in size, then condense it

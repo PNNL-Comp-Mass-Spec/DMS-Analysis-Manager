@@ -14,17 +14,17 @@ Imports System.IO
 Imports System.Xml
 Imports System.Text
 
+''' <summary>
+''' Provides DB access and tools for one analysis job
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisJob
 	Inherits clsDBTask
 	Implements IJobParams
 
-	'*********************************************************************************************************
-	'Provides DB access and tools for one analysis job
-	'*********************************************************************************************************
-
 #Region "Constants"
 	Protected Const SP_NAME_SET_COMPLETE As String = "SetStepTaskComplete"
-	Protected Const SP_NAME_REQUEST_TASK As String = "RequestStepTaskXML" '"RequestStepTask"
+	Protected Const SP_NAME_REQUEST_TASK As String = "RequestStepTaskXML"	'"RequestStepTask"
 #End Region
 
 #Region "Module variables"
@@ -301,7 +301,7 @@ Public Class clsAnalysisJob
 	''' <param name="Name">Key name for parameter</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
+	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
 		Return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
@@ -312,7 +312,7 @@ Public Class clsAnalysisJob
 	''' <param name="Name">Key name for parameter</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
+	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
 		Return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
@@ -323,7 +323,7 @@ Public Class clsAnalysisJob
 	''' <param name="Name">Key name for parameter</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
+	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
 		Dim strValue As String
 		strValue = GetParam(Section, Name)
 		If String.IsNullOrEmpty(strValue) Then
@@ -340,7 +340,7 @@ Public Class clsAnalysisJob
 	''' <param name="Name">Key name for parameter</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
+	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
 		Return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing)
 	End Function
 
@@ -600,7 +600,7 @@ Public Class clsAnalysisJob
 	End Function
 
 	''' <summary>
-	''' Requests a single analysis job
+	''' Requests a single analysis job using RequestStepTaskXML
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
@@ -777,7 +777,7 @@ Public Class clsAnalysisJob
 	End Sub
 
 	''' <summary>
-	''' Closes an analysis job
+	''' Contact the Pipeline database to close the analysis job
 	''' </summary>
 	''' <param name="CloseOut">IJobParams enum specifying close out type</param>
 	''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
@@ -786,7 +786,7 @@ Public Class clsAnalysisJob
 	End Sub
 
 	''' <summary>
-	''' Closes an analysis job
+	''' Contact the Pipeline database to close the analysis job
 	''' </summary>
 	''' <param name="CloseOut">IJobParams enum specifying close out type</param>
 	''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
@@ -816,7 +816,7 @@ Public Class clsAnalysisJob
 	''' <summary>
 	''' Communicates with database to perform job closeout
 	''' </summary>
-	''' <param name="SpName">Name of SP in database to call for closeout</param>
+	''' <param name="SpName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
 	''' <param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
 	''' <param name="CompMsg">Comment to insert in database</param>
 	''' <param name="EvalCode">Integer results evaluation code</param>
