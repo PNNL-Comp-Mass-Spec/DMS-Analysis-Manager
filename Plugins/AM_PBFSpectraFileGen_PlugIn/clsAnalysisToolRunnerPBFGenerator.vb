@@ -95,6 +95,13 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 							If Not m_ResFolderName.StartsWith("PBF_Gen_1_191") Then
 								blnSuccess = False
 							End If
+						Case "150604"
+							' This version is created by Pbf_Gen.exe v1.0.5367
+							' Make sure the output folder starts with PBF_Gen_1_193
+							' (which will be the case if the settings file has <item key="PbfFormatVersion" value="150604"/>)
+							If Not m_ResFolderName.StartsWith("PBF_Gen_1_193") Then
+								blnSuccess = False
+							End If
 						Case Else
 							blnSuccess = False
 					End Select
