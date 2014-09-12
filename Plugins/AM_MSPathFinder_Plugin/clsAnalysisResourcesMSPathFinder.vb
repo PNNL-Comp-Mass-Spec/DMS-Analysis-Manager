@@ -28,8 +28,9 @@ Public Class clsAnalysisResourcesMSPathFinder
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-		If Not RetrieveInstrumentData() Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+		Dim eResult = RetrieveInstrumentData()
+		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Return eResult
 		End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -76,33 +77,28 @@ Public Class clsAnalysisResourcesMSPathFinder
 
 	End Function
 
-	Protected Function RetrieveInstrumentData() As Boolean
+	Protected Function RetrieveInstrumentData() As IJobParams.CloseOutType
 
 		Dim currentTask As String = "Initializing"
 
 		Try
-			' Retrieve the .pbf file
-			' Note that if the file was found in MyEMSL then RetrievePBFFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+			' Retrieve the .pbf file from the MSXml cache folder
 
 			currentTask = "RetrievePBFFile"
 
-			If Not RetrievePBFFile() Then
-				Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
-				If Not String.IsNullOrEmpty(sharedResultsFolder) Then
-					m_message &= "; shared results folder is " & sharedResultsFolder
-				End If
-
-				Return False
+			Dim eResult = GetPBFFile()
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+				Return eResult
 			End If
 
 			m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)
 
-			Return True
+			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		Catch ex As Exception
 			m_message = "Exception in RetrieveInstrumentData: " & ex.Message
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return False
+			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 	End Function

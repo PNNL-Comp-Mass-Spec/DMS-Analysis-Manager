@@ -245,7 +245,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		If Not fiFastaFile.Exists Then
 			' Fasta file not found
-			ReportError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
+			LogError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
 			Return False
 		End If
 
@@ -259,21 +259,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		Return True
 
-	End Function
-
-	''' <summary>
-	''' Compare two strings (not case sensitive)
-	''' </summary>
-	''' <param name="strText1"></param>
-	''' <param name="strText2"></param>
-	''' <returns>True if they match; false if not</returns>
-	''' <remarks></remarks>
-	Protected Function IsMatch(ByVal strText1 As String, ByVal strText2 As String) As Boolean
-		If String.Compare(strText1, strText2, True) = 0 Then
-			Return True
-		Else
-			Return False
-		End If
 	End Function
 
 	''' <summary>
@@ -430,7 +415,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 								' Static (fixed) mod is listed as dynamic
 								' Abort the analysis since the parameter file is misleading and needs to be fixed							
 								errMsg = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
-								ReportError(errMsg, errMsg & "; " & strStaticMod)
+								LogError(errMsg, errMsg & "; " & strStaticMod)
 								Return False
 							End If
 							swModFile.WriteLine(strModClean)
@@ -453,7 +438,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 								' Dynamic (optional) mod is listed as static
 								' Abort the analysis since the parameter file is misleading and needs to be fixed							
 								errMsg = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
-								ReportError(errMsg, errMsg & "; " & strDynamicMod)
+								LogError(errMsg, errMsg & "; " & strDynamicMod)
 								Return False
 							End If
 							swModFile.WriteLine(strModClean)
@@ -469,7 +454,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		Catch ex As Exception
 			errMsg = "Exception creating MSPathFinder Mods file"
-			ReportError(errMsg, errMsg & ": " & ex.Message)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex)
 			blnSuccess = False
 		End Try
 
@@ -498,7 +483,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
 		If Not File.Exists(strParameterFilePath) Then
-			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+			LogError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
 			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
 		End If
 
@@ -528,23 +513,23 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
 
-						ElseIf IsMatch(kvSetting.Key, "NumMods") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
 							If Integer.TryParse(strValue, intValue) Then
 								intNumMods = intValue
 							Else
 								errMsg = "Invalid value for NumMods in MSGFDB parameter file"
-								ReportError(errMsg, errMsg & ": " & strLineIn)
+								LogError(errMsg, errMsg & ": " & strLineIn)
 								srParamFile.Close()
 								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "StaticMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
 								lstStaticMods.Add(strValue)
 							End If
 
-						ElseIf IsMatch(kvSetting.Key, "DynamicMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not IsMatch(strValue, "none") Then
+						ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
+							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
 								lstDynamicMods.Add(strValue)
 							End If
 						End If
@@ -555,8 +540,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			End Using
 
 		Catch ex As Exception
-			errMsg = "Exception reading MSPathFinder parameter file"
-			ReportError(errMsg, errMsg & ": " & ex.Message)
+			m_message = "Exception reading MSPathFinder parameter file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)			
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
@@ -571,7 +556,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			tdaEnabled = True
 			' Make sure the .Fasta file is not a Decoy fasta
 			If fastaFileIsDecoy Then
-				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
+				LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 		End If
@@ -606,13 +591,13 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		If strSplitMod.Length < 5 Then
 			' Invalid mod definition; must have 5 sections
-			ReportError("Invalid modification string; must have 5 sections: " & strMod)
+			LogError("Invalid modification string; must have 5 sections: " & strMod)
 			Return False
 		End If
 
 		' Make sure mod does not have both * and any
 		If strSplitMod(1).Trim() = "*" AndAlso strSplitMod(3).ToLower().Trim() = "any" Then
-			ReportError("Modification cannot contain both * and any: " & strMod)
+			LogError("Modification cannot contain both * and any: " & strMod)
 			Return False
 		End If
 
@@ -697,19 +682,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		End Try
 
 	End Function
-
-	Private Sub ReportError(ByVal errorMessage As String)
-		ReportError(errorMessage, String.Empty)
-	End Sub
-
-	Private Sub ReportError(ByVal errorMessage As String, ByVal detailedMessage As String)
-		m_message = String.Copy(errorMessage)
-		If String.IsNullOrEmpty(detailedMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-		End If
-	End Sub
 
 	Protected Function StartMSPathFinder(ByVal progLoc As String, ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
 
@@ -844,7 +816,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiProgram.FullName)
 		If Not blnSuccess Then Return False
 
-	
+
 		' Store paths to key DLLs in ioToolFiles
 		Dim ioToolFiles = New List(Of FileInfo)
 		ioToolFiles.Add(fiProgram)

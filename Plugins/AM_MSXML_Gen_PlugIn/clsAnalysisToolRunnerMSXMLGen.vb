@@ -111,75 +111,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 	End Function
 
 	''' <summary>
-	''' Copy the MSXmlFile to the cache folder
-	''' </summary>
-	''' <param name="fiMSXmlFile"></param>
-	''' <returns>The full path to the remote cached file; empty string if an error</returns>
-	''' <remarks></remarks>
-	Private Function CopyMSXmlToCache(ByVal fiMSXmlFile As FileInfo) As String
-
-		Try
-			mMSXmlCacheFolder.Refresh()
-			If Not mMSXmlCacheFolder.Exists Then
-				LogError("MSXmlCache folder not found: " & mMSXmlCacheFolder.FullName)
-				Return String.Empty
-			End If
-
-			' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
-			Dim outputFolderName = m_jobParams.GetJobParameter("OutputFolderName", String.Empty)
-			If String.IsNullOrEmpty(outputFolderName) Then
-				LogError("OutputFolderName is empty; cannot construct MSXmlCache path")
-				Return String.Empty
-			End If
-
-			' Remove the dataset ID portion from the output folder
-			Dim msXmlToolNameVersionFolder As String
-			Try
-				msXmlToolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(outputFolderName)
-			Catch ex As Exception
-				LogError("OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" & outputFolderName & "); cannot construct MSXmlCache path")
-				Return String.Empty
-			End Try
-
-			' Determine the year_quarter text for this dataset
-			Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-			If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
-
-			Dim strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
-			If String.IsNullOrEmpty(strDatasetYearQuarter) Then
-				LogError("Unable to determine DatasetYearQuarter using the DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path")
-				Return String.Empty
-			End If
-
-			Dim remoteCacheFilePath = String.Empty
-
-			Dim success = CopyFileToServerCache(
-			  mMSXmlCacheFolder.FullName,
-			  msXmlToolNameVersionFolder,
-			  fiMSXmlFile.FullName,
-			  strDatasetYearQuarter,
-			  purgeOldFilesIfNeeded:=False,
-			  remoteCacheFilePath:=remoteCacheFilePath)
-
-			If Not success Then
-				If String.IsNullOrEmpty(m_message) Then
-					LogError("CopyFileToServerCache returned false copying the MsXML file to " & Path.Combine(mMSXmlCacheFolder.FullName, msXmlToolNameVersionFolder))
-					Return String.Empty
-				End If
-			End If
-
-			Return remoteCacheFilePath
-
-		Catch ex As Exception
-			m_message = "Exception in CopyMSXmlToCache"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return String.Empty
-		End Try
-
-
-	End Function
-
-	''' <summary>
 	''' Generate the mzXML or mzML file
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -312,7 +243,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Return fiGZippedFile
 
 		Catch ex As Exception
-			m_message = "Exception in CopyMSXmlToCache"
+			m_message = "Exception in GZipMSXmlFile"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
 			Return Nothing
 		End Try
@@ -362,10 +293,11 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 			If storeInCache Then
 				' Copy the .mzXML or .mzML file to the MSXML cache
-				Dim remoteCacheFilePath = CopyMSXmlToCache(fiMSXmlFile)
-				If String.IsNullOrEmpty(remoteCacheFilePath) Then
+				Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMSXmlFile.FullName, purgeOldFilesIfNeeded:=True)
+
+				If String.IsNullOrEmpty(remoteCachefilePath) Then
 					If String.IsNullOrEmpty(m_message) Then
-						LogError("CopyMSXmlToCache returned false")
+						LogError("CopyFileToServerCache returned false for " & fiMSXmlFile.Name)
 					End If
 					Return False
 				End If
@@ -388,11 +320,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 	End Function
 
-	Private Sub LogError(ByVal errorMessage As String)
-		m_message = errorMessage
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-	End Sub
-		
 	''' <summary>
 	''' Stores the tool version info in the database
 	''' </summary>

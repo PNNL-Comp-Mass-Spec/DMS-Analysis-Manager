@@ -34,8 +34,9 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 	Protected mResultsFilePath As String
 	Protected mPbfFormatVersion As String
 
-	Protected WithEvents CmdRunner As clsRunDosProgram
+	Protected mMSXmlCacheFolder As DirectoryInfo
 
+	Protected WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -71,7 +72,15 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 			' Store the PBFGen version info in the database
 			If Not StoreToolVersionInfo(progLoc) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining PBFGen version"
+				LogError("Error determining PBFGen version")
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
+			Dim msXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
+			mMSXmlCacheFolder = New DirectoryInfo(msXMLCacheFolderPath)
+
+			If Not mMSXmlCacheFolder.Exists Then
+				LogError("MSXmlCache folder not found: " & msXMLCacheFolderPath)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -107,13 +116,35 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 					End Select
 
 					If Not blnSuccess Then
-						m_message = "Unrecognized PbfFormatVersion.  Create a new Settings file with PbfFormatVersion " & mPbfFormatVersion
-						m_message &= "; next, delete the job from the DMS_Pipeline database then update the job to use the new settings file"
+						LogError(
+						  "Unrecognized PbfFormatVersion.  Either create a new Settings file with PbfFormatVersion " & mPbfFormatVersion &
+						  " or update the version listed in the current, default settings file;" &
+						  " next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)")
+					Else
+
+						' Copy the .pbf file to the MSXML cache
+						Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiResultsFile.FullName, purgeOldFilesIfNeeded:=True)
+
+						If String.IsNullOrEmpty(remoteCachefilePath) Then
+							If String.IsNullOrEmpty(m_message) Then
+								LogError("CopyFileToServerCache returned false for " & fiResultsFile.Name)
+							End If
+							blnSuccess = False
+						End If
+
+						' Create the _CacheInfo.txt file
+						Dim cacheInfoFilePath = fiResultsFile.FullName & "_CacheInfo.txt"
+						Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+							swOutFile.WriteLine(remoteCachefilePath)
+						End Using
+
+						m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
+
 					End If
 
 				Else
 					If String.IsNullOrEmpty(m_message) Then
-						m_message = "PBF_Gen results file not found: " & fiResultsFile.Name
+						LogError("PBF_Gen results file not found: " & fiResultsFile.Name)
 						blnSuccess = False
 					End If
 				End If
@@ -121,17 +152,17 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 			m_progress = PROGRESS_PCT_COMPLETE
 
-			'Stop the job timer
+			' Stop the job timer
 			m_StopTime = DateTime.UtcNow
 
-			'Add the current job data to the summary file
+			' Add the current job data to the summary file
 			If Not UpdateSummaryFile() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
 			End If
 
 			CmdRunner = Nothing
 
-			'Make sure objects are released
+			' Make sure objects are released
 			Threading.Thread.Sleep(2000)		'2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
@@ -236,7 +267,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		Return 0
 
 	End Function
-	
+
 	''' <summary>
 	''' Parse the PBFGen console output file to track the search progress
 	''' </summary>
@@ -313,19 +344,6 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
 	End Sub
 
-	Private Sub ReportError(ByVal errorMessage As String)
-		ReportError(errorMessage, String.Empty)
-	End Sub
-
-	Private Sub ReportError(ByVal errorMessage As String, ByVal detailedMessage As String)
-		m_message = String.Copy(errorMessage)
-		If String.IsNullOrEmpty(detailedMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-		End If
-	End Sub
-
 	Protected Function StartPBFFileCreation(ByVal progLoc As String) As Boolean
 
 		Dim CmdStr As String
@@ -337,7 +355,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
 
 		If eRawDataType <> clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-			m_message = "PBF generation presently only supports Thermo .Raw files"
+			LogError("PBF generation presently only supports Thermo .Raw files")
 			Return False
 		End If
 
@@ -347,7 +365,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 		' Cache the size of the instrument data file
 		Dim fiInstrumentFile = New FileInfo(rawFilePath)
 		If Not fiInstrumentFile.Exists Then
-			m_message = "Instrument data not found: " & rawFilePath
+			LogError("Instrument data not found: " & rawFilePath)
 			Return False
 		End If
 
