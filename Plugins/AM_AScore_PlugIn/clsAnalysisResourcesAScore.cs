@@ -12,7 +12,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         public override IJobParams.CloseOutType GetResources()
         {
-			// WARNING: AScore access the files over the network, retrieving the files using Mage
+			// WARNING: AScore accesses the files over the network, retrieving the files using Mage
 			//          If the files have been purged, they may not be accessible 
 			//          (Mage supports retrieving files from Aurora or MyEmsl, 
 			//           but this has not be tested as of July 16, 2014)

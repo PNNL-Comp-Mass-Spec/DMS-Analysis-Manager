@@ -385,6 +385,7 @@ namespace AnalysisManager_AScore_PlugIn
 			extractionParms.KeepAllResults = m_jobParams.GetJobParam("KeepAllResults", "Yes");
 			extractionParms.ResultFilterSetID = m_jobParams.GetJobParam("ResultFilterSetID", "All Pass");
 			extractionParms.MSGFCutoff = m_jobParams.GetJobParam("MSGFCutoff", "All Pass");
+
 			return extractionParms;
 		}
 
