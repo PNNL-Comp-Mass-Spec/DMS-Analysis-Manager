@@ -455,6 +455,21 @@ Public Class clsGlobal
 
 		Return New KeyValuePair(Of String, String)(strKey, strValue)
 	End Function
+	
+	''' <summary>
+	''' Compare two strings (not case sensitive)
+	''' </summary>
+	''' <param name="strText1"></param>
+	''' <param name="strText2"></param>
+	''' <returns>True if they match; false if not</returns>
+	''' <remarks></remarks>
+	Public Shared Function IsMatch(ByVal strText1 As String, ByVal strText2 As String) As Boolean
+		If String.Compare(strText1, strText2, True) = 0 Then
+			Return True
+		Else
+			Return False
+		End If
+	End Function
 
 	''' <summary>
 	''' Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames

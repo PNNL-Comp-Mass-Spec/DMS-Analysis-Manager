@@ -229,11 +229,29 @@ Public Class clsAnalysisToolRunnerBase
 	''' <summary>
 	''' Computes the incremental progress that has been made beyond CurrentTaskProgressAtStart, based on the number of items processed and the next overall progress level
 	''' </summary>
+	''' <param name="currentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
+	''' <param name="currentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
+	''' <param name="subTaskProgress">Progress of the current subtask (value between 0 and 100)</param>
+	''' <returns>Overall progress (value between 0 and 100)</returns>
+	''' <remarks></remarks>
+	Public Shared Function ComputeIncrementalProgress(ByVal currentTaskProgressAtStart As Single, ByVal currentTaskProgressAtEnd As Single, ByVal subTaskProgress As Single) As Single
+		If subTaskProgress < 0 Then
+			Return currentTaskProgressAtStart
+		ElseIf subTaskProgress >= 100 Then
+			Return currentTaskProgressAtEnd
+		Else
+			Return CSng(currentTaskProgressAtStart + (subTaskProgress / 100.0) * (currentTaskProgressAtEnd - currentTaskProgressAtStart))
+		End If
+	End Function
+
+	''' <summary>
+	''' Computes the incremental progress that has been made beyond CurrentTaskProgressAtStart, based on the number of items processed and the next overall progress level
+	''' </summary>
 	''' <param name="CurrentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
 	''' <param name="CurrentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
 	''' <param name="CurrentTaskItemsProcessed">Number of items processed so far during this subtask</param>
 	''' <param name="CurrentTaskTotalItems">Total number of items to process during this subtask</param>
-	''' <returns></returns>
+	''' <returns>Overall progress (value between 0 and 100)</returns>
 	''' <remarks></remarks>
 	Public Shared Function ComputeIncrementalProgress(ByVal CurrentTaskProgressAtStart As Single, ByVal CurrentTaskProgressAtEnd As Single, ByVal CurrentTaskItemsProcessed As Integer, ByVal CurrentTaskTotalItems As Integer) As Single
 		If CurrentTaskTotalItems < 1 Then
@@ -245,17 +263,85 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 	End Function
 
+
 	''' <summary>
 	''' Copies a file (typically a mzXML or mzML file) to a server cache folder
-	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2, based on the DatasetStoragePath job parameter
+	''' Will store the file in a subfolder based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
+	''' </summary>
+	''' <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
+	''' <param name="sourceFilePath">Path to the data file</param>
+	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
+	''' <returns>Path to the remotely cached file; empty path if an error</returns>
+	Protected Function CopyFileToServerCache(ByVal cacheFolderPath As String, ByVal sourceFilePath As String, ByVal purgeOldFilesIfNeeded As Boolean) As String
+
+		Try
+			' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
+			Dim outputFolderName = m_jobParams.GetJobParameter("OutputFolderName", String.Empty)
+			If String.IsNullOrEmpty(outputFolderName) Then
+				LogError("OutputFolderName is empty; cannot construct MSXmlCache path")
+				Return String.Empty
+			End If
+
+			' Remove the dataset ID portion from the output folder
+			Dim toolNameVersionFolder As String
+			Try
+				toolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(outputFolderName)
+			Catch ex As Exception
+				LogError("OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" & outputFolderName & "); cannot construct MSXmlCache path")
+				Return String.Empty
+			End Try
+
+			' Determine the year_quarter text for this dataset
+			Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
+			If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+
+			Dim strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
+			If String.IsNullOrEmpty(strDatasetYearQuarter) Then
+				LogError("Unable to determine DatasetYearQuarter using the DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path")
+				Return String.Empty
+			End If
+
+			Dim remoteCacheFilePath = String.Empty
+
+			Dim success = CopyFileToServerCache(
+			  cacheFolderPath,
+			  toolNameVersionFolder,
+			  sourceFilePath,
+			  strDatasetYearQuarter,
+			  purgeOldFilesIfNeeded:=purgeOldFilesIfNeeded,
+			  remoteCacheFilePath:=remoteCacheFilePath)
+
+			If Not success Then
+				If String.IsNullOrEmpty(m_message) Then
+					LogError("CopyFileToServerCache returned false copying the " & Path.GetExtension(sourceFilePath) & " file to " & Path.Combine(cacheFolderPath, toolNameVersionFolder))
+					Return String.Empty
+				End If
+			End If
+
+			Return remoteCacheFilePath
+
+		Catch ex As Exception
+			m_message = "Exception in CopyFileToServerCache"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+			Return String.Empty
+		End Try
+
+	End Function
+
+	''' <summary>
+	''' Copies a file (typically a mzXML or mzML file) to a server cache folder
+	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2
 	''' </summary>
 	''' <param name="strCacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
 	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="strSourceFilePath">Path to the data file</param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
-	''' <returns></returns>
-	''' <remarks>True if success, false if an error</remarks>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>
+	''' Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
+	''' If those parameters are not defined, then copies the file anyway
+	''' </remarks>
 	Protected Function CopyFileToServerCache(
 	  ByVal strCacheFolderPath As String,
 	  ByVal strSubfolderInTarget As String,
@@ -269,7 +355,7 @@ Public Class clsAnalysisToolRunnerBase
 
 	''' <summary>
 	''' Copies a file (typically a mzXML or mzML file) to a server cache folder
-	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2, based on the DatasetStoragePath job parameter
+	''' Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2
 	''' </summary>
 	''' <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
 	''' <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
@@ -277,8 +363,11 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="datasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
 	''' <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
-	''' <returns></returns>
-	''' <remarks>True if success, false if an error</remarks>
+	''' <returns>True if success, false if an error</returns>
+	''' <remarks>
+	''' Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
+	''' If those parameters are not defined, then copies the file anyway
+	''' </remarks>
 	Protected Function CopyFileToServerCache(
 	  ByVal cacheFolderPath As String,
 	  ByVal subfolderInTarget As String,
@@ -296,64 +385,64 @@ Public Class clsAnalysisToolRunnerBase
 
 			If Not diCacheFolder.Exists Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & cacheFolderPath)
-			Else
-
-				Dim diTargetFolder As DirectoryInfo
-
-				' Define the target folder
-				If String.IsNullOrEmpty(subfolderInTarget) Then
-					diTargetFolder = diCacheFolder
-				Else
-					diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget))
-					If Not diTargetFolder.Exists Then diTargetFolder.Create()
-				End If
-
-				If String.IsNullOrEmpty(datasetYearQuarter) Then
-					' Determine the year_quarter text for this dataset
-					Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-					If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
-
-					datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
-				End If
-
-				If Not String.IsNullOrEmpty(datasetYearQuarter) Then
-					diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, datasetYearQuarter))
-					If Not diTargetFolder.Exists Then diTargetFolder.Create()
-				End If
-
-				m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
-
-				' Create the .hashcheck file
-				Dim strHashcheckFilePath As String
-				strHashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, blnComputeMD5Hash:=True)
-
-				If String.IsNullOrEmpty(strHashcheckFilePath) Then
-					m_message = "Error in CopyFileToServerCache: Hashcheck file was not created"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					Return False
-				End If
-
-				Dim fiTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
-
-				ResetTimestampForQueueWaitTimeLogging()
-				blnSuccess = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, True)
-
-				If Not blnSuccess Then
-					m_message = "CopyFileUsingLocks returned false copying " & Path.GetFileName(sourceFilePath) & " to " & fiTargetFile.FullName
-					Return False
-				End If
-
-				remoteCacheFilePath = fiTargetFile.FullName
-
-				' Copy over the .Hashcheck file
-				m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
-
-				If purgeOldFilesIfNeeded Then
-					Const spaceUsageThresholdGB As Integer = 3000
-					PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
-				End If
+				Return False
 			End If
 
+			Dim diTargetFolder As DirectoryInfo
+
+			' Define the target folder
+			If String.IsNullOrEmpty(subfolderInTarget) Then
+				diTargetFolder = diCacheFolder
+			Else
+				diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget))
+				If Not diTargetFolder.Exists Then diTargetFolder.Create()
+			End If
+
+			If String.IsNullOrEmpty(datasetYearQuarter) Then
+				' Determine the year_quarter text for this dataset
+				Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
+				If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+
+				datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath)
+			End If
+
+			If Not String.IsNullOrEmpty(datasetYearQuarter) Then
+				diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, datasetYearQuarter))
+				If Not diTargetFolder.Exists Then diTargetFolder.Create()
+			End If
+
+			m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
+
+			' Create the .hashcheck file
+			Dim strHashcheckFilePath As String
+			strHashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, blnComputeMD5Hash:=True)
+
+			If String.IsNullOrEmpty(strHashcheckFilePath) Then
+				m_message = "Error in CopyFileToServerCache: Hashcheck file was not created"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return False
+			End If
+
+			Dim fiTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
+
+			ResetTimestampForQueueWaitTimeLogging()
+			blnSuccess = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, True)
+
+			If Not blnSuccess Then
+				m_message = "CopyFileUsingLocks returned false copying " & Path.GetFileName(sourceFilePath) & " to " & fiTargetFile.FullName
+				Return False
+			End If
+
+			remoteCacheFilePath = fiTargetFile.FullName
+
+			' Copy over the .Hashcheck file
+			m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
+
+			If purgeOldFilesIfNeeded Then
+				Const spaceUsageThresholdGB As Integer = 3000
+				PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
+			End If
+			
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: " & ex.Message)
 			blnSuccess = False
@@ -1322,6 +1411,25 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 
 	End Function
+
+	''' <summary>
+	''' Update m_message with an error message and record the error in the manager's daily log file
+	''' </summary>
+	''' <param name="errorMessage"></param>
+	''' <remarks></remarks>
+	Protected Sub LogError(ByVal errorMessage As String)
+		m_message = errorMessage
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+	End Sub
+
+	Protected Sub LogError(ByVal errorMessage As String, ByVal detailedMessage As String)
+		m_message = String.Copy(errorMessage)
+		If String.IsNullOrEmpty(detailedMessage) Then
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+		Else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+		End If
+	End Sub
 
 	''' <summary>
 	''' Creates a results folder after analysis complete

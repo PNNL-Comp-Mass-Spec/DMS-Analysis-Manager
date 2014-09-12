@@ -2971,6 +2971,22 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+	Protected Function GetPBFFile() As IJobParams.CloseOutType
+
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting PBF file")
+
+		Dim errorMessage = String.Empty
+		Dim fileMissingFromCache = False
+
+		Dim success = RetrieveCachedPBFFile(errorMessage, fileMissingFromCache)
+		If Not success Then
+			Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION)
+		End If
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
 	Protected Function HandleMsXmlRetrieveFailure(
 	  ByVal fileMissingFromCache As Boolean,
 	  ByRef errorMessage As String,
@@ -3365,6 +3381,11 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 	End Function
+
+	Protected Sub LogError(ByVal errorMessage As String)
+		m_message = errorMessage
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+	End Sub
 
 	''' <summary>
 	''' Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
@@ -3950,6 +3971,23 @@ Public MustInherit Class clsAnalysisResources
 		Return RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, unzip, errorMessage, fileMissingFromCache)
 	End Function
 
+
+	''' <summary>
+	''' Retrieve the dataset's cached .PBF file from the MsXML Cache
+	''' </summary>
+	''' <param name="errorMessage">Output parameter: Error message</param>
+	''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+	''' <returns>True if success, false if an error or file not found</returns>
+	''' <remarks>
+	''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\proto-6\MSXML_Cache
+	''' InputFolderName should be in the form MSXML_Gen_1_93_367204
+	''' </remarks>
+	Protected Function RetrieveCachedPBFFile(<Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
+		Const unzip = False
+		Return RetrieveCachedMSXMLFile(DOT_PBF_EXTENSION, unzip, errorMessage, fileMissingFromCache)
+	End Function
+
+
 	''' <summary>
 	''' Retrieve the dataset's cached .mzML file from the MsXML Cache
 	''' </summary>
@@ -4038,7 +4076,7 @@ Public MustInherit Class clsAnalysisResources
 
 		errorMessage = String.Empty
 		If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
-			errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in" & sourceFolder & "; will re-generate it"
+			errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & sourceFolder & "; will re-generate it"
 			fileMissingFromCache = True
 			Return False
 		End If
@@ -4048,15 +4086,18 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
+		If fiSourceFile.Extension.ToLower() = DOT_GZ_EXTENSION Then
+			m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
 
-		If unzip Then
-			Dim zippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
+			If unzip Then
+				Dim localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
 
-			If Not m_IonicZipTools.GUnzipFile(zippedFile) Then
-				errorMessage = m_IonicZipTools.Message
-				Return False
+				If Not m_IonicZipTools.GUnzipFile(localZippedFile) Then
+					errorMessage = m_IonicZipTools.Message
+					Return False
+				End If
 			End If
+
 		End If
 
 		Return True
@@ -6193,61 +6234,6 @@ Public MustInherit Class clsAnalysisResources
 			If m_DebugLevel >= 1 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Completed splitting concatenated OUT file")
 			End If
-		End If
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Retrieves the .pbf file
-	''' </summary>
-	''' <returns>TRUE for success, FALSE for error</returns>
-	''' <remarks>If the .pbf file already exists in the working folder then will not re-copy it from the remote folder</remarks>
-	Public Function RetrievePBFFile() As Boolean
-
-		Dim TargetFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + DOT_PBF_EXTENSION)
-
-		If Not File.Exists(TargetFilePath) Then
-
-			Dim SourceFilePath As String
-			Dim strErrorMessage As String = String.Empty
-
-			' Find the PBF file
-			SourceFilePath = FindPBFFile(strErrorMessage)
-
-			If String.IsNullOrEmpty(SourceFilePath) Then
-				m_message = strErrorMessage
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-				If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
-					End If
-				Else
-					Return False
-				End If
-			Else
-
-				Dim fiSourceFile As FileInfo = New FileInfo(SourceFilePath)
-
-				' Copy the file locally
-				If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-					m_message = "Error copying " + fiSourceFile.Name
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName)
-					End If
-					Return False
-				Else
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
-					End If
-				End If
-			End If
-
 		End If
 
 		Return True
