@@ -24,6 +24,11 @@ Public MustInherit Class clsAnalysisResources
 #Region "Constants"
 	Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
 	Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
+
+	''' <summary>
+	''' Maximum number of attempts to find a folder or file
+	''' </summary>
+	''' <remarks></remarks>
 	Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
 
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
@@ -446,7 +451,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the specified files, and instead creates a series of files named s*.zip_StoragePathInfo.txt, and each file's first line will be the full path to the source file</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Private Function CopySFoldersToWorkDir(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Private Function CopySFoldersToWorkDir(ByVal createStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder:=True)
 
@@ -621,7 +626,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-	  ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	  ByVal createStoragePathInfoOnly As Boolean) As Boolean
 
 		Const MaxCopyAttempts As Integer = 3
 		Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly, MaxCopyAttempts)
@@ -644,7 +649,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-	  ByVal CreateStoragePathInfoOnly As Boolean, _
+	  ByVal createStoragePathInfoOnly As Boolean, _
 	  ByVal MaxCopyAttempts As Integer) As Boolean
 
 		Dim SourceFile As String = String.Empty
@@ -762,7 +767,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal InpFolder As String, _
 	  ByVal OutDir As String, _
 	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-	  ByVal CreateStoragePathInfoOnly As Boolean, _
+	  ByVal createStoragePathInfoOnly As Boolean, _
 	  ByVal MaxCopyAttempts As Integer) As Boolean
 
 
@@ -1152,8 +1157,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Private Function FileExistsWithRetry(ByVal FileName As String, ByVal RetryHoldoffSeconds As Integer, ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-		Const MaxAttempts As Integer = 3
-		Return FileExistsWithRetry(FileName, RetryHoldoffSeconds, eLogMsgTypeIfNotFound, MaxAttempts)
+		Const MAX_ATTEMPTS As Integer = 3
+		Return FileExistsWithRetry(FileName, RetryHoldoffSeconds, eLogMsgTypeIfNotFound, MAX_ATTEMPTS)
 
 	End Function
 
@@ -1163,35 +1168,41 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="FileName"></param>
 	''' <param name="RetryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
 	''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+	''' <param name="maxAttempts">Maximum number of attempts</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function FileExistsWithRetry(ByVal FileName As String, ByVal RetryHoldoffSeconds As Integer, ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels, ByVal MaxAttempts As Integer) As Boolean
+	Private Function FileExistsWithRetry(
+	  ByVal FileName As String,
+	  ByVal RetryHoldoffSeconds As Integer,
+	  ByVal eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
+	  ByVal maxAttempts As Integer) As Boolean
 
-		Dim RetryCount As Integer = MaxAttempts
-		If RetryCount < 1 Then RetryCount = 1
+		Dim retryCount As Integer = maxAttempts
+		If retryCount < 1 Then retryCount = 1
+		If retryCount > 10 Then retryCount = 10
 
 		If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
 		If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
-		While RetryCount > 0
+		While retryCount > 0
 			If File.Exists(FileName) Then
 				Return True
 			Else
 				If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
 					' Only log each failed attempt to find the file if eLogMsgTypeIfNotFound = ILogger.logMsgType.logError
 					' Otherwise, we won't log each failed attempt
-					Dim ErrMsg As String = "File " + FileName + " not found. Retry count = " + RetryCount.ToString
+					Dim ErrMsg As String = "File " + FileName + " not found. Retry count = " + retryCount.ToString
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, ErrMsg)
 				End If
-				RetryCount -= 1
-				If RetryCount > 0 Then
+				retryCount -= 1
+				If retryCount > 0 Then
 					Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
 				End If
 			End If
 		End While
 
-		'If we got to here, there were too many failures
-		If RetryCount < 1 Then
+		' If we got to here, there were too many failures
+		If retryCount < 1 Then
 			m_message = "File " + FileName + " could not be found after multiple retries"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
 			Return False
@@ -1526,6 +1537,20 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>The full path to the dataset file or folder</returns>
 	''' <remarks></remarks>
 	Protected Function FindDatasetFileOrFolder(<Out()> ByRef blnIsFolder As Boolean) As String
+		Return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, blnIsFolder)
+	End Function
+
+	''' <summary>
+	''' Determines the full path to the dataset file
+	''' Returns a folder path for data that is stored in folders (e.g. .D folders)
+	''' For instruments with multiple data folders, returns the path to the first folder
+	''' For instrument with multiple zipped data files, returns the dataset folder path
+	''' </summary>
+	''' <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
+	''' <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+	''' <returns>The full path to the dataset file or folder</returns>
+	''' <remarks></remarks>
+	Protected Function FindDatasetFileOrFolder(ByVal maxAttempts As Integer, <Out()> ByRef blnIsFolder As Boolean) As String
 
 		Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
 		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -1543,7 +1568,7 @@ Public MustInherit Class clsAnalysisResources
 					' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
 					'  we would pre-process the data beforehand to create MGF files
 					' The following call can be used to retrieve the files
-					strFileOrFolderPath = FindMGFFile()
+					strFileOrFolderPath = FindMGFFile(maxAttempts)
 				Else
 					' DeconTools_V2 now supports reading the .D files directly
 					' Call RetrieveDotDFolder() to copy the folder and all subfolders
@@ -1552,27 +1577,27 @@ Public MustInherit Class clsAnalysisResources
 				End If
 
 			Case eRawDataTypeConstants.AgilentQStarWiffFile			'Agilent/QSTAR TOF data
-				strFileOrFolderPath = FindDatasetFile(DOT_WIFF_EXTENSION)
+				strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_WIFF_EXTENSION)
 
 			Case eRawDataTypeConstants.ZippedSFolders			'FTICR data
 				strFileOrFolderPath = FindSFolders()
 				blnIsFolder = True
 
 			Case eRawDataTypeConstants.ThermoRawFile			'Finnigan ion trap/LTQ-FT data
-				strFileOrFolderPath = FindDatasetFile(DOT_RAW_EXTENSION)
+				strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_RAW_EXTENSION)
 
 			Case eRawDataTypeConstants.MicromassRawFolder			'Micromass QTOF data
 				strFileOrFolderPath = FindDotRawFolder()
 				blnIsFolder = True
 
 			Case eRawDataTypeConstants.UIMF			'IMS UIMF data
-				strFileOrFolderPath = FindDatasetFile(DOT_UIMF_EXTENSION)
+				strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_UIMF_EXTENSION)
 
 			Case eRawDataTypeConstants.mzXML
-				strFileOrFolderPath = FindDatasetFile(DOT_MZXML_EXTENSION)
+				strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZXML_EXTENSION)
 
 			Case eRawDataTypeConstants.mzML
-				strFileOrFolderPath = FindDatasetFile(DOT_MZML_EXTENSION)
+				strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZML_EXTENSION)
 
 			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' Call RetrieveDotDFolder() to copy the folder and all subfolders
@@ -1613,7 +1638,6 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-
 	''' <summary>
 	''' Finds a file named DatasetName.FileExtension
 	''' </summary>
@@ -1621,13 +1645,31 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>The full path to the folder; an empty string if no match</returns>
 	''' <remarks></remarks>
 	Protected Function FindDatasetFile(ByVal FileExtension As String) As String
+		Return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension)
+	End Function
+
+	''' <summary>
+	''' Finds a file named DatasetName.FileExtension
+	''' </summary>
+	''' <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
+	''' <param name="FileExtension"></param>
+	''' <returns>The full path to the folder; an empty string if no match</returns>
+	''' <remarks></remarks>
+	Protected Function FindDatasetFile(ByVal maxAttempts As Integer, ByVal FileExtension As String) As String
 
 		If Not FileExtension.StartsWith(".") Then
 			FileExtension = "." + FileExtension
 		End If
 
 		Dim DataFileName As String = m_DatasetName + FileExtension
-		Dim DSFolderPath As String = FindValidFolder(m_DatasetName, DataFileName)
+
+		Dim DSFolderPath As String = FindValidFolder(
+		  m_DatasetName,
+		  DataFileName,
+		  folderNameToFind:="",
+		  maxRetryCount:=maxAttempts,
+		  logFolderNotFound:=True,
+		  retrievingInstrumentDataFolder:=False)
 
 		If Not String.IsNullOrEmpty(DSFolderPath) Then
 			Return Path.Combine(DSFolderPath, DataFileName)
@@ -1710,12 +1752,12 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function FindMGFFile() As String
+	Protected Function FindMGFFile(ByVal maxAttempts As Integer) As String
 
 		' Data files are in a subfolder off of the main dataset folder
 		' Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION)
+		Dim ServerPath As String = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION, maxAttempts, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
 
 		Dim diServerFolder As DirectoryInfo = New DirectoryInfo(ServerPath)
 
@@ -1756,7 +1798,7 @@ Public MustInherit Class clsAnalysisResources
 		Const MSXmlFoldernameBase As String = "MSXML_Gen_1_"
 		Dim MzXMLFilename As String = m_DatasetName + ".mzXML"
 
-		Const MaxRetryCount As Integer = 1
+		Const MAX_ATTEMPTS As Integer = 1
 
 		Dim lstValuesToCheck As List(Of Integer)
 		lstValuesToCheck = New List(Of Integer)
@@ -1778,7 +1820,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Look for the MSXmlFolder
 			' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MaxRetryCount, False, retrievingInstrumentDataFolder:=False)
+			Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MAX_ATTEMPTS, False, retrievingInstrumentDataFolder:=False)
 
 			If String.IsNullOrEmpty(ServerPath) Then
 				Continue For
@@ -1987,7 +2029,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-	Protected Function FindValidFolder(ByVal DSName As String,
+	Protected Function FindValidFolder(
+	  ByVal DSName As String,
 	  ByVal FileNameToFind As String,
 	  ByVal FolderNameToFind As String,
 	  ByVal RetrievingInstrumentDataFolder As Boolean) As String
@@ -2086,9 +2129,15 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
 			End If
 
-			' Optional Temp Debug: Comment this out to disable checking MyEMSL (and thus speed things up)
 			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
-			
+
+			' Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
+#If DISABLE_MYEMSL_SEARCH Then
+			If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
+				lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
+			End If
+#End If
+
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
 			lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName))
 
@@ -2233,7 +2282,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="PathToCheck">Path to examine</param>
 	''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
 	''' <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-	''' <param name="MaxRetryCount">Maximum number of attempts</param>
+	''' <param name="maxAttempts">Maximum number of attempts</param>
 	''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 	''' <returns>Path to the most appropriate dataset folder</returns>
 	''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
@@ -2241,12 +2290,12 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal PathToCheck As String,
 	  ByVal FileNameToFind As String,
 	  ByVal FolderNameToFind As String,
-	  ByVal MaxRetryCount As Integer,
+	  ByVal maxAttempts As Integer,
 	  ByVal LogFolderNotFound As Boolean) As Boolean
 
 		' First check whether this folder exists
 		' Using a 1 second holdoff between retries
-		If Not FolderExistsWithRetry(PathToCheck, 1, MaxRetryCount, LogFolderNotFound) Then
+		If Not FolderExistsWithRetry(PathToCheck, 1, maxAttempts, LogFolderNotFound) Then
 			Return False
 		End If
 
@@ -2311,7 +2360,7 @@ Public MustInherit Class clsAnalysisResources
 
 				' Look for folder FolderNameToFind in this folder
 				' Note: Using a 1 second holdoff between retries
-				If Not FolderExistsWithRetry(Path.Combine(PathToCheck, FolderNameToFind), 1, MaxRetryCount, LogFolderNotFound) Then
+				If Not FolderExistsWithRetry(Path.Combine(PathToCheck, FolderNameToFind), 1, maxAttempts, LogFolderNotFound) Then
 					blnValidFolder = False
 				End If
 			End If
@@ -2345,9 +2394,9 @@ Public MustInherit Class clsAnalysisResources
 	' ''' </summary>
 	' ''' <param name="FolderName">Folder name to look for</param>
 	' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-	' ''' <param name="MaxRetryCount">Maximum number of attempts</param>
-	'Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer, ByVal MaxRetryCount As Integer) As Boolean
-	'	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, MaxRetryCount, True)
+	' ''' <param name="maxAttempts">Maximum number of attempts</param>
+	'Private Function FolderExistsWithRetry(ByVal FolderName As String, ByVal RetryHoldoffSeconds As Integer, ByVal maxAttempts As Integer) As Boolean
+	'	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, maxAttempts, True)
 	'End Function
 
 
@@ -2356,36 +2405,34 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <param name="FolderName">Folder name to look for</param>
 	''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-	''' <param name="MaxRetryCount">Maximum number of attempts</param>
+	''' <param name="maxAttempts">Maximum number of attempts</param>
 	''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Private Function FolderExistsWithRetry(ByVal FolderName As String, _
 	  ByVal RetryHoldoffSeconds As Integer, _
-	  ByVal MaxRetryCount As Integer, _
+	  ByVal maxAttempts As Integer, _
 	  ByVal LogFolderNotFound As Boolean) As Boolean
 
-		Dim RetryCount As Integer
-
-		If MaxRetryCount < 1 Then MaxRetryCount = 1
-		If MaxRetryCount > 10 Then MaxRetryCount = 10
-		RetryCount = MaxRetryCount
+		If maxAttempts < 1 Then maxAttempts = 1
+		If maxAttempts > 10 Then maxAttempts = 10
+		Dim retryCount = maxAttempts
 
 		If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS
 		If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
 
-		While RetryCount > 0
+		While retryCount > 0
 			If Directory.Exists(FolderName) Then
 				Return True
 			Else
 				If LogFolderNotFound Then
-					If m_DebugLevel >= 2 OrElse m_DebugLevel >= 1 AndAlso RetryCount = 0 Then
-						Dim ErrMsg As String = "Folder " + FolderName + " not found. Retry count = " + RetryCount.ToString
+					If m_DebugLevel >= 2 OrElse m_DebugLevel >= 1 AndAlso retryCount = 1 Then
+						Dim ErrMsg As String = "Folder " + FolderName + " not found. Retry count = " + retryCount.ToString
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, ErrMsg)
 					End If
 				End If
-				RetryCount -= 1
-				If RetryCount <= 0 Then
+				retryCount -= 1
+				If retryCount <= 0 Then
 					Return False
 				Else
 					Threading.Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))		'Wait RetryHoldoffSeconds seconds before retrying
@@ -2998,7 +3045,7 @@ Public MustInherit Class clsAnalysisResources
 			End If
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
-			Return IJobParams.CloseOutType.CLOSEOUT_MZML_FILE_NOT_IN_CACHE
+			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE
 		End If
 
 		If String.IsNullOrEmpty(errorMessage) Then
@@ -4063,9 +4110,16 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension & DOT_GZ_EXTENSION))
+		Dim sourceFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension)
+		Dim expectedFileDescription = resultFileExtension
+		If resultFileExtension <> DOT_PBF_EXTENSION Then
+			sourceFilePath &= DOT_GZ_EXTENSION
+			expectedFileDescription &= DOT_GZ_EXTENSION
+		End If
+
+		Dim fiSourceFile = New FileInfo(sourceFilePath)
 		If Not fiSourceFile.Exists Then
-			errorMessage = "Cached " & resultFileExtension & " file does not exist in " & sourceFolder & "; will re-generate it"
+			errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & sourceFolder & "; will re-generate it"
 			fileMissingFromCache = True
 			Return False
 		End If
@@ -4133,7 +4187,10 @@ Public MustInherit Class clsAnalysisResources
 		Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID, lstAdditionalJobs)
 	End Function
 
-	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(ByVal ConnectionString As String, ByVal DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
+	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(
+	  ByVal ConnectionString As String,
+	  ByVal DataPackageID As Integer,
+	  <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
 
 		Dim lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)
 		Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)
@@ -4574,7 +4631,7 @@ Public MustInherit Class clsAnalysisResources
 	  ByVal udtOptions As udtDataPackageRetrievalOptionsType) As Boolean
 
 		Dim blnSuccess As Boolean
-		Dim CreateStoragePathInfoOnly As Boolean
+		Dim createStoragePathInfoOnly As Boolean
 
 		Dim intCurrentJob As Integer
 		Dim lstDatasetsProcessed As SortedSet(Of String)
@@ -4590,9 +4647,9 @@ Public MustInherit Class clsAnalysisResources
 			m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)				' .gz file
 
 			If udtOptions.CreateJobPathFiles Then
-				CreateStoragePathInfoOnly = True
+				createStoragePathInfoOnly = True
 			Else
-				CreateStoragePathInfoOnly = False
+				createStoragePathInfoOnly = False
 			End If
 
 			lstDatasetsProcessed = New SortedSet(Of String)
@@ -4628,7 +4685,7 @@ Public MustInherit Class clsAnalysisResources
 						blnSuccess = False
 					Else
 						' mzXML or .mzML file exists; either retrieve it or create a StoragePathInfo file
-						blnSuccess = RetrieveMZXmlFileUsingSourceFile(CreateStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath)
+						blnSuccess = RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath)
 					End If
 
 					If blnSuccess Then
@@ -4653,7 +4710,7 @@ Public MustInherit Class clsAnalysisResources
 						' .mzXML file not found (or problem adding to the MyEMSL download queue)
 						' Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
 
-						If Not RetrieveSpectra(kvItem.Key.RawDataType, CreateStoragePathInfoOnly) Then
+						If Not RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts:=1) Then
 							m_message = "Error occurred retrieving instrument data file for job " & intCurrentJob
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "RetrieveDataPackageMzXMLFiles, " & m_message)
 							Return False
@@ -4661,8 +4718,8 @@ Public MustInherit Class clsAnalysisResources
 
 					End If
 
-						lstDatasetsProcessed.Add(kvItem.Key.Dataset)
-					End If
+					lstDatasetsProcessed.Add(kvItem.Key.Dataset)
+				End If
 
 				datasetsProcessed += 1
 
@@ -4741,11 +4798,24 @@ Public MustInherit Class clsAnalysisResources
 	''' Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
 	''' </summary>
 	''' <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
+	''' ''' <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveDatasetFile(ByVal FileExtension As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveDatasetFile(ByVal FileExtension As String, ByVal createStoragePathInfoOnly As Boolean) As Boolean
+		Return RetrieveDatasetFile(FileExtension, CreateStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
+	End Function
 
-		Dim DatasetFilePath As String = FindDatasetFile(FileExtension)
+	''' <summary>
+	''' Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
+	''' </summary>
+	''' <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
+	''' <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
+	''' <param name="maxAttempts">Maximum number of attempts</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveDatasetFile(ByVal FileExtension As String, ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer) As Boolean
+
+		Dim DatasetFilePath As String = FindDatasetFile(maxAttempts, FileExtension)
 		If String.IsNullOrEmpty(DatasetFilePath) Then
 			Return False
 		End If
@@ -4781,12 +4851,12 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveMgfFile(ByVal GetCdfAlso As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveMgfFile(ByVal GetCdfAlso As Boolean, ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer) As Boolean
 
 		Dim strMGFFilePath As String
 		Dim fiMGFFile As FileInfo
 
-		strMGFFilePath = FindMGFFile()
+		strMGFFilePath = FindMGFFile(maxAttempts)
 
 		If String.IsNullOrEmpty(strMGFFilePath) Then
 			m_message = "Source mgf file not found using FindMGFFile"
@@ -4803,14 +4873,14 @@ Public MustInherit Class clsAnalysisResources
 
 
 		'Do the copy
-		If Not CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
+		If Not CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
 
 		'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
 		If Not GetCdfAlso Then Return True
 
 		For Each fiCDFFile As FileInfo In fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION)
 			'Copy the .cdf file that was found
-			If CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts:=3) Then
+			If CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts:=3) Then
 				Return True
 			Else
 				If String.IsNullOrEmpty(m_message) Then
@@ -4898,7 +4968,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveMzXMLFileVerifyHash(ByVal fiSourceFile As FileInfo, ByVal HashcheckFilePath As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveMzXMLFileVerifyHash(ByVal fiSourceFile As FileInfo, ByVal HashcheckFilePath As String, ByVal createStoragePathInfoOnly As Boolean) As Boolean
 
 		Dim strTargetFilePath As String
 		Dim strErrorMessage As String = String.Empty
@@ -4955,7 +5025,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveScanStatsFiles(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveScanStatsFiles(ByVal createStoragePathInfoOnly As Boolean) As Boolean
 
 		Const RetrieveSICStatsFile As Boolean = False
 		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
@@ -4971,7 +5041,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveScanStatsFiles(ByVal CreateStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
+	Protected Function RetrieveScanStatsFiles(ByVal createStoragePathInfoOnly As Boolean, ByVal RetrieveScanStatsFile As Boolean, ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
 		Const RetrieveSICStatsFile As Boolean = False
 		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
@@ -4986,7 +5056,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
 	''' <returns>True if the file was found and retrieved, otherwise False</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveScanAndSICStatsFiles(ByVal RetrieveSICStatsFile As Boolean, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveScanAndSICStatsFiles(ByVal RetrieveSICStatsFile As Boolean, ByVal createStoragePathInfoOnly As Boolean) As Boolean
 		Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
 	End Function
 
@@ -5002,7 +5072,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(
 	  ByVal RetrieveSICStatsFile As Boolean,
-	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal createStoragePathInfoOnly As Boolean,
 	  ByVal RetrieveScanStatsFile As Boolean,
 	  ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
@@ -5023,7 +5093,7 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveScanAndSICStatsFiles(
 	  ByVal RetrieveSICStatsFile As Boolean,
-	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal createStoragePathInfoOnly As Boolean,
 	  ByVal RetrieveScanStatsFile As Boolean,
 	  ByVal RetrieveScanStatsExFile As Boolean,
 	  ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
@@ -5033,12 +5103,12 @@ Public MustInherit Class clsAnalysisResources
 
 		Dim BestScanStatsFileTransactionID As Int64 = 0
 
-		Const MaxRetryCount As Integer = 1
+		Const MAX_ATTEMPTS As Integer = 1
 
 		' Look for the MASIC Results folder
 		' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
 		ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX
-		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MaxRetryCount, logFolderNotFound:=False, retrievingInstrumentDataFolder:=False)
+		ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound:=False, retrievingInstrumentDataFolder:=False)
 
 		If String.IsNullOrEmpty(ServerPath) Then
 			m_message = "Dataset folder path not defined"
@@ -5129,7 +5199,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function RetrieveScanAndSICStatsFiles(
 	  ByVal MASICResultsFolderPath As String,
 	  ByVal RetrieveSICStatsFile As Boolean,
-	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal createStoragePathInfoOnly As Boolean,
 	  ByVal RetrieveScanStatsFile As Boolean,
 	  ByVal RetrieveScanStatsExFile As Boolean) As Boolean
 
@@ -5151,7 +5221,7 @@ Public MustInherit Class clsAnalysisResources
 	Protected Function RetrieveScanAndSICStatsFiles(
 	  ByVal MASICResultsFolderPath As String,
 	  ByVal RetrieveSICStatsFile As Boolean,
-	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal createStoragePathInfoOnly As Boolean,
 	  ByVal RetrieveScanStatsFile As Boolean,
 	  ByVal RetrieveScanStatsExFile As Boolean,
 	  ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
@@ -5263,7 +5333,7 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function RetrieveSICFileUNC(ByVal strFileToFind As String, ByVal MASICResultsFolderPath As String, ByVal CreateStoragePathInfoOnly As Boolean, ByVal MaxCopyAttempts As Integer, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
+	Protected Function RetrieveSICFileUNC(ByVal strFileToFind As String, ByVal MASICResultsFolderPath As String, ByVal createStoragePathInfoOnly As Boolean, ByVal MaxCopyAttempts As Integer, ByVal lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
 		Dim fiSourceFile = New FileInfo(Path.Combine(MASICResultsFolderPath, strFileToFind))
 
@@ -5292,8 +5362,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Protected Function RetrieveSpectra(ByVal RawDataType As String) As Boolean
-		Const CreateStoragePathInfoOnly As Boolean = False
-		Return RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly)
+		Const createStoragePathInfoOnly As Boolean = False
+		Return RetrieveSpectra(RawDataType, createStoragePathInfoOnly)
 	End Function
 
 	''' <summary>
@@ -5303,7 +5373,19 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal createStoragePathInfoOnly As Boolean) As Boolean
+		Return RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
+	End Function
+
+	''' <summary>
+	''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
+	''' </summary>
+	''' <param name="RawDataType">Type of data to copy</param>
+	''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
+	''' <param name="maxAttempts">Maximum number of attempts</param>
+	''' <returns>TRUE for success; FALSE for failure</returns>
+	''' <remarks></remarks>
+	Protected Function RetrieveSpectra(ByVal RawDataType As String, ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer) As Boolean
 
 		Dim blnSuccess As Boolean = False
 		Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -5320,33 +5402,33 @@ Public MustInherit Class clsAnalysisResources
 					' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
 					'  we would pre-process the data beforehand to create MGF files
 					' The following call can be used to retrieve the files
-					blnSuccess = RetrieveMgfFile(GetCdfAlso:=True, CreateStoragePathInfoOnly:=CreateStoragePathInfoOnly)
+					blnSuccess = RetrieveMgfFile(GetCdfAlso:=True, createStoragePathInfoOnly:=createStoragePathInfoOnly, maxAttempts:=maxAttempts)
 				Else
 					' DeconTools_V2 now supports reading the .D files directly
 					' Call RetrieveDotDFolder() to copy the folder and all subfolders
-					blnSuccess = RetrieveDotDFolder(CreateStoragePathInfoOnly, blnSkipBAFFiles:=True)
+					blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles:=True)
 				End If
 
 			Case eRawDataTypeConstants.AgilentQStarWiffFile			'Agilent/QSTAR TOF data
-				blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.ZippedSFolders			'FTICR data
-				blnSuccess = RetrieveSFolders(CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveSFolders(CreateStoragePathInfoOnly, maxAttempts)
 
-			Case eRawDataTypeConstants.ThermoRawFile			'Finnigan ion trap/LTQ-FT data
-				blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly)
+			Case eRawDataTypeConstants.ThermoRawFile			'Finnigan ion trap/LTQ-FT data				
+				blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.MicromassRawFolder			'Micromass QTOF data
-				blnSuccess = RetrieveDotRawFolder(CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveDotRawFolder(CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.UIMF			'IMS UIMF data
-				blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.mzXML
-				blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.mzML
-				blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, CreateStoragePathInfoOnly)
+				blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
 
 			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' Call RetrieveDotDFolder() to copy the folder and all subfolders
@@ -5363,7 +5445,7 @@ Public MustInherit Class clsAnalysisResources
 					blnSkipBAFFiles = True
 				End If
 
-				blnSuccess = RetrieveDotDFolder(CreateStoragePathInfoOnly, blnSkipBAFFiles)
+				blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles)
 
 			Case eRawDataTypeConstants.BrukerMALDIImaging
 				blnSuccess = RetrieveBrukerMALDIImagingFolders(UnzipOverNetwork:=True)
@@ -5388,7 +5470,7 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveDotDFolder(ByVal CreateStoragePathInfoOnly As Boolean, ByVal blnSkipBAFFiles As Boolean) As Boolean
+	Protected Function RetrieveDotDFolder(ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer, ByVal blnSkipBAFFiles As Boolean) As Boolean
 
 		Dim objFileNamesToSkip As List(Of String)
 
@@ -5397,7 +5479,7 @@ Public MustInherit Class clsAnalysisResources
 			objFileNamesToSkip.Add("analysis.baf")
 		End If
 
-		Return RetrieveDotXFolder(DOT_D_EXTENSION, CreateStoragePathInfoOnly, objFileNamesToSkip)
+		Return RetrieveDotXFolder(DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, objFileNamesToSkip)
 	End Function
 
 	''' <summary>
@@ -5405,8 +5487,8 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Protected Function RetrieveDotRawFolder(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
-		Return RetrieveDotXFolder(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, New List(Of String))
+	Protected Function RetrieveDotRawFolder(ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer) As Boolean
+		Return RetrieveDotXFolder(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, maxAttempts, New List(Of String))
 	End Function
 
 	''' <summary>
@@ -5417,7 +5499,8 @@ Public MustInherit Class clsAnalysisResources
 	''' <remarks></remarks>
 	Protected Function RetrieveDotXFolder(
 	  ByVal FolderExtension As String,
-	  ByVal CreateStoragePathInfoOnly As Boolean,
+	  ByVal createStoragePathInfoOnly As Boolean,
+	  ByVal maxAttempts As Integer,
 	  ByVal objFileNamesToSkip As List(Of String)) As Boolean
 
 		'Copies a data folder ending in FolderExtension to the working directory
@@ -5750,7 +5833,7 @@ Public MustInherit Class clsAnalysisResources
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Private Function RetrieveSFolders(ByVal CreateStoragePathInfoOnly As Boolean) As Boolean
+	Private Function RetrieveSFolders(ByVal createStoragePathInfoOnly As Boolean, ByVal maxAttempts As Integer) As Boolean
 
 		Dim ZipFiles() As String
 		Dim DSWorkFolder As String
@@ -5765,7 +5848,13 @@ Public MustInherit Class clsAnalysisResources
 
 			'First Check for the existence of a 0.ser Folder
 			'If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
-			Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "", BRUKER_ZERO_SER_FOLDER, RetrievingInstrumentDataFolder:=True)
+			Dim DSFolderPath As String = FindValidFolder(
+			  m_DatasetName,
+			  fileNameToFind:="",
+			  folderNameToFind:=BRUKER_ZERO_SER_FOLDER,
+			  maxRetryCount:=maxAttempts,
+			  logFolderNotFound:=True,
+			  retrievingInstrumentDataFolder:=True)
 
 			If Not String.IsNullOrEmpty(DSFolderPath) Then
 				Dim diSourceFolder As DirectoryInfo
@@ -5775,7 +5864,7 @@ Public MustInherit Class clsAnalysisResources
 				diSourceFolder = New DirectoryInfo(Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER))
 
 				If diSourceFolder.Exists Then
-					If CreateStoragePathInfoOnly Then
+					If createStoragePathInfoOnly Then
 						If CreateStoragePathInfoFile(diSourceFolder.FullName, m_WorkingDir + "\") Then
 							Return True
 						Else
@@ -5803,12 +5892,12 @@ Public MustInherit Class clsAnalysisResources
 
 			'If the 0.ser folder does not exist, unzip the zipped s-folders
 			'Copy the zipped s-folders from archive to work directory
-			If Not CopySFoldersToWorkDir(CreateStoragePathInfoOnly) Then
+			If Not CopySFoldersToWorkDir(createStoragePathInfoOnly) Then
 				'Error messages have already been logged, so just exit
 				Return False
 			End If
 
-			If CreateStoragePathInfoOnly Then
+			If createStoragePathInfoOnly Then
 				' Nothing was copied locally, so nothing to unzip
 				Return True
 			End If

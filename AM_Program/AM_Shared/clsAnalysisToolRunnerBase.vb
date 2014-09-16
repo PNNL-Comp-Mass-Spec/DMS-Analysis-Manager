@@ -1728,7 +1728,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal spaceUsageThresholdGB As Integer)
 
-		Const PURGE_INTERVAL_MINUTES As Integer = 10
+		Const PURGE_INTERVAL_MINUTES As Integer = 30
 		Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
 
 		Dim diCacheFolder As DirectoryInfo
@@ -1748,29 +1748,50 @@ Public Class clsAnalysisToolRunnerBase
 			If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
 				Exit Sub
 			End If
-			dtLastCheck = DateTime.UtcNow
-
 			diCacheFolder = New DirectoryInfo(strCacheFolderPath)
 
-			If diCacheFolder.Exists Then
-				' Make a list of all of the files in diCacheFolder
-
-				For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
-
-					If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
-						Dim strDataFilePath As String
-						strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
-
-						Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
-
-						If fiDataFile.Exists Then
-							lstDataFiles.Add(fiDataFile.LastWriteTimeUtc, fiDataFile)
-
-							dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
-						End If
-					End If
-				Next
+			If Not diCacheFolder.Exists Then
+				Exit Sub
 			End If
+
+			' Look for a purge check file
+			Dim fiPurgeCheckFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"))
+			If fiPurgeCheckFile.Exists Then
+				If DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+					Exit Sub
+				End If
+			End If
+
+			' Create / update the purge check file
+			Try
+				Using swPurgeCheckFile = New StreamWriter(New FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
+					swPurgeCheckFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
+				End Using
+
+			Catch ex As Exception
+				' Likely another manager tried to update the file at the same time; ignore the error
+			End Try
+
+			dtLastCheck = DateTime.UtcNow
+
+			' Make a list of all of the hashcheck files in diCacheFolder
+
+			For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
+
+				If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
+					Dim strDataFilePath As String
+					strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
+
+					Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
+
+					If fiDataFile.Exists Then
+						lstDataFiles.Add(fiDataFile.LastWriteTimeUtc, fiDataFile)
+
+						dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
+					End If
+				End If
+			Next
+
 
 			If dblTotalSizeMB / 1024.0 > spaceUsageThresholdGB Then
 				' Purge files until the space usage falls below the threshold

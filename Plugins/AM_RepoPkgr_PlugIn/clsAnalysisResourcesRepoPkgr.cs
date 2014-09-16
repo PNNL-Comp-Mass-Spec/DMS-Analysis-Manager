@@ -44,7 +44,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
 
 			if (includeMzXmlFiles)
-				FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs);
+			{
+				var lstAllJobs = new List<udtDataPackageJobInfoType>();
+				lstAllJobs.AddRange(lstDataPackagePeptideHitJobs);
+
+				if (lstAdditionalJobs != null)
+					lstAllJobs.AddRange(lstAdditionalJobs);
+
+				FindMissingMzXmlFiles(lstAllJobs);
+			}
 
 			if (success)
 				return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
@@ -154,7 +162,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 				// Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
 				// Therefore, we need to check that strRawFilePath actually exists
-				string strRawFilePath = FindDatasetFileOrFolder(out blnIsFolder);
+				string strRawFilePath = FindDatasetFileOrFolder(1, out blnIsFolder);
 
 				if (!strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
 				{

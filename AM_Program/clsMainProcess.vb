@@ -290,7 +290,6 @@ Public Class clsMainProcess
 					' However, only reload every 2 minutes
 					If Not UpdateManagerSettings(dtLastConfigDBUpdate, 2) Then
 						' Error retrieving settings from the manager control DB
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 						Exit Sub
 					End If
 
@@ -311,7 +310,6 @@ Public Class clsMainProcess
 
 					If Me.TraceMode Then ShowTraceMessage("Manager inactive: " & strManagerDisableReason)
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager inactive: " & strManagerDisableReason)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 					Exit Sub
 				End If
 
@@ -320,7 +318,6 @@ Public Class clsMainProcess
 					If Me.TraceMode Then ShowTraceMessage("Manager update is required, closing manager")
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager update is required")
 					m_MgrSettings.AckManagerUpdateRequired()
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 					UpdateStatusIdle("Manager update is required")
 					Exit Sub
 				End If
@@ -354,7 +351,6 @@ Public Class clsMainProcess
 				If StatusFlagFileError() Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
 					UpdateStatusFlagFileExists()
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 					Exit Sub
 				End If
 
@@ -392,6 +388,7 @@ Public Class clsMainProcess
 				' Check whether the computer is likely to install the monthly Windows Updates within the next few hours
 				Dim pendingWindowsUpdateMessage As String = String.Empty
 				If WindowsUpdatesArePending(DateTime.Now, pendingWindowsUpdateMessage) Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage)
 					UpdateStatusIdle(pendingWindowsUpdateMessage)
 					Exit While
 				End If
@@ -402,8 +399,9 @@ Public Class clsMainProcess
 				Select Case TaskReturn
 					Case clsDBTask.RequestTaskResult.NoTaskFound
 						'No tasks found
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "No analysis jobs found")
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, "No analysis jobs found")
+						If m_DebugLevel >= 3 Then
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No analysis jobs found")
+						End If
 						blnRequestJobs = False
 						intErrorCount = 0
 						UpdateStatusIdle("No analysis jobs found")
@@ -503,7 +501,6 @@ Public Class clsMainProcess
 			End If
 
 			UpdateClose("Closing manager.")
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 		Catch Err As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Error encountered, " & _
 			 Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
@@ -605,7 +602,7 @@ Public Class clsMainProcess
 				End If
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
-				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_Resource.Message)
+				m_AnalysisTask.CloseTask(eToolRunnerResult, m_Resource.Message)
 
 				m_MgrErrorCleanup.CleanWorkDir()
 				UpdateStatusIdle("Error encountered: " & m_MostRecentErrorMessage)
@@ -1342,14 +1339,12 @@ Public Class clsMainProcess
 
 		If m_NeedToAbortProcessing Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Analysis manager has encountered a fatal error - aborting processing")
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 			Return True
 		End If
 
 		If Not m_StatusTools Is Nothing Then
 			If m_StatusTools.AbortProcessingNow Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Found file " & clsStatusFile.ABORT_PROCESSING_NOW_FILENAME & " - aborting processing")
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "===== Closing Analysis Manager =====")
 				Return True
 			End If
 		End If
@@ -1401,9 +1396,8 @@ Public Class clsMainProcess
 					UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally")
 				Else
 					'Unknown problem reading config file
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Error re-reading config file")
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error re-reading config file")
 				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Analysis Manager =====")
 				Return False
 			End If
 
