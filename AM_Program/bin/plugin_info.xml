@@ -332,6 +332,11 @@
 		Class="AnalysisManagerMSPathFinderPlugIn.clsAnalysisToolRunnerMSPathFinder" 
 		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="mz_refinery" 
+		Class="AnalysisManagerMzRefineryPlugIn.clsAnalysisToolRunnerMzRefinery" 
+		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -665,7 +670,12 @@
 		Tool="mspathfinder" 
 		Class="AnalysisManagerMSPathFinderPlugIn.clsAnalysisResourcesMSPathFinder" 
 		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" 
-	/>		
+	/>
+	<Resourcer 
+		Tool="mz_refinery" 
+		Class="AnalysisManagerMzRefineryPlugIn.clsAnalysisResourcesMzRefinery" 
+		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" 
+	/>			
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

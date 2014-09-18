@@ -1125,8 +1125,8 @@ Public Class clsAnalysisToolRunnerBase
 		progLoc = Path.Combine(progLoc, strExeName)
 
 		If Not File.Exists(progLoc) Then
-			m_message = "Cannot find " & strStepToolName & " program file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+			m_message = "Cannot find " & strStepToolName & " program file " & strExeName
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & progLoc)
 			Return String.Empty
 		End If
 
@@ -1728,7 +1728,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <remarks></remarks>
 	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal spaceUsageThresholdGB As Integer)
 
-		Const PURGE_INTERVAL_MINUTES As Integer = 30
+		Const PURGE_INTERVAL_MINUTES As Integer = 90
 		Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
 
 		Dim diCacheFolder As DirectoryInfo
@@ -1825,7 +1825,7 @@ Public Class clsAnalysisToolRunnerBase
 
 					End Try
 
-					If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB Then
+					If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95 Then
 						Exit For
 					End If
 				Next

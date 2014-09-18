@@ -329,6 +329,7 @@ Public Class clsMainProcess
 					' There was a problem deleting non result files with the last job.  Attempt to delete files again
 					If Not m_MgrErrorCleanup.CleanWorkDir() Then
 						If blnOneTaskStarted Then
+							If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & m_WorkDirPath)
 							m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
 						Else
@@ -342,12 +343,12 @@ Public Class clsMainProcess
 					m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
 				End If
 
-                ' Verify that the working directory exists
-                If Not VerifyWorkDir() Then
-                    Exit Sub
-                End If
+				' Verify that the working directory exists
+				If Not VerifyWorkDir() Then
+					Exit Sub
+				End If
 
-                ' Verify that an error hasn't left the the system in an odd state
+				' Verify that an error hasn't left the the system in an odd state
 				If StatusFlagFileError() Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Flag file exists - unable to perform any further analysis jobs")
 					UpdateStatusFlagFileExists()
@@ -393,11 +394,15 @@ Public Class clsMainProcess
 					Exit While
 				End If
 
+				If Me.TraceMode Then ShowTraceMessage("Requesting a new task from DMS_Pipeline")
+
 				'Get an analysis job, if any are available
 				Dim TaskReturn As clsAnalysisJob.RequestTaskResult
 				TaskReturn = m_AnalysisTask.RequestTask()
 				Select Case TaskReturn
 					Case clsDBTask.RequestTaskResult.NoTaskFound
+						If Me.TraceMode Then ShowTraceMessage("No tasks found")
+
 						'No tasks found
 						If m_DebugLevel >= 3 Then
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No analysis jobs found")
@@ -407,10 +412,15 @@ Public Class clsMainProcess
 						UpdateStatusIdle("No analysis jobs found")
 
 					Case clsDBTask.RequestTaskResult.ResultError
+						If Me.TraceMode Then ShowTraceMessage("Error requesting a task")
+
 						'There was a problem getting the task; errors were logged by RequestTaskResult
 						intErrorCount += 1
 
 					Case clsDBTask.RequestTaskResult.TaskFound
+
+						If Me.TraceMode Then ShowTraceMessage("Task found")
+
 						blnRequestJobs = True
 						TasksStartedCount += 1
 						intSuccessiveDeadLockCount = 0
@@ -433,6 +443,7 @@ Public Class clsMainProcess
 
 						Catch ex As Exception
 							' Something went wrong; errors likely were not logged by DoAnalysisJob
+							If Me.TraceMode Then ShowTraceMessage("Exception in DoAnalysisJob; closing job step task")
 
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " & _
 							 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
@@ -447,12 +458,17 @@ Public Class clsMainProcess
 						End Try
 
 					Case clsDBTask.RequestTaskResult.TooManyRetries
+						If Me.TraceMode Then ShowTraceMessage("Too many retries calling the stored procedure")
+
 						'There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
 						' Bump up LoopCount to the maximum to exit the loop
 						UpdateStatusIdle("Excessive retries requesting task")
 						LoopCount = MaxLoopCount
 
 					Case clsDBTask.RequestTaskResult.Deadlock
+
+						If Me.TraceMode Then ShowTraceMessage("Deadlock")
+
 						' A deadlock error occured
 						' Query the DB again, but only if we have not had 3 deadlock results in a row
 						intSuccessiveDeadLockCount += 1
@@ -463,17 +479,22 @@ Public Class clsMainProcess
 
 					Case Else
 						'Shouldn't ever get here
-						Dim MyErr As String = "clsMainProcess.DoAnalysis; Invalid request result: "
-						MyErr &= CInt(TaskReturn).ToString
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MyErr)
+						Dim errMsg As String = "clsMainProcess.DoAnalysis; Invalid request result: "
+						errMsg &= CInt(TaskReturn).ToString
+						If Me.TraceMode Then ShowTraceMessage(errMsg)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
 						Exit Sub
 				End Select
 
-				If NeedToAbortProcessing() Then Exit While
+				If NeedToAbortProcessing() Then
+					If Me.TraceMode Then ShowTraceMessage("Need to abort processing")
+					Exit While
+				End If
 				LoopCount += 1
 
-				'if the only problem was deleting non result files, we want to stop the manager
+				' If the only problem was deleting non result files, we want to stop the manager
 				If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
+					If Me.TraceMode Then ShowTraceMessage("Error deleting files flag file")
 					blnErrorDeletingFilesFlagFile = True
 					LoopCount = MaxLoopCount
 				End If
@@ -500,6 +521,7 @@ Public Class clsMainProcess
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "Analysis complete for all available jobs")
 			End If
 
+			If Me.TraceMode Then ShowTraceMessage("Closing the manager")
 			UpdateClose("Closing manager.")
 		Catch Err As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Error encountered, " & _
@@ -518,12 +540,14 @@ Public Class clsMainProcess
 	Private Function DoAnalysisJob() As Boolean
 
 		Dim eToolRunnerResult As IJobParams.CloseOutType
-		Dim JobNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0)
-		Dim StepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
-		Dim Dataset As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
-		Dim JobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
+		Dim jobNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0)
+		Dim stepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
+		Dim datasetName As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
+		Dim jobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
 
 		Dim blnRunToolError As Boolean = False
+
+		If Me.TraceMode Then ShowTraceMessage("Processing job " & jobNum & ", " & jobToolDescription)
 
 		'Initialize summary and status files
 		m_SummaryFile.Clear()
@@ -533,14 +557,14 @@ Public Class clsMainProcess
 		End If
 
 		' Update the cached most recent job info
-		m_MostRecentJobInfo = ConstructMostRecentJobInfoText(DateTime.Now.ToString(), JobNum, Dataset, JobToolDescription)
+		m_MostRecentJobInfo = ConstructMostRecentJobInfoText(DateTime.Now.ToString(), jobNum, datasetName, jobToolDescription)
 
 		With m_StatusTools
 			.TaskStartTime = DateTime.UtcNow
-			.Dataset = Dataset
-			.JobNumber = JobNum
-			.JobStep = StepNum
-			.Tool = JobToolDescription
+			.Dataset = datasetName
+			.JobNumber = jobNum
+			.JobStep = stepNum
+			.Tool = jobToolDescription
 			.MgrName = m_MgrName
 			.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, True)
 		End With
@@ -548,7 +572,7 @@ Public Class clsMainProcess
 		' Note: The format of the following text is important; be careful about changing it
 		' In particular, function DetermineRecentErrorMessages in clsMainProcess looks for log entries
 		'   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & JobNum & ", Dataset " & Dataset & ", Tool " & JobToolDescription)
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName & ", Tool " & jobToolDescription)
 
 		If m_DebugLevel >= 2 Then
 			' Log the debug level value whenever the debug level is 2 or higher
@@ -557,7 +581,8 @@ Public Class clsMainProcess
 
 		'Create an object to manage the job resources
 		If Not SetResourceObject() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to SetResourceObject, job " & JobNum & ", Dataset " & Dataset)
+			If Me.TraceMode Then ShowTraceMessage("Unable to set the Resource object; closing job step task")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to set the Resource object, job " & jobNum & ", Dataset " & datasetName)
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object")
 			m_MgrErrorCleanup.CleanWorkDir()
 			UpdateStatusIdle("Error encountered: Unable to set resource object")
@@ -566,7 +591,8 @@ Public Class clsMainProcess
 
 		'Create an object to run the analysis tool
 		If Not SetToolRunnerObject() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to SetToolRunnerObject, job " & JobNum & ", Dataset " & Dataset)
+			If Me.TraceMode Then ShowTraceMessage("Unable to set the ToolRunner object; closing job step task")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to set the toolRunner object, job " & jobNum & ", Dataset " & datasetName)
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object")
 			m_MgrErrorCleanup.CleanWorkDir()
 			UpdateStatusIdle("Error encountered: Unable to set tool runner object")
@@ -574,6 +600,7 @@ Public Class clsMainProcess
 		End If
 
 		If NeedToAbortProcessing() Then
+			If Me.TraceMode Then ShowTraceMessage("NeedToAbortProcessing; closing job step task")
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Processing aborted")
 			m_MgrErrorCleanup.CleanWorkDir()
 			UpdateStatusIdle("Processing aborted")
@@ -582,6 +609,7 @@ Public Class clsMainProcess
 
 		' Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
 		If Not ValidateFreeDiskSpace(m_MostRecentErrorMessage) Then
+			If Me.TraceMode Then ShowTraceMessage("Insufficient free space; closing job step task")
 			If String.IsNullOrEmpty(m_MostRecentErrorMessage) Then
 				m_MostRecentErrorMessage = "Insufficient free space (location undefined)"
 			End If
@@ -594,14 +622,17 @@ Public Class clsMainProcess
 		'Retrieve files required for the job
 		m_MgrErrorCleanup.CreateStatusFlagFile()
 		Try
+			If Me.TraceMode Then ShowTraceMessage("Getting job resources")
+
 			eToolRunnerResult = m_Resource.GetResources()
 			If Not eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				m_MostRecentErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
+				If Me.TraceMode Then ShowTraceMessage(m_MostRecentErrorMessage & "; closing job step task")
 				If Not m_Resource.Message Is Nothing Then
 					m_MostRecentErrorMessage &= "; " & m_Resource.Message
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & jobNum & ", Dataset " & datasetName)
 				m_AnalysisTask.CloseTask(eToolRunnerResult, m_Resource.Message)
 
 				m_MgrErrorCleanup.CleanWorkDir()
@@ -610,6 +641,7 @@ Public Class clsMainProcess
 				Return False
 			End If
 		Catch Err As Exception
+			If Me.TraceMode Then ShowTraceMessage("Exception getting resources; closing job step task")
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Getting resources, " & _
 			 Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
 
@@ -628,6 +660,8 @@ Public Class clsMainProcess
 		'Run the job
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0)
 		Try
+			If Me.TraceMode Then ShowTraceMessage("Running the step tool")
+
 			eToolRunnerResult = m_ToolRunner.RunTool()
 			If eToolRunnerResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				m_MostRecentErrorMessage = m_ToolRunner.Message
@@ -636,7 +670,9 @@ Public Class clsMainProcess
 					m_MostRecentErrorMessage = "Unknown ToolRunner Error"
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & JobNum & ", Dataset " & Dataset)
+				If Me.TraceMode Then ShowTraceMessage("Error running the tool; closing job step task")
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & jobNum & ", Dataset " & datasetName)
 				m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
 				Try
@@ -662,6 +698,7 @@ Public Class clsMainProcess
 
 			If m_ToolRunner.NeedToAbortProcessing Then
 				m_NeedToAbortProcessing = True
+				If Me.TraceMode Then ShowTraceMessage("ToolRunner.NeedToAbortProcessing = True; closing job step task")
 				m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 			End If
 
@@ -672,6 +709,7 @@ Public Class clsMainProcess
 				m_NeedToAbortProcessing = True
 			End If
 
+			If Me.TraceMode Then ShowTraceMessage("Exception running tool; closing job step task")
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
 			blnRunToolError = True
@@ -679,6 +717,8 @@ Public Class clsMainProcess
 
 		If blnRunToolError Then
 			' Note: the above code should have already called m_AnalysisTask.CloseTask()
+
+			If Me.TraceMode Then ShowTraceMessage("Tool run error; cleaning up")
 
 			Try
 				If m_MgrErrorCleanup.CleanWorkDir() Then
@@ -708,11 +748,13 @@ Public Class clsMainProcess
 		'Close out the job
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 100)
 		Try
+			If Me.TraceMode Then ShowTraceMessage("Task completed successfully; closing the job step task")
+
 			'Close out the job as a success
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, String.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & JobNum)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & jobNum)
 
-			UpdateStatusIdle("Completed job " & JobNum & ", step " & StepNum)
+			UpdateStatusIdle("Completed job " & jobNum & ", step " & stepNum)
 
 		Catch err As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Close task after normal run," & _
@@ -734,6 +776,7 @@ Public Class clsMainProcess
 				'Clean the working directory
 				Try
 					If Not m_MgrErrorCleanup.CleanWorkDir() Then
+						If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
 						m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
 						m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
@@ -1541,7 +1584,7 @@ Public Class clsMainProcess
 	End Function
 
 	Public Shared Sub ShowTraceMessage(ByVal strMessage As String)
-		Console.WriteLine(DateTime.Now.ToString("hh:mm:ss tt") & ": " & strMessage)
+		Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
 	End Sub
 
 	Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)

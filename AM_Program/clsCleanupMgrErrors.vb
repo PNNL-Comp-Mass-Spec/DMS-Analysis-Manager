@@ -152,6 +152,8 @@ Public Class clsCleanupMgrErrors
 		Dim diWorkFolder As DirectoryInfo
 		Dim HoldoffMilliseconds As Integer
 
+		If Environment.MachineName.ToLower.StartsWith("monroe") AndAlso HoldoffSeconds > 1 Then HoldoffSeconds = 1
+
 		strFailureMessage = String.Empty
 
 		Try
