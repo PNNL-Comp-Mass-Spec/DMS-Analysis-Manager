@@ -100,6 +100,7 @@ Public Class clsAnalysisResourcesIDPicker
 	''' <returns>True if success, otherwise false</returns>
 	''' <remarks></remarks>
 	Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
+
 		' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
 		Dim lstFileNamesToGet As SortedList(Of String, Boolean)
 		Dim lstExtraFilesToGet As List(Of String)
@@ -302,7 +303,11 @@ Public Class clsAnalysisResourcesIDPicker
 
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), False)
 
-		If eResultType <> clsPHRPReader.ePeptideHitResultType.MODa Then
+		Dim strScriptName As String = m_jobParams.GetParam("ToolName")
+		If strScriptName.ToLower().StartsWith("MSGFPlus_MzML".ToLower()) OrElse
+		   eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+			' MGSF file was not made; don't require it
+		Else
 			lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
 		End If
 

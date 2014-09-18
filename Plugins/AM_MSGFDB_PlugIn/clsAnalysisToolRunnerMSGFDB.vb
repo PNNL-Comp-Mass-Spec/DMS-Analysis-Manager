@@ -18,6 +18,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	'Class for running MSGFDB or MSGF+ analysis
 	'*********************************************************************************************************
 
+#Region "Constants and Enums"
+	Protected Enum eInputFileFormatTypes
+		Unknown = 0
+		CDTA = 1
+		MzXML = 2
+		MzML = 3
+	End Enum
+#End Region
+
 #Region "Module Variables"
 
 	Protected mToolVersionWritten As Boolean
@@ -210,6 +219,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
+	''' <summary>
+	''' Index the Fasta file (if needed) then run MSGF+
+	''' </summary>
+	''' <param name="javaProgLoc"></param>
+	''' <param name="fiMSGFPlusResults"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Protected Function RunMSGFPlus(
 	  ByVal javaProgLoc As String,
 	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
@@ -265,11 +281,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		mUsingHPC = False
 		mMSGFPlusComplete = False
 
-		Dim blnUsingMzXML As Boolean
+		Dim eInputFileFormat As eInputFileFormatTypes
 		Dim strScanTypeFilePath As String = String.Empty
 		Dim strAssumedScanType As String = String.Empty
 
-		Dim result = DetermineAssumedScanType(strAssumedScanType, blnUsingMzXML, strScanTypeFilePath)
+		Dim result = DetermineAssumedScanType(strAssumedScanType, eInputFileFormat, strScanTypeFilePath)
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
 		End If
@@ -327,6 +343,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & mSearchEngineName)
 
 		' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
+		' The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
 		' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
 		' (job 611216 succeeded with a value of 5000)
 		Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
@@ -341,11 +358,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
 
 		' Define the input file, output file, and fasta file
-		If blnUsingMzXML Then
-			CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
-		Else
-			CmdStr &= " -s " & m_Dataset & "_dta.txt"
-		End If
+		Select Case eInputFileFormat
+			Case eInputFileFormatTypes.CDTA
+				CmdStr &= " -s " & m_Dataset & "_dta.txt"
+			Case eInputFileFormatTypes.MzML
+				CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
+			Case eInputFileFormatTypes.MzXML
+				CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
+			Case Else
+				m_message = "Unsupported InputFileFormat: " & eInputFileFormat
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		End Select
 
 		CmdStr &= " -o " & fiMSGFPlusResults.Name
 		CmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
@@ -782,7 +806,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	Protected Function DetermineAssumedScanType(ByRef strAssumedScanType As String, ByRef blnUsingMzXML As Boolean, ByRef strScanTypeFilePath As String) As IJobParams.CloseOutType
+	Protected Function DetermineAssumedScanType(
+	  <Out()> ByRef strAssumedScanType As String,
+	  <Out()> ByRef eInputFileFormat As eInputFileFormatTypes,
+	  <Out()> ByRef strScanTypeFilePath As String) As IJobParams.CloseOutType
+
 		Dim strScriptNameLCase As String
 		strAssumedScanType = String.Empty
 
@@ -790,9 +818,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 		strScanTypeFilePath = String.Empty
 
 		If strScriptNameLCase.Contains("mzxml") OrElse strScriptNameLCase.Contains("msgfplus_bruker") Then
-			blnUsingMzXML = True
+			eInputFileFormat = eInputFileFormatTypes.MzXML
+		ElseIf strScriptNameLCase.Contains("mzml") Then
+			eInputFileFormat = eInputFileFormatTypes.MzML
 		Else
-			blnUsingMzXML = False
+			eInputFileFormat = eInputFileFormatTypes.CDTA
 
 			' Make sure the _DTA.txt file is valid
 			If Not ValidateCDTAFile() Then
@@ -814,7 +844,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	End Function
 
-	Private Sub MonitorMSGFPlusProgress()
+	Private Sub MonitorProgress()
 
 		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
@@ -1077,7 +1107,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		MonitorMSGFPlusProgress()
+		MonitorProgress()
 	End Sub
 
 	Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
@@ -1112,7 +1142,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 	Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
 		mHPCMonitorInitTimer.Enabled = False
-		MonitorMSGFPlusProgress()
+		MonitorProgress()
 	End Sub
 
 	''' <summary>

@@ -499,10 +499,16 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
 
+			Dim strScriptName As String = m_jobParams.GetParam("ToolName")
+
 			If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
 				' The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
 				' Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
 				' Therefore, don't include them in the PepXML file
+				CmdStr &= " /NoMSGF"
+
+			ElseIf strScriptName.ToLower().StartsWith("MSGFPlus_MzML".ToLower()) Then
+				' File _syn_MSGF.txt does not exist because MSGF is not run in the MSGFPlus_MzML script
 				CmdStr &= " /NoMSGF"
 			End If
 

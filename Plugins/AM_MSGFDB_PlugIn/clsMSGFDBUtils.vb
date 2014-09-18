@@ -41,6 +41,8 @@ Public Class clsMSGFDBUtils
 	Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
 	Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
 
+	Public Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
+
 #End Region
 
 #Region "Events"
@@ -588,6 +590,7 @@ Public Class clsMSGFDBUtils
 			ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
 
 			clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
+			trimmedFastaFilePath = fiTrimmedFasta.FullName
 
 		Catch ex As Exception
 			mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMb & " MB"
@@ -910,9 +913,12 @@ Public Class clsMSGFDBUtils
 			' Update fastaFilePath to use the path to the trimmed version
 			fastaFilePath = fastaFilePathTrimmed
 
+			fiFastaFile.Refresh()
+			fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
+
 		End If
 
-		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 1000) Then
+		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 500) Then
 			ReportMessage("Indexing Fasta file to create Suffix Array files")
 		End If
 
@@ -1377,7 +1383,6 @@ Public Class clsMSGFDBUtils
 	  ByRef lstStaticMods As List(Of String), _
 	  ByRef lstDynamicMods As List(Of String)) As Boolean
 
-		Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
 		Dim blnSuccess As Boolean
 		Dim strModFilePath As String
 
