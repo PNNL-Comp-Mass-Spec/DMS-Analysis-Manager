@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMzRefinery.vb" />
     <Compile Include="clsAnalysisToolRunnerMzRefinery.vb" />
+    <Compile Include="clsMzRefineryMassErrorStatsExtractor.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

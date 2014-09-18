@@ -1,12 +1,14 @@
 ﻿Imports AnalysisManagerBase
+Imports System.IO
 Imports System.Text
+Imports System.Runtime.InteropServices
 
 ''' <summary>
-''' This class reads a DTA_Refinery log file to extract the parent ion mass error information
+''' This class reads the console text from the PPMErrorCharter's console output and extracts the parent ion mass error information
 ''' It passes on the information to DMS for storage in table T_Dataset_QC
 ''' </summary>
 ''' <remarks></remarks>
-Public Class clsDtaRefLogMassErrorExtractor
+Public Class clsMzRefineryMassErrorStatsExtractor
 
 	Protected Const STORE_MASS_ERROR_STATS_SP_NAME As String = "StoreDTARefMassErrorStats"
 
@@ -42,7 +44,7 @@ Public Class clsDtaRefLogMassErrorExtractor
 	End Sub
 
 	Protected Function ConstructXML(ByVal udtMassErrorInfo As udtMassErrorInfoType) As String
-		Dim sbXml = New System.Text.StringBuilder()
+		Dim sbXml = New StringBuilder()
 
 		Try
 			sbXml.Append("<DTARef_MassErrorStats>")
@@ -67,107 +69,86 @@ Public Class clsDtaRefLogMassErrorExtractor
 
 	End Function
 
-	Public Function ParseDTARefineryLogFile(ByVal strDatasetName As String, ByVal intDatasetID As Integer, ByVal intPSMJob As Integer) As Boolean
-		Return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, m_WorkDir)
-	End Function
+	Public Function ParsePPMErrorCharterOutput(
+	  ByVal strDatasetName As String,
+	  ByVal intDatasetID As Integer,
+	  ByVal intPSMJob As Integer,
+	  ByVal ppmErrorCharterConsoleOutputFilePath As String) As Boolean
 
-	Public Function ParseDTARefineryLogFile(ByVal strDatasetName As String, ByVal intDatasetID As Integer, ByVal intPSMJob As Integer, ByVal strWorkDirPath As String) As Boolean
-
-		Dim fiSourceFile As System.IO.FileInfo
-
-		Dim blnOriginalDistributionSection As Boolean = False
-		Dim blnRefinedDistributionSection As Boolean = False
-
-		Dim udtMassErrorInfo As udtMassErrorInfoType
-
-		Dim reMassError = New RegularExpressions.Regex("Robust estimate[ \t]+([^\t ]+)", RegularExpressions.RegexOptions.Compiled)
-		Dim reMatch As RegularExpressions.Match
-
-		Dim strLineIn As String
+		Const MASS_ERROR_PPM As String = "MedianMassErrorPPM:"
+		Const MASS_ERROR_PPM_REFINED As String = "MedianMassErrorPPM_Refined:"
 
 		Try
 
-			udtMassErrorInfo = New udtMassErrorInfoType
+			Dim udtMassErrorInfo = New udtMassErrorInfoType
 			udtMassErrorInfo.DatasetName = strDatasetName
 			udtMassErrorInfo.DatasetID = intDatasetID
 			udtMassErrorInfo.PSMJob = intPSMJob
 			udtMassErrorInfo.MassErrorPPM = Double.MinValue
 			udtMassErrorInfo.MassErrorPPMRefined = Double.MinValue
 
-			fiSourceFile = New System.IO.FileInfo(System.IO.Path.Combine(strWorkDirPath, strDatasetName & "_dta_DtaRefineryLog.txt"))
+			Dim fiSourceFile = New FileInfo(ppmErrorCharterConsoleOutputFilePath)
 			If Not fiSourceFile.Exists Then
-				mErrorMessage = "DtaRefinery Log file not found"
+				mErrorMessage = "MzRefinery Log file not found"
 				Return False
 			End If
 
-			Using srSourceFile = New System.IO.StreamReader(New System.IO.FileStream(fiSourceFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				Do While srSourceFile.Peek > -1
-					strLineIn = srSourceFile.ReadLine()
+					Dim strLineIn = srSourceFile.ReadLine()
 
-					If strLineIn.Contains("ORIGINAL parent ion mass error distribution") Then
-						blnOriginalDistributionSection = True
-						blnRefinedDistributionSection = False
-					End If
+					If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-					If strLineIn.Contains("REFINED parent ion mass error distribution") Then
-						blnOriginalDistributionSection = False
-						blnRefinedDistributionSection = True
-					End If
+					strLineIn = strLineIn.Trim()
 
-					If strLineIn.StartsWith("Robust estimate") Then
-						reMatch = reMassError.Match(strLineIn)
+					Dim massError As Double
 
-						Dim dblMassError As Double
-						If reMatch.Success Then
-							If Double.TryParse(reMatch.Groups(1).Value, dblMassError) Then
-
-								If blnOriginalDistributionSection Then
-									udtMassErrorInfo.MassErrorPPM = dblMassError
-								End If
-
-								If blnRefinedDistributionSection Then
-									udtMassErrorInfo.MassErrorPPMRefined = dblMassError
-								End If
-							Else
-								mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; RegEx capture is not a number: " & reMatch.Groups(1).Value
-								Return False
-							End If
+					If strLineIn.StartsWith(MASS_ERROR_PPM) Then
+						If ParseMassErrorValue(strLineIn, MASS_ERROR_PPM, massError) Then
+							udtMassErrorInfo.MassErrorPPM = massError
 						Else
-							mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; RegEx match failed"
+							Return False
+						End If
+					ElseIf strLineIn.StartsWith(MASS_ERROR_PPM_REFINED) Then
+						If ParseMassErrorValue(strLineIn, MASS_ERROR_PPM_REFINED, massError) Then
+							udtMassErrorInfo.MassErrorPPMRefined = massError
+						Else
 							Return False
 						End If
 					End If
-
 				Loop
 
 			End Using
 
-			If udtMassErrorInfo.MassErrorPPM > Double.MinValue Then
-
-				Dim strXMLResults As String
-
-				strXMLResults = ConstructXML(udtMassErrorInfo)
-
-				If mPostResultsToDB Then
-					Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
-					Dim blnSuccess As Boolean
-
-					blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
-
-					If Not blnSuccess Then
-						If String.IsNullOrEmpty(mErrorMessage) Then
-							mErrorMessage = "Unknown error posting Mass Error results from DTA Refinery to the database"
-						End If
-						Return False
-					End If
-				End If
-
+			If Math.Abs(udtMassErrorInfo.MassErrorPPM - Double.MinValue) < Single.Epsilon Then
+				mErrorMessage = "Did not find '" & MASS_ERROR_PPM & "' in the PPM Error Charter output"
+				Return False
 			End If
 
+			If Math.Abs(udtMassErrorInfo.MassErrorPPMRefined - Double.MinValue) < Single.Epsilon Then
+				mErrorMessage = "Did not find '" & MASS_ERROR_PPM_REFINED & "' in the PPM Error Charter output"
+				Return False
+			End If
+
+			Dim strXMLResults = ConstructXML(udtMassErrorInfo)
+
+			If mPostResultsToDB Then
+				Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
+				Dim blnSuccess As Boolean
+
+				blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
+
+				If Not blnSuccess Then
+					If String.IsNullOrEmpty(mErrorMessage) Then
+						mErrorMessage = "Unknown error posting Mass Error results from MzRefinery to the database"
+					End If
+					Return False
+				End If
+			End If
 
 		Catch ex As Exception
-			mErrorMessage = "Exception in ParseDTARefineryLogFile: " & ex.Message
+			mErrorMessage = "Exception in ParsePPMErrorCharterOutput: " & ex.Message
 			Return False
 		End Try
 
@@ -175,6 +156,19 @@ Public Class clsDtaRefLogMassErrorExtractor
 
 	End Function
 
+	Private Function ParseMassErrorValue(ByVal dataLine As String, ByVal lineLabel As String, <Out()> ByRef massError As Double) As Boolean
+
+		Dim dataValue = dataLine.Substring(lineLabel.Length).Trim()
+		massError = 0
+
+		If Double.TryParse(dataValue, massError) Then
+			Return True
+		Else
+			mErrorMessage = "Unable to extract mass error value from the '" & lineLabel & "' line in the PPMErrorCharter console output; text is not a number: " & dataValue
+			Return False
+		End If
+
+	End Function
 
 	Protected Function PostMassErrorInfoToDB(
 	  ByVal intDatasetID As Integer,
@@ -231,12 +225,12 @@ Public Class clsDtaRefLogMassErrorExtractor
 			If ResCode = 0 Then
 				blnSuccess = True
 			Else
-				mErrorMessage = "Error storing DTA Refinery Mass Error Results in the database, " & strStoredProcedure & " returned " & ResCode.ToString
+				mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " & strStoredProcedure & " returned " & ResCode.ToString
 				blnSuccess = False
 			End If
 
 		Catch ex As System.Exception
-			mErrorMessage = "Exception storing DTA Refinery Mass Error Results in the database: " & ex.Message
+			mErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " & ex.Message
 			blnSuccess = False
 		End Try
 
