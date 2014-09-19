@@ -108,42 +108,27 @@ Public Class clsMSGFRunner
 	''' <remarks></remarks>
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		Dim eResultType As clsPHRPReader.ePeptideHitResultType
-		Dim blnMGFInstrumentData As Boolean
-
-		Dim Msg As String = String.Empty
-
-		Dim blnSuccess As Boolean
-		Dim Result As IJobParams.CloseOutType
-		Dim eReturnCode As IJobParams.CloseOutType
-
-		Dim blnProcessingError As Boolean
-		Dim blnPostProcessingError As Boolean
-
-		Dim blnDoNotFilterPeptides As Boolean
-		Dim intMSGFInputFileLineCount As Integer = 0
 
 		' Set this to success for now
-		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Dim eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		'Call base class for initial setup
 		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+		Dim blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
 		' Determine the raw data type
-		eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"))
+		Dim eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"))
 
 		' Resolve eResultType
-		eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
+		Dim eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
 
 		If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
 			' Result type is not supported
-			Msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
-			m_message = clsGlobal.AppendToComment(m_message, Msg)
+			Dim msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
+			m_message = clsGlobal.AppendToComment(m_message, msg)
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
@@ -159,10 +144,11 @@ Public Class clsMSGFRunner
 		mConsoleOutputErrorMsg = String.Empty
 
 		mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", False)
-		blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", False)
+		Dim blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", False)
+		Dim blnPostProcessingError = False
 
 		Try
-			blnProcessingError = False
+			Dim blnProcessingError = False
 
 			If mUsingMSGFDB And eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 				' Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
@@ -199,11 +185,10 @@ Public Class clsMSGFRunner
 					' Sleep for 1 second to give the MSGF results file a chance to finalize
 					Threading.Thread.Sleep(1000)
 
-					blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData)
+					Dim blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData)
 
 					If Not blnSuccess Then
-						Msg = "MSGF results file post-processing error"
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
+						m_message = clsGlobal.AppendToComment(m_message, "MSGF results file post-processing error")
 						blnPostProcessingError = True
 					End If
 
@@ -230,15 +215,15 @@ Public Class clsMSGFRunner
 			Threading.Thread.Sleep(2000)		   '2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			Result = MakeResultsFolder()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			Dim eResult = MakeResultsFolder()
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				'MakeResultsFolder handles posting to local log, so set database error message and exit
 				m_message = "Error making results folder"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			Result = MoveResultFiles()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			eResult = MoveResultFiles()
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				'MoveResultFiles moves the result files to the result folder
 				m_message = "Error moving files into results folder"
 				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -252,10 +237,10 @@ Public Class clsMSGFRunner
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			Result = CopyResultsFolderToServer()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			eResult = CopyResultsFolderToServer()
+			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				Return Result
+				Return eResult
 			End If
 
 			If blnPostProcessingError Then
@@ -264,8 +249,8 @@ Public Class clsMSGFRunner
 			End If
 
 		Catch ex As Exception
-			Msg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+			Dim errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
 			m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try

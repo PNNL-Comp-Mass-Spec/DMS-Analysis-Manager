@@ -4141,7 +4141,10 @@ Public MustInherit Class clsAnalysisResources
 		End If
 
 		If fiSourceFile.Extension.ToLower() = DOT_GZ_EXTENSION Then
-			m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
+			' Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
+
+			m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
+			m_jobParams.AddResultFileToSkip(fiSourceFile.Name.Substring(0, fiSourceFile.Name.Length - DOT_GZ_EXTENSION.Length))
 
 			If unzip Then
 				Dim localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
@@ -4640,7 +4643,7 @@ Public MustInherit Class clsAnalysisResources
 
 		Try
 
-			' Make sure we don't move the .mzXML file into the results folder
+			' Make sure we don't move the .Raw, .mzXML, .mzML or .gz files into the results folder
 			m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)				' .Raw file
 			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)			' .mzXML file
 			m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)			' .mzML file

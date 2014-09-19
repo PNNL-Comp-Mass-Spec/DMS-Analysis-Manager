@@ -300,17 +300,12 @@ Public Class clsAnalysisResourcesIDPicker
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, strDatasetName), True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, strDatasetName), True)
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
-
 		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), False)
 
-		Dim strScriptName As String = m_jobParams.GetParam("ToolName")
-		If strScriptName.ToLower().StartsWith("MSGFPlus_MzML".ToLower()) OrElse
-		   eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-			' MGSF file was not made; don't require it
-		Else
+		If eResultType <> clsPHRPReader.ePeptideHitResultType.MODa Then
 			lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
 		End If
-
+			
 		Dim strToolVersionFile As String = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
 		Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", "")
 		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFPlus_IMS" Then

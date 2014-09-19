@@ -40,10 +40,16 @@ Public Class clsAnalysisResourcesMSGF
 
 		m_PendingFileRenames = New Dictionary(Of String, String)
 
-		' Make sure the machine has enough free memory to run MSGF
-		If Not ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF") Then
-			m_message = "Not enough free memory to run MSGF"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+		Dim strScriptName As String = m_jobParams.GetParam("ToolName")
+
+		If Not strScriptName.ToLower().StartsWith("MSGFPlus".ToLower()) Then
+
+			' Make sure the machine has enough free memory to run MSGF
+			If Not ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF") Then
+				m_message = "Not enough free memory to run MSGF"
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 		End If
 
 		'Get analysis results files

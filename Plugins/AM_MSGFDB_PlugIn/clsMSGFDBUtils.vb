@@ -223,6 +223,56 @@ Public Class clsMSGFDBUtils
 
 	End Sub
 
+	Private Function CanDetermineInstIdFromInstGroup(ByVal instrumentGroup As String, ByRef instrumentIDNew As String, ByRef autoSwitchReason As String) As Boolean
+
+		' Thermo Instruments
+		If clsGlobal.IsMatch(instrumentGroup, "QExactive") Then
+			instrumentIDNew = "3"
+			autoSwitchReason = "based on instrument group " & instrumentGroup
+			Return True
+		ElseIf clsGlobal.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
+			instrumentIDNew = "0"
+			autoSwitchReason = "based on instrument group " & instrumentGroup
+			Return True
+		ElseIf clsGlobal.IsMatch(instrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
+			instrumentIDNew = "1"
+			autoSwitchReason = "based on instrument group " & instrumentGroup
+			Return True
+		ElseIf clsGlobal.IsMatch(instrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
+			instrumentIDNew = "1"
+			autoSwitchReason = "based on instrument group " & instrumentGroup
+			Return True
+		Else
+			Return False
+		End If
+
+	End Function
+
+	Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, ByVal instrumentIDCurrentNew As String, ByVal autoSwitchReason As String)
+
+		If Not String.IsNullOrEmpty(instrumentIDCurrentNew) AndAlso instrumentIDCurrentNew <> instrumentIDCurrent Then
+
+			If m_DebugLevel >= 1 Then
+				Dim strInstIDDescription As String = "??"
+				Select Case instrumentIDCurrentNew
+					Case "0"
+						strInstIDDescription = "Low-res MSn"
+					Case "1"
+						strInstIDDescription = "High-res MSn"
+					Case "2"
+						strInstIDDescription = "TOF"
+					Case "3"
+						strInstIDDescription = "Q-Exactive"
+				End Select
+
+				ReportMessage("Auto-updating instrument ID from " & instrumentIDCurrent & " to " & instrumentIDCurrentNew & " (" & strInstIDDescription & ") " & autoSwitchReason)
+			End If
+
+			instrumentIDCurrent = instrumentIDCurrentNew
+		End If
+
+	End Sub
+
 	Public Function ConvertMZIDToTSV(ByVal javaProgLoc As String, ByVal msgfDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
 
 		Dim strTSVFilePath As String
@@ -582,7 +632,7 @@ Public Class clsMSGFDBUtils
 							contaminantUtility.WriteProteinToFasta(swTrimmedFasta, protein.Key)
 						End If
 					Next
-					
+
 				End Using
 
 			End Using
@@ -897,7 +947,7 @@ Public Class clsMSGFDBUtils
 					Exit While
 				End If
 
-				If trimIteration <= 2 Then					
+				If trimIteration <= 2 Then
 					Dim sleepTimeSec = oRand.Next(10, 19)
 
 					ReportMessage("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
@@ -1062,7 +1112,6 @@ Public Class clsMSGFDBUtils
 		Return True
 
 	End Function
-
 
 	''' <summary>
 	''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
@@ -1607,113 +1656,30 @@ Public Class clsMSGFDBUtils
 							ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
 
 								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
-									' Override Instrument ID based on the instrument class and scan types in the _ScanType file
 
-									' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-									' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
-									' #  2 means TOF
-									' #  3 means Q-Exactive
+									Dim eResult = DetermineInstrumentID(strValue, strScanTypeFilePath, strInstrumentGroup)
+									If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+										Return eResult
+									End If
 
-									If String.IsNullOrEmpty(strInstrumentGroup) Then strInstrumentGroup = "#Undefined#"
-									Dim strNewInstrumentID As String
-									Dim strAutoSwitchReason As String
+								ElseIf Not String.IsNullOrWhiteSpace(strInstrumentGroup) Then
+									Dim instrumentIDNew As String = String.Empty
+									Dim autoSwitchReason As String = String.Empty
 
-									' Thermo Instruments
-									If clsGlobal.IsMatch(strInstrumentGroup, "QExactive") Then
-										strNewInstrumentID = "3"
-										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
+									If Not CanDetermineInstIdFromInstGroup(strInstrumentGroup, instrumentIDNew, autoSwitchReason) Then
+										Dim datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
+										Dim countLowResMSn As Integer
+										Dim countHighResMSn As Integer
+										Dim countHCDMSn As Integer
 
-									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
-										strNewInstrumentID = "0"
-										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
-
-									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
-										strNewInstrumentID = "1"
-										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
-
-									ElseIf clsGlobal.IsMatch(strInstrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
-										strNewInstrumentID = "1"
-										strAutoSwitchReason = "based on instrument group " & strInstrumentGroup
-
-									Else
-										' If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
-
-										' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
-
-										' Count the number of High res CID or ETD spectra
-										' Count HCD spectra separtely since MSGF+ has a special scoring model for HCD spectra
-
-										Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
-										Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
-										Dim lstHCDMSn As Dictionary(Of Integer, String) = Nothing
-										Dim lstOther As Dictionary(Of Integer, String) = Nothing
-										Dim blnSuccess As Boolean
-
-										blnSuccess = LoadScanTypeFile(strScanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
-
-										If Not blnSuccess Then
-											If String.IsNullOrEmpty(mErrorMessage) Then
-												mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(strScanTypeFilePath)
-												ReportError(mErrorMessage)
-											End If
-											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-										ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
-											mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(strScanTypeFilePath)
-											ReportError(mErrorMessage)
-											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-										Else
-											Dim dblFractionHiRes As Double = 0
-
-											If lstHighResMSn.Count > 0 Then
-												dblFractionHiRes = lstHighResMSn.Count / (lstLowResMSn.Count + lstHighResMSn.Count)
-											End If
-
-											If dblFractionHiRes > 0.1 Then
-												' At least 10% of the spectra are HMSn
-												strNewInstrumentID = "1"
-												strAutoSwitchReason = "since " & (dblFractionHiRes * 100).ToString("0") & "% of the spectra are HMSn"
-
-											Else
-												If lstLowResMSn.Count = 0 And lstHCDMSn.Count > 0 Then
-													' All of the spectra are HCD
-													strNewInstrumentID = "1"
-													strAutoSwitchReason = "since all of the spectra are HCD"
-												Else
-													strNewInstrumentID = "0"
-													If lstHCDMSn.Count = 0 And lstHighResMSn.Count = 0 Then
-														strAutoSwitchReason = "since all of the spectra are low res MSn"
-													Else
-														strAutoSwitchReason = "since there is a mix of low res and high res spectra"
-													End If
-												End If
-
-											End If
-
+										If LookupScanTypesForDataset(datasetName, countLowResMSn, countHighResMSn, countHCDMSn) Then
+											ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, instrumentIDNew, autoSwitchReason)
 										End If
 
 									End If
 
-									If Not String.IsNullOrEmpty(strNewInstrumentID) AndAlso strNewInstrumentID <> strValue Then
-										If m_DebugLevel >= 1 Then
-											Dim strInstIDDescription As String = "??"
-											Select Case strNewInstrumentID
-												Case "0"
-													strInstIDDescription = "Low-res MSn"
-												Case "1"
-													strInstIDDescription = "High-res MSn"
-												Case "2"
-													strInstIDDescription = "TOF"
-												Case "3"
-													strInstIDDescription = "Q-Exactive"
-											End Select
+									AutoUpdateInstrumentIDIfChanged(strValue, instrumentIDNew, autoSwitchReason)
 
-											ReportMessage("Auto-updating instrument ID from " & strValue & " to " & strNewInstrumentID & " (" & strInstIDDescription & ") " & strAutoSwitchReason)
-										End If
-
-										strValue = strNewInstrumentID
-									End If
 								End If
 
 							End If
@@ -1914,6 +1880,182 @@ Public Class clsMSGFDBUtils
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
+
+	End Function
+
+	Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, ByVal scanTypeFilePath As String, ByVal instrumentGroup As String) As IJobParams.CloseOutType
+
+		' Override Instrument ID based on the instrument class and scan types in the _ScanType file
+
+		' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
+		' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
+		' #  2 means TOF
+		' #  3 means Q-Exactive
+
+		If String.IsNullOrEmpty(instrumentGroup) Then instrumentGroup = "#Undefined#"
+
+		Dim instrumentIDNew As String = String.Empty
+		Dim autoSwitchReason As String = String.Empty
+
+		If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
+
+			' Instrument ID is not obvious from the instrument group
+			' Examine the scan types in scanTypeFilePath
+
+			' If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
+
+			' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
+
+			' Count the number of High res CID or ETD spectra
+			' Count HCD spectra separately since MSGF+ has a special scoring model for HCD spectra
+
+			Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
+			Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
+			Dim lstHCDMSn As Dictionary(Of Integer, String) = Nothing
+			Dim lstOther As Dictionary(Of Integer, String) = Nothing
+			Dim blnSuccess As Boolean
+
+			blnSuccess = LoadScanTypeFile(scanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
+
+			If Not blnSuccess Then
+				If String.IsNullOrEmpty(mErrorMessage) Then
+					mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(scanTypeFilePath)
+					ReportError(mErrorMessage)
+				End If
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+			ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
+				mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(scanTypeFilePath)
+				ReportError(mErrorMessage)
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Else
+				ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, instrumentIDNew, autoSwitchReason)
+			End If
+
+		End If
+
+		AutoUpdateInstrumentIDIfChanged(instrumentIDCurrent, instrumentIDNew, autoSwitchReason)
+
+		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+	End Function
+
+	Private Sub ExamineScanTypes(
+	  ByVal countLowResMSn As Integer,
+	  ByVal countHighResMSn As Integer,
+	  ByVal countHCDMSn As Integer,
+	  ByRef instrumentIDNew As String,
+	  ByRef autoSwitchReason As String)
+
+		If countLowResMSn + countHighResMSn + countHCDMSn = 0 Then
+			' Scan counts are all 0; leave instrumentIDNew untouched
+			ReportMessage("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID")
+		Else
+			Dim dblFractionHiRes As Double = 0
+
+			If countHighResMSn > 0 Then
+				dblFractionHiRes = countHighResMSn / (countLowResMSn + countHighResMSn)
+			End If
+
+			If dblFractionHiRes > 0.1 Then
+				' At least 10% of the spectra are HMSn
+				instrumentIDNew = "1"
+				autoSwitchReason = "since " & (dblFractionHiRes * 100).ToString("0") & "% of the spectra are HMSn"
+
+			Else
+				If countLowResMSn = 0 And countHCDMSn > 0 Then
+					' All of the spectra are HCD
+					instrumentIDNew = "1"
+					autoSwitchReason = "since all of the spectra are HCD"
+				Else
+					instrumentIDNew = "0"
+					If countHCDMSn = 0 And countHighResMSn = 0 Then
+						autoSwitchReason = "since all of the spectra are low res MSn"
+					Else
+						autoSwitchReason = "since there is a mix of low res and high res spectra"
+					End If
+				End If
+
+			End If
+
+		End If
+
+	End Sub
+
+	Protected Function LookupScanTypesForDataset(
+	  ByVal datasetName As String,
+	  ByRef countLowResMSn As Integer,
+	  ByRef countHighResMSn As Integer,
+	  ByRef countHCDMSn As Integer) As Boolean
+
+		Try
+			countLowResMSn = 0
+			countHighResMSn = 0
+			countHCDMSn = 0
+
+			If String.IsNullOrEmpty(datasetName) Then
+				Return False
+			End If
+
+			Dim ConnectionString As String = m_mgrParams.GetParam("connectionstring")
+
+			Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+
+			SqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn], ")
+			SqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn], ")
+			SqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn], ")
+			SqlStr.Append("   HMSn, MSn, ")
+			SqlStr.Append("   [PQD-HMSn], [PQD-MSn]")
+			SqlStr.Append(" FROM V_Dataset_ScanType_CrossTab")
+			SqlStr.Append(" WHERE Dataset = '" & datasetName & "'")
+
+			Dim Dt As DataTable = Nothing
+			Const RetryCount = 2
+
+			'Get a table to hold the results of the query
+			Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LookupScanTypesForDataset", RetryCount, Dt)
+
+			If Not blnSuccess Then
+				ReportError("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset")
+				Dt.Dispose()
+				Return False
+			End If
+
+			'Verify at least one row returned
+			If Dt.Rows.Count < 1 Then
+				' No data was returned
+				ReportMessage("Now rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
+				Return False
+			Else
+				For Each CurRow As DataRow In Dt.Rows
+
+					countLowResMSn += clsGlobal.DbCInt(CurRow("CID-MSn"))
+					countHighResMSn += clsGlobal.DbCInt(CurRow("CID-HMSn"))
+					countHCDMSn += clsGlobal.DbCInt(CurRow("HCD-HMSn"))
+
+					countHighResMSn += clsGlobal.DbCInt(CurRow("ETD-HMSn"))
+					countLowResMSn += clsGlobal.DbCInt(CurRow("ETD-MSn"))
+
+					countHighResMSn += clsGlobal.DbCInt(CurRow("SA_ETD-HMSn"))
+					countLowResMSn += clsGlobal.DbCInt(CurRow("SA_ETD-MSn"))
+
+					countHighResMSn += clsGlobal.DbCInt(CurRow("HMSn"))
+					countLowResMSn += clsGlobal.DbCInt(CurRow("MSn"))
+
+					countHighResMSn += clsGlobal.DbCInt(CurRow("PQD-HMSn"))
+					countLowResMSn += clsGlobal.DbCInt(CurRow("PQD-MSn"))
+
+				Next
+
+				Dt.Dispose()
+				Return True
+			End If
+
+		Catch ex As Exception
+			Const msg = "Exception in LookupScanTypersForDataset"
+			ReportError(msg, msg & ": " & ex.Message)
+			Return False
+		End Try
 
 	End Function
 
