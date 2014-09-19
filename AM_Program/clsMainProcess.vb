@@ -388,7 +388,7 @@ Public Class clsMainProcess
 
 				' Check whether the computer is likely to install the monthly Windows Updates within the next few hours
 				Dim pendingWindowsUpdateMessage As String = String.Empty
-				If WindowsUpdatesArePending(DateTime.Now, pendingWindowsUpdateMessage) Then
+				If clsWindowsUpdateStatus.UpdatesArePending(pendingWindowsUpdateMessage) Then
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage)
 					UpdateStatusIdle(pendingWindowsUpdateMessage)
 					Exit While
@@ -1847,56 +1847,6 @@ Public Class clsMainProcess
 
 		'No problems found
 		Return True
-
-	End Function
-
-	Private Function WindowsUpdatesArePending(ByVal currentTime As DateTime, <Out()> ByRef pendingWindowsUpdateMessage As String) As Boolean
-
-		pendingWindowsUpdateMessage = "No pending update"
-
-		' Determine the second Tuesday in the current month
-		Dim firstTuesdayInMonth = New DateTime(currentTime.Year, currentTime.Month, 1)
-		While firstTuesdayInMonth.DayOfWeek <> DayOfWeek.Tuesday
-			firstTuesdayInMonth = firstTuesdayInMonth.AddDays(1)
-		End While
-
-		Dim secondTuesdayInMonth = firstTuesdayInMonth.AddDays(7)
-
-		' Windows 7 / Windows 8 Pubs install updates around 3 am on the Thursday after the second Tuesday of the month
-		' Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
-		Dim dtExclusionStart = secondTuesdayInMonth.AddDays(2)
-		Dim dtExclusionEnd = secondTuesdayInMonth.AddDays(2).AddHours(6)
-
-		If currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd Then
-			Dim dtPendingUpdateTime = secondTuesdayInMonth.AddDays(2).AddHours(3)
-
-			If currentTime < dtPendingUpdateTime Then
-				pendingWindowsUpdateMessage = "Processing boxes expected to install Windows Updates around " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
-			Else
-				pendingWindowsUpdateMessage = "Processing boxes should have installed Windows Updates at " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
-			End If
-
-			Return True
-		End If
-
-		' Windows servers install updates around 10 am on the Sunday after the second Tuesday of the month
-		' Do not request a job between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-		dtExclusionStart = secondTuesdayInMonth.AddDays(5).AddHours(9)
-		dtExclusionEnd = secondTuesdayInMonth.AddDays(5).AddHours(11)
-
-		If currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd Then
-			Dim dtPendingUpdateTime = secondTuesdayInMonth.AddDays(5).AddHours(10)
-
-			If currentTime < dtPendingUpdateTime Then
-				pendingWindowsUpdateMessage = "Servers expected to install Windows Updates around " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
-			Else
-				pendingWindowsUpdateMessage = "Servers should have installed Windows Updates at " & dtPendingUpdateTime.ToString("hh:mm:ss tt")
-			End If
-
-			Return True
-		End If
-
-		Return False
 
 	End Function
 
