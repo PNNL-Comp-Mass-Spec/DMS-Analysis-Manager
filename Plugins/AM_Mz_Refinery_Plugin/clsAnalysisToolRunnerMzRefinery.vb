@@ -11,6 +11,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports AnalysisManagerMSGFDBPlugIn
+Imports System.Text.RegularExpressions
 
 ''' <summary>
 ''' Class for running Mz Refinery to recalibrate m/z values in a .mzML file
@@ -21,13 +22,14 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 #Region "Constants and Enums"
 	Protected Const PROGRESS_PCT_STARTING As Single = 1
-	Protected Const PROGRESS_PCT_MZREFINERY_COMPLETE As Single = 97
+	Protected Const PROGRESS_PCT_MZREFINER_COMPLETE As Single = 97
 	Protected Const PROGRESS_PCT_PLOTS_GENERATED As Single = 98
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
-	Protected Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MzRefinery_ConsoleOutput.txt"
+	Protected Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MSConvert_MzRefiner_ConsoleOutput.txt"
 	Protected Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
 
+	Public Const MSGFPLUS_MZID_SUFFIX As String = "_msgfplus.mzid"
 #End Region
 
 #Region "Module Variables"
@@ -37,18 +39,18 @@ Public Class clsAnalysisToolRunnerMzRefinery
 	Protected mConsoleOutputErrorMsg As String
 
 	Protected mMSGFDbProgLoc As String
-	Protected mMzRefineryProgLoc As String
+	Protected mMSConvertProgLoc As String
 	Protected mPpmErrorCharterProgLoc As String
 
 	Protected mMSGFPlusResultsFilePath As String
 
 	Protected mRunningMSGFPlus As Boolean
-	Protected mRunningMzRefinery As Boolean
+	Protected mRunningzRefinerWithMSConvert As Boolean
 
 	Protected mMSGFPlusComplete As Boolean
 	Protected mMSGFPlusCompletionTime As DateTime
 
-	Protected mSkipMzRefinery As Boolean
+	Protected mSkipMzRefiner As Boolean
 
 	Protected mMzRefineryCorrectionMode As String
 
@@ -63,7 +65,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 #Region "Methods"
 
 	''' <summary>
-	''' Runs MSGF+ then runs MzRefinery
+	''' Runs MSGF+ then runs MSConvert with the MzRefiner filter
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
@@ -83,14 +85,14 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 			' Verify that program files exist
 
-			' Determine the path to the MzRefinery program
-			mMzRefineryProgLoc = DetermineProgramLocation("MzRefinery", "MzRefineryProgLoc", "mzML_Refinery.exe")
+			' Determine the path to the customized version of MSConvert that includes the MzRefiner filter
+			mMSConvertProgLoc = DetermineProgramLocation("MzRefinery", "MzRefineryProgLoc", "msconvert.exe")
 
-			If String.IsNullOrWhiteSpace(mMzRefineryProgLoc) Then
+			If String.IsNullOrWhiteSpace(mMSConvertProgLoc) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
-			' Determine the path to the PPM Error Charter program
+			' Determine the path to the PPM error charter program
 			mPpmErrorCharterProgLoc = DetermineProgramLocation("MzRefinery", "MzRefineryProgLoc", "PPMErrorCharter.exe")
 
 			If String.IsNullOrWhiteSpace(mPpmErrorCharterProgLoc) Then
@@ -111,15 +113,23 @@ Public Class clsAnalysisToolRunnerMzRefinery
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
+			' Look for existing MSGF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
 
-			' Run MSGF+ (includes indexing the fasta file)
-			Dim fiMSGFPlusResults As FileInfo = Nothing
+			Dim fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & MSGFPLUS_MZID_SUFFIX))
+			Dim skippedMSGFPlus = False
 
-			result = RunMSGFPlus(javaProgLoc, fiMSGFPlusResults)
+			If fiMSGFPlusResults.Exists Then
+				result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+				skippedMSGFPlus = True
+				m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name)
+			Else
+				' Run MSGF+ (includes indexing the fasta file)
+				result = RunMSGFPlus(javaProgLoc, fiMSGFPlusResults)
+			End If
 
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Unknown error running MSGF+ prior to running MzRefinery"
+					m_message = "Unknown error running MSGF+ prior to running MzRefiner"
 				End If
 				Return result
 			End If
@@ -127,6 +137,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			CmdRunner = Nothing
 
 			Dim blnSuccess As Boolean
+			Dim processingError As Boolean = False
 
 			Dim fiOriginalMzMLFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION))
 			Dim fiFixedMzMLFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_FIXED" & clsAnalysisResources.DOT_MZML_EXTENSION))
@@ -134,24 +145,25 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			m_jobParams.AddResultFileToSkip(fiOriginalMzMLFile.Name)
 			m_jobParams.AddResultFileToSkip(fiFixedMzMLFile.Name)
 
-			If mSkipMzRefinery Then
+			If mSkipMzRefiner Then
 				' Rename the original file to have the expected name of the fixed mzML file
 				' Required for PostProcessMzRefineryResults to work properly
 				fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
 			Else
-				' Run MzRefinery
-				blnSuccess = StartMzRefinery(fiMSGFPlusResults)
+				' Run MSConvert with the MzRefiner filter
+				blnSuccess = StartMzRefiner(fiOriginalMzMLFile, fiMSGFPlusResults)
+				If Not blnSuccess Then processingError = True
 			End If
-
 
 			' Look for the results file
 			fiFixedMzMLFile.Refresh()
-			If fiFixedMzMLFile.Exists Then
-				blnSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMzMLFile)
+			If fiFixedMzMLFile.Exists AndAlso Not processingError Then
+				blnSuccess = PostProcessMzRefinerResults(fiMSGFPlusResults, fiFixedMzMLFile)
+				If Not blnSuccess Then processingError = True
 			Else
 				If String.IsNullOrEmpty(m_message) Then
-					m_message = "MzRefinery results file not found: " & fiFixedMzMLFile.Name
-					blnSuccess = False
+					m_message = "MzRefiner results file not found: " & fiFixedMzMLFile.Name
+					processingError = True
 				End If
 			End If
 
@@ -167,22 +179,37 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 			CmdRunner = Nothing
 
-			'Make sure objects are released
+			' Make sure objects are released
 			Threading.Thread.Sleep(2000)		'2 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			If blnSuccess Then
-				m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name)
-			Else
-				' Move the source files and any results to the Failed Job folder
-				' Useful for debugging problems
-				CopyFailedResultsToArchiveFolder()
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			If processingError Then
+				Dim msgfPlusResultsExist = False
+
+				If Not fiMSGFPlusResults Is Nothing AndAlso fiMSGFPlusResults.Exists() Then
+					' MSGF+ succeeded but MzRefiner or PostProcessing failed
+					' We will mark the job as failed, but we want to move the MSGF+ results into the transfer folder
+
+					If skippedMSGFPlus Then
+						msgfPlusResultsExist = True
+					Else
+						msgfPlusResultsExist = CompressMSGFPlusResults(fiMSGFPlusResults)
+					End If
+
+				End If
+
+				If Not msgfPlusResultsExist Then
+					' Move the source files and any results to the Failed Job folder
+					' Useful for debugging problems
+					CopyFailedResultsToArchiveFolder()
+					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				End If
+
 			End If
 
 			result = MakeResultsFolder()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'MakeResultsFolder handles posting to local log, so set database error message and exit
+				' MakeResultsFolder handles posting to local log, so set database error message and exit
 				m_message = "Error making results folder"
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -200,6 +227,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
+			If processingError Then
+				' If we get here, MSGF+ succeeded, but MzRefiner or PostProcessing failed
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing failed; see results at " & m_jobParams.GetParam("transferFolderPath"))
+				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			End If
+
 		Catch ex As Exception
 			m_message = "Error in MzRefineryPlugin->RunTool"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
@@ -213,8 +246,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 	''' <summary>
 	''' Index the Fasta file (if needed) then run MSGF+
 	''' </summary>
-	''' <param name="javaProgLoc"></param>
-	''' <param name="fiMSGFPlusResults"></param>
+	''' <param name="javaProgLoc">Path to Java</param>
+	''' <param name="fiMSGFPlusResults">Output: MSGF+ results file</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Protected Function RunMSGFPlus(
@@ -289,14 +322,14 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		' Look for extra parameters specific to MZRefinery
-		Dim success = ExtractMzRefineryOptionsFromParameterFile(strParameterFilePath)
+		' Look for extra parameters specific to MZRefiner
+		Dim success = ExtractMzRefinerOptionsFromParameterFile(strParameterFilePath)
 		If Not success Then
-			m_message = "Error extracting MzRefinery options from parameter file " & Path.GetFileName(strParameterFilePath)
+			m_message = "Error extracting MzRefiner options from parameter file " & Path.GetFileName(strParameterFilePath)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		Dim resultsFileName = m_Dataset & "_msgfplus.mzid"
+		Dim resultsFileName = m_Dataset & MSGFPLUS_MZID_SUFFIX
 		fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, resultsFileName))
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & strSearchEngineName)
@@ -440,6 +473,30 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 	End Function
 
+	Private Function CompressMSGFPlusResults(ByVal fiMSGFPlusResults As FileInfo) As Boolean
+
+		Try
+
+			' Compress the MSGF+ .mzID file
+			Dim blnSuccess = m_IonicZipTools.GZipFile(fiMSGFPlusResults.FullName, True)
+
+			If Not blnSuccess Then
+				m_message = m_IonicZipTools.Message
+				Return False
+			End If
+
+			m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name)
+			m_jobParams.AddResultFileToKeep(fiMSGFPlusResults.Name & clsAnalysisResources.DOT_GZ_EXTENSION)
+
+		Catch ex As Exception
+			m_message = "Error compressing the .mzID file"
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+			Return False
+		End Try
+
+		Return True
+	End Function
+
 	Protected Sub CopyFailedResultsToArchiveFolder()
 
 		Dim result As IJobParams.CloseOutType
@@ -482,10 +539,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 	End Sub
 
+	Private Function ExtractMzRefinerOptionsFromParameterFile(ByVal strParameterFilePath As String) As Boolean
 
-	Private Function ExtractMzRefineryOptionsFromParameterFile(ByVal strParameterFilePath As String) As Boolean
-
-		mSkipMzRefinery = False
+		mSkipMzRefiner = False
 
 		Try
 			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -503,7 +559,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 							Case "SkipMzRefinery"
 								Dim strValue As String = kvSetting.Value
 								If Boolean.TryParse(strValue, blnValue) Then
-									mSkipMzRefinery = blnValue
+									mSkipMzRefiner = blnValue
 								End If
 						End Select
 
@@ -512,7 +568,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			End Using
 
 		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ExtractMzRefineryOptionsFromParameterFile", ex)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ExtractMzRefinerOptionsFromParameterFile", ex)
 			Return False
 		End Try
 
@@ -566,8 +622,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 					End If
 				End If
 
-			ElseIf mRunningMzRefinery Then
-				ParseMzRefineryConsoleOutputFile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT))
+			ElseIf mRunningzRefinerWithMSConvert Then
+				ParseMSConvertConsoleOutputfile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT))
 			End If
 
 		End If
@@ -596,48 +652,65 @@ Public Class clsAnalysisToolRunnerMzRefinery
 	End Sub
 
 	''' <summary>
-	''' Parse the MzRefinery console output file to look for errors
+	''' Parse the MSConvert console output file to look for errors from MzRefiner
 	''' </summary>
 	''' <param name="strConsoleOutputFilePath"></param>
 	''' <remarks></remarks>
-	Private Sub ParseMzRefineryConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+	Private Sub ParseMSConvertConsoleOutputfile(ByVal strConsoleOutputFilePath As String)
 
-		' Example Console output
+		' Example console output
 		'
-
-		'         Filtered out 10430 identifications.
-		'         Good data points:                                 4645
-		'         Average: global ppm Errors:                       3.22947
-		'         Systematic Drift (mode):                          3
-		'         Systematic Drift (median):                        3
-		'         Measurement Precision (stdev ppm):                2.86259
-		'         Measurement Precision (stdev(mode) ppm):          2.87108
-		'         Measurement Precision (stdev(median) ppm):        2.87108
-		'         Average BinWise stdev (scan):                     2.60397
-		'         Expected % Improvement (scan):                    9.03471
-		'         Expected % Improvement (scan)(mode):              9.30347
-		'         Expected % Improvement (scan)(median):            9.03471
-		'         Average BinWise stdev (smoothed scan):            2.67439
-		'         Expected % Improvement (smoothed scan):           6.57469
-		'         Expected % Improvement (smoothed scan)(mode):     6.85072
-		'         Expected % Improvement (smoothed scan)(median):   6.57469
-		'         Average BinWise stdev (mz):                       2.49953
-		'         Expected % Improvement (mz):                      12.683
-		'         Expected % Improvement (mz)(mode):                12.941
-		'         Expected % Improvement (mz)(median):              12.683
-		'         Average BinWise stdev (smoothed mz):              2.60274
-		'         Expected % Improvement (smoothed mz):             9.07751
-		'         Expected % Improvement (smoothed mz)(mode):       9.34615
-		'         Expected % Improvement (smoothed mz)(median):     9.07751
+		' filters:
+		'   mzRefiner QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_msgfplus.mzid thresholdValue=-1e-10 thresholdStep=10 maxSteps=3
+		' 
+		' filenames:
+		'   QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07.mzML
+		' 
+		' processing file: QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07.mzML
+		' Reading file "QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_msgfplus.mzid"...
+		'         Filtered out 19654 identifications because of score.
+		'         Filtered out 0 identifications because of mass error.
+		'         Good data points:                                 9637
+		'         Average: global ppm Errors:                       -0.745957
+		'         Systematic Drift (mode):                          -1.5
+		'         Systematic Drift (median):                        -1.5
+		'         Measurement Precision (stdev ppm):                6.56403
+		'         Measurement Precision (stdev(mode) ppm):          6.59396
+		'         Measurement Precision (stdev(median) ppm):        6.59396
+		'         Average BinWise stdev (scan):                     5.5313
+		'         Expected % Improvement (scan):                    15.5618
+		'         Expected % Improvement (scan)(mode):              16.1157
+		'         Expected % Improvement (scan)(median):            15.7332
+		'         Average BinWise stdev (smoothed scan):            5.55708
+		'         Expected % Improvement (smoothed scan):           15.1681
+		'         Expected % Improvement (smoothed scan)(mode):     15.7246
+		'         Expected % Improvement (smoothed scan)(median):   15.3404
+		'         Average BinWise stdev (mz):                       4.75475
+		'         Expected % Improvement (mz):                      27.4163
+		'         Expected % Improvement (mz)(mode):                27.8924
+		'         Expected % Improvement (mz)(median):              27.5636
+		'         Average BinWise stdev (smoothed mz):              4.94676
+		'         Expected % Improvement (smoothed mz):             24.4851
+		'         Expected % Improvement (smoothed mz)(mode):       24.9805
+		'         Expected % Improvement (smoothed mz)(median):     24.6384
 		' Chose mass to charge shift...
-		' Reading mzML file    "E:\DMS_WorkDir\QC_Shew_13_07_500ng_CID_A_15Jul14_Lynx_14-02-24.mzML"
-		' Outputting fixed to: "E:\DMS_WorkDir\QC_Shew_13_07_500ng_CID_A_15Jul14_Lynx_14-02-24_FIXED.mzML"
-		' mzML
-		'     m/z: Compression-None, 32-bit
-		'     intensity: Compression-None, 32-bit
-		'     rt: Compression-None, 32-bit
-		' ByteOrder_LittleEndian
-		'  indexed="true"
+		'         Estimated final stDev:                            4.94676
+		'         Estimated tolerance for 99%: 0 +/-                14.8403
+		' writing output file: .\QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_FIXED.mzML
+		' 
+
+		' Example warning for sparse data file
+		' Low number of good identifications found. Will not perform dependent shifts.
+		'         Less than 500 (123) results after filtering.
+		'         Filtered out 6830 identifications because of score.
+
+		' Example error for really sparse data file
+		' Excluding file ".\mzmlRefineryData\Cyanothece_bad\Cyano_GC_07_10_25Aug09_Draco_09-05-02.mzid" from data set
+		'         Less than 100 (16) results after filtering.
+		'         Filtered out 4208 identifications because of score.
+		'         Filtered out 0 identifications because of mass error.
+
+		Dim reResultsAfterFiltering = New Regex("Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled)
 
 		Try
 			If Not File.Exists(strConsoleOutputFilePath) Then
@@ -659,16 +732,30 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 					If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim strLineInLCase = strLineIn.ToLower()
+						Dim strLineInLCase = strLineIn.Trim().ToLower()
 
 						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
 							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running MzRefinery:"
+								mConsoleOutputErrorMsg = "Error running MzRefinery: " & strLineIn
+							Else
+								mConsoleOutputErrorMsg &= "; " & strLineIn
 							End If
-							mConsoleOutputErrorMsg &= "; " & strLineIn
+
 							Continue Do
-						ElseIf strLineInLCase.StartsWith("chose ") Then
+						ElseIf strLineIn.StartsWith("Chose ") Then
 							mMzRefineryCorrectionMode = String.Copy(strLineIn)
+						ElseIf strLineIn.StartsWith("Low number of good identifications found") Then
+							m_EvalMessage = strLineIn
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefiner warning: " & strLineIn)
+						ElseIf strLineIn.StartsWith("Excluding file") AndAlso strLineIn.EndsWith("from data set") Then
+							m_message = "Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset"
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+						Else
+							Dim reMatch = reResultsAfterFiltering.Match(strLineIn)
+
+							If reMatch.Success Then
+								m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, strLineIn.Trim())
+							End If
 						End If
 
 					End If
@@ -679,13 +766,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		Catch ex As Exception
 			' Ignore errors here
 			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MzRefinery console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MzRefiner console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
 			End If
 		End Try
 
 	End Sub
 
-	Private Function PostProcessMzRefineryResults(ByVal fiMSGFPlusResults As FileInfo, ByVal fiFixedMzMLFile As FileInfo) As Boolean
+	Private Function PostProcessMzRefinerResults(ByVal fiMSGFPlusResults As FileInfo, ByVal fiFixedMzMLFile As FileInfo) As Boolean
 
 		Dim strOriginalMzMLFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 
@@ -697,7 +784,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 				Return False
 			End If
 
-			If Not mSkipMzRefinery Then
+			If Not mSkipMzRefiner Then
 				' Store the PPM Mass Errors in the database
 				blnSuccess = StorePPMErrorStatsInDB()
 				If Not blnSuccess Then
@@ -779,40 +866,42 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			Return False
 		End Try
 
-		Try
+		' Compress the MSGF+ .mzID file
+		Dim success = CompressMSGFPlusResults(fiMSGFPlusResults)
 
-			' Compress the .mzID file
-			Dim blnSuccess = m_IonicZipTools.GZipFile(fiMSGFPlusResults.FullName, True)
-
-			If Not blnSuccess Then
-				m_message = m_IonicZipTools.Message
-				Return False
-			End If
-
-			m_jobParams.AddResultFileToKeep(fiMSGFPlusResults.Name & clsAnalysisResources.DOT_GZ_EXTENSION)
-
-		Catch ex As Exception
-			m_message = "Error compressing the .mzID file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
+		Return success
 
 	End Function
 
-	Protected Function StartMzRefinery(ByVal fiMSGFPlusResults As FileInfo) As Boolean
+	Protected Function StartMzRefiner(ByVal fiOriginalMzMLFile As FileInfo, ByVal fiMSGFPlusResults As FileInfo) As Boolean
 
 		mConsoleOutputErrorMsg = String.Empty
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MzRefinery")
+		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MzRefiner using MSConvert")
 
-		'Set up and execute a program runner to run MzRefinery
-		Dim CmdStr = " " & fiMSGFPlusResults.FullName
+		' Set up and execute a program runner to run MSConvert
+		' Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
+
+		Dim CmdStr = " "
+		CmdStr &= fiOriginalMzMLFile.FullName
+		CmdStr &= " --filter ""mzRefiner " & fiMSGFPlusResults.FullName
+
+		' MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
+		' The data is initially filtered by MSGF SpecProb <= 1e-10
+		' The reason that we prepend "1e-10" with a dash is to indicate a range of "-infinity to 1e-10"
+		CmdStr &= " thresholdValue=-1e-10"
+
+		' If there are not 500 matches with 1e-10, then the threshold value is multiplied by the thresholdStep value
+		' This process is continued at most maxSteps times
+		' Thus, using 10 and 3 means the thresholds that will be considered are 1e-10, 1e-9, 1e-8, and 1e-7
+		CmdStr &= " thresholdStep=10"
+		CmdStr &= " maxSteps=3"""
+
+		' These switches assure that the output file is a 32-bit mzML file
+		CmdStr &= " --32 --mzML"
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMzRefineryProgLoc & CmdStr)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMSConvertProgLoc & CmdStr)
 		End If
 
 		CmdRunner = New clsRunDosProgram(m_WorkDir)
@@ -828,12 +917,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 		m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
 
-		mRunningMzRefinery = True
+		mRunningzRefinerWithMSConvert = True
 
-		' Start MzRefinery and wait for it to exit
-		Dim blnSuccess = CmdRunner.RunProgram(mMzRefineryProgLoc, CmdStr, "MzRefinery", True)
+		' Start MSConvert and wait for it to exit
+		Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, CmdStr, "MSConvert_MzRefiner", True)
 
-		mRunningMzRefinery = False
+		mRunningzRefinerWithMSConvert = False
 
 		If Not CmdRunner.WriteConsoleOutputToFile Then
 			' Write the console output to a text file
@@ -849,38 +938,45 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		End If
 
 		' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
-		System.Threading.Thread.Sleep(250)
-		ParseMzRefineryConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+		Threading.Thread.Sleep(250)
+		ParseMSConvertConsoleOutputfile(CmdRunner.ConsoleOutputFilePath)
 
 		If Not String.IsNullOrEmpty(mMzRefineryCorrectionMode) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery " & mMzRefineryCorrectionMode)
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefiner " & mMzRefineryCorrectionMode)
 		End If
 
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+			If mConsoleOutputErrorMsg.Contains("No high-resolution data in input file") Then
+				m_message = "No high-resolution data in input file; cannot use MzRefinery on this dataset"
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+				blnSuccess = False
+			End If
 		End If
 
 		If Not blnSuccess Then
 			Dim Msg As String
-			Msg = "Error running MzRefinery"
-			m_message = clsGlobal.AppendToComment(m_message, Msg)
+			Msg = "Error running MSConvert/MzRefiner"
+			If String.IsNullOrEmpty(m_message) Then
+				m_message = Msg
+			End If
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
 			If CmdRunner.ExitCode <> 0 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MzRefinery returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefiner returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
 			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MzRefinery failed (but exit code is 0)")
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert/MzRefiner failed (but exit code is 0)")
 			End If
 
 			Return False
 
 		End If
 
-		m_progress = PROGRESS_PCT_MZREFINERY_COMPLETE
+		m_progress = PROGRESS_PCT_MZREFINER_COMPLETE
 		m_StatusTools.UpdateAndWrite(m_progress)
 		If m_DebugLevel >= 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MzRefinery Complete")
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MzRefiner Complete")
 		End If
 
 		Return True
@@ -998,7 +1094,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		' Store paths to key files in ioToolFiles
 		Dim ioToolFiles As New List(Of FileInfo)
 		ioToolFiles.Add(New FileInfo(mMSGFDbProgLoc))
-		ioToolFiles.Add(New FileInfo(mMzRefineryProgLoc))
+		ioToolFiles.Add(New FileInfo(mMSConvertProgLoc))
 		ioToolFiles.Add(New FileInfo(mPpmErrorCharterProgLoc))
 
 		Try
