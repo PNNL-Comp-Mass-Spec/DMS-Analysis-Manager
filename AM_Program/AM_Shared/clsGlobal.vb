@@ -1120,6 +1120,194 @@ Public Class clsGlobal
 
 	End Function
 
+	''' <summary>
+	''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+	''' </summary>
+	''' <param name="filePath1">First file</param>
+	''' <param name="filePath2">Second file</param>
+	''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function TextFilesMatch(ByVal filePath1 As String, ByVal filePath2 As String, ByVal ignoreWhitespace As Boolean) As Boolean
+
+		Const comparisonStartLine = 0
+		Const comparisonEndLine = 0
+
+		Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
+
+	End Function
+
+
+	''' <summary>
+	''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+	''' </summary>
+	''' <param name="filePath1">First file</param>
+	''' <param name="filePath2">Second file</param>
+	''' <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	''' <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function TextFilesMatch(
+	 ByVal filePath1 As String, ByVal filePath2 As String, _
+	 ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer, _
+	 ByVal ignoreWhitespace As Boolean) As Boolean
+
+		Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
+
+	End Function
+
+	''' <summary>
+	''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number. 
+	''' </summary>
+	''' <param name="filePath1">First file</param>
+	''' <param name="filePath2">Second file</param>
+	''' <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+	''' <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+	''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+	''' <param name="lstLineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Shared Function TextFilesMatch(
+	  ByVal filePath1 As String, ByVal filePath2 As String, _
+	  ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer, _
+	  ByVal ignoreWhitespace As Boolean, _
+	  ByRef lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
+
+		Dim strLineIn1 As String
+		Dim strLineIn2 As String
+
+		Dim chWhiteSpaceChars() As Char
+		Dim intLineNumber As Integer = 0
+
+		ReDim chWhiteSpaceChars(1)
+		chWhiteSpaceChars(0) = ControlChars.Tab
+		chWhiteSpaceChars(1) = " "c
+
+		Try
+			Using srFile1 = New StreamReader(New FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read))
+				Using srFile2 = New StreamReader(New FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+					Do While srFile1.Peek > -1
+						strLineIn1 = srFile1.ReadLine
+						intLineNumber += 1
+
+						If comparisonEndLine > 0 AndAlso intLineNumber > comparisonEndLine Then
+							' No need to compare further; files match up to this point
+							Exit Do
+						End If
+
+						If srFile2.Peek > -1 Then
+							strLineIn2 = srFile2.ReadLine
+
+							If intLineNumber >= comparisonStartLine Then
+								If ignoreWhitespace Then
+									strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
+									strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
+								End If
+
+								If strLineIn1 <> strLineIn2 Then
+									' Lines don't match; are we ignoring both of them?
+									If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso _
+									   TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
+										' Ignoring both lines
+									Else
+										' Files do not match
+										Return False
+									End If
+								End If
+							End If
+							Continue Do
+						End If
+
+						' File1 has more lines than file2
+
+						If Not ignoreWhitespace Then
+							' Files do not match
+							Return False
+						End If
+
+						' Ignoring whitespace
+						' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
+						' See if the remaining lines are blank
+						Do
+							If strLineIn1.Length <> 0 Then
+								If Not TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) Then
+									' Files do not match
+									Return False
+								End If
+							End If
+
+							If srFile1.Peek < 0 Then
+								Exit Do
+							End If
+
+							strLineIn1 = srFile1.ReadLine
+							strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
+						Loop
+
+						Exit Do
+
+					Loop
+
+					If srFile2.Peek > -1 Then
+						' File2 has more lines than file1
+						If Not ignoreWhitespace Then
+							' Files do not match
+							Return False
+						End If
+
+						' Ignoring whitespace
+						' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
+						' See if the remaining lines are blank
+						Do
+							strLineIn2 = srFile2.ReadLine
+							strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
+
+							If strLineIn2.Length <> 0 Then
+								If Not TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
+									' Files do not match
+									Return False
+								End If
+							End If
+						Loop While srFile2.Peek > -1
+
+					End If
+
+				End Using
+			End Using
+
+			Return True
+
+		Catch ex As Exception
+			' Error occurred
+			Return False
+		End Try
+
+	End Function
+
+	Protected Shared Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
+
+		If Not lstLineIgnoreRegExSpecs Is Nothing Then
+			For Each matchSpec In lstLineIgnoreRegExSpecs
+				If matchSpec.Match(strText).Success Then
+					' Line matches; ignore it
+					Return True
+				End If
+			Next
+		End If
+
+		Return False
+
+	End Function
+
+	''' <summary>
+	''' Change the host name in the given share path to use a different host
+	''' </summary>
+	''' <param name="sharePath"></param>
+	''' <param name="newHostName"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Shared Function UpdateHostName(ByVal sharePath As String, ByVal newHostName As String) As String
 
 		If Not newHostName.StartsWith("\\") Then

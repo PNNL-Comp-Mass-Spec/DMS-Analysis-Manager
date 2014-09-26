@@ -168,8 +168,14 @@ Public Class clsIonicZipTools
 		Try
 			Dim fiFile = New FileInfo(GZipFilePath)
 
-			If Not File.Exists(GZipFilePath) Then
+			If Not fiFile.Exists Then
 				m_Message = "GZip file not found: " & fiFile.FullName
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+				Return False
+			End If
+
+			If fiFile.Extension.ToLower() <> ".gz" Then
+				m_Message = "Not a GZipped file; must have extension .gz: " & fiFile.FullName
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
 				Return False
 			End If

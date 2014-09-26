@@ -13,7 +13,6 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports AnalysisManagerBase
-Imports System.Runtime.InteropServices
 
 Public Class clsMainProcess
 
@@ -1028,7 +1027,7 @@ Public Class clsMainProcess
 
 						If intErrorMessageCountToReturn < 1 Then intErrorMessageCountToReturn = 1
 
-						Do While srInFile.Peek >= 0
+						Do While srInFile.Peek > -1
 							strLineIn = srInFile.ReadLine
 
 							If Not strLineIn Is Nothing Then

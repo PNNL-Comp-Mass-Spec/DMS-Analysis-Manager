@@ -547,7 +547,7 @@ Public Class clsAnalysisToolRunnerBase
 			resultsFolderName = m_jobParams.GetParam("OutputFolderName")
 			If String.IsNullOrEmpty(resultsFolderName) Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-				m_message = "Results folder not found"
+				m_message = "Results folder not defined (job parameter OutputFolderName)"
 				' Without a source folder; there isn't much we can do
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
@@ -648,19 +648,19 @@ Public Class clsAnalysisToolRunnerBase
 
 				' Examine the files in the results folder to see if any of the files already exist in the transfer folder
 				' If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
+				' However, if file sizes differ, then replace the file
 
 				objSourceFolderInfo = New DirectoryInfo(SourceFolderPath)
 				For Each objSourceFile In objSourceFolderInfo.GetFiles()
 					If File.Exists(Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
 						objTargetFile = New FileInfo(Path.Combine(TargetFolderPath, objSourceFile.Name))
 
-						If objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
+						If objSourceFile.Length <> objTargetFile.Length OrElse objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
 							strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
 
 							If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
 							End If
-
 
 							htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
 						End If
@@ -711,7 +711,6 @@ Public Class clsAnalysisToolRunnerBase
 				intFailedFileCount += 1
 			End Try
 		Next
-
 
 		' Recursively call this function for each subfolder
 		' If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
@@ -1441,11 +1440,10 @@ Public Class clsAnalysisToolRunnerBase
 		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 
 		'Makes results folder and moves files into it
-		Dim ResFolderNamePath As String
 
 		'Log status (both locally and in the DB)
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
-		ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
+		Dim ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
 
 		'make the results folder
 		Try

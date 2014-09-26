@@ -24,7 +24,7 @@ Public Class clsCodeTest
 
 	Protected m_Progress As Single
 	Protected m_MaxScanInFile As Integer
-	Private WithEvents mDTAWatcher As System.IO.FileSystemWatcher
+	Private WithEvents mDTAWatcher As FileSystemWatcher
 
 	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450				' 7.5 minutes
 
@@ -72,7 +72,7 @@ Public Class clsCodeTest
 		objJobParams = New clsAnalysisJob(m_mgrParams, 0)
 
 		Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-		
+
 		m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
 		m_mgrParams.SetParam("MgrName", "Monroe_Test")
 		m_mgrParams.SetParam("debuglevel", "3")
@@ -258,7 +258,7 @@ Public Class clsCodeTest
 
 		' Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
 		'Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB)
-		
+
 		For Each CurRow As DataRow In Dt.Rows
 			Dim udtPSMJob As udtPSMJobInfoType = New udtPSMJobInfoType
 
@@ -266,14 +266,14 @@ Public Class clsCodeTest
 				.Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
 				.DatasetID = clsGlobal.DbCInt(CurRow("Dataset_ID"))
 				.Job = clsGlobal.DbCInt(CurRow("Job"))
-				.DtaRefineryDataFolderPath = IO.Path.Combine(clsGlobal.DbCStr(CurRow("Dataset_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
+				.DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow("Dataset_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
 			End With
 
-			If Not IO.Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
-				udtPSMJob.DtaRefineryDataFolderPath = IO.Path.Combine(clsGlobal.DbCStr(CurRow("Transfer_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
+			If Not Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
+				udtPSMJob.DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow("Transfer_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
 			End If
 
-			If IO.Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
+			If Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
 				Console.WriteLine("Processing " & udtPSMJob.DtaRefineryDataFolderPath)
 				'oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
 			Else
@@ -306,49 +306,48 @@ Public Class clsCodeTest
 
 		Dim blnNeedToArchiveFile As Boolean
 		Dim strTargetFilePath As String
-		Dim strLineIgnoreRegExList() As String
-
+		
 		Dim strNewNameBase As String
 		Dim strNewName As String
 		Dim strNewPath As String
 
 		Dim intRevisionNumber As Integer
 
-		Dim fiArchivedFile As System.IO.FileInfo
+		Dim fiArchivedFile As FileInfo
 
 		Try
-			ReDim strLineIgnoreRegExList(0)
-			strLineIgnoreRegExList(0) = "mass_type_parent *=.*"
+			Dim lstLineIgnoreRegExSpecs = New List(Of Regex)
+			lstLineIgnoreRegExSpecs.Add(New Regex("mass_type_parent *=.*", RegexOptions.Compiled Or RegexOptions.IgnoreCase))
 
 			blnNeedToArchiveFile = False
 
-			strTargetFilePath = System.IO.Path.Combine(strTargetFolderPath, System.IO.Path.GetFileName(strSrcFilePath))
+			strTargetFilePath = Path.Combine(strTargetFolderPath, Path.GetFileName(strSrcFilePath))
 
-			If Not System.IO.File.Exists(strTargetFilePath) Then
+			If Not File.Exists(strTargetFilePath) Then
 				blnNeedToArchiveFile = True
 			Else
 
 				' Read the files line-by-line and compare
 				' Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
-				If Not TextFilesMatch(strSrcFilePath, strTargetFilePath, 4, 0, True, strLineIgnoreRegExList) Then
+				If Not clsGlobal.TextFilesMatch(strSrcFilePath, strTargetFilePath, 4, 0, True, lstLineIgnoreRegExSpecs) Then
 					' Files don't match; rename the old file
 
-					fiArchivedFile = New System.IO.FileInfo(strTargetFilePath)
+					fiArchivedFile = New FileInfo(strTargetFilePath)
 
-					strNewNameBase = System.IO.Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
-					strNewName = strNewNameBase & System.IO.Path.GetExtension(strTargetFilePath)
+					strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
+					strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
 
 					' See if the renamed file exists; if it does, we'll have to tweak the name
 					intRevisionNumber = 1
 					Do
-						strNewPath = System.IO.Path.Combine(strTargetFolderPath, strNewName)
-						If Not System.IO.File.Exists(strNewPath) Then
+						strNewPath = Path.Combine(strTargetFolderPath, strNewName)
+						If Not File.Exists(strNewPath) Then
 							Exit Do
 						End If
 
 						intRevisionNumber += 1
-						strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & System.IO.Path.GetExtension(strTargetFilePath)
+						strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
 					Loop
 
 					fiArchivedFile.MoveTo(strNewPath)
@@ -359,8 +358,8 @@ Public Class clsCodeTest
 
 			If blnNeedToArchiveFile Then
 				' Copy the new parameter file to the archive
-				Console.WriteLine("Copying " & System.IO.Path.GetFileName(strSrcFilePath) & " to " & strTargetFilePath)
-				System.IO.File.Copy(strSrcFilePath, strTargetFilePath, True)
+				Console.WriteLine("Copying " & Path.GetFileName(strSrcFilePath) & " to " & strTargetFilePath)
+				File.Copy(strSrcFilePath, strTargetFilePath, True)
 			End If
 
 		Catch ex As Exception
@@ -369,204 +368,12 @@ Public Class clsCodeTest
 
 	End Sub
 
-	''' <summary>
-	''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-	''' </summary>
-	''' <param name="strFile1">First file</param>
-	''' <param name="strFile2">Second file</param>
-	''' <param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	''' <param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	''' <param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-	   ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-	   ByVal blnIgnoreWhitespace As Boolean) As Boolean
-
-		Return TextFilesMatch(strFile1, strFile2, intComparisonStartLine, intComparisonEndLine, blnIgnoreWhitespace, Nothing)
-
-	End Function
-
-	''' <summary>
-	''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-	''' </summary>
-	''' <param name="strFile1">First file</param>
-	''' <param name="strFile2">Second file</param>
-	''' <param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	''' <param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	''' <param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	''' <param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-	 ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-	 ByVal blnIgnoreWhitespace As Boolean, _
-	 ByRef strLineIgnoreRegExList() As String) As Boolean
-
-		Dim srFile1 As System.IO.StreamReader
-		Dim srFile2 As System.IO.StreamReader
-
-		Dim strLineIn1 As String
-		Dim strLineIn2 As String
-
-		Dim intIndex As Integer
-
-		Dim chWhiteSpaceChars() As Char
-		Dim blnFilesMatch As Boolean
-		Dim intLineNumber As Integer = 0
-
-		Dim intLineIgnoreListCount As Integer
-		Dim reLineIgnoreList() As System.Text.RegularExpressions.Regex
-
-		ReDim chWhiteSpaceChars(1)
-		chWhiteSpaceChars(0) = ControlChars.Tab
-		chWhiteSpaceChars(1) = " "c
-
-		blnFilesMatch = True
-
-		Try
-			intLineIgnoreListCount = 0
-			If Not strLineIgnoreRegExList Is Nothing AndAlso strLineIgnoreRegExList.Length > 0 Then
-				ReDim reLineIgnoreList(strLineIgnoreRegExList.Length - 1)
-
-				For intIndex = 0 To strLineIgnoreRegExList.Length - 1
-					If Not strLineIgnoreRegExList(intIndex) Is Nothing AndAlso strLineIgnoreRegExList(intIndex).Length > 0 Then
-						reLineIgnoreList(intLineIgnoreListCount) = New System.Text.RegularExpressions.Regex(strLineIgnoreRegExList(intIndex), System.Text.RegularExpressions.RegexOptions.Compiled Or System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-						intLineIgnoreListCount += 1
-					End If
-				Next
-			Else
-				ReDim reLineIgnoreList(0)
-			End If
-
-			srFile1 = New System.IO.StreamReader(New System.IO.FileStream(strFile1, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-			srFile2 = New System.IO.StreamReader(New System.IO.FileStream(strFile2, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
-
-			Do While srFile1.Peek >= 0
-				strLineIn1 = srFile1.ReadLine
-				intLineNumber += 1
-
-				If intComparisonEndLine > 0 AndAlso intLineNumber > intComparisonEndLine Then
-					' No need to compare further; files match up to this point
-					Exit Do
-				End If
-
-				If srFile2.Peek >= 0 Then
-					strLineIn2 = srFile2.ReadLine
-
-					If intLineNumber >= intComparisonStartLine Then
-						If blnIgnoreWhitespace Then
-							strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-							strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-						End If
-
-						If strLineIn1 <> strLineIn2 Then
-							' Lines don't match; are we ignoring both of them?
-							If TextFilesMatchIgnoreLine(strLineIn1, intLineIgnoreListCount, reLineIgnoreList) AndAlso _
-							   TextFilesMatchIgnoreLine(strLineIn2, intLineIgnoreListCount, reLineIgnoreList) Then
-								' Ignoring both lines
-							Else
-								blnFilesMatch = False
-								Exit Do
-							End If
-						End If
-					End If
-
-				Else
-					' File1 has more lines than file2
-					If blnIgnoreWhitespace Then
-						' Ignoring whitespace
-						' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
-						' See if the remaining lines are blank
-						Do
-							If strLineIn1.Length <> 0 Then
-								If Not TextFilesMatchIgnoreLine(strLineIn1, intLineIgnoreListCount, reLineIgnoreList) Then
-									blnFilesMatch = False
-									Exit Do
-								End If
-							End If
-
-							If srFile1.Peek >= 0 Then
-								strLineIn1 = srFile1.ReadLine
-								strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-							Else
-								Exit Do
-							End If
-						Loop
-
-					Else
-						' Not ignoring whitespace; files don't match
-						blnFilesMatch = False
-					End If
-
-					Exit Do
-				End If
-			Loop
-
-			If srFile2.Peek >= 0 Then
-				' File2 has more lines than file1
-				If blnIgnoreWhitespace Then
-					' Ignoring whitespace
-					' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
-					' See if the remaining lines are blank
-					Do
-						strLineIn2 = srFile2.ReadLine
-						strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-
-						If strLineIn2.Length <> 0 Then
-							If Not TextFilesMatchIgnoreLine(strLineIn2, intLineIgnoreListCount, reLineIgnoreList) Then
-								blnFilesMatch = False
-								Exit Do
-							End If
-						End If
-					Loop While srFile2.Peek >= 0
-
-				Else
-					' Not ignoring whitespace; files don't match
-					blnFilesMatch = False
-				End If
-			End If
-
-
-			srFile1.Close()
-			srFile2.Close()
-
-		Catch ex As Exception
-			' Error occurred
-			blnFilesMatch = False
-		End Try
-
-		Return blnFilesMatch
-
-	End Function
-
-	Protected Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal intLineIgnoreListCount As Integer, ByRef reLineIgnoreList() As System.Text.RegularExpressions.Regex) As Boolean
-
-		Dim intIndex As Integer
-		Dim blnIgnoreLine As Boolean = False
-
-		If Not reLineIgnoreList Is Nothing Then
-			For intIndex = 0 To intLineIgnoreListCount - 1
-				If Not reLineIgnoreList(intIndex) Is Nothing Then
-					If reLineIgnoreList(intIndex).Match(strText).Success Then
-						' Line matches; ignore it
-						blnIgnoreLine = True
-						Exit For
-					End If
-				End If
-			Next
-		End If
-
-		Return blnIgnoreLine
-
-	End Function
-
 	Protected Sub TestException()
 		InnerTestException()
 	End Sub
 
 	Protected Sub InnerTestException()
-		Throw New System.IO.PathTooLongException
+		Throw New PathTooLongException
 	End Sub
 
 	Public Sub TestUncat(ByVal rootFileName As String, ByVal strResultsFolder As String)
@@ -576,7 +383,7 @@ Public Class clsCodeTest
 		FileSplitter.SplitCattedDTAsOnly(rootFileName, strResultsFolder)
 
 		Console.WriteLine("Completed splitting concatenated DTA file")
-		
+
 	End Sub
 
 	Public Sub TestDTASplit()
@@ -775,16 +582,16 @@ Public Class clsCodeTest
 	End Sub
 
 	Public Sub TestFileDateConversion()
-		Dim objTargetFile As System.IO.FileInfo
+		Dim objTargetFile As FileInfo
 		Dim strDate As String
 
-		objTargetFile = New System.IO.FileInfo("D:\JobSteps.png")
+		objTargetFile = New FileInfo("D:\JobSteps.png")
 
 		strDate = objTargetFile.LastWriteTime.ToString()
 
 		Dim ResultFiles() As String
 
-		ResultFiles = System.IO.Directory.GetFiles("C:\Temp\", "*")
+		ResultFiles = Directory.GetFiles("C:\Temp\", "*")
 
 		For Each FileToCopy As String In ResultFiles
 			Console.WriteLine(FileToCopy)
@@ -1043,7 +850,7 @@ Public Class clsCodeTest
 		Dim SynFile As String
 		Dim strSynFileNameAndSize As String
 
-		Dim fiSynFile As System.IO.FileInfo
+		Dim fiSynFile As FileInfo
 		Dim Msg As String
 		Dim strFileList() As String
 
@@ -1059,7 +866,7 @@ Public Class clsCodeTest
 		SynFile = "JGI_Fungus_02_13_8Apr09_Griffin_09-02-12_syn.txt"
 
 		'Check to see if Syn file exists
-		fiSynFile = New System.IO.FileInfo(SynFile)
+		fiSynFile = New FileInfo(SynFile)
 		If Not fiSynFile.Exists Then
 			Msg = "clsExtractToolRunner.RunPeptideProphet(); Syn file " & SynFile & " not found; unable to run peptide prophet"
 			Console.WriteLine(Msg)
@@ -1083,7 +890,7 @@ Public Class clsCodeTest
 		For intFileIndex = 0 To strFileList.Length - 1
 			' Run PeptideProphet
 
-			fiSynFile = New System.IO.FileInfo(strFileList(intFileIndex))
+			fiSynFile = New FileInfo(strFileList(intFileIndex))
 			strSynFileNameAndSize = fiSynFile.Name & " (file size = " & (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") & " MB"
 			If strFileList.Length > 1 Then
 				strSynFileNameAndSize &= "; parent syn file is " & sngParentSynFileSizeMB.ToString("0.00") & " MB)"
@@ -1093,11 +900,11 @@ Public Class clsCodeTest
 
 			If True Then
 				' Make sure the Peptide Prophet output file was actually created
-				strPepProphetOutputFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(strFileList(intFileIndex)), _
-				   System.IO.Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
+				strPepProphetOutputFilePath = Path.Combine(Path.GetDirectoryName(strFileList(intFileIndex)), _
+				   Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
 				   PEPPROPHET_RESULT_FILE_SUFFIX)
 
-				If Not System.IO.File.Exists(strPepProphetOutputFilePath) Then
+				If Not File.Exists(strPepProphetOutputFilePath) Then
 
 					Msg = "clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " & strSynFileNameAndSize
 					''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
@@ -1128,7 +935,7 @@ Public Class clsCodeTest
 			' We now need to recombine the peptide prophet result files
 
 			' Update strFileList() to have the peptide prophet result file names
-			strBaseName = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(fiSynFile.FullName), System.IO.Path.GetFileNameWithoutExtension(SynFile))
+			strBaseName = Path.Combine(Path.GetDirectoryName(fiSynFile.FullName), Path.GetFileNameWithoutExtension(SynFile))
 
 			For intFileIndex = 0 To strFileList.Length - 1
 				strFileList(intFileIndex) = strBaseName & "_part" & (intFileIndex + 1).ToString & PEPPROPHET_RESULT_FILE_SUFFIX
@@ -1166,8 +973,8 @@ Public Class clsCodeTest
 		Dim intIndex As Integer
 
 		Dim intFileCount As Integer
-		Dim srInFiles() As System.IO.StreamReader
-		Dim swOutFile As System.IO.StreamWriter
+		Dim srInFiles() As StreamReader
+		Dim swOutFile As StreamWriter
 
 		Dim strLineIn As String = String.Empty
 		Dim strSplitLine() As String
@@ -1194,8 +1001,8 @@ Public Class clsCodeTest
 
 			' Open each of the input files
 			For intIndex = 0 To intFileCount - 1
-				If System.IO.File.Exists(strFileList(intIndex)) Then
-					srInFiles(intIndex) = New System.IO.StreamReader(New System.IO.FileStream(strFileList(intIndex), System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+				If File.Exists(strFileList(intIndex)) Then
+					srInFiles(intIndex) = New StreamReader(New FileStream(strFileList(intIndex), FileMode.Open, FileAccess.Read, FileShare.Read))
 				Else
 					' File not found; unable to continue
 					Msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
@@ -1206,7 +1013,7 @@ Public Class clsCodeTest
 
 			' Create the output file
 
-			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strCombinedFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			swOutFile = New StreamWriter(New FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 			intTotalLinesRead = 0
 			blnContinueReading = True
@@ -1215,7 +1022,7 @@ Public Class clsCodeTest
 				intTotalLinesReadSaved = intTotalLinesRead
 				For intFileIndex = 0 To intFileCount - 1
 
-					If srInFiles(intFileIndex).Peek >= 0 Then
+					If srInFiles(intFileIndex).Peek > -1 Then
 						strLineIn = srInFiles(intFileIndex).ReadLine
 
 						intLinesRead(intFileIndex) += 1
@@ -1358,7 +1165,7 @@ Public Class clsCodeTest
 	 ByVal blnLookForHeaderLine As Boolean, _
 	 ByRef strSplitFileList() As String) As Boolean
 
-		Dim fiFileInfo As System.IO.FileInfo
+		Dim fiFileInfo As FileInfo
 		Dim strBaseName As String
 
 		Dim intLinesRead As Integer = 0
@@ -1368,8 +1175,8 @@ Public Class clsCodeTest
 		Dim strLineIn As String = String.Empty
 		Dim strSplitLine() As String
 
-		Dim srInFile As System.IO.StreamReader
-		Dim swOutFiles() As System.IO.StreamWriter
+		Dim srInFile As StreamReader
+		Dim swOutFiles() As StreamWriter
 
 		Dim intSplitCount As Integer
 		Dim intIndex As Integer
@@ -1378,7 +1185,7 @@ Public Class clsCodeTest
 		Dim blnSuccess As Boolean = False
 
 		Try
-			fiFileInfo = New System.IO.FileInfo(strSrcFilePath)
+			fiFileInfo = New FileInfo(strSrcFilePath)
 			If Not fiFileInfo.Exists Then Return False
 
 			If fiFileInfo.Length <= lngMaxSizeBytes Then
@@ -1398,23 +1205,23 @@ Public Class clsCodeTest
 				End If
 
 				' Open the input file
-				srInFile = New System.IO.StreamReader(New System.IO.FileStream(fiFileInfo.FullName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+				srInFile = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Create each of the output files
 				ReDim strSplitFileList(intSplitCount - 1)
 				ReDim swOutFiles(intSplitCount - 1)
 
-				strBaseName = System.IO.Path.Combine(fiFileInfo.DirectoryName, System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name))
+				strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name))
 
 				For intIndex = 0 To intSplitCount - 1
-					strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & System.IO.Path.GetExtension(fiFileInfo.Name)
-					swOutFiles(intIndex) = New System.IO.StreamWriter(New System.IO.FileStream(strSplitFileList(intIndex), System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+					strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & Path.GetExtension(fiFileInfo.Name)
+					swOutFiles(intIndex) = New StreamWriter(New FileStream(strSplitFileList(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
 				Next
 
 				intLinesRead = 0
 				intTargetFileIndex = 0
 
-				Do While srInFile.Peek >= 0
+				Do While srInFile.Peek > -1
 					strLineIn = srInFile.ReadLine
 					intLinesRead += 1
 
@@ -1485,12 +1292,12 @@ Public Class clsCodeTest
 		Dim FolderToMove As String
 		Dim DatasetDir As String
 		Dim TargetDir As String
-		Dim diDatasetFolder As System.IO.DirectoryInfo
+		Dim diDatasetFolder As DirectoryInfo
 
 		'Verify input folder exists in storage server xfer folder
-		FolderToMove = System.IO.Path.Combine(strTransferFolderPath, strDatasetName)
-		FolderToMove = System.IO.Path.Combine(FolderToMove, strInputFolderName)
-		If Not System.IO.Directory.Exists(FolderToMove) Then
+		FolderToMove = Path.Combine(strTransferFolderPath, strDatasetName)
+		FolderToMove = Path.Combine(FolderToMove, strInputFolderName)
+		If Not Directory.Exists(FolderToMove) Then
 			Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
 			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1500,8 +1307,8 @@ Public Class clsCodeTest
 
 		' Verify dataset folder exists on storage server
 		' If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-		DatasetDir = System.IO.Path.Combine(strDatasetFolderPath, strDatasetName)
-		diDatasetFolder = New System.IO.DirectoryInfo(DatasetDir)
+		DatasetDir = Path.Combine(strDatasetFolderPath, strDatasetName)
+		diDatasetFolder = New DirectoryInfo(DatasetDir)
 		If Not diDatasetFolder.Exists Then
 			Msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " & DatasetDir & " not found; will attempt to make it"
 			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, clsGlobal.LOG_LOCAL_ONLY)
@@ -1539,8 +1346,8 @@ Public Class clsCodeTest
 		End If
 
 		'Determine if output folder already exists on storage server
-		TargetDir = System.IO.Path.Combine(DatasetDir, strInputFolderName)
-		If System.IO.Directory.Exists(TargetDir) Then
+		TargetDir = Path.Combine(DatasetDir, strInputFolderName)
+		If Directory.Exists(TargetDir) Then
 			Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
 			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1574,7 +1381,7 @@ Public Class clsCodeTest
 
 	Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
-		m_FastaFileName = System.IO.Path.GetFileName(FullOutputPath)		'Get the name of the fasta file that was generated
+		m_FastaFileName = Path.GetFileName(FullOutputPath)		'Get the name of the fasta file that was generated
 		m_FastaTimer.Stop()	  'Stop the fasta generation timer so no false error occurs
 		m_GenerationComplete = True		'Set the completion flag
 
@@ -1688,7 +1495,7 @@ Public Class clsCodeTest
 
 		strAppPath = "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\XTandem\tandem.exe"
 
-		strWorkDir = System.IO.Path.GetDirectoryName(strAppPath)
+		strWorkDir = Path.GetDirectoryName(strAppPath)
 
 		Dim objProgRunner As clsRunDosProgram
 
@@ -1747,7 +1554,7 @@ Public Class clsCodeTest
 			Else
 				.CacheStandardOutput = False
 				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, strConsoleOutputFileName)
+				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName)
 			End If
 		End With
 
@@ -1768,8 +1575,8 @@ Public Class clsCodeTest
 
 		Dim objExtensionsToCheck As New Generic.List(Of String)
 
-		Dim fiFolder As System.IO.DirectoryInfo
-		Dim fiFile As System.IO.FileInfo
+		Dim fiFolder As DirectoryInfo
+		Dim fiFile As FileInfo
 
 		Dim strDSNameLCase As String
 		Dim strExtension As String
@@ -1783,7 +1590,7 @@ Public Class clsCodeTest
 
 			strDSNameLCase = strDatasetName.ToLower()
 
-			fiFolder = New System.IO.DirectoryInfo(strFolderPath)
+			fiFolder = New DirectoryInfo(strFolderPath)
 
 			If fiFolder.Exists Then
 				For Each strExtension In objExtensionsToCheck
@@ -1794,7 +1601,7 @@ Public Class clsCodeTest
 
 							If fiFile.Name.ToLower <> strDesiredName.ToLower Then
 								Try
-									fiFile.MoveTo(System.IO.Path.Combine(fiFolder.FullName, strDesiredName))
+									fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName))
 								Catch ex As Exception
 									' Rename failed; that means the correct file already exists; this is OK
 								End Try
@@ -1902,10 +1709,10 @@ Public Class clsCodeTest
 
 		' Setup a FileSystemWatcher to watch for new .Dta files being created
 		' We can compare the scan number of new .Dta files to the m_MaxScanInFile value to determine % complete
-		mDTAWatcher = New System.IO.FileSystemWatcher(strWorkDir, "*.dta")
+		mDTAWatcher = New FileSystemWatcher(strWorkDir, "*.dta")
 
 		mDTAWatcher.IncludeSubdirectories = False
-		mDTAWatcher.NotifyFilter = IO.NotifyFilters.FileName Or IO.NotifyFilters.CreationTime
+		mDTAWatcher.NotifyFilter = NotifyFilters.FileName Or NotifyFilters.CreationTime
 
 		mDTAWatcher.EnableRaisingEvents = True
 
@@ -1942,7 +1749,7 @@ Public Class clsCodeTest
 
 	End Sub
 
-	Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mDTAWatcher.Created
+	Private Sub mDTAWatcher_Created(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mDTAWatcher.Created
 		UpdateDTAProgress(e.Name)
 	End Sub
 
@@ -1959,11 +1766,11 @@ Public Class clsCodeTest
 	End Sub
 
 	Private Function GetFileContents(ByVal filePath As String) As String
-		Dim fi As New System.IO.FileInfo(filePath)
-		Dim tr As System.IO.StreamReader
+		Dim fi As New FileInfo(filePath)
+		Dim tr As StreamReader
 		Dim s As String
 
-		tr = New System.IO.StreamReader(New System.IO.FileStream(fi.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+		tr = New StreamReader(New FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 		s = tr.ReadToEnd
 
@@ -2041,7 +1848,7 @@ Public Class clsCodeTest
 
 			blnShowDetailedRates = False
 
-			If Not System.IO.File.Exists(strLogFilePath) Then
+			If Not File.Exists(strLogFilePath) Then
 				strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count"
 				If blnLogToConsole Then Console.WriteLine(strProcessingMsg & ": " & strLogFilePath)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
@@ -2081,10 +1888,10 @@ Public Class clsCodeTest
 			' Initialize the dictionary that will track processing rates
 			dctHostProcessingRate = New Generic.Dictionary(Of String, Single)
 
-			Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srLogFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Read each line from the input file
-				Do While srLogFile.Peek >= 0
+				Do While srLogFile.Peek > -1
 					strLineIn = srLogFile.ReadLine
 
 					If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
