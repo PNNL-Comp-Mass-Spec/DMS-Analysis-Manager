@@ -1564,342 +1564,342 @@ Public Class clsMSGFDBUtils
 	''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
 	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
 	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
-	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
+    ''' <param name="instrumentGroup">DMS Instrument Group name</param>
 	''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
 	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
 	''' <returns>Options string if success; empty string if an error</returns>
 	''' <remarks></remarks>
-	Public Function ParseMSGFDBParameterFile(
-	  ByVal fastaFileSizeKB As Single,
-	  ByVal fastaFileIsDecoy As Boolean,
-	  ByVal strAssumedScanType As String,
-	  ByVal strScanTypeFilePath As String,
-	  ByVal strInstrumentGroup As String,
-	  ByVal strParameterFilePath As String,
-	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-	  <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+    Public Function ParseMSGFDBParameterFile(
+      ByVal fastaFileSizeKB As Single,
+      ByVal fastaFileIsDecoy As Boolean,
+      ByVal strAssumedScanType As String,
+      ByVal strScanTypeFilePath As String,
+      ByVal instrumentGroup As String,
+      ByVal strParameterFilePath As String,
+      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
-		Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
+        Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
 
-		Dim strLineIn As String
-		Dim sbOptions As Text.StringBuilder
+        Dim strLineIn As String
+        Dim sbOptions As Text.StringBuilder
 
-		Dim kvSetting As KeyValuePair(Of String, String)
-		Dim intValue As Integer
+        Dim kvSetting As KeyValuePair(Of String, String)
+        Dim intValue As Integer
 
-		Dim intParamFileThreadCount As Integer = 0
-		Dim strDMSDefinedThreadCount As String
-		Dim intDMSDefinedThreadCount As Integer = 0
+        Dim intParamFileThreadCount As Integer = 0
+        Dim strDMSDefinedThreadCount As String
+        Dim intDMSDefinedThreadCount As Integer = 0
 
-		Dim dctParamNames As Dictionary(Of String, String)
+        Dim dctParamNames As Dictionary(Of String, String)
 
-		Dim intNumMods As Integer = 0
-		Dim lstStaticMods As List(Of String) = New List(Of String)
-		Dim lstDynamicMods As List(Of String) = New List(Of String)
+        Dim intNumMods As Integer = 0
+        Dim lstStaticMods As List(Of String) = New List(Of String)
+        Dim lstDynamicMods As List(Of String) = New List(Of String)
 
-		Dim blnShowDecoyParamPresent As Boolean = False
-		Dim blnShowDecoy As Boolean = False
-		Dim blnTDA As Boolean = False
+        Dim blnShowDecoyParamPresent As Boolean = False
+        Dim blnShowDecoy As Boolean = False
+        Dim blnTDA As Boolean = False
 
-		Dim strSearchEngineName As String
+        Dim strSearchEngineName As String
 
-		strMSGFDbCmdLineOptions = String.Empty
+        strMSGFDbCmdLineOptions = String.Empty
 
-		If Not File.Exists(strParameterFilePath) Then
-			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
-			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-		End If
+        If Not File.Exists(strParameterFilePath) Then
+            ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+        End If
 
-		'Dim strDatasetType As String
-		'Dim blnHCD As Boolean = False
-		'strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
-		'If strDatasetType.ToUpper().Contains("HCD") Then
-		'	blnHCD = True
-		'End If
+        'Dim strDatasetType As String
+        'Dim blnHCD As Boolean = False
+        'strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
+        'If strDatasetType.ToUpper().Contains("HCD") Then
+        '	blnHCD = True
+        'End If
 
-		strSearchEngineName = GetSearchEngineName()
+        strSearchEngineName = GetSearchEngineName()
 
-		sbOptions = New Text.StringBuilder(500)
+        sbOptions = New Text.StringBuilder(500)
 
-		' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-		' Alternatively, if running MSGF+, this is set to true if TDA=1
-		mResultsIncludeAutoAddedDecoyPeptides = False
+        ' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
+        ' Alternatively, if running MSGF+, this is set to true if TDA=1
+        mResultsIncludeAutoAddedDecoyPeptides = False
 
-		Try
+        Try
 
-			' Initialize the Param Name dictionary
-			dctParamNames = GetMSFGDBParameterNames()
+            ' Initialize the Param Name dictionary
+            dctParamNames = GetMSFGDBParameterNames()
 
-			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srParamFile.Peek > -1
-					strLineIn = srParamFile.ReadLine()
+                Do While srParamFile.Peek > -1
+                    strLineIn = srParamFile.ReadLine()
 
-					kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
+                    kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
-					If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
+                    If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
-						Dim strValue As String = kvSetting.Value
+                        Dim strValue As String = kvSetting.Value
 
-						Dim strArgumentSwitch As String = String.Empty
-						Dim strArgumentSwitchOriginal As String
+                        Dim strArgumentSwitch As String = String.Empty
+                        Dim strArgumentSwitchOriginal As String
 
-						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
+                        ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+                        If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-							If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+                            If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 
-								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
-									' Override FragmentationMethodID to always be 0
-									strValue = "0"
-
-								ElseIf Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
-									' Override FragmentationMethodID using strAssumedScanType
-									Select Case strAssumedScanType.ToUpper()
-										Case "CID"
-											strValue = "1"
-										Case "ETD"
-											strValue = "2"
-										Case "HCD"
-											strValue = "3"
-										Case Else
-											' Invalid string
-											mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-											ReportError(mErrorMessage)
-											Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-									End Select
-
-								End If
-
-							ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
-
-								If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
-
-									Dim eResult = DetermineInstrumentID(strValue, strScanTypeFilePath, strInstrumentGroup)
-									If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-										Return eResult
-									End If
-
-								ElseIf Not String.IsNullOrWhiteSpace(strInstrumentGroup) Then
-									Dim instrumentIDNew As String = String.Empty
-									Dim autoSwitchReason As String = String.Empty
-
-									If Not CanDetermineInstIdFromInstGroup(strInstrumentGroup, instrumentIDNew, autoSwitchReason) Then
-										Dim datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
-										Dim countLowResMSn As Integer
-										Dim countHighResMSn As Integer
-										Dim countHCDMSn As Integer
-
-										If LookupScanTypesForDataset(datasetName, countLowResMSn, countHighResMSn, countHCDMSn) Then
-											ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, instrumentIDNew, autoSwitchReason)
-										End If
-
-									End If
-
-									AutoUpdateInstrumentIDIfChanged(strValue, instrumentIDNew, autoSwitchReason)
-
-								End If
-
-							End If
-
-							strArgumentSwitchOriginal = String.Copy(strArgumentSwitch)
-
-							AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
-
-							If String.IsNullOrEmpty(strArgumentSwitch) Then
-								If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
-									ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
-								End If
-							ElseIf String.IsNullOrEmpty(strValue) Then
-								If m_DebugLevel >= 1 Then
-									ReportWarning("Skipping switch " & strArgumentSwitch & " since the value is empty")
-								End If
-							Else
-								sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-							End If
-
-
-							If clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
-								blnShowDecoyParamPresent = True
-								If Integer.TryParse(strValue, intValue) Then
-									If intValue > 0 Then
-										blnShowDecoy = True
-									End If
-								End If
-							ElseIf clsGlobal.IsMatch(strArgumentSwitch, "tda") Then
-								If Integer.TryParse(strValue, intValue) Then
-									If intValue > 0 Then
-										blnTDA = True
-									End If
-								End If
-							End If
-
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb") Then
-
-							If mMSGFPlus Then
-								' Not valid for MSGF+; skip it
-							Else
-
-								If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "auto") Then
-									If fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
-										sbOptions.Append(" -uniformAAProb 1")
-									Else
-										sbOptions.Append(" -uniformAAProb 0")
-									End If
-								Else
-									If Integer.TryParse(strValue, intValue) Then
-										sbOptions.Append(" -uniformAAProb " & intValue)
-									Else
-										mErrorMessage = "Invalid value for uniformAAProb in MSGFDB parameter file"
-										ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
-										srParamFile.Close()
-										Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-									End If
-								End If
-							End If
-
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumThreads") Then
-							If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "all") Then
-								' Do not append -thread to the command line; MSGFDB will use all available cores by default
-							Else
-								If Integer.TryParse(strValue, intParamFileThreadCount) Then
-									' intParamFileThreadCount now has the thread count
-								Else
-									ReportWarning("Invalid value for NumThreads in MSGFDB parameter file: " & strLineIn)
-								End If
-							End If
-
-
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
-							If Integer.TryParse(strValue, intValue) Then
-								intNumMods = intValue
-							Else
-								mErrorMessage = "Invalid value for NumMods in MSGFDB parameter file"
-								ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
-								srParamFile.Close()
-								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-							End If
-
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-								lstStaticMods.Add(strValue)
-							End If
-
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-								lstDynamicMods.Add(strValue)
-							End If
-						End If
-
-						'If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
-						'	If Integer.TryParse(strValue, intValue) Then
-						'		If intValue = 3 Then
-						'			blnHCD = True
-						'		End If
-						'	End If
-						'End If
-
-					End If
-				Loop
-
-			End Using
-
-			If blnTDA Then
-				If mMSGFPlus Then
-					' Parameter file contains TDA=1 and we're running MSGF+
-					mResultsIncludeAutoAddedDecoyPeptides = True
-				ElseIf blnShowDecoy Then
-					' Parameter file contains both TDA=1 and showDecoy=1
-					mResultsIncludeAutoAddedDecoyPeptides = True
-				End If
-			End If
-
-			If Not blnShowDecoyParamPresent And Not mMSGFPlus Then
-				' Add showDecoy to sbOptions
-				sbOptions.Append(" -showDecoy 0")
-			End If
-
-		Catch ex As Exception
-			mErrorMessage = "Exception reading MSGFDB parameter file"
-			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		' Define the thread count; note that MSGFDBThreads could be "all"
-		strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", String.Empty)
-		If Not Integer.TryParse(strDMSDefinedThreadCount, intDMSDefinedThreadCount) Then
-			intDMSDefinedThreadCount = 0
-		End If
-
-		If intDMSDefinedThreadCount > 0 Then
-			intParamFileThreadCount = intDMSDefinedThreadCount
-		End If
-
-		If udtHPCOptions.UsingHPC Then
-			' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
-			If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
-
-		ElseIf intParamFileThreadCount <= 0 Then
-			' Set intParamFileThreadCount to the number of cores on this computer
-			' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
-			' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
-
-			Dim coreCount As Integer = 0
-			For Each item As Management.ManagementBaseObject In New Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
-				coreCount += Integer.Parse(item("NumberOfCores").ToString())
-			Next
-
-			' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
-			' Starting with version v10072 it now uses intParamFileThreadCount cores as instructed
-			intParamFileThreadCount = coreCount
-
-		End If
-
-		If intParamFileThreadCount > 0 Then
-			sbOptions.Append(" -thread " & intParamFileThreadCount)
-		End If
-
-		' Create the modification file and append the -mod switch
-		' We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation 
-		If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-
-		'' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
-		'' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
-		'' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
-		'' The following code is therefore no long used
-		''
-		'' Check whether we are performing an HCD-based phosphorylation search
-		'If mPhosphorylationSearch AndAlso blnHCD Then
-		'	If Not sbOptions.ToString().Contains("-protocol ") Then
-		'		' Specify that "Protocol 1" is being used
-		'		' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
-		'		sbOptions.Append(" -protocol 1")
-		'	End If
-		'End If
-
-		strMSGFDbCmdLineOptions = sbOptions.ToString()
-
-		' By default, MSGF+ filters out spectra with fewer than 20 data points
-		' Override this threshold to 5 data points
-		If strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.CurrentCultureIgnoreCase) < 0 Then
-			strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
-		End If
-
-		If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
-			' Make sure the .Fasta file is not a Decoy fasta
-			If fastaFileIsDecoy Then
-				ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		End If
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-
-	End Function
+                                If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
+                                    ' Override FragmentationMethodID to always be 0
+                                    strValue = "0"
+
+                                ElseIf Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
+                                    ' Override FragmentationMethodID using strAssumedScanType
+                                    Select Case strAssumedScanType.ToUpper()
+                                        Case "CID"
+                                            strValue = "1"
+                                        Case "ETD"
+                                            strValue = "2"
+                                        Case "HCD"
+                                            strValue = "3"
+                                        Case Else
+                                            ' Invalid string
+                                            mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+                                            ReportError(mErrorMessage)
+                                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                    End Select
+
+                                End If
+
+                            ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
+
+                                If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
+
+                                    Dim eResult = DetermineInstrumentID(strValue, strScanTypeFilePath, instrumentGroup)
+                                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                                        Return eResult
+                                    End If
+
+                                ElseIf Not String.IsNullOrWhiteSpace(instrumentGroup) Then
+                                    Dim instrumentIDNew As String = String.Empty
+                                    Dim autoSwitchReason As String = String.Empty
+
+                                    If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
+                                        Dim datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
+                                        Dim countLowResMSn As Integer
+                                        Dim countHighResMSn As Integer
+                                        Dim countHCDMSn As Integer
+
+                                        If LookupScanTypesForDataset(datasetName, countLowResMSn, countHighResMSn, countHCDMSn) Then
+                                            ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, instrumentIDNew, autoSwitchReason)
+                                        End If
+
+                                    End If
+
+                                    AutoUpdateInstrumentIDIfChanged(strValue, instrumentIDNew, autoSwitchReason)
+
+                                End If
+
+                            End If
+
+                            strArgumentSwitchOriginal = String.Copy(strArgumentSwitch)
+
+                            AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
+
+                            If String.IsNullOrEmpty(strArgumentSwitch) Then
+                                If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
+                                    ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
+                                End If
+                            ElseIf String.IsNullOrEmpty(strValue) Then
+                                If m_DebugLevel >= 1 Then
+                                    ReportWarning("Skipping switch " & strArgumentSwitch & " since the value is empty")
+                                End If
+                            Else
+                                sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+                            End If
+
+
+                            If clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
+                                blnShowDecoyParamPresent = True
+                                If Integer.TryParse(strValue, intValue) Then
+                                    If intValue > 0 Then
+                                        blnShowDecoy = True
+                                    End If
+                                End If
+                            ElseIf clsGlobal.IsMatch(strArgumentSwitch, "tda") Then
+                                If Integer.TryParse(strValue, intValue) Then
+                                    If intValue > 0 Then
+                                        blnTDA = True
+                                    End If
+                                End If
+                            End If
+
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb") Then
+
+                            If mMSGFPlus Then
+                                ' Not valid for MSGF+; skip it
+                            Else
+
+                                If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "auto") Then
+                                    If fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB Then
+                                        sbOptions.Append(" -uniformAAProb 1")
+                                    Else
+                                        sbOptions.Append(" -uniformAAProb 0")
+                                    End If
+                                Else
+                                    If Integer.TryParse(strValue, intValue) Then
+                                        sbOptions.Append(" -uniformAAProb " & intValue)
+                                    Else
+                                        mErrorMessage = "Invalid value for uniformAAProb in MSGFDB parameter file"
+                                        ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
+                                        srParamFile.Close()
+                                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                    End If
+                                End If
+                            End If
+
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumThreads") Then
+                            If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "all") Then
+                                ' Do not append -thread to the command line; MSGFDB will use all available cores by default
+                            Else
+                                If Integer.TryParse(strValue, intParamFileThreadCount) Then
+                                    ' intParamFileThreadCount now has the thread count
+                                Else
+                                    ReportWarning("Invalid value for NumThreads in MSGFDB parameter file: " & strLineIn)
+                                End If
+                            End If
+
+
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
+                            If Integer.TryParse(strValue, intValue) Then
+                                intNumMods = intValue
+                            Else
+                                mErrorMessage = "Invalid value for NumMods in MSGFDB parameter file"
+                                ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
+                                srParamFile.Close()
+                                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            End If
+
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
+                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
+                                lstStaticMods.Add(strValue)
+                            End If
+
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
+                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
+                                lstDynamicMods.Add(strValue)
+                            End If
+                        End If
+
+                        'If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+                        '	If Integer.TryParse(strValue, intValue) Then
+                        '		If intValue = 3 Then
+                        '			blnHCD = True
+                        '		End If
+                        '	End If
+                        'End If
+
+                    End If
+                Loop
+
+            End Using
+
+            If blnTDA Then
+                If mMSGFPlus Then
+                    ' Parameter file contains TDA=1 and we're running MSGF+
+                    mResultsIncludeAutoAddedDecoyPeptides = True
+                ElseIf blnShowDecoy Then
+                    ' Parameter file contains both TDA=1 and showDecoy=1
+                    mResultsIncludeAutoAddedDecoyPeptides = True
+                End If
+            End If
+
+            If Not blnShowDecoyParamPresent And Not mMSGFPlus Then
+                ' Add showDecoy to sbOptions
+                sbOptions.Append(" -showDecoy 0")
+            End If
+
+        Catch ex As Exception
+            mErrorMessage = "Exception reading MSGFDB parameter file"
+            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        ' Define the thread count; note that MSGFDBThreads could be "all"
+        strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", String.Empty)
+        If Not Integer.TryParse(strDMSDefinedThreadCount, intDMSDefinedThreadCount) Then
+            intDMSDefinedThreadCount = 0
+        End If
+
+        If intDMSDefinedThreadCount > 0 Then
+            intParamFileThreadCount = intDMSDefinedThreadCount
+        End If
+
+        If udtHPCOptions.UsingHPC Then
+            ' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
+            If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
+
+        ElseIf intParamFileThreadCount <= 0 Then
+            ' Set intParamFileThreadCount to the number of cores on this computer
+            ' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
+            ' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
+
+            Dim coreCount As Integer = 0
+            For Each item As Management.ManagementBaseObject In New Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
+                coreCount += Integer.Parse(item("NumberOfCores").ToString())
+            Next
+
+            ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
+            ' Starting with version v10072 it now uses intParamFileThreadCount cores as instructed
+            intParamFileThreadCount = coreCount
+
+        End If
+
+        If intParamFileThreadCount > 0 Then
+            sbOptions.Append(" -thread " & intParamFileThreadCount)
+        End If
+
+        ' Create the modification file and append the -mod switch
+        ' We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation 
+        If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+
+        '' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
+        '' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
+        '' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
+        '' The following code is therefore no long used
+        ''
+        '' Check whether we are performing an HCD-based phosphorylation search
+        'If mPhosphorylationSearch AndAlso blnHCD Then
+        '	If Not sbOptions.ToString().Contains("-protocol ") Then
+        '		' Specify that "Protocol 1" is being used
+        '		' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
+        '		sbOptions.Append(" -protocol 1")
+        '	End If
+        'End If
+
+        strMSGFDbCmdLineOptions = sbOptions.ToString()
+
+        ' By default, MSGF+ filters out spectra with fewer than 20 data points
+        ' Override this threshold to 5 data points
+        If strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.CurrentCultureIgnoreCase) < 0 Then
+            strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
+        End If
+
+        If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
+            ' Make sure the .Fasta file is not a Decoy fasta
+            If fastaFileIsDecoy Then
+                ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End If
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+
+    End Function
 
 	Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, ByVal scanTypeFilePath As String, ByVal instrumentGroup As String) As IJobParams.CloseOutType
 
@@ -2042,7 +2042,7 @@ Public Class clsMSGFDBUtils
 			'Verify at least one row returned
 			If Dt.Rows.Count < 1 Then
 				' No data was returned
-				ReportMessage("Now rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
+                ReportMessage("No rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
 				Return False
 			Else
 				For Each CurRow As DataRow In Dt.Rows
