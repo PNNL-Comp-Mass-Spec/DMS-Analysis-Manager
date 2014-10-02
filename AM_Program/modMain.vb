@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "September 16, 2014"
+	Public Const PROGRAM_DATE As String = "September 29, 2014"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -121,9 +121,12 @@ Module modMain
 
 						'objTest.ValidateCentroided()
 
-                        Console.WriteLine(clsGlobal.DecodePassword("Test"))
+						'Console.WriteLine(clsGlobal.DecodePassword("Test"))
 
-						Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
+						'Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
+
+						objTest.TestCosoleOutputParsing()
+
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

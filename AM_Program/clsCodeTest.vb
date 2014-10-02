@@ -18,6 +18,9 @@ Public Class clsCodeTest
 	Protected m_FastaGenTimeOut As Boolean = False
 
 	Protected m_mgrParams As AnalysisManagerBase.IMgrParams
+
+	Protected mConsoleOutputErrorMsg As String = String.Empty
+
 	Protected m_EvalMessage As String
 	Protected m_EvalCode As Integer
 	Protected m_DebugLevel As Integer = 2
@@ -1483,6 +1486,150 @@ Public Class clsCodeTest
 		ElseIf intMatchIndex = 0 Then
 			lineText = strNewValue + lineText.Substring(intMatchIndex + strOldValue.Length)
 		End If
+	End Sub
+
+	Public Sub TestCosoleOutputParsing()
+		ParseConsoleOutputFile("F:\Temp\MSPathFinder_ConsoleOutput.txt")
+	End Sub
+
+	Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+
+		Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 5
+		Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 50
+		Const PROGRESS_PCT_COMPLETE As Single = 99
+
+		' Example Console output
+		'
+		' MSPathFinderT 0.12 (June 17, 2014)
+		' SpecFilePath: E:\DMS_WorkDir\Synocho_L2_1.pbf
+		' DatabaseFilePath: C:\DMS_Temp_Org\ID_003962_71E1A1D4.fasta
+		' OutputDir: E:\DMS_WorkDir
+		' SearchMode: 1
+		' Tda: True
+		' PrecursorIonTolerancePpm: 10
+		' ProductIonTolerancePpm: 10
+		' MinSequenceLength: 21
+		' MaxSequenceLength: 300
+		' MinPrecursorIonCharge: 2
+		' MaxPrecursorIonCharge: 30
+		' MinProductIonCharge: 1
+		' MaxProductIonCharge: 15
+		' MinSequenceMass: 3000
+		' MaxSequenceMass: 50000
+		' MaxDynamicModificationsPerSequence: 4
+		' Modifications:
+		' C(2) H(3) N(1) O(1) S(0),C,fix,Everywhere,Carbamidomethyl
+		' C(0) H(0) N(0) O(1) S(0),M,opt,Everywhere,Oxidation
+		' C(0) H(1) N(0) O(3) S(0) P(1),S,opt,Everywhere,Phospho
+		' C(0) H(1) N(0) O(3) S(0) P(1),T,opt,Everywhere,Phospho
+		' C(0) H(1) N(0) O(3) S(0) P(1),Y,opt,Everywhere,Phospho
+		' C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
+		' C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
+		' Reading raw file...Elapsed Time: 4.4701 sec
+		' Determining precursor masses...Elapsed Time: 59.2987 sec
+		' Deconvoluting MS2 spectra...Elapsed Time: 9.5820 sec
+		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icseq and C:\DMS_Temp_Org\ID_003962_71E1A1D4.icanno...    Done.
+		' Reading the target database...Elapsed Time: 0.0074 sec
+		' Searching the target database
+		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icplcp... Done.
+
+		Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
+		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+		Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
+
+		Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+
+		Try
+			If Not File.Exists(strConsoleOutputFilePath) Then
+				If m_DebugLevel >= 4 Then
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+				End If
+
+				Exit Sub
+			End If
+
+			If m_DebugLevel >= 4 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+			End If
+
+			' Value between 0 and 100
+			Dim progressComplete As Single = 0
+			Dim targetProteinsSearched As Integer = 0
+			Dim decoyProteinsSearched As Integer = 0
+
+			Dim searchingDecoyDB = False
+
+			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+				Do While srInFile.Peek() >= 0
+					Dim strLineIn = srInFile.ReadLine()
+
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+						Dim strLineInLCase = strLineIn.ToLower()
+
+						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+								mConsoleOutputErrorMsg = "Error running MSPathFinder:"
+							End If
+							mConsoleOutputErrorMsg &= "; " & strLineIn
+							Continue Do
+
+						ElseIf strLineIn.StartsWith("Searching the target database") Then
+							progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
+
+						ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+							progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
+							searchingDecoyDB = True
+
+						Else
+							Dim oMatch As Match = reCheckProgress.Match(strLineIn)
+							If oMatch.Success Then
+								Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
+								Continue Do
+							End If
+
+							oMatch = reProcessingProteins.Match(strLineIn)
+							If oMatch.Success Then
+								Dim proteinsSearched As Integer
+								If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
+									If searchingDecoyDB Then
+										decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+									Else
+										targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
+									End If
+								End If
+
+								Continue Do
+							End If
+
+						End If
+
+					End If
+				Loop
+
+			End Using
+
+			If searchingDecoyDB Then
+				progressComplete = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
+			End If
+
+			If m_progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
+				m_progress = progressComplete
+
+				If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+					dtLastProgressWriteTime = DateTime.UtcNow
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
+				End If
+			End If
+
+		Catch ex As Exception
+			' Ignore errors here
+			If m_DebugLevel >= 2 Then
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+			End If
+		End Try
+
 	End Sub
 
 	Public Sub TestProgRunner()

@@ -913,105 +913,123 @@ Public Class clsMSGFDBUtils
 			End If
 		End If
 
-		If Not fastaFileIsDecoy AndAlso fastaFileSizeKB / 1024.0 / 1024.0 > 1 AndAlso Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
-			' If the Fasta file is large (over 1 GB in size) then look for "TDA=0" in the MSGF+ parameter file
-			' If TDA=0 exists, then we're performing a forward-only search and we will auto-change fastaFileIsDecoy to True
-			'   to prevent the reverse indices from being created
+        If Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
+            Dim strTDASetting As String
+            strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
 
-			Dim strTDASetting As String
-			strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
+            Dim tdaValue As Integer
+            If Not Integer.TryParse(strTDASetting, tdaValue) Then
+                ReportError("TDA value is not numeric: " & strTDASetting)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If strTDASetting.Trim() = "0" Then
-				fastaFileIsDecoy = True
-				If m_DebugLevel >= 1 Then
-					ReportMessage("Processing large FASTA file with forward-only search; auto switching to -tda 0")
-				End If
-			End If
+            If tdaValue = 0 Then
+                If Not fastaFileIsDecoy AndAlso fastaFileSizeKB / 1024.0 / 1024.0 > 1 Then
+                    ' Large Fasta file (over 1 GB in size)
+                    ' TDA is 0, so we're performing a forward-only search
+                    ' Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
 
-		End If
+                    fastaFileIsDecoy = True
+                    If m_DebugLevel >= 1 Then
+                        ReportMessage("Processing large FASTA file with forward-only search; auto switching to -tda 0")
+                    End If
 
-		If maxFastaFileSizeMB > 0 AndAlso fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB Then
-			' Create a trimmed version of the fasta file
-			ReportMessage("Fasta file is over " & maxFastaFileSizeMB & " MB; creating a trimmed version of the fasta file")
+                ElseIf strMSGFDBParameterFilePath.ToLower().EndsWith("_NoDecoy.txt".ToLower()) Then
+                    ' Parameter file ends in _NoDecoy.txt and TDA = 0, thus we're performing a forward-only search
+                    ' Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
 
-			Dim fastaFilePathTrimmed = String.Empty
+                    fastaFileIsDecoy = True
+                    If m_DebugLevel >= 1 Then
+                        ReportMessage("Using NoDecoy parameter file with TDA=0; auto switching to -tda 0")
+                    End If
 
-			' Allow for up to 3 attempts since multiple processes might potentially try to do this at the same time
-			Dim trimIteration As Integer = 0
+                End If
+            End If
+            
+        End If
 
-			While trimIteration <= 2
-				trimIteration += 1
-				fastaFilePathTrimmed = CreateTrimmedFasta(fastaFilePath, maxFastaFileSizeMB)
+        If maxFastaFileSizeMB > 0 AndAlso fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB Then
+            ' Create a trimmed version of the fasta file
+            ReportMessage("Fasta file is over " & maxFastaFileSizeMB & " MB; creating a trimmed version of the fasta file")
 
-				If Not String.IsNullOrEmpty(fastaFilePathTrimmed) Then
-					Exit While
-				End If
+            Dim fastaFilePathTrimmed = String.Empty
 
-				If trimIteration <= 2 Then
-					Dim sleepTimeSec = oRand.Next(10, 19)
+            ' Allow for up to 3 attempts since multiple processes might potentially try to do this at the same time
+            Dim trimIteration As Integer = 0
 
-					ReportMessage("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
-					Threading.Thread.Sleep(sleepTimeSec * 1000)
-				End If
+            While trimIteration <= 2
+                trimIteration += 1
+                fastaFilePathTrimmed = CreateTrimmedFasta(fastaFilePath, maxFastaFileSizeMB)
 
-			End While
+                If Not String.IsNullOrEmpty(fastaFilePathTrimmed) Then
+                    Exit While
+                End If
 
-			If String.IsNullOrEmpty(fastaFilePathTrimmed) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+                If trimIteration <= 2 Then
+                    Dim sleepTimeSec = oRand.Next(10, 19)
 
-			' Update fastaFilePath to use the path to the trimmed version
-			fastaFilePath = fastaFilePathTrimmed
+                    ReportMessage("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
+                    Threading.Thread.Sleep(sleepTimeSec * 1000)
+                End If
 
-			fiFastaFile.Refresh()
-			fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
+            End While
 
-		End If
+            If String.IsNullOrEmpty(fastaFilePathTrimmed) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-		If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 500) Then
-			ReportMessage("Indexing Fasta file to create Suffix Array files")
-		End If
+            ' Update fastaFilePath to use the path to the trimmed version
+            fastaFilePath = fastaFilePathTrimmed
 
-		' Look for the suffix array files that should exist for the fasta file
-		' Either copy them from Gigasax (or Proto-7) or re-create them
-		' 
-		Dim indexIteration = 0
-		Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
-		Dim strMSGFPlusIndexFilesFolderPathLegacyDB As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
+            fiFastaFile.Refresh()
+            fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
 
-		While indexIteration <= 2
+        End If
 
-			indexIteration += 1
+        If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 500) Then
+            ReportMessage("Indexing Fasta file to create Suffix Array files")
+        End If
 
-			' Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
-			result = objIndexedDBCreator.CreateSuffixArrayFiles(
-			  m_WorkDir, m_DebugLevel, m_JobNum,
-			  javaProgLoc, msgfDbProgLoc,
-			  fastaFilePath, fastaFileIsDecoy,
-			  strMSGFPlusIndexFilesFolderPath,
-			  strMSGFPlusIndexFilesFolderPathLegacyDB,
-			  udtHPCOptions)
+        ' Look for the suffix array files that should exist for the fasta file
+        ' Either copy them from Gigasax (or Proto-7) or re-create them
+        ' 
+        Dim indexIteration = 0
+        Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
+        Dim strMSGFPlusIndexFilesFolderPathLegacyDB As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
 
-			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Exit While
-			ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
+        While indexIteration <= 2
 
-				If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
-					ReportError(objIndexedDBCreator.ErrorMessage)
-				Else
-					ReportError("Error creating Suffix Array files")
-				End If
-				Return result
-			Else
-				Dim sleepTimeSec = oRand.Next(10, 19)
+            indexIteration += 1
 
-				ReportMessage("Fasta file indexing failed; waiting " & sleepTimeSec & " seconds then trying again")
-				Threading.Thread.Sleep(sleepTimeSec * 1000)
-			End If
+            ' Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
+            result = objIndexedDBCreator.CreateSuffixArrayFiles(
+              m_WorkDir, m_DebugLevel, m_JobNum,
+              javaProgLoc, msgfDbProgLoc,
+              fastaFilePath, fastaFileIsDecoy,
+              strMSGFPlusIndexFilesFolderPath,
+              strMSGFPlusIndexFilesFolderPathLegacyDB,
+              udtHPCOptions)
 
-		End While
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Exit While
+            ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
+                    ReportError(objIndexedDBCreator.ErrorMessage)
+                Else
+                    ReportError("Error creating Suffix Array files")
+                End If
+                Return result
+            Else
+                Dim sleepTimeSec = oRand.Next(10, 19)
+
+                ReportMessage("Fasta file indexing failed; waiting " & sleepTimeSec & " seconds then trying again")
+                Threading.Thread.Sleep(sleepTimeSec * 1000)
+            End If
+
+        End While
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 
