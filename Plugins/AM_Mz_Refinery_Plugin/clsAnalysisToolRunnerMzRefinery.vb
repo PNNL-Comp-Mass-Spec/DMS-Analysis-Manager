@@ -52,7 +52,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 	Protected mSkipMzRefiner As Boolean
 
-	Protected mMzRefineryCorrectionMode As String
+    Protected mMzRefineryCorrectionMode As String
+    Protected mMzRefinerGoodDataPoints As Integer
+    Protected mMzRefinerSpecEValueThreshold As Double
 
 	Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
@@ -82,6 +84,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			If m_DebugLevel > 4 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMzRefinery.RunTool(): Enter")
 			End If
+
+            ' Initialize class-wide variables that will be updated later
+            mMzRefineryCorrectionMode = String.Empty
+            mMzRefinerGoodDataPoints = 0
+            mMzRefinerSpecEValueThreshold = 0.0000000001
 
 			' Verify that program files exist
 
@@ -341,26 +348,26 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
 		'Set up and execute a program runner to run MSGF+
-		Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
+        Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
 
-		' Define the input file, output file, and fasta file
-		CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
+        ' Define the input file, output file, and fasta file
+        cmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
 
-		CmdStr &= " -o " & fiMSGFPlusResults.Name
-		CmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
+        cmdStr &= " -o " & fiMSGFPlusResults.Name
+        cmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
 
-		' Append the remaining options loaded from the parameter file
-		CmdStr &= " " & strMSGFDbCmdLineOptions
+        ' Append the remaining options loaded from the parameter file
+        cmdStr &= " " & strMSGFDbCmdLineOptions
 
-		' Make sure the machine has enough free memory to run MSGF+
-		Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
+        ' Make sure the machine has enough free memory to run MSGF+
+        Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
 
-		If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
-			m_message = "Not enough free memory to run " & strSearchEngineName
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
+            m_message = "Not enough free memory to run " & strSearchEngineName
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		success = StartMSGFPlus(javaExePath, strSearchEngineName, CmdStr)
+        success = StartMSGFPlus(javaExePath, strSearchEngineName, cmdStr)
 
 		If Not success And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
 			' Parse the console output file one more time in hopes of finding an error message
@@ -660,44 +667,62 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 		' Example console output
 		'
-		' filters:
-		'   mzRefiner QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_msgfplus.mzid thresholdValue=-1e-10 thresholdStep=10 maxSteps=3
-		' 
-		' filenames:
-		'   QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07.mzML
-		' 
-		' processing file: QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07.mzML
-		' Reading file "QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_msgfplus.mzid"...
-		'         Filtered out 19654 identifications because of score.
-		'         Filtered out 0 identifications because of mass error.
-		'         Good data points:                                 9637
-		'         Average: global ppm Errors:                       -0.745957
-		'         Systematic Drift (mode):                          -1.5
-		'         Systematic Drift (median):                        -1.5
-		'         Measurement Precision (stdev ppm):                6.56403
-		'         Measurement Precision (stdev(mode) ppm):          6.59396
-		'         Measurement Precision (stdev(median) ppm):        6.59396
-		'         Average BinWise stdev (scan):                     5.5313
-		'         Expected % Improvement (scan):                    15.5618
-		'         Expected % Improvement (scan)(mode):              16.1157
-		'         Expected % Improvement (scan)(median):            15.7332
-		'         Average BinWise stdev (smoothed scan):            5.55708
-		'         Expected % Improvement (smoothed scan):           15.1681
-		'         Expected % Improvement (smoothed scan)(mode):     15.7246
-		'         Expected % Improvement (smoothed scan)(median):   15.3404
-		'         Average BinWise stdev (mz):                       4.75475
-		'         Expected % Improvement (mz):                      27.4163
-		'         Expected % Improvement (mz)(mode):                27.8924
-		'         Expected % Improvement (mz)(median):              27.5636
-		'         Average BinWise stdev (smoothed mz):              4.94676
-		'         Expected % Improvement (smoothed mz):             24.4851
-		'         Expected % Improvement (smoothed mz)(mode):       24.9805
-		'         Expected % Improvement (smoothed mz)(median):     24.6384
-		' Chose mass to charge shift...
-		'         Estimated final stDev:                            4.94676
-		'         Estimated tolerance for 99%: 0 +/-                14.8403
-		' writing output file: .\QC_Shew_13_07-500ng_4a_01Sept14_Falcon_14-07-07_FIXED.mzML
-		' 
+        ' format: mzML 
+        '     m/z: Compression-None, 32-bit
+        '     intensity: Compression-None, 32-bit
+        '     rt: Compression-None, 32-bit
+        ' ByteOrder_LittleEndian
+        '  indexed="true"
+        ' outputPath: .
+        ' extension: .mzML
+        ' contactFilename: 
+        ' filters:
+        '   mzRefiner E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_msgfplus.mzid thresholdValue=-1e-10 thresholdStep=10 maxSteps=3
+        '   
+        ' filenames:
+        '   E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06.mzML
+        '   
+        ' processing file: E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06.mzML
+        ' Reading file "E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_msgfplus.mzid"...
+        ' Adjusted filters: 
+        ' 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-010
+        ' 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-009
+        ' Adjusted filters: 
+        ' 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-009
+        ' 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-008
+        ' Adjusted filters: 
+        ' 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-008
+        ' 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-007
+        ' 	Filtered out 13014 identifications because of score.
+        ' 	Filtered out 128 identifications because of mass error.
+        ' 	Good data points:                                 839
+        ' 	Average: global ppm Errors:                       0.77106
+        ' 	Systematic Drift (mode):                          -11.5
+        ' 	Systematic Drift (median):                        -11.5
+        ' 	Measurement Precision (stdev ppm):                26.0205
+        ' 	Measurement Precision (stdev(mode) ppm):          28.7674
+        ' 	Measurement Precision (stdev(median) ppm):        28.7674
+        ' 	Average BinWise stdev (scan):                     24.6157
+        ' 	Expected % Improvement (scan):                    5.39302
+        ' 	Expected % Improvement (scan)(mode):              14.4319
+        ' 	Expected % Improvement (scan)(median):            5.39907
+        ' 	Average BinWise stdev (smoothed scan):            25.4906
+        ' 	Expected % Improvement (smoothed scan):           2.03045
+        ' 	Expected % Improvement (smoothed scan)(mode):     11.3906
+        ' 	Expected % Improvement (smoothed scan)(median):   2.03672
+        ' 	Average BinWise stdev (mz):                       23.4562
+        ' 	Expected % Improvement (mz):                      9.84931
+        ' 	Expected % Improvement (mz)(mode):                18.4625
+        ' 	Expected % Improvement (mz)(median):              9.85509
+        ' 	Average BinWise stdev (smoothed mz):              25.5205
+        ' 	Expected % Improvement (smoothed mz):             1.91564
+        ' 	Expected % Improvement (smoothed mz)(mode):       11.2868
+        ' 	Expected % Improvement (smoothed mz)(median):     1.92192
+        ' Chose global shift...
+        ' 	Estimated final stDev:                            26.0205
+        ' 	Estimated tolerance for 99%: 0 +/-                78.0616
+        ' writing output file: .\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_FIXED.mzML
+
 
 		' Example warning for sparse data file
 		' Low number of good identifications found. Will not perform dependent shifts.
@@ -710,7 +735,10 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		'         Filtered out 4208 identifications because of score.
 		'         Filtered out 0 identifications because of mass error.
 
-		Dim reResultsAfterFiltering = New Regex("Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled)
+        Dim reResultsAfterFiltering = New Regex("Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled)
+
+        Dim reGoodDataPoints = New Regex("Good data points:[^\d]+(\d+)", RegexOptions.Compiled)
+        Dim reSpecEValueThreshold = New Regex("New: MS-GF:SpecEValue;.+value <= ([^ ]+)", RegexOptions.Compiled)
 
 		Try
 			If Not File.Exists(strConsoleOutputFilePath) Then
@@ -728,37 +756,53 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				Do While srInFile.Peek() >= 0
-					Dim strLineIn = srInFile.ReadLine()
+                    Dim strDataLine = srInFile.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strDataLine) Then
 
-						Dim strLineInLCase = strLineIn.Trim().ToLower()
+                        Dim strDataLineLCase = strDataLine.Trim().ToLower()
 
-						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running MzRefinery: " & strLineIn
-							Else
-								mConsoleOutputErrorMsg &= "; " & strLineIn
-							End If
+                        If strDataLineLCase.StartsWith("error:") OrElse strDataLineLCase.Contains("unhandled exception") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running MzRefinery: " & strDataLine
+                            Else
+                                mConsoleOutputErrorMsg &= "; " & strDataLine
+                            End If
 
-							Continue Do
-						ElseIf strLineIn.StartsWith("Chose ") Then
-							mMzRefineryCorrectionMode = String.Copy(strLineIn)
-						ElseIf strLineIn.StartsWith("Low number of good identifications found") Then
-							m_EvalMessage = strLineIn
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefiner warning: " & strLineIn)
-						ElseIf strLineIn.StartsWith("Excluding file") AndAlso strLineIn.EndsWith("from data set") Then
-							m_message = "Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset"
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						Else
-							Dim reMatch = reResultsAfterFiltering.Match(strLineIn)
+                            Continue Do
+                        ElseIf strDataLine.StartsWith("Chose ") Then
+                            mMzRefineryCorrectionMode = String.Copy(strDataLine)
+                        ElseIf strDataLine.StartsWith("Low number of good identifications found") Then
+                            m_EvalMessage = strDataLine
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefiner warning: " & strDataLine)
+                        ElseIf strDataLine.StartsWith("Excluding file") AndAlso strDataLine.EndsWith("from data set") Then
+                            m_message = "Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset"
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Else
+                            Dim reMatch = reResultsAfterFiltering.Match(strDataLine)
 
-							If reMatch.Success Then
-								m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, strLineIn.Trim())
-							End If
-						End If
+                            If reMatch.Success Then
+                                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, strDataLine.Trim())
+                            End If
 
-					End If
+                            reMatch = reGoodDataPoints.Match(strDataLine)
+                            If reMatch.Success Then
+                                Dim dataPoints As Integer
+                                If Integer.TryParse(reMatch.Groups(1).Value, dataPoints) Then
+                                    mMzRefinerGoodDataPoints = dataPoints
+                                End If
+                            End If
+
+                            reMatch = reSpecEValueThreshold.Match(strDataLine)
+                            If reMatch.Success Then
+                                Dim specEValueThreshold As Double
+                                If Double.TryParse(reMatch.Groups(1).Value, specEValueThreshold) Then
+                                    mMzRefinerSpecEValueThreshold = specEValueThreshold
+                                End If
+                            End If
+                        End If
+
+                    End If
 				Loop
 
 			End Using
@@ -784,13 +828,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
 				Return False
 			End If
 
-			If Not mSkipMzRefiner Then
-				' Store the PPM Mass Errors in the database
-				blnSuccess = StorePPMErrorStatsInDB()
-				If Not blnSuccess Then
-					Return False
-				End If
-			End If
+            If Not mSkipMzRefiner Then
+                ' Store the PPM Mass Errors in the database
+                blnSuccess = StorePPMErrorStatsInDB()
+                If Not blnSuccess Then
+                    Return False
+                End If
+            End If
 
 		Catch ex As Exception
 			m_message = "Error creating PPM Error charters"
@@ -882,45 +926,45 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		' Set up and execute a program runner to run MSConvert
 		' Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
 
-		Dim CmdStr = " "
-		CmdStr &= fiOriginalMzMLFile.FullName
-		CmdStr &= " --filter ""mzRefiner " & fiMSGFPlusResults.FullName
+        Dim cmdStr = " "
+        cmdStr &= fiOriginalMzMLFile.FullName
+        cmdStr &= " --filter ""mzRefiner " & fiMSGFPlusResults.FullName
 
-		' MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
-		' The data is initially filtered by MSGF SpecProb <= 1e-10
-		' The reason that we prepend "1e-10" with a dash is to indicate a range of "-infinity to 1e-10"
-		CmdStr &= " thresholdValue=-1e-10"
+        ' MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
+        ' The data is initially filtered by MSGF SpecProb <= 1e-10
+        ' The reason that we prepend "1e-10" with a dash is to indicate a range of "-infinity to 1e-10"
+        cmdStr &= " thresholdValue=-1e-10"
 
-		' If there are not 500 matches with 1e-10, then the threshold value is multiplied by the thresholdStep value
-		' This process is continued at most maxSteps times
-		' Thus, using 10 and 3 means the thresholds that will be considered are 1e-10, 1e-9, 1e-8, and 1e-7
-		CmdStr &= " thresholdStep=10"
-		CmdStr &= " maxSteps=3"""
+        ' If there are not 500 matches with 1e-10, then the threshold value is multiplied by the thresholdStep value
+        ' This process is continued at most maxSteps times
+        ' Thus, using 10 and 3 means the thresholds that will be considered are 1e-10, 1e-9, 1e-8, and 1e-7
+        cmdStr &= " thresholdStep=10"
+        cmdStr &= " maxSteps=3"""
 
-		' These switches assure that the output file is a 32-bit mzML file
-		CmdStr &= " --32 --mzML"
+        ' These switches assure that the output file is a 32-bit mzML file
+        cmdStr &= " --32 --mzML"
 
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMSConvertProgLoc & CmdStr)
-		End If
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMSConvertProgLoc & cmdStr)
+        End If
 
-		CmdRunner = New clsRunDosProgram(m_WorkDir)
+        CmdRunner = New clsRunDosProgram(m_WorkDir)
 
-		With CmdRunner
-			.CreateNoWindow = True
-			.CacheStandardOutput = False
-			.EchoOutputToConsole = True
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = True
 
-			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT)
-		End With
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT)
+        End With
 
-		m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
 
-		mRunningzRefinerWithMSConvert = True
+        mRunningzRefinerWithMSConvert = True
 
-		' Start MSConvert and wait for it to exit
-		Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, CmdStr, "MSConvert_MzRefiner", True)
+        ' Start MSConvert and wait for it to exit
+        Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefiner", True)
 
 		mRunningzRefinerWithMSConvert = False
 
@@ -937,12 +981,17 @@ Public Class clsAnalysisToolRunnerMzRefinery
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
 		End If
 
-		' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
+        ' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
+        ' We will also extract out the final MS-GF:SpecEValue used for filtering the data
 		Threading.Thread.Sleep(250)
 		ParseMSConvertConsoleOutputfile(CmdRunner.ConsoleOutputFilePath)
 
 		If Not String.IsNullOrEmpty(mMzRefineryCorrectionMode) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefiner " & mMzRefineryCorrectionMode)
+
+            Dim logMessage = "MzRefiner " & mMzRefineryCorrectionMode.Replace("...", "")
+            logMessage &= ", " & mMzRefinerGoodDataPoints & " points had SpecEValue <= " & mMzRefinerSpecEValueThreshold.ToString("0.###E+00")
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, logMessage)
 		End If
 
 		If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -988,25 +1037,25 @@ Public Class clsAnalysisToolRunnerMzRefinery
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PPMErrorCharter")
 
 		' Set up and execute a program runner to run the PPMErrorCharter
-		Dim CmdStr = " " & fiMSGFPlusResults.FullName
+        Dim cmdStr = " " & fiMSGFPlusResults.FullName & " " & mMzRefinerSpecEValueThreshold.ToString("0.###E+00")
 
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mPpmErrorCharterProgLoc & CmdStr)
-		End If
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mPpmErrorCharterProgLoc & cmdStr)
+        End If
 
-		CmdRunner = New clsRunDosProgram(m_WorkDir)
+        CmdRunner = New clsRunDosProgram(m_WorkDir)
 
-		With CmdRunner
-			.CreateNoWindow = True
-			.CacheStandardOutput = False
-			.EchoOutputToConsole = True
+        With CmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = True
 
-			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE)
-		End With
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE)
+        End With
 
-		' Start the PPM Error Chararter and wait for it to exit
-		Dim blnSuccess = CmdRunner.RunProgram(mPpmErrorCharterProgLoc, CmdStr, "PPMErrorCharter", True)
+        ' Start the PPM Error Chararter and wait for it to exit
+        Dim blnSuccess = CmdRunner.RunProgram(mPpmErrorCharterProgLoc, cmdStr, "PPMErrorCharter", True)
 
 		If Not blnSuccess Then
 			Dim Msg As String

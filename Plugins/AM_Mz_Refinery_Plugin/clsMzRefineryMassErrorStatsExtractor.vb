@@ -75,8 +75,19 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 	  ByVal intPSMJob As Integer,
 	  ByVal ppmErrorCharterConsoleOutputFilePath As String) As Boolean
 
+        ' Parse the Console Output file to extract the mass error reported in this table
+        '
+        ' Using fixed data file "E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_FIXED.mzML"
+        ' Statistic                   Original    Refined
+        ' MeanMassErrorPPM:              2.430      1.361
+        ' MedianMassErrorPPM:            1.782      0.704
+        ' StDev(Mean):                   6.969      6.972
+        ' StDev(Median):                 6.999      7.003
+        ' PPM Window for 99%: 0 +/-     22.779     21.712
+        ' PPM Window for 99%: high:     22.779     21.712
+        ' PPM Window for 99%:  low:    -19.216    -20.305
+
 		Const MASS_ERROR_PPM As String = "MedianMassErrorPPM:"
-		Const MASS_ERROR_PPM_REFINED As String = "MedianMassErrorPPM_Refined:"
 
 		Try
 
@@ -105,17 +116,19 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 					Dim massError As Double
 
 					If strLineIn.StartsWith(MASS_ERROR_PPM) Then
-						If ParseMassErrorValue(strLineIn, MASS_ERROR_PPM, massError) Then
-							udtMassErrorInfo.MassErrorPPM = massError
-						Else
-							Return False
-						End If
-					ElseIf strLineIn.StartsWith(MASS_ERROR_PPM_REFINED) Then
-						If ParseMassErrorValue(strLineIn, MASS_ERROR_PPM_REFINED, massError) Then
-							udtMassErrorInfo.MassErrorPPMRefined = massError
-						Else
-							Return False
-						End If
+                        Dim dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim()
+                        massError = 0
+
+                        Dim dataValues = dataString.Split(" "c).ToList()
+
+                        If Double.TryParse(dataValues.First, massError) Then
+                            udtMassErrorInfo.MassErrorPPM = massError
+                        End If
+
+                        If dataValues.Count > 1 AndAlso Double.TryParse(dataValues.Last, massError) Then
+                            udtMassErrorInfo.MassErrorPPMRefined = massError
+                        End If
+
 					End If
 				Loop
 
@@ -127,7 +140,7 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 			End If
 
 			If Math.Abs(udtMassErrorInfo.MassErrorPPMRefined - Double.MinValue) < Single.Epsilon Then
-				mErrorMessage = "Did not find '" & MASS_ERROR_PPM_REFINED & "' in the PPM Error Charter output"
+                mErrorMessage = "Did not find '" & MASS_ERROR_PPM & "' with two values in the PPM Error Charter output"
 				Return False
 			End If
 
@@ -153,20 +166,6 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 		End Try
 
 		Return True
-
-	End Function
-
-	Private Function ParseMassErrorValue(ByVal dataLine As String, ByVal lineLabel As String, <Out()> ByRef massError As Double) As Boolean
-
-		Dim dataValue = dataLine.Substring(lineLabel.Length).Trim()
-		massError = 0
-
-		If Double.TryParse(dataValue, massError) Then
-			Return True
-		Else
-			mErrorMessage = "Unable to extract mass error value from the '" & lineLabel & "' line in the PPMErrorCharter console output; text is not a number: " & dataValue
-			Return False
-		End If
 
 	End Function
 

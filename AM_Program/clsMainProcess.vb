@@ -661,7 +661,7 @@ Public Class clsMainProcess
 		Try
 			If Me.TraceMode Then ShowTraceMessage("Running the step tool")
 
-			eToolRunnerResult = m_ToolRunner.RunTool()
+            eToolRunnerResult = m_ToolRunner.RunTool()
 			If eToolRunnerResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				m_MostRecentErrorMessage = m_ToolRunner.Message
 
