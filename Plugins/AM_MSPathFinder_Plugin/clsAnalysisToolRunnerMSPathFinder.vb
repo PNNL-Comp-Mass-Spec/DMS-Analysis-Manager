@@ -23,6 +23,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	Protected Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
 
 	Protected Const PROGRESS_PCT_STARTING As Single = 1
+	Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 5
+	Protected Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 50
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
 	'Protected Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
@@ -304,8 +306,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icplcp... Done.
 
 		Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
-		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 		Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
+
+		Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
 		Try
 			If Not File.Exists(strConsoleOutputFilePath) Then
@@ -320,7 +324,12 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
 			End If
 
+			' Value between 0 and 100
 			Dim progressComplete As Single = 0
+			Dim targetProteinsSearched As Integer = 0
+			Dim decoyProteinsSearched As Integer = 0
+
+			Dim searchingDecoyDB = False
 
 			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -337,11 +346,35 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 							End If
 							mConsoleOutputErrorMsg &= "; " & strLineIn
 							Continue Do
+
+						ElseIf strLineIn.StartsWith("Searching the target database") Then
+							progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
+
+						ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+							progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
+							searchingDecoyDB = True
+
 						Else
 							Dim oMatch As Match = reCheckProgress.Match(strLineIn)
 							If oMatch.Success Then
 								Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
+								Continue Do
 							End If
+
+							oMatch = reProcessingProteins.Match(strLineIn)
+							If oMatch.Success Then
+								Dim proteinsSearched As Integer
+								If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
+									If searchingDecoyDB Then
+										decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+									Else
+										targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
+									End If
+								End If
+
+								Continue Do
+							End If
+
 						End If
 
 					End If
@@ -349,7 +382,11 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 			End Using
 
-			If m_progress < progressComplete Then
+			If searchingDecoyDB Then
+				progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
+			End If
+
+			If m_progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
 				m_progress = progressComplete
 
 				If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
