@@ -42,6 +42,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			bool includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
 			success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
+            if (!success)
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
 			if (includeMzXmlFiles)
 			{
@@ -54,10 +56,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				FindMissingMzXmlFiles(lstAllJobs);
 			}
 
-			if (success)
-				return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
-			else
-				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+			
+			return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+				
 		}
 
 		#endregion // Member_Functions
@@ -183,7 +184,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				{
 					if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
 					{
-						dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath);
+					    if (strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
+					    {
+					        m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo);
+					    }
+
+					    dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath);
 					}
 				}
 
@@ -220,6 +226,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			// Restore the dataset and job info for this aggregation job
 			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
+
+		    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+		    {
+		        return false;
+		    }
 
 			// Store the dataset paths in a Packed Job Parameter
 			StorePackedJobParameterDictionary(dctDatasetRawFilePaths, JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
