@@ -563,9 +563,10 @@ Public Class clsAnalysisToolRunnerBase
 			End If
 
 			targetFolderPath = CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath)
-			If String.IsNullOrEmpty(targetFolderPath) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrEmpty(targetFolderPath) Then
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
