@@ -36,7 +36,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 #Region "Methods"
 
 	''' <summary>
-	''' Runs ReadW tool
+    ''' Runs ReAdW or MSConvert
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
@@ -48,7 +48,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		' Store the ReadW or MSConvert version info in the database
+        ' Store the ReAdW or MSConvert version info in the database
 		If Not StoreToolVersionInfo() Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 			LogError("Error determining MSXMLGen version")			
@@ -123,7 +123,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter")
 			End If
 
-			Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe
+            Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
 			Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")				' Typically mzXML or mzML
 
 			' Determine the output type
@@ -169,13 +169,13 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 			' Determine the program path and Instantiate the processing class
 			If msXmlGenerator.ToLower.Contains("readw") Then
-				' ReadW
+                ' ReAdW
 				' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
 				mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType, CentroidMS1 Or CentroidMS2)
 
 				If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
-					LogError( "ReadW can only be used with .Raw files, not with " & rawDataType)
+                    LogError("ReAdW can only be used with .Raw files, not with " & rawDataType)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
@@ -336,11 +336,11 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 		Dim ioToolFiles As New Generic.List(Of FileInfo)
 
 		' Determine the path to the XML Generator
-		Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")			' ReadW.exe or MSConvert.exe
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
 
 		mMSXmlGeneratorAppPath = String.Empty
 		If msXmlGenerator.ToLower().Contains("readw") Then
-			' ReadW
+            ' ReAdW
 			' Note that msXmlGenerator will likely be ReAdW.exe
 			mMSXmlGeneratorAppPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
 
@@ -350,7 +350,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator)
 
 		Else
-			LogError( "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'")
+            LogError("Invalid value for MSXMLGenerator; should be 'ReAdW' or 'MSConvert'")
 			Return False
 		End If
 

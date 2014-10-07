@@ -3,35 +3,42 @@
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 07/19/2010
 '
-' Uses ReadW to create a .mzXML or .mzML file
+' Uses ReAdW to create a .mzXML or .mzML file
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsMSXMLGenReadW
 	Inherits clsMSXmlGen
 
+    Public Overrides ReadOnly Property ProgramName As String
+        Get
+            Return "ReAdW"
+        End Get
+    End Property
+
 #Region "Methods"
 
-	Public Sub New(ByVal WorkDir As String,
-	  ByVal ReadWProgramPath As String,
-	  ByVal DatasetName As String,
-	  ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-	  ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-	  ByVal CentroidMSXML As Boolean)
+    Public Sub New(ByVal WorkDir As String,
+      ByVal ReadWProgramPath As String,
+      ByVal DatasetName As String,
+      ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+      ByVal CentroidMSXML As Boolean)
 
-		MyBase.New(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
+        MyBase.New(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
 
-		If RawDataType <> clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-			Const message As String = "clsMSXMLGenReadW can only be used to process Thermo .Raw files"
-			Throw New ArgumentOutOfRangeException(message)
-		End If
+        If RawDataType <> clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
+            Const message As String = "clsMSXMLGenReadW can only be used to process Thermo .Raw files"
+            Throw New ArgumentOutOfRangeException(message)
+        End If
 
-		mUseProgRunnerResultCode = True
+        mUseProgRunnerResultCode = True
 
-	End Sub
+    End Sub
 
 	Protected Overrides Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
 
@@ -67,10 +74,10 @@ Public Class clsMSXMLGenReadW
 
 	Protected Overrides Function SetupTool() As Boolean
 
-		' No special setup is required for ReadW
+        ' No special setup is required for ReAdW
 		Return True
 
-	End Function
+    End Function
 
 #End Region
 

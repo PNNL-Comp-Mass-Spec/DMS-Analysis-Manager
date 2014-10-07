@@ -150,10 +150,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			End If
 
 			result = CopyResultsFolderToServer()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
 		Catch ex As Exception
 			m_message = "Error in MSPathFinderPlugin->RunTool"

@@ -176,13 +176,13 @@ Public Class clsMSXMLCreator
 		Dim eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
 
 		If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
-			' ReadW
+            ' ReAdW
 			' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
 			mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML)
 
 			If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
-				m_ErrorMessage = "ReadW can only be used with .Raw files, not with " & rawDataType
+                m_ErrorMessage = "ReAdW can only be used with .Raw files, not with " & rawDataType
 				ReportError(m_ErrorMessage)
 				Return False
 			End If

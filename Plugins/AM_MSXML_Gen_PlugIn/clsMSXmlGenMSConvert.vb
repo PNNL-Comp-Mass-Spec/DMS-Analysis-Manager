@@ -28,6 +28,12 @@ Public Class clsMSXmlGenMSConvert
 	''' <remarks></remarks>
 	Protected mCustomMSConvertArguments As String
 
+    Public Overrides ReadOnly Property ProgramName As String
+        Get
+            Return "MSConvert"
+        End Get
+    End Property
+
 #Region "Methods"
 
 	Public Sub New(ByVal WorkDir As String,
