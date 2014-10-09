@@ -50,7 +50,7 @@ namespace AnalysisManager_MAC {
                     log4net.GlobalContext.Properties["LogName"] = logFileName;
                     clsLogTools.ChangeLogFileName(logFileName);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message, ex);
                     blnSuccess = false;
 
 					m_message = "Error running MAC: " + ex.Message;

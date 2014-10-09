@@ -295,7 +295,7 @@ namespace AnalysisManager_Mage_PlugIn
 
 			// If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created 
 			// If it wasn't, then no matching jobs were found and we should fail out this job step
-			if (mageOperations.IndexOf("ExtractFromJobs", StringComparison.CurrentCultureIgnoreCase) >= 0)
+			if (mageOperations.Contains("ExtractFromJobs"))
 			{
 				if (!TableExists(fiResultsDB, "t_results"))
 				{
@@ -306,12 +306,12 @@ namespace AnalysisManager_Mage_PlugIn
 
 			bool itraqMode = false;
 			string analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
-			if (analysisType.IndexOf("iTRAQ", StringComparison.CurrentCultureIgnoreCase) >= 0)
+			if (analysisType.Contains("iTRAQ"))
 				itraqMode = true;
 
 			// If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created 
 			// If it wasn't, then we should fail out this job step
-			if (itraqMode || mageOperations.IndexOf("ImportDataPackageFiles", StringComparison.CurrentCultureIgnoreCase) >= 0)
+			if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
 			{
 				if (!TableExists(fiResultsDB, "T_alias"))
 				{

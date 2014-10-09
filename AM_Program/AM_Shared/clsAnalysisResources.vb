@@ -4161,13 +4161,26 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
-	Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
+    ''' <summary>
+    ''' Lookup the Peptide Hit jobs associated with the current job
+    ''' </summary>
+    ''' <param name="DataPackageID">Data package ID</param>
+    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+    ''' <remarks></remarks>
+    Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
 
-		Dim lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
-		Return RetrieveDataPackagePeptideHitJobInfo(DataPackageID, lstAdditionalJobs)
+        Dim lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
+        Return RetrieveDataPackagePeptideHitJobInfo(DataPackageID, lstAdditionalJobs)
 
-	End Function
+    End Function
 
+    ''' <summary>
+    ''' Lookup the Peptide Hit jobs associated with the current job
+    ''' </summary>
+    ''' <param name="DataPackageID">Data package ID</param>
+    ''' <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
+    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+    ''' <remarks></remarks>
 	Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
 
 		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
@@ -4184,12 +4197,27 @@ Public MustInherit Class clsAnalysisResources
 
 	End Function
 
+    ''' <summary>
+    ''' Lookup the Peptide Hit jobs associated with the current job
+    ''' </summary>
+    ''' <param name="ConnectionString">Connection string</param>
+    ''' <param name="DataPackageID">Data package ID</param>
+    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+    ''' <remarks></remarks>
 	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(ByVal ConnectionString As String, ByVal DataPackageID As Integer) As List(Of udtDataPackageJobInfoType)
 
 		Dim lstAdditionalJobs = New List(Of udtDataPackageJobInfoType)
 		Return RetrieveDataPackagePeptideHitJobInfo(ConnectionString, DataPackageID, lstAdditionalJobs)
 	End Function
 
+    ''' <summary>
+    ''' Lookup the Peptide Hit jobs associated with the current job
+    ''' </summary>
+    ''' <param name="ConnectionString">Connection string</param>
+    ''' <param name="DataPackageID">Data package ID</param>
+    ''' <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
+    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+    ''' <remarks></remarks>
 	Public Shared Function RetrieveDataPackagePeptideHitJobInfo(
 	  ByVal ConnectionString As String,
 	  ByVal DataPackageID As Integer,
