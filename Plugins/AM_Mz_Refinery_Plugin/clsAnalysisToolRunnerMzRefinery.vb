@@ -158,7 +158,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
             Else
                 ' Run MSConvert with the MzRefiner filter
-                blnSuccess = StartMzRefiner(fiOriginalMzMLFile, fiMSGFPlusResults)
+                blnSuccess = StartMzRefinery(fiOriginalMzMLFile, fiMSGFPlusResults)
                 If Not blnSuccess Then processingError = True
             End If
 
@@ -917,7 +917,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartMzRefiner(ByVal fiOriginalMzMLFile As FileInfo, ByVal fiMSGFPlusResults As FileInfo) As Boolean
+    Protected Function StartMzRefinery(ByVal fiOriginalMzMLFile As FileInfo, ByVal fiMSGFPlusResults As FileInfo) As Boolean
 
         mConsoleOutputErrorMsg = String.Empty
 
@@ -937,9 +937,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         ' If there are not 500 matches with 1e-10, then the threshold value is multiplied by the thresholdStep value
         ' This process is continued at most maxSteps times
-        ' Thus, using 10 and 3 means the thresholds that will be considered are 1e-10, 1e-9, 1e-8, and 1e-7
+        ' Thus, using 10 and 2 means the thresholds that will be considered are 1e-10, 1e-9, and 1e-8
         cmdStr &= " thresholdStep=10"
-        cmdStr &= " maxSteps=3"""
+        cmdStr &= " maxSteps=2"""
 
         ' These switches assure that the output file is a 32-bit mzML file
         cmdStr &= " --32 --mzML"
