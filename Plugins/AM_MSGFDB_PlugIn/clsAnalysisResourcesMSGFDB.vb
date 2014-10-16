@@ -230,6 +230,10 @@ Public Class clsAnalysisResourcesMSGFDB
 				' We also have to retrieve the _ScanStatsEx.txt file
 				blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
 
+                If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
 				If blnSuccess Then
 					strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStatsEx.txt")
 				End If
