@@ -223,55 +223,57 @@ Public Class clsMSGFDBUtils
 
 	End Sub
 
-	Private Function CanDetermineInstIdFromInstGroup(ByVal instrumentGroup As String, ByRef instrumentIDNew As String, ByRef autoSwitchReason As String) As Boolean
+    Private Function CanDetermineInstIdFromInstGroup(ByVal instrumentGroup As String, <Out> ByRef instrumentIDNew As String, <Out> ByRef autoSwitchReason As String) As Boolean
 
-		' Thermo Instruments
-		If clsGlobal.IsMatch(instrumentGroup, "QExactive") Then
-			instrumentIDNew = "3"
-			autoSwitchReason = "based on instrument group " & instrumentGroup
-			Return True
-		ElseIf clsGlobal.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap") Then	' Non-Thermo Instrument, low res MS/MS
-			instrumentIDNew = "0"
-			autoSwitchReason = "based on instrument group " & instrumentGroup
-			Return True
-		ElseIf clsGlobal.IsMatch(instrumentGroup, "IMS") Then						' Non-Thermo Instrument, high res MS/MS
-			instrumentIDNew = "1"
-			autoSwitchReason = "based on instrument group " & instrumentGroup
-			Return True
-		ElseIf clsGlobal.IsMatch(instrumentGroup, "Sciex_TripleTOF") Then			' Non-Thermo Instrument, high res MS/MS
-			instrumentIDNew = "1"
-			autoSwitchReason = "based on instrument group " & instrumentGroup
-			Return True
-		Else
-			Return False
-		End If
+        ' Thermo Instruments
+        If clsGlobal.IsMatch(instrumentGroup, "QExactive") Then
+            instrumentIDNew = "3"
+            autoSwitchReason = "based on instrument group " & instrumentGroup
+            Return True
+        ElseIf clsGlobal.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap") Then    ' Non-Thermo Instrument, low res MS/MS
+            instrumentIDNew = "0"
+            autoSwitchReason = "based on instrument group " & instrumentGroup
+            Return True
+        ElseIf clsGlobal.IsMatch(instrumentGroup, "IMS") Then                       ' Non-Thermo Instrument, high res MS/MS
+            instrumentIDNew = "1"
+            autoSwitchReason = "based on instrument group " & instrumentGroup
+            Return True
+        ElseIf clsGlobal.IsMatch(instrumentGroup, "Sciex_TripleTOF") Then           ' Non-Thermo Instrument, high res MS/MS
+            instrumentIDNew = "1"
+            autoSwitchReason = "based on instrument group " & instrumentGroup
+            Return True
+        Else
+            instrumentIDNew = String.Empty
+            autoSwitchReason = String.Empty
+            Return False
+        End If
 
-	End Function
+    End Function
 
-	Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, ByVal instrumentIDCurrentNew As String, ByVal autoSwitchReason As String)
+    Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, ByVal instrumentIDNew As String, ByVal autoSwitchReason As String)
 
-		If Not String.IsNullOrEmpty(instrumentIDCurrentNew) AndAlso instrumentIDCurrentNew <> instrumentIDCurrent Then
+        If Not String.IsNullOrEmpty(instrumentIDNew) AndAlso instrumentIDNew <> instrumentIDCurrent Then
 
-			If m_DebugLevel >= 1 Then
-				Dim strInstIDDescription As String = "??"
-				Select Case instrumentIDCurrentNew
-					Case "0"
-						strInstIDDescription = "Low-res MSn"
-					Case "1"
-						strInstIDDescription = "High-res MSn"
-					Case "2"
-						strInstIDDescription = "TOF"
-					Case "3"
-						strInstIDDescription = "Q-Exactive"
-				End Select
+            If m_DebugLevel >= 1 Then
+                Dim strInstIDDescription As String = "??"
+                Select Case instrumentIDNew
+                    Case "0"
+                        strInstIDDescription = "Low-res MSn"
+                    Case "1"
+                        strInstIDDescription = "High-res MSn"
+                    Case "2"
+                        strInstIDDescription = "TOF"
+                    Case "3"
+                        strInstIDDescription = "Q-Exactive"
+                End Select
 
-				ReportMessage("Auto-updating instrument ID from " & instrumentIDCurrent & " to " & instrumentIDCurrentNew & " (" & strInstIDDescription & ") " & autoSwitchReason)
-			End If
+                ReportMessage("Auto-updating instrument ID from " & instrumentIDCurrent & " to " & instrumentIDNew & " (" & strInstIDDescription & ") " & autoSwitchReason)
+            End If
 
-			instrumentIDCurrent = instrumentIDCurrentNew
-		End If
+            instrumentIDCurrent = instrumentIDNew
+        End If
 
-	End Sub
+    End Sub
 
 	Public Function ConvertMZIDToTSV(ByVal javaProgLoc As String, ByVal msgfDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
 
@@ -1958,124 +1960,128 @@ Public Class clsMSGFDBUtils
 
 	End Function
 
-	Private Sub ExamineScanTypes(
-	  ByVal countLowResMSn As Integer,
-	  ByVal countHighResMSn As Integer,
-	  ByVal countHCDMSn As Integer,
-	  ByRef instrumentIDNew As String,
-	  ByRef autoSwitchReason As String)
+    Private Sub ExamineScanTypes(
+      ByVal countLowResMSn As Integer,
+      ByVal countHighResMSn As Integer,
+      ByVal countHCDMSn As Integer,
+      <Out> ByRef instrumentIDNew As String,
+      <Out> ByRef autoSwitchReason As String)
 
-		If countLowResMSn + countHighResMSn + countHCDMSn = 0 Then
-			' Scan counts are all 0; leave instrumentIDNew untouched
-			ReportMessage("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID")
-		Else
-			Dim dblFractionHiRes As Double = 0
+        instrumentIDNew = String.Empty
+        autoSwitchReason = String.Empty
 
-			If countHighResMSn > 0 Then
-				dblFractionHiRes = countHighResMSn / (countLowResMSn + countHighResMSn)
-			End If
+        If countLowResMSn + countHighResMSn + countHCDMSn = 0 Then
+            ' Scan counts are all 0; leave instrumentIDNew untouched
+            ReportMessage("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID")
+        Else
+            Dim dblFractionHiRes As Double = 0
 
-			If dblFractionHiRes > 0.1 Then
-				' At least 10% of the spectra are HMSn
-				instrumentIDNew = "1"
-				autoSwitchReason = "since " & (dblFractionHiRes * 100).ToString("0") & "% of the spectra are HMSn"
+            If countHighResMSn > 0 Then
+                dblFractionHiRes = countHighResMSn / (countLowResMSn + countHighResMSn)
+            End If
 
-			Else
-				If countLowResMSn = 0 And countHCDMSn > 0 Then
-					' All of the spectra are HCD
-					instrumentIDNew = "1"
-					autoSwitchReason = "since all of the spectra are HCD"
-				Else
-					instrumentIDNew = "0"
-					If countHCDMSn = 0 And countHighResMSn = 0 Then
-						autoSwitchReason = "since all of the spectra are low res MSn"
-					Else
-						autoSwitchReason = "since there is a mix of low res and high res spectra"
-					End If
-				End If
+            If dblFractionHiRes > 0.1 Then
+                ' At least 10% of the spectra are HMSn
+                instrumentIDNew = "1"
+                autoSwitchReason = "since " & (dblFractionHiRes * 100).ToString("0") & "% of the spectra are HMSn"
 
-			End If
+            Else
+                If countLowResMSn = 0 And countHCDMSn > 0 Then
+                    ' All of the spectra are HCD
+                    instrumentIDNew = "1"
+                    autoSwitchReason = "since all of the spectra are HCD"
+                Else
+                    instrumentIDNew = "0"
+                    If countHCDMSn = 0 And countHighResMSn = 0 Then
+                        autoSwitchReason = "since all of the spectra are low res MSn"
+                    Else
+                        autoSwitchReason = "since there is a mix of low res and high res spectra"
+                    End If
+                End If
 
-		End If
+            End If
 
-	End Sub
+        End If
 
-	Protected Function LookupScanTypesForDataset(
-	  ByVal datasetName As String,
-	  ByRef countLowResMSn As Integer,
-	  ByRef countHighResMSn As Integer,
-	  ByRef countHCDMSn As Integer) As Boolean
+    End Sub
 
-		Try
-			countLowResMSn = 0
-			countHighResMSn = 0
-			countHCDMSn = 0
+    Protected Function LookupScanTypesForDataset(
+      ByVal datasetName As String,
+      <Out> ByRef countLowResMSn As Integer,
+      <Out> ByRef countHighResMSn As Integer,
+      <Out> ByRef countHCDMSn As Integer) As Boolean
 
-			If String.IsNullOrEmpty(datasetName) Then
-				Return False
-			End If
+        countLowResMSn = 0
+        countHighResMSn = 0
+        countHCDMSn = 0
 
-			Dim ConnectionString As String = m_mgrParams.GetParam("connectionstring")
+        Try
 
-			Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+            If String.IsNullOrEmpty(datasetName) Then
+                Return False
+            End If
 
-			SqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn], ")
-			SqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn], ")
-			SqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn], ")
-			SqlStr.Append("   HMSn, MSn, ")
-			SqlStr.Append("   [PQD-HMSn], [PQD-MSn]")
-			SqlStr.Append(" FROM V_Dataset_ScanType_CrossTab")
-			SqlStr.Append(" WHERE Dataset = '" & datasetName & "'")
+            Dim connectionString As String = m_mgrParams.GetParam("connectionstring")
 
-			Dim Dt As DataTable = Nothing
-			Const RetryCount = 2
+            Dim sqlStr As Text.StringBuilder = New Text.StringBuilder
 
-			'Get a table to hold the results of the query
-			Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LookupScanTypesForDataset", RetryCount, Dt)
+            sqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn], ")
+            sqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn], ")
+            sqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn], ")
+            sqlStr.Append("   HMSn, MSn, ")
+            sqlStr.Append("   [PQD-HMSn], [PQD-MSn]")
+            sqlStr.Append(" FROM V_Dataset_ScanType_CrossTab")
+            sqlStr.Append(" WHERE Dataset = '" & datasetName & "'")
 
-			If Not blnSuccess Then
-				ReportError("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset")
-				Dt.Dispose()
-				Return False
-			End If
+            Dim dtResults As DataTable = Nothing
+            Const retryCount = 2
 
-			'Verify at least one row returned
-			If Dt.Rows.Count < 1 Then
-				' No data was returned
+            'Get a table to hold the results of the query
+            Dim blnSuccess = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, dtResults)
+
+            If Not blnSuccess Then
+                ReportError("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset")
+                dtResults.Dispose()
+                Return False
+            End If
+
+            'Verify at least one row returned
+            If dtResults.Rows.Count < 1 Then
+                ' No data was returned
                 ReportMessage("No rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
-				Return False
-			Else
-				For Each CurRow As DataRow In Dt.Rows
+                Return False
+            Else
+                For Each curRow As DataRow In dtResults.Rows
 
-					countLowResMSn += clsGlobal.DbCInt(CurRow("CID-MSn"))
-					countHighResMSn += clsGlobal.DbCInt(CurRow("CID-HMSn"))
-					countHCDMSn += clsGlobal.DbCInt(CurRow("HCD-HMSn"))
+                    countLowResMSn += clsGlobal.DbCInt(curRow("CID-MSn"))
+                    countHighResMSn += clsGlobal.DbCInt(curRow("CID-HMSn"))
+                    countHCDMSn += clsGlobal.DbCInt(curRow("HCD-HMSn"))
 
-					countHighResMSn += clsGlobal.DbCInt(CurRow("ETD-HMSn"))
-					countLowResMSn += clsGlobal.DbCInt(CurRow("ETD-MSn"))
+                    countHighResMSn += clsGlobal.DbCInt(curRow("ETD-HMSn"))
+                    countLowResMSn += clsGlobal.DbCInt(curRow("ETD-MSn"))
 
-					countHighResMSn += clsGlobal.DbCInt(CurRow("SA_ETD-HMSn"))
-					countLowResMSn += clsGlobal.DbCInt(CurRow("SA_ETD-MSn"))
+                    countHighResMSn += clsGlobal.DbCInt(curRow("SA_ETD-HMSn"))
+                    countLowResMSn += clsGlobal.DbCInt(curRow("SA_ETD-MSn"))
 
-					countHighResMSn += clsGlobal.DbCInt(CurRow("HMSn"))
-					countLowResMSn += clsGlobal.DbCInt(CurRow("MSn"))
+                    countHighResMSn += clsGlobal.DbCInt(curRow("HMSn"))
+                    countLowResMSn += clsGlobal.DbCInt(curRow("MSn"))
 
-					countHighResMSn += clsGlobal.DbCInt(CurRow("PQD-HMSn"))
-					countLowResMSn += clsGlobal.DbCInt(CurRow("PQD-MSn"))
+                    countHighResMSn += clsGlobal.DbCInt(curRow("PQD-HMSn"))
+                    countLowResMSn += clsGlobal.DbCInt(curRow("PQD-MSn"))
 
-				Next
+                Next
 
-				Dt.Dispose()
-				Return True
-			End If
+                dtResults.Dispose()
+                Return True
+            End If
 
-		Catch ex As Exception
-			Const msg = "Exception in LookupScanTypersForDataset"
-			ReportError(msg, msg & ": " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            Const msg = "Exception in LookupScanTypersForDataset"
+            ReportError(msg, msg & ": " & ex.Message)
+            Return False
+        End Try
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Validates that the modification definition text

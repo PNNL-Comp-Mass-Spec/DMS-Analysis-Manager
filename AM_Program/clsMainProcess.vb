@@ -623,7 +623,7 @@ Public Class clsMainProcess
 		Try
 			If Me.TraceMode Then ShowTraceMessage("Getting job resources")
 
-			eToolRunnerResult = m_Resource.GetResources()
+            eToolRunnerResult = m_Resource.GetResources()
 			If Not eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 				m_MostRecentErrorMessage = "GetResources returned result: " & eToolRunnerResult.ToString
 				If Me.TraceMode Then ShowTraceMessage(m_MostRecentErrorMessage & "; closing job step task")
