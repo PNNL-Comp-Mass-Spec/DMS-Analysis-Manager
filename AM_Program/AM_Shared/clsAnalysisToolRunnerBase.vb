@@ -2053,7 +2053,7 @@ Public Class clsAnalysisToolRunnerBase
 			swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
 			swToolVersionFile.WriteLine("ToolVersionInfo:")
 
-			swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", ControlChars.NewLine))
+            swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", Environment.NewLine))
 			swToolVersionFile.Close()
 
 		Catch ex As Exception

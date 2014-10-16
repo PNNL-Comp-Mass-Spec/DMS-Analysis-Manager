@@ -6242,31 +6242,32 @@ Public MustInherit Class clsAnalysisResources
 				Return False
 			End If
 
-			If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-				If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
-					End If
-				Else
-					Return False
-				End If
-			Else
+            If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
+                AddFileToMyEMSLDownloadQueue(SourceFilePath)
+                If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+                    End If
+                Else
+                    Return False
+                End If
+            Else
 
-				Dim fiSourceFile As FileInfo = New FileInfo(SourceFilePath)
+                Dim fiSourceFile As FileInfo = New FileInfo(SourceFilePath)
 
-				' Copy the file locally
-				If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-					m_message = "Error copying " + fiSourceFile.Name
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName)
-					End If
-					Return False
-				Else
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
-					End If
-				End If
-			End If
+                ' Copy the file locally
+                If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+                    m_message = "Error copying " + fiSourceFile.Name
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName)
+                    End If
+                    Return False
+                Else
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
+                    End If
+                End If
+            End If
 
 		End If
 

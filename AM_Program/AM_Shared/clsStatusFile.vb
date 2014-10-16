@@ -636,7 +636,7 @@ Public Class clsStatusFile
 				If m_RecentErrorMessageCount > 1 Then
 					' Append the next two error messages
 					For intIndex = 1 To m_RecentErrorMessageCount - 1
-						.MostRecentErrorMessage &= ControlChars.NewLine & m_RecentErrorMessages(intIndex)
+                        .MostRecentErrorMessage &= Environment.NewLine & m_RecentErrorMessages(intIndex)
 						If intIndex >= 2 Then Exit For
 					Next
 				End If

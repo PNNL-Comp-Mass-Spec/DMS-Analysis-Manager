@@ -29,6 +29,8 @@ Public Class clsRunDosProgram
 	Private m_CacheStandardOutput As Boolean = False
 	Private m_EchoOutputToConsole As Boolean = True
 
+    Private m_CachedConsoleErrors As String = String.Empty
+
 	Private m_WriteConsoleOutputToFile As Boolean = False
 	Private m_ConsoleOutputFilePath As String = String.Empty
 
@@ -70,6 +72,19 @@ Public Class clsRunDosProgram
 #End Region
 
 #Region "Properties"
+
+    ''' <summary>
+    ''' Text written to the Error stream by the external program (including carriage returns)
+    ''' </summary>
+    Public ReadOnly Property CachedConsoleErrors() As String
+        Get
+            If String.IsNullOrWhiteSpace(m_CachedConsoleErrors) Then
+                Return String.Empty
+            Else
+                Return m_CachedConsoleErrors
+            End If
+        End Get
+    End Property
 
 	''' <summary>
 	''' Text written to the Console by the external program (including carriage returns)
@@ -347,6 +362,8 @@ Public Class clsRunDosProgram
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " & m_ProgRunner.Program)
 		End If
 
+        m_CachedConsoleErrors = String.Empty
+
 		m_AbortProgramNow = False
 		m_AbortProgramPostLogEntry = True
 		blnRuntimeExceeded = False
@@ -416,7 +433,12 @@ Public Class clsRunDosProgram
 #End Region
 
 	Private Sub ProgRunner_ConsoleErrorEvent(ByVal NewText As String) Handles m_ProgRunner.ConsoleErrorEvent
-		RaiseEvent ConsoleErrorEvent(NewText)
+        RaiseEvent ConsoleErrorEvent(NewText)
+        If String.IsNullOrWhiteSpace(m_CachedConsoleErrors) Then
+            m_CachedConsoleErrors = NewText
+        Else
+            m_CachedConsoleErrors &= Environment.NewLine & NewText
+        End If        
 		Console.WriteLine("Console error: " & Environment.NewLine & NewText)
 	End Sub
 
