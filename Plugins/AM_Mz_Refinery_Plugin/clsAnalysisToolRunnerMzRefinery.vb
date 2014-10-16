@@ -159,7 +159,17 @@ Public Class clsAnalysisToolRunnerMzRefinery
             Else
                 ' Run MSConvert with the MzRefiner filter
                 blnSuccess = StartMzRefinery(fiOriginalMzMLFile, fiMSGFPlusResults)
-                If Not blnSuccess Then processingError = True
+                If Not blnSuccess Then
+                    processingError = True
+                Else
+                    If mMzRefineryCorrectionMode.StartsWith("Chose no shift") Then
+                        ' No valid peak was found; a result file will not exist
+                        ' Rename the original file to have the expected name of the fixed mzML file
+                        ' Required for PostProcessMzRefineryResults to work properly
+                        fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
+                    End If
+                End If
+
             End If
 
             ' Look for the results file
@@ -769,7 +779,6 @@ Public Class clsAnalysisToolRunnerMzRefinery
                                 mConsoleOutputErrorMsg &= "; " & strDataLine
                             End If
 
-                            Continue Do
                         ElseIf strDataLine.StartsWith("Chose ") Then
                             mMzRefineryCorrectionMode = String.Copy(strDataLine)
                         ElseIf strDataLine.StartsWith("Low number of good identifications found") Then
@@ -928,6 +937,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         Dim cmdStr = " "
         cmdStr &= fiOriginalMzMLFile.FullName
+        cmdStr &= " --outfile " & Path.GetFileNameWithoutExtension(fiOriginalMzMLFile.Name) & "_FIXED.mzML"
         cmdStr &= " --filter ""mzRefiner " & fiMSGFPlusResults.FullName
 
         ' MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
@@ -952,7 +962,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         With CmdRunner
             .CreateNoWindow = True
-            .CacheStandardOutput = False
+            .CacheStandardOutput = True
+
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
@@ -964,7 +975,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         mRunningzRefinerWithMSConvert = True
 
         ' Start MSConvert and wait for it to exit
-        Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefiner", True)
+        Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefinery", True)
 
         mRunningzRefinerWithMSConvert = False
 
@@ -988,10 +999,20 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         If Not String.IsNullOrEmpty(mMzRefineryCorrectionMode) Then
 
-            Dim logMessage = "MzRefiner " & mMzRefineryCorrectionMode.Replace("...", "")
+            Dim logMessage = "MzRefinery " & mMzRefineryCorrectionMode.Replace("...", "").TrimEnd("."c)
             logMessage &= ", " & mMzRefinerGoodDataPoints & " points had SpecEValue <= " & mMzRefinerSpecEValueThreshold.ToString("0.###E+00")
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, logMessage)
+        End If
+
+        If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
+            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")            
+            If String.IsNullOrWhiteSpace(mConsoleOutputErrorMsg) Then
+                mConsoleOutputErrorMsg = consoleError
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
+            End If
+            blnSuccess = False
         End If
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -1005,7 +1026,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         If Not blnSuccess Then
             Dim Msg As String
-            Msg = "Error running MSConvert/MzRefiner"
+            Msg = "Error running MSConvert/MzRefinery"
             If String.IsNullOrEmpty(m_message) Then
                 m_message = Msg
             End If

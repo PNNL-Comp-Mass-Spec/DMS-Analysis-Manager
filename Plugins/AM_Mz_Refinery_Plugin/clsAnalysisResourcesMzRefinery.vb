@@ -140,6 +140,7 @@ Public Class clsAnalysisResourcesMzRefinery
 			Return True
 		End If
 
+        ' Existing results found
 		' Copy the MSGF+ results locally
 		Dim localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name)
 		fiMSGFPlusResults.CopyTo(localFilePath, True)
@@ -148,6 +149,8 @@ Public Class clsAnalysisResourcesMzRefinery
 
 		localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name)
 		fiMSGFPlusConsoleOutput.CopyTo(localFilePath, True)
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found existing MSGF+ results to use for MzRefinery")
 
 		Return True
 
