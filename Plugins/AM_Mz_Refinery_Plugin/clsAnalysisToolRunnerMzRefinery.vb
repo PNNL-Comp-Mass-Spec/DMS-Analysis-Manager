@@ -159,14 +159,19 @@ Public Class clsAnalysisToolRunnerMzRefinery
             Else
                 ' Run MSConvert with the MzRefiner filter
                 blnSuccess = StartMzRefinery(fiOriginalMzMLFile, fiMSGFPlusResults)
+
                 If Not blnSuccess Then
                     processingError = True
                 Else
                     If mMzRefineryCorrectionMode.StartsWith("Chose no shift") Then
-                        ' No valid peak was found; a result file will not exist
-                        ' Rename the original file to have the expected name of the fixed mzML file
-                        ' Required for PostProcessMzRefineryResults to work properly
-                        fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
+                        ' No valid peak was found; a result file may not exist
+                        fiFixedMzMLFile.Refresh()
+                        If Not fiFixedMzMLFile.Exists Then
+
+                            ' Rename the original file to have the expected name of the fixed mzML file
+                            ' Required for PostProcessMzRefineryResults to work properly
+                            fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
+                        End If
                     End If
                 End If
 
