@@ -459,12 +459,13 @@ Public Class clsAnalysisToolRunnerMODa
 		Dim ioToolFiles As New List(Of FileInfo)
 		ioToolFiles.Add(New FileInfo(mMODaProgLoc))
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        Try
+            ' Tool_Version_Info_MODa.txt is required by IDPicker
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
 	End Function
 

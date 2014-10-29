@@ -170,7 +170,7 @@ Public MustInherit Class clsMSXmlGen
 
         If Not blnSuccess Then
             If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS Then
-                mErrorMessage = ProgramName & " has run for over " & DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") & " and has thus been aborted"
+                mErrorMessage = ProgramName & " has run for over " & DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") & " hours and has thus been aborted"
                 Return False
             Else
                 If CmdRunner.ExitCode <> 0 Then
