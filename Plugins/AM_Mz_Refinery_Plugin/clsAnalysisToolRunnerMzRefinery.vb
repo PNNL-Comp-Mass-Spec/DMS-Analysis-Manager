@@ -51,6 +51,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 	Protected mMSGFPlusCompletionTime As DateTime
 
     Protected mSkipMzRefinery As Boolean
+    Protected m_UnableToUseMzRefinery As Boolean
 
     Protected mMzRefineryCorrectionMode As String
     Protected mMzRefinerGoodDataPoints As Integer
@@ -89,6 +90,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
             mMzRefineryCorrectionMode = String.Empty
             mMzRefinerGoodDataPoints = 0
             mMzRefinerSpecEValueThreshold = 0.0000000001
+
+            m_UnableToUseMzRefinery = False
 
             ' Verify that program files exist
 
@@ -177,16 +180,28 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
             End If
 
-            ' Look for the results file
-            fiFixedMzMLFile.Refresh()
-            If fiFixedMzMLFile.Exists AndAlso Not processingError Then
-                blnSuccess = PostProcessMzRefinerResults(fiMSGFPlusResults, fiFixedMzMLFile)
-                If Not blnSuccess Then processingError = True
-            Else
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "MzRefinery results file not found: " & fiFixedMzMLFile.Name
+            If Not processingError Then
+
+                ' Look for the results file
+                fiFixedMzMLFile.Refresh()
+                If fiFixedMzMLFile.Exists Then
+                    blnSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMzMLFile)
+                    If Not blnSuccess Then processingError = True
+                Else
+                    If String.IsNullOrEmpty(m_message) Then
+                        m_message = "MzRefinery results file not found: " & fiFixedMzMLFile.Name
+                    End If
                     processingError = True
                 End If
+
+            End If
+
+            If m_UnableToUseMzRefinery Then
+                Using swMessageFile = New StreamWriter(New FileStream(Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"), FileMode.Create, FileAccess.Write, FileShare.Read))
+                    swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " & m_JobNum & ".")
+                    swMessageFile.WriteLine("The files here can be used to investigate the MzRefinery failure.")
+                    swMessageFile.WriteLine("The folder can be safely deleted.")
+                End Using
             End If
 
             m_progress = PROGRESS_PCT_COMPLETE
@@ -252,7 +267,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
             If processingError Then
                 ' If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing failed; see results at " & m_jobParams.GetParam("transferFolderPath"))
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                If m_UnableToUseMzRefinery Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY
+                Else
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
             End If
 
         Catch ex As Exception
@@ -741,14 +761,20 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         ' Example warning for sparse data file
         ' Low number of good identifications found. Will not perform dependent shifts.
-        '         Less than 500 (123) results after filtering.
-        '         Filtered out 6830 identifications because of score.
+        '    Less than 500 (123) results after filtering.
+        '    Filtered out 6830 identifications because of score.
 
         ' Example error for really sparse data file
         ' Excluding file ".\mzmlRefineryData\Cyanothece_bad\Cyano_GC_07_10_25Aug09_Draco_09-05-02.mzid" from data set
-        '         Less than 100 (16) results after filtering.
-        '         Filtered out 4208 identifications because of score.
-        '         Filtered out 0 identifications because of mass error.
+        '    Less than 100 (16) results after filtering.
+        '    Filtered out 4208 identifications because of score.
+        '    Filtered out 0 identifications because of mass error.
+
+        ' Example error for no data passing the filters
+        ' Excluding file "C:\DMS_WorkDir1\Caulo_pY_Run5_msgfplus.mzid" from data set.
+        '    Less than 100 (0) results after filtering.
+        '    Filtered out 8 identifications because of score.
+        '    Filtered out 0 identifications because of mass error.
 
         Dim reResultsAfterFiltering = New Regex("Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled)
 
@@ -797,6 +823,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
                             If reMatch.Success Then
                                 m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, strDataLine.Trim())
+                                If strDataLine.Trim.StartsWith("Less than 100 ") Then
+                                    m_UnableToUseMzRefinery = True
+                                End If
                             End If
 
                             reMatch = reGoodDataPoints.Match(strDataLine)
@@ -830,7 +859,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Sub
 
-    Private Function PostProcessMzRefinerResults(ByVal fiMSGFPlusResults As FileInfo, ByVal fiFixedMzMLFile As FileInfo) As Boolean
+    Private Function PostProcessMzRefineryResults(ByVal fiMSGFPlusResults As FileInfo, ByVal fiFixedMzMLFile As FileInfo) As Boolean
 
         Dim strOriginalMzMLFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
 
@@ -1011,7 +1040,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         End If
 
         If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
-            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")            
+            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
             If String.IsNullOrWhiteSpace(mConsoleOutputErrorMsg) Then
                 mConsoleOutputErrorMsg = consoleError
             Else
@@ -1029,19 +1058,27 @@ Public Class clsAnalysisToolRunnerMzRefinery
             End If
         End If
 
+        If m_UnableToUseMzRefinery Then blnSuccess = False
+
         If Not blnSuccess Then
             Dim Msg As String
             Msg = "Error running MSConvert/MzRefinery"
-            If String.IsNullOrEmpty(m_message) Then
+
+            If m_UnableToUseMzRefinery Then
+                m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Else
                 m_message = Msg
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefinery returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert/MzRefinery failed (but exit code is 0)")
+            If Not m_UnableToUseMzRefinery Then
+                If CmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefinery returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert/MzRefinery failed (but exit code is 0)")
+                End If
             End If
 
             Return False
