@@ -82,6 +82,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     Protected WithEvents mCmdRunner As clsRunDosProgram
 	Protected WithEvents mStatusFileWatcher As FileSystemWatcher
 
+    Protected WithEvents mPEKtoCSVConverter As PEKtoCSVConverter.PEKtoCSVConverter
+
 	Public Sub New()
 
 		ResetStatusLogTimes()
@@ -104,6 +106,34 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 	End Function
+
+
+    Private Function ConvertPekToCsv(ByVal pekFilePath As String) As Boolean
+        Try
+
+            Dim scansFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_scans.csv")
+            Dim isosFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_isos.csv")
+            Dim rawFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+
+            If Not File.Exists(rawFilePath) Then
+                rawFilePath = String.Empty
+            End If
+
+            mPEKtoCSVConverter = New PEKtoCSVConverter.PEKtoCSVConverter(pekFilePath, scansFilePath, isosFilePath, rawFilePath)
+
+            Dim success = mPEKtoCSVConverter.Convert()
+
+            mPEKtoCSVConverter = Nothing
+
+            Return success
+
+        Catch ex As Exception
+            m_message = "Error converting the PEK file to DeconTools-compatible _isos.csv"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
 	Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
 
@@ -281,14 +311,19 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum)
 		End If
 
-		'Get rid of raw data file
+        ' Use the PEK file to create DeconTools compatible _isos.csv and _scans.csv files
+        Dim pekFilePath = Path.Combine(m_WorkDir, m_Dataset & ".pek")
+        Dim pekConversionSuccess As Boolean
+        pekConversionSuccess = ConvertPekToCsv(pekFilePath)
+
+        ' Get rid of raw data file
 		result = DeleteDataFile()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			' Error deleting raw files; the error will have already been logged
 			' Since the results might still be good, we will not return an error at this point
 		End If
 
-		'make results folder
+        ' Make results folder
 		result = MakeResultsFolder()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return result
@@ -296,31 +331,36 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
 		result = MoveResultFiles()
 		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
-			Return result
+            Return result
 		End If
 
 		If blnCopyResultsToServer Then
 			result = CopyResultsFolderToServer()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'TODO: What do we do here?
-				Return result
+                Return result
 			End If
 		End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        If pekConversionSuccess Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
-	End Function
+        If String.IsNullOrEmpty(m_message) Then
+            m_message = "Unknown error converting the .PEK file to a DeconTools-compatible _isos.csv file"
+        End If
+        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-	Private Sub ResetStatusLogTimes()
-		' Initialize the last error posting time to 2 hours before the present
-		mLastErrorPostingTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
+    End Function
 
-		' Initialize the last MissingStatusFileTime to the time the job starts
-		mLastMissingStatusFiletime = System.DateTime.UtcNow
+    Private Sub ResetStatusLogTimes()
+        ' Initialize the last error posting time to 2 hours before the present
+        mLastErrorPostingTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
 
-		mLastInvalidStatusFiletime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
-	End Sub
+        ' Initialize the last MissingStatusFileTime to the time the job starts
+        mLastMissingStatusFiletime = System.DateTime.UtcNow
+
+        mLastInvalidStatusFiletime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
+    End Sub
 
 	''' <summary>
 	''' Starts ICR-2LS by running the .Exe at the command line
@@ -742,4 +782,13 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 	Private Sub mStatusFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mStatusFileWatcher.Changed
 		ParseICR2LSStatusFile(mStatusFilePath, False)
 	End Sub
+
+    Private Sub mPEKtoCSVConverter_ErrorEvent(sender As Object, e As PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs) Handles mPEKtoCSVConverter.ErrorEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PEKtoCSVConverter error: " & e.Message)
+        clsGlobal.AppendToComment(m_message, e.Message)
+    End Sub
+
+    Private Sub mPEKtoCSVConverter_MessageEvent(sender As Object, e As PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs) Handles mPEKtoCSVConverter.MessageEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
+    End Sub
 End Class

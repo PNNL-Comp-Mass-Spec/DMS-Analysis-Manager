@@ -212,7 +212,9 @@ Public Class clsAnalysisToolRunnerICR
 			currentTask = "PerfPostAnalysisTasks"
 
 			If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				m_message = clsGlobal.AppendToComment(m_message, "Error performing post analysis tasks")
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Error performing post analysis tasks"
+                End If
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -247,7 +249,7 @@ Public Class clsAnalysisToolRunnerICR
 				ErrMsg = Err.Message
 				RetryCount += 1
 			Catch Err As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & Err.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & Err.Message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 		End While

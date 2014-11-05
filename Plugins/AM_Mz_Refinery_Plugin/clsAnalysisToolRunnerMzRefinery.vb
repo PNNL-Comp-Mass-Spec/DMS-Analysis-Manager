@@ -794,6 +794,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
             End If
 
+            mConsoleOutputErrorMsg = String.Empty
+
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Do While srInFile.Peek() >= 0
@@ -1017,13 +1019,10 @@ Public Class clsAnalysisToolRunnerMzRefinery
             ' Write the console output to a text file
             System.Threading.Thread.Sleep(250)
 
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
-            swConsoleOutputfile.Close()
-        End If
-
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+            Using swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+            End Using
+            
         End If
 
         ' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
@@ -1040,6 +1039,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
         End If
 
         If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
+            ' Append the console errors to the log file
+            Using swConsoleOutputFile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                swConsoleOutputFile.WriteLine()
+                swConsoleOutputFile.WriteLine(CmdRunner.CachedConsoleErrors)
+            End Using
+
             Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
             If String.IsNullOrWhiteSpace(mConsoleOutputErrorMsg) Then
                 mConsoleOutputErrorMsg = consoleError
