@@ -1188,91 +1188,91 @@ Public Class clsGlobal
 			Using srFile1 = New StreamReader(New FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read))
 				Using srFile2 = New StreamReader(New FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-					Do While srFile1.Peek > -1
-						strLineIn1 = srFile1.ReadLine
-						intLineNumber += 1
+                    Do While Not srFile1.EndOfStream
+                        strLineIn1 = srFile1.ReadLine
+                        intLineNumber += 1
 
-						If comparisonEndLine > 0 AndAlso intLineNumber > comparisonEndLine Then
-							' No need to compare further; files match up to this point
-							Exit Do
-						End If
+                        If comparisonEndLine > 0 AndAlso intLineNumber > comparisonEndLine Then
+                            ' No need to compare further; files match up to this point
+                            Exit Do
+                        End If
 
-						If srFile2.Peek > -1 Then
-							strLineIn2 = srFile2.ReadLine
+                        If Not srFile2.EndOfStream Then
+                            strLineIn2 = srFile2.ReadLine
 
-							If intLineNumber >= comparisonStartLine Then
-								If ignoreWhitespace Then
-									strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-									strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-								End If
+                            If intLineNumber >= comparisonStartLine Then
+                                If ignoreWhitespace Then
+                                    strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
+                                    strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
+                                End If
 
-								If strLineIn1 <> strLineIn2 Then
-									' Lines don't match; are we ignoring both of them?
-									If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso _
-									   TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
-										' Ignoring both lines
-									Else
-										' Files do not match
-										Return False
-									End If
-								End If
-							End If
-							Continue Do
-						End If
+                                If strLineIn1 <> strLineIn2 Then
+                                    ' Lines don't match; are we ignoring both of them?
+                                    If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso _
+                                       TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
+                                        ' Ignoring both lines
+                                    Else
+                                        ' Files do not match
+                                        Return False
+                                    End If
+                                End If
+                            End If
+                            Continue Do
+                        End If
 
-						' File1 has more lines than file2
+                        ' File1 has more lines than file2
 
-						If Not ignoreWhitespace Then
-							' Files do not match
-							Return False
-						End If
+                        If Not ignoreWhitespace Then
+                            ' Files do not match
+                            Return False
+                        End If
 
-						' Ignoring whitespace
-						' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
-						' See if the remaining lines are blank
-						Do
-							If strLineIn1.Length <> 0 Then
-								If Not TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) Then
-									' Files do not match
-									Return False
-								End If
-							End If
+                        ' Ignoring whitespace
+                        ' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
+                        ' See if the remaining lines are blank
+                        Do
+                            If strLineIn1.Length <> 0 Then
+                                If Not TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) Then
+                                    ' Files do not match
+                                    Return False
+                                End If
+                            End If
 
-							If srFile1.Peek < 0 Then
-								Exit Do
-							End If
+                            If srFile1.EndOfStream Then
+                                Exit Do
+                            End If
 
-							strLineIn1 = srFile1.ReadLine
-							strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-						Loop
+                            strLineIn1 = srFile1.ReadLine
+                            strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
+                        Loop
 
-						Exit Do
+                        Exit Do
 
-					Loop
+                    Loop
 
-					If srFile2.Peek > -1 Then
-						' File2 has more lines than file1
-						If Not ignoreWhitespace Then
-							' Files do not match
-							Return False
-						End If
+                    If Not srFile2.EndOfStream Then
+                        ' File2 has more lines than file1
+                        If Not ignoreWhitespace Then
+                            ' Files do not match
+                            Return False
+                        End If
 
-						' Ignoring whitespace
-						' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
-						' See if the remaining lines are blank
-						Do
-							strLineIn2 = srFile2.ReadLine
-							strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
+                        ' Ignoring whitespace
+                        ' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
+                        ' See if the remaining lines are blank
+                        Do
+                            strLineIn2 = srFile2.ReadLine
+                            strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
 
-							If strLineIn2.Length <> 0 Then
-								If Not TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
-									' Files do not match
-									Return False
-								End If
-							End If
-						Loop While srFile2.Peek > -1
+                            If strLineIn2.Length <> 0 Then
+                                If Not TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
+                                    ' Files do not match
+                                    Return False
+                                End If
+                            End If
+                        Loop While Not srFile2.EndOfStream
 
-					End If
+                    End If
 
 				End Using
 			End Using
@@ -1427,7 +1427,7 @@ Public Class clsGlobal
 			Dim strSplitLine As String()
 
 			Using srInfile As StreamReader = New StreamReader(New FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-				While srInfile.Peek > -1
+				While Not srInfile.EndOfStream
 					strLineIn = srInfile.ReadLine()
 
 					If Not String.IsNullOrWhiteSpace(strLineIn) AndAlso Not strLineIn.StartsWith("#"c) AndAlso strLineIn.Contains("="c) Then

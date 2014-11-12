@@ -59,7 +59,7 @@ Public Class clsCDTAUtilities
 				' Create the output file
 				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-					Do While srInFile.Peek > -1
+					Do While Not srInfile.EndOfStream
 						strLineIn = srInFile.ReadLine()
 
 						If String.IsNullOrEmpty(strLineIn) Then
@@ -252,7 +252,7 @@ Public Class clsCDTAUtilities
 				' Create the output file
 				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-					Do While srInFile.Peek > -1
+					Do While Not srInfile.EndOfStream
 						strLineIn = srInFile.ReadLine()
 
 						If String.IsNullOrEmpty(strLineIn) Then

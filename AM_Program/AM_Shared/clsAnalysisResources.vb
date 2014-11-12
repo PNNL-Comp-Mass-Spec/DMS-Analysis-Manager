@@ -271,12 +271,15 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Properties"
-	' Explanation of what happened to last operation this class performed
-	Public ReadOnly Property Message() As String Implements IAnalysisResources.Message
-		Get
-			Return m_message
-		End Get
-	End Property
+
+    Public Property MyEMSLSearchDisabled() As Boolean
+
+    ' Explanation of what happened to last operation this class performed
+    Public ReadOnly Property Message() As String Implements IAnalysisResources.Message
+        Get
+            Return m_message
+        End Get
+    End Property
 #End Region
 
 #Region "Event handlers"
@@ -1133,6 +1136,10 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
+    Protected Sub DisableMyEMSLSearch()
+        m_MyEMSLDatasetListInfo.FilesToDownload.Clear()
+        MyEMSLSearchDisabled = True
+    End Sub
 
 	''' <summary>
 	''' Test for file existence with a retry loop in case of temporary glitch
@@ -2129,7 +2136,9 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
 			End If
 
-			lstPathsToCheck.Add(MYEMSL_PATH_FLAG)	   ' \\MyEMSL
+            If Not MyEMSLSearchDisabled Then
+                lstPathsToCheck.Add(MYEMSL_PATH_FLAG)      ' \\MyEMSL
+            End If
 
 			' Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
 #If DISABLE_MYEMSL_SEARCH Then
@@ -3613,13 +3622,13 @@ Public MustInherit Class clsAnalysisResources
 						Try
 							' Read the date stored in the file
 							Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-								If srLastUsedfile.Peek > -1 Then
-									Dim strLastUseDate = srLastUsedfile.ReadLine()
-									Dim dtLastUsedActual As DateTime
-									If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
-										dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
-									End If
-								End If
+                                If Not srLastUsedfile.EndOfStream Then
+                                    Dim strLastUseDate = srLastUsedfile.ReadLine()
+                                    Dim dtLastUsedActual As DateTime
+                                    If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
+                                        dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
+                                    End If
+                                End If
 							End Using
 						Catch ex As Exception
 							' Ignore errors here
@@ -6764,7 +6773,7 @@ Public MustInherit Class clsAnalysisResources
 
 			' Open the file and confirm it has data rows
 			Using srInFile As StreamReader = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-				While srInFile.Peek > -1 And Not blnDataFound
+				While Not srInfile.EndOfStream And Not blnDataFound
 					strLineIn = srInFile.ReadLine()
 					If Not String.IsNullOrEmpty(strLineIn) Then
 						If intNumericDataColIndex < 0 Then

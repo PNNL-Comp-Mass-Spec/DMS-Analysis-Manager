@@ -1890,42 +1890,42 @@ Public Class clsAnalysisToolRunnerBase
 
 			srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-			Do While srInFile.Peek > -1
-				strLineIn = srInFile.ReadLine()
+            Do While Not srInFile.EndOfStream
+                strLineIn = srInFile.ReadLine()
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					intEqualsLoc = strLineIn.IndexOf("="c)
+                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    intEqualsLoc = strLineIn.IndexOf("="c)
 
-					If intEqualsLoc > 0 Then
-						strKey = strLineIn.Substring(0, intEqualsLoc)
+                    If intEqualsLoc > 0 Then
+                        strKey = strLineIn.Substring(0, intEqualsLoc)
 
-						If intEqualsLoc < strLineIn.Length Then
-							strValue = strLineIn.Substring(intEqualsLoc + 1)
-						Else
-							strValue = String.Empty
-						End If
+                        If intEqualsLoc < strLineIn.Length Then
+                            strValue = strLineIn.Substring(intEqualsLoc + 1)
+                        Else
+                            strValue = String.Empty
+                        End If
 
-						Select Case strKey.ToLower()
-							Case "filename"
-							Case "path"
-							Case "version"
-								strVersion = String.Copy(strValue)
-								If String.IsNullOrWhiteSpace(strVersion) Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath))
-									blnSuccess = False
-								Else
-									blnSuccess = True
-								End If
-							Case "error"
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue)
-								blnSuccess = False
-							Case Else
-								' Ignore the line
-						End Select
-					End If
+                        Select Case strKey.ToLower()
+                            Case "filename"
+                            Case "path"
+                            Case "version"
+                                strVersion = String.Copy(strValue)
+                                If String.IsNullOrWhiteSpace(strVersion) Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath))
+                                    blnSuccess = False
+                                Else
+                                    blnSuccess = True
+                                End If
+                            Case "error"
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue)
+                                blnSuccess = False
+                            Case Else
+                                ' Ignore the line
+                        End Select
+                    End If
 
-				End If
-			Loop
+                End If
+            Loop
 
 			srInFile.Close()
 
@@ -2812,14 +2812,14 @@ Public Class clsAnalysisToolRunnerBase
 
 			Using srReader As StreamReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				Do While srReader.Peek > -1
-					strLineIn = srReader.ReadLine()
+                Do While Not srReader.EndOfStream
+                    strLineIn = srReader.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						blnDataFound = True
-						Exit Do
-					End If
-				Loop
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                        blnDataFound = True
+                        Exit Do
+                    End If
+                Loop
 
 			End Using
 

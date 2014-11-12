@@ -157,7 +157,7 @@ Public Class clsSplitCattedFiles
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				While srInFile.Peek > -1
+				While Not srInfile.EndOfStream
 					s = srInFile.ReadLine()
 
 					objFileSepMatch = Me.r_FileSeparator.Match(s)
@@ -186,11 +186,11 @@ Public Class clsSplitCattedFiles
 						fileCounter += 1
 						fileText.Clear()
 
-						If srInFile.Peek > -1 Then
-							s = srInFile.ReadLine()
-						Else
-							s = String.Empty
-						End If
+                        If Not srInFile.EndOfStream Then
+                            s = srInFile.ReadLine()
+                        Else
+                            s = String.Empty
+                        End If
 
 					End If
 
@@ -270,7 +270,7 @@ Public Class clsSplitCattedFiles
 		If fi.Exists Then
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-				While srInFile.Peek > -1
+				While Not srInfile.EndOfStream
 					s = srInFile.ReadLine()
 					If r.IsMatch(s) Then outFileCount += 1
 				End While
