@@ -98,12 +98,12 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         End If
 
 		'Run the cleanup routine from the base class
-		If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Error performing post analysis tasks"
             End If
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
