@@ -566,28 +566,28 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
 				' Read each line from the input file
-				Do While srLogFile.Peek > -1
-					strLineIn = srLogFile.ReadLine
+                Do While Not srLogFile.EndOfStream
+                    strLineIn = srLogFile.ReadLine
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						' Check whether line looks like:
-						'    9.  received ready messsage from p6(c0002)
+                        ' Check whether line looks like:
+                        '    9.  received ready messsage from p6(c0002)
 
-						reMatch = reReceivedReadyMsg.Match(strLineIn)
-						If Not reMatch Is Nothing AndAlso reMatch.Success Then
-							strHostName = reMatch.Groups(1).Value
+                        reMatch = reReceivedReadyMsg.Match(strLineIn)
+                        If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                            strHostName = reMatch.Groups(1).Value
 
-							mSequestNodesSpawned += 1
+                            mSequestNodesSpawned += 1
 
-						Else
-							reMatch = reSpawnedSlaveProcesses.Match(strLineIn)
-							If Not reMatch Is Nothing AndAlso reMatch.Success Then
-								blnFoundSpawned = True
-							End If
-						End If
-					End If
-				Loop
+                        Else
+                            reMatch = reSpawnedSlaveProcesses.Match(strLineIn)
+                            If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                                blnFoundSpawned = True
+                            End If
+                        End If
+                    End If
+                Loop
 
 			End Using
 
@@ -1216,15 +1216,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		Try
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(SeqLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-				While srInFile.Peek > -1
-					strLineIn = srInFile.ReadLine()
+                While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-					If strLineIn.StartsWith("Searched dta file") Then
-						intDTAsSearched += 1
-					End If
+                    If strLineIn.StartsWith("Searched dta file") Then
+                        intDTAsSearched += 1
+                    End If
 
-					sbContents.AppendLine(strLineIn)
-				End While
+                    sbContents.AppendLine(strLineIn)
+                End While
 			End Using
 
 		Catch ex As Exception
@@ -1371,26 +1371,26 @@ Public Class clsAnalysisToolRunnerSeqCluster
 			intNodeCountCurrent = 0
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strActiveNodesFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-				While srInFile.Peek > -1
-					strLineIn = srInFile.ReadLine()
+                While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-					' Check whether line looks like:
-					'    p6    c0007     6/c,f sequest27_slave
+                    ' Check whether line looks like:
+                    '    p6    c0007     6/c,f sequest27_slave
 
-					reMatch = m_ActiveNodeRegEx.Match(strLineIn)
-					If reMatch.Success Then
-						strNodeName = reMatch.Groups("node").Value
+                    reMatch = m_ActiveNodeRegEx.Match(strLineIn)
+                    If reMatch.Success Then
+                        strNodeName = reMatch.Groups("node").Value
 
-						If mSequestNodes.TryGetValue(strNodeName, dtLastFinishTime) Then
-							mSequestNodes(strNodeName) = System.DateTime.UtcNow
-						Else
-							mSequestNodes.Add(strNodeName, System.DateTime.UtcNow)
-						End If
+                        If mSequestNodes.TryGetValue(strNodeName, dtLastFinishTime) Then
+                            mSequestNodes(strNodeName) = System.DateTime.UtcNow
+                        Else
+                            mSequestNodes.Add(strNodeName, System.DateTime.UtcNow)
+                        End If
 
-						intNodeCountCurrent += 1
-					End If
+                        intNodeCountCurrent += 1
+                    End If
 
-				End While
+                End While
 			End Using
 
 			' Log the number of active nodes every 10 minutes

@@ -213,28 +213,28 @@ Public Class clsAnalysisToolRunnerSeqBase
 				swTargetFile.WriteLine()
 				swTargetFile.WriteLine(hdrLeft & cleanedFileName & hdrRight)
 
-				While srSrcFile.Peek > -1
-					strLineIn = srSrcFile.ReadLine()
-					swTargetFile.WriteLine(strLineIn)
+                While Not srSrcFile.EndOfStream
+                    strLineIn = srSrcFile.ReadLine()
+                    swTargetFile.WriteLine(strLineIn)
 
-					reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn)
-					If reMatch.Success Then
-						If Single.TryParse(reMatch.Groups("time").Value, sngOutFileSearchTimeSeconds) Then
+                    reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn)
+                    If reMatch.Success Then
+                        If Single.TryParse(reMatch.Groups("time").Value, sngOutFileSearchTimeSeconds) Then
 
-							If mRecentOutFileSearchTimes.Count >= MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK Then
-								mRecentOutFileSearchTimes.Dequeue()
-							End If
+                            If mRecentOutFileSearchTimes.Count >= MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK Then
+                                mRecentOutFileSearchTimes.Dequeue()
+                            End If
 
-							mRecentOutFileSearchTimes.Enqueue(sngOutFileSearchTimeSeconds)
-						End If
+                            mRecentOutFileSearchTimes.Enqueue(sngOutFileSearchTimeSeconds)
+                        End If
 
-						' Append the remainder of the out file (no need to continue reading line-by-line)
-						If srSrcFile.Peek > -1 Then
-							swTargetFile.Write(srSrcFile.ReadToEnd())
-						End If
+                        ' Append the remainder of the out file (no need to continue reading line-by-line)
+                        If Not srSrcFile.EndOfStream Then
+                            swTargetFile.Write(srSrcFile.ReadToEnd())
+                        End If
 
-					End If
-				End While
+                    End If
+                End While
 
 			End Using
 
@@ -363,15 +363,15 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConcatenatedTempFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-				While srInFile.Peek > -1
-					strLineIn = srInFile.ReadLine()
+                While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-					objFileSepMatch = reFileSeparator.Match(strLineIn)
+                    objFileSepMatch = reFileSeparator.Match(strLineIn)
 
-					If objFileSepMatch.Success Then
-						lstDTAsToSkip.Add(System.IO.Path.ChangeExtension(objFileSepMatch.Groups("filename").Value, "dta"))
-					End If
-				End While
+                    If objFileSepMatch.Success Then
+                        lstDTAsToSkip.Add(System.IO.Path.ChangeExtension(objFileSepMatch.Groups("filename").Value, "dta"))
+                    End If
+                End While
 
 			End Using
 
@@ -744,21 +744,21 @@ Public Class clsAnalysisToolRunnerSeqBase
 
 				Using srOutFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strOutFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
 
-					Do While srOutFile.Peek > -1
-						strLineIn = srOutFile.ReadLine()
-						If Not String.IsNullOrEmpty(strLineIn) Then
-							strLineIn = strLineIn.Trim()
-							If strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()) Then
-								strToolVersionInfo = strLineIn
+                    Do While Not srOutFile.EndOfStream
+                        strLineIn = srOutFile.ReadLine()
+                        If Not String.IsNullOrEmpty(strLineIn) Then
+                            strLineIn = strLineIn.Trim()
+                            If strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()) Then
+                                strToolVersionInfo = strLineIn
 
-								If m_DebugLevel >= 2 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest Version: " & strToolVersionInfo)
-								End If
+                                If m_DebugLevel >= 2 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest Version: " & strToolVersionInfo)
+                                End If
 
-								Exit Do
-							End If
-						End If
-					Loop
+                                Exit Do
+                            End If
+                        End If
+                    Loop
 
 				End Using
 			End If
@@ -812,14 +812,14 @@ Public Class clsAnalysisToolRunnerSeqBase
 				For Each ioFile In ioFiles
 					Using srReader As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(ioFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-						Do While srReader.Peek > -1
-							strLineIn = srReader.ReadLine
+                        Do While Not srReader.EndOfStream
+                            strLineIn = srReader.ReadLine
 
-							If Not String.IsNullOrWhiteSpace(strLineIn) Then
-								blnDataFound = True
-								Exit Do
-							End If
-						Loop
+                            If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                                blnDataFound = True
+                                Exit Do
+                            End If
+                        Loop
 					End Using
 
 					intFilesChecked += 1
@@ -952,73 +952,73 @@ Public Class clsAnalysisToolRunnerSeqBase
 			Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
 				' Read each line from the input file
-				Do While srLogFile.Peek > -1
-					strLineIn = srLogFile.ReadLine
+                Do While Not srLogFile.EndOfStream
+                    strLineIn = srLogFile.ReadLine
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						' See if the line matches one of the expected RegEx values
-						reMatch = reStartingTask.Match(strLineIn)
-						If Not reMatch Is Nothing AndAlso reMatch.Success Then
-							If Not Integer.TryParse(reMatch.Groups(1).Value, intHostCount) Then
-								strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
-								If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-							End If
+                        ' See if the line matches one of the expected RegEx values
+                        reMatch = reStartingTask.Match(strLineIn)
+                        If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                            If Not Integer.TryParse(reMatch.Groups(1).Value, intHostCount) Then
+                                strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
+                                If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                            End If
 
-						Else
-							reMatch = reWaitingForReadyMsg.Match(strLineIn)
-							If Not reMatch Is Nothing AndAlso reMatch.Success Then
-								If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountStarted) Then
-									strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
-									If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-								End If
+                        Else
+                            reMatch = reWaitingForReadyMsg.Match(strLineIn)
+                            If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                                If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountStarted) Then
+                                    strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
+                                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                End If
 
-							Else
-								reMatch = reReceivedReadyMsg.Match(strLineIn)
-								If Not reMatch Is Nothing AndAlso reMatch.Success Then
-									strHostName = reMatch.Groups(1).Value
+                            Else
+                                reMatch = reReceivedReadyMsg.Match(strLineIn)
+                                If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                                    strHostName = reMatch.Groups(1).Value
 
-									If dctHostNodeCount.TryGetValue(strHostName, intValue) Then
-										dctHostNodeCount(strHostName) = intValue + 1
-									Else
-										dctHostNodeCount.Add(strHostName, 1)
-									End If
+                                    If dctHostNodeCount.TryGetValue(strHostName, intValue) Then
+                                        dctHostNodeCount(strHostName) = intValue + 1
+                                    Else
+                                        dctHostNodeCount.Add(strHostName, 1)
+                                    End If
 
-								Else
-									reMatch = reSpawnedSlaveProcesses.Match(strLineIn)
-									If Not reMatch Is Nothing AndAlso reMatch.Success Then
-										If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountActive) Then
-											strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
-											If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-										End If
+                                Else
+                                    reMatch = reSpawnedSlaveProcesses.Match(strLineIn)
+                                    If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                                        If Not Integer.TryParse(reMatch.Groups(1).Value, intNodeCountActive) Then
+                                            strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
+                                            If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                        End If
 
-									Else
-										reMatch = reSearchedDTAFile.Match(strLineIn)
-										If Not reMatch Is Nothing AndAlso reMatch.Success Then
-											strHostName = reMatch.Groups(1).Value
+                                    Else
+                                        reMatch = reSearchedDTAFile.Match(strLineIn)
+                                        If Not reMatch Is Nothing AndAlso reMatch.Success Then
+                                            strHostName = reMatch.Groups(1).Value
 
-											If Not strHostName Is Nothing Then
-												If dctHostCounts.TryGetValue(strHostName, intValue) Then
-													dctHostCounts(strHostName) = intValue + 1
-												Else
-													dctHostCounts.Add(strHostName, 1)
-												End If
+                                            If Not strHostName Is Nothing Then
+                                                If dctHostCounts.TryGetValue(strHostName, intValue) Then
+                                                    dctHostCounts(strHostName) = intValue + 1
+                                                Else
+                                                    dctHostCounts.Add(strHostName, 1)
+                                                End If
 
-												intDTACount += 1
-											End If
-										Else
-											' Ignore this line
-										End If
-									End If
-								End If
-							End If
-						End If
+                                                intDTACount += 1
+                                            End If
+                                        Else
+                                            ' Ignore this line
+                                        End If
+                                    End If
+                                End If
+                            End If
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 

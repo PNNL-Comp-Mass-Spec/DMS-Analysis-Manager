@@ -65,7 +65,6 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim blnNeedToArchiveFile As Boolean
 		Dim strTargetFilePath As String
-		Dim strLineIgnoreRegExList() As String
 
 		Dim strNewNameBase As String
 		Dim strNewName As String
@@ -75,8 +74,8 @@ Public Class clsAnalysisResourcesSeq
 
 		Dim fiArchivedFile As FileInfo
 
-		ReDim strLineIgnoreRegExList(0)
-		strLineIgnoreRegExList(0) = "mass_type_parent *=.*"
+        Dim lstLineIgnoreRegExSpecs = New List(Of Regex)
+        lstLineIgnoreRegExSpecs.Add(New Regex("mass_type_parent *=.*"))
 
 		blnNeedToArchiveFile = False
 
@@ -93,201 +92,188 @@ Public Class clsAnalysisResourcesSeq
 			' Read the files line-by-line and compare
 			' Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
-			If Not TextFilesMatch(strSrcFilePath, strTargetFilePath, 4, 0, True, strLineIgnoreRegExList) Then
+            Const ignoreWhitespace = True
 
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " & strTargetFilePath)
-				End If
+            If Not clsGlobal.TextFilesMatch(strSrcFilePath, strTargetFilePath, 4, 0, ignoreWhitespace, lstLineIgnoreRegExSpecs) Then
 
-				' Files don't match; rename the old file
-				fiArchivedFile = New FileInfo(strTargetFilePath)
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " & strTargetFilePath)
+                    End If
 
-				strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
-				strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
+                    ' Files don't match; rename the old file
+                    fiArchivedFile = New FileInfo(strTargetFilePath)
 
-				' See if the renamed file exists; if it does, we'll have to tweak the name
-				intRevisionNumber = 1
-				Do
-					strNewPath = Path.Combine(strTargetFolderPath, strNewName)
-					If Not File.Exists(strNewPath) Then
-						Exit Do
-					End If
+                    strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
+                    strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
 
-					intRevisionNumber += 1
-					strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
-				Loop
+                    ' See if the renamed file exists; if it does, we'll have to tweak the name
+                    intRevisionNumber = 1
+                    Do
+                        strNewPath = Path.Combine(strTargetFolderPath, strNewName)
+                        If Not File.Exists(strNewPath) Then
+                            Exit Do
+                        End If
 
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & strTargetFilePath & " to " & strNewPath)
-				End If
+                        intRevisionNumber += 1
+                        strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
+                    Loop
 
-				fiArchivedFile.MoveTo(strNewPath)
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & strTargetFilePath & " to " & strNewPath)
+                    End If
 
-				blnNeedToArchiveFile = True
-			End If
-		End If
+                    fiArchivedFile.MoveTo(strNewPath)
 
-		If blnNeedToArchiveFile Then
-			' Copy the new parameter file to the archive
+                    blnNeedToArchiveFile = True
+                End If
+            End If
 
-			If m_DebugLevel >= 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strSrcFilePath & " to " & strTargetFilePath)
-			End If
+            If blnNeedToArchiveFile Then
+                ' Copy the new parameter file to the archive
 
-			File.Copy(strSrcFilePath, strTargetFilePath, True)
-		End If
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strSrcFilePath & " to " & strTargetFilePath)
+                End If
 
-	End Sub
+                File.Copy(strSrcFilePath, strTargetFilePath, True)
+            End If
+
+    End Sub
 
 	''' <summary>
 	''' Look for file _out.txt.tmp in the transfer folder
-	''' If present, also looks for the JobParameters.xml file and the sequest param file
+    ''' Retrieves the file if it was found and if both JobParameters.xml file and the sequest param file match the 
+    ''' JobParameters.xml and sequest param file in the local working directory
 	''' </summary>
-	''' <returns>True if file is found and the folder also has a parameter file and settings file that corresponds to the ones in the local DMS_Work folder</returns>
+    ''' <returns>
+    ''' CLOSEOUT_SUCCESS if an existing file was found and copied, 
+    ''' CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and 
+    ''' CLOSEOUT_FAILURE if an error
+    ''' </returns>
 	Protected Function CheckForExistingConcatenatedOutFile() As IJobParams.CloseOutType
-
-		Dim strTransferFolderPath As String
-		Dim strConcatenatedTempFilePath As String
-
-		Dim strJob As String
-
-		Dim strFileNameToCompare As String
-		Dim strRemoteFilePath As String
-		Dim strLocalFilePath As String
-		Dim blnFilesMatch As Boolean
-
-		Dim ioSourceFolder As DirectoryInfo
-		Dim ioFileList() As FileInfo
-		Dim ioTempOutFile As FileInfo
-
-		Dim blnExistingOutfileFound As Boolean
 
 		Try
 
-			strJob = m_jobParams.GetParam("Job")
-			strTransferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
+            Dim strJob = m_jobParams.GetParam("Job")
+            Dim transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
 
-			If String.IsNullOrWhiteSpace(strTransferFolderPath) Then
-				' Transfer folder path is not defined
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
-				Exit Try
-			Else
-				strTransferFolderPath = Path.Combine(strTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
-				strTransferFolderPath = Path.Combine(strTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
-			End If
+            If String.IsNullOrWhiteSpace(transferFolderPath) Then
+                ' Transfer folder path is not defined
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
+                Exit Try
+            Else
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
+            End If
 
-			If m_DebugLevel >= 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking for " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file at " & strTransferFolderPath)
-			End If
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking for " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file at " & transferFolderPath)
+            End If
 
-			ioSourceFolder = New DirectoryInfo(strTransferFolderPath)
+            Dim diSourceFolder = New DirectoryInfo(transferFolderPath)
 
-			If Not ioSourceFolder.Exists Then
-				' Transfer folder not found; return false
-				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & ioSourceFolder.FullName)
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
+            If Not diSourceFolder.Exists Then
+                ' Transfer folder not found; return false
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & diSourceFolder.FullName)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
-			strConcatenatedTempFilePath = Path.Combine(ioSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
+            Dim concatenatedTempFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
 
-			ioTempOutFile = New FileInfo(strConcatenatedTempFilePath)
-			If Not ioTempOutFile.Exists Then
-				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file not found")
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
+            Dim fiTempOutFile = New FileInfo(concatenatedTempFilePath)
+            If Not fiTempOutFile.Exists Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file not found")
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & " (file size = " & (ioTempOutFile.Length / 1024.0).ToString("#,##0") & " KB); comparing JobParameters.xml file and Sequest parameter file to local copies")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file found for job " & strJob & " (file size = " & (fiTempOutFile.Length / 1024.0).ToString("#,##0") & " KB); comparing JobParameters.xml file and Sequest parameter file to local copies")
 			End If
 
 			' Compare the remote and local copies of the JobParameters file
-			strFileNameToCompare = "JobParameters_" & strJob & ".xml"
-			strRemoteFilePath = Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
-			strLocalFilePath = Path.Combine(m_WorkingDir, strFileNameToCompare)
+            Dim fileNameToCompare = "JobParameters_" & strJob & ".xml"
+            Dim remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare & ".tmp")
+            Dim localFilePath = Path.Combine(m_WorkingDir, fileNameToCompare)
 
-			blnFilesMatch = CompareRemoteAndLocalFilesForResume(strRemoteFilePath, strLocalFilePath, "JobParameters")
-			If Not blnFilesMatch Then
-				' Files don't match; do not resume
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
+            Dim filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "JobParameters")
+            If Not filesMatch Then
+                ' Files don't match; do not resume
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
 			' Compare the remote and local copies of the Sequest Parameter file
-			strFileNameToCompare = m_jobParams.GetParam("ParmFileName")
-			strRemoteFilePath = Path.Combine(ioSourceFolder.FullName, strFileNameToCompare & ".tmp")
-			strLocalFilePath = Path.Combine(m_WorkingDir, strFileNameToCompare)
+            fileNameToCompare = m_jobParams.GetParam("ParmFileName")
+            remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare & ".tmp")
+            localFilePath = Path.Combine(m_WorkingDir, fileNameToCompare)
 
-			blnFilesMatch = CompareRemoteAndLocalFilesForResume(strRemoteFilePath, strLocalFilePath, "Sequest Parameter")
-			If Not blnFilesMatch Then
-				' Files don't match; do not resume
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
+            filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Sequest Parameter")
+            If Not filesMatch Then
+                ' Files don't match; do not resume
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
-			' Everything matches up; copy ioTempOutFile locally
+            ' Everything matches up; copy fiTempOutFile locally
 			Try
-				ioTempOutFile.CopyTo(Path.Combine(m_WorkingDir, ioTempOutFile.Name), True)
+                fiTempOutFile.CopyTo(Path.Combine(m_WorkingDir, fiTempOutFile.Name), True)
 
 				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & ioTempOutFile.Name & " locally; will resume Sequest analysis")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & fiTempOutFile.Name & " locally; will resume Sequest analysis")
 				End If
 
 				' If the job succeeds, we should delete the _out.txt.tmp file from the transfer folder
 				' Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-				m_jobParams.AddServerFileToDelete(ioTempOutFile.FullName)
+                m_jobParams.AddServerFileToDelete(fiTempOutFile.FullName)
 
 			Catch ex As Exception
 				' Error copying the file; treat this as a failed job
 				m_message = " Exception copying " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file locally"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & ioTempOutFile.FullName & " locally; unable to resume")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & fiTempOutFile.FullName & " locally; unable to resume: " & ex.Message)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Try
 
 			' Look for a sequest.log.tmp file
-			ioFileList = ioSourceFolder.GetFiles("sequest.log.tmp")
-			If ioFileList.Length > 0 Then
-				Dim strExistingSeqLogFileRenamed As String
+            Dim lstLogFiles = diSourceFolder.GetFiles("sequest.log.tmp").ToList()
 
-				With ioFileList(0)
-					' Copy the sequest.log.tmp file to the work directory, but rename it to include a time stamp
-					strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(.Name)
-					strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(strExistingSeqLogFileRenamed)
-					strExistingSeqLogFileRenamed &= "_" & .LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
-				End With
+            If lstLogFiles.Count > 0 Then
+                Dim strExistingSeqLogFileRenamed As String
+                Dim fiFirstLogFile = lstLogFiles.First()
 
-				Try
-					strLocalFilePath = Path.Combine(m_WorkingDir, strExistingSeqLogFileRenamed)
-					ioFileList(0).CopyTo(strLocalFilePath, True)
+                With fiFirstLogFile
+                    ' Copy the sequest.log.tmp file to the work directory, but rename it to include a time stamp
+                    strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(.Name)
+                    strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(strExistingSeqLogFileRenamed)
+                    strExistingSeqLogFileRenamed &= "_" & .LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
+                End With
 
-					If m_DebugLevel >= 3 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & Path.GetFileName(ioFileList(0).Name) & " locally, renaming to " & strExistingSeqLogFileRenamed)
-					End If
+                Try
+                    localFilePath = Path.Combine(m_WorkingDir, strExistingSeqLogFileRenamed)
+                    fiFirstLogFile.CopyTo(localFilePath, True)
 
-					m_jobParams.AddServerFileToDelete(ioFileList(0).FullName)
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & Path.GetFileName(fiFirstLogFile.Name) & " locally, renaming to " & strExistingSeqLogFileRenamed)
+                    End If
 
-					' Copy the new file back to the transfer folder (necessary in case this job fails)
-					File.Copy(strLocalFilePath, Path.Combine(strTransferFolderPath, strExistingSeqLogFileRenamed))
+                    m_jobParams.AddServerFileToDelete(fiFirstLogFile.FullName)
 
-				Catch ex As Exception
-					' Ignore errors here
-				End Try
-			End If
+                    ' Copy the new file back to the transfer folder (necessary in case this job fails)
+                    File.Copy(localFilePath, Path.Combine(transferFolderPath, strExistingSeqLogFileRenamed))
 
-			blnExistingOutfileFound = True
+                Catch ex As Exception
+                    ' Ignore errors here
+                End Try
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 		Catch ex As Exception
 			m_message = "Error in CheckForExistingConcatenatedOutFile"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingConcatenatedOutFile: " & ex.Message)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
-
-		If blnExistingOutfileFound Then
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
 
 	End Function
 
@@ -307,211 +293,16 @@ Public Class clsAnalysisResourcesSeq
 			Return False
 		End If
 
-		If TextFilesMatch(strRemoteFilePath, strLocalFilePath, 0, 0, True) Then
-			' If the job succeeds, we should delete this file from the transfer folder
-			' Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-			m_jobParams.AddServerFileToDelete(strRemoteFilePath)
-			Return True
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & strFileDescription & " file at " & strRemoteFilePath & " doesn't match local file; unable to resume")
-			Return False
-		End If
+        Const ignoreWhitespace = True
 
-	End Function
+        If clsGlobal.TextFilesMatch(strRemoteFilePath, strLocalFilePath, 0, 0, ignoreWhitespace) Then
+            Return True
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & strFileDescription & " file at " & strRemoteFilePath & " doesn't match local file; unable to resume")
+            Return False
+        End If
 
-	''' <summary>
-	''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-	''' </summary>
-	''' <param name="strFile1">First file</param>
-	''' <param name="strFile2">Second file</param>
-	''' <param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	''' <param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	''' <param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-		ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-		ByVal blnIgnoreWhitespace As Boolean) As Boolean
-
-		Return TextFilesMatch(strFile1, strFile2, intComparisonStartLine, intComparisonEndLine, blnIgnoreWhitespace, Nothing)
-
-	End Function
-
-	''' <summary>
-	''' Compares two files line-by-line.  If intComparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-	''' </summary>
-	''' <param name="strFile1">First file</param>
-	''' <param name="strFile2">Second file</param>
-	''' <param name="intComparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-	''' <param name="intComparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-	''' <param name="blnIgnoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-	''' <param name="strLineIgnoreRegExList">List of RegEx match specs that indicate lines to ignore</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function TextFilesMatch(ByVal strFile1 As String, ByVal strFile2 As String, _
-		ByVal intComparisonStartLine As Integer, ByVal intComparisonEndLine As Integer, _
-		ByVal blnIgnoreWhitespace As Boolean, _
-		ByRef strLineIgnoreRegExList() As String) As Boolean
-
-		Dim strLineIn1 As String
-		Dim strLineIn2 As String
-
-		Dim intIndex As Integer
-
-		Dim chWhiteSpaceChars() As Char
-		Dim blnFilesMatch As Boolean
-		Dim intLineNumber As Integer = 0
-
-		Dim intLineIgnoreListCount As Integer
-		Dim reLineIgnoreList() As Text.RegularExpressions.Regex
-
-		ReDim chWhiteSpaceChars(1)
-		chWhiteSpaceChars(0) = ControlChars.Tab
-		chWhiteSpaceChars(1) = " "c
-
-		blnFilesMatch = True
-
-		Try
-			intLineIgnoreListCount = 0
-			If Not strLineIgnoreRegExList Is Nothing AndAlso strLineIgnoreRegExList.Length > 0 Then
-				ReDim reLineIgnoreList(strLineIgnoreRegExList.Length - 1)
-
-				For intIndex = 0 To strLineIgnoreRegExList.Length - 1
-					If Not strLineIgnoreRegExList(intIndex) Is Nothing AndAlso strLineIgnoreRegExList(intIndex).Length > 0 Then
-						reLineIgnoreList(intLineIgnoreListCount) = New Regex(strLineIgnoreRegExList(intIndex), RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-						intLineIgnoreListCount += 1
-					End If
-				Next
-			Else
-				ReDim reLineIgnoreList(0)
-			End If
-
-			Using srFile1 As StreamReader = New StreamReader(New FileStream(strFile1, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-				Using srFile2 As StreamReader = New StreamReader(New FileStream(strFile2, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-
-					Do While srFile1.Peek > -1
-						strLineIn1 = srFile1.ReadLine
-						intLineNumber += 1
-
-						If intComparisonEndLine > 0 AndAlso intLineNumber > intComparisonEndLine Then
-							' No need to compare further; files match up to this point
-							Exit Do
-						End If
-
-						If srFile2.Peek > -1 Then
-							strLineIn2 = srFile2.ReadLine
-
-							If intLineNumber >= intComparisonStartLine Then
-								If blnIgnoreWhitespace Then
-									strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-									strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-								End If
-
-								If strLineIn1 <> strLineIn2 Then
-									' Lines don't match; are we ignoring both of them?
-									If TextFilesMatchIgnoreLine(strLineIn1, intLineIgnoreListCount, reLineIgnoreList) AndAlso _
-									   TextFilesMatchIgnoreLine(strLineIn2, intLineIgnoreListCount, reLineIgnoreList) Then
-										' Ignoring both lines
-									Else
-										blnFilesMatch = False
-										Exit Do
-									End If
-								End If
-							End If
-
-						Else
-							' File1 has more lines than file2
-							If blnIgnoreWhitespace Then
-								' Ignoring whitespace
-								' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
-								' See if the remaining lines are blank
-								Do
-									If strLineIn1.Length <> 0 Then
-										If Not TextFilesMatchIgnoreLine(strLineIn1, intLineIgnoreListCount, reLineIgnoreList) Then
-											blnFilesMatch = False
-											Exit Do
-										End If
-									End If
-
-									If srFile1.Peek > -1 Then
-										strLineIn1 = srFile1.ReadLine
-										strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-									Else
-										Exit Do
-									End If
-								Loop
-
-							Else
-								' Not ignoring whitespace; files don't match
-								blnFilesMatch = False
-							End If
-
-							Exit Do
-						End If
-					Loop
-
-					If srFile2.Peek > -1 Then
-						' File2 has more lines than file1
-						If blnIgnoreWhitespace Then
-							' Ignoring whitespace
-							' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
-							' See if the remaining lines are blank
-							Do
-								strLineIn2 = srFile2.ReadLine
-								strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-
-								If strLineIn2.Length <> 0 Then
-									If Not TextFilesMatchIgnoreLine(strLineIn2, intLineIgnoreListCount, reLineIgnoreList) Then
-										blnFilesMatch = False
-										Exit Do
-									End If
-								End If
-							Loop While srFile2.Peek > -1
-
-						Else
-							' Not ignoring whitespace; files don't match
-							blnFilesMatch = False
-						End If
-					End If
-
-
-				End Using
-
-			End Using
-
-
-		Catch ex As Exception
-			' Error occurred
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error in TextFilesMatch" & ex.Message)
-			blnFilesMatch = False
-		End Try
-
-		Return blnFilesMatch
-
-	End Function
-
-	Protected Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal intLineIgnoreListCount As Integer, ByRef reLineIgnoreList() As Regex) As Boolean
-
-		Dim intIndex As Integer
-		Dim blnIgnoreLine As Boolean = False
-
-		If Not reLineIgnoreList Is Nothing Then
-			For intIndex = 0 To intLineIgnoreListCount - 1
-				If Not reLineIgnoreList(intIndex) Is Nothing Then
-					If reLineIgnoreList(intIndex).Match(strText).Success Then
-						' Line matches; ignore it
-						blnIgnoreLine = True
-						Exit For
-					End If
-				End If
-			Next
-		End If
-
-		Return blnIgnoreLine
-
-	End Function
+    End Function
 
 	''' <summary>
 	''' Retrieves files necessary for performance of Sequest analysis
@@ -712,23 +503,23 @@ Public Class clsAnalysisResourcesSeq
 		Try
 			Using srHostFile As StreamReader = New StreamReader(New FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srHostFile.Peek > -1
-					'Read the line from the file and check to see if it contains a node IP address. 
-					' If it does, add the IP address to the collection of addresses
-					InpLine = srHostFile.ReadLine
+                Do While Not srHostFile.EndOfStream
+                    'Read the line from the file and check to see if it contains a node IP address. 
+                    ' If it does, add the IP address to the collection of addresses
+                    InpLine = srHostFile.ReadLine
 
-					'Verify the line isn't a comment line
-					If Not String.IsNullOrWhiteSpace(InpLine) AndAlso Not InpLine.Contains("#") Then
-						'Parse the node name and add it to the collection
-						LineFields = InpLine.Split(Separators, StringSplitOptions.RemoveEmptyEntries)
-						If LineFields.Length >= 1 Then
-							If Not lstNodes.Contains(LineFields(0)) Then
-								lstNodes.Add(LineFields(0))
-							End If
-						End If
-					End If
+                    'Verify the line isn't a comment line
+                    If Not String.IsNullOrWhiteSpace(InpLine) AndAlso Not InpLine.Contains("#") Then
+                        'Parse the node name and add it to the collection
+                        LineFields = InpLine.Split(Separators, StringSplitOptions.RemoveEmptyEntries)
+                        If LineFields.Length >= 1 Then
+                            If Not lstNodes.Contains(LineFields(0)) Then
+                                lstNodes.Add(LineFields(0))
+                            End If
+                        End If
+                    End If
 
-				Loop
+                Loop
 
 			End Using
 
