@@ -57,16 +57,37 @@ Public Class clsAnalysisResourcesIDPicker
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		End If
 
-		If Not blnMGFInstrumentData Then
-			' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
-			If eRawDataType = eRawDataTypeConstants.ThermoRawFile Or eRawDataType = eRawDataTypeConstants.UIMF Then
-				If Not RetrieveMASICFiles(m_DatasetName) Then
-					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-				End If
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Not retrieving MASIC files since unsupported data type: " & RawDataType)
-			End If
-		End If
+        If Not blnMGFInstrumentData Then
+          
+                ' Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+            If eRawDataType = eRawDataTypeConstants.ThermoRawFile Or eRawDataType = eRawDataTypeConstants.UIMF Then
+                Dim retrievalAttempts = 0
+
+                While retrievalAttempts < 2
+
+                    retrievalAttempts += 1
+                    If Not RetrieveMASICFiles(m_DatasetName) Then
+                        Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    End If
+
+                    If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
+                        Exit While
+                    Else
+                        If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                            Exit While
+                        Else
+                            ' Look for the MASIC files on the Samba share
+                            MyBase.DisableMyEMSLSearch()
+                        End If
+                    End If
+
+                End While
+
+            Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Not retrieving MASIC files since unsupported data type: " & RawDataType)
+            End If
+
+        End If
 
 		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -79,7 +100,7 @@ Public Class clsAnalysisResourcesIDPicker
 			m_jobParams.SetParam("SplitFasta", "False")
 		End If
 
-		'Retrieve the Fasta file
+        ' Retrieve the Fasta file
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		If blnSplitFasta Then

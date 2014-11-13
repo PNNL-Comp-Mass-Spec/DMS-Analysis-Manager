@@ -157,6 +157,7 @@ Public MustInherit Class clsMSXmlGen
         With CmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
+
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
@@ -167,6 +168,22 @@ Public MustInherit Class clsMSXmlGen
 
         Dim dtStartTime = DateTime.UtcNow()
         blnSuccess = CmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode, MAX_RUNTIME_SECONDS)
+
+        If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
+            ' Append the console errors to the log file
+            Using swConsoleOutputFile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                swConsoleOutputFile.WriteLine()
+                swConsoleOutputFile.WriteLine(CmdRunner.CachedConsoleErrors)
+            End Using
+
+            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
+            If String.IsNullOrWhiteSpace(mErrorMessage) Then
+                mErrorMessage = consoleError
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
+            End If
+            blnSuccess = False
+        End If
 
         If Not blnSuccess Then
             If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS Then
@@ -182,7 +199,7 @@ Public MustInherit Class clsMSXmlGen
                 End If
             End If
         Else
-            ' Make sure the output file was created and is non-zero
+            ' Make sure the output file was created and is not empty
             Dim outputFilePath As String
             outputFilePath = Path.ChangeExtension(mSourceFilePath, msXmlFormat)
 
@@ -272,7 +289,7 @@ Public MustInherit Class clsMSXmlGen
             End If
 
             Using srMsXmlfile = New StreamReader(New FileStream(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While srMsXmlfile.Peek() > -1
+                While Not srMsXmlfile.EndOfStream
                     Dim dataLine = srMsXmlfile.ReadLine()
                     If Not String.IsNullOrWhiteSpace(dataLine) Then
                         mostRecentLine = dataLine
@@ -281,19 +298,30 @@ Public MustInherit Class clsMSXmlGen
             End Using
 
             mostRecentLine = mostRecentLine.Trim()
+            If mostRecentLine.Length > 250 Then
+                mostRecentLine = mostRecentLine.Substring(0, 250)
+            End If
 
             Select Case eOutputType
                 Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
                     If mostRecentLine <> "</mzXML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </mzXML>"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzXML file is corrupt; final line is: " & mostRecentLine.Substring(0, 250))
+                        If String.IsNullOrWhiteSpace(mostRecentLine) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzXML file is corrupt; file is empty or only contains whitespace")
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzXML file is corrupt; final line is: " & mostRecentLine)
+                        End If
                         Return False
                     End If
 
                 Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
                     If mostRecentLine <> "</indexedmzML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </indexedmzML>"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzML file is corrupt; final line is: " & mostRecentLine.Substring(0, 250))
+                        If String.IsNullOrWhiteSpace(mostRecentLine) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzML file is corrupt; file is empty or only contains whitespace")
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzML file is corrupt; final line is: " & mostRecentLine)
+                        End If
                         Return False
                     End If
 

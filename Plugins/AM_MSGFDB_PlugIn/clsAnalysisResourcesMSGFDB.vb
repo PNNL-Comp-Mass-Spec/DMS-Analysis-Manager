@@ -324,72 +324,72 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-			If srScanStatsFile.Peek > -1 Then
-				' Parse the scan headers
+            If Not srScanStatsFile.EndOfStream Then
+                ' Parse the scan headers
 
-				Dim lstColumns As List(Of String)
-				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+                Dim lstColumns As List(Of String)
+                lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
-				For Each columnName In lstColumnNameWithScanType
-					Dim intScanTypeIndex = lstColumns.IndexOf(columnName)
-					If intScanTypeIndex >= 0 Then
-						lstColumnIndicesToCheck.Add(intScanTypeIndex)
-					End If
-				Next
+                For Each columnName In lstColumnNameWithScanType
+                    Dim intScanTypeIndex = lstColumns.IndexOf(columnName)
+                    If intScanTypeIndex >= 0 Then
+                        lstColumnIndicesToCheck.Add(intScanTypeIndex)
+                    End If
+                Next
 
-				If lstColumnIndicesToCheck.Count = 0 Then
-					Dim sngValue As Single
-					If Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
-						' This file does not have a header line
-						If lstColumns.Count >= 11 Then
-							' Check whether column 11 has ScanTypeName info
-							If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-								Return True
-							End If
-						End If
+                If lstColumnIndicesToCheck.Count = 0 Then
+                    Dim sngValue As Single
+                    If Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
+                        ' This file does not have a header line
+                        If lstColumns.Count >= 11 Then
+                            ' Check whether column 11 has ScanTypeName info
+                            If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                                Return True
+                            End If
+                        End If
 
-						If lstColumns.Count >= 16 Then
-							' Check whether column 15 has "Collision Mode" values
-							If lstColumns(15).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(15).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(15).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-								Return True
-							End If
-						End If
+                        If lstColumns.Count >= 16 Then
+                            ' Check whether column 15 has "Collision Mode" values
+                            If lstColumns(15).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(15).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(15).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                                Return True
+                            End If
+                        End If
 
-						If lstColumns.Count >= 17 Then
-							' Check whether column 15 has "Collision Mode" values
-							If lstColumns(16).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(16).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-							   lstColumns(16).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-								Return True
-							End If
-						End If
+                        If lstColumns.Count >= 17 Then
+                            ' Check whether column 15 has "Collision Mode" values
+                            If lstColumns(16).IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(16).IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                               lstColumns(16).IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                                Return True
+                            End If
+                        End If
 
-					End If
-				End If
-			End If
+                    End If
+                End If
+            End If
 
 			If lstColumnIndicesToCheck.Count > 0 Then
-				Do While srScanStatsFile.Peek > -1 And Not blnDetailedScanTypesDefined
-					Dim lstColumns As List(Of String)
-					lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+                Do While Not srScanStatsFile.EndOfStream AndAlso Not blnDetailedScanTypesDefined
+                    Dim lstColumns As List(Of String)
+                    lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
-					For Each columnIndex In lstColumnIndicesToCheck
-						Dim strScanType = lstColumns(columnIndex)
+                    For Each columnIndex In lstColumnIndicesToCheck
+                        Dim strScanType = lstColumns(columnIndex)
 
-						If strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-							blnDetailedScanTypesDefined = True
-						ElseIf strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-							blnDetailedScanTypesDefined = True
-						ElseIf strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-							blnDetailedScanTypesDefined = True
-						End If
-					Next
+                        If strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                            blnDetailedScanTypesDefined = True
+                        ElseIf strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                            blnDetailedScanTypesDefined = True
+                        ElseIf strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                            blnDetailedScanTypesDefined = True
+                        End If
+                    Next
 
-				Loop
+                Loop
 			End If
 
 		End Using
@@ -404,27 +404,27 @@ Public Class clsAnalysisResourcesMSGFDB
 
 		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-			If srScanStatsFile.Peek > -1 Then
-				' Parse the scan headers to look for ScanTypeName
+            If Not srScanStatsFile.EndOfStream Then
+                ' Parse the scan headers to look for ScanTypeName
 
-				Dim lstColumns As List(Of String)
-				Dim sngValue As Single
-				lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
+                Dim lstColumns As List(Of String)
+                Dim sngValue As Single
+                lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
 
-				If lstColumns.Contains("ScanTypeName") Then
-					blnScanTypeColumnFound = True
-				ElseIf Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
-					' This file does not have a header line
-					If lstColumns.Count >= 11 Then
-						' Assume column 11 is the ScanTypeName column
-						If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-						 lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
-						 lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
-							blnScanTypeColumnFound = True
-						End If
-					End If
-				End If
-			End If
+                If lstColumns.Contains("ScanTypeName") Then
+                    blnScanTypeColumnFound = True
+                ElseIf Single.TryParse(lstColumns(0), sngValue) OrElse Single.TryParse(lstColumns(1), sngValue) Then
+                    ' This file does not have a header line
+                    If lstColumns.Count >= 11 Then
+                        ' Assume column 11 is the ScanTypeName column
+                        If lstColumns(10).IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                         lstColumns(10).IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 OrElse
+                         lstColumns(10).IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0 Then
+                            blnScanTypeColumnFound = True
+                        End If
+                    End If
+                End If
+            End If
 
 		End Using
 

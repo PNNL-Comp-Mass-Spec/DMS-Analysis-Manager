@@ -106,16 +106,16 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 
 			Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srSourceFile.Peek > -1
-					Dim strLineIn = srSourceFile.ReadLine()
+                Do While Not srSourceFile.EndOfStream
+                    Dim strLineIn = srSourceFile.ReadLine()
 
-					If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-					strLineIn = strLineIn.Trim()
+                    strLineIn = strLineIn.Trim()
 
-					Dim massError As Double
+                    Dim massError As Double
 
-					If strLineIn.StartsWith(MASS_ERROR_PPM) Then
+                    If strLineIn.StartsWith(MASS_ERROR_PPM) Then
                         Dim dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim()
                         massError = 0
 
@@ -129,8 +129,8 @@ Public Class clsMzRefineryMassErrorStatsExtractor
                             udtMassErrorInfo.MassErrorPPMRefined = massError
                         End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 

@@ -199,7 +199,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             If m_UnableToUseMzRefinery Then
                 Using swMessageFile = New StreamWriter(New FileStream(Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"), FileMode.Create, FileAccess.Write, FileShare.Read))
                     swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " & m_JobNum & ".")
-                    swMessageFile.WriteLine("The files here can be used to investigate the MzRefinery failure.")
+                    swMessageFile.WriteLine("The files can be used to investigate the MzRefinery failure.")
                     swMessageFile.WriteLine("The folder can be safely deleted.")
                 End Using
             End If
@@ -588,7 +588,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Try
             Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek > -1
+                Do While Not srParamFile.EndOfStream
                     Dim strLineIn = srParamFile.ReadLine()
 
                     Dim kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
@@ -798,7 +798,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     Dim strDataLine = srInFile.ReadLine()
 
                     If Not String.IsNullOrWhiteSpace(strDataLine) Then
@@ -1059,7 +1059,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
             If mConsoleOutputErrorMsg.Contains("No high-resolution data in input file") Then
                 m_message = "No high-resolution data in input file; cannot use MzRefinery on this dataset"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                blnSuccess = False
+                m_UnableToUseMzRefinery = True
+            ElseIf mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found") Then
+                m_message = "Signficant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                m_UnableToUseMzRefinery = True
             End If
         End If
 
@@ -1070,8 +1074,10 @@ Public Class clsAnalysisToolRunnerMzRefinery
             Msg = "Error running MSConvert/MzRefinery"
 
             If m_UnableToUseMzRefinery Then
-                m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                End If
             Else
                 m_message = Msg
             End If

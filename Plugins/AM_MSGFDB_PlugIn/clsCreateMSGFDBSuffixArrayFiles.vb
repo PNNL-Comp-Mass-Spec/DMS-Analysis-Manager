@@ -97,21 +97,21 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				Dim strLineIn As String
 				Dim lstData As List(Of String)
 
-				Do While srInFile.Peek > 0
-					strLineIn = srInFile.ReadLine()
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-					lstData = strLineIn.Split(ControlChars.Tab).ToList()
+                    lstData = strLineIn.Split(ControlChars.Tab).ToList()
 
-					If lstData.Count >= 3 Then
-						' Add this file to the list of files to copy
-						Dim intFileSizeBytes As Int64
-						If Int64.TryParse(lstData(1), intFileSizeBytes) Then
-							dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
-							fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
-						End If
+                    If lstData.Count >= 3 Then
+                        ' Add this file to the list of files to copy
+                        Dim intFileSizeBytes As Int64
+                        If Int64.TryParse(lstData(1), intFileSizeBytes) Then
+                            dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
+                            fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 
@@ -449,27 +449,27 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 						strCurrentTask = "Examining first two lines of " & fiCAnnoFile.FullName
 						Using srCannoFile As StreamReader = New StreamReader(New FileStream(fiCAnnoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-							If srCannoFile.Peek > -1 Then
-								Dim strLine1 As String
-								Dim strLine2 As String
-								Dim intLine1Value As Integer
+                            If Not srCannoFile.EndOfStream Then
+                                Dim strLine1 As String
+                                Dim strLine2 As String
+                                Dim intLine1Value As Integer
 
-								strLine1 = srCannoFile.ReadLine()
+                                strLine1 = srCannoFile.ReadLine()
 
-								If srCannoFile.Peek > -1 Then
-									strLine2 = srCannoFile.ReadLine()
+                                If Not srCannoFile.EndOfStream Then
+                                    strLine2 = srCannoFile.ReadLine()
 
-									If Integer.TryParse(strLine1, intLine1Value) Then
-										If Char.IsLetter(strLine2.Chars(0)) Then
-											strCurrentTask = "Legacy MSGFDB indexed file found (" & fiCAnnoFile.Name & "); re-indexing"
-											If intDebugLevel >= 1 Then
-												clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strCurrentTask)
-											End If
-											blnReindexingRequired = True
-										End If
-									End If
-								End If
-							End If
+                                    If Integer.TryParse(strLine1, intLine1Value) Then
+                                        If Char.IsLetter(strLine2.Chars(0)) Then
+                                            strCurrentTask = "Legacy MSGFDB indexed file found (" & fiCAnnoFile.Name & "); re-indexing"
+                                            If intDebugLevel >= 1 Then
+                                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strCurrentTask)
+                                            End If
+                                            blnReindexingRequired = True
+                                        End If
+                                    End If
+                                End If
+                            End If
 						End Using
 					End If
 

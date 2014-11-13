@@ -367,47 +367,47 @@ Public Class clsGlobal
 		' Populate strFunctions() with the function name of each line
 		Using trTextReader As StringReader = New StringReader(objException.StackTrace)
 
-			Do While trTextReader.Peek > -1
-				strLine = trTextReader.ReadLine()
+            Do While trTextReader.Peek > -1
+                strLine = trTextReader.ReadLine()
 
-				If Not String.IsNullOrEmpty(strLine) Then
-					strCurrentFunction = String.Empty
+                If Not String.IsNullOrEmpty(strLine) Then
+                    strCurrentFunction = String.Empty
 
-					objMatch = reFunctionName.Match(strLine)
-					If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-						strCurrentFunction = objMatch.Groups(1).Value
-					Else
-						' Look for the word " in "
-						intIndex = strLine.ToLower().IndexOf(" in ", StringComparison.Ordinal)
-						If intIndex = 0 Then
-							' " in" not found; look for the first space after startIndex 4
-							intIndex = strLine.IndexOf(" ", 4, StringComparison.Ordinal)
-						End If
-						If intIndex = 0 Then
-							' Space not found; use the entire string
-							intIndex = strLine.Length - 1
-						End If
+                    objMatch = reFunctionName.Match(strLine)
+                    If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
+                        strCurrentFunction = objMatch.Groups(1).Value
+                    Else
+                        ' Look for the word " in "
+                        intIndex = strLine.ToLower().IndexOf(" in ", StringComparison.Ordinal)
+                        If intIndex = 0 Then
+                            ' " in" not found; look for the first space after startIndex 4
+                            intIndex = strLine.IndexOf(" ", 4, StringComparison.Ordinal)
+                        End If
+                        If intIndex = 0 Then
+                            ' Space not found; use the entire string
+                            intIndex = strLine.Length - 1
+                        End If
 
-						If intIndex > 0 Then
-							strCurrentFunction = strLine.Substring(0, intIndex)
-						End If
+                        If intIndex > 0 Then
+                            strCurrentFunction = strLine.Substring(0, intIndex)
+                        End If
 
-					End If
+                    End If
 
-					If Not String.IsNullOrEmpty(strCurrentFunction) Then
-						lstFunctions.Add(strCurrentFunction)
-					End If
+                    If Not String.IsNullOrEmpty(strCurrentFunction) Then
+                        lstFunctions.Add(strCurrentFunction)
+                    End If
 
-					If strFinalFile.Length = 0 Then
-						' Also extract the file name where the Exception occurred
-						objMatch = reFileName.Match(strLine)
-						If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
-							strFinalFile = objMatch.Groups(1).Value
-						End If
-					End If
+                    If strFinalFile.Length = 0 Then
+                        ' Also extract the file name where the Exception occurred
+                        objMatch = reFileName.Match(strLine)
+                        If objMatch.Success AndAlso objMatch.Groups.Count > 1 Then
+                            strFinalFile = objMatch.Groups(1).Value
+                        End If
+                    End If
 
-				End If
-			Loop
+                End If
+            Loop
 
 		End Using
 

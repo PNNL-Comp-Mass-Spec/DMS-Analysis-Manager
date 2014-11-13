@@ -419,12 +419,12 @@ Public Class clsMSGFDBUtils
 			Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
-				Do While srInFile.Peek > -1 AndAlso intLinesRead < 10
-					strLineIn = srInFile.ReadLine()
-					If Not String.IsNullOrEmpty(strLineIn) Then
-						intLinesRead += 1
-					End If
-				Loop
+                Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
+                    strLineIn = srInFile.ReadLine()
+                    If Not String.IsNullOrEmpty(strLineIn) Then
+                        intLinesRead += 1
+                    End If
+                Loop
 
 			End Using
 
@@ -601,32 +601,32 @@ Public Class clsMSGFDBUtils
 
 			Using srSourceFasta = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 				Using swTrimmedFasta = New StreamWriter(New FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-					While srSourceFasta.Peek() > -1
-						Dim dataLine = srSourceFasta.ReadLine()
+                    While Not srSourceFasta.EndOfStream
+                        Dim dataLine = srSourceFasta.ReadLine()
 
-						If String.IsNullOrWhiteSpace(dataLine) Then Continue While
+                        If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-						If dataLine.StartsWith(">") Then
-							' Protein header
-							If bytesWritten > maxSizeBytes Then
-								' Do not write out any more proteins
-								Exit While
-							End If
+                        If dataLine.StartsWith(">") Then
+                            ' Protein header
+                            If bytesWritten > maxSizeBytes Then
+                                ' Do not write out any more proteins
+                                Exit While
+                            End If
 
-							Dim spaceIndex = dataLine.IndexOf(" "c, 1)
-							If spaceIndex < 0 Then spaceIndex = dataLine.Length - 1
-							Dim proteinName = dataLine.Substring(1, spaceIndex - 1)
+                            Dim spaceIndex = dataLine.IndexOf(" "c, 1)
+                            If spaceIndex < 0 Then spaceIndex = dataLine.Length - 1
+                            Dim proteinName = dataLine.Substring(1, spaceIndex - 1)
 
-							If dctRequiredContaminants.ContainsKey(proteinName) Then
-								dctRequiredContaminants(proteinName) = True
-							End If
+                            If dctRequiredContaminants.ContainsKey(proteinName) Then
+                                dctRequiredContaminants(proteinName) = True
+                            End If
 
-							proteinCount += 1
-						End If
+                            proteinCount += 1
+                        End If
 
-						swTrimmedFasta.WriteLine(dataLine)
-						bytesWritten += dataLine.Length + 2
-					End While
+                        swTrimmedFasta.WriteLine(dataLine)
+                        bytesWritten += dataLine.Length + 2
+                    End While
 
 					' Add any missing contaminants
 					For Each protein In dctRequiredContaminants
@@ -818,15 +818,15 @@ Public Class clsMSGFDBUtils
 
 			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srParamFile.Peek > -1
-					strLineIn = srParamFile.ReadLine()
+                Do While Not srParamFile.EndOfStream
+                    strLineIn = srParamFile.ReadLine()
 
-					kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
+                    kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
-					If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso clsGlobal.IsMatch(kvSetting.Key, strSettingToFind) Then
-						Return kvSetting.Value
-					End If
-				Loop
+                    If Not String.IsNullOrWhiteSpace(kvSetting.Key) AndAlso clsGlobal.IsMatch(kvSetting.Key, strSettingToFind) Then
+                        Return kvSetting.Value
+                    End If
+                Loop
 
 			End Using
 
@@ -1068,59 +1068,59 @@ Public Class clsMSGFDBUtils
 
 			Using srScanTypeFile As StreamReader = New StreamReader(New FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				While srScanTypeFile.Peek > -1
-					strLineIn = srScanTypeFile.ReadLine()
+                While Not srScanTypeFile.EndOfStream
+                    strLineIn = srScanTypeFile.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim lstColumns As List(Of String)
-						lstColumns = strLineIn.Split(ControlChars.Tab).ToList()
+                        Dim lstColumns As List(Of String)
+                        lstColumns = strLineIn.Split(ControlChars.Tab).ToList()
 
-						If intScanNumberColIndex < 0 Then
-							' Parse the header line to define the mapping
-							' Expected headers are ScanNumber   ScanTypeName   ScanType
-							intScanNumberColIndex = lstColumns.IndexOf("ScanNumber")
-							intScanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName")
+                        If intScanNumberColIndex < 0 Then
+                            ' Parse the header line to define the mapping
+                            ' Expected headers are ScanNumber   ScanTypeName   ScanType
+                            intScanNumberColIndex = lstColumns.IndexOf("ScanNumber")
+                            intScanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName")
 
-						ElseIf intScanNumberColIndex >= 0 Then
-							Dim intScanNumber As Integer
-							Dim strScanType As String
-							Dim strScanTypeLCase As String
+                        ElseIf intScanNumberColIndex >= 0 Then
+                            Dim intScanNumber As Integer
+                            Dim strScanType As String
+                            Dim strScanTypeLCase As String
 
-							If Integer.TryParse(lstColumns(intScanNumberColIndex), intScanNumber) Then
-								If intScanTypeNameColIndex >= 0 Then
-									strScanType = lstColumns(intScanTypeNameColIndex)
-									strScanTypeLCase = strScanType.ToLower()
+                            If Integer.TryParse(lstColumns(intScanNumberColIndex), intScanNumber) Then
+                                If intScanTypeNameColIndex >= 0 Then
+                                    strScanType = lstColumns(intScanTypeNameColIndex)
+                                    strScanTypeLCase = strScanType.ToLower()
 
-									If strScanTypeLCase.Contains("hcd") Then
-										lstHCDMSn.Add(intScanNumber, strScanType)
+                                    If strScanTypeLCase.Contains("hcd") Then
+                                        lstHCDMSn.Add(intScanNumber, strScanType)
 
-									ElseIf strScanTypeLCase.Contains("hmsn") Then
-										lstHighResMSn.Add(intScanNumber, strScanType)
+                                    ElseIf strScanTypeLCase.Contains("hmsn") Then
+                                        lstHighResMSn.Add(intScanNumber, strScanType)
 
-									ElseIf strScanTypeLCase.Contains("msn") Then
-										' Not HCD and doesn't contain HMSn; assume low-res
-										lstLowResMSn.Add(intScanNumber, strScanType)
+                                    ElseIf strScanTypeLCase.Contains("msn") Then
+                                        ' Not HCD and doesn't contain HMSn; assume low-res
+                                        lstLowResMSn.Add(intScanNumber, strScanType)
 
-									ElseIf strScanTypeLCase.Contains("cid") OrElse strScanTypeLCase.Contains("etd") Then
-										' The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
-										' This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
-										' We'll assume low res
-										lstLowResMSn.Add(intScanNumber, strScanType)
+                                    ElseIf strScanTypeLCase.Contains("cid") OrElse strScanTypeLCase.Contains("etd") Then
+                                        ' The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
+                                        ' This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
+                                        ' We'll assume low res
+                                        lstLowResMSn.Add(intScanNumber, strScanType)
 
-									Else
-										' Does not contain MSn or HCD
-										' Likely SRM or MS1
-										lstOther.Add(intScanNumber, strScanType)
-									End If
+                                    Else
+                                        ' Does not contain MSn or HCD
+                                        ' Likely SRM or MS1
+                                        lstOther.Add(intScanNumber, strScanType)
+                                    End If
 
-								End If
-							End If
-						End If
+                                End If
+                            End If
+                        End If
 
-					End If
+                    End If
 
-				End While
+                End While
 			End Using
 
 		Catch ex As Exception
@@ -1223,112 +1223,112 @@ Public Class clsMSGFDBUtils
 			Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
 				intLinesRead = 0
-				Do While srInFile.Peek() >= 0
-					strLineIn = srInFile.ReadLine()
-					intLinesRead += 1
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						If intLinesRead = 1 Then
-							' The first line is the MSGFDB version
-							If strLineIn.ToLower.Contains("gfdb") OrElse strLineIn.ToLower.Contains("ms-gf+") Then
-								If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
-									ReportMessage("MSGFDB version: " & strLineIn)
-								End If
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                        If intLinesRead = 1 Then
+                            ' The first line is the MSGFDB version
+                            If strLineIn.ToLower.Contains("gfdb") OrElse strLineIn.ToLower.Contains("ms-gf+") Then
+                                If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                                    ReportMessage("MSGFDB version: " & strLineIn)
+                                End If
 
-								mMSGFDbVersion = String.Copy(strLineIn)
-							Else
-								If strLineIn.ToLower.Contains("error") Then
-									If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-										mConsoleOutputErrorMsg = "Error running MSGFDB: "
-									End If
-									If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
-										mConsoleOutputErrorMsg &= "; " & strLineIn
-									End If
-								End If
-							End If
-						End If
+                                mMSGFDbVersion = String.Copy(strLineIn)
+                            Else
+                                If strLineIn.ToLower.Contains("error") Then
+                                    If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                        mConsoleOutputErrorMsg = "Error running MSGFDB: "
+                                    End If
+                                    If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
+                                        mConsoleOutputErrorMsg &= "; " & strLineIn
+                                    End If
+                                End If
+                            End If
+                        End If
 
-						' Look for warning messages  
-						' Additionally, update progress if the line starts with one of the expected phrases
-						If strLineIn.StartsWith("Ignoring spectrum") Then
-							' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-							If strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0 Then
-								mContinuumSpectraSkipped += 1
-							End If
-						ElseIf strLineIn.StartsWith("Loading database files") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
-								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
-							End If
+                        ' Look for warning messages  
+                        ' Additionally, update progress if the line starts with one of the expected phrases
+                        If strLineIn.StartsWith("Ignoring spectrum") Then
+                            ' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
+                            If strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0 Then
+                                mContinuumSpectraSkipped += 1
+                            End If
+                        ElseIf strLineIn.StartsWith("Loading database files") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
+                            End If
 
-						ElseIf strLineIn.StartsWith("Reading spectra") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
-								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
-							End If
-						ElseIf strLineIn.StartsWith("Using") Then
+                        ElseIf strLineIn.StartsWith("Reading spectra") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
+                            End If
+                        ElseIf strLineIn.StartsWith("Using") Then
 
-							' Extract out the thread count
-							oMatch = reExtractThreadCount.Match(strLineIn)
+                            ' Extract out the thread count
+                            oMatch = reExtractThreadCount.Match(strLineIn)
 
-							If oMatch.Success Then
-								Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
-							End If
+                            If oMatch.Success Then
+                                Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
+                            End If
 
-							' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
-							If eThreadProgressBase.Length < intThreadCount Then
-								ReDim eThreadProgressBase(intThreadCount)
-								ReDim sngThreadProgressAddon(intThreadCount)
-							End If
+                            ' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
+                            If eThreadProgressBase.Length < intThreadCount Then
+                                ReDim eThreadProgressBase(intThreadCount)
+                                ReDim sngThreadProgressAddon(intThreadCount)
+                            End If
 
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
-								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
-							End If
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+                            End If
 
-						ElseIf strLineIn.StartsWith("Spectrum") Then
-							' Extract out the number of spectra that MSGF+ will actually search
+                        ElseIf strLineIn.StartsWith("Spectrum") Then
+                            ' Extract out the number of spectra that MSGF+ will actually search
 
-							oMatch = reSpectraSearched.Match(strLineIn)
+                            oMatch = reSpectraSearched.Match(strLineIn)
 
-							If oMatch.Success Then
-								Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
-							End If
+                            If oMatch.Success Then
+                                Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
+                            End If
 
-						ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
-							End If
+                        ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
+                            End If
 
-						ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
-								sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
-							End If
+                        ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
+                            End If
 
-						ElseIf strLineIn.Contains("Preprocessing spectra") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
-							End If
+                        ElseIf strLineIn.Contains("Preprocessing spectra") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
+                            End If
 
-						ElseIf strLineIn.Contains("Database search") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
-							End If
+                        ElseIf strLineIn.Contains("Database search") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
+                            End If
 
-						ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
-							End If
+                        ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
+                            End If
 
-						ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
-							If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-								ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
-							End If
+                        ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
+                            End If
 
-						ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-							If strLineIn.ToLower.Contains("error") Then
-								mConsoleOutputErrorMsg &= "; " & strLineIn
-							End If
-						End If
-					End If
-				Loop
+                        ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            If strLineIn.ToLower.Contains("error") Then
+                                mConsoleOutputErrorMsg &= "; " & strLineIn
+                            End If
+                        End If
+                    End If
+                Loop
 
 			End Using
 
@@ -1634,7 +1634,7 @@ Public Class clsMSGFDBUtils
 
             Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek > -1
+                Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine()
 
                     kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
@@ -2243,17 +2243,17 @@ Public Class clsMSGFDBUtils
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srInFile.Peek > -1
-					strLineIn = srInFile.ReadLine()
-					intLinesRead += 1
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-					If intLinesRead > 1 AndAlso Not String.IsNullOrEmpty(strLineIn) Then
-						intPeptideCount += 1
-						If strLineIn.Contains(PROTEIN_NAME_NO_MATCH) Then
-							intPeptideCountNoMatch += 1
-						End If
-					End If
-				Loop
+                    If intLinesRead > 1 AndAlso Not String.IsNullOrEmpty(strLineIn) Then
+                        intPeptideCount += 1
+                        If strLineIn.Contains(PROTEIN_NAME_NO_MATCH) Then
+                            intPeptideCountNoMatch += 1
+                        End If
+                    End If
+                Loop
 
 			End Using
 

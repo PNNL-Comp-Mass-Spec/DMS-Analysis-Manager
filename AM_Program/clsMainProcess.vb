@@ -1027,31 +1027,31 @@ Public Class clsMainProcess
 
 						If intErrorMessageCountToReturn < 1 Then intErrorMessageCountToReturn = 1
 
-						Do While srInFile.Peek > -1
-							strLineIn = srInFile.ReadLine
+                        Do While Not srInFile.EndOfStream
+                            strLineIn = srInFile.ReadLine
 
-							If Not strLineIn Is Nothing Then
-								objMatch = reErrorLine.Match(strLineIn)
+                            If Not strLineIn Is Nothing Then
+                                objMatch = reErrorLine.Match(strLineIn)
 
-								If objMatch.Success Then
-									DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn)
-								End If
+                                If objMatch.Success Then
+                                    DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn)
+                                End If
 
-								If blnCheckForMostRecentJob Then
-									objMatch = reJobStartLine.Match(strLineIn)
-									If objMatch.Success Then
-										Try
-											strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(objMatch.Groups(1).Value, _
-											  CInt(objMatch.Groups(2).Value), _
-											  objMatch.Groups(3).Value, _
-											  objMatch.Groups(4).Value)
-										Catch ex As Exception
-											' Ignore errors here
-										End Try
-									End If
-								End If
-							End If
-						Loop
+                                If blnCheckForMostRecentJob Then
+                                    objMatch = reJobStartLine.Match(strLineIn)
+                                    If objMatch.Success Then
+                                        Try
+                                            strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(objMatch.Groups(1).Value, _
+                                              CInt(objMatch.Groups(2).Value), _
+                                              objMatch.Groups(3).Value, _
+                                              objMatch.Groups(4).Value)
+                                        Catch ex As Exception
+                                            ' Ignore errors here
+                                        End Try
+                                    End If
+                                End If
+                            End If
+                        Loop
 
 						srInFile.Close()
 

@@ -1025,35 +1025,35 @@ Public Class clsCodeTest
 				intTotalLinesReadSaved = intTotalLinesRead
 				For intFileIndex = 0 To intFileCount - 1
 
-					If srInFiles(intFileIndex).Peek > -1 Then
-						strLineIn = srInFiles(intFileIndex).ReadLine
+                    If Not srInFiles(intFileIndex).EndOfStream Then
+                        strLineIn = srInFiles(intFileIndex).ReadLine
 
-						intLinesRead(intFileIndex) += 1
-						intTotalLinesRead += 1
+                        intLinesRead(intFileIndex) += 1
+                        intTotalLinesRead += 1
 
-						If Not strLineIn Is Nothing Then
-							blnProcessLine = True
+                        If Not strLineIn Is Nothing Then
+                            blnProcessLine = True
 
-							If intLinesRead(intFileIndex) = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
-								' Check for a header line
-								strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
+                            If intLinesRead(intFileIndex) = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
+                                ' Check for a header line
+                                strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
 
-								If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
-									' First column does not contain a number; this must be a header line
-									' Write the header to the output file (provided intFileIndex=0)
-									If intFileIndex = 0 Then
-										swOutFile.WriteLine(strLineIn)
-									End If
-									blnProcessLine = False
-								End If
-							End If
+                                If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
+                                    ' First column does not contain a number; this must be a header line
+                                    ' Write the header to the output file (provided intFileIndex=0)
+                                    If intFileIndex = 0 Then
+                                        swOutFile.WriteLine(strLineIn)
+                                    End If
+                                    blnProcessLine = False
+                                End If
+                            End If
 
-							If blnProcessLine Then
-								swOutFile.WriteLine(strLineIn)
-							End If
+                            If blnProcessLine Then
+                                swOutFile.WriteLine(strLineIn)
+                            End If
 
-						End If
-					End If
+                        End If
+                    End If
 
 				Next
 
@@ -1224,34 +1224,34 @@ Public Class clsCodeTest
 				intLinesRead = 0
 				intTargetFileIndex = 0
 
-				Do While srInFile.Peek > -1
-					strLineIn = srInFile.ReadLine
-					intLinesRead += 1
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine
+                    intLinesRead += 1
 
-					If Not strLineIn Is Nothing Then
-						blnProcessLine = True
+                    If Not strLineIn Is Nothing Then
+                        blnProcessLine = True
 
-						If intLinesRead = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
-							' Check for a header line
-							strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
+                        If intLinesRead = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
+                            ' Check for a header line
+                            strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
 
-							If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
-								' First column does not contain a number; this must be a header line
-								' Write the header to each output file
-								For intIndex = 0 To intSplitCount - 1
-									swOutFiles(intIndex).WriteLine(strLineIn)
-								Next
-								blnProcessLine = False
-							End If
-						End If
+                            If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
+                                ' First column does not contain a number; this must be a header line
+                                ' Write the header to each output file
+                                For intIndex = 0 To intSplitCount - 1
+                                    swOutFiles(intIndex).WriteLine(strLineIn)
+                                Next
+                                blnProcessLine = False
+                            End If
+                        End If
 
-						If blnProcessLine Then
-							swOutFiles(intTargetFileIndex).WriteLine(strLineIn)
-							intTargetFileIndex += 1
-							If intTargetFileIndex = intSplitCount Then intTargetFileIndex = 0
-						End If
-					End If
-				Loop
+                        If blnProcessLine Then
+                            swOutFiles(intTargetFileIndex).WriteLine(strLineIn)
+                            intTargetFileIndex += 1
+                            If intTargetFileIndex = intSplitCount Then intTargetFileIndex = 0
+                        End If
+                    End If
+                Loop
 
 				' Close the input file
 				srInFile.Close()
@@ -1561,52 +1561,52 @@ Public Class clsCodeTest
 
 			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				Do While srInFile.Peek() >= 0
-					Dim strLineIn = srInFile.ReadLine()
+                Do While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim strLineInLCase = strLineIn.ToLower()
+                        Dim strLineInLCase = strLineIn.ToLower()
 
-						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running MSPathFinder:"
-							End If
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-							Continue Do
+                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running MSPathFinder:"
+                            End If
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                            Continue Do
 
-						ElseIf strLineIn.StartsWith("Searching the target database") Then
-							progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
+                        ElseIf strLineIn.StartsWith("Searching the target database") Then
+                            progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
 
-						ElseIf strLineIn.StartsWith("Searching the decoy database") Then
-							progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
-							searchingDecoyDB = True
+                        ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+                            progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
+                            searchingDecoyDB = True
 
-						Else
-							Dim oMatch As Match = reCheckProgress.Match(strLineIn)
-							If oMatch.Success Then
-								Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
-								Continue Do
-							End If
+                        Else
+                            Dim oMatch As Match = reCheckProgress.Match(strLineIn)
+                            If oMatch.Success Then
+                                Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
+                                Continue Do
+                            End If
 
-							oMatch = reProcessingProteins.Match(strLineIn)
-							If oMatch.Success Then
-								Dim proteinsSearched As Integer
-								If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
-									If searchingDecoyDB Then
-										decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
-									Else
-										targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
-									End If
-								End If
+                            oMatch = reProcessingProteins.Match(strLineIn)
+                            If oMatch.Success Then
+                                Dim proteinsSearched As Integer
+                                If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
+                                    If searchingDecoyDB Then
+                                        decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+                                    Else
+                                        targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
+                                    End If
+                                End If
 
-								Continue Do
-							End If
+                                Continue Do
+                            End If
 
-						End If
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 
@@ -2038,73 +2038,73 @@ Public Class clsCodeTest
 			Using srLogFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				' Read each line from the input file
-				Do While srLogFile.Peek > -1
-					strLineIn = srLogFile.ReadLine
+                Do While Not srLogFile.EndOfStream
+                    strLineIn = srLogFile.ReadLine
 
-					If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+                    If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
 
-						' See if the line matches one of the expected RegEx values
-						objMatch = reStartingTask.Match(strLineIn)
-						If Not objMatch Is Nothing AndAlso objMatch.Success Then
-							If Not Integer.TryParse(objMatch.Groups(1).Value, intHostCount) Then
-								strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
-								If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-							End If
+                        ' See if the line matches one of the expected RegEx values
+                        objMatch = reStartingTask.Match(strLineIn)
+                        If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                            If Not Integer.TryParse(objMatch.Groups(1).Value, intHostCount) Then
+                                strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
+                                If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                            End If
 
-						Else
-							objMatch = reWaitingForReadyMsg.Match(strLineIn)
-							If Not objMatch Is Nothing AndAlso objMatch.Success Then
-								If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountStarted) Then
-									strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
-									If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-								End If
+                        Else
+                            objMatch = reWaitingForReadyMsg.Match(strLineIn)
+                            If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountStarted) Then
+                                    strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
+                                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                End If
 
-							Else
-								objMatch = reReceivedReadyMsg.Match(strLineIn)
-								If Not objMatch Is Nothing AndAlso objMatch.Success Then
-									strHostName = objMatch.Groups(1).Value
+                            Else
+                                objMatch = reReceivedReadyMsg.Match(strLineIn)
+                                If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                    strHostName = objMatch.Groups(1).Value
 
-									If dctHostNodeCount.TryGetValue(strHostName, intValue) Then
-										dctHostNodeCount(strHostName) = intValue + 1
-									Else
-										dctHostNodeCount.Add(strHostName, 1)
-									End If
+                                    If dctHostNodeCount.TryGetValue(strHostName, intValue) Then
+                                        dctHostNodeCount(strHostName) = intValue + 1
+                                    Else
+                                        dctHostNodeCount.Add(strHostName, 1)
+                                    End If
 
-								Else
-									objMatch = reSpawnedSlaveProcesses.Match(strLineIn)
-									If Not objMatch Is Nothing AndAlso objMatch.Success Then
-										If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountActive) Then
-											strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
-											If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
-										End If
+                                Else
+                                    objMatch = reSpawnedSlaveProcesses.Match(strLineIn)
+                                    If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                        If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountActive) Then
+                                            strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
+                                            If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
+                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                        End If
 
-									Else
-										objMatch = reSearchedDTAFile.Match(strLineIn)
-										If Not objMatch Is Nothing AndAlso objMatch.Success Then
-											strHostName = objMatch.Groups(1).Value
+                                    Else
+                                        objMatch = reSearchedDTAFile.Match(strLineIn)
+                                        If Not objMatch Is Nothing AndAlso objMatch.Success Then
+                                            strHostName = objMatch.Groups(1).Value
 
-											If Not strHostName Is Nothing Then
-												If dctHostCounts.TryGetValue(strHostName, intValue) Then
-													dctHostCounts(strHostName) = intValue + 1
-												Else
-													dctHostCounts.Add(strHostName, 1)
-												End If
+                                            If Not strHostName Is Nothing Then
+                                                If dctHostCounts.TryGetValue(strHostName, intValue) Then
+                                                    dctHostCounts(strHostName) = intValue + 1
+                                                Else
+                                                    dctHostCounts.Add(strHostName, 1)
+                                                End If
 
-												intDTACount += 1
-											End If
-										Else
-											' Ignore this line
-										End If
-									End If
-								End If
-							End If
-						End If
+                                                intDTACount += 1
+                                            End If
+                                        Else
+                                            ' Ignore this line
+                                        End If
+                                    End If
+                                End If
+                            End If
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 
