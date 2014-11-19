@@ -479,23 +479,34 @@ Public Class clsAnalysisToolRunnerMSGFDB
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 					blnProcessingError = True
 				Else
-					' Compute the fraction of all potential spectra that were skipped
+                    ' Compute the fraction of all potential spectra that were skipped
+                    ' If over 20% of the spectra were skipped, and if the source spectra were not centroided, 
+                    '   then blnTooManySkippedSpectra will be set to True and the job step will be marked as failed
+
 					Dim dblFractionSkipped As Double
 					Dim strPercentSkipped As String
+                    Dim spectraAreCentroided As Boolean
 
-					dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
-					strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
+                    ' Examine the job parameters to determine if the spectra were definitely centroided by the MSXML_Gen or DTA_Gen tools
+                    If m_jobParams.GetJobParameter("CentroidMSXML", False) OrElse
+                       m_jobParams.GetJobParameter("CentroidDTAs", False) OrElse
+                       m_jobParams.GetJobParameter("CentroidMGF", False) Then
+                        spectraAreCentroided = True
+                    End If
 
-					If dblFractionSkipped > 0.2 Then
-						m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						blnTooManySkippedSpectra = True
-					Else
-						m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-					End If
+                    dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
+                    strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
 
-				End If
+                    If dblFractionSkipped > 0.2 And Not spectraAreCentroided Then
+                        m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        blnTooManySkippedSpectra = True
+                    Else
+                        m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+                    End If
+
+                    End If
 
 			End If
 
