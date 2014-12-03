@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "September 29, 2014"
+    Public Const PROGRAM_DATE As String = "December 2, 2014"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -125,7 +125,8 @@ Module modMain
 
 						'Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
 
-						objTest.TestCosoleOutputParsing()
+                        'objTest.TestCosoleOutputParsing()
+                        objTest.TestMSXmlCachePurge()
 
 
 					Catch ex As Exception

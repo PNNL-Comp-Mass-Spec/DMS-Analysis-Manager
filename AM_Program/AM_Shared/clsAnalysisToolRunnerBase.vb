@@ -270,7 +270,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' </summary>
 	''' <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
 	''' <param name="sourceFilePath">Path to the data file</param>
-	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
+    ''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
 	''' <returns>Path to the remotely cached file; empty path if an error</returns>
 	Protected Function CopyFileToServerCache(ByVal cacheFolderPath As String, ByVal sourceFilePath As String, ByVal purgeOldFilesIfNeeded As Boolean) As String
 
@@ -336,7 +336,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="strSourceFilePath">Path to the data file</param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
-	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
+    ''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks>
 	''' Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
@@ -361,7 +361,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
 	''' <param name="sourceFilePath">Path to the data file</param>
 	''' <param name="datasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
-	''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
+    ''' <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
 	''' <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
 	''' <returns>True if success, false if an error</returns>
 	''' <remarks>
@@ -438,10 +438,12 @@ Public Class clsAnalysisToolRunnerBase
 			' Copy over the .Hashcheck file
 			m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
 
-			If purgeOldFilesIfNeeded Then
-				Const spaceUsageThresholdGB As Integer = 3000
-				PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
-			End If
+            If purgeOldFilesIfNeeded Then
+                ' Value prior to December 2014: 3 TB
+                ' Value effective December 2014: 20 TB
+                Const spaceUsageThresholdGB As Integer = 20000
+                PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
+            End If
 			
 		Catch ex As Exception
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: " & ex.Message)
@@ -458,7 +460,7 @@ Public Class clsAnalysisToolRunnerBase
 	''' <param name="strSourceFilePath"></param>
 	''' <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
 	''' <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
-	''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 750 GB</param>
+    ''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
 	''' <returns>True if success; false if an error</returns>
 	''' <remarks>
 	''' Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is 
@@ -1718,177 +1720,193 @@ Public Class clsAnalysisToolRunnerBase
 		End If
 	End Function
 
-	''' <summary>
-	''' Determines the space usage of data files in the cache folder
-	''' If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
-	''' </summary>
-	''' <param name="strCacheFolderPath">Path to the file cache</param>
-	''' <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 10)</param>
-	''' <remarks></remarks>
-	Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal spaceUsageThresholdGB As Integer)
+    Public Sub PurgeOldServerCacheFiles(ByVal cacheFolderPath As String)
+        Const spaceUsageThresholdGB As Integer = 20000
+        PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
+    End Sub
 
-		Const PURGE_INTERVAL_MINUTES As Integer = 90
-		Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
+    ''' <summary>
+    ''' Determines the space usage of data files in the cache folder
+    ''' If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
+    ''' </summary>
+    ''' <param name="strCacheFolderPath">Path to the file cache</param>
+    ''' <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 10)</param>
+    ''' <remarks></remarks>
+    Protected Sub PurgeOldServerCacheFiles(ByVal strCacheFolderPath As String, ByVal spaceUsageThresholdGB As Integer)
 
-		Dim diCacheFolder As DirectoryInfo
-		Dim lstDataFiles As SortedList(Of DateTime, FileInfo) = New SortedList(Of DateTime, FileInfo)
+        Const PURGE_INTERVAL_MINUTES As Integer = 90
+        Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
 
-		Dim dblTotalSizeMB As Double = 0
+        Dim diCacheFolder As DirectoryInfo
+        Dim lstDataFiles = New List(Of KeyValuePair(Of DateTime, FileInfo))
 
-		Dim dblSizeDeletedMB As Double = 0
-		Dim intFileDeleteCount As Integer = 0
-		Dim intFileDeleteErrorCount As Integer = 0
+        Dim dblTotalSizeMB As Double = 0
 
-		Dim dctErrorSummary As Dictionary(Of String, Integer) = New Dictionary(Of String, Integer)
+        Dim dblSizeDeletedMB As Double = 0
+        Dim intFileDeleteCount As Integer = 0
+        Dim intFileDeleteErrorCount As Integer = 0
 
-		If spaceUsageThresholdGB < 10 Then spaceUsageThresholdGB = 10
+        Dim dctErrorSummary As Dictionary(Of String, Integer) = New Dictionary(Of String, Integer)
 
-		Try
-			If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
-				Exit Sub
-			End If
-			diCacheFolder = New DirectoryInfo(strCacheFolderPath)
+        If spaceUsageThresholdGB < 10 Then spaceUsageThresholdGB = 10
 
-			If Not diCacheFolder.Exists Then
-				Exit Sub
-			End If
+        Try
+            If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+                Exit Sub
+            End If
+            diCacheFolder = New DirectoryInfo(strCacheFolderPath)
 
-			' Look for a purge check file
-			Dim fiPurgeCheckFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"))
-			If fiPurgeCheckFile.Exists Then
-				If DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < PURGE_INTERVAL_MINUTES Then
-					Exit Sub
-				End If
-			End If
+            If Not diCacheFolder.Exists Then
+                Exit Sub
+            End If
 
-			' Create / update the purge check file
-			Try
-				Using swPurgeCheckFile = New StreamWriter(New FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
-					swPurgeCheckFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
-				End Using
+            ' Look for a purge check file
+            Dim fiPurgeCheckFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"))
+            If fiPurgeCheckFile.Exists Then
+                If DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+                    Exit Sub
+                End If
+            End If
 
-			Catch ex As Exception
-				' Likely another manager tried to update the file at the same time; ignore the error
-			End Try
+            ' Create / update the purge check file
+            Try
+                Using swPurgeCheckFile = New StreamWriter(New FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                    swPurgeCheckFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
+                End Using
 
-			dtLastCheck = DateTime.UtcNow
+            Catch ex As Exception
+                ' Likely another manager tried to update the file at the same time; ignore the error
+            End Try
 
-			' Make a list of all of the hashcheck files in diCacheFolder
+            dtLastCheck = DateTime.UtcNow
 
-			For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
+            ' Make a list of all of the hashcheck files in diCacheFolder
 
-				If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
-					Dim strDataFilePath As String
-					strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
+            For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
 
-					Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
+                If fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()) Then
+                    Dim strDataFilePath As String
+                    strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
 
-					If fiDataFile.Exists Then
-						lstDataFiles.Add(fiDataFile.LastWriteTimeUtc, fiDataFile)
+                    Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
 
-						dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
-					End If
-				End If
-			Next
+                    If fiDataFile.Exists Then
+                        Try
+                            lstDataFiles.Add(New KeyValuePair(Of DateTime, FileInfo)(fiDataFile.LastWriteTimeUtc, fiDataFile))
+
+                            dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
+                        Catch ex As Exception
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception adding to file list " + fiDataFile.Name + "; " + ex.Message)
+                        End Try
+                       
+                    End If
+                End If
+            Next
 
 
-			If dblTotalSizeMB / 1024.0 > spaceUsageThresholdGB Then
-				' Purge files until the space usage falls below the threshold
+            If dblTotalSizeMB / 1024 > spaceUsageThresholdGB Then
+                ' Purge files until the space usage falls below the threshold
+                ' Start with the earliest file then work our way forward
 
-				For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstDataFiles
+                Dim lstSortedFiles = (From item In lstDataFiles Select item Order By item.Key)
 
-					Try
-						Dim strHashcheckPath As String
-						Dim dblFileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
+                For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstSortedFiles
 
-						strHashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-						dblTotalSizeMB -= dblFileSizeMB
+                    Try
+                        Dim dblFileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
 
-						kvItem.Value.Delete()
-						File.Delete(strHashcheckPath)
+                        Dim strHashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+                        Dim fiHashCheckFile = New FileInfo(strHashcheckPath)
 
-						dblSizeDeletedMB += dblFileSizeMB
-						intFileDeleteCount += 1
+                        dblTotalSizeMB -= dblFileSizeMB
 
-					Catch ex As Exception
-						' Keep track of the number of times we have an exception
-						intFileDeleteErrorCount += 1
+                        kvItem.Value.Delete()
+                        dblSizeDeletedMB += dblFileSizeMB
+                        intFileDeleteCount += 1
 
-						Dim intOccurrences As Integer = 1
-						Dim strExceptionName As String = ex.GetType.ToString()
-						If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
-							dctErrorSummary(strExceptionName) = intOccurrences + 1
-						Else
-							dctErrorSummary.Add(strExceptionName, 1)
-						End If
+                        If fiHashCheckFile.Exists Then
+                            fiHashCheckFile.Delete()
+                        End If
 
-					End Try
+                    Catch ex As Exception
+                        ' Keep track of the number of times we have an exception
+                        intFileDeleteErrorCount += 1
 
-					If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95 Then
-						Exit For
-					End If
-				Next
+                        Dim intOccurrences As Integer = 1
+                        Dim strExceptionName As String = ex.GetType.ToString()
+                        If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
+                            dctErrorSummary(strExceptionName) = intOccurrences + 1
+                        Else
+                            dctErrorSummary.Add(strExceptionName, 1)
+                        End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath & ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
+                    End Try
 
-				If intFileDeleteErrorCount > 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
-					For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
-					Next
-				End If
+                    If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95 Then
+                        Exit For
+                    End If
+                Next
 
-			End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath & ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeOldServerCacheFiles", ex)
-		End Try
-	End Sub
+                If intFileDeleteErrorCount > 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
+                    For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
+                    Next
+                End If
 
-	''' <summary>
-	''' Updates the dataset name to the final folder name in the transferFolderPath job parameter
-	''' Updates the transfer folder path to remove the final folder
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Sub RedefineAggregationJobDatasetAndTransferFolder()
+            End If
 
-		Dim strTransferFolderPath As String = m_jobParams.GetParam("transferFolderPath")
-		Dim diTransferFolder As New DirectoryInfo(strTransferFolderPath)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeOldServerCacheFiles", ex)
+        End Try
+    End Sub
 
-		m_Dataset = diTransferFolder.Name
-		strTransferFolderPath = diTransferFolder.Parent.FullName
-		m_jobParams.SetParam("JobParameters", "transferFolderPath", strTransferFolderPath)
+    ''' <summary>
+    ''' Updates the dataset name to the final folder name in the transferFolderPath job parameter
+    ''' Updates the transfer folder path to remove the final folder
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Sub RedefineAggregationJobDatasetAndTransferFolder()
 
-	End Sub
+        Dim strTransferFolderPath As String = m_jobParams.GetParam("transferFolderPath")
+        Dim diTransferFolder As New DirectoryInfo(strTransferFolderPath)
 
-	''' <summary>
-	''' Extracts the contents of the Version= line in a Tool Version Info file
-	''' </summary>
-	''' <param name="strDLLFilePath"></param>
-	''' <param name="strVersionInfoFilePath"></param>
-	''' <param name="strVersion"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function ReadVersionInfoFile(ByVal strDLLFilePath As String, ByVal strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
+        m_Dataset = diTransferFolder.Name
+        strTransferFolderPath = diTransferFolder.Parent.FullName
+        m_jobParams.SetParam("JobParameters", "transferFolderPath", strTransferFolderPath)
 
-		' Open strVersionInfoFilePath and read the Version= line
-		Dim srInFile As StreamReader
-		Dim strLineIn As String
-		Dim strKey As String
-		Dim strValue As String
-		Dim intEqualsLoc As Integer
+    End Sub
 
-		strVersion = String.Empty
-		Dim blnSuccess As Boolean = False
+    ''' <summary>
+    ''' Extracts the contents of the Version= line in a Tool Version Info file
+    ''' </summary>
+    ''' <param name="strDLLFilePath"></param>
+    ''' <param name="strVersionInfoFilePath"></param>
+    ''' <param name="strVersion"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function ReadVersionInfoFile(ByVal strDLLFilePath As String, ByVal strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
 
-		Try
+        ' Open strVersionInfoFilePath and read the Version= line
+        Dim srInFile As StreamReader
+        Dim strLineIn As String
+        Dim strKey As String
+        Dim strValue As String
+        Dim intEqualsLoc As Integer
 
-			If Not File.Exists(strVersionInfoFilePath) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Version Info File not found: " & strVersionInfoFilePath)
-				Return False
-			End If
+        strVersion = String.Empty
+        Dim blnSuccess As Boolean = False
 
-			srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        Try
+
+            If Not File.Exists(strVersionInfoFilePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Version Info File not found: " & strVersionInfoFilePath)
+                Return False
+            End If
+
+            srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
             Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine()
@@ -1927,890 +1945,890 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Loop
 
-			srInFile.Close()
+            srInFile.Close()
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
-	''' </summary>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks>List of files to delete is tracked via m_jobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
-	Public Function RemoveNonResultServerFiles() As Boolean
+    ''' <summary>
+    ''' Deletes files in specified directory that have been previously flagged as not wanted in results folder
+    ''' </summary>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks>List of files to delete is tracked via m_jobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
+    Public Function RemoveNonResultServerFiles() As Boolean
 
-		Dim FileToDelete As String = ""
+        Dim FileToDelete As String = ""
 
-		Try
-			'Log status
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Files from the storage server; ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries")
-			End If
+        Try
+            'Log status
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Files from the storage server; ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries")
+            End If
 
-			For Each FileToDelete In m_jobParams.ServerFilesToDelete
-				If m_DebugLevel >= 4 Then	 'Log file to be deleted
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
-				End If
+            For Each FileToDelete In m_jobParams.ServerFilesToDelete
+                If m_DebugLevel >= 4 Then    'Log file to be deleted
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
+                End If
 
-				If File.Exists(FileToDelete) Then
-					'Verify file is not set to readonly, then delete it
-					File.SetAttributes(FileToDelete, File.GetAttributes(FileToDelete) And (Not FileAttributes.ReadOnly))
-					File.Delete(FileToDelete)
-				End If
-			Next
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
-			'Even if an exception occurred, return true since the results were already copied back to the server
-			Return True
-		End Try
+                If File.Exists(FileToDelete) Then
+                    'Verify file is not set to readonly, then delete it
+                    File.SetAttributes(FileToDelete, File.GetAttributes(FileToDelete) And (Not FileAttributes.ReadOnly))
+                    File.Delete(FileToDelete)
+                End If
+            Next
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
+            'Even if an exception occurred, return true since the results were already copied back to the server
+            Return True
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function ReplaceUpdatedFile(ByVal fiOrginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo) As Boolean
+    Protected Function ReplaceUpdatedFile(ByVal fiOrginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo) As Boolean
 
-		Try
-			Dim finalFilePath = fiOrginalFile.FullName
+        Try
+            Dim finalFilePath = fiOrginalFile.FullName
 
-			Thread.Sleep(250)
-			fiOrginalFile.Delete()
+            Thread.Sleep(250)
+            fiOrginalFile.Delete()
 
-			Thread.Sleep(250)
-			fiUpdatedFile.MoveTo(finalFilePath)
+            Thread.Sleep(250)
+            fiUpdatedFile.MoveTo(finalFilePath)
 
-		Catch ex As Exception
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReplaceUpdatedFile: " & ex.Message)
-			End If
+        Catch ex As Exception
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReplaceUpdatedFile: " & ex.Message)
+            End If
 
-			Return False
-		End Try
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-	End Sub
+    Protected Sub ResetTimestampForQueueWaitTimeLogging()
+        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+    End Sub
 
-	''' <summary>
-	''' Runs the analysis tool
-	''' Major work is performed by overrides
-	''' </summary>
-	''' <returns>CloseoutType enum representing completion status</returns>
-	''' <remarks></remarks>
-	Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
+    ''' <summary>
+    ''' Runs the analysis tool
+    ''' Major work is performed by overrides
+    ''' </summary>
+    ''' <returns>CloseoutType enum representing completion status</returns>
+    ''' <remarks></remarks>
+    Public Overridable Function RunTool() As IJobParams.CloseOutType Implements IToolRunner.RunTool
 
-		' Synchronize the stored Debug level with the value stored in the database
-		GetCurrentMgrSettingsFromDB()
+        ' Synchronize the stored Debug level with the value stored in the database
+        GetCurrentMgrSettingsFromDB()
 
-		'Make log entry
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+        'Make log entry
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
-		'Start the job timer
-		m_StartTime = DateTime.UtcNow
+        'Start the job timer
+        m_StartTime = DateTime.UtcNow
 
-		'Remainder of method is supplied by subclasses
+        'Remainder of method is supplied by subclasses
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Creates a Tool Version Info file
-	''' </summary>
-	''' <param name="strFolderPath"></param>
-	''' <param name="strToolVersionInfo"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
-		Dim swToolVersionFile As StreamWriter
-		Dim strToolVersionFilePath As String
-		Dim strStepToolName As String
+    ''' <summary>
+    ''' Creates a Tool Version Info file
+    ''' </summary>
+    ''' <param name="strFolderPath"></param>
+    ''' <param name="strToolVersionInfo"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function SaveToolVersionInfoFile(ByVal strFolderPath As String, ByVal strToolVersionInfo As String) As Boolean
+        Dim swToolVersionFile As StreamWriter
+        Dim strToolVersionFilePath As String
+        Dim strStepToolName As String
 
-		Try
-			strStepToolName = m_jobParams.GetParam("StepTool")
-			If strStepToolName.ToLower().StartsWith("msgfplus") Then
-				' For backwards compatibility, need to make sure the file does not start with "MSGFPlus" 
-				strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
-			End If
+        Try
+            strStepToolName = m_jobParams.GetParam("StepTool")
+            If strStepToolName.ToLower().StartsWith("msgfplus") Then
+                ' For backwards compatibility, need to make sure the file does not start with "MSGFPlus" 
+                strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
+            End If
 
-			strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
+            strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
 
-			swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+            swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
-			swToolVersionFile.WriteLine("Date: " & DateTime.Now().ToString(DATE_TIME_FORMAT))
-			swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
-			swToolVersionFile.WriteLine("Job: " & m_JobNum)
-			swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
-			swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
-			swToolVersionFile.WriteLine("ToolVersionInfo:")
+            swToolVersionFile.WriteLine("Date: " & DateTime.Now().ToString(DATE_TIME_FORMAT))
+            swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
+            swToolVersionFile.WriteLine("Job: " & m_JobNum)
+            swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
+            swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
+            swToolVersionFile.WriteLine("ToolVersionInfo:")
 
             swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", Environment.NewLine))
-			swToolVersionFile.Close()
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Communicates with database to record the tool version(s) for the current step task
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-	''' <returns>True for success, False for failure</returns>
-	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
-		Return SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
-	End Function
-
-	''' <summary>
-	''' Communicates with database to record the tool version(s) for the current step task
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-	''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-	''' <returns>True for success, False for failure</returns>
-	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As List(Of FileInfo)) As Boolean
-
-		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
-	End Function
-
-	''' <summary>
-	''' Communicates with database to record the tool version(s) for the current step task
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-	''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-	''' <returns>True for success, False for failure</returns>
-	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-	Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
-	   ByVal ioToolFiles As IEnumerable(Of FileInfo)) As Boolean
-
-		Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
-	End Function
-
-	''' <summary>
-	''' Communicates with database to record the tool version(s) for the current step task
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
-	''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-	''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
-	''' <returns>True for success, False for failure</returns>
-	''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-	Protected Function SetStepTaskToolVersion(
-	  ByVal strToolVersionInfo As String,
-	  ByVal ioToolFiles As IEnumerable(Of FileInfo),
-	  ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
-
-		Dim strExeInfo As String = String.Empty
-		Dim strToolVersionInfoCombined As String
-
-		Dim Outcome As Boolean
-		Dim ResCode As Integer
-
-		If Not ioToolFiles Is Nothing Then
-
-			For Each ioFileInfo As FileInfo In ioToolFiles
-				Try
-					If ioFileInfo.Exists Then
-						strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
-
-						If m_DebugLevel >= 2 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
-						End If
-
-					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
-					End If
-
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
-				End Try
-			Next
-		End If
-
-		' Append the .Exe info to strToolVersionInfo
-		If String.IsNullOrEmpty(strExeInfo) Then
-			strToolVersionInfoCombined = String.Copy(strToolVersionInfo)
-		Else
-			strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo)
-		End If
-
-		If blnSaveToolVersionTextFile Then
-			SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined)
-		End If
-
-		'Setup for execution of the stored procedure
-		Dim MyCmd As New SqlClient.SqlCommand
-		With MyCmd
-			.CommandType = CommandType.StoredProcedure
-			.CommandText = SP_NAME_SET_TASK_TOOL_VERSION
-
-			.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-			.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-			.Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
-			.Parameters.Item("@job").Direction = ParameterDirection.Input
-			.Parameters.Item("@job").Value = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
-
-			.Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
-			.Parameters.Item("@step").Direction = ParameterDirection.Input
-			.Parameters.Item("@step").Value = m_jobParams.GetJobParameter("StepParameters", "Step", 0)
-
-			.Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
-			.Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
-			.Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
-		End With
-
-		Dim objAnalysisTask As clsAnalysisJob
-		Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
-
-		objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
-
-		'Execute the SP (retry the call up to 4 times)
-		ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
-
-		If ResCode = 0 Then
-			Outcome = True
-		Else
-			Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Outcome = False
-		End If
-
-		Return Outcome
-
-	End Function
-
-	''' <summary>
-	''' Uses Reflection to determine the version info for an assembly already loaded in memory
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
-	''' <param name="strAssemblyName">Assembly Name</param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String) As Boolean
-		Return StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, strAssemblyName, blnIncludeRevision:=True)
-	End Function
-
-	''' <summary>
-	''' Uses Reflection to determine the version info for an assembly already loaded in memory
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
-	''' <param name="strAssemblyName">Assembly Name</param>
-	''' <param name="blnIncludeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-	Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String, ByVal blnIncludeRevision As Boolean) As Boolean
-
-		Try
-			Dim oAssemblyName As Reflection.AssemblyName
-			oAssemblyName = Reflection.Assembly.Load(strAssemblyName).GetName
-
-			Dim strNameAndVersion As String
-			If blnIncludeRevision Then
-				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-			Else
-				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.Major & "." & oAssemblyName.Version.Minor & "." & oAssemblyName.Version.Build
-			End If
-
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & strAssemblyName & ": " & ex.Message)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Determines the version info for a .NET DLL using reflection
-	''' If reflection fails, then uses System.Diagnostics.FileVersionInfo
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
-	''' <param name="strDLLFilePath">Path to the DLL</param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
-
-		Dim ioFileInfo As FileInfo
-		Dim blnSuccess As Boolean
-
-		Try
-			ioFileInfo = New FileInfo(strDLLFilePath)
-
-			If Not ioFileInfo.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
-				Return False
-			Else
-
-				Dim oAssemblyName As Reflection.AssemblyName
-				oAssemblyName = Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
-
-				Dim strNameAndVersion As String
-				strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-				blnSuccess = True
-			End If
-
-		Catch ex As BadImageFormatException
-			' Most likely trying to read a 64-bit DLL
-			' Instead try StoreToolVersionInfoOneFile64Bit
-			blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
-
-		Catch ex As Exception
-			' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
-			'  <startup useLegacyV2RuntimeActivationPolicy="true">
-			'    <supportedRuntime version="v4.0" />
-			'  </startup>
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
-			blnSuccess = False
-		End Try
-
-		If Not blnSuccess Then
-			blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLFilePath)
-		End If
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
-	''' </summary>
-	''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
-	''' <param name="strDLLFilePath">Path to the DLL</param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
-		Dim ioFileInfo As FileInfo
-		Dim blnSuccess As Boolean
-
-		Try
-			ioFileInfo = New FileInfo(strDLLFilePath)
-
-			If Not ioFileInfo.Exists Then
-				m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strDLLFilePath)
-				Return False
-			Else
-
-				Dim oFileVersionInfo As FileVersionInfo
-				oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath)
-
-				Dim strName As String
-				Dim strVersion As String
-
-				strName = oFileVersionInfo.FileDescription
-				If String.IsNullOrEmpty(strName) Then
-					strName = oFileVersionInfo.InternalName
-				End If
-
-				If String.IsNullOrEmpty(strName) Then
-					strName = oFileVersionInfo.FileName
-				End If
-
-				If String.IsNullOrEmpty(strName) Then
-					strName = ioFileInfo.Name
-				End If
-
-				strVersion = oFileVersionInfo.FileVersion
-				If String.IsNullOrEmpty(strVersion) Then
-					strVersion = oFileVersionInfo.ProductVersion
-				End If
-
-				If String.IsNullOrEmpty(strVersion) Then
-					strVersion = "??"
-				End If
-
-				Dim strNameAndVersion As String
-				strNameAndVersion = strName & ", Version=" & strVersion
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-				blnSuccess = True
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception determining File Version for " & Path.GetFileName(strDLLFilePath)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
-	''' </summary>
-	''' <param name="strToolVersionInfo"></param>
-	''' <param name="strDLLFilePath"></param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfoOneFile64Bit(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
-
-		Dim strNameAndVersion As String = String.Empty
-		Dim strAppPath As String
-		Dim strVersionInfoFilePath As String
-		Dim strArgs As String
-
-		Dim ioFileInfo As FileInfo
-
-		Try
-			strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), "DLLVersionInspector.exe")
-
-			ioFileInfo = New FileInfo(strDLLFilePath)
-			strNameAndVersion = Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
-
-			If Not ioFileInfo.Exists Then
-				m_message = "File not found by StoreToolVersionInfoOneFile64Bit"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
-				Return False
-			ElseIf Not File.Exists(strAppPath) Then
-				m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
-				Return False
-			Else
-				' Call DLLVersionInspector.exe to determine the tool version
-
-				strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
-
-				Dim objProgRunner As clsRunDosProgram
-				Dim blnSuccess As Boolean
-				Dim strVersion As String = String.Empty
-
-				objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
-
-				strArgs = ioFileInfo.FullName & " /O:" & PossiblyQuotePath(strVersionInfoFilePath)
-
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath & " " & strArgs)
-				End If
-
-				With objProgRunner
-					.CacheStandardOutput = False
-					.CreateNoWindow = True
-					.EchoOutputToConsole = True
-					.WriteConsoleOutputToFile = False
-
-					.DebugLevel = 1
-					.MonitorInterval = 250
-				End With
-
-				blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
-
-				If Not blnSuccess Then
-					Return False
-				End If
-
-				Thread.Sleep(100)
-
-				blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
-
-				' Delete the version info file
-				Try
-					Thread.Sleep(100)
-					File.Delete(strVersionInfoFilePath)
-				Catch ex As Exception
-					' Ignore errors here
-				End Try
-
-
-				If Not blnSuccess OrElse String.IsNullOrWhiteSpace(strVersion) Then
-					Return False
-				Else
-					strNameAndVersion = String.Copy(strVersion)
-				End If
-
-			End If
-
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-			Return True
-
-		Catch ex As Exception
-			m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
-		End Try
-
-		Return False
-
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String) As Boolean
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, "*")
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String, ByVal copySubfolders As Boolean) As Boolean
-
-		Dim lstFileNameFilterSpec = New List(Of String) From {"*"}
-		Dim lstFileNameExclusionSpec = New List(Of String)
-		Const maxRetryCount = 3
-
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks>Will retry failed copies up to 3 times</remarks>
-	Protected Function SynchronizeFolders(
-	  ByVal sourceFolderPath As String,
-	  ByVal targetFolderPath As String,
-	  ByVal fileNameFilterSpec As String) As Boolean
-
-		Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}
-		Dim lstFileNameExclusionSpec = New List(Of String)
-		Const maxRetryCount = 3
-		Const copySubfolders = False
-
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks>Will retry failed copies up to 3 times</remarks>
-	Protected Function SynchronizeFolders(
-	  ByVal sourceFolderPath As String,
-	  ByVal targetFolderPath As String,
-	  ByVal lstFileNameFilterSpec As List(Of String)) As Boolean
-
-		Dim lstFileNameExclusionSpec = New List(Of String)
-		Const maxRetryCount = 3
-		Const copySubfolders = False
-
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks>Will retry failed copies up to 3 times</remarks>
-	Protected Function SynchronizeFolders(
-	  ByVal sourceFolderPath As String,
-	  ByVal targetFolderPath As String,
-	  ByVal lstFileNameFilterSpec As List(Of String),
-	  ByVal lstFileNameExclusionSpec As List(Of String)) As Boolean
-
-		Const maxRetryCount = 3
-		Const copySubfolders = False
-
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
-	''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function SynchronizeFolders(
-	  ByVal sourceFolderPath As String,
-	  ByVal targetFolderPath As String,
-	  ByVal lstFileNameFilterSpec As List(Of String),
-	  ByVal lstFileNameExclusionSpec As List(Of String),
-	  ByVal maxRetryCount As Integer) As Boolean
-
-		Const copySubfolders = False
-		Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-
-	End Function
-
-	''' <summary>
-	''' Copies new/changed files from the source folder to the target folder
-	''' </summary>
-	''' <param name="sourceFolderPath"></param>
-	''' <param name="targetFolderPath"></param>
-	''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-	''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
-	''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
-	''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function SynchronizeFolders(
-	  ByVal sourceFolderPath As String,
-	  ByVal targetFolderPath As String,
-	  ByVal lstFileNameFilterSpec As List(Of String),
-	  ByVal lstFileNameExclusionSpec As List(Of String),
-	  ByVal maxRetryCount As Integer,
-	  ByVal copySubfolders As Boolean) As Boolean
-
-		Try
-			Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
-			Dim diTargetFolder = New DirectoryInfo(targetFolderPath)
-
-			If Not diTargetFolder.Exists Then
-				diTargetFolder.Create()
-			End If
-
-			If lstFileNameFilterSpec Is Nothing Then
-				lstFileNameFilterSpec = New List(Of String)
-			End If
-
-			If lstFileNameFilterSpec.Count = 0 Then lstFileNameFilterSpec.Add("*")
-
-			Dim lstFilesToCopy = New SortedSet(Of String)
-
-			For Each filterSpec In lstFileNameFilterSpec
-				If String.IsNullOrWhiteSpace(filterSpec) Then
-					filterSpec = "*"
-				End If
-
-				For Each fiFile In diSourceFolder.GetFiles(filterSpec)
-					If Not lstFilesToCopy.Contains(fiFile.Name) Then
-						lstFilesToCopy.Add(fiFile.Name)
-					End If
-				Next
-			Next
-
-			If Not lstFileNameExclusionSpec Is Nothing AndAlso lstFileNameExclusionSpec.Count > 0 Then
-				' Remove any files from lstFilesToCopy that would get matched by items in lstFileNameExclusionSpec
-
-				For Each filterSpec In lstFileNameExclusionSpec
-					If Not String.IsNullOrWhiteSpace(filterSpec) Then
-						For Each fiFile In diSourceFolder.GetFiles(filterSpec)
-							If lstFilesToCopy.Contains(fiFile.Name) Then
-								lstFilesToCopy.Remove(fiFile.Name)
-							End If
-						Next
-					End If
-				Next
-			End If
-
-			For Each fileName In lstFilesToCopy
-				Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, fileName))
-				Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fileName))
-				Dim copyFile = False
-
-				If Not fiTargetFile.Exists Then
-					copyFile = True
-				ElseIf fiTargetFile.Length <> fiSourceFile.Length Then
-					copyFile = True
-				ElseIf fiTargetFile.LastWriteTimeUtc < fiSourceFile.LastWriteTimeUtc Then
-					copyFile = True
-				End If
-
-				If copyFile Then
-					Dim retriesRemaining = maxRetryCount
-
-					Dim success = False
-					While Not success
-						success = m_FileTools.CopyFileUsingLocks(fiSourceFile, fiTargetFile.FullName, m_MachName, True)
-						If Not success Then
-							retriesRemaining -= 1
-							If retriesRemaining < 0 Then
-								m_message = "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName
-								Return False
-							End If
-
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName & "; RetriesRemaining: " & retriesRemaining)
-
-							' Wait 2 seconds then try again
-							Thread.Sleep(2000)
-						End If
-					End While
-
-				End If
-			Next
-
-			If copySubfolders Then
-				Dim lstSubFolders = diSourceFolder.GetDirectories()
-
-				For Each diSubFolder In lstSubFolders
-					Dim subfolderTargetPath = Path.Combine(targetFolderPath, diSubFolder.Name)
-					Dim success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
-
-					If Not success Then
-						m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetFolderPath
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-						Exit For
-					End If
-
-				Next
-			End If
-
-		Catch ex As Exception
-			m_message = "Error in SynchronizeFolders"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Updates the analysis summary file
-	''' </summary>
-	''' <returns>TRUE for success, FALSE for failure</returns>
-	''' <remarks></remarks>
-	Protected Function UpdateSummaryFile() As Boolean
-		Dim strTool As String
-		Dim strToolAndStepTool As String
-		Try
-			'Add a separator
-			m_SummaryFile.Add(Environment.NewLine)
-			m_SummaryFile.Add("=====================================================================================")
-			m_SummaryFile.Add(Environment.NewLine)
-
-			' Construct the Tool description (combination of Tool name and Step Tool name)
-			strTool = m_jobParams.GetParam("ToolName")
-
-			strToolAndStepTool = m_jobParams.GetParam("StepTool")
-			If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
-
-			If strToolAndStepTool <> strTool Then
-				If strToolAndStepTool.Length > 0 Then
-					strToolAndStepTool &= " (" & strTool & ")"
-				Else
-					strToolAndStepTool &= strTool
-				End If
-			End If
-
-			'Add the data
-			m_SummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
-			m_SummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
-			m_SummaryFile.Add("Date" & ControlChars.Tab & DateTime.Now().ToString)
-			m_SummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
-			m_SummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
-			m_SummaryFile.Add("Dataset Name" & ControlChars.Tab & m_Dataset)
-			m_SummaryFile.Add("Xfer Folder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
-			m_SummaryFile.Add("Param File Name" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
-			m_SummaryFile.Add("Settings File Name" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
-			m_SummaryFile.Add("Legacy Organism Db Name" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
-			m_SummaryFile.Add("Protein Collection List" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
-			m_SummaryFile.Add("Protein Options List" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
-			m_SummaryFile.Add("Fasta File Name" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-			m_SummaryFile.Add("Analysis Time (hh:mm:ss)" & ControlChars.Tab & CalcElapsedTime(m_StartTime, m_StopTime))
-
-			'Add another separator
-			m_SummaryFile.Add(Environment.NewLine)
-			m_SummaryFile.Add("=====================================================================================")
-			m_SummaryFile.Add(Environment.NewLine)
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
-			 & " - " & ex.Message)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	''' <summary>
-	''' Unzips all files in the specified Zip file
-	''' Output folder is m_WorkDir
-	''' </summary>
-	''' <param name="ZipFilePath">File to unzip</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function UnzipFile(ByVal ZipFilePath As String) As Boolean
-		Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
-	End Function
-
-	''' <summary>
-	''' Unzips all files in the specified Zip file
-	''' Output folder is TargetDirectory
-	''' </summary>
-	''' <param name="ZipFilePath">File to unzip</param>
-	''' <param name="TargetDirectory">Target directory for the extracted files</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
-		Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
-	End Function
-
-	''' <summary>
-	''' Unzips files in the specified Zip file that match the FileFilter spec
-	''' Output folder is TargetDirectory
-	''' </summary>
-	''' <param name="ZipFilePath">File to unzip</param>
-	''' <param name="TargetDirectory">Target directory for the extracted files</param>
-	''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
-		m_IonicZipTools.DebugLevel = m_DebugLevel
-		Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
-	End Function
-
-	''' <summary>
-	''' Make sure the _DTA.txt file exists and has at least one spectrum in it
-	''' </summary>
-	''' <returns>True if success; false if failure</returns>
-	''' <remarks></remarks>
-	Protected Function ValidateCDTAFile() As Boolean
-		Dim strDTAFilePath As String
-
-		strDTAFilePath = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
-
-		Return ValidateCDTAFile(strDTAFilePath)
-
-	End Function
-
-	Protected Function ValidateCDTAFile(ByVal strDTAFilePath As String) As Boolean
-
-		Dim strLineIn As String
-		Dim blnDataFound As Boolean = False
-
-		Try
-			If Not File.Exists(strDTAFilePath) Then
-				m_message = "_DTA.txt file not found"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDTAFilePath)
-				Return False
-			End If
-
-			Using srReader As StreamReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            swToolVersionFile.Close()
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Communicates with database to record the tool version(s) for the current step task
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+    ''' <returns>True for success, False for failure</returns>
+    ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+    Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String) As Boolean
+        Return SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
+    End Function
+
+    ''' <summary>
+    ''' Communicates with database to record the tool version(s) for the current step task
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+    ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+    ''' <returns>True for success, False for failure</returns>
+    ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+    Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+       ByVal ioToolFiles As List(Of FileInfo)) As Boolean
+
+        Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
+    End Function
+
+    ''' <summary>
+    ''' Communicates with database to record the tool version(s) for the current step task
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+    ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+    ''' <returns>True for success, False for failure</returns>
+    ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+    Protected Function SetStepTaskToolVersion(ByVal strToolVersionInfo As String, _
+       ByVal ioToolFiles As IEnumerable(Of FileInfo)) As Boolean
+
+        Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
+    End Function
+
+    ''' <summary>
+    ''' Communicates with database to record the tool version(s) for the current step task
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+    ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+    ''' <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+    ''' <returns>True for success, False for failure</returns>
+    ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+    Protected Function SetStepTaskToolVersion(
+      ByVal strToolVersionInfo As String,
+      ByVal ioToolFiles As IEnumerable(Of FileInfo),
+      ByVal blnSaveToolVersionTextFile As Boolean) As Boolean
+
+        Dim strExeInfo As String = String.Empty
+        Dim strToolVersionInfoCombined As String
+
+        Dim Outcome As Boolean
+        Dim ResCode As Integer
+
+        If Not ioToolFiles Is Nothing Then
+
+            For Each ioFileInfo As FileInfo In ioToolFiles
+                Try
+                    If ioFileInfo.Exists Then
+                        strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
+
+                        If m_DebugLevel >= 2 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
+                        End If
+
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
+                    End If
+
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
+                End Try
+            Next
+        End If
+
+        ' Append the .Exe info to strToolVersionInfo
+        If String.IsNullOrEmpty(strExeInfo) Then
+            strToolVersionInfoCombined = String.Copy(strToolVersionInfo)
+        Else
+            strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo)
+        End If
+
+        If blnSaveToolVersionTextFile Then
+            SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined)
+        End If
+
+        'Setup for execution of the stored procedure
+        Dim MyCmd As New SqlClient.SqlCommand
+        With MyCmd
+            .CommandType = CommandType.StoredProcedure
+            .CommandText = SP_NAME_SET_TASK_TOOL_VERSION
+
+            .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+            .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+            .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
+            .Parameters.Item("@job").Direction = ParameterDirection.Input
+            .Parameters.Item("@job").Value = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
+
+            .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
+            .Parameters.Item("@step").Direction = ParameterDirection.Input
+            .Parameters.Item("@step").Value = m_jobParams.GetJobParameter("StepParameters", "Step", 0)
+
+            .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
+            .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
+            .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
+        End With
+
+        Dim objAnalysisTask As clsAnalysisJob
+        Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
+
+        objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
+
+        'Execute the SP (retry the call up to 4 times)
+        ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
+
+        If ResCode = 0 Then
+            Outcome = True
+        Else
+            Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Outcome = False
+        End If
+
+        Return Outcome
+
+    End Function
+
+    ''' <summary>
+    ''' Uses Reflection to determine the version info for an assembly already loaded in memory
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+    ''' <param name="strAssemblyName">Assembly Name</param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
+    Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String) As Boolean
+        Return StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, strAssemblyName, blnIncludeRevision:=True)
+    End Function
+
+    ''' <summary>
+    ''' Uses Reflection to determine the version info for an assembly already loaded in memory
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+    ''' <param name="strAssemblyName">Assembly Name</param>
+    ''' <param name="blnIncludeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
+    Protected Function StoreToolVersionInfoForLoadedAssembly(ByRef strToolVersionInfo As String, ByVal strAssemblyName As String, ByVal blnIncludeRevision As Boolean) As Boolean
+
+        Try
+            Dim oAssemblyName As Reflection.AssemblyName
+            oAssemblyName = Reflection.Assembly.Load(strAssemblyName).GetName
+
+            Dim strNameAndVersion As String
+            If blnIncludeRevision Then
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+            Else
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.Major & "." & oAssemblyName.Version.Minor & "." & oAssemblyName.Version.Build
+            End If
+
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & strAssemblyName & ": " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Determines the version info for a .NET DLL using reflection
+    ''' If reflection fails, then uses System.Diagnostics.FileVersionInfo
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+    ''' <param name="strDLLFilePath">Path to the DLL</param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+
+        Dim ioFileInfo As FileInfo
+        Dim blnSuccess As Boolean
+
+        Try
+            ioFileInfo = New FileInfo(strDLLFilePath)
+
+            If Not ioFileInfo.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
+                Return False
+            Else
+
+                Dim oAssemblyName As Reflection.AssemblyName
+                oAssemblyName = Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
+
+                Dim strNameAndVersion As String
+                strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+                blnSuccess = True
+            End If
+
+        Catch ex As BadImageFormatException
+            ' Most likely trying to read a 64-bit DLL
+            ' Instead try StoreToolVersionInfoOneFile64Bit
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
+
+        Catch ex As Exception
+            ' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
+            '  <startup useLegacyV2RuntimeActivationPolicy="true">
+            '    <supportedRuntime version="v4.0" />
+            '  </startup>
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+            blnSuccess = False
+        End Try
+
+        If Not blnSuccess Then
+            blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLFilePath)
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
+    ''' </summary>
+    ''' <param name="strToolVersionInfo">Version info string to append the version info to</param>
+    ''' <param name="strDLLFilePath">Path to the DLL</param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+        Dim ioFileInfo As FileInfo
+        Dim blnSuccess As Boolean
+
+        Try
+            ioFileInfo = New FileInfo(strDLLFilePath)
+
+            If Not ioFileInfo.Exists Then
+                m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strDLLFilePath)
+                Return False
+            Else
+
+                Dim oFileVersionInfo As FileVersionInfo
+                oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath)
+
+                Dim strName As String
+                Dim strVersion As String
+
+                strName = oFileVersionInfo.FileDescription
+                If String.IsNullOrEmpty(strName) Then
+                    strName = oFileVersionInfo.InternalName
+                End If
+
+                If String.IsNullOrEmpty(strName) Then
+                    strName = oFileVersionInfo.FileName
+                End If
+
+                If String.IsNullOrEmpty(strName) Then
+                    strName = ioFileInfo.Name
+                End If
+
+                strVersion = oFileVersionInfo.FileVersion
+                If String.IsNullOrEmpty(strVersion) Then
+                    strVersion = oFileVersionInfo.ProductVersion
+                End If
+
+                If String.IsNullOrEmpty(strVersion) Then
+                    strVersion = "??"
+                End If
+
+                Dim strNameAndVersion As String
+                strNameAndVersion = strName & ", Version=" & strVersion
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+                blnSuccess = True
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception determining File Version for " & Path.GetFileName(strDLLFilePath)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            blnSuccess = False
+        End Try
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
+    ''' </summary>
+    ''' <param name="strToolVersionInfo"></param>
+    ''' <param name="strDLLFilePath"></param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoOneFile64Bit(ByRef strToolVersionInfo As String, ByVal strDLLFilePath As String) As Boolean
+
+        Dim strNameAndVersion As String = String.Empty
+        Dim strAppPath As String
+        Dim strVersionInfoFilePath As String
+        Dim strArgs As String
+
+        Dim ioFileInfo As FileInfo
+
+        Try
+            strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), "DLLVersionInspector.exe")
+
+            ioFileInfo = New FileInfo(strDLLFilePath)
+            strNameAndVersion = Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
+
+            If Not ioFileInfo.Exists Then
+                m_message = "File not found by StoreToolVersionInfoOneFile64Bit"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
+                Return False
+            ElseIf Not File.Exists(strAppPath) Then
+                m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
+                Return False
+            Else
+                ' Call DLLVersionInspector.exe to determine the tool version
+
+                strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
+
+                Dim objProgRunner As clsRunDosProgram
+                Dim blnSuccess As Boolean
+                Dim strVersion As String = String.Empty
+
+                objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
+
+                strArgs = ioFileInfo.FullName & " /O:" & PossiblyQuotePath(strVersionInfoFilePath)
+
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath & " " & strArgs)
+                End If
+
+                With objProgRunner
+                    .CacheStandardOutput = False
+                    .CreateNoWindow = True
+                    .EchoOutputToConsole = True
+                    .WriteConsoleOutputToFile = False
+
+                    .DebugLevel = 1
+                    .MonitorInterval = 250
+                End With
+
+                blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
+
+                If Not blnSuccess Then
+                    Return False
+                End If
+
+                Thread.Sleep(100)
+
+                blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
+
+                ' Delete the version info file
+                Try
+                    Thread.Sleep(100)
+                    File.Delete(strVersionInfoFilePath)
+                Catch ex As Exception
+                    ' Ignore errors here
+                End Try
+
+
+                If Not blnSuccess OrElse String.IsNullOrWhiteSpace(strVersion) Then
+                    Return False
+                Else
+                    strNameAndVersion = String.Copy(strVersion)
+                End If
+
+            End If
+
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+            Return True
+
+        Catch ex As Exception
+            m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
+        End Try
+
+        Return False
+
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String) As Boolean
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, "*")
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function SynchronizeFolders(ByVal sourceFolderPath As String, ByVal targetFolderPath As String, ByVal copySubfolders As Boolean) As Boolean
+
+        Dim lstFileNameFilterSpec = New List(Of String) From {"*"}
+        Dim lstFileNameExclusionSpec = New List(Of String)
+        Const maxRetryCount = 3
+
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks>Will retry failed copies up to 3 times</remarks>
+    Protected Function SynchronizeFolders(
+      ByVal sourceFolderPath As String,
+      ByVal targetFolderPath As String,
+      ByVal fileNameFilterSpec As String) As Boolean
+
+        Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}
+        Dim lstFileNameExclusionSpec = New List(Of String)
+        Const maxRetryCount = 3
+        Const copySubfolders = False
+
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks>Will retry failed copies up to 3 times</remarks>
+    Protected Function SynchronizeFolders(
+      ByVal sourceFolderPath As String,
+      ByVal targetFolderPath As String,
+      ByVal lstFileNameFilterSpec As List(Of String)) As Boolean
+
+        Dim lstFileNameExclusionSpec = New List(Of String)
+        Const maxRetryCount = 3
+        Const copySubfolders = False
+
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+    ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks>Will retry failed copies up to 3 times</remarks>
+    Protected Function SynchronizeFolders(
+      ByVal sourceFolderPath As String,
+      ByVal targetFolderPath As String,
+      ByVal lstFileNameFilterSpec As List(Of String),
+      ByVal lstFileNameExclusionSpec As List(Of String)) As Boolean
+
+        Const maxRetryCount = 3
+        Const copySubfolders = False
+
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+    ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+    ''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function SynchronizeFolders(
+      ByVal sourceFolderPath As String,
+      ByVal targetFolderPath As String,
+      ByVal lstFileNameFilterSpec As List(Of String),
+      ByVal lstFileNameExclusionSpec As List(Of String),
+      ByVal maxRetryCount As Integer) As Boolean
+
+        Const copySubfolders = False
+        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+
+    End Function
+
+    ''' <summary>
+    ''' Copies new/changed files from the source folder to the target folder
+    ''' </summary>
+    ''' <param name="sourceFolderPath"></param>
+    ''' <param name="targetFolderPath"></param>
+    ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+    ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+    ''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
+    ''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function SynchronizeFolders(
+      ByVal sourceFolderPath As String,
+      ByVal targetFolderPath As String,
+      ByVal lstFileNameFilterSpec As List(Of String),
+      ByVal lstFileNameExclusionSpec As List(Of String),
+      ByVal maxRetryCount As Integer,
+      ByVal copySubfolders As Boolean) As Boolean
+
+        Try
+            Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
+            Dim diTargetFolder = New DirectoryInfo(targetFolderPath)
+
+            If Not diTargetFolder.Exists Then
+                diTargetFolder.Create()
+            End If
+
+            If lstFileNameFilterSpec Is Nothing Then
+                lstFileNameFilterSpec = New List(Of String)
+            End If
+
+            If lstFileNameFilterSpec.Count = 0 Then lstFileNameFilterSpec.Add("*")
+
+            Dim lstFilesToCopy = New SortedSet(Of String)
+
+            For Each filterSpec In lstFileNameFilterSpec
+                If String.IsNullOrWhiteSpace(filterSpec) Then
+                    filterSpec = "*"
+                End If
+
+                For Each fiFile In diSourceFolder.GetFiles(filterSpec)
+                    If Not lstFilesToCopy.Contains(fiFile.Name) Then
+                        lstFilesToCopy.Add(fiFile.Name)
+                    End If
+                Next
+            Next
+
+            If Not lstFileNameExclusionSpec Is Nothing AndAlso lstFileNameExclusionSpec.Count > 0 Then
+                ' Remove any files from lstFilesToCopy that would get matched by items in lstFileNameExclusionSpec
+
+                For Each filterSpec In lstFileNameExclusionSpec
+                    If Not String.IsNullOrWhiteSpace(filterSpec) Then
+                        For Each fiFile In diSourceFolder.GetFiles(filterSpec)
+                            If lstFilesToCopy.Contains(fiFile.Name) Then
+                                lstFilesToCopy.Remove(fiFile.Name)
+                            End If
+                        Next
+                    End If
+                Next
+            End If
+
+            For Each fileName In lstFilesToCopy
+                Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, fileName))
+                Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fileName))
+                Dim copyFile = False
+
+                If Not fiTargetFile.Exists Then
+                    copyFile = True
+                ElseIf fiTargetFile.Length <> fiSourceFile.Length Then
+                    copyFile = True
+                ElseIf fiTargetFile.LastWriteTimeUtc < fiSourceFile.LastWriteTimeUtc Then
+                    copyFile = True
+                End If
+
+                If copyFile Then
+                    Dim retriesRemaining = maxRetryCount
+
+                    Dim success = False
+                    While Not success
+                        success = m_FileTools.CopyFileUsingLocks(fiSourceFile, fiTargetFile.FullName, m_MachName, True)
+                        If Not success Then
+                            retriesRemaining -= 1
+                            If retriesRemaining < 0 Then
+                                m_message = "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName
+                                Return False
+                            End If
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName & "; RetriesRemaining: " & retriesRemaining)
+
+                            ' Wait 2 seconds then try again
+                            Thread.Sleep(2000)
+                        End If
+                    End While
+
+                End If
+            Next
+
+            If copySubfolders Then
+                Dim lstSubFolders = diSourceFolder.GetDirectories()
+
+                For Each diSubFolder In lstSubFolders
+                    Dim subfolderTargetPath = Path.Combine(targetFolderPath, diSubFolder.Name)
+                    Dim success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+
+                    If Not success Then
+                        m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetFolderPath
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        Exit For
+                    End If
+
+                Next
+            End If
+
+        Catch ex As Exception
+            m_message = "Error in SynchronizeFolders"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Updates the analysis summary file
+    ''' </summary>
+    ''' <returns>TRUE for success, FALSE for failure</returns>
+    ''' <remarks></remarks>
+    Protected Function UpdateSummaryFile() As Boolean
+        Dim strTool As String
+        Dim strToolAndStepTool As String
+        Try
+            'Add a separator
+            m_SummaryFile.Add(Environment.NewLine)
+            m_SummaryFile.Add("=====================================================================================")
+            m_SummaryFile.Add(Environment.NewLine)
+
+            ' Construct the Tool description (combination of Tool name and Step Tool name)
+            strTool = m_jobParams.GetParam("ToolName")
+
+            strToolAndStepTool = m_jobParams.GetParam("StepTool")
+            If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
+
+            If strToolAndStepTool <> strTool Then
+                If strToolAndStepTool.Length > 0 Then
+                    strToolAndStepTool &= " (" & strTool & ")"
+                Else
+                    strToolAndStepTool &= strTool
+                End If
+            End If
+
+            'Add the data
+            m_SummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
+            m_SummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
+            m_SummaryFile.Add("Date" & ControlChars.Tab & DateTime.Now().ToString)
+            m_SummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
+            m_SummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
+            m_SummaryFile.Add("Dataset Name" & ControlChars.Tab & m_Dataset)
+            m_SummaryFile.Add("Xfer Folder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
+            m_SummaryFile.Add("Param File Name" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
+            m_SummaryFile.Add("Settings File Name" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
+            m_SummaryFile.Add("Legacy Organism Db Name" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
+            m_SummaryFile.Add("Protein Collection List" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
+            m_SummaryFile.Add("Protein Options List" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
+            m_SummaryFile.Add("Fasta File Name" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            m_SummaryFile.Add("Analysis Time (hh:mm:ss)" & ControlChars.Tab & CalcElapsedTime(m_StartTime, m_StopTime))
+
+            'Add another separator
+            m_SummaryFile.Add(Environment.NewLine)
+            m_SummaryFile.Add("=====================================================================================")
+            m_SummaryFile.Add(Environment.NewLine)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
+             & " - " & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    ''' <summary>
+    ''' Unzips all files in the specified Zip file
+    ''' Output folder is m_WorkDir
+    ''' </summary>
+    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function UnzipFile(ByVal ZipFilePath As String) As Boolean
+        Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
+    End Function
+
+    ''' <summary>
+    ''' Unzips all files in the specified Zip file
+    ''' Output folder is TargetDirectory
+    ''' </summary>
+    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String) As Boolean
+        Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
+    End Function
+
+    ''' <summary>
+    ''' Unzips files in the specified Zip file that match the FileFilter spec
+    ''' Output folder is TargetDirectory
+    ''' </summary>
+    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+    ''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
+        m_IonicZipTools.DebugLevel = m_DebugLevel
+        Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
+    End Function
+
+    ''' <summary>
+    ''' Make sure the _DTA.txt file exists and has at least one spectrum in it
+    ''' </summary>
+    ''' <returns>True if success; false if failure</returns>
+    ''' <remarks></remarks>
+    Protected Function ValidateCDTAFile() As Boolean
+        Dim strDTAFilePath As String
+
+        strDTAFilePath = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
+
+        Return ValidateCDTAFile(strDTAFilePath)
+
+    End Function
+
+    Protected Function ValidateCDTAFile(ByVal strDTAFilePath As String) As Boolean
+
+        Dim strLineIn As String
+        Dim blnDataFound As Boolean = False
+
+        Try
+            If Not File.Exists(strDTAFilePath) Then
+                m_message = "_DTA.txt file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDTAFilePath)
+                Return False
+            End If
+
+            Using srReader As StreamReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Do While Not srReader.EndOfStream
                     strLineIn = srReader.ReadLine()
@@ -2821,73 +2839,73 @@ Public Class clsAnalysisToolRunnerBase
                     End If
                 Loop
 
-			End Using
+            End Using
 
-			If Not blnDataFound Then
-				m_message = "The _DTA.txt file is empty"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			End If
+            If Not blnDataFound Then
+                m_message = "The _DTA.txt file is empty"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            End If
 
-		Catch ex As Exception
-			m_message = "Exception in ValidateCDTAFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in ValidateCDTAFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
 
-		Return blnDataFound
+        Return blnDataFound
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Stores SourceFilePath in a zip file with the same name, but extension .zip
-	''' </summary>
-	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
-	''' <returns>True if success; false if an error</returns>
-	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
+    ''' <summary>
+    ''' Stores SourceFilePath in a zip file with the same name, but extension .zip
+    ''' </summary>
+    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <returns>True if success; false if an error</returns>
+    Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean) As Boolean
 
-		Dim blnSuccess As Boolean
-		m_IonicZipTools.DebugLevel = m_DebugLevel
+        Dim blnSuccess As Boolean
+        m_IonicZipTools.DebugLevel = m_DebugLevel
 
-		blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
+        blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
 
-		If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
-			m_NeedToAbortProcessing = True
-		End If
+        If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+            m_NeedToAbortProcessing = True
+        End If
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Stores SourceFilePath in a zip file named ZipfilePath
-	''' </summary>
-	''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-	''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
-	''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-	''' <returns>True if success; false if an error</returns>
-	Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean, ByVal ZipFilePath As String) As Boolean
-		Dim blnSuccess As Boolean
-		m_IonicZipTools.DebugLevel = m_DebugLevel
-		blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
+    ''' <summary>
+    ''' Stores SourceFilePath in a zip file named ZipfilePath
+    ''' </summary>
+    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+    ''' <returns>True if success; false if an error</returns>
+    Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean, ByVal ZipFilePath As String) As Boolean
+        Dim blnSuccess As Boolean
+        m_IonicZipTools.DebugLevel = m_DebugLevel
+        blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
 
-		If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
-			m_NeedToAbortProcessing = True
-		End If
+        If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+            m_NeedToAbortProcessing = True
+        End If
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 #Region "Event Handlers"
-	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-		If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
-			m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
-			End If
-		End If
-	End Sub
+    Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+        If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
+            m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+            End If
+        End If
+    End Sub
 
 #End Region
 

@@ -1711,6 +1711,31 @@ Public Class clsCodeTest
 
 	End Sub
 
+    Public Sub TestMSXmlCachePurge()
+
+        Const intDebugLevel As Integer = 2
+
+        Dim objToolRunner As clsCodeTestAM
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+        Dim objSummaryFile As New clsSummaryFile()
+
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "0")
+
+        objToolRunner = New clsCodeTestAM
+        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+
+        Const cacheFolderPath As String = "\\proto-11\MSXML_Cache"
+
+        Try
+            objToolRunner.PurgeOldServerCacheFiles(cacheFolderPath)
+        Catch ex As Exception
+            Console.WriteLine("Error calling PurgeOldServerCacheFiles: " & ex.Message)
+        End Try
+
+    End Sub
 	''' <summary>
 	''' Look for the .PEK and .PAR files in the specified folder
 	''' Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
