@@ -192,6 +192,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Dim currentScan = 0
         Dim lastValidScan = 0
         Dim reScanNumber = New Regex("Scan = (\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Dim reScanNumberFromFilename = New Regex("Filename: .+ Scan.(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Dim lstClosingMessages = New List(Of String)
         lstClosingMessages.Add("Number of isotopic distributions detected")
@@ -205,6 +206,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                     If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
                     Dim reMatch = reScanNumber.Match(dataLine)
+                    If Not reMatch.Success Then
+                        reMatch = reScanNumberFromFilename.Match(dataLine)
+                    End If
+
                     If reMatch.Success Then
                         Integer.TryParse(reMatch.Groups(1).Value, currentScan)
                     End If
@@ -559,8 +564,6 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         '
         ' See clsAnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders 
 
-        ' TODO: For 12T datasets with .D folders, need to send the path to the apexAcquisition.method file in the .M folder
-
         Select Case eICR2LSMode
             Case ICR2LSProcessingModeConstants.SerFolderPEK, ICR2LSProcessingModeConstants.SerFolderTIC
                 strArguments = " /I:" & PossiblyQuotePath(instrumentFilePath) & "\acqus /P:" & PossiblyQuotePath(paramFilePath) & " /O:" & PossiblyQuotePath(resultsFileNamePath)
@@ -630,8 +633,20 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strExeFilePath & strArguments)
         End If
 
+        If strArguments.Length > 250 Then
+            ' VB6 programs cannot parse command lines over 255 characters in length
+            ' Save the arguments to a text file and then call ICR2LS using the /R switch
+
+            Dim commandLineFilePath = Path.GetTempFileName()
+            Using swCommandLineFile = New StreamWriter(New FileStream(commandLineFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swCommandLineFile.WriteLine(strArguments)
+            End Using
+
+            strArguments = "/R:" & PossiblyQuotePath(commandLineFilePath)
+        End If
+
         ' Start ICR-2LS.  Note that .Runprogram will not return until after the ICR2LS.exe closes
-        ' However, it will raise a Loop Waiting event every MONITOR_INTERVAL_SECONDS seconds
+        ' However, it will raise a Loop Waiting event every MONITOR_INTERVAL_SECONDS seconds (see CmdRunner_LoopWaiting)
         blnSuccess = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", True)
 
         ' Pause for another 2 seconds to make sure ICR-2LS closes

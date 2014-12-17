@@ -202,11 +202,7 @@ Public Class clsAnalysisToolRunnerICR
 				End If
 
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			Else
-				' Make sure the .pek file and .Par file are named properly
-				currentTask = "FixICR2LSResultFileNames"
-				FixICR2LSResultFileNames(m_WorkDir, m_Dataset)
-			End If
+            End If
 
 			'Run the cleanup routine from the base class
 			currentTask = "PerfPostAnalysisTasks"
