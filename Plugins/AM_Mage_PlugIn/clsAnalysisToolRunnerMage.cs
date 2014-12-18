@@ -265,6 +265,21 @@ namespace AnalysisManager_Mage_PlugIn
 						lstIonColumns.Add("Ion_121");
 					}
 
+                    if (workFlowSteps.Contains("TMT10Plex"))
+                    {
+                        // 10-plex TMT
+                        labelingScheme = "TMT10Plex";
+                        lstIonColumns.Add("Ion_126.128");
+                        lstIonColumns.Add("Ion_127.125");
+                        lstIonColumns.Add("Ion_127.131");
+                        lstIonColumns.Add("Ion_128.128");
+                        lstIonColumns.Add("Ion_128.134");
+                        lstIonColumns.Add("Ion_129.131");
+                        lstIonColumns.Add("Ion_129.138");
+                        lstIonColumns.Add("Ion_130.135");
+                        lstIonColumns.Add("Ion_130.141");
+                    }
+
 					if (lstIonColumns.Count > 0)
 					{
 						if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage))
