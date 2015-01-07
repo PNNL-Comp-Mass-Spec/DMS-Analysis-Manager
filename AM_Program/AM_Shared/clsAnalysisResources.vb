@@ -1720,6 +1720,10 @@ Public MustInherit Class clsAnalysisResources
 		Dim FolderExtensionWildcard As String = "*" + FolderExtension
 		Dim ServerPath As String = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard, RetrievingInstrumentDataFolder:=True)
 
+        If (ServerPath.StartsWith(MYEMSL_PATH_FLAG)) Then
+            Return ServerPath
+        End If
+
 		Dim diDatasetFolder As DirectoryInfo = New DirectoryInfo(ServerPath)
 
 		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
@@ -5547,7 +5551,18 @@ Public MustInherit Class clsAnalysisResources
 
 		'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
 		Dim DSFolderPath As String = FindDotXFolder(FolderExtension)
-		If String.IsNullOrEmpty(DSFolderPath) Then Return False
+
+        If String.IsNullOrEmpty(DSFolderPath) Then
+            Return False
+        End If
+
+        If (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG)) Then
+            ' Queue the MyEMSL files for download
+            For Each udtArchiveFile In m_RecentlyFoundMyEMSLFiles
+                m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(udtArchiveFile.FileInfo)
+            Next
+            Return True
+        End If
 
 		'Do the copy
 		Try

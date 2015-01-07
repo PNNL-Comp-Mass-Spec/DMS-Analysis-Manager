@@ -41,9 +41,9 @@ Public Class clsAnalysisResourcesMSXMLBruker
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

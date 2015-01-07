@@ -411,13 +411,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
         Dim pekConversionSuccess As Boolean
 
-        If blnCopyResultsToServer Then
-            ' Use the PEK file to create DeconTools compatible _isos.csv and _scans.csv files
-            Dim pekFilePath = Path.Combine(m_WorkDir, m_Dataset & ".pek")
-            pekConversionSuccess = ConvertPekToCsv(pekFilePath)
-        Else
-            pekConversionSuccess = True
-        End If
+        ' Use the PEK file to create DeconTools compatible _isos.csv and _scans.csv files
+        ' Create this CSV file even if ICR-2LS did not successfully finish
+        Dim pekFilePath = Path.Combine(m_WorkDir, m_Dataset & ".pek")
+        pekConversionSuccess = ConvertPekToCsv(pekFilePath)
 
         ' Get rid of raw data file
         result = DeleteDataFile()
@@ -446,7 +443,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             End If
         End If
 
-        If pekConversionSuccess Then
+        If pekConversionSuccess Or Not blnCopyResultsToServer Then
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         End If
 
@@ -643,6 +640,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             End Using
 
             strArguments = "/R:" & PossiblyQuotePath(commandLineFilePath)
+
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command line is over 250 characters long; will use /R instead")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " & strExeFilePath & strArguments)
+            End If
+
         End If
 
         ' Start ICR-2LS.  Note that .Runprogram will not return until after the ICR2LS.exe closes

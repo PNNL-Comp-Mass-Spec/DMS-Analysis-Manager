@@ -52,6 +52,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Protected mSkipMzRefinery As Boolean
     Protected m_UnableToUseMzRefinery As Boolean
+    Protected m_ForceGeneratePPMErrorPlots As Boolean
 
     Protected mMzRefineryCorrectionMode As String
     Protected mMzRefinerGoodDataPoints As Integer
@@ -92,6 +93,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             mMzRefinerSpecEValueThreshold = 0.0000000001
 
             m_UnableToUseMzRefinery = False
+            m_ForceGeneratePPMErrorPlots = False
 
             ' Verify that program files exist
 
@@ -170,7 +172,6 @@ Public Class clsAnalysisToolRunnerMzRefinery
                         ' No valid peak was found; a result file may not exist
                         fiFixedMzMLFile.Refresh()
                         If Not fiFixedMzMLFile.Exists Then
-
                             ' Rename the original file to have the expected name of the fixed mzML file
                             ' Required for PostProcessMzRefineryResults to work properly
                             fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
@@ -197,6 +198,17 @@ Public Class clsAnalysisToolRunnerMzRefinery
             End If
 
             If m_UnableToUseMzRefinery Then
+
+                fiMSGFPlusResults.Refresh()
+                If m_ForceGeneratePPMErrorPlots AndAlso fiMSGFPlusResults.Exists Then
+                    Try
+                        StartPpmErrorCharter(fiMSGFPlusResults)
+                    Catch ex As Exception
+                        ' Treat this as a warning
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating PPMError plots for debugging purposes", ex)
+                    End Try
+                End If
+
                 Using swMessageFile = New StreamWriter(New FileStream(Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"), FileMode.Create, FileAccess.Write, FileShare.Read))
                     swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " & m_JobNum & ".")
                     swMessageFile.WriteLine("The files can be used to investigate the MzRefinery failure.")
@@ -1022,7 +1034,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             Using swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
             End Using
-            
+
         End If
 
         ' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
@@ -1060,10 +1072,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 m_message = "No high-resolution data in input file; cannot use MzRefinery on this dataset"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 m_UnableToUseMzRefinery = True
+                m_ForceGeneratePPMErrorPlots = False
             ElseIf mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found") Then
                 m_message = "Signficant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 m_UnableToUseMzRefinery = True
+                m_ForceGeneratePPMErrorPlots = True
             End If
         End If
 
@@ -1077,6 +1091,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    m_ForceGeneratePPMErrorPlots = True
                 End If
             Else
                 m_message = Msg
