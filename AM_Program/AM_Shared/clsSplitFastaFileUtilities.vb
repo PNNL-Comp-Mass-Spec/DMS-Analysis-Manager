@@ -250,7 +250,11 @@ Public Class clsSplitFastaFileUtilities
 					.Parameters.Item("@NumResidues").Direction = ParameterDirection.Input
 					.Parameters.Item("@NumResidues").Value = udtFileInfo.NumResidues
 
-					.Parameters.Add(New SqlClient.SqlParameter("@Message", SqlDbType.VarChar, 512))
+                    .Parameters.Add(New SqlClient.SqlParameter("@FileSizeKB", SqlDbType.Int))
+                    .Parameters.Item("@FileSizeKB").Direction = ParameterDirection.Input
+                    .Parameters.Item("@FileSizeKB").Value = (fiSplitFastaFile.Length / 1024.0).ToString("0")
+
+                    .Parameters.Add(New SqlClient.SqlParameter("@Message", SqlDbType.VarChar, 512))
 					.Parameters.Item("@Message").Direction = ParameterDirection.InputOutput
 					.Parameters.Item("@Message").Value = String.Empty
 
