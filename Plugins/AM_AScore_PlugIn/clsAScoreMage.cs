@@ -210,7 +210,9 @@ namespace AnalysisManager_AScore_PlugIn
 		/// <param name="jobsToProcess"></param>
 		private void ApplyAScoreToJobs(SimpleSink jobsToProcess)
 		{
-			var ascoreModule = new MageAScoreModule();
+            string connStr = m_mgrParams.RequireMgrParam("ConnectionString");
+
+            var ascoreModule = new MageAScoreModule(connStr);
 			ascoreModule.WarningMessageUpdated += ascoreModule_WarningMessageUpdated;
 
 			ascoreModule.ExtractionParms = GetExtractionParametersFromJobParameters();

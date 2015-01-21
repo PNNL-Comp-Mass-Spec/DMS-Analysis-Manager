@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -30,9 +31,12 @@ namespace AnalysisManager_AScore_PlugIn
 
 		#region Member Variables
 
+	    protected string mConnectionString;
+
 		protected string[] jobFieldNames;
 
 		// indexes to look up values for some key job fields
+	    protected int jobIdx;
 		protected int toolIdx;
 		protected int paramFileIdx;
 		protected int resultsFldrIdx;
@@ -60,8 +64,9 @@ namespace AnalysisManager_AScore_PlugIn
 		#region Constructors
 
 		// constructor
-		public MageAScoreModule()
+		public MageAScoreModule(string connectionString)
 		{
+		    mConnectionString = connectionString;
 			ExtractedResultsFileName = "extracted_results.txt";
 		}
 
@@ -81,6 +86,7 @@ namespace AnalysisManager_AScore_PlugIn
 			jobFieldNames = InputColumnDefs.Select(colDef => colDef.Name).ToArray();
 
 			// set up column indexes
+            jobIdx = InputColumnPos["Job"];
 			toolIdx = InputColumnPos["Tool"];
 			paramFileIdx = InputColumnPos["Parameter_File"];
 			resultsFldrIdx = InputColumnPos["Folder"];
@@ -98,14 +104,23 @@ namespace AnalysisManager_AScore_PlugIn
 				// extract contents of results file for current job to local file in working directory
 				BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
 				ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
-
+                
 				// copy DTA file for current job to working directory
-				string resultsFolderPath = vals[resultsFldrIdx];
+			    string jobText = vals[jobIdx];
+			    int jobNumber;
+			    if (!int.TryParse(jobText, out jobNumber))
+			    {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job number is not numeric: " + jobText);
+                    return false;
+			    }
+
+			    string resultsFolderPath = vals[resultsFldrIdx];
 				string paramFileNameForPSMTool = vals[paramFileIdx];
 				string datasetName = vals[datasetNameIdx];
 				string datasetType = vals[datasetTypeIdx];
-
-				string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath);
+                string analysisTool = vals[toolIdx];
+                
+				string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
 				if (string.IsNullOrEmpty(dtaFilePath))
 				{
 					return false;
@@ -289,7 +304,7 @@ namespace AnalysisManager_AScore_PlugIn
 		#region MageAScore Utility Methods
 
 		// look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
-		private string CopyDTAResults(string datasetName, string resultsFolderPath)
+		private string CopyDTAResults(string datasetName, string resultsFolderPath, int jobNumber, string toolName, string connectionString)
 		{
 			string dtaZipPathLocal;
 
@@ -299,11 +314,11 @@ namespace AnalysisManager_AScore_PlugIn
 			{
 				// Need to retrieve the _DTA.zip file from MyEMSL
 
-				dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, diResultsFolder);
+                dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, diResultsFolder, jobNumber, toolName, connectionString);
 			}
 			else
 			{
-				dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder);
+				dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder, jobNumber, toolName, connectionString);
 			}
 
 			// If we have changed the string from empty we have found the correct _dta.zip file
@@ -341,52 +356,22 @@ namespace AnalysisManager_AScore_PlugIn
 			return unzippedDtaResultsFilePath;
 		}
 
-		protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder)
+		protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
 		{
 			clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
 			var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
 
 			if (lstArchiveFiles.Count == 0)
 			{
-				// Look for the JobParameters file
-				lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("JobParameters_*.xml", diResultsFolder.Name, datasetName);
-				if (lstArchiveFiles.Count == 0)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "JobParameters XML file not found in folder " + diResultsFolder.FullName +
-										 "; unable to determine the DTA folder");
-					return null;
-				}
+				// Lookup the shared results folder name
+                var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
 
-				clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+                if (string.IsNullOrEmpty(dtaFolderName))
+                {
+                    // Error has already been logged
+                    return null;
+                }
 
-				if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(Path.GetTempPath(), Downloader.DownloadFolderLayout.FlatNoSubfolders))
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "Error downloading the JobParameters XML file from MyEMSL");
-					return null;
-				}
-
-				string jobParamFile = Path.Combine(Path.GetTempPath(), lstArchiveFiles.First().FileInfo.Filename);
-
-				string dtaFolderName = ReadJobParametersFile(jobParamFile);
-
-				try
-				{
-					File.Delete(jobParamFile);
-				}
-				// ReSharper disable once EmptyGeneralCatchClause
-				catch
-				{
-					// Ignore errors here
-				}
-
-				if (string.IsNullOrEmpty(dtaFolderName))
-				{
-					return null;
-				}
-
-				clsAScoreMagePipeline.mMyEMSLDatasetInfo.ClearDownloadQueue();
 				lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaFolderName, datasetName);
 
 				if (lstArchiveFiles.Count == 0)
@@ -412,7 +397,7 @@ namespace AnalysisManager_AScore_PlugIn
 		}
 
 
-		protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder)
+		protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
 		{
 			// Check if the dta is in the search tool's directory					
 			string dtaZipSourceFilePath;
@@ -425,20 +410,10 @@ namespace AnalysisManager_AScore_PlugIn
 			else
 			{
 				// File not found
-				// Examine the JobParameters file to determine the appropriate dta directory
+                // Prior to January 2015 we would examine the JobParameters file to determine the appropriate dta directory (by looking for parameter SharedResultsFolders)
+                // That method is not reliable, so we instead now query V_Job_Steps and V_Job_Steps_History
 
-				lstFiles = diResultsFolder.GetFiles("JobParameters_*.xml").ToList();
-				if (lstFiles.Count == 0)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "JobParameters XML file not found in folder " + diResultsFolder.FullName +
-										 "; unable to determine the DTA folder");
-					return null;
-				}
-
-				string jobParamFile = lstFiles.First().FullName;
-
-				string dtaFolderName = ReadJobParametersFile(jobParamFile);
+			    var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
 
 				if (string.IsNullOrEmpty(dtaFolderName))
 				{
@@ -481,7 +456,50 @@ namespace AnalysisManager_AScore_PlugIn
 			return dtaZipPathLocal;
 		}
 
-		private string ReadJobParametersFile(string jobParameterFilePath)
+        private string GetSharedResultFolderName(int jobNumber, string toolName, string connectionString)
+        {
+            try
+            {
+                string sqlWhere = "WHERE Job = " + jobNumber + " AND Tool LIKE '%" + toolName + "%' AND (ISNULL(Input_Folder, '') <> '')";
+
+                string sqlQuery = "";
+                sqlQuery += " SELECT Input_Folder, 1 AS Preference, GetDate() AS Saved FROM DMS_Pipeline.dbo.V_Job_Steps " + sqlWhere;
+                sqlQuery += " UNION ";
+                sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
+                sqlQuery += " ORDER BY Preference, saved";
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    using (var cmd = new SqlCommand(sqlQuery, connection))
+                    {
+                        connection.Open();
+
+                        var reader = cmd.ExecuteReader();
+                        if (!reader.HasRows)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                             "Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
+                            return string.Empty;
+                        }
+
+                        reader.Read();
+                        var sharedResultsFolder = reader.GetString(0);
+
+                        return sharedResultsFolder;
+                    }
+
+                }        
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error looking up the input folder for job " + jobNumber + " and tool " + toolName + " in GetSharedResultFolderName: " + ex.Message);
+                return string.Empty;
+            }
+           
+
+	    }
+
+	    private string ReadJobParametersFile(string jobParameterFilePath)
 		{
 			string dtaFolderName = string.Empty;
 
