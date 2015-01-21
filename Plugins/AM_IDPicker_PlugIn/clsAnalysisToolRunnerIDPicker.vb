@@ -92,7 +92,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 		Dim result As IJobParams.CloseOutType
 
-		Dim blnSkipIDPicker As Boolean = False
+        ' As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
+        Dim blnSkipIDPicker As Boolean = True
+
 		Dim blnProcessingError As Boolean = False
 
 		Dim blnSuccess As Boolean
@@ -179,17 +181,17 @@ Public Class clsAnalysisToolRunnerIDPicker
 				End If
 			End If
 
-			If String.IsNullOrEmpty(strDecoyPrefix) Then
-				m_EvalMessage = "No decoy proteins; skipping IDPicker"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-				blnSkipIDPicker = True
-			End If
+            If Not blnSkipIDPicker AndAlso String.IsNullOrEmpty(strDecoyPrefix) Then
+                m_EvalMessage = "No decoy proteins; skipping IDPicker"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+                blnSkipIDPicker = True
+            End If
 
-			If m_jobParams.GetJobParameter("SplitFasta", False) Then
-				blnSkipIDPicker = True
-				m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-			End If
+            If Not blnSkipIDPicker AndAlso m_jobParams.GetJobParameter("SplitFasta", False) Then
+                blnSkipIDPicker = True
+                m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+            End If
 
 			' Store the version of IDPicker and PeptideListToXML in the database
 			' Alternatively, if blnSkipIDPicker is true, then just store the version of PeptideListToXML
