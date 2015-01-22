@@ -3,8 +3,6 @@
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
-'
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -229,7 +227,8 @@ Public MustInherit Class clsAnalysisResources
 #Region "Module variables"
 	Protected m_jobParams As IJobParams
 	Protected m_mgrParams As IMgrParams
-	Protected m_WorkingDir As String
+    Protected m_WorkingDir As String
+    Protected m_JobNum As Integer
 	Protected m_DatasetName As String
 	Protected m_message As String
 	Protected m_DebugLevel As Short
@@ -361,7 +360,13 @@ Public MustInherit Class clsAnalysisResources
 		m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
 
 		m_WorkingDir = m_mgrParams.GetParam("workdir")
-		m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
+
+        Dim jobNum = m_jobParams.GetParam("StepParameters", "Job")
+        If Not String.IsNullOrEmpty(jobNum) Then
+            Integer.TryParse(jobNum, m_JobNum)
+        End If
+
+        m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
 		m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 
