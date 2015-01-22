@@ -224,7 +224,8 @@ Public Class clsExtractToolRunner
 				Return Result
 			End If
 
-			' Everything succeeded; now delete the _msgfdb.tsv file from the server
+            ' Everything succeeded; now delete the _msgfdb.tsv file from the server
+            ' For SplitFasta files there will be multiple tsv files to delete, plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
 			RemoveNonResultServerFiles()
 
 		Catch ex As Exception
@@ -1091,18 +1092,21 @@ Public Class clsExtractToolRunner
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 				End If
 
-				If Not splitFastaEnabled Then
-					Try
-						' Delete the _msgfdb.txt or _msgfdb.tsv file
-						File.Delete(strTargetFilePath)
-					Catch ex As Exception
-						' Ignore errors here
-					End Try
-				End If
+                If splitFastaEnabled Then
+                    ' Zip the MSGFDB_ConsoleOutput files
+                   ZipConsoleOutputFiles()
+
+                Else
+                    Try
+                        ' Delete the _msgfdb.txt or _msgfdb.tsv file
+                        File.Delete(strTargetFilePath)
+                    Catch ex As Exception
+                        ' Ignore errors here
+                    End Try
+                End If
 
 			Catch ex As Exception
-				Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & _
-				 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                Msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
 				m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1121,7 +1125,45 @@ Public Class clsExtractToolRunner
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-	End Function
+    End Function
+
+    Private Sub ZipConsoleOutputFiles()
+        Dim diWorkingDirectory = New DirectoryInfo(m_WorkDir)
+        Dim consoleOutputFiles = New List(Of String)
+
+        Dim diConsoleOutputFiles = New DirectoryInfo(Path.Combine(diWorkingDirectory.FullName, "ConsoleOutputFiles"))
+        diConsoleOutputFiles.Create()
+
+        For Each fiFile As FileInfo In diWorkingDirectory.GetFiles("MSGFDB_ConsoleOutput_Part*.txt")
+            Dim targetPath = Path.Combine(diConsoleOutputFiles.FullName, fiFile.Name)
+            fiFile.MoveTo(targetPath)
+            consoleOutputFiles.Add(fiFile.Name)
+        Next
+
+        Dim zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFDB_ConsoleOutput_Files.zip")
+        If Not m_IonicZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder")
+            Return
+        End If
+        
+        Dim transferFolderPath = GetTransferFolderPath()
+
+        If String.IsNullOrEmpty(transferFolderPath) Then
+            ' Error has already been logged
+            Return
+        End If
+
+        If String.IsNullOrEmpty(m_ResFolderName) Then
+            ' Ignore error; will be logged in function 
+            Return
+        End If
+
+        For Each consoleOutputfile In consoleOutputFiles
+            Dim targetPath = Path.Combine(transferFolderPath, m_Dataset, m_ResFolderName, consoleOutputfile)
+            m_jobParams.AddServerFileToDelete(targetPath)
+        Next
+
+    End Sub
 
 	Private Function RunPhrpForInSpecT() As IJobParams.CloseOutType
 

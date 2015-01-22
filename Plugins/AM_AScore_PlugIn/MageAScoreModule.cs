@@ -456,6 +456,13 @@ namespace AnalysisManager_AScore_PlugIn
 			return dtaZipPathLocal;
 		}
 
+        /// <summary>
+        /// Lookup the shared result folder name for the given job
+        /// </summary>
+        /// <param name="jobNumber"></param>
+        /// <param name="toolName"></param>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
         private string GetSharedResultFolderName(int jobNumber, string toolName, string connectionString)
         {
             try
@@ -468,27 +475,21 @@ namespace AnalysisManager_AScore_PlugIn
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
                 sqlQuery += " ORDER BY Preference, saved";
 
-                using (var connection = new SqlConnection(connectionString))
+                List<string> lstResults;
+
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out lstResults, "GetSharedResultFolderName");
+
+                if (!success || lstResults.Count == 0)
                 {
-                    using (var cmd = new SqlCommand(sqlQuery, connection))
-                    {
-                        connection.Open();
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
+                    return string.Empty;
+                    
+                }
 
-                        var reader = cmd.ExecuteReader();
-                        if (!reader.HasRows)
-                        {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                             "Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
-                            return string.Empty;
-                        }
+                var sharedResultsFolder = lstResults.First();
+                return sharedResultsFolder;
 
-                        reader.Read();
-                        var sharedResultsFolder = reader.GetString(0);
-
-                        return sharedResultsFolder;
-                    }
-
-                }        
             }
             catch (Exception ex)
             {

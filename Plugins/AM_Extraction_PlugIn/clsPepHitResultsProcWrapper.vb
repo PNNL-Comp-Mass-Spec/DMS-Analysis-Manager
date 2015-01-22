@@ -232,17 +232,17 @@ Public Class clsPepHitResultsProcWrapper
 					lstFilesToCheck.Add("_ModSummary.txt")
 					lstFilesToCheck.Add("_ModDetails.txt")
 
-					If Not blnSkipProteinMods Then
-						If Not String.IsNullOrEmpty(FastaFilePath) Then
-							Dim strWarningMessage As String = String.Empty
+                    If Not blnSkipProteinMods Then
+                        If Not String.IsNullOrEmpty(FastaFilePath) Then
+                            Dim strWarningMessage As String = String.Empty
 
-							If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
-								lstFilesToCheck.Add("_ProteinMods.txt")
-							End If
-						ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
-							lstFilesToCheck.Add("_ProteinMods.txt")
-						End If
-					End If
+                            If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
+                                lstFilesToCheck.Add("_ProteinMods.txt")
+                            End If
+                        ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
+                            lstFilesToCheck.Add("_ProteinMods.txt")
+                        End If
+                    End If
 
 				End If
 

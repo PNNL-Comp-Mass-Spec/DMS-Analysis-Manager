@@ -431,9 +431,20 @@ Public Class clsAnalysisResourcesExtraction
 					End If
 				End If
 
-				m_jobParams.AddResultFileToSkip(FileToGet)
+                If splitFastaEnabled Then
+                    ' Retrieve the _ConsoleOutput file
 
-			Next
+                    FileToGet = "MSGFDB_ConsoleOutput" & suffixToAdd & ".txt"
+                    currentStep = "Retrieving " & FileToGet
+
+                    If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                        ' This is not an important error; ignore it
+                    End If
+                End If
+
+                m_jobParams.AddResultFileToSkip(FileToGet)
+
+            Next
 
 			If Not pepToProtMapRetrievalError Then
 				' The OrgDB (aka fasta file) is not required
