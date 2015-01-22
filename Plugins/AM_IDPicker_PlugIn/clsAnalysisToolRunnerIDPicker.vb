@@ -5,6 +5,7 @@ Imports AnalysisManagerBase
 Imports System.Collections.Generic
 Imports System.Collections.Concurrent
 Imports System.IO
+Imports System.Runtime.InteropServices
 Imports PHRPReader
 
 Public Class clsAnalysisToolRunnerIDPicker
@@ -15,58 +16,61 @@ Public Class clsAnalysisToolRunnerIDPicker
 	'*********************************************************************************************************
 
 #Region "Module Variables"
-	Protected Const PEPXML_CONSOLE_OUTPUT As String = "PepXML_ConsoleOutput.txt"
 
-	Protected Const IPD_Qonvert_CONSOLE_OUTPUT As String = "IDPicker_Qonvert_ConsoleOutput.txt"
-	Protected Const IPD_Assemble_CONSOLE_OUTPUT As String = "IDPicker_Assemble_ConsoleOutput.txt"
-	Protected Const IPD_Report_CONSOLE_OUTPUT As String = "IDPicker_Report_ConsoleOutput.txt"
+    Public Const ALWAYS_SKIP_IDPICKER = True
 
-	Protected Const IDPicker_Qonvert As String = "idpQonvert.exe"
-	Protected Const IDPicker_Assemble As String = "idpAssemble.exe"
-	Protected Const IDPicker_Report As String = "idpReport.exe"
-	Protected Const IDPicker_GUI As String = "IdPickerGui.exe"
+    Protected Const PEPXML_CONSOLE_OUTPUT As String = "PepXML_ConsoleOutput.txt"
 
-	Protected Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
-	Protected Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
+    Protected Const IPD_Qonvert_CONSOLE_OUTPUT As String = "IDPicker_Qonvert_ConsoleOutput.txt"
+    Protected Const IPD_Assemble_CONSOLE_OUTPUT As String = "IDPicker_Assemble_ConsoleOutput.txt"
+    Protected Const IPD_Report_CONSOLE_OUTPUT As String = "IDPicker_Report_ConsoleOutput.txt"
 
-	Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
-	Protected Const MSGFPLUS_DECOY_PROTEIN_PREFIX As String = "XXX_"
+    Protected Const IDPicker_Qonvert As String = "idpQonvert.exe"
+    Protected Const IDPicker_Assemble As String = "idpAssemble.exe"
+    Protected Const IDPicker_Report As String = "idpReport.exe"
+    Protected Const IDPicker_GUI As String = "IdPickerGui.exe"
 
-	Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
+    Protected Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
+    Protected Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
 
-	Protected Const PROGRESS_PCT_IDPicker_STARTING As Single = 1
-	Protected Const PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES As Single = 5
-	Protected Const PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE As Single = 10
-	Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert As Single = 20
-	Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble As Single = 60
-	Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPReport As Single = 70
-	Protected Const PROGRESS_PCT_IDPicker_COMPLETE As Single = 95
-	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
+    Protected Const MSGFPLUS_DECOY_PROTEIN_PREFIX As String = "XXX_"
 
-	Protected mIDPickerProgramFolder As String = String.Empty
-	Protected mIDPickerParamFileNameLocal As String = String.Empty
+    Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
 
-	Protected mPeptideListToXMLExePath As String = String.Empty
-	Protected mPepXMLFilePath As String = String.Empty
-	Protected mIdpXMLFilePath As String = String.Empty
-	Protected mIdpAssembleFilePath As String = String.Empty
+    Protected Const PROGRESS_PCT_IDPicker_STARTING As Single = 1
+    Protected Const PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES As Single = 5
+    Protected Const PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE As Single = 10
+    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert As Single = 20
+    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble As Single = 60
+    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPReport As Single = 70
+    Protected Const PROGRESS_PCT_IDPicker_COMPLETE As Single = 95
+    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
-	Protected mIDPickerOptions As Dictionary(Of String, String)
+    Protected mIDPickerProgramFolder As String = String.Empty
+    Protected mIDPickerParamFileNameLocal As String = String.Empty
 
-	' This variable holds the name of the program that is currently running via CmdRunner
-	Protected mCmdRunnerDescription As String = String.Empty
+    Protected mPeptideListToXMLExePath As String = String.Empty
+    Protected mPepXMLFilePath As String = String.Empty
+    Protected mIdpXMLFilePath As String = String.Empty
+    Protected mIdpAssembleFilePath As String = String.Empty
 
-	' This list tracks the error messages reported by CmdRunner
-	Protected mCmdRunnerErrors As ConcurrentBag(Of String)
+    Protected mIDPickerOptions As Dictionary(Of String, String)
 
-	' This list tracks error message text that we look for when considering whether or not to ignore an error message
-	Protected mCmdRunnerErrorsToIgnore As ConcurrentBag(Of String)
+    ' This variable holds the name of the program that is currently running via CmdRunner
+    Protected mCmdRunnerDescription As String = String.Empty
 
-	' This list tracks files that we want to include in the zipped up IDPicker report folder
-	Protected mFilenamesToAddToReportFolder As List(Of String)
-	Protected mBatchFilesMoved As Boolean
+    ' This list tracks the error messages reported by CmdRunner
+    Protected mCmdRunnerErrors As ConcurrentBag(Of String)
 
-	Protected WithEvents CmdRunner As clsRunDosProgram
+    ' This list tracks error message text that we look for when considering whether or not to ignore an error message
+    Protected mCmdRunnerErrorsToIgnore As ConcurrentBag(Of String)
+
+    ' This list tracks files that we want to include in the zipped up IDPicker report folder
+    Protected mFilenamesToAddToReportFolder As List(Of String)
+    Protected mBatchFilesMoved As Boolean
+
+    Protected WithEvents CmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures"
@@ -93,7 +97,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim result As IJobParams.CloseOutType
 
         ' As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
-        Dim blnSkipIDPicker As Boolean = True
+        Dim blnSkipIDPicker As Boolean = ALWAYS_SKIP_IDPICKER
 
 		Dim blnProcessingError As Boolean = False
 
@@ -148,46 +152,16 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			Dim fiFastaFile = New FileInfo(strFASTAFilePath)
 
-			If Not fiFastaFile.Exists Then
-				' Fasta file not found
-				m_message = "Fasta file not found: " & fiFastaFile.Name
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
-
-			' Determine the prefix used by decoy proteins
-			Dim strDecoyPrefix As String = String.Empty
-
-			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-				' If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
-				' Check for this
-				blnSuccess = LookForDecoyProteinsInMSGFDBResults(strSynFilePath, ePHRPResultType, strDecoyPrefix)
-				If Not blnSuccess Then
-					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Error looking for decoy proteins in the MSGFDB synopsis file"
-					End If
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			End If
-
-			If String.IsNullOrEmpty(strDecoyPrefix) Then
-				' Look for decoy proteins in the Fasta file
-				blnSuccess = DetermineDecoyProteinPrefix(fiFastaFile.FullName, strDecoyPrefix)
-				If Not blnSuccess Then
-					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Error looking for decoy proteins in the Fasta file"
-					End If
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			End If
-
-            If Not blnSkipIDPicker AndAlso String.IsNullOrEmpty(strDecoyPrefix) Then
-                m_EvalMessage = "No decoy proteins; skipping IDPicker"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-                blnSkipIDPicker = True
+            If Not blnSkipIDPicker AndAlso Not fiFastaFile.Exists Then
+                ' Fasta file not found
+                m_message = "Fasta file not found: " & fiFastaFile.Name
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
-            If Not blnSkipIDPicker AndAlso m_jobParams.GetJobParameter("SplitFasta", False) Then
+            Dim blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", False)
+
+            If Not blnSkipIDPicker AndAlso blnSplitFasta Then
                 blnSkipIDPicker = True
                 m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
@@ -226,1174 +200,1243 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			Else
 
-				' Load the IDPicker options
-				blnSuccess = LoadIDPickerOptions()
-				If Not blnSuccess Then blnProcessingError = True
-
-				If blnSuccess Then
-					' Convert the search scores in the pepXML file to q-values
-					blnSuccess = RunQonvert(strFASTAFilePath, strDecoyPrefix, ePHRPResultType)
-					If Not blnSuccess Then blnProcessingError = True
-				End If
-
-				If blnSuccess Then
-					' Organizes the search results into a hierarchy
-					blnSuccess = RunAssemble()
-					If Not blnSuccess Then blnProcessingError = True
-				End If
-
-				If blnSuccess Then
-					' Apply parsimony in protein assembly and generate reports
-					blnSuccess = RunReport()
-					If Not blnSuccess Then blnProcessingError = True
-				End If
-
-			End If
-
-			If Not blnProcessingError Then
-				' Zip the PepXML file
-				ZipPepXMLFile()
-			End If
-
-			m_jobParams.AddResultFileExtensionToSkip(".bat")
-
-			m_progress = PROGRESS_PCT_COMPLETE
-
-			'Stop the job timer
-			m_StopTime = DateTime.UtcNow
-
-			'Add the current job data to the summary file
-			If Not UpdateSummaryFile() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-			End If
-
-			'Make sure objects are released
-			Threading.Thread.Sleep(2000)		   '2 second delay
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Something went wrong
-				' In order to help diagnose things, we will move whatever files were created into the result folder, 
-				'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-				m_jobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
-				m_jobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
-
-				CopyFailedResultsToArchiveFolder()
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			result = MakeResultsFolder()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'MakeResultsFolder handles posting to local log, so set database error message and exit
-				m_message = "Error making results folder"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			result = MoveResultFiles()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				m_message = "Error moving files into results folder"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-
-			If Not blnSkipIDPicker Then
-				result = MoveFilesIntoIDPickerSubfolder()
-				If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-					m_message = "Error moving files into IDPicker subfolder"
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			End If
-
-			result = CopyResultsFolderToServer()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				Return result
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->RunTool"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
-
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
-
-	End Function
-
-	Protected Sub CopyFailedResultsToArchiveFolder()
-
-		Dim result As IJobParams.CloseOutType
-
-		Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-		If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-		' Bump up the debug level if less than 2
-		If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-		' Try to save whatever files are in the work directory
-		Dim strFolderPathToArchive As String
-		strFolderPathToArchive = String.Copy(m_WorkDir)
-
-		' Make the results folder
-		result = MakeResultsFolder()
-		If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Move the result files into the result folder
-			result = MoveResultFiles()
-			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-			End If
-		End If
-
-		' Copy the results folder to the Archive folder
-		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-		objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-	End Sub
-
-	''' <summary>
-	''' Append a new command line argument (appends using ValueIfMissing if not defined in mIDPickerOptions)
-	''' </summary>
-	''' <param name="CmdArgs">Current arguments</param>
-	''' <param name="ArgumentName">Argument Name</param>
-	''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
-	''' <returns>The new argument list</returns>
-	''' <remarks></remarks>
-	Protected Function AppendArgument(ByVal CmdArgs As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
-		Const AppendIfMissing As Boolean = True
-		Return AppendArgument(CmdArgs, ArgumentName, ArgumentName, ValueIfMissing, AppendIfMissing)
-	End Function
-
-
-	''' <summary>
-	''' Append a new command line argument (appends using ValueIfMissing if not defined in mIDPickerOptions)
-	''' </summary>
-	''' <param name="CmdArgs">Current arguments</param>
-	''' <param name="OptionName">Key name to lookup in mIDPickerOptions</param>
-	''' <param name="ArgumentName">Argument Name</param>
-	''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
-	''' <returns>The new argument list</returns>
-	''' <remarks></remarks>
-	Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
-		Const AppendIfMissing As Boolean = True
-		Return AppendArgument(CmdArgs, OptionName, ArgumentName, ValueIfMissing, AppendIfMissing)
-	End Function
-
-	''' <summary>
-	''' Append a new command line argument
-	''' </summary>
-	''' <param name="CmdArgs">Current arguments</param>
-	''' <param name="OptionName">Key name to lookup in mIDPickerOptions</param>
-	''' <param name="ArgumentName">Argument Name</param>
-	''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
-	''' <param name="AppendIfMissing">If True, then append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, then does not append the argument</param>
-	''' <returns>The new argument list</returns>
-	''' <remarks></remarks>
-	Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String, ByVal AppendIfMissing As Boolean) As String
-		Dim strValue As String = String.Empty
-		Dim blnIsMissing As Boolean
-		Dim blnAppendParam As Boolean
-
-		If mIDPickerOptions.TryGetValue(OptionName, strValue) Then
-			blnIsMissing = False
-		Else
-			blnIsMissing = True
-			strValue = ValueIfMissing
-		End If
-
-		If blnIsMissing Then
-			blnAppendParam = AppendIfMissing
-		Else
-			blnAppendParam = True
-		End If
-
-		If String.IsNullOrEmpty(CmdArgs) Then
-			CmdArgs = String.Empty
-		End If
-
-		If blnAppendParam Then
-			Return CmdArgs & " -" & ArgumentName & " " & PossiblyQuotePath(strValue)
-		Else
-			Return CmdArgs
-		End If
-
-	End Function
-
-	Protected Function CreateAssembleFile(ByVal strAssembleFilePath As String) As Boolean
-
-		Dim strDatasetLabel As String
-
-		Try
-			' Prepend strExperiment with PNNL/
-			' Also make sure it doesn't contain any spaces
-			strDatasetLabel = "PNNL/" & m_Dataset.Replace(" ", "_")
-
-			' Create the Assemble.txt file
-			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strAssembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-				swOutfile.WriteLine(strDatasetLabel & " " & Path.GetFileName(mIdpXMLFilePath))
-			End Using
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->CreateAssembleFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	Protected Sub ClearConcurrentBag(ByRef oBag As ConcurrentBag(Of String))
-		Dim item As String = String.Empty
-		Do While Not oBag.IsEmpty
-			oBag.TryTake(item)
-		Loop
-	End Sub
-
-	''' <summary>
-	''' Copies a file into folder strReportFolderPath then adds it to m_jobParams.AddResultFileToSkip
-	''' </summary>
-	''' <param name="strFileName"></param>
-	''' <param name="strReportFolderPath"></param>
-	''' <remarks></remarks>
-	Protected Sub CopyFileIntoReportFolder(ByVal strFileName As String, strReportFolderPath As String)
-		Dim ioSourceFile As FileInfo
-
-		Try
-			ioSourceFile = New FileInfo(Path.Combine(m_WorkDir, strFileName))
-
-			If ioSourceFile.Exists Then
-				ioSourceFile.CopyTo(Path.Combine(strReportFolderPath, strFileName), True)
-				m_jobParams.AddResultFileToSkip(strFileName)
-			End If
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying ConsoleOutput file into the IDPicker Report folder: " & ex.Message)
-		End Try
-
-	End Sub
-
-	Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
-
-		Dim strParamFileName As String
-
-		Dim iHitsPerSpectrum As Integer
-
-		Dim CmdStr As String
-
-		' PepXML file creation should generally be done in less than 10 minutes
-		' However, for huge fasta files, conversion could take an hour
-		Const intMaxRuntimeMinutes As Integer = 60
-
-		Dim blnSuccess As Boolean
-
-		Try
-
-			'Set up and execute a program runner to run PeptideListToXML
-			strParamFileName = m_jobParams.GetParam("ParmFileName")
-
-			mPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & ".pepXML")
-			iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3)
-
-			CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
-
-			If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-				' The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
-				' Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
-				' Therefore, don't include them in the PepXML file
-				CmdStr &= " /NoMSGF"
-			End If
-
-			ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
-
-			m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE
-
-			blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, False, intMaxRuntimeMinutes)
-
-			If blnSuccess Then
-				' Make sure a .pepXML file was created
-				If Not File.Exists(mPepXMLFilePath) Then
-					m_message = "Error creating PepXML file"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
-					blnSuccess = False
-				Else
-					m_jobParams.AddResultFileToSkip(PEPXML_CONSOLE_OUTPUT)
-				End If
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->CreatePepXMLFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Determine the prefix used by to denote decoy (reversed) proteins
-	''' </summary>
-	''' <param name="strFastaFilePath"></param>
-	''' <param name="strDecoyPrefix"></param>
-	''' <returns>True if success; false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function DetermineDecoyProteinPrefix(ByVal strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
-
-		Dim lstReversedProteinPrefixes As SortedSet(Of String)
-		Dim lstPrefixStats As Dictionary(Of String, Integer)
-
-		Dim strProtein As String
-		Dim strProteinPrefix As String
-		Dim intCount As Integer
-
-		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
-
-		strDecoyPrefix = String.Empty
-
-		Try
-
-			If m_DebugLevel >= 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the fasta file")
-			End If
-
-			lstReversedProteinPrefixes = New SortedSet(Of String)
-
-			lstReversedProteinPrefixes.Add("reversed_")								' MTS reversed proteins                 'reversed[_]%'
-			lstReversedProteinPrefixes.Add("scrambled_")							' MTS scrambled proteins                'scrambled[_]%'
-			lstReversedProteinPrefixes.Add("xxx.")									' Inspect reversed/scrambled proteins   'xxx.%'
-			lstReversedProteinPrefixes.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToLower())	' MSGFDB reversed proteins              'rev[_]%'
-			lstReversedProteinPrefixes.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower())	' MSGF+ reversed proteins               'xxx[_]%'
-
-			' Note that X!Tandem decoy proteins end with ":reversed"
-			' IDPicker doesn't support decoy protein name suffixes, only prefixes
-
-			lstPrefixStats = New Dictionary(Of String, Integer)
-
-			objFastaFileReader = New ProteinFileReader.FastaFileReader
-
-			If Not objFastaFileReader.OpenFile(strFastaFilePath) Then
-				m_message = "Error reading fasta file with ProteinFileReader"
-				Return False
-			End If
-
-			Do While objFastaFileReader.ReadNextProteinEntry()
-
-				strProtein = objFastaFileReader.ProteinName
-
-				For Each strPrefix In lstReversedProteinPrefixes
-					If strProtein.ToLower.StartsWith(strPrefix.ToLower) Then
-						strProteinPrefix = strProtein.Substring(0, strPrefix.Length)
-
-						If lstPrefixStats.TryGetValue(strProteinPrefix, intCount) Then
-							lstPrefixStats(strProteinPrefix) = intCount + 1
-						Else
-							lstPrefixStats.Add(strProteinPrefix, 1)
-						End If
-					End If
-				Next
-			Loop
-
-			objFastaFileReader.CloseFile()
-
-			If lstPrefixStats.Count = 1 Then
-				strDecoyPrefix = lstPrefixStats.First.Key
-
-			ElseIf lstPrefixStats.Count > 1 Then
-				' Find the prefix (key) in lstPrefixStats with the highest occurrence count
-				Dim intMaxCount As Integer = -1
-				For Each kvEntry In lstPrefixStats
-					If kvEntry.Value > intMaxCount Then
-						intMaxCount = kvEntry.Value
-						strDecoyPrefix = kvEntry.Key
-					End If
-				Next
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->DetermineDecoyProteinPrefix"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	Protected Function IgnoreError(ByVal strErrorMessage As String) As Boolean
-		Dim blnIgnore As Boolean = False
-
-		For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
-			If strErrorMessage.Contains(strIgnoreText) Then
-				blnIgnore = True
-				Exit For
-			End If
-		Next
-
-		Return blnIgnore
-	End Function
-
-	Protected Function LoadIDPickerOptions() As Boolean
-
-		Dim strParameterFilePath As String
-
-		Dim strLineIn As String
-		Dim strKey As String
-		Dim strValue As String
-
-		Try
-			mIDPickerParamFileNameLocal = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
-			If String.IsNullOrEmpty(mIDPickerParamFileNameLocal) Then
-				m_message = "IDPicker parameter file not defined"
-				Return False
-			End If
-
-			strParameterFilePath = Path.Combine(m_WorkDir, mIDPickerParamFileNameLocal)
-
-			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-				Do While srParamFile.Peek > -1
-					strLineIn = srParamFile.ReadLine()
-					strKey = String.Empty
-					strValue = String.Empty
-
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
-						strLineIn = strLineIn.Trim()
-
-						If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
-
-							Dim intCharIndex As Integer
-							intCharIndex = strLineIn.IndexOf("="c)
-							If intCharIndex > 0 Then
-								strKey = strLineIn.Substring(0, intCharIndex).Trim()
-								If intCharIndex < strLineIn.Length - 1 Then
-									strValue = strLineIn.Substring(intCharIndex + 1).Trim()
-								Else
-									strValue = String.Empty
-								End If
-							End If
-
-							intCharIndex = strValue.IndexOf("#"c)
-							If intCharIndex >= 0 Then
-								strValue = strValue.Substring(0, intCharIndex)
-							End If
-						End If
-
-					End If
-
-					If Not String.IsNullOrWhiteSpace(strKey) Then
-						If mIDPickerOptions.ContainsKey(strKey) Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring duplicate parameter file option '" & strKey & "' in file " & mIDPickerParamFileNameLocal)
-						Else
-							mIDPickerOptions.Add(strKey, strValue.Trim())
-						End If
-					End If
-
-				Loop
-
-			End Using
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->LoadIDPickerOptions"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
-
-		Dim lstPrefixesToCheck As List(Of String)
-
-		Try
-			strDecoyPrefix = String.Empty
-			lstPrefixesToCheck = New List(Of String)
-			lstPrefixesToCheck.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper())
-			lstPrefixesToCheck.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToUpper())
-
-			If m_DebugLevel >= 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the MSGFDB synopsis file")
-			End If
-
-			Using oReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSynFilePath, eResultType, False, False, False)
-
-				Do While oReader.MoveNext
-					For Each strPrefixToCheck As String In lstPrefixesToCheck
-						If oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck) Then
-							strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, strPrefixToCheck.Length)
-
-							If m_DebugLevel >= 4 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decoy protein prefix found: " & strDecoyPrefix)
-							End If
-
-							Exit Do
-						End If
-					Next
-				Loop
-			End Using
-
-		Catch ex As Exception
-			m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFDBResults"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
-
-		Return True
-
-	End Function
-
-	Protected Function MoveFilesIntoIDPickerSubfolder() As IJobParams.CloseOutType
-
-		Dim diSourceFolder As DirectoryInfo
-		Dim diTargetFolder As DirectoryInfo
-
-		Dim lstFileSpecs As List(Of String)
-		Dim fiFilesToMove As List(Of FileInfo)
-
-		Dim blnErrorEncountered As Boolean
-		Dim ResFolderNamePath As String
-
-		Try
-			ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
-
-			diSourceFolder = New DirectoryInfo(ResFolderNamePath)
-			diTargetFolder = diSourceFolder.CreateSubdirectory("IDPicker")
-
-			lstFileSpecs = New List(Of String)
-			fiFilesToMove = New List(Of FileInfo)
-
-			lstFileSpecs.Add("*.idpXML")
-			lstFileSpecs.Add("IDPicker*.*")
-			lstFileSpecs.Add("Tool_Version_Info_IDPicker.txt")
-			lstFileSpecs.Add(mIDPickerParamFileNameLocal)
-
-			If Not mBatchFilesMoved Then
-				lstFileSpecs.Add("Run*.bat")
-			End If
-
-			For Each strFileSpec As String In lstFileSpecs
-				For Each fiFile As FileInfo In diSourceFolder.GetFiles(strFileSpec)
-					fiFilesToMove.Add(fiFile)
-				Next
-			Next
-
-			For Each fiFile As FileInfo In fiFilesToMove
-				Dim intAttempts As Integer = 0
-				Dim blnSuccess As Boolean = False
-
-				Do
-					Try
-						' Note that the file may have been moved already; confirm that it still exists
-						fiFile.Refresh()
-						If fiFile.Exists Then
-							fiFile.MoveTo(Path.Combine(diTargetFolder.FullName, fiFile.Name))
-						End If
-						blnSuccess = True
-					Catch ex As Exception
-						intAttempts += 1
-						Threading.Thread.Sleep(2000)
-					End Try
-				Loop While Not blnSuccess AndAlso intAttempts <= 3
-
-				If Not blnSuccess Then
-					blnErrorEncountered = True
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to move " & fiFile.Name & " into the IDPicker subfolder; tried " & (intAttempts - 1).ToString() & " times")
-				End If
-			Next
-
-		Catch ex As Exception
-			blnErrorEncountered = True
-		End Try
-
-		If blnErrorEncountered Then
-			' Try to save whatever files were moved into the results folder
-			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
-
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
-
-	End Function
-
-	Protected Sub ParseConsoleOutputFileForErrors(ByVal strConsoleOutputFilePath As String)
-
-		Dim strLineIn As String
-		Dim blnUnhandledException As Boolean
-		Dim strExceptionText As String = String.Empty
-
-		Try
-			If File.Exists(strConsoleOutputFilePath) Then
-				Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-					While srInFile.Peek > -1
-						strLineIn = srInFile.ReadLine
-
-						If Not String.IsNullOrEmpty(strLineIn) Then
-							If blnUnhandledException Then
-								If String.IsNullOrEmpty(strExceptionText) Then
-									strExceptionText = String.Copy(strLineIn)
-								Else
-									strExceptionText = ";" & strLineIn
-								End If
-
-							ElseIf strLineIn.StartsWith("Error:") Then
-								If Not IgnoreError(strLineIn) Then
-									mCmdRunnerErrors.Add(strLineIn)
-								End If
-							ElseIf strLineIn.StartsWith("Unhandled Exception") Then
-								mCmdRunnerErrors.Add(strLineIn)
-								blnUnhandledException = True
-							End If
-						End If
-					End While
-				End Using
-
-				If Not String.IsNullOrEmpty(strExceptionText) Then
-					mCmdRunnerErrors.Add(strExceptionText)
-				End If
-			End If
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileForErrors: " & ex.Message)
-		End Try
-
-	End Sub
-
-	''' <summary>
-	''' Run idpAssemble to organizes the search results into a hierarchy
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function RunAssemble() As Boolean
-
-		Dim strAssembleFilePath As String
-		Dim progLoc As String
-		Const intMaxRuntimeMinutes As Integer = 30
-
-		Dim blnSuccess As Boolean
-
-		' Create the Assemble.txt file
-		' Since we're only processing one dataset, the file will only have one line
-		strAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_GROUPING_FILENAME)
-
-		blnSuccess = CreateAssembleFile(strAssembleFilePath)
-		If Not blnSuccess Then
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error running idpAssemble"
-			End If
-			Return False
-		End If
-
-		' Define the errors that we can ignore
-		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
-		mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
-		mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
-
-		' Define the path to the .Exe
-		progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble)
-
-		' Build the command string, for example:
-		'  Assemble.xml -MaxFDR 0.1 -b Assemble.txt
-		Dim cmdStr As String
-
-		cmdStr = ASSEMBLE_OUTPUT_FILENAME
-		cmdStr = AppendArgument(cmdStr, "AssemblyMaxFDR", "MaxFDR", "0.1")
-		cmdStr &= " -b Assemble.txt -dump"
-
-		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble
-
-		blnSuccess = RunProgramWork("IDPAssemble", progLoc, cmdStr, IPD_Assemble_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
-
-		mIdpAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_OUTPUT_FILENAME)
-
-		If blnSuccess Then
-
-			' Make sure the output file was created		
-			If Not File.Exists(mIdpAssembleFilePath) Then
-				m_message = "IDPicker Assemble results file not found"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & mIdpAssembleFilePath)
-				blnSuccess = False
-			Else
-				' Do not keep the assemble input or output files
-				m_jobParams.AddResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
-				m_jobParams.AddResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
-			End If
-
-		End If
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Run idpQonvert to convert the search scores in the pepXML file to q-values
-	''' </summary>
-	''' <param name="strFASTAFilePath"></param>
-	''' <param name="strDecoyPrefix"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function RunQonvert(ByVal strFASTAFilePath As String, ByVal strDecoyPrefix As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
-
-		Dim progLoc As String
-		Dim CmdStr As String
-		Const intMaxRuntimeMinutes As Integer = 30
-
-		Dim blnSuccess As Boolean
-
-		' Define the errors that we can ignore
-		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
-		mCmdRunnerErrorsToIgnore.Add("could not find the default configuration file")
-		mCmdRunnerErrorsToIgnore.Add("could not find the default residue masses file")
-
-		' Define the path to the .Exe
-		progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert)
-
-		' Possibly override some options
-		If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-			' Higher MODa probability scores are better
-			mIDPickerOptions("SearchScoreWeights") = "Probability 1"
-			mIDPickerOptions("NormalizedSearchScores") = "Probability"
-		End If
-
-		' Build the command string, for example:
-		'   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
-		CmdStr = String.Empty
-
-		CmdStr = AppendArgument(CmdStr, "QonvertMaxFDR", "MaxFDR", "0.1")
-		CmdStr &= " -ProteinDatabase " & PossiblyQuotePath(strFASTAFilePath)
-		CmdStr = AppendArgument(CmdStr, "SearchScoreWeights", "msgfspecprob -1")
-		CmdStr = AppendArgument(CmdStr, "OptimizeScoreWeights", "1")
-		CmdStr = AppendArgument(CmdStr, "NormalizedSearchScores", "msgfspecprob")
-
-		CmdStr &= " -DecoyPrefix " & PossiblyQuotePath(strDecoyPrefix)
-		CmdStr &= " -dump"				' This tells IDPQonvert to display the processing options that the program is using
-		CmdStr &= " " & mPepXMLFilePath
-
-		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert
-
-		blnSuccess = RunProgramWork("IDPQonvert", progLoc, CmdStr, IPD_Qonvert_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
-
-		mIdpXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & ".idpXML")
-
-		If blnSuccess Then
-
-			' Make sure the output file was created		
-			If Not File.Exists(mIdpXMLFilePath) Then
-				m_message = "IDPicker Qonvert results file not found"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & mIdpXMLFilePath)
-				blnSuccess = False
-			End If
-		End If
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Run idpReport to apply parsimony in protein assembly and generate reports
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function RunReport() As Boolean
-		Dim strOutputFolderName As String
-		Dim progLoc As String
-		Const intMaxRuntimeMinutes As Integer = 20
-
-		Dim blnSuccess As Boolean
-
-		strOutputFolderName = "IDPicker"
-
-		' Define the errors that we can ignore
-		ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
-		mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
-		mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
-
-		' Define the path to the .Exe
-		progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Report)
-
-		' Build the command string, for example:
-		'  report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -OutputTextReport true
-		Dim CmdStr As String
-
-		CmdStr = strOutputFolderName & " " & mIdpAssembleFilePath
-		CmdStr = AppendArgument(CmdStr, "ReportMaxFDR", "MaxFDR", "0.05")
-		CmdStr = AppendArgument(CmdStr, "MinDistinctPeptides", "2")
-		CmdStr = AppendArgument(CmdStr, "MinAdditionalPeptides", "2")
-		CmdStr = AppendArgument(CmdStr, "ModsAreDistinctByDefault", "true")
-		CmdStr = AppendArgument(CmdStr, "MaxAmbiguousIds", "2")
-		CmdStr = AppendArgument(CmdStr, "MinSpectraPerProtein", "2")
-
-		CmdStr &= " -OutputTextReport true -dump"
-
-		m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPReport
-
-		blnSuccess = RunProgramWork("IDPReport", progLoc, CmdStr, IPD_Report_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
-
-		If blnSuccess Then
-
-			Dim diReportFolder As DirectoryInfo
-			diReportFolder = New DirectoryInfo(Path.Combine(m_WorkDir, strOutputFolderName))
-
-			' Make sure the output folder was created
-			If Not diReportFolder.Exists Then
-				m_message = "IDPicker report folder file not found"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & diReportFolder.FullName)
-				blnSuccess = False
-			End If
-
-			If blnSuccess Then
-
-				Dim blnTSVFileFound As Boolean = False
-
-				' Move the .tsv files from the Report folder up one level
-				For Each fiFile As FileInfo In diReportFolder.GetFiles("*.tsv")
-					fiFile.MoveTo(Path.Combine(m_WorkDir, fiFile.Name))
-					blnTSVFileFound = True
-				Next
-
-				If Not blnTSVFileFound Then
-					m_message = "IDPicker report folder does not contain any TSV files"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & diReportFolder.FullName)
-					blnSuccess = False
-				End If
-
-			End If
-
-			If blnSuccess Then
-				' Copy the ConsoleOutput and RunProgram batch files into the Report folder (and add them to the files to Skip)
-				' mFilenamesToAddToReportFolder will already contain the batch file names
-
-				mFilenamesToAddToReportFolder.Add(IPD_Qonvert_CONSOLE_OUTPUT)
-				mFilenamesToAddToReportFolder.Add(IPD_Assemble_CONSOLE_OUTPUT)
-				mFilenamesToAddToReportFolder.Add(IPD_Report_CONSOLE_OUTPUT)
-
-				For Each strFileName As String In mFilenamesToAddToReportFolder
-					CopyFileIntoReportFolder(strFileName, diReportFolder.FullName)
-				Next
-
-				mBatchFilesMoved = True
-
-				' Zip the report folder
-				Dim strZippedResultsFilePath As String
-				strZippedResultsFilePath = Path.Combine(m_WorkDir, "IDPicker_HTML_Results.zip")
-				m_IonicZipTools.DebugLevel = m_DebugLevel
-				blnSuccess = m_IonicZipTools.ZipDirectory(diReportFolder.FullName, strZippedResultsFilePath, True)
-
-				If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
-					m_NeedToAbortProcessing = True
-				End If
-
-			End If
-		Else
-			' Check whether mCmdRunnerErrors contains a known error message
-			For Each strError As String In mCmdRunnerErrors
-				If strError.Contains("no spectra in workspace") Then
-					' All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
-					m_message = String.Empty
-					m_EvalMessage = "IDPicker Report filtered out all of the proteins"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage & "; this indicates there are not enough filter-passing peptides.")
-					blnSuccess = True
-					Exit For
-				End If
-			Next
-
-		End If
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' 
-	''' </summary>
-	''' <param name="strProgramDescription"></param>
-	''' <param name="strExePath"></param>
-	''' <param name="CmdStr"></param>
-	''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
-	''' <returns></returns>
-	''' <remarks>IDPicker tools cause clsRunDosProgram to hang when they post errors and warnings to the error stream; thus, strConsoleOutputFileName should be empty for IDPicker tools</remarks>
-	Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal blnCaptureConsoleOutputViaDosRedirection As Boolean, ByVal intMaxRuntimeMinutes As Integer) As Boolean
-
-		Dim blnSuccess As Boolean
-
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strExePath & " " & CmdStr.TrimStart(" "c))
-		End If
-
-		mCmdRunnerDescription = String.Copy(strProgramDescription)
-		ClearConcurrentBag(mCmdRunnerErrors)
-
-		CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-		If blnCaptureConsoleOutputViaDosRedirection Then
-			' Create a batch file to run the command
-			' Capture the console output (including output to the error stream) via redirection symbols: 
-			'    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
-
-			Dim strExePathOriginal As String = String.Copy(strExePath)
-			Dim CmdStrOriginal As String = String.Copy(CmdStr)
-
-			strProgramDescription = strProgramDescription.Replace(" ", "_")
-
-			Dim strBatchFileName As String = "Run_" & strProgramDescription & ".bat"
-			mFilenamesToAddToReportFolder.Add(strBatchFileName)
-
-			' Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
-			strExePath = Path.Combine(m_WorkDir, strBatchFileName)
-			CmdStr = String.Empty
-
-			If String.IsNullOrEmpty(strConsoleOutputFileName) Then
-				strConsoleOutputFileName = strProgramDescription & "_Console_Output.txt"
-			End If
-
-			' Create the batch file
-			Using swBatchFile As StreamWriter = New StreamWriter(New FileStream(strExePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-				swBatchFile.WriteLine(strExePathOriginal & " " & CmdStrOriginal & " > " & strConsoleOutputFileName & " 2>&1")
-			End Using
-
-			Threading.Thread.Sleep(100)
-		End If
-
-		With CmdRunner
-			If blnCaptureConsoleOutputViaDosRedirection OrElse String.IsNullOrEmpty(strConsoleOutputFileName) Then
-				.CreateNoWindow = False
-				.EchoOutputToConsole = False
-				.CacheStandardOutput = False
-				.WriteConsoleOutputToFile = False
-			Else
-				.CreateNoWindow = True
-				.EchoOutputToConsole = True
-				.CacheStandardOutput = False
-				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName)
-			End If
-
-		End With
-
-		Dim intMaxRuntimeSeconds As Integer = intMaxRuntimeMinutes * 60
-
-		blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True, intMaxRuntimeSeconds)
-
-		If mCmdRunnerErrors.Count = 0 And Not String.IsNullOrEmpty(CmdRunner.CachedConsoleError) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
-		End If
-
-		If blnCaptureConsoleOutputViaDosRedirection Then
-			ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, strConsoleOutputFileName))
-
-		ElseIf mCmdRunnerErrors.Count > 0 AndAlso Not String.IsNullOrEmpty(strConsoleOutputFileName) Then
-
-			' Append the error messages to the console output file
-			Threading.Thread.Sleep(250)
-			Using swConsoleOutputAppend As StreamWriter = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-
-				swConsoleOutputAppend.WriteLine()
-				swConsoleOutputAppend.WriteLine(" ----- Errors and Warnings ---- ")
-				For Each strError As String In mCmdRunnerErrors
-					swConsoleOutputAppend.WriteLine(strError)
-
-					If Not strError.ToLower().StartsWith("warning") Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
-					End If
-				Next
-			End Using
-
-		End If
-
-		If Not blnSuccess Then
-
-			m_message = "Error running " & strProgramDescription
-			If mCmdRunnerErrors.Count > 0 Then
-				m_message &= ": " & mCmdRunnerErrors.First
-			End If
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-
-			If CmdRunner.ExitCode <> 0 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProgramDescription & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strProgramDescription & " failed (but exit code is 0)")
-			End If
-
-		Else
-			m_StatusTools.UpdateAndWrite(m_progress)
-			If m_DebugLevel >= 3 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProgramDescription & " Complete")
-			End If
-
-		End If
-
-		Return blnSuccess
-
-	End Function
-
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo(ByVal strIDPickerProgLoc As String, ByVal blnSkipIDPicker As Boolean) As Boolean
-
-		Dim strToolVersionInfo As String = String.Empty
-		Dim strExePath As String
-
-		Dim ioIDPicker As FileInfo
-		Dim blnSuccess As Boolean
-
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
-
-		' We will store paths to key files in ioToolFiles
-		Dim ioToolFiles As New List(Of FileInfo)
-
-		' Determine the path to the PeptideListToXML.exe
-		mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXML", "PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE)
-
-		If blnSkipIDPicker Then
-			' Only store the version of PeptideListToXML.exe in the database
-			blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, mPeptideListToXMLExePath)
-			ioToolFiles.Add(New FileInfo(mPeptideListToXMLExePath))
-		Else
-
-			ioIDPicker = New FileInfo(strIDPickerProgLoc)
-			If Not ioIDPicker.Exists Then
-				Try
-					strToolVersionInfo = "Unknown"
-					Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-					Return False
-				End Try
-
-			End If
-
-			mIDPickerProgramFolder = ioIDPicker.DirectoryName
-
-			' Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
-			strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Assemble)
-			blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strExePath)
-			ioToolFiles.Add(New FileInfo(strExePath))
-
-			' Lookup the version of idpReport.exe
-			strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Report)
-			blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strExePath)
-			ioToolFiles.Add(New FileInfo(strExePath))
-
-			' Also include idpQonvert.exe in ioToolFiles (version determination does not work)
-			strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Qonvert)
-			ioToolFiles.Add(New FileInfo(strExePath))
-
-			' Lookup the version of PeptideListToXML.exe			
-			blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, mPeptideListToXMLExePath)
-			ioToolFiles.Add(New FileInfo(mPeptideListToXMLExePath))
-
-		End If
-
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
-
-	End Function
-
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
-	Private Function ZipPepXMLFile() As Boolean
-
-		Dim strZippedPepXMLFilePath As String
-
-		Try
-			strZippedPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & "_pepXML.zip")
-
-			If Not MyBase.ZipFile(mPepXMLFilePath, False, strZippedPepXMLFilePath) Then
-				Dim Msg As String = "Error zipping PepXML file, job " & m_JobNum
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-				m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file")
-				Return False
-			End If
-
-			' Add the .pepXML file to .FilesToDelete since we only want to keep the Zipped version
-			m_jobParams.AddResultFileToSkip(Path.GetFileName(mPepXMLFilePath))
-
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerIDPicker.ZipPepXMLFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file")
-			Return False
-		End Try
-
-		Return True
-
-	End Function
+                Dim blnCriticalError As Boolean = False
+
+                blnSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, blnProcessingError, blnCriticalError)
+
+                If blnCriticalError Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                If Not blnSuccess Then blnProcessingError = True
+
+            End If
+
+            If Not blnProcessingError Then
+                ' Zip the PepXML file
+                ZipPepXMLFile()
+            End If
+
+            m_jobParams.AddResultFileExtensionToSkip(".bat")
+
+            m_progress = PROGRESS_PCT_COMPLETE
+
+            'Stop the job timer
+            m_StopTime = DateTime.UtcNow
+
+            'Add the current job data to the summary file
+            If Not UpdateSummaryFile() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            End If
+
+            'Make sure objects are released
+            Threading.Thread.Sleep(2000)           '2 second delay
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+            If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Something went wrong
+                ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+                m_jobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
+                m_jobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
+
+                CopyFailedResultsToArchiveFolder()
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            result = MakeResultsFolder()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            result = MoveResultFiles()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                m_message = "Error moving files into results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If Not blnSkipIDPicker Then
+                result = MoveFilesIntoIDPickerSubfolder()
+                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    m_message = "Error moving files into IDPicker subfolder"
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+            End If
+
+            result = CopyResultsFolderToServer()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                Return result
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->RunTool"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+
+    End Function
+
+    Protected Function RunIDPickerWrapper(
+        ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType,
+        ByVal strSynFilePath As String,
+        ByVal fastaFilePath As String,
+        <Out> ByRef blnProcessingError As Boolean,
+        <Out> ByRef blnCriticalError As Boolean) As Boolean
+
+        Dim blnSuccess = False
+        blnProcessingError = False
+        blnCriticalError = False
+
+        ' Determine the prefix used by decoy proteins
+        Dim strDecoyPrefix As String = String.Empty
+
+        If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+            ' If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
+            ' Check for this
+            blnSuccess = LookForDecoyProteinsInMSGFDBResults(strSynFilePath, ePHRPResultType, strDecoyPrefix)
+            If Not blnSuccess Then
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Error looking for decoy proteins in the MSGFDB synopsis file"
+                End If
+                blnCriticalError = True
+                Return False
+            End If
+        End If
+
+        If String.IsNullOrEmpty(strDecoyPrefix) Then
+            ' Look for decoy proteins in the Fasta file
+            blnSuccess = DetermineDecoyProteinPrefix(fastaFilePath, strDecoyPrefix)
+            If Not blnSuccess Then
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Error looking for decoy proteins in the Fasta file"
+                End If
+                blnCriticalError = True
+                Return False
+            End If
+        End If
+
+        If String.IsNullOrEmpty(strDecoyPrefix) Then
+            m_EvalMessage = "No decoy proteins; skipping IDPicker"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+            Return True
+        End If
+
+        ' Load the IDPicker options
+        blnSuccess = LoadIDPickerOptions()
+        If Not blnSuccess Then
+            blnProcessingError = True
+            Return False
+        End If
+
+        ' Convert the search scores in the pepXML file to q-values
+        blnSuccess = RunQonvert(fastaFilePath, strDecoyPrefix, ePHRPResultType)
+        If Not blnSuccess Then
+            blnProcessingError = True
+            Return False
+        End If        
+
+        ' Organizes the search results into a hierarchy
+        blnSuccess = RunAssemble()
+        If Not blnSuccess Then
+            blnProcessingError = True
+            Return False
+        End If
+
+        ' Apply parsimony in protein assembly and generate reports
+        blnSuccess = RunReport()
+        If Not blnSuccess Then
+            blnProcessingError = True
+            Return False
+        Else
+            Return True
+        End If
+
+    End Function
+
+    Protected Sub CopyFailedResultsToArchiveFolder()
+
+        Dim result As IJobParams.CloseOutType
+
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
+
+        ' Try to save whatever files are in the work directory
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
+
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            result = MoveResultFiles()
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
+
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+    End Sub
+
+    ''' <summary>
+    ''' Append a new command line argument (appends using ValueIfMissing if not defined in mIDPickerOptions)
+    ''' </summary>
+    ''' <param name="CmdArgs">Current arguments</param>
+    ''' <param name="ArgumentName">Argument Name</param>
+    ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
+    ''' <returns>The new argument list</returns>
+    ''' <remarks></remarks>
+    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
+        Const AppendIfMissing As Boolean = True
+        Return AppendArgument(CmdArgs, ArgumentName, ArgumentName, ValueIfMissing, AppendIfMissing)
+    End Function
+
+
+    ''' <summary>
+    ''' Append a new command line argument (appends using ValueIfMissing if not defined in mIDPickerOptions)
+    ''' </summary>
+    ''' <param name="CmdArgs">Current arguments</param>
+    ''' <param name="OptionName">Key name to lookup in mIDPickerOptions</param>
+    ''' <param name="ArgumentName">Argument Name</param>
+    ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
+    ''' <returns>The new argument list</returns>
+    ''' <remarks></remarks>
+    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
+        Const AppendIfMissing As Boolean = True
+        Return AppendArgument(CmdArgs, OptionName, ArgumentName, ValueIfMissing, AppendIfMissing)
+    End Function
+
+    ''' <summary>
+    ''' Append a new command line argument
+    ''' </summary>
+    ''' <param name="CmdArgs">Current arguments</param>
+    ''' <param name="OptionName">Key name to lookup in mIDPickerOptions</param>
+    ''' <param name="ArgumentName">Argument Name</param>
+    ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
+    ''' <param name="AppendIfMissing">If True, then append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, then does not append the argument</param>
+    ''' <returns>The new argument list</returns>
+    ''' <remarks></remarks>
+    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String, ByVal AppendIfMissing As Boolean) As String
+        Dim strValue As String = String.Empty
+        Dim blnIsMissing As Boolean
+        Dim blnAppendParam As Boolean
+
+        If mIDPickerOptions.TryGetValue(OptionName, strValue) Then
+            blnIsMissing = False
+        Else
+            blnIsMissing = True
+            strValue = ValueIfMissing
+        End If
+
+        If blnIsMissing Then
+            blnAppendParam = AppendIfMissing
+        Else
+            blnAppendParam = True
+        End If
+
+        If String.IsNullOrEmpty(CmdArgs) Then
+            CmdArgs = String.Empty
+        End If
+
+        If blnAppendParam Then
+            Return CmdArgs & " -" & ArgumentName & " " & PossiblyQuotePath(strValue)
+        Else
+            Return CmdArgs
+        End If
+
+    End Function
+
+    Protected Function CreateAssembleFile(ByVal strAssembleFilePath As String) As Boolean
+
+        Dim strDatasetLabel As String
+
+        Try
+            ' Prepend strExperiment with PNNL/
+            ' Also make sure it doesn't contain any spaces
+            strDatasetLabel = "PNNL/" & m_Dataset.Replace(" ", "_")
+
+            ' Create the Assemble.txt file
+            Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strAssembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swOutfile.WriteLine(strDatasetLabel & " " & Path.GetFileName(mIdpXMLFilePath))
+            End Using
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->CreateAssembleFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Sub ClearConcurrentBag(ByRef oBag As ConcurrentBag(Of String))
+        Dim item As String = String.Empty
+        Do While Not oBag.IsEmpty
+            oBag.TryTake(item)
+        Loop
+    End Sub
+
+    ''' <summary>
+    ''' Copies a file into folder strReportFolderPath then adds it to m_jobParams.AddResultFileToSkip
+    ''' </summary>
+    ''' <param name="strFileName"></param>
+    ''' <param name="strReportFolderPath"></param>
+    ''' <remarks></remarks>
+    Protected Sub CopyFileIntoReportFolder(ByVal strFileName As String, strReportFolderPath As String)
+        Dim ioSourceFile As FileInfo
+
+        Try
+            ioSourceFile = New FileInfo(Path.Combine(m_WorkDir, strFileName))
+
+            If ioSourceFile.Exists Then
+                ioSourceFile.CopyTo(Path.Combine(strReportFolderPath, strFileName), True)
+                m_jobParams.AddResultFileToSkip(strFileName)
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying ConsoleOutput file into the IDPicker Report folder: " & ex.Message)
+        End Try
+
+    End Sub
+
+    Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+
+        Dim strParamFileName As String
+
+        Dim iHitsPerSpectrum As Integer
+
+        Dim CmdStr As String
+
+        ' PepXML file creation should generally be done in less than 10 minutes
+        ' However, for huge fasta files, conversion could take an hour
+        Const intMaxRuntimeMinutes As Integer = 60
+
+        Dim blnSuccess As Boolean
+
+        Try
+
+            'Set up and execute a program runner to run PeptideListToXML
+            strParamFileName = m_jobParams.GetParam("ParmFileName")
+
+            mPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & ".pepXML")
+            iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3)
+
+            CmdStr = PossiblyQuotePath(strSynFilePath) & " /E:" & PossiblyQuotePath(strParamFileName) & " /F:" & PossiblyQuotePath(strFastaFilePath) & " /H:" & iHitsPerSpectrum
+
+            If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+                ' The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
+                ' Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
+                ' Therefore, don't include them in the PepXML file
+                CmdStr &= " /NoMSGF"
+            End If
+
+            If m_jobParams.GetJobParameter("PepXMLNoScanStats", False) Then
+                CmdStr &= " /NoScanStats"
+            End If
+
+            ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
+
+            m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE
+
+            blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, False, intMaxRuntimeMinutes)
+
+            If blnSuccess Then
+                ' Make sure a .pepXML file was created
+                If Not File.Exists(mPepXMLFilePath) Then
+                    m_message = "Error creating PepXML file"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
+                    blnSuccess = False
+                Else
+                    m_jobParams.AddResultFileToSkip(PEPXML_CONSOLE_OUTPUT)
+                End If
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->CreatePepXMLFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Determine the prefix used by to denote decoy (reversed) proteins
+    ''' </summary>
+    ''' <param name="strFastaFilePath"></param>
+    ''' <param name="strDecoyPrefix"></param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function DetermineDecoyProteinPrefix(ByVal strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
+
+        Dim lstReversedProteinPrefixes As SortedSet(Of String)
+        Dim lstPrefixStats As Dictionary(Of String, Integer)
+
+        Dim strProtein As String
+        Dim strProteinPrefix As String
+        Dim intCount As Integer
+
+        Dim objFastaFileReader As ProteinFileReader.FastaFileReader
+
+        strDecoyPrefix = String.Empty
+
+        Try
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the fasta file")
+            End If
+
+            lstReversedProteinPrefixes = New SortedSet(Of String)
+
+            lstReversedProteinPrefixes.Add("reversed_")                             ' MTS reversed proteins                 'reversed[_]%'
+            lstReversedProteinPrefixes.Add("scrambled_")                            ' MTS scrambled proteins                'scrambled[_]%'
+            lstReversedProteinPrefixes.Add("xxx.")                                  ' Inspect reversed/scrambled proteins   'xxx.%'
+            lstReversedProteinPrefixes.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToLower())   ' MSGFDB reversed proteins              'rev[_]%'
+            lstReversedProteinPrefixes.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()) ' MSGF+ reversed proteins               'xxx[_]%'
+
+            ' Note that X!Tandem decoy proteins end with ":reversed"
+            ' IDPicker doesn't support decoy protein name suffixes, only prefixes
+
+            lstPrefixStats = New Dictionary(Of String, Integer)
+
+            objFastaFileReader = New ProteinFileReader.FastaFileReader
+
+            If Not objFastaFileReader.OpenFile(strFastaFilePath) Then
+                m_message = "Error reading fasta file with ProteinFileReader"
+                Return False
+            End If
+
+            Do While objFastaFileReader.ReadNextProteinEntry()
+
+                strProtein = objFastaFileReader.ProteinName
+
+                For Each strPrefix In lstReversedProteinPrefixes
+                    If strProtein.ToLower.StartsWith(strPrefix.ToLower) Then
+                        strProteinPrefix = strProtein.Substring(0, strPrefix.Length)
+
+                        If lstPrefixStats.TryGetValue(strProteinPrefix, intCount) Then
+                            lstPrefixStats(strProteinPrefix) = intCount + 1
+                        Else
+                            lstPrefixStats.Add(strProteinPrefix, 1)
+                        End If
+                    End If
+                Next
+            Loop
+
+            objFastaFileReader.CloseFile()
+
+            If lstPrefixStats.Count = 1 Then
+                strDecoyPrefix = lstPrefixStats.First.Key
+
+            ElseIf lstPrefixStats.Count > 1 Then
+                ' Find the prefix (key) in lstPrefixStats with the highest occurrence count
+                Dim intMaxCount As Integer = -1
+                For Each kvEntry In lstPrefixStats
+                    If kvEntry.Value > intMaxCount Then
+                        intMaxCount = kvEntry.Value
+                        strDecoyPrefix = kvEntry.Key
+                    End If
+                Next
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->DetermineDecoyProteinPrefix"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Function IgnoreError(ByVal strErrorMessage As String) As Boolean
+        Dim blnIgnore As Boolean = False
+
+        For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
+            If strErrorMessage.Contains(strIgnoreText) Then
+                blnIgnore = True
+                Exit For
+            End If
+        Next
+
+        Return blnIgnore
+    End Function
+
+    Protected Function LoadIDPickerOptions() As Boolean
+
+        Dim strParameterFilePath As String
+
+        Dim strLineIn As String
+        Dim strKey As String
+        Dim strValue As String
+
+        Try
+            mIDPickerParamFileNameLocal = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
+            If String.IsNullOrEmpty(mIDPickerParamFileNameLocal) Then
+                m_message = "IDPicker parameter file not defined"
+                Return False
+            End If
+
+            strParameterFilePath = Path.Combine(m_WorkDir, mIDPickerParamFileNameLocal)
+
+            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                Do While srParamFile.Peek > -1
+                    strLineIn = srParamFile.ReadLine()
+                    strKey = String.Empty
+                    strValue = String.Empty
+
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                        strLineIn = strLineIn.Trim()
+
+                        If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+
+                            Dim intCharIndex As Integer
+                            intCharIndex = strLineIn.IndexOf("="c)
+                            If intCharIndex > 0 Then
+                                strKey = strLineIn.Substring(0, intCharIndex).Trim()
+                                If intCharIndex < strLineIn.Length - 1 Then
+                                    strValue = strLineIn.Substring(intCharIndex + 1).Trim()
+                                Else
+                                    strValue = String.Empty
+                                End If
+                            End If
+
+                            intCharIndex = strValue.IndexOf("#"c)
+                            If intCharIndex >= 0 Then
+                                strValue = strValue.Substring(0, intCharIndex)
+                            End If
+                        End If
+
+                    End If
+
+                    If Not String.IsNullOrWhiteSpace(strKey) Then
+                        If mIDPickerOptions.ContainsKey(strKey) Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring duplicate parameter file option '" & strKey & "' in file " & mIDPickerParamFileNameLocal)
+                        Else
+                            mIDPickerOptions.Add(strKey, strValue.Trim())
+                        End If
+                    End If
+
+                Loop
+
+            End Using
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->LoadIDPickerOptions"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
+
+        Dim lstPrefixesToCheck As List(Of String)
+
+        Try
+            strDecoyPrefix = String.Empty
+            lstPrefixesToCheck = New List(Of String)
+            lstPrefixesToCheck.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper())
+            lstPrefixesToCheck.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToUpper())
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the MSGFDB synopsis file")
+            End If
+
+            Using oReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSynFilePath, eResultType, False, False, False)
+
+                Do While oReader.MoveNext
+                    For Each strPrefixToCheck As String In lstPrefixesToCheck
+                        If oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck) Then
+                            strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, strPrefixToCheck.Length)
+
+                            If m_DebugLevel >= 4 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Decoy protein prefix found: " & strDecoyPrefix)
+                            End If
+
+                            Exit Do
+                        End If
+                    Next
+                Loop
+            End Using
+
+        Catch ex As Exception
+            m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFDBResults"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
+
+    End Function
+
+    Protected Function MoveFilesIntoIDPickerSubfolder() As IJobParams.CloseOutType
+
+        Dim diSourceFolder As DirectoryInfo
+        Dim diTargetFolder As DirectoryInfo
+
+        Dim lstFileSpecs As List(Of String)
+        Dim fiFilesToMove As List(Of FileInfo)
+
+        Dim blnErrorEncountered As Boolean
+        Dim ResFolderNamePath As String
+
+        Try
+            ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
+
+            diSourceFolder = New DirectoryInfo(ResFolderNamePath)
+            diTargetFolder = diSourceFolder.CreateSubdirectory("IDPicker")
+
+            lstFileSpecs = New List(Of String)
+            fiFilesToMove = New List(Of FileInfo)
+
+            lstFileSpecs.Add("*.idpXML")
+            lstFileSpecs.Add("IDPicker*.*")
+            lstFileSpecs.Add("Tool_Version_Info_IDPicker.txt")
+            lstFileSpecs.Add(mIDPickerParamFileNameLocal)
+
+            If Not mBatchFilesMoved Then
+                lstFileSpecs.Add("Run*.bat")
+            End If
+
+            For Each strFileSpec As String In lstFileSpecs
+                For Each fiFile As FileInfo In diSourceFolder.GetFiles(strFileSpec)
+                    fiFilesToMove.Add(fiFile)
+                Next
+            Next
+
+            For Each fiFile As FileInfo In fiFilesToMove
+                Dim intAttempts As Integer = 0
+                Dim blnSuccess As Boolean = False
+
+                Do
+                    Try
+                        ' Note that the file may have been moved already; confirm that it still exists
+                        fiFile.Refresh()
+                        If fiFile.Exists Then
+                            fiFile.MoveTo(Path.Combine(diTargetFolder.FullName, fiFile.Name))
+                        End If
+                        blnSuccess = True
+                    Catch ex As Exception
+                        intAttempts += 1
+                        Threading.Thread.Sleep(2000)
+                    End Try
+                Loop While Not blnSuccess AndAlso intAttempts <= 3
+
+                If Not blnSuccess Then
+                    blnErrorEncountered = True
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to move " & fiFile.Name & " into the IDPicker subfolder; tried " & (intAttempts - 1).ToString() & " times")
+                End If
+            Next
+
+        Catch ex As Exception
+            blnErrorEncountered = True
+        End Try
+
+        If blnErrorEncountered Then
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Else
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
+
+    End Function
+
+    Protected Sub ParseConsoleOutputFileForErrors(ByVal strConsoleOutputFilePath As String)
+
+        Dim strLineIn As String
+        Dim blnUnhandledException As Boolean
+        Dim strExceptionText As String = String.Empty
+
+        Try
+            If File.Exists(strConsoleOutputFilePath) Then
+                Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                    While srInFile.Peek > -1
+                        strLineIn = srInFile.ReadLine
+
+                        If Not String.IsNullOrEmpty(strLineIn) Then
+                            If blnUnhandledException Then
+                                If String.IsNullOrEmpty(strExceptionText) Then
+                                    strExceptionText = String.Copy(strLineIn)
+                                Else
+                                    strExceptionText = ";" & strLineIn
+                                End If
+
+                            ElseIf strLineIn.StartsWith("Error:") Then
+                                If Not IgnoreError(strLineIn) Then
+                                    mCmdRunnerErrors.Add(strLineIn)
+                                End If
+                            ElseIf strLineIn.StartsWith("Unhandled Exception") Then
+                                mCmdRunnerErrors.Add(strLineIn)
+                                blnUnhandledException = True
+                            End If
+                        End If
+                    End While
+                End Using
+
+                If Not String.IsNullOrEmpty(strExceptionText) Then
+                    mCmdRunnerErrors.Add(strExceptionText)
+                End If
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileForErrors: " & ex.Message)
+        End Try
+
+    End Sub
+
+    ''' <summary>
+    ''' Run idpAssemble to organizes the search results into a hierarchy
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function RunAssemble() As Boolean
+
+        Dim strAssembleFilePath As String
+        Dim progLoc As String
+        Const intMaxRuntimeMinutes As Integer = 30
+
+        Dim blnSuccess As Boolean
+
+        ' Create the Assemble.txt file
+        ' Since we're only processing one dataset, the file will only have one line
+        strAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_GROUPING_FILENAME)
+
+        blnSuccess = CreateAssembleFile(strAssembleFilePath)
+        If Not blnSuccess Then
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error running idpAssemble"
+            End If
+            Return False
+        End If
+
+        ' Define the errors that we can ignore
+        ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
+        mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
+        mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
+
+        ' Define the path to the .Exe
+        progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble)
+
+        ' Build the command string, for example:
+        '  Assemble.xml -MaxFDR 0.1 -b Assemble.txt
+        Dim cmdStr As String
+
+        cmdStr = ASSEMBLE_OUTPUT_FILENAME
+        cmdStr = AppendArgument(cmdStr, "AssemblyMaxFDR", "MaxFDR", "0.1")
+        cmdStr &= " -b Assemble.txt -dump"
+
+        m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble
+
+        blnSuccess = RunProgramWork("IDPAssemble", progLoc, cmdStr, IPD_Assemble_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
+
+        mIdpAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_OUTPUT_FILENAME)
+
+        If blnSuccess Then
+
+            ' Make sure the output file was created		
+            If Not File.Exists(mIdpAssembleFilePath) Then
+                m_message = "IDPicker Assemble results file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & mIdpAssembleFilePath)
+                blnSuccess = False
+            Else
+                ' Do not keep the assemble input or output files
+                m_jobParams.AddResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
+                m_jobParams.AddResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
+            End If
+
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Run idpQonvert to convert the search scores in the pepXML file to q-values
+    ''' </summary>
+    ''' <param name="strFASTAFilePath"></param>
+    ''' <param name="strDecoyPrefix"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function RunQonvert(ByVal strFASTAFilePath As String, ByVal strDecoyPrefix As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+
+        Dim progLoc As String
+        Dim CmdStr As String
+        Const intMaxRuntimeMinutes As Integer = 30
+
+        Dim blnSuccess As Boolean
+
+        ' Define the errors that we can ignore
+        ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
+        mCmdRunnerErrorsToIgnore.Add("could not find the default configuration file")
+        mCmdRunnerErrorsToIgnore.Add("could not find the default residue masses file")
+
+        ' Define the path to the .Exe
+        progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert)
+
+        ' Possibly override some options
+        If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+            ' Higher MODa probability scores are better
+            mIDPickerOptions("SearchScoreWeights") = "Probability 1"
+            mIDPickerOptions("NormalizedSearchScores") = "Probability"
+        End If
+
+        ' Build the command string, for example:
+        '   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
+        CmdStr = String.Empty
+
+        CmdStr = AppendArgument(CmdStr, "QonvertMaxFDR", "MaxFDR", "0.1")
+        CmdStr &= " -ProteinDatabase " & PossiblyQuotePath(strFASTAFilePath)
+        CmdStr = AppendArgument(CmdStr, "SearchScoreWeights", "msgfspecprob -1")
+        CmdStr = AppendArgument(CmdStr, "OptimizeScoreWeights", "1")
+        CmdStr = AppendArgument(CmdStr, "NormalizedSearchScores", "msgfspecprob")
+
+        CmdStr &= " -DecoyPrefix " & PossiblyQuotePath(strDecoyPrefix)
+        CmdStr &= " -dump"              ' This tells IDPQonvert to display the processing options that the program is using
+        CmdStr &= " " & mPepXMLFilePath
+
+        m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert
+
+        blnSuccess = RunProgramWork("IDPQonvert", progLoc, CmdStr, IPD_Qonvert_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
+
+        mIdpXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & ".idpXML")
+
+        If blnSuccess Then
+
+            ' Make sure the output file was created		
+            If Not File.Exists(mIdpXMLFilePath) Then
+                m_message = "IDPicker Qonvert results file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & mIdpXMLFilePath)
+                blnSuccess = False
+            End If
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Run idpReport to apply parsimony in protein assembly and generate reports
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function RunReport() As Boolean
+        Dim strOutputFolderName As String
+        Dim progLoc As String
+        Const intMaxRuntimeMinutes As Integer = 20
+
+        Dim blnSuccess As Boolean
+
+        strOutputFolderName = "IDPicker"
+
+        ' Define the errors that we can ignore
+        ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
+        mCmdRunnerErrorsToIgnore.Add("protein database filename should be the same in all input files")
+        mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file")
+
+        ' Define the path to the .Exe
+        progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Report)
+
+        ' Build the command string, for example:
+        '  report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -OutputTextReport true
+        Dim CmdStr As String
+
+        CmdStr = strOutputFolderName & " " & mIdpAssembleFilePath
+        CmdStr = AppendArgument(CmdStr, "ReportMaxFDR", "MaxFDR", "0.05")
+        CmdStr = AppendArgument(CmdStr, "MinDistinctPeptides", "2")
+        CmdStr = AppendArgument(CmdStr, "MinAdditionalPeptides", "2")
+        CmdStr = AppendArgument(CmdStr, "ModsAreDistinctByDefault", "true")
+        CmdStr = AppendArgument(CmdStr, "MaxAmbiguousIds", "2")
+        CmdStr = AppendArgument(CmdStr, "MinSpectraPerProtein", "2")
+
+        CmdStr &= " -OutputTextReport true -dump"
+
+        m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPReport
+
+        blnSuccess = RunProgramWork("IDPReport", progLoc, CmdStr, IPD_Report_CONSOLE_OUTPUT, True, intMaxRuntimeMinutes)
+
+        If blnSuccess Then
+
+            Dim diReportFolder As DirectoryInfo
+            diReportFolder = New DirectoryInfo(Path.Combine(m_WorkDir, strOutputFolderName))
+
+            ' Make sure the output folder was created
+            If Not diReportFolder.Exists Then
+                m_message = "IDPicker report folder file not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & diReportFolder.FullName)
+                blnSuccess = False
+            End If
+
+            If blnSuccess Then
+
+                Dim blnTSVFileFound As Boolean = False
+
+                ' Move the .tsv files from the Report folder up one level
+                For Each fiFile As FileInfo In diReportFolder.GetFiles("*.tsv")
+                    fiFile.MoveTo(Path.Combine(m_WorkDir, fiFile.Name))
+                    blnTSVFileFound = True
+                Next
+
+                If Not blnTSVFileFound Then
+                    m_message = "IDPicker report folder does not contain any TSV files"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & diReportFolder.FullName)
+                    blnSuccess = False
+                End If
+
+            End If
+
+            If blnSuccess Then
+                ' Copy the ConsoleOutput and RunProgram batch files into the Report folder (and add them to the files to Skip)
+                ' mFilenamesToAddToReportFolder will already contain the batch file names
+
+                mFilenamesToAddToReportFolder.Add(IPD_Qonvert_CONSOLE_OUTPUT)
+                mFilenamesToAddToReportFolder.Add(IPD_Assemble_CONSOLE_OUTPUT)
+                mFilenamesToAddToReportFolder.Add(IPD_Report_CONSOLE_OUTPUT)
+
+                For Each strFileName As String In mFilenamesToAddToReportFolder
+                    CopyFileIntoReportFolder(strFileName, diReportFolder.FullName)
+                Next
+
+                mBatchFilesMoved = True
+
+                ' Zip the report folder
+                Dim strZippedResultsFilePath As String
+                strZippedResultsFilePath = Path.Combine(m_WorkDir, "IDPicker_HTML_Results.zip")
+                m_IonicZipTools.DebugLevel = m_DebugLevel
+                blnSuccess = m_IonicZipTools.ZipDirectory(diReportFolder.FullName, strZippedResultsFilePath, True)
+
+                If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+                    m_NeedToAbortProcessing = True
+                End If
+
+            End If
+        Else
+            ' Check whether mCmdRunnerErrors contains a known error message
+            For Each strError As String In mCmdRunnerErrors
+                If strError.Contains("no spectra in workspace") Then
+                    ' All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
+                    m_message = String.Empty
+                    m_EvalMessage = "IDPicker Report filtered out all of the proteins"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage & "; this indicates there are not enough filter-passing peptides.")
+                    blnSuccess = True
+                    Exit For
+                End If
+            Next
+
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="strProgramDescription"></param>
+    ''' <param name="strExePath"></param>
+    ''' <param name="CmdStr"></param>
+    ''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
+    ''' <returns></returns>
+    ''' <remarks>IDPicker tools cause clsRunDosProgram to hang when they post errors and warnings to the error stream; thus, strConsoleOutputFileName should be empty for IDPicker tools</remarks>
+    Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal blnCaptureConsoleOutputViaDosRedirection As Boolean, ByVal intMaxRuntimeMinutes As Integer) As Boolean
+
+        Dim blnSuccess As Boolean
+
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strExePath & " " & CmdStr.TrimStart(" "c))
+        End If
+
+        mCmdRunnerDescription = String.Copy(strProgramDescription)
+        ClearConcurrentBag(mCmdRunnerErrors)
+
+        CmdRunner = New clsRunDosProgram(m_WorkDir)
+
+        If blnCaptureConsoleOutputViaDosRedirection Then
+            ' Create a batch file to run the command
+            ' Capture the console output (including output to the error stream) via redirection symbols: 
+            '    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
+
+            Dim strExePathOriginal As String = String.Copy(strExePath)
+            Dim CmdStrOriginal As String = String.Copy(CmdStr)
+
+            strProgramDescription = strProgramDescription.Replace(" ", "_")
+
+            Dim strBatchFileName As String = "Run_" & strProgramDescription & ".bat"
+            mFilenamesToAddToReportFolder.Add(strBatchFileName)
+
+            ' Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
+            strExePath = Path.Combine(m_WorkDir, strBatchFileName)
+            CmdStr = String.Empty
+
+            If String.IsNullOrEmpty(strConsoleOutputFileName) Then
+                strConsoleOutputFileName = strProgramDescription & "_Console_Output.txt"
+            End If
+
+            ' Create the batch file
+            Using swBatchFile As StreamWriter = New StreamWriter(New FileStream(strExePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swBatchFile.WriteLine(strExePathOriginal & " " & CmdStrOriginal & " > " & strConsoleOutputFileName & " 2>&1")
+            End Using
+
+            Threading.Thread.Sleep(100)
+        End If
+
+        With CmdRunner
+            If blnCaptureConsoleOutputViaDosRedirection OrElse String.IsNullOrEmpty(strConsoleOutputFileName) Then
+                .CreateNoWindow = False
+                .EchoOutputToConsole = False
+                .CacheStandardOutput = False
+                .WriteConsoleOutputToFile = False
+            Else
+                .CreateNoWindow = True
+                .EchoOutputToConsole = True
+                .CacheStandardOutput = False
+                .WriteConsoleOutputToFile = True
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName)
+            End If
+
+        End With
+
+        Dim intMaxRuntimeSeconds As Integer = intMaxRuntimeMinutes * 60
+
+        blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True, intMaxRuntimeSeconds)
+
+        If mCmdRunnerErrors.Count = 0 And Not String.IsNullOrEmpty(CmdRunner.CachedConsoleError) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
+        End If
+
+        If blnCaptureConsoleOutputViaDosRedirection Then
+            ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, strConsoleOutputFileName))
+
+        ElseIf mCmdRunnerErrors.Count > 0 AndAlso Not String.IsNullOrEmpty(strConsoleOutputFileName) Then
+
+            ' Append the error messages to the console output file
+            Threading.Thread.Sleep(250)
+            Using swConsoleOutputAppend As StreamWriter = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+
+                swConsoleOutputAppend.WriteLine()
+                swConsoleOutputAppend.WriteLine(" ----- Errors and Warnings ---- ")
+                For Each strError As String In mCmdRunnerErrors
+                    swConsoleOutputAppend.WriteLine(strError)
+
+                    If Not strError.ToLower().StartsWith("warning") Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
+                    End If
+                Next
+            End Using
+
+        End If
+
+        If Not blnSuccess Then
+
+            m_message = "Error running " & strProgramDescription
+            If mCmdRunnerErrors.Count > 0 Then
+                m_message &= ": " & mCmdRunnerErrors.First
+            End If
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+
+            If CmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProgramDescription & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strProgramDescription & " failed (but exit code is 0)")
+            End If
+
+        Else
+            m_StatusTools.UpdateAndWrite(m_progress)
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProgramDescription & " Complete")
+            End If
+
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo(ByVal strIDPickerProgLoc As String, ByVal blnSkipIDPicker As Boolean) As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+        Dim strExePath As String
+
+        Dim ioIDPicker As FileInfo
+        Dim blnSuccess As Boolean
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' We will store paths to key files in ioToolFiles
+        Dim ioToolFiles As New List(Of FileInfo)
+
+        ' Determine the path to the PeptideListToXML.exe
+        mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXML", "PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE)
+
+        If blnSkipIDPicker Then
+            ' Only store the version of PeptideListToXML.exe in the database
+            blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, mPeptideListToXMLExePath)
+            ioToolFiles.Add(New FileInfo(mPeptideListToXMLExePath))
+        Else
+
+            ioIDPicker = New FileInfo(strIDPickerProgLoc)
+            If Not ioIDPicker.Exists Then
+                Try
+                    strToolVersionInfo = "Unknown"
+                    Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                    Return False
+                End Try
+
+            End If
+
+            mIDPickerProgramFolder = ioIDPicker.DirectoryName
+
+            ' Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
+            strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Assemble)
+            blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strExePath)
+            ioToolFiles.Add(New FileInfo(strExePath))
+
+            ' Lookup the version of idpReport.exe
+            strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Report)
+            blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strExePath)
+            ioToolFiles.Add(New FileInfo(strExePath))
+
+            ' Also include idpQonvert.exe in ioToolFiles (version determination does not work)
+            strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Qonvert)
+            ioToolFiles.Add(New FileInfo(strExePath))
+
+            ' Lookup the version of PeptideListToXML.exe			
+            blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, mPeptideListToXMLExePath)
+            ioToolFiles.Add(New FileInfo(mPeptideListToXMLExePath))
+
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+        m_progress = sngPercentComplete
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
+    End Sub
+
+    Private Function ZipPepXMLFile() As Boolean
+
+        Dim strZippedPepXMLFilePath As String
+
+        Try
+            strZippedPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset & "_pepXML.zip")
+
+            If Not MyBase.ZipFile(mPepXMLFilePath, False, strZippedPepXMLFilePath) Then
+                Dim Msg As String = "Error zipping PepXML file, job " & m_JobNum
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file")
+                Return False
+            End If
+
+            ' Add the .pepXML file to .FilesToDelete since we only want to keep the Zipped version
+            m_jobParams.AddResultFileToSkip(Path.GetFileName(mPepXMLFilePath))
+
+        Catch ex As Exception
+            Dim Msg As String = "clsAnalysisToolRunnerIDPicker.ZipPepXMLFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file")
+            Return False
+        End Try
+
+        Return True
+
+    End Function
 
 #End Region
 
 #Region "Event Handlers"
 
-	Private Sub CmdRunner_ConsoleErrorEvent(NewText As String) Handles CmdRunner.ConsoleErrorEvent
+    Private Sub CmdRunner_ConsoleErrorEvent(NewText As String) Handles CmdRunner.ConsoleErrorEvent
 
-		If Not mCmdRunnerErrors Is Nothing Then
-			' Split NewText on newline characters
-			Dim strSplitLine() As String
-			Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
+        If Not mCmdRunnerErrors Is Nothing Then
+            ' Split NewText on newline characters
+            Dim strSplitLine() As String
+            Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
 
-			strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
+            strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
 
-			If Not strSplitLine Is Nothing Then
-				For Each strItem As String In strSplitLine
-					strItem = strItem.Trim(chNewLineChars)
-					If Not String.IsNullOrEmpty(strItem) Then
+            If Not strSplitLine Is Nothing Then
+                For Each strItem As String In strSplitLine
+                    strItem = strItem.Trim(chNewLineChars)
+                    If Not String.IsNullOrEmpty(strItem) Then
 
-						' Confirm that strItem does not contain any text in mCmdRunnerErrorsToIgnore
-						If Not IgnoreError(strItem) Then
-							mCmdRunnerErrors.Add(strItem)
-						End If
+                        ' Confirm that strItem does not contain any text in mCmdRunnerErrorsToIgnore
+                        If Not IgnoreError(strItem) Then
+                            mCmdRunnerErrors.Add(strItem)
+                        End If
 
-					End If
-				Next
-			End If
+                    End If
+                Next
+            End If
 
-		End If
+        End If
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        ' Synchronize the stored Debug level with the value stored in the database
+        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
+        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
-		'Update the status file (limit the updates to every 5 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+        'Update the status file (limit the updates to every 5 seconds)
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
+            UpdateStatusRunning(m_progress)
+        End If
 
-	End Sub
+    End Sub
 
-	Private Sub CmdRunner_Timeout() Handles CmdRunner.Timeout
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborted " & mCmdRunnerDescription)
-		End If
-	End Sub
+    Private Sub CmdRunner_Timeout() Handles CmdRunner.Timeout
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborted " & mCmdRunnerDescription)
+        End If
+    End Sub
 
 #End Region
 
