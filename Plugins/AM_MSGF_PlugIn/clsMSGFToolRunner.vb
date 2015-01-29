@@ -1361,7 +1361,7 @@ Public Class clsMSGFRunner
 			ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
 				blnSuccess = ConvertMzMLToMzXML()
 			Else
-				' Create the .mzXML file
+                ' Possibly create the .mzXML file
 				' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
 				blnSuccess = CreateMzXMLFile()
 			End If

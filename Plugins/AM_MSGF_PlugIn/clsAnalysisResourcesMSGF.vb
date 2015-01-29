@@ -330,7 +330,7 @@ Public Class clsAnalysisResourcesMSGF
 				End If
 
 				' Possibly unzip the .mzXML file
-				Dim fiMzXMLFile = New FileInfo(Path.Combine(m_WorkingDir & DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION))
+                Dim fiMzXMLFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION))
 				If fiMzXMLFile.Exists Then
 					m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
 
