@@ -337,6 +337,11 @@
 		Class="AnalysisManagerMzRefineryPlugIn.clsAnalysisToolRunnerMzRefinery" 
 		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="promex" 
+		Class="AnalysisManagerProMexPlugIn.clsAnalysisToolRunnerProMex" 
+		AssemblyFile="AnalysisManagerProMexPlugIn.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -675,6 +680,11 @@
 		Tool="mz_refinery" 
 		Class="AnalysisManagerMzRefineryPlugIn.clsAnalysisResourcesMzRefinery" 
 		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" 
+	/>			
+	<Resourcer 
+		Tool="promex" 
+		Class="AnalysisManagerProMexPlugIn.clsAnalysisResourcesProMex" 
+		AssemblyFile="AnalysisManagerProMexPlugIn.dll" 
 	/>			
 </Resourcers>
 

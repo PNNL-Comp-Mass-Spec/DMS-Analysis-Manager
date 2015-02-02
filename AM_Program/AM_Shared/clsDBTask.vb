@@ -99,8 +99,8 @@ Public MustInherit Class clsDBTask
 	Protected Sub New(ByVal MgrParams As IMgrParams, ByVal DebugLvl As Integer)
 
 		m_MgrParams = MgrParams
-		m_ConnStr = m_MgrParams.GetParam("ConnectionString")
-		m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")
+        m_ConnStr = m_MgrParams.GetParam("ConnectionString")               ' Gigasax.DMS5
+        m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
 		m_DebugLevel = DebugLvl
 
 	End Sub

@@ -42,19 +42,19 @@ Public Class clsCleanupMgrErrors
 	   ByVal strMgrFolderPath As String, _
 	   ByVal strWorkingDirPath As String)
 
-		If strMgrConfigDBConnectionString Is Nothing OrElse strMgrConfigDBConnectionString.Length = 0 Then
-			Throw New Exception("Manager config DB connection string is not defined")
-		ElseIf strManagerName Is Nothing OrElse strManagerName.Length = 0 Then
-			Throw New Exception("Manager name is not defined")
-		Else
-			mMgrConfigDBConnectionString = String.Copy(strMgrConfigDBConnectionString)
-			mManagerName = String.Copy(strManagerName)
+        If String.IsNullOrEmpty(strMgrConfigDBConnectionString) Then
+            Throw New Exception("Manager config DB connection string is not defined")
+        ElseIf String.IsNullOrEmpty(strManagerName) Then
+            Throw New Exception("Manager name is not defined")
+        Else
+            mMgrConfigDBConnectionString = String.Copy(strMgrConfigDBConnectionString)
+            mManagerName = String.Copy(strManagerName)
 
-			mMgrFolderPath = strMgrFolderPath
-			mWorkingDirPath = strWorkingDirPath
+            mMgrFolderPath = strMgrFolderPath
+            mWorkingDirPath = strWorkingDirPath
 
-			mInitialized = True
-		End If
+            mInitialized = True
+        End If
 
 	End Sub
 
@@ -75,9 +75,9 @@ Public Class clsCleanupMgrErrors
 			blnSuccess = CleanWorkDir(mWorkingDirPath, 1, strFailureMessage)
 
 			If Not blnSuccess Then
-				If strFailureMessage Is Nothing OrElse strFailureMessage.Length = 0 Then
-					strFailureMessage = "unable to clear work directory"
-				End If
+                If String.IsNullOrEmpty(strFailureMessage) Then
+                    strFailureMessage = "unable to clear work directory"
+                End If
 			Else
 				' If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
 				blnSuccess = DeleteDeconServerFlagFile(DebugLevel)

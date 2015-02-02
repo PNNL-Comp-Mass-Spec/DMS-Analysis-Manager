@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+January 31, 2015
+	- Added ProMex plugin
+	- Updated to .NET 4.0 version of Log4net
+
 August 15, 2014
 	- Updated IAnalysisResources to include methods GetOption and SetOption 
 

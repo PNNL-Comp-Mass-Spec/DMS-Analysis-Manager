@@ -149,19 +149,20 @@ Public Class clsDtaRefLogMassErrorExtractor
 
 				strXMLResults = ConstructXML(udtMassErrorInfo)
 
-				If mPostResultsToDB Then
-					Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
-					Dim blnSuccess As Boolean
+                If mPostResultsToDB Then
+                    ' Gigasax.DMS5
+                    Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
+                    Dim blnSuccess As Boolean
 
-					blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
+                    blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
 
-					If Not blnSuccess Then
-						If String.IsNullOrEmpty(mErrorMessage) Then
-							mErrorMessage = "Unknown error posting Mass Error results from DTA Refinery to the database"
-						End If
-						Return False
-					End If
-				End If
+                    If Not blnSuccess Then
+                        If String.IsNullOrEmpty(mErrorMessage) Then
+                            mErrorMessage = "Unknown error posting Mass Error results from DTA Refinery to the database"
+                        End If
+                        Return False
+                    End If
+                End If
 
 			End If
 

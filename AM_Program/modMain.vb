@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "December 2, 2014"
+    Public Const PROGRAM_DATE As String = "February 2, 2015"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean

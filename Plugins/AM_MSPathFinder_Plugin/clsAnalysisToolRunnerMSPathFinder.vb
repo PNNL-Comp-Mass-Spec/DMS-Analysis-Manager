@@ -169,7 +169,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		Dim result As IJobParams.CloseOutType
 
-		Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        Dim strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
 		If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
@@ -273,7 +273,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		' Example Console output
 		'
 		' MSPathFinderT 0.12 (June 17, 2014)
-		' SpecFilePath: E:\DMS_WorkDir\Synocho_L2_1.pbf
+        ' SpecFilePath: E:\DMS_WorkDir\Synocho_L2_1.ms1ft
 		' DatabaseFilePath: C:\DMS_Temp_Org\ID_003962_71E1A1D4.fasta
 		' OutputDir: E:\DMS_WorkDir
 		' SearchMode: 1
@@ -445,7 +445,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 					swModFile.WriteLine("# None")
 				Else
 					For Each strStaticMod As String In lstStaticMods
-						Dim strModClean As String = String.Empty
+                        Dim strModClean = String.Empty
 
 						If ParseMSPathFinderValidateMod(strStaticMod, strModClean) Then
 							If strModClean.Contains(",opt,") Then
@@ -468,7 +468,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 					swModFile.WriteLine("# None")
 				Else
 					For Each strDynamicMod As String In lstDynamicMods
-						Dim strModClean As String = String.Empty
+                        Dim strModClean = String.Empty
 
 						If ParseMSPathFinderValidateMod(strDynamicMod, strModClean) Then
 							If strModClean.Contains(",fix,") Then
@@ -540,10 +540,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 					If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
-						Dim strValue As String = kvSetting.Value
+                        Dim strValue = kvSetting.Value
 						Dim intValue As Integer
 
-						Dim strArgumentSwitch As String = String.Empty
+                        Dim strArgumentSwitch = String.Empty
 
 						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
 						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
@@ -614,7 +614,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		Dim intPoundIndex As Integer
 		Dim strSplitMod() As String
 
-		Dim strComment As String = String.Empty
+        Dim strComment = String.Empty
 
 		strModClean = String.Empty
 
@@ -658,7 +658,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	Private Function PostProcessMSPathFinderResults() As Boolean
 
 		' Move the output files into a subfolder so that we can zip them
-		Dim compressDirPath As String = String.Empty
+        Dim compressDirPath = String.Empty
 
 		Try
 			Dim diWorkDir = New DirectoryInfo(m_WorkDir)
@@ -699,7 +699,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 			m_IonicZipTools.DebugLevel = m_DebugLevel
 
-			Dim resultsZipFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_IcTsv.zip")
+            Dim resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset & "_IcTsv.zip")
 			Dim blnSuccess = m_IonicZipTools.ZipDirectory(compressDirPath, resultsZipFilePath)
 
 			If Not blnSuccess Then
@@ -743,7 +743,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			Return False
 		End If
 
-		Dim pbfFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
+        Dim pbfFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
+        Dim featureFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MS1FT_EXTENSION)
 
 		' Define the path to the fasta file
 		Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
@@ -752,7 +753,9 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSPathFinder")
 
 		'Set up and execute a program runner to run MSPathFinder
-		CmdStr = " -s " & pbfFilePath
+
+        CmdStr = " -s " & pbfFilePath
+        CmdStr &= " -feature " & featureFilePath
 		CmdStr &= " -d " & fastaFilePath
 		CmdStr &= " -o " & m_WorkDir
 		CmdStr &= " " & strCmdLineOptions
@@ -830,7 +833,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	''' <remarks></remarks>
 	Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
+        Dim strToolVersionInfo = String.Empty
 		Dim blnSuccess As Boolean
 
 		If m_DebugLevel >= 2 Then

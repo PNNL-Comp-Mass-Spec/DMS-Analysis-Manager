@@ -46,10 +46,10 @@ Public Class clsAnalysisResourcesDtaRefinery
 		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "DTA_Refinery"
 
 		strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
-		If strDtaRefineryParmFileStoragePath Is Nothing OrElse strDtaRefineryParmFileStoragePath.Length = 0 Then
-			strDtaRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\DTARefinery"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strDtaRefineryParmFileStoragePath)
-		End If
+        If String.IsNullOrEmpty(strDtaRefineryParmFileStoragePath) Then
+            strDtaRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\DTARefinery"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strDtaRefineryParmFileStoragePath)
+        End If
 
 		'Retrieve settings files aka default file that will have values overwritten by parameter file values
 		'Stored in same location as parameter file

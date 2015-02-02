@@ -27,8 +27,15 @@ Public Class clsAnalysisResourcesMSPathFinder
 		If Not RetrieveFastaAndParamFile() Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
+        Dim eResult As IJobParams.CloseOutType
 
-		Dim eResult = RetrieveInstrumentData()
+        eResult = RetrieveProMexFeaturesFile()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return eResult
+        End If
+
+        eResult = RetrievePBFFile()
+
 		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			Return eResult
 		End If
@@ -77,30 +84,92 @@ Public Class clsAnalysisResourcesMSPathFinder
 
 	End Function
 
-	Protected Function RetrieveInstrumentData() As IJobParams.CloseOutType
+    Protected Function RetrievePBFFile() As IJobParams.CloseOutType
 
-		Dim currentTask As String = "Initializing"
+        Const PBF_GEN_FOLDER_PREFIX As String = "PBF_GEN"
 
-		Try
-			' Retrieve the .pbf file from the MSXml cache folder
+        Dim currentTask As String = "Initializing"
 
-			currentTask = "RetrievePBFFile"
+        Try
 
-			Dim eResult = GetPBFFile()
-			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return eResult
-			End If
+            ' Cache the input folder name
+            Dim inputFolderNameCached = m_jobParams.GetJobParameter("InputFolderName", String.Empty)
+            Dim inputFolderNameWasUpdated As Boolean = False
 
-			m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)
+            If Not inputFolderNameCached.ToUpper().StartsWith(PBF_GEN_FOLDER_PREFIX) Then
+                ' Update the input folder to be the PBF_Gen input folder for this job (should be the input_folder of the previous job step)
+                Dim stepNum = m_jobParams.GetJobParameter("Step", 100)
 
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                ' Gigasax.DMS_Pipeline
+                Dim dmsConnectionString = m_mgrParams.GetParam("brokerconnectionstring")
 
-		Catch ex As Exception
-			m_message = "Exception in RetrieveInstrumentData: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+                Dim sql = " SELECT Input_Folder_Name " &
+                          " FROM T_Job_Steps" &
+                          " WHERE Job = " & m_JobNum & " AND Step_Number < " & stepNum & " AND Input_Folder_Name LIKE '" & PBF_GEN_FOLDER_PREFIX & "%'" &
+                          " ORDER by Step_Number DESC"
 
-	End Function
+                Dim lstResults As List(Of String) = Nothing
 
+                If Not clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, lstResults, "RetrievePBFFile") Then
+                    m_message = "Error looking up the correct PBF_Gen folder name in T_Job_Steps"
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                Dim pbfGenFolderName = lstResults.FirstOrDefault()
+
+                If String.IsNullOrWhiteSpace(pbfGenFolderName) Then
+                    m_message = "PBF_Gen folder name listed in T_Job_Steps for step " & stepNum - 1 & " was empty"
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                m_jobParams.SetParam("InputFolderName", pbfGenFolderName)
+                inputFolderNameWasUpdated = True
+            End If
+
+            ' Retrieve the .pbf file from the MSXml cache folder
+
+            currentTask = "RetrievePBFFile"
+
+            Dim eResult = GetPBFFile()
+
+            If inputFolderNameWasUpdated Then
+                m_jobParams.SetParam("InputFolderName", inputFolderNameCached)
+            End If
+
+            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return eResult
+            End If
+
+            m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)            
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+        Catch ex As Exception
+            m_message = "Exception in RetrievePBFFile: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+    End Function
+
+    Protected Function RetrieveProMexFeaturesFile() As IJobParams.CloseOutType
+
+        Try
+            Dim FileToGet = m_DatasetName & DOT_MS1FT_EXTENSION
+
+            If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
+
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MS1FT_EXTENSION)
+
+        Catch ex As Exception
+            m_message = "Exception in RetrieveProMexFeaturesFile: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
 End Class

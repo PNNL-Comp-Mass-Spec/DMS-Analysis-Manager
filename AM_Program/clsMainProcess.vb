@@ -1073,9 +1073,9 @@ Public Class clsMainProcess
 
 						' Decrement the log file path by one day
 						strLogFilePath = DecrementLogFilePath(strLogFilePath)
-						If strLogFilePath Is Nothing OrElse strLogFilePath = String.Empty Then
-							Exit Do
-						End If
+                        If String.IsNullOrEmpty(strLogFilePath) Then
+                            Exit Do
+                        End If
 					End If
 				Loop
 
