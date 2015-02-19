@@ -126,8 +126,10 @@ Module modMain
 						'Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
 
                         'objTest.TestCosoleOutputParsing()
-                        objTest.TestMSXmlCachePurge()
+                        ' objTest.TestMSXmlCachePurge()
 
+                        Dim testLogger = New PRISM.Logging.clsDBLogger()
+                        Console.WriteLine(testLogger.MachineName)
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

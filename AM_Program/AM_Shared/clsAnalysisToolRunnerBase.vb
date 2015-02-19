@@ -1131,6 +1131,58 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
+    ''' Gets the dictionary for the packed job parameter
+    ''' </summary>
+    ''' <param name="strPackedJobParameterName">Packaged job parameter name</param>
+    ''' <returns>List of strings</returns>
+    ''' <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
+    Protected Function ExtractPackedJobParameterDictionary(ByVal strPackedJobParameterName As String) As Dictionary(Of String, String)
+
+        Dim lstData As List(Of String)
+        Dim dctData As Dictionary(Of String, String) = New Dictionary(Of String, String)
+
+        lstData = ExtractPackedJobParameterList(strPackedJobParameterName)
+
+        For Each strItem In lstData
+            Dim intEqualsIndex = strItem.LastIndexOf("="c)
+            If intEqualsIndex > 0 Then
+                Dim strKey As String = strItem.Substring(0, intEqualsIndex)
+                Dim strValue As String = strItem.Substring(intEqualsIndex + 1)
+
+                If Not dctData.ContainsKey(strKey) Then
+                    dctData.Add(strKey, strValue)
+                End If
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Packed dictionary item does not contain an equals sign: " & strItem)
+            End If
+        Next
+
+        Return dctData
+
+    End Function
+
+    ''' <summary>
+    ''' Gets the list of values for the packed job parameter
+    ''' </summary>
+    ''' <param name="strPackedJobParameterName">Packaged job parameter name</param>
+    ''' <returns>List of strings</returns>
+    ''' <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
+    Protected Function ExtractPackedJobParameterList(ByVal strPackedJobParameterName As String) As List(Of String)
+
+        Dim strList As String
+
+        strList = m_jobParams.GetJobParameter(strPackedJobParameterName, String.Empty)
+
+        If String.IsNullOrEmpty(strList) Then
+            Return New List(Of String)
+        Else
+            ' Split the list on tab characters
+            Return strList.Split(ControlChars.Tab).ToList()
+        End If
+
+    End Function
+
+    ''' <summary>
     ''' Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
     ''' </summary>
     ''' <returns></returns>
@@ -1303,7 +1355,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Return strMSXmlGeneratorExe
     End Function
-
+    
     ''' <summary>
     ''' Lookup the transfer folder path
     ''' </summary>
@@ -1341,6 +1393,8 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns></returns>
     Public Function GUnzipFile(ByVal GZipFilePath As String, ByVal TargetDirectory As String) As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
+
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         Return m_IonicZipTools.GUnzipFile(GZipFilePath, TargetDirectory)
     End Function
 
@@ -1354,6 +1408,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, DeleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
@@ -1375,6 +1430,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, TargetDirectoryPath, DeleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
@@ -1393,7 +1449,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
 
-        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
         If DataPackageID < 0 Then
@@ -2202,13 +2258,10 @@ Public Class clsAnalysisToolRunnerBase
             .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
         End With
 
-        Dim objAnalysisTask As clsAnalysisJob
-        Dim strBrokerConnStr As String = m_mgrParams.GetParam("brokerconnectionstring")
+        Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
-        objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
-
-        'Execute the SP (retry the call up to 4 times)
-        ResCode = objAnalysisTask.ExecuteSP(MyCmd, strBrokerConnStr, 4)
+        ' Execute the stored procedure (retry the call up to 4 times)
+        ResCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 4)
 
         If ResCode = 0 Then
             Outcome = True
@@ -2809,7 +2862,10 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Public Function UnzipFile(ByVal ZipFilePath As String, ByVal TargetDirectory As String, ByVal FileFilter As String) As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
+
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
+
     End Function
 
     ''' <summary>
@@ -2877,6 +2933,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
@@ -2897,6 +2954,8 @@ Public Class clsAnalysisToolRunnerBase
     Public Function ZipFile(ByVal SourceFilePath As String, ByVal DeleteSourceAfterZip As Boolean, ByVal ZipFilePath As String) As Boolean
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
+
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
         blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then

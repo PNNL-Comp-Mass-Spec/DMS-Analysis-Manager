@@ -311,7 +311,7 @@ Public Class clsAnalysisMgrSettings
 			blnSuccess = True
 
 		Catch ex As Exception
-			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
+            m_ErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
 			WriteErrorMsg(m_ErrMsg)
 			blnSuccess = False
 		Finally
@@ -341,7 +341,7 @@ Public Class clsAnalysisMgrSettings
 		Dim MyMsg As String
 		Dim ParamKey As String
 		Dim ParamVal As String
-		Dim ConnectionString As String = Me.GetParam("brokerconnectionstring")
+        Dim ConnectionString As String = Me.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
 
 		' Construct the Sql to obtain the information:
 		'   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue

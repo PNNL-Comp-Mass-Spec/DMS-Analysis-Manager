@@ -2507,45 +2507,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 	End Function
 
-	Protected Function ExtractPackedJobParameterDictionary(ByVal strPackedJobParameterName As String) As Dictionary(Of String, String)
-
-		Dim lstData As List(Of String)
-		Dim dctData As Dictionary(Of String, String) = New Dictionary(Of String, String)
-
-		lstData = ExtractPackedJobParameterList(strPackedJobParameterName)
-
-		For Each strItem In lstData
-			Dim intEqualsIndex = strItem.LastIndexOf("="c)
-			If intEqualsIndex > 0 Then
-				Dim strKey As String = strItem.Substring(0, intEqualsIndex)
-				Dim strValue As String = strItem.Substring(intEqualsIndex + 1)
-
-				If Not dctData.ContainsKey(strKey) Then
-					dctData.Add(strKey, strValue)
-				End If
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Packed dictionary item does not contain an equals sign: " & strItem)
-			End If
-		Next
-
-		Return dctData
-
-	End Function
-
-	Protected Function ExtractPackedJobParameterList(ByVal strParameterName As String) As List(Of String)
-
-		Dim strList As String
-
-		strList = m_jobParams.GetJobParameter(strParameterName, String.Empty)
-
-		If String.IsNullOrEmpty(strList) Then
-			Return New List(Of String)
-		Else
-			Return strList.Split(ControlChars.Tab).ToList()
-		End If
-
-	End Function
-
 	Protected Function GetCVString(ByVal cvParamInfo As udtCvParamInfoType) As String
 		Return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value)
 	End Function

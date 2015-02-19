@@ -662,38 +662,15 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	Protected Function PostSMAQCResultsToDB(ByVal strXMLResults As String) As Boolean
 
-		' This Connection String points to the DMS5 database
-		Dim strConnectionString As String
-		strConnectionString = m_mgrParams.GetParam("connectionstring")
-
+		
 		' Note that mDatasetID gets populated by LookupInstrumentIDFromDB
 
-		Return PostSMAQCResultsToDB(mDatasetID, strXMLResults, strConnectionString, STORE_SMAQC_RESULTS_SP_NAME)
+        Return PostSMAQCResultsToDB(mDatasetID, strXMLResults)
 
 	End Function
 
 	Protected Function PostSMAQCResultsToDB(ByVal intDatasetID As Integer, _
 	  ByVal strXMLResults As String) As Boolean
-
-		Dim strConnectionString As String
-		strConnectionString = m_mgrParams.GetParam("connectionstring")
-
-		Return PostSMAQCResultsToDB(intDatasetID, strXMLResults, strConnectionString, STORE_SMAQC_RESULTS_SP_NAME)
-
-	End Function
-
-	Protected Function PostSMAQCResultsToDB(ByVal intDatasetID As Integer, _
-	  ByVal strXMLResults As String, _
-	  ByVal strConnectionString As String) As Boolean
-
-		Return PostSMAQCResultsToDB(intDatasetID, strXMLResults, strConnectionString, STORE_SMAQC_RESULTS_SP_NAME)
-
-	End Function
-
-	Protected Function PostSMAQCResultsToDB(ByVal intDatasetID As Integer, _
-	  ByVal strXMLResults As String, _
-	  ByVal strConnectionString As String, _
-	  ByVal strStoredProcedure As String) As Boolean
 
 		Const MAX_RETRY_COUNT As Integer = 3
 
@@ -721,23 +698,13 @@ Public Class clsAnalysisToolRunnerSMAQC
 				strXMLResultsClean = strXMLResults
 			End If
 
-			' Call stored procedure strStoredProcedure using connection string strConnectionString
+            ' Call stored procedure StoreSMAQCResults in DMS5
 
-			If String.IsNullOrWhiteSpace(strConnectionString) Then
-				m_message = "Connection string empty in PostSMAQCResultsToDB"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Connection string not defined; unable to post the SMAQC results to the database")
-				Return False
-			End If
-
-			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
-				strStoredProcedure = STORE_SMAQC_RESULTS_SP_NAME
-			End If
-
-			objCommand = New SqlCommand()
+            objCommand = New SqlCommand()
 
 			With objCommand
 				.CommandType = CommandType.StoredProcedure
-				.CommandText = strStoredProcedure
+                .CommandText = STORE_SMAQC_RESULTS_SP_NAME
 
 				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
@@ -756,14 +723,12 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			'Execute the SP (retry the call up to 4 times)
 			Dim ResCode As Integer
-			ResCode = objAnalysisTask.ExecuteSP(objCommand, strConnectionString, MAX_RETRY_COUNT)
-
-			objAnalysisTask = Nothing
+            ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
 
 			If ResCode = 0 Then
 				blnSuccess = True
 			Else
-				m_message = "Error storing SMAQC Results in database, " & strStoredProcedure & " returned " & ResCode.ToString
+                m_message = "Error storing SMAQC Results in database, " & STORE_SMAQC_RESULTS_SP_NAME & " returned " & ResCode.ToString
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 				blnSuccess = False
 			End If

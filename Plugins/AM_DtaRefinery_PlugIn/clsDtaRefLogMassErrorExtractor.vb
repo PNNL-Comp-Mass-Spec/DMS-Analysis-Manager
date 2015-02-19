@@ -150,11 +150,9 @@ Public Class clsDtaRefLogMassErrorExtractor
 				strXMLResults = ConstructXML(udtMassErrorInfo)
 
                 If mPostResultsToDB Then
-                    ' Gigasax.DMS5
-                    Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
                     Dim blnSuccess As Boolean
 
-                    blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
+                    blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults)
 
                     If Not blnSuccess Then
                         If String.IsNullOrEmpty(mErrorMessage) Then
@@ -177,72 +175,61 @@ Public Class clsDtaRefLogMassErrorExtractor
 	End Function
 
 
-	Protected Function PostMassErrorInfoToDB(
-	  ByVal intDatasetID As Integer,
-	  ByVal strXMLResults As String,
-	  ByVal strConnectionString As String,
-	  ByVal strStoredProcedure As String) As Boolean
+    Protected Function PostMassErrorInfoToDB(
+      ByVal intDatasetID As Integer,
+      ByVal strXMLResults As String) As Boolean
 
-		Const MAX_RETRY_COUNT As Integer = 3
+        Const MAX_RETRY_COUNT As Integer = 3
 
-		Dim objCommand As System.Data.SqlClient.SqlCommand
+        Dim objCommand As System.Data.SqlClient.SqlCommand
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		Try
+        Try
 
-			' Call stored procedure strStoredProcedure using connection string strConnectionString
+            ' Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
-			If String.IsNullOrWhiteSpace(strConnectionString) Then
-				mErrorMessage = "Connection string empty in PostMassErrorInfoToDB"
-				Return False
-			End If
+            objCommand = New System.Data.SqlClient.SqlCommand()
 
-			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
-				strStoredProcedure = STORE_MASS_ERROR_STATS_SP_NAME
-			End If
+            With objCommand
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = STORE_MASS_ERROR_STATS_SP_NAME
 
-			objCommand = New System.Data.SqlClient.SqlCommand()
+                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-			With objCommand
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = strStoredProcedure
+                .Parameters.Add(New SqlClient.SqlParameter("@DatasetID", SqlDbType.Int))
+                .Parameters.Item("@DatasetID").Direction = ParameterDirection.Input
+                .Parameters.Item("@DatasetID").Value = intDatasetID
 
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-				.Parameters.Add(New SqlClient.SqlParameter("@DatasetID", SqlDbType.Int))
-				.Parameters.Item("@DatasetID").Direction = ParameterDirection.Input
-				.Parameters.Item("@DatasetID").Value = intDatasetID
-
-				.Parameters.Add(New SqlClient.SqlParameter("@ResultsXML", SqlDbType.Xml))
-				.Parameters.Item("@ResultsXML").Direction = ParameterDirection.Input
-				.Parameters.Item("@ResultsXML").Value = strXMLResults
-			End With
+                .Parameters.Add(New SqlClient.SqlParameter("@ResultsXML", SqlDbType.Xml))
+                .Parameters.Item("@ResultsXML").Direction = ParameterDirection.Input
+                .Parameters.Item("@ResultsXML").Value = strXMLResults
+            End With
 
 
-			Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
+            Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
-			'Execute the SP (retry the call up to 4 times)
-			Dim ResCode As Integer
-			ResCode = objAnalysisTask.ExecuteSP(objCommand, strConnectionString, MAX_RETRY_COUNT)
+            'Execute the SP (retry the call up to 4 times)
+            Dim ResCode As Integer
+            ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
 
-			objAnalysisTask = Nothing
+            objAnalysisTask = Nothing
 
-			If ResCode = 0 Then
-				blnSuccess = True
-			Else
-				mErrorMessage = "Error storing DTA Refinery Mass Error Results in the database, " & strStoredProcedure & " returned " & ResCode.ToString
-				blnSuccess = False
-			End If
+            If ResCode = 0 Then
+                blnSuccess = True
+            Else
+                mErrorMessage = "Error storing DTA Refinery Mass Error Results in the database, " & STORE_MASS_ERROR_STATS_SP_NAME & " returned " & ResCode.ToString
+                blnSuccess = False
+            End If
 
-		Catch ex As System.Exception
-			mErrorMessage = "Exception storing DTA Refinery Mass Error Results in the database: " & ex.Message
-			blnSuccess = False
-		End Try
+        Catch ex As System.Exception
+            mErrorMessage = "Exception storing DTA Refinery Mass Error Results in the database: " & ex.Message
+            blnSuccess = False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 End Class

@@ -1661,7 +1661,7 @@ Public Class clsMainProcess
 		Dim MinimumMemoryUsageLogInterval As Single = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1)
 
 		Dim LogStatusToBrokerDB As Boolean = m_MgrSettings.GetParam("LogStatusToBrokerDB", False)
-		Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")
+        Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
 		Dim BrokerDBStatusUpdateIntervalMinutes As Single = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60)
 
 		Dim LogStatusToMessageQueue As Boolean = m_MgrSettings.GetParam("LogStatusToMessageQueue", False)

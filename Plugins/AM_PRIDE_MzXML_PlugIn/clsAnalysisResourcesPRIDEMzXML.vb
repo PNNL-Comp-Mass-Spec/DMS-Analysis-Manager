@@ -1,20 +1,20 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.Linq
+Imports System.Collections.Generic
 
 Public Class clsAnalysisResourcesPRIDEMzXML
     Inherits clsAnalysisResources
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim SplitString As String()
-        Dim FileNameExt As String()
+        Dim fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(","c).ToList()
 
-        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
-        For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
-            If FileNameExt(2) = "nocopy" Then
-                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
+        For Each fileSpec As String In fileSpecList.ToList()
+            Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
+            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower = "copy" Then
+                m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
             End If
         Next
 
@@ -26,7 +26,11 @@ Public Class clsAnalysisResourcesPRIDEMzXML
 
         m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"))
 
-        If Not RetrieveAggregateFiles(SplitString) Then
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
+
+        Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
+
+        If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

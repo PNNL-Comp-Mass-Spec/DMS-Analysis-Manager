@@ -76,6 +76,8 @@ Public Class clsMSGFResultsSummarizer
 	Private ReadOnly mWorkDir As String
 	Private ReadOnly mConnectionString As String
 
+    Private WithEvents mStoredProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
+
 	' The following is auto-determined in ProcessMSGFResults
 	Private mMSGFSynopsisFileName As String = String.Empty
 #End Region
@@ -240,12 +242,11 @@ Public Class clsMSGFResultsSummarizer
 		mDatasetName = strDatasetName
 		mJob = intJob
 		mWorkDir = strSourceFolderPath
-		mConnectionString = strConnectionString
-	End Sub
+        mConnectionString = strConnectionString
 
-	Protected Function PostJobPSMResults() As Boolean
-		Return PostJobPSMResults(mJob, mConnectionString, STORE_JOB_PSM_RESULTS_SP_NAME)
-	End Function
+        mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(mConnectionString)
+
+	End Sub
 
 	Protected Function ExamineFirstHitsFile(ByVal strFirstHitsFilePath As String) As Boolean
 
@@ -513,118 +514,107 @@ Public Class clsMSGFResultsSummarizer
 		Return True
 
 	End Function
+  
+    Protected Function PostJobPSMResults(ByVal intJob As Integer) As Boolean
 
-	Protected Function PostJobPSMResults(ByVal intJob As Integer, _
-	 ByVal strConnectionString As String, _
-	 ByVal strStoredProcedure As String) As Boolean
+        Const MAX_RETRY_COUNT As Integer = 3
 
-		Const MAX_RETRY_COUNT As Integer = 3
+        Dim objCommand As SqlCommand
 
-		Dim objCommand As SqlCommand
+        Dim blnSuccess As Boolean
 
-		Dim blnSuccess As Boolean
+        Try
 
-		Try
+            ' Call stored procedure StoreJobPSMStats in DMS5
 
-			' Call stored procedure strStoredProcedure using connection string strConnectionString
+            objCommand = New SqlCommand()
 
-			If String.IsNullOrWhiteSpace(strConnectionString) Then
-				SetErrorMessage("Connection string empty in PostJobPSMResults")
-				Return False
-			End If
+            With objCommand
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = STORE_JOB_PSM_RESULTS_SP_NAME
 
-			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
-				strStoredProcedure = STORE_JOB_PSM_RESULTS_SP_NAME
-			End If
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-			objCommand = New SqlCommand()
+                .Parameters.Add(New SqlParameter("@Job", SqlDbType.Int))
+                .Parameters.Item("@Job").Direction = ParameterDirection.Input
+                .Parameters.Item("@Job").Value = intJob
 
-			With objCommand
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = strStoredProcedure
+                .Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
+                .Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
 
-				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+                If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                    .Parameters.Item("@MSGFThreshold").Value = mEValueThreshold
+                Else
+                    .Parameters.Item("@MSGFThreshold").Value = mMSGFThreshold
+                End If
 
-				.Parameters.Add(New SqlParameter("@Job", SqlDbType.Int))
-				.Parameters.Item("@Job").Direction = ParameterDirection.Input
-				.Parameters.Item("@Job").Value = intJob
+                .Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float))
+                .Parameters.Item("@FDRThreshold").Direction = ParameterDirection.Input
+                .Parameters.Item("@FDRThreshold").Value = mFDRThreshold
 
-				.Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
-				.Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
+                .Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int))
+                .Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
+                .Parameters.Item("@SpectraSearched").Value = mSpectraSearched
 
-				If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-					.Parameters.Item("@MSGFThreshold").Value = mEValueThreshold
-				Else
-					.Parameters.Item("@MSGFThreshold").Value = mMSGFThreshold
-				End If
+                .Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int))
+                .Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
+                .Parameters.Item("@TotalPSMs").Value = mMSGFBasedCounts.TotalPSMs
 
-				.Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float))
-				.Parameters.Item("@FDRThreshold").Direction = ParameterDirection.Input
-				.Parameters.Item("@FDRThreshold").Value = mFDRThreshold
+                .Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int))
+                .Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePeptides").Value = mMSGFBasedCounts.UniquePeptideCount
 
-				.Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int))
-				.Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
-				.Parameters.Item("@SpectraSearched").Value = mSpectraSearched
+                .Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int))
+                .Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniqueProteins").Value = mMSGFBasedCounts.UniqueProteinCount
 
-				.Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int))
-				.Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
-				.Parameters.Item("@TotalPSMs").Value = mMSGFBasedCounts.TotalPSMs
+                .Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@TotalPSMsFDRFilter").Value = mFDRBasedCounts.TotalPSMs
 
-				.Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int))
-				.Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
-				.Parameters.Item("@UniquePeptides").Value = mMSGFBasedCounts.UniquePeptideCount
+                .Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@UniquePeptidesFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePeptidesFDRFilter").Value = mFDRBasedCounts.UniquePeptideCount
 
-				.Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int))
-				.Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
-				.Parameters.Item("@UniqueProteins").Value = mMSGFBasedCounts.UniqueProteinCount
+                .Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniqueProteinsFDRFilter").Value = mFDRBasedCounts.UniqueProteinCount
 
-				.Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
-				.Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
-				.Parameters.Item("@TotalPSMsFDRFilter").Value = mFDRBasedCounts.TotalPSMs
-
-				.Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int))
-				.Parameters.Item("@UniquePeptidesFDRFilter").Direction = ParameterDirection.Input
-				.Parameters.Item("@UniquePeptidesFDRFilter").Value = mFDRBasedCounts.UniquePeptideCount
-
-				.Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
-				.Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
-				.Parameters.Item("@UniqueProteinsFDRFilter").Value = mFDRBasedCounts.UniqueProteinCount
-
-				.Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
-				.Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
-				If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-					.Parameters.Item("@MSGFThresholdIsEValue").Value = 1
-				Else
-					.Parameters.Item("@MSGFThresholdIsEValue").Value = 0
-				End If
+                .Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
+                .Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
+                If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                    .Parameters.Item("@MSGFThresholdIsEValue").Value = 1
+                Else
+                    .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
+                End If
 
 
-			End With
+            End With
 
-			'Execute the SP (retry the call up to 3 times)
-			Dim ResCode As Integer
-			Dim strErrorMessage As String = String.Empty
-			ResCode = AnalysisManagerBase.clsGlobal.ExecuteSP(objCommand, strConnectionString, MAX_RETRY_COUNT, strErrorMessage)
+            'Execute the SP (retry the call up to 3 times)
+            Dim ResCode As Integer
+            Dim strErrorMessage As String = String.Empty
+            ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, strErrorMessage)
 
-			If ResCode = 0 Then
-				blnSuccess = True
-			Else
-				SetErrorMessage("Error storing PSM Results in database, " & strStoredProcedure & " returned " & ResCode.ToString)
-				If Not String.IsNullOrEmpty(strErrorMessage) Then
-					mErrorMessage &= "; " & strErrorMessage
-				End If
-				blnSuccess = False
-			End If
+            If ResCode = 0 Then
+                blnSuccess = True
+            Else
+                SetErrorMessage("Error storing PSM Results in database, " & STORE_JOB_PSM_RESULTS_SP_NAME & " returned " & ResCode.ToString)
+                If Not String.IsNullOrEmpty(strErrorMessage) Then
+                    mErrorMessage &= "; " & strErrorMessage
+                End If
+                blnSuccess = False
+            End If
 
-		Catch ex As Exception
-			SetErrorMessage("Exception storing PSM Results in database: " & ex.Message)
-			blnSuccess = False
-		End Try
+        Catch ex As Exception
+            SetErrorMessage("Exception storing PSM Results in database: " & ex.Message)
+            blnSuccess = False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Process this dataset's synopsis file to determine the PSM stats
@@ -715,7 +705,7 @@ Public Class clsMSGFResultsSummarizer
 				End If
 
 				If mPostJobPSMResultsToDB Then
-					blnSuccess = PostJobPSMResults()
+                    blnSuccess = PostJobPSMResults(mJob)
 				Else
 					blnSuccess = True
 				End If
@@ -952,6 +942,22 @@ Public Class clsMSGFResultsSummarizer
 		Return True
 
 	End Function
+
+#Region "Event Handlers"
+
+    Private Sub m_ExecuteSP_DebugEvent(Message As String) Handles mStoredProcedureExecutor.DebugEvent
+        Console.WriteLine(Message)
+    End Sub
+
+    Private Sub m_ExecuteSP_DBErrorEvent(Message As String) Handles mStoredProcedureExecutor.DBErrorEvent
+        SetErrorMessage(Message)
+
+        If Message.Contains("permission was denied") Then
+            AnalysisManagerBase.clsLogTools.WriteLog(AnalysisManagerBase.clsLogTools.LoggerTypes.LogDb, AnalysisManagerBase.clsLogTools.LogLevels.ERROR, Message)
+        End If        
+    End Sub
+
+#End Region
 
 	Protected Class clsMSGFtoResultIDMapComparer
 		Implements IComparer(Of KeyValuePair(Of Double, Integer))

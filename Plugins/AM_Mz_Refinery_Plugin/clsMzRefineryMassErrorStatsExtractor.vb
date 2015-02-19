@@ -147,10 +147,9 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 			Dim strXMLResults = ConstructXML(udtMassErrorInfo)
 
 			If mPostResultsToDB Then
-				Dim strConnectionString As String = m_mgrParams.GetParam("connectionstring")
-				Dim blnSuccess As Boolean
+                Dim blnSuccess As Boolean
 
-				blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults, strConnectionString, STORE_MASS_ERROR_STATS_SP_NAME)
+                blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults)
 
 				If Not blnSuccess Then
 					If String.IsNullOrEmpty(mErrorMessage) Then
@@ -171,9 +170,7 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 
 	Protected Function PostMassErrorInfoToDB(
 	  ByVal intDatasetID As Integer,
-	  ByVal strXMLResults As String,
-	  ByVal strConnectionString As String,
-	  ByVal strStoredProcedure As String) As Boolean
+	  ByVal strXMLResults As String) As Boolean
 
 		Const MAX_RETRY_COUNT As Integer = 3
 
@@ -183,22 +180,13 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 
 		Try
 
-			' Call stored procedure strStoredProcedure using connection string strConnectionString
-
-			If String.IsNullOrWhiteSpace(strConnectionString) Then
-				mErrorMessage = "Connection string empty in PostMassErrorInfoToDB"
-				Return False
-			End If
-
-			If String.IsNullOrWhiteSpace(strStoredProcedure) Then
-				strStoredProcedure = STORE_MASS_ERROR_STATS_SP_NAME
-			End If
+            ' Call stored procedure StoreDTARefMassErrorStats in DMS5
 
 			objCommand = New System.Data.SqlClient.SqlCommand()
 
 			With objCommand
 				.CommandType = CommandType.StoredProcedure
-				.CommandText = strStoredProcedure
+                .CommandText = STORE_MASS_ERROR_STATS_SP_NAME
 
 				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
 				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
@@ -217,14 +205,14 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 
 			'Execute the SP (retry the call up to 4 times)
 			Dim ResCode As Integer
-			ResCode = objAnalysisTask.ExecuteSP(objCommand, strConnectionString, MAX_RETRY_COUNT)
+            ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
 
 			objAnalysisTask = Nothing
 
 			If ResCode = 0 Then
 				blnSuccess = True
 			Else
-				mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " & strStoredProcedure & " returned " & ResCode.ToString
+                mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " & STORE_MASS_ERROR_STATS_SP_NAME & " returned " & ResCode.ToString
 				blnSuccess = False
 			End If
 

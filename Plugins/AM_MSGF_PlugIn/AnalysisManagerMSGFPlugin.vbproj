@@ -118,7 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj">
-      <Project>{02D682E5-F70F-4C46-BAC8-1C18920FFF22}</Project>
+      <Project>{02d682e5-f70f-4c46-bac8-1c18920fff22}</Project>
       <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>
   </ItemGroup>

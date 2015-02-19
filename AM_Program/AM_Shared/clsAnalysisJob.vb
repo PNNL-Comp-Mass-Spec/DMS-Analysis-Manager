@@ -656,242 +656,240 @@ Public Class clsAnalysisJob
 				PrintCommandParams(MyCmd)
 			End If
 
-			'Execute the SP
-			RetVal = ExecuteSP(MyCmd, m_BrokerConnStr, 1)
+            ' Execute the SP
+            RetVal = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 1)
 
-			Select Case RetVal
-				Case RET_VAL_OK
-					'No errors found in SP call, so see if any step tasks were found
-					m_JobId = CInt(MyCmd.Parameters("@jobNumber").Value)
-					paramXml = CStr(MyCmd.Parameters("@parameters").Value)
+            Select Case RetVal
+                Case RET_VAL_OK
+                    'No errors found in SP call, so see if any step tasks were found
+                    m_JobId = CInt(MyCmd.Parameters("@jobNumber").Value)
+                    paramXml = CStr(MyCmd.Parameters("@parameters").Value)
 
-					'Step task was found; get the data for it
-					Dim dctParameters As IEnumerable(Of udtParameterInfoType) = FillParamDictXml(paramXml)
+                    'Step task was found; get the data for it
+                    Dim dctParameters As IEnumerable(Of udtParameterInfoType) = FillParamDictXml(paramXml)
 
-					If dctParameters IsNot Nothing Then
+                    If dctParameters IsNot Nothing Then
 
-						For Each udtParamInfo As udtParameterInfoType In dctParameters
-							SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
-						Next
+                        For Each udtParamInfo As udtParameterInfoType In dctParameters
+                            SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
+                        Next
 
-						SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
-						Outcome = RequestTaskResult.TaskFound
-					Else
-						'There was an error
-						Const Msg As String = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-						Outcome = RequestTaskResult.ResultError
-					End If
-				Case RET_VAL_TASK_NOT_AVAILABLE
-					'No jobs found
-					Outcome = RequestTaskResult.NoTaskFound
-				Case RET_VAL_EXCESSIVE_RETRIES
-					' Too many retries
-					Outcome = RequestTaskResult.TooManyRetries
-				Case RET_VAL_DEADLOCK
-					' Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-					Outcome = RequestTaskResult.Deadlock
-				Case Else
-					'There was an SP error
-					Dim msg As String = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString
-					msg &= "; Msg text = " & CStr(MyCmd.Parameters("@message").Value)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-					Outcome = RequestTaskResult.ResultError
-			End Select
+                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
+                        Outcome = RequestTaskResult.TaskFound
+                    Else
+                        'There was an error
+                        Const Msg As String = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                        Outcome = RequestTaskResult.ResultError
+                    End If
+                Case RET_VAL_TASK_NOT_AVAILABLE
+                    'No jobs found
+                    Outcome = RequestTaskResult.NoTaskFound
+                Case RET_VAL_EXCESSIVE_RETRIES
+                    ' Too many retries
+                    Outcome = RequestTaskResult.TooManyRetries
+                Case RET_VAL_DEADLOCK
+                    ' Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+                    Outcome = RequestTaskResult.Deadlock
+                Case Else
+                    'There was an SP error
+                    Dim msg As String = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString
+                    msg &= "; Msg text = " & CStr(MyCmd.Parameters("@message").Value)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                    Outcome = RequestTaskResult.ResultError
+            End Select
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " & ex.Message)
-			Outcome = RequestTaskResult.ResultError
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " & ex.Message)
+            Outcome = RequestTaskResult.ResultError
+        End Try
 
-		Return Outcome
+        Return Outcome
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Reset the class-wide variables to their defaults
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub Reset()
-		m_TaskWasClosed = False
+    ''' <summary>
+    ''' Reset the class-wide variables to their defaults
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub Reset()
+        m_TaskWasClosed = False
 
-		m_ResultFilesToSkip.Clear()
-		m_ResultFileExtensionsToSkip.Clear()
-		m_ResultFilesToKeep.Clear()
-		m_ServerFilesToDelete.Clear()
+        m_ResultFilesToSkip.Clear()
+        m_ResultFileExtensionsToSkip.Clear()
+        m_ResultFilesToKeep.Clear()
+        m_ServerFilesToDelete.Clear()
 
-		m_DatasetInfoList.Clear()
+        m_DatasetInfoList.Clear()
 
-		If m_JobParams Is Nothing Then
-			m_JobParams = New Dictionary(Of String, Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
-		End If
+        If m_JobParams Is Nothing Then
+            m_JobParams = New Dictionary(Of String, Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+        End If
 
-		m_JobParams.Clear()
+        m_JobParams.Clear()
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Saves job Parameters to an XML File
-	''' </summary>
-	''' <param name="WorkDir">Full path to work directory</param>
-	''' <param name="paramXml">Contains the xml for all the job parameters</param>
-	''' <param name="jobNum">Contains the job number</param>
-	''' <remarks>Skipped if the debug level is less than 4</remarks>
-	Private Sub SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer)
+    ''' <summary>
+    ''' Saves job Parameters to an XML File
+    ''' </summary>
+    ''' <param name="WorkDir">Full path to work directory</param>
+    ''' <param name="paramXml">Contains the xml for all the job parameters</param>
+    ''' <param name="jobNum">Contains the job number</param>
+    ''' <remarks>Skipped if the debug level is less than 4</remarks>
+    Private Sub SaveJobParameters(ByVal WorkDir As String, ByVal paramXml As String, ByVal jobNum As Integer)
 
-		Dim xmlWriter As New clsFormattedXMLWriter
-		Dim xmlParameterFilename As String
-		Dim xmlParameterFilePath As String = String.Empty
+        Dim xmlWriter As New clsFormattedXMLWriter
+        Dim xmlParameterFilename As String
+        Dim xmlParameterFilePath As String = String.Empty
 
-		Try
-			xmlParameterFilename = JobParametersFilename(jobNum.ToString())
-			xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
+        Try
+            xmlParameterFilename = JobParametersFilename(jobNum.ToString())
+            xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
 
-			Dim filteredXML As String
-			If m_DebugLevel < 4 Then
-				' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
-				filteredXML = RemoveXmlSection(paramXml, "StepParameters")
-			Else
-				filteredXML = paramXml
-			End If
-			
-			xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFilePath)
+            Dim filteredXML As String
+            If m_DebugLevel < 4 Then
+                ' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
+                filteredXML = RemoveXmlSection(paramXml, "StepParameters")
+            Else
+                filteredXML = paramXml
+            End If
 
-			If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
+            xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFilePath)
 
-			Dim Msg As String = "Job Parameters successfully saved to file: " & xmlParameterFilePath
+            If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
 
-			' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
-			clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFilePath, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
+            Dim Msg As String = "Job Parameters successfully saved to file: " & xmlParameterFilePath
 
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-			End If
+            ' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
+            clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFilePath, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving analysis job parameters to " & xmlParameterFilePath & ": " & ex.Message)
-			Return
-		End Try
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+            End If
 
-		Return
-	End Sub
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving analysis job parameters to " & xmlParameterFilePath & ": " & ex.Message)
+            Return
+        End Try
 
-	''' <summary>
-	''' Contact the Pipeline database to close the analysis job
-	''' </summary>
-	''' <param name="CloseOut">IJobParams enum specifying close out type</param>
-	''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
-	Public Overrides Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String) Implements IJobParams.CloseTask
-		CloseTask(CloseOut, CompMsg, 0, String.Empty)
-	End Sub
+        Return
+    End Sub
 
-	''' <summary>
-	''' Contact the Pipeline database to close the analysis job
-	''' </summary>
-	''' <param name="CloseOut">IJobParams enum specifying close out type</param>
-	''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
-	''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-	''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
-	Public Overrides Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMessage As String) Implements IJobParams.CloseTask
+    ''' <summary>
+    ''' Contact the Pipeline database to close the analysis job
+    ''' </summary>
+    ''' <param name="CloseOut">IJobParams enum specifying close out type</param>
+    ''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
+    Public Overrides Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String) Implements IJobParams.CloseTask
+        CloseTask(CloseOut, CompMsg, 0, String.Empty)
+    End Sub
 
-		Dim MsgStr As String
-		Dim CompCode As Integer
+    ''' <summary>
+    ''' Contact the Pipeline database to close the analysis job
+    ''' </summary>
+    ''' <param name="CloseOut">IJobParams enum specifying close out type</param>
+    ''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
+    ''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+    ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
+    Public Overrides Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMessage As String) Implements IJobParams.CloseTask
 
-		CompCode = CInt(CloseOut)
+        Dim MsgStr As String
+        Dim CompCode As Integer
 
-		If EvalMessage Is Nothing Then EvalMessage = String.Empty
+        CompCode = CInt(CloseOut)
 
-		If m_TaskWasClosed Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
-		Else
-			m_TaskWasClosed = True
-			If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage, m_BrokerConnStr) Then
-				MsgStr = "Error setting job complete in database, job " & m_JobId
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
-			End If
-		End If
+        If EvalMessage Is Nothing Then EvalMessage = String.Empty
 
-	End Sub
+        If m_TaskWasClosed Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
+        Else
+            m_TaskWasClosed = True
+            If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage) Then
+                MsgStr = "Error setting job complete in database, job " & m_JobId
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
+            End If
+        End If
 
-	''' <summary>
-	''' Communicates with database to perform job closeout
-	''' </summary>
-	''' <param name="SpName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
-	''' <param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
-	''' <param name="CompMsg">Comment to insert in database</param>
-	''' <param name="EvalCode">Integer results evaluation code</param>
-	''' <param name="EvalMsg">Message describing evaluation results</param>
-	''' <param name="ConnStr">Database connection string</param>
-	''' <returns>True for success, False for failure</returns>
-	''' <remarks>EvalCode and EvalMsg not presently used</remarks>
-	Protected Function SetAnalysisJobComplete(ByVal SpName As String,
-	   ByVal CompCode As Integer, ByVal CompMsg As String, _
-	   ByVal EvalCode As Integer, ByVal EvalMsg As String, _
-	   ByVal ConnStr As String) As Boolean
+    End Sub
 
-		Dim Outcome As Boolean
-		Dim ResCode As Integer
+    ''' <summary>
+    ''' Communicates with database to perform job closeout
+    ''' </summary>
+    ''' <param name="SpName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
+    ''' <param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
+    ''' <param name="CompMsg">Comment to insert in database</param>
+    ''' <param name="EvalCode">Integer results evaluation code</param>
+    ''' <param name="EvalMsg">Message describing evaluation results</param>
+    ''' <returns>True for success, False for failure</returns>
+    ''' <remarks>EvalCode and EvalMsg not presently used</remarks>
+    Protected Function SetAnalysisJobComplete(ByVal SpName As String,
+       ByVal CompCode As Integer, ByVal CompMsg As String, _
+       ByVal EvalCode As Integer, ByVal EvalMsg As String) As Boolean
 
-		'Setup for execution of the stored procedure
-		Dim MyCmd As New SqlCommand
-		With MyCmd
-			.CommandType = CommandType.StoredProcedure
-			.CommandText = SpName
+        Dim Outcome As Boolean
+        Dim ResCode As Integer
 
-			.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-			.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-			.Parameters.Add(New SqlParameter("@job", SqlDbType.Int))
+        'Setup for execution of the stored procedure
+        Dim MyCmd As New SqlCommand
+        With MyCmd
+            .CommandType = CommandType.StoredProcedure
+            .CommandText = SpName
 
-			.Parameters.Item("@job").Direction = ParameterDirection.Input
-			.Parameters.Item("@job").Value = GetJobParameter("StepParameters", "Job", 0)
+            .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
+            .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+            .Parameters.Add(New SqlParameter("@job", SqlDbType.Int))
 
-			.Parameters.Add(New SqlParameter("@step", SqlDbType.Int))
-			.Parameters.Item("@step").Direction = ParameterDirection.Input
-			.Parameters.Item("@step").Value = GetJobParameter("StepParameters", "Step", 0)
+            .Parameters.Item("@job").Direction = ParameterDirection.Input
+            .Parameters.Item("@job").Value = GetJobParameter("StepParameters", "Job", 0)
 
-			.Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int))
-			.Parameters.Item("@completionCode").Direction = ParameterDirection.Input
-			.Parameters.Item("@completionCode").Value = CompCode
+            .Parameters.Add(New SqlParameter("@step", SqlDbType.Int))
+            .Parameters.Item("@step").Direction = ParameterDirection.Input
+            .Parameters.Item("@step").Value = GetJobParameter("StepParameters", "Step", 0)
 
-			.Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
-			.Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
-			.Parameters.Item("@completionMessage").Value = CompMsg
+            .Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int))
+            .Parameters.Item("@completionCode").Direction = ParameterDirection.Input
+            .Parameters.Item("@completionCode").Value = CompCode
 
-			.Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int))
-			.Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
-			.Parameters.Item("@evaluationCode").Value = EvalCode
+            .Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
+            .Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
+            .Parameters.Item("@completionMessage").Value = CompMsg
 
-			.Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
-			.Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
-			.Parameters.Item("@evaluationMessage").Value = EvalMsg
+            .Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int))
+            .Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
+            .Parameters.Item("@evaluationCode").Value = EvalCode
 
-			.Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
-			.Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
+            .Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
+            .Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
+            .Parameters.Item("@evaluationMessage").Value = EvalMsg
 
-			Dim strValue As String = String.Empty
-			If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
-				.Parameters.Item("@organismDBName").Value = strValue
-			Else
-				.Parameters.Item("@organismDBName").Value = String.Empty
-			End If
+            .Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
+            .Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
 
-		End With
+            Dim strValue As String = String.Empty
+            If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
+                .Parameters.Item("@organismDBName").Value = strValue
+            Else
+                .Parameters.Item("@organismDBName").Value = String.Empty
+            End If
 
-		'Execute the SP (retry the call up to 20 times)
-		ResCode = ExecuteSP(MyCmd, ConnStr, 20)
+        End With
 
-		If ResCode = 0 Then
-			Outcome = True
-		Else
-			Dim Msg As String = "Error " & ResCode.ToString & " setting analysis job complete"
-			'			Msg &= "; Message = " & CStr(MyCmd.Parameters("@message").Value)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Outcome = False
-		End If
+        ' Execute the Stored Procedure (retry the call up to 20 times)
+        ResCode = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 20)
 
-		Return Outcome
+        If ResCode = 0 Then
+            Outcome = True
+        Else
+            Dim Msg As String = "Error " & ResCode.ToString & " setting analysis job complete"
+            '			Msg &= "; Message = " & CStr(MyCmd.Parameters("@message").Value)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Outcome = False
+        End If
 
-	End Function
+        Return Outcome
+
+    End Function
 
 	''' <summary>
 	''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job

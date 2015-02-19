@@ -117,38 +117,49 @@ Public MustInherit Class clsAnalysisResources
 	Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
 	Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
 
+    Public Const DATA_PACKAGE_SPECTRA_FILE_SUFFIX As String = "_SpectraFile"
+
 	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
 	Public Const BRUKER_SER_FILE As String = "ser"
 	Public Const BRUKER_FID_FILE As String = "fid"
 
-	Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
-	Public Const JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES As String = "PackedParam_DatasetRawDataTypes"
+    Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
+
+    ' These are used by clsAnalysisResourcesPhosphoFdrAggregator
+    Public Const JOB_PARAM_DICTIONARY_JOB_DATASET_MAP As String = "PackedParam_JobDatasetMap"
+    Public Const JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP As String = "PackedParam_JobSettingsFileMap"
+    Public Const JOB_PARAM_DICTIONARY_JOB_TOOL_MAP As String = "PackedParam_JobToolNameMap"
 
 	Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
 
 	' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
 	Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
 
-	Public Enum eRawDataTypeConstants
-		Unknown = 0
-		ThermoRawFile = 1
-		UIMF = 2
-		mzXML = 3
-		mzML = 4
-		AgilentDFolder = 5				' Agilent ion trap data, Agilent TOF data
-		AgilentQStarWiffFile = 6
-		MicromassRawFolder = 7			' Micromass QTOF data
-		ZippedSFolders = 8				' FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-		BrukerFTFolder = 9				' .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-		BrukerMALDISpot = 10			' has a .EMF file and a single sub-folder that has an acqu file and fid file
-		BrukerMALDIImaging = 11			' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-		BrukerTOFBaf = 12				' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-	End Enum
+    Public Enum eRawDataTypeConstants
+        Unknown = 0
+        ThermoRawFile = 1
+        UIMF = 2
+        mzXML = 3
+        mzML = 4
+        AgilentDFolder = 5              ' Agilent ion trap data, Agilent TOF data
+        AgilentQStarWiffFile = 6
+        MicromassRawFolder = 7          ' Micromass QTOF data
+        ZippedSFolders = 8              ' FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        BrukerFTFolder = 9              ' .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        BrukerMALDISpot = 10            ' has a .EMF file and a single sub-folder that has an acqu file and fid file
+        BrukerMALDIImaging = 11         ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        BrukerTOFBaf = 12               ' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+    End Enum
 
 	Public Enum MSXMLOutputTypeConstants
 		mzXML = 0
 		mzML = 1
 	End Enum
+
+    Public Enum DataPackageFileRetrievalModeConstants
+        Undefined = 0
+        Ascore = 1
+    End Enum
 
 #End Region
 
@@ -209,12 +220,6 @@ Public MustInherit Class clsAnalysisResources
 		''' </summary>
 		''' <remarks></remarks>
 		Public RetrievePHRPFiles As Boolean
-	End Structure
-
-	Public Structure udtAggregateFileProcessingType
-		Public Filename As String
-		Public FilterValue As String
-		Public SaveMode As String
 	End Structure
 
 	Public Structure udtHPCOptionsType
@@ -1348,137 +1353,118 @@ Public MustInherit Class clsAnalysisResources
 		Dim strDatasetFolderName As String
 		Dim strInputFolderName As String
 
-		Dim strSharedResultFolders As String
+        Try
+            ' Fill collection with possible folder locations
+            ' The order of searching is:
+            '  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
+            '  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
+            '  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
+            '  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
+            '
+            ' Note that "SharedResultsFolders" will typically only contain one folder path, 
+            '  but can contain a comma-separated list of folders
 
-		Dim SharedResultFolderNames As New List(Of String)
+            strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
+            strInputFolderName = m_jobParams.GetParam("inputFolderName")
+          
+            Dim sharedResultFolderNames = GetSharedResultFolderList()
 
-		Try
-			' Fill collection with possible folder locations
-			' The order of searching is:
-			'  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
-			'  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
-			'  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
-			'  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
-			'
-			' Note that "SharedResultsFolders" will typically only contain one folder path, 
-			'  but can contain a comma-separated list of folders
+            strParentFolderPaths = New List(Of String)
+            strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
+            strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
 
-			strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
-			strInputFolderName = m_jobParams.GetParam("inputFolderName")
-			strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
+            If SearchArchivedDatasetFolder Then
+                strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
+                strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
+            End If
 
-			If strSharedResultFolders.Contains(",") Then
+            For Each strParentFolderPath As String In strParentFolderPaths
 
-				' Split on commas and populate SharedResultFolderNames
-				For Each strItem As String In strSharedResultFolders.Split(","c)
-					If strItem.Trim.Length > 0 Then
-						SharedResultFolderNames.Add(strItem.Trim)
-					End If
-				Next
+                If Not String.IsNullOrEmpty(strParentFolderPath) Then
+                    If Not String.IsNullOrEmpty(strInputFolderName) Then
+                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder \ Dataset Folder \ Input folder
+                    End If
 
-				' Reverse the list so that the last item in strSharedResultFolders is the first item in SharedResultFolderNames
-				SharedResultFolderNames.Reverse()
-			Else
-				' Just one item in strSharedResultFolders
-				SharedResultFolderNames.Add(strSharedResultFolders)
-			End If
+                    For Each strSharedFolderName As String In SharedResultFolderNames
+                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))  ' Parent Folder \ Dataset Folder \  Shared results folder
+                    Next
 
-			strParentFolderPaths = New List(Of String)
-			strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
-			strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
+                    FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))             ' Parent Folder \ Dataset Folder
+                End If
 
-			If SearchArchivedDatasetFolder Then
-				strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
-				strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
-			End If
+            Next
 
-			For Each strParentFolderPath As String In strParentFolderPaths
+            ' Now search for FileToFind in each folder in FoldersToSearch
+            For Each TempDir In FoldersToSearch
+                Try
+                    Dim diFolderToCheck = New DirectoryInfo(TempDir)
 
-				If Not String.IsNullOrEmpty(strParentFolderPath) Then
-					If Not String.IsNullOrEmpty(strInputFolderName) Then
-						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))	' Parent Folder \ Dataset Folder \ Input folder
-					End If
+                    If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
 
-					For Each strSharedFolderName As String In SharedResultFolderNames
-						FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))	' Parent Folder \ Dataset Folder \  Shared results folder
-					Next
+                        If (Not m_MyEMSLDatasetListInfo.ContainsDataset(m_DatasetName)) Then
+                            m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
+                        End If
 
-					FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))				' Parent Folder \ Dataset Folder
-				End If
+                        m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
 
-			Next
+                        If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
+                            FileFound = True
 
-			' Now search for FileToFind in each folder in FoldersToSearch
-			For Each TempDir In FoldersToSearch
-				Try
-					Dim diFolderToCheck = New DirectoryInfo(TempDir)
+                            ' Include the MyEMSL FileID in TempDir so that it is available for downloading
+                            TempDir = MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(TempDir, m_RecentlyFoundMyEMSLFiles.First().FileID)
+                            Exit For
+                        End If
 
-					If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
+                    Else
 
-						If (Not m_MyEMSLDatasetListInfo.ContainsDataset(m_DatasetName)) Then
-							m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
-						End If
+                        If diFolderToCheck.Exists Then
+                            If File.Exists(Path.Combine(TempDir, FileToFind)) Then
+                                FileFound = True
+                                Exit For
+                            End If
+                        End If
 
-						m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
+                    End If
 
-						If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
-							FileFound = True
+                Catch ex As Exception
+                    ' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
+                    m_message = "Exception in FindDataFile looking for: " + FileToFind + " in " + TempDir + ": " + ex.Message
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                End Try
+            Next
 
-							' Include the MyEMSL FileID in TempDir so that it is available for downloading
-							TempDir = MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(TempDir, m_RecentlyFoundMyEMSLFiles.First().FileID)
-							Exit For
-						End If
+            If FileFound Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " + FileToFind)
+                End If
+                Return TempDir
+            Else
+                ' Data file not found
+                ' Log this as an error if SearchArchivedDatasetFolder=True
+                ' Log this as a warning if SearchArchivedDatasetFolder=False
 
-					Else
+                If LogFileNotFound Then
+                    If SearchArchivedDatasetFolder Then
+                        m_message = "Data file not found: " + FileToFind
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " + FileToFind)
+                    End If
+                End If
 
-						If diFolderToCheck.Exists Then
-							If File.Exists(Path.Combine(TempDir, FileToFind)) Then
-								FileFound = True
-								Exit For
-							End If
-						End If
+                Return String.Empty
+            End If
 
-					End If
-
-				Catch ex As Exception
-					' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
-					m_message = "Exception in FindDataFile looking for: " + FileToFind + " in " + TempDir + ": " + ex.Message
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				End Try
-			Next
-
-			If FileFound Then
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " + FileToFind)
-				End If
-				Return TempDir
-			Else
-				' Data file not found
-				' Log this as an error if SearchArchivedDatasetFolder=True
-				' Log this as a warning if SearchArchivedDatasetFolder=False
-
-				If LogFileNotFound Then
-					If SearchArchivedDatasetFolder Then
-						m_message = "Data file not found: " + FileToFind
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					Else
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " + FileToFind)
-					End If
-				End If
-
-				Return String.Empty
-			End If
-
-		Catch ex As Exception
-			m_message = "Exception in FindDataFile looking for: " + FileToFind
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in FindDataFile looking for: " + FileToFind
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+        End Try
 
 		' We'll only get here if an exception occurs
 		Return String.Empty
 
-	End Function
-
+    End Function
+    
 	Private Function FindDataFileAddFolder(ByVal strParentFolderPath As String, _
 	   ByVal strDatasetFolderName As String, _
 	   ByVal strInputFolderName As String) As String
@@ -3076,7 +3062,8 @@ Public MustInherit Class clsAnalysisResources
 
 		If String.IsNullOrEmpty(errorMessage) Then
 			errorMessage = "Unknown error in RetrieveCached" & msXmlExtension.TrimStart("."c) & "File"
-		End If
+        End If
+
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 		Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 
@@ -3194,6 +3181,37 @@ Public MustInherit Class clsAnalysisResources
 		Return udtHPCOptions
 
 	End Function
+
+    ''' <summary>
+    ''' Examines job parameter SharedResultsFolders to construct a list of the shared result folders
+    ''' </summary>
+    ''' <returns>List of folder names</returns>
+    Protected Function GetSharedResultFolderList() As IEnumerable(Of String)
+
+        Dim sharedResultFolderNames As New List(Of String)
+
+        Dim strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
+
+        If strSharedResultFolders.Contains(",") Then
+
+            ' Split on commas and populate sharedResultFolderNames
+            For Each strItem As String In strSharedResultFolders.Split(","c)
+                strItem = strItem.Trim
+                If strItem.Length > 0 Then
+                    sharedResultFolderNames.Add(strItem)
+                End If
+            Next
+
+            ' Reverse the list so that the last item in strSharedResultFolders is the first item in sharedResultFolderNames
+            sharedResultFolderNames.Reverse()
+        Else
+            ' Just one item in strSharedResultFolders
+            sharedResultFolderNames.Add(strSharedResultFolders)
+        End If
+
+        Return sharedResultFolderNames
+
+    End Function
 
 	''' <summary>
 	''' Get the name of the split fasta file to use for this job
@@ -3320,17 +3338,18 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="dctDataPackageJobs"></param>
 	''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
 	''' <remarks></remarks>
-	Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+    Protected Function LoadDataPackageJobInfo(<Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
-		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-		Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+        Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-		If DataPackageID < 0 Then
-			Return False
-		Else
-			Return LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
-		End If
-	End Function
+        If DataPackageID < 0 Then
+            dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
+            Return False
+        Else
+            Return LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
+        End If
+    End Function
 
 	''' <summary>
 	''' Lookups up dataset information for a data package
@@ -3340,305 +3359,315 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Public Shared Function LoadDataPackageJobInfo(ByVal ConnectionString As String, DataPackageID As Integer, ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+    Public Shared Function LoadDataPackageJobInfo(ByVal ConnectionString As String, DataPackageID As Integer, <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
-		'Requests Dataset information from a data package
-		Const RetryCount As Short = 3
-		Dim strMsg As String
+        'Requests Dataset information from a data package
+        Const RetryCount As Short = 3
+        Dim strMsg As String
 
-		If dctDataPackageJobs Is Nothing Then
-			dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
-		Else
-			dctDataPackageJobs.Clear()
-		End If
+        dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
 
-		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+        Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
 
-		SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
-		SqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
-		SqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
-		SqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
-		SqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
-		SqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs")
-		SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
-		SqlStr.Append(" ORDER BY Dataset, Tool")
+        SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
+        SqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
+        SqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
+        SqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
+        SqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
+        SqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs")
+        SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
+        SqlStr.Append(" ORDER BY Dataset, Tool")
 
-		Dim Dt As DataTable = Nothing
+        Dim Dt As DataTable = Nothing
 
-		'Get a table to hold the results of the query
-		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
+        'Get a table to hold the results of the query
+        Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
 
-		If Not blnSuccess Then
-			strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-			Dt.Dispose()
-			Return False
-		End If
+        If Not blnSuccess Then
+            strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+            Dt.Dispose()
+            Return False
+        End If
 
-		'Verify at least one row returned
-		If Dt.Rows.Count < 1 Then
-			' No data was returned
+        'Verify at least one row returned
+        If Dt.Rows.Count < 1 Then
+            ' No data was returned
 
-			' If the data package exists and has datasets associated with it, then Log this as a warning but return true
-			' Otherwise, log an error and return false
+            ' If the data package exists and has datasets associated with it, then Log this as a warning but return true
+            ' Otherwise, log an error and return false
 
-			SqlStr.Clear()
-			SqlStr.Append(" SELECT Count(*) AS Datasets")
-			SqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
-			SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
+            SqlStr.Clear()
+            SqlStr.Append(" SELECT Count(*) AS Datasets")
+            SqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
+            SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
 
-			'Get a table to hold the results of the query
-			blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
-			If blnSuccess AndAlso Dt.Rows.Count > 0 Then
-				For Each curRow As DataRow In Dt.Rows
-					Dim datasetCount = clsGlobal.DbCInt(curRow(0))
+            'Get a table to hold the results of the query
+            blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
+            If blnSuccess AndAlso Dt.Rows.Count > 0 Then
+                For Each curRow As DataRow In Dt.Rows
+                    Dim datasetCount = clsGlobal.DbCInt(curRow(0))
 
-					If datasetCount > 0 Then
-						strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID & ", but it does have " & datasetCount & " dataset"
-						If datasetCount > 1 Then strMsg &= "s"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
-						Return True
-					End If
-				Next
-			End If
+                    If datasetCount > 0 Then
+                        strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID & ", but it does have " & datasetCount & " dataset"
+                        If datasetCount > 1 Then strMsg &= "s"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
+                        Return True
+                    End If
+                Next
+            End If
 
-			strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-			Return False
-		Else
-			For Each CurRow As DataRow In Dt.Rows
-				Dim udtDataPackageInfo As udtDataPackageJobInfoType = New udtDataPackageJobInfoType
+            strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+            Return False
+        Else
+            For Each CurRow As DataRow In Dt.Rows
+                Dim udtDataPackageInfo As udtDataPackageJobInfoType = New udtDataPackageJobInfoType
 
-				With udtDataPackageInfo
-					.Job = clsGlobal.DbCInt(CurRow("Job"))
-					.Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
-					.DatasetID = clsGlobal.DbCInt(CurRow("DatasetID"))
-					.Instrument = clsGlobal.DbCStr(CurRow("Instrument"))
-					.InstrumentGroup = clsGlobal.DbCStr(CurRow("InstrumentGroup"))
-					.Experiment = clsGlobal.DbCStr(CurRow("Experiment"))
-					.Experiment_Reason = clsGlobal.DbCStr(CurRow("Experiment_Reason"))
-					.Experiment_Comment = clsGlobal.DbCStr(CurRow("Experiment_Comment"))
-					.Experiment_Organism = clsGlobal.DbCStr(CurRow("Organism"))
-					.Experiment_NEWT_ID = clsGlobal.DbCInt(CurRow("Experiment_NEWT_ID"))
-					.Experiment_NEWT_Name = clsGlobal.DbCStr(CurRow("Experiment_NEWT_Name"))
-					.Tool = clsGlobal.DbCStr(CurRow("Tool"))
-					.ResultType = clsGlobal.DbCStr(CurRow("ResultType"))
-					.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(.ResultType)
-					.SettingsFileName = clsGlobal.DbCStr(CurRow("SettingsFileName"))
-					.ParameterFileName = clsGlobal.DbCStr(CurRow("ParameterFileName"))
-					.OrganismDBName = clsGlobal.DbCStr(CurRow("OrganismDBName"))
-					.ProteinCollectionList = clsGlobal.DbCStr(CurRow("ProteinCollectionList"))
-					.ProteinOptions = clsGlobal.DbCStr(CurRow("ProteinOptions"))
+                With udtDataPackageInfo
+                    .Job = clsGlobal.DbCInt(CurRow("Job"))
+                    .Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
+                    .DatasetID = clsGlobal.DbCInt(CurRow("DatasetID"))
+                    .Instrument = clsGlobal.DbCStr(CurRow("Instrument"))
+                    .InstrumentGroup = clsGlobal.DbCStr(CurRow("InstrumentGroup"))
+                    .Experiment = clsGlobal.DbCStr(CurRow("Experiment"))
+                    .Experiment_Reason = clsGlobal.DbCStr(CurRow("Experiment_Reason"))
+                    .Experiment_Comment = clsGlobal.DbCStr(CurRow("Experiment_Comment"))
+                    .Experiment_Organism = clsGlobal.DbCStr(CurRow("Organism"))
+                    .Experiment_NEWT_ID = clsGlobal.DbCInt(CurRow("Experiment_NEWT_ID"))
+                    .Experiment_NEWT_Name = clsGlobal.DbCStr(CurRow("Experiment_NEWT_Name"))
+                    .Tool = clsGlobal.DbCStr(CurRow("Tool"))
+                    .ResultType = clsGlobal.DbCStr(CurRow("ResultType"))
+                    .PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(.ResultType)
+                    .SettingsFileName = clsGlobal.DbCStr(CurRow("SettingsFileName"))
+                    .ParameterFileName = clsGlobal.DbCStr(CurRow("ParameterFileName"))
+                    .OrganismDBName = clsGlobal.DbCStr(CurRow("OrganismDBName"))
+                    .ProteinCollectionList = clsGlobal.DbCStr(CurRow("ProteinCollectionList"))
+                    .ProteinOptions = clsGlobal.DbCStr(CurRow("ProteinOptions"))
 
-					If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
-						.LegacyFastaFileName = String.Copy(.OrganismDBName)
-					Else
-						.LegacyFastaFileName = "na"
-					End If
+                    If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
+                        .LegacyFastaFileName = String.Copy(.OrganismDBName)
+                    Else
+                        .LegacyFastaFileName = "na"
+                    End If
 
-					.ServerStoragePath = clsGlobal.DbCStr(CurRow("ServerStoragePath"))
-					.ArchiveStoragePath = clsGlobal.DbCStr(CurRow("ArchiveStoragePath"))
-					.ResultsFolderName = clsGlobal.DbCStr(CurRow("ResultsFolder"))
-					.DatasetFolderName = clsGlobal.DbCStr(CurRow("DatasetFolder"))
-					.SharedResultsFolder = clsGlobal.DbCStr(CurRow("SharedResultsFolder"))
-					.RawDataType = clsGlobal.DbCStr(CurRow("RawDataType"))
-				End With
+                    .ServerStoragePath = clsGlobal.DbCStr(CurRow("ServerStoragePath"))
+                    .ArchiveStoragePath = clsGlobal.DbCStr(CurRow("ArchiveStoragePath"))
+                    .ResultsFolderName = clsGlobal.DbCStr(CurRow("ResultsFolder"))
+                    .DatasetFolderName = clsGlobal.DbCStr(CurRow("DatasetFolder"))
+                    .SharedResultsFolder = clsGlobal.DbCStr(CurRow("SharedResultsFolder"))
+                    .RawDataType = clsGlobal.DbCStr(CurRow("RawDataType"))
+                End With
 
-				If Not dctDataPackageJobs.ContainsKey(udtDataPackageInfo.Job) Then
-					dctDataPackageJobs.Add(udtDataPackageInfo.Job, udtDataPackageInfo)
-				End If
-			Next
+                If Not dctDataPackageJobs.ContainsKey(udtDataPackageInfo.Job) Then
+                    dctDataPackageJobs.Add(udtDataPackageInfo.Job, udtDataPackageInfo)
+                End If
+            Next
 
-			Dt.Dispose()
-			Return True
-		End If
+            Dt.Dispose()
+            Return True
+        End If
 
-	End Function
+    End Function
 
 	Protected Sub LogError(ByVal errorMessage As String)
 		m_message = errorMessage
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 	End Sub
 
-	''' <summary>
-	''' Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
-	''' </summary>
-	''' <param name="udtDataPackageJobInfo"></param>
-	''' <returns></returns>
-	''' <remarks> Does not override the job number</remarks>
-	Protected Function OverrideCurrentDatasetAndJobInfo(ByVal udtDataPackageJobInfo As udtDataPackageJobInfoType) As Boolean
-
-		Dim blnAggregationJob As Boolean = False
-
-		If String.IsNullOrEmpty(udtDataPackageJobInfo.Dataset) Then
-			m_message = "OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
-
-		If String.Equals(udtDataPackageJobInfo.Dataset, "Aggregation", StringComparison.CurrentCultureIgnoreCase) Then
-			blnAggregationJob = True
-		End If
-
-		If Not blnAggregationJob Then
-			' Update job params to have the details for the current dataset
-			' This is required so that we can use FindDataFile to find the desired files
-			If String.IsNullOrEmpty(udtDataPackageJobInfo.ServerStoragePath) Then
-				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			If String.IsNullOrEmpty(udtDataPackageJobInfo.ArchiveStoragePath) Then
-				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			If String.IsNullOrEmpty(udtDataPackageJobInfo.ResultsFolderName) Then
-				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-
-			If String.IsNullOrEmpty(udtDataPackageJobInfo.DatasetFolderName) Then
-				m_message = "OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
-		End If
+    ''' <summary>
+    ''' Moves a file from one folder to another folder
+    ''' </summary>
+    ''' <param name="diSourceFolder"></param>
+    ''' <param name="diTargetFolder"></param>
+    ''' <param name="sourceFileName"></param>
+    ''' <remarks></remarks>
+    Protected Sub MoveFileToFolder(ByVal diSourceFolder As DirectoryInfo, ByVal diTargetFolder As DirectoryInfo, ByVal sourceFileName As String)
+        Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, sourceFileName))
+        Dim targetFilePath = Path.Combine(diTargetFolder.FullName, sourceFileName)
+        fiSourceFile.MoveTo(targetFilePath)
+    End Sub
 
 
-		With udtDataPackageJobInfo
+    ''' <summary>
+    ''' Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
+    ''' </summary>
+    ''' <param name="udtDataPackageJobInfo"></param>
+    ''' <returns></returns>
+    ''' <remarks> Does not override the job number</remarks>
+    Protected Function OverrideCurrentDatasetAndJobInfo(ByVal udtDataPackageJobInfo As udtDataPackageJobInfoType) As Boolean
 
-			m_jobParams.AddDatasetInfo(.Dataset, .DatasetID)
-			m_DatasetName = String.Copy(.Dataset)
+        Dim blnAggregationJob As Boolean = False
 
-			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", .Dataset)
-			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", .DatasetID.ToString())
+        If String.IsNullOrEmpty(udtDataPackageJobInfo.Dataset) Then
+            m_message = "OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-			m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", .Instrument)
-			m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", .InstrumentGroup)
+        If String.Equals(udtDataPackageJobInfo.Dataset, "Aggregation", StringComparison.CurrentCultureIgnoreCase) Then
+            blnAggregationJob = True
+        End If
 
-			m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", .Tool)
-			m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", .ResultType)
-			m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", .SettingsFileName)
+        If Not blnAggregationJob Then
+            ' Update job params to have the details for the current dataset
+            ' This is required so that we can use FindDataFile to find the desired files
+            If String.IsNullOrEmpty(udtDataPackageJobInfo.ServerStoragePath) Then
+                m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", .ParameterFileName)
+            If String.IsNullOrEmpty(udtDataPackageJobInfo.ArchiveStoragePath) Then
+                m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			If String.IsNullOrWhiteSpace(.OrganismDBName) Then
-				m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", "na")
-			Else
-				m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", .OrganismDBName)
-			End If
+            If String.IsNullOrEmpty(udtDataPackageJobInfo.ResultsFolderName) Then
+                m_message = "OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
-				m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", .OrganismDBName)
-			Else
-				m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", "na")
-			End If
+            If String.IsNullOrEmpty(udtDataPackageJobInfo.DatasetFolderName) Then
+                m_message = "OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job " & udtDataPackageJobInfo.Job & " in the data package"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+        End If
 
-			m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", .ProteinCollectionList)
-			m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", .ProteinOptions)
 
-			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", .ServerStoragePath)
-			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", .ArchiveStoragePath)
-			m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", .ResultsFolderName)
-			m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", .DatasetFolderName)
-			m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", .SharedResultsFolder)
-			m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", .RawDataType)
+        With udtDataPackageJobInfo
 
-		End With
+            m_jobParams.AddDatasetInfo(.Dataset, .DatasetID)
+            m_DatasetName = String.Copy(.Dataset)
 
-		Return True
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", .Dataset)
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", .DatasetID.ToString())
 
-	End Function
+            m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", .Instrument)
+            m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", .InstrumentGroup)
 
-	Protected Function ProcessMyEMSLDownloadQueue(ByVal downloadFolderPath As String, ByVal folderLayout As MyEMSLReader.Downloader.DownloadFolderLayout) As Boolean
+            m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", .Tool)
+            m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", .ResultType)
+            m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", .SettingsFileName)
 
-		If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
-			' Nothing to download; that's OK
-			Return True
-		End If
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", .ParameterFileName)
 
-		Dim success = m_MyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout)
+            If String.IsNullOrWhiteSpace(.OrganismDBName) Then
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", "na")
+            Else
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", .OrganismDBName)
+            End If
 
-		If Not success Then
-			If m_MyEMSLDatasetListInfo.ErrorMessages.Count > 0 Then
-				m_message = "Error in ProcessMyEMSLDownloadQueue: " & m_MyEMSLDatasetListInfo.ErrorMessages.First()
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Else
-				m_message = "Unknown error in ProcessMyEMSLDownloadQueue"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			End If
+            If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", .OrganismDBName)
+            Else
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", "na")
+            End If
 
-		End If
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", .ProteinCollectionList)
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", .ProteinOptions)
 
-		Return success
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", .ServerStoragePath)
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", .ArchiveStoragePath)
+            m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", .ResultsFolderName)
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", .DatasetFolderName)
+            m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", .SharedResultsFolder)
+            m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", .RawDataType)
 
-	End Function
+        End With
 
-	''' <summary>
-	''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
-	''' </summary>
-	''' <param name="localOrgDbFolder"></param>
-	''' <param name="freeSpaceThresholdPercent">Value between 0 and 100</param>
-	''' <remarks>Minimum allowed value for freeSpaceThresholdPercent is 1; maximum allowed value is 50</remarks>
-	Protected Sub PurgeFastaFilesIfLowFreeSpace(ByVal localOrgDbFolder As String, ByVal freeSpaceThresholdPercent As Integer)
+        Return True
 
-		If freeSpaceThresholdPercent < 1 Then freeSpaceThresholdPercent = 1
-		If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
+    End Function
 
-		Try
+    Protected Function ProcessMyEMSLDownloadQueue(ByVal downloadFolderPath As String, ByVal folderLayout As MyEMSLReader.Downloader.DownloadFolderLayout) As Boolean
 
-			Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
-			If diOrgDbFolder.FullName.Length <= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
-				Exit Sub
-			End If
+        If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
+            ' Nothing to download; that's OK
+            Return True
+        End If
 
-			Dim driveLetter = diOrgDbFolder.FullName.Substring(0, 2)
-			If (Not driveLetter.EndsWith(":")) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Orb DB folder path does not have a colon; cannot query drive free space: " & diOrgDbFolder.FullName)
-				Exit Sub
-			End If
+        Dim success = m_MyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout)
 
-			Dim driveInfo = New DriveInfo(driveLetter)
-			Dim percentFreeSpace As Double = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+        If Not success Then
+            If m_MyEMSLDatasetListInfo.ErrorMessages.Count > 0 Then
+                m_message = "Error in ProcessMyEMSLDownloadQueue: " & m_MyEMSLDatasetListInfo.ErrorMessages.First()
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Else
+                m_message = "Unknown error in ProcessMyEMSLDownloadQueue"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            End If
 
-			If (percentFreeSpace >= freeSpaceThresholdPercent) Then
-				If m_DebugLevel >= 2 Then
-					Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
-				End If
-				Exit Sub
-			End If
+        End If
 
-			If m_DebugLevel >= 1 Then
-				Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is " & freeSpaceThresholdPercent & "% of the total space; purge required since less than threshold of " & freeSpaceThresholdPercent & "%")
-			End If
+        Return success
 
-			Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
+    End Function
 
-			For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
-				If Not dctFastaFiles.ContainsKey(fiFile) Then
-					Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
+    ''' <summary>
+    ''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
+    ''' </summary>
+    ''' <param name="localOrgDbFolder"></param>
+    ''' <param name="freeSpaceThresholdPercent">Value between 0 and 100</param>
+    ''' <remarks>Minimum allowed value for freeSpaceThresholdPercent is 1; maximum allowed value is 50</remarks>
+    Protected Sub PurgeFastaFilesIfLowFreeSpace(ByVal localOrgDbFolder As String, ByVal freeSpaceThresholdPercent As Integer)
 
-					' Look for a .hashcheck file
-					Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
-					If lstHashCheckfiles.Count > 0 Then
-						dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
-					End If
+        If freeSpaceThresholdPercent < 1 Then freeSpaceThresholdPercent = 1
+        If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
 
-					' Look for a .LastUsed file
-					Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
-					If lstLastUsedFiles.Count > 0 Then
-						dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
+        Try
 
-						Try
-							' Read the date stored in the file
-							Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
+            If diOrgDbFolder.FullName.Length <= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
+                Exit Sub
+            End If
+
+            Dim driveLetter = diOrgDbFolder.FullName.Substring(0, 2)
+            If (Not driveLetter.EndsWith(":")) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Orb DB folder path does not have a colon; cannot query drive free space: " & diOrgDbFolder.FullName)
+                Exit Sub
+            End If
+
+            Dim driveInfo = New DriveInfo(driveLetter)
+            Dim percentFreeSpace As Double = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+
+            If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+                If m_DebugLevel >= 2 Then
+                    Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
+                End If
+                Exit Sub
+            End If
+
+            If m_DebugLevel >= 1 Then
+                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is " & freeSpaceThresholdPercent & "% of the total space; purge required since less than threshold of " & freeSpaceThresholdPercent & "%")
+            End If
+
+            Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
+
+            For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
+                If Not dctFastaFiles.ContainsKey(fiFile) Then
+                    Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
+
+                    ' Look for a .hashcheck file
+                    Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
+                    If lstHashCheckfiles.Count > 0 Then
+                        dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
+                    End If
+
+                    ' Look for a .LastUsed file
+                    Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
+                    If lstLastUsedFiles.Count > 0 Then
+                        dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
+
+                        Try
+                            ' Read the date stored in the file
+                            Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                                 If Not srLastUsedfile.EndOfStream Then
                                     Dim strLastUseDate = srLastUsedfile.ReadLine()
                                     Dim dtLastUsedActual As DateTime
@@ -3646,391 +3675,420 @@ Public MustInherit Class clsAnalysisResources
                                         dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
                                     End If
                                 End If
-							End Using
-						Catch ex As Exception
-							' Ignore errors here
-						End Try
+                            End Using
+                        Catch ex As Exception
+                            ' Ignore errors here
+                        End Try
 
-					End If
-					dctFastaFiles.Add(fiFile, dtLastUsed)
-				End If
-			Next
+                    End If
+                    dctFastaFiles.Add(fiFile, dtLastUsed)
+                End If
+            Next
 
-			Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
+            Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
 
-			For Each fiFileToPurge In lstFastaFilesByLastUse
-				' Abort this process if the LastUsed date of this file is less than 5 days old
-				Dim dtLastUsed As DateTime
-				If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
-					If DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "All fasta files in " & localOrgDbFolder & " are less than 5 days old; will not purge any more files to free disk space")
-						Exit For
-					End If
-				End If
+            For Each fiFileToPurge In lstFastaFilesByLastUse
+                ' Abort this process if the LastUsed date of this file is less than 5 days old
+                Dim dtLastUsed As DateTime
+                If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
+                    If DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "All fasta files in " & localOrgDbFolder & " are less than 5 days old; will not purge any more files to free disk space")
+                        Exit For
+                    End If
+                End If
 
-				' Delete all files associated with this fasta file
-				Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
+                ' Delete all files associated with this fasta file
+                Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
 
-				Dim lstFilesToDelete = New List(Of FileInfo)
-				lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
+                Dim lstFilesToDelete = New List(Of FileInfo)
+                lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
 
-				If m_DebugLevel >= 1 Then
-					Dim fileText = lstFilesToDelete.Count & " file"
-					If lstFilesToDelete.Count <> 1 Then
-						fileText &= "s"
-					End If
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
-				End If
+                If m_DebugLevel >= 1 Then
+                    Dim fileText = lstFilesToDelete.Count & " file"
+                    If lstFilesToDelete.Count <> 1 Then
+                        fileText &= "s"
+                    End If
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
+                End If
 
-				Try
-					For Each fiFileToDelete In lstFilesToDelete
-						fiFileToDelete.Delete()
-					Next
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
-				End Try
+                Try
+                    For Each fiFileToDelete In lstFilesToDelete
+                        fiFileToDelete.Delete()
+                    Next
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
+                End Try
 
-				' Re-check the disk free space
-				percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
-				Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+                ' Re-check the disk free space
+                percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
 
-				If (percentFreeSpace >= freeSpaceThresholdPercent) Then
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
-					End If
-					Exit Sub
-				ElseIf m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
-				End If
+                If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
+                    End If
+                    Exit Sub
+                ElseIf m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
+                End If
 
-			Next
+            Next
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
+        End Try
 
-	End Sub
+    End Sub
 
-	Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
-		Try
-			Dim fiFileToRename As FileInfo = New FileInfo(Path.Combine(SourceFolderPath, SourceFilename))
-			Dim strFilePathWithPrefix As String = Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
+    Protected Function RenameDuplicatePHRPFile(ByVal SourceFolderPath As String, ByVal SourceFilename As String, ByVal TargetFolderPath As String, ByVal strPrefixToAdd As String, ByVal intJob As Integer) As Boolean
+        Try
+            Dim fiFileToRename As FileInfo = New FileInfo(Path.Combine(SourceFolderPath, SourceFilename))
+            Dim strFilePathWithPrefix As String = Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
 
-			Threading.Thread.Sleep(100)
-			fiFileToRename.MoveTo(strFilePathWithPrefix)
+            Threading.Thread.Sleep(100)
+            fiFileToRename.MoveTo(strFilePathWithPrefix)
 
-			m_jobParams.AddResultFileToSkip(Path.GetFileName(strFilePathWithPrefix))
+            m_jobParams.AddResultFileToSkip(Path.GetFileName(strFilePathWithPrefix))
 
-		Catch ex As Exception
-			m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & intJob & " (data package has multiple jobs for the same dataset)"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception renaming PHRP file " & SourceFilename & " for job " & intJob & " (data package has multiple jobs for the same dataset)"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-		m_LockQueueWaitTimeStart = DateTime.UtcNow
-	End Sub
+    Protected Sub ResetTimestampForQueueWaitTimeLogging()
+        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+        m_LockQueueWaitTimeStart = DateTime.UtcNow
+    End Sub
 
+    ''' <summary>
+    ''' Looks for the specified file in the given folder
+    ''' If present, returns the full path to the file
+    ''' If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
+    ''' If the file isn't found (and the _StoragePathInfo.txt file isn't present), then returns an empty string
+    ''' </summary>
+    ''' <param name="FolderPath">The folder to look in</param>
+    ''' <param name="FileName">The file name to find</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function ResolveStoragePath(ByVal FolderPath As String, ByVal FileName As String) As String
+
+        Dim srInFile As StreamReader
+        Dim strPhysicalFilePath As String = String.Empty
+        Dim strFilePath As String
+
+        Dim strLineIn As String
+
+        strFilePath = Path.Combine(FolderPath, FileName)
+
+        If File.Exists(strFilePath) Then
+            ' The desired file is located in folder FolderPath
+            strPhysicalFilePath = strFilePath
+        Else
+            ' The desired file was not found
+            strFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
+
+            If File.Exists(strFilePath) Then
+                ' The _StoragePathInfo.txt file is present
+                ' Open that file to read the file path on the first line of the file
+
+                srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                strLineIn = srInFile.ReadLine
+                strPhysicalFilePath = strLineIn
+
+                srInFile.Close()
+            End If
+        End If
+
+        Return strPhysicalFilePath
+
+    End Function
+
+    ''' <summary>
+    ''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
+    ''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
+    ''' If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+    ''' If found, returns the path to the ser file
+    ''' If not found, then looks for a 0.ser folder in the specified folder
+    ''' If found, returns the path to the 0.ser folder
+    ''' Otherwise, returns an empty string
+    ''' </summary>
+    ''' <param name="FolderPath">The folder to look in</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
+
+        Dim diFolder As DirectoryInfo
+        Dim fiFile As FileInfo
+
+        Dim srInFile As StreamReader
+        Dim strPhysicalFilePath As String
+        Dim strFilePath As String
+
+        Dim strLineIn As String
+
+        strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
+
+        If File.Exists(strFilePath) Then
+            ' The desired file is located in folder FolderPath
+            ' The _StoragePathInfo.txt file is present
+            ' Open that file to read the file path on the first line of the file
+
+            srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+            strLineIn = srInFile.ReadLine
+            strPhysicalFilePath = strLineIn
+
+            srInFile.Close()
+        Else
+            ' The desired file was not found
+
+            ' Look for a ser file in the dataset folder
+            strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE)
+            fiFile = New FileInfo(strPhysicalFilePath)
+
+            If Not fiFile.Exists Then
+                ' See if a folder named 0.ser exists in FolderPath
+                strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
+                diFolder = New DirectoryInfo(strPhysicalFilePath)
+                If Not diFolder.Exists Then
+                    strPhysicalFilePath = ""
+                End If
+            End If
+
+        End If
+
+        Return strPhysicalFilePath
+
+    End Function
+
+    ''' <summary>
+    ''' Retrieve the files specified by the file processing options parameter
+    ''' </summary>
+    ''' <param name="fileSpecList">
+    ''' File processing options, examples:
+    ''' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
+    ''' sequest:_syn.txt,sequest:_fht.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt
+    ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
+    ''' </param>
+    ''' <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
+    ''' <returns>True if success, false if a problem</returns>
+    ''' <remarks>
+    ''' This function is used by two plugins, PhosphoFDRAggregator and PRIDEMzXML, though PrideMzXML is dormant as of September 2013
+    ''' </remarks>
+    Protected Function RetrieveAggregateFiles(
+      ByVal fileSpecList As List(Of String),
+      ByVal fileRetrievalMode As DataPackageFileRetrievalModeConstants,
+      <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+
+        Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
+        Dim blnSuccess As Boolean
+
+        Try
+            If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
+                m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
+                dctDataPackageJobs = Nothing
+                Return False
+            End If
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
+            dctDataPackageJobs = Nothing
+            Return False
+        End Try
+
+        Try
+            Dim diWorkingDirectory = New DirectoryInfo(m_WorkingDir)
+
+            ' Cache the current dataset and job info
+            udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
+
+            For Each udtJob As KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
+
+                If Not OverrideCurrentDatasetAndJobInfo(udtJob.Value) Then
+                    Return False
+                End If
+
+                ' See if this job matches any of the entries in fileSpecList
+                Dim fileSpecListCurrent = New List(Of String)
+
+                For Each fileSpec As String In fileSpecList
+                    Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
+                    If udtJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).ToLower()) Then
+                        fileSpecListCurrent = fileSpecList
+                        Exit For
+                    End If
+                Next
+
+                If fileSpecListCurrent.Count = 0 Then
+                    Select Case fileRetrievalMode
+                        Case DataPackageFileRetrievalModeConstants.Ascore
+
+                            If udtJob.Value.Tool.ToLower().StartsWith("msgf") Then
+                                ' MSGF+
+                                fileSpecListCurrent = New List(Of String) From {
+                                    "MSGFPlus:_msgfdb_syn.txt",
+                                    "MSGFPlus:_msgfdb_fht.txt",
+                                    "MSGFPlus:_dta.zip",
+                                    "MSGFPlus:_msgfdb_syn_ModSummary.txt",
+                                    "masic_finnigan:_ScanStatsEx.txt"}
+
+                            End If
+
+                            If udtJob.Value.Tool.ToLower().StartsWith("sequest") Then
+                                ' Sequest
+                                fileSpecListCurrent = New List(Of String) From {
+                                    "sequest:_syn.txt",
+                                    "sequest:_fht.txt",
+                                    "sequest:_dta.zip",
+                                    "MSGFPlus:_syn_ModSummary.txt",
+                                    "masic_finnigan:_ScanStatsEx.txt"}
+
+                            End If
+
+                            If udtJob.Value.Tool.ToLower().StartsWith("xtandem") Then
+                                ' XTandem
+                                fileSpecListCurrent = New List(Of String) From {
+                                    "MSGFPlus:_xt_syn.txt",
+                                    "MSGFPlus:_xt_fht.txt",
+                                    "MSGFPlus:_dta.zip",
+                                    "MSGFPlus:_xt_syn_ModSummary.txt",
+                                    "masic_finnigan:_ScanStatsEx.txt"}
+
+                            End If
+
+                    End Select
+                End If
+
+                If fileSpecListCurrent.Count = 0 Then
+                    Continue For
+                End If
+
+                Dim spectraFileKey = "Job" & udtJob.Key & DATA_PACKAGE_SPECTRA_FILE_SUFFIX
+
+                For Each fileSpec As String In fileSpecListCurrent
+                    Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
+                    Dim sourceFileName = udtJob.Value.Dataset & fileSpecTerms(1)
+                    Dim sourceFolderPath = "??"
+
+                    Dim saveMode = "nocopy"
+                    If fileSpecTerms.Count > 2 Then
+                        saveMode = fileSpecTerms(2)
+                    End If
+
+                    Try
+
+                        If Not udtJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).ToLower()) Then
+                            Continue For
+                        End If
+
+                        ' To avoid collisions, files for this job will be placed in a subfolder based on the Job number
+                        Dim diTargetFolder = New DirectoryInfo(Path.Combine(m_WorkingDir, "Job" & udtJob.Key))
+                        If Not diTargetFolder.Exists Then diTargetFolder.Create()
+
+                        If sourceFileName.ToLower().EndsWith("_dta.zip") AndAlso udtJob.Value.Tool.ToLower().EndsWith("_mzml") Then
+                            ' This is a .mzML job; it is not going to have a _dta.zip file
+                            ' Setting sourceFolderPath to an empty string so that GetMzMLFile will get called below
+                            sourceFolderPath = String.Empty
+                        Else
+                            sourceFolderPath = FindDataFile(sourceFileName)
+                        End If
+
+                        If String.IsNullOrEmpty(sourceFolderPath) Then
+
+                            If sourceFileName.ToLower().EndsWith("_dta.zip") Then
+                                ' Look for a mzML.gz file instead
+
+                                Dim errorMessage As String = String.Empty
+                                Dim fileMissingFromCache As Boolean
+
+                                Dim success = RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, False, errorMessage, fileMissingFromCache)
+
+                                If Not success Then
+                                    If String.IsNullOrWhiteSpace(errorMessage) Then
+                                        errorMessage = "Unknown error looking for the .mzML file for " & udtJob.Value.Dataset
+                                    End If
+
+                                    m_message = errorMessage
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                    Return False
+                                End If
+
+                                sourceFileName = udtJob.Value.Dataset & DOT_MZML_EXTENSION & DOT_GZ_EXTENSION
+                                m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName)
+                                m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
+
+                                MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
+
+                                If m_DebugLevel >= 1 Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved the .mzML file for " & udtJob.Value.Dataset)
+                                End If
+
+                                Continue For
+                            End If
+
+                            m_message = "Could not find a valid folder with file " & sourceFileName
+                            If m_DebugLevel >= 1 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                            End If
+                            Return False
+                        End If
+
+                        If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+                            m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath
+                            If m_DebugLevel >= 1 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                            End If
+                            Return False
+                        End If
+
+                        If sourceFileName.EndsWith("_dta.zip") Then
+                            m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName)
+                        End If
+
+                        If saveMode.ToLower() <> "copy" Then
+                            m_jobParams.AddResultFileToSkip(sourceFileName)
+                        End If
+
+                        MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
+
+                        If m_DebugLevel >= 1 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + sourceFileName + " from folder " + sourceFolderPath)
+                        End If
+
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from folder " + sourceFolderPath, ex)
+                        Return False
+
+                    End Try
+
+                Next
+            Next
+
+            If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                Return False
+            End If
+
+            ' Restore the dataset and job info for this aggregation job
+            OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
+
+            blnSuccess = True
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveAggregateFiles", ex)
+            blnSuccess = False
+        End Try
+
+        Return blnSuccess
+
+    End Function
+    
 	''' <summary>
-	''' Looks for the specified file in the given folder
-	''' If present, returns the full path to the file
-	''' If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
-	''' If the file isn't found (and the _StoragePathInfo.txt file isn't present), then returns an empty string
-	''' </summary>
-	''' <param name="FolderPath">The folder to look in</param>
-	''' <param name="FileName">The file name to find</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Shared Function ResolveStoragePath(ByVal FolderPath As String, ByVal FileName As String) As String
-
-		Dim srInFile As StreamReader
-		Dim strPhysicalFilePath As String = String.Empty
-		Dim strFilePath As String
-
-		Dim strLineIn As String
-
-		strFilePath = Path.Combine(FolderPath, FileName)
-
-		If File.Exists(strFilePath) Then
-			' The desired file is located in folder FolderPath
-			strPhysicalFilePath = strFilePath
-		Else
-			' The desired file was not found
-			strFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
-
-			If File.Exists(strFilePath) Then
-				' The _StoragePathInfo.txt file is present
-				' Open that file to read the file path on the first line of the file
-
-				srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-				strLineIn = srInFile.ReadLine
-				strPhysicalFilePath = strLineIn
-
-				srInFile.Close()
-			End If
-		End If
-
-		Return strPhysicalFilePath
-
-	End Function
-
-	''' <summary>
-	''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
-	''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
-	''' If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
-	''' If found, returns the path to the ser file
-	''' If not found, then looks for a 0.ser folder in the specified folder
-	''' If found, returns the path to the 0.ser folder
-	''' Otherwise, returns an empty string
-	''' </summary>
-	''' <param name="FolderPath">The folder to look in</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Shared Function ResolveSerStoragePath(ByVal FolderPath As String) As String
-
-		Dim diFolder As DirectoryInfo
-		Dim fiFile As FileInfo
-
-		Dim srInFile As StreamReader
-		Dim strPhysicalFilePath As String
-		Dim strFilePath As String
-
-		Dim strLineIn As String
-
-		strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
-
-		If File.Exists(strFilePath) Then
-			' The desired file is located in folder FolderPath
-			' The _StoragePathInfo.txt file is present
-			' Open that file to read the file path on the first line of the file
-
-			srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-			strLineIn = srInFile.ReadLine
-			strPhysicalFilePath = strLineIn
-
-			srInFile.Close()
-		Else
-			' The desired file was not found
-
-			' Look for a ser file in the dataset folder
-			strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE)
-			fiFile = New FileInfo(strPhysicalFilePath)
-
-			If Not fiFile.Exists Then
-				' See if a folder named 0.ser exists in FolderPath
-				strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
-				diFolder = New DirectoryInfo(strPhysicalFilePath)
-				If Not diFolder.Exists Then
-					strPhysicalFilePath = ""
-				End If
-			End If
-
-		End If
-
-		Return strPhysicalFilePath
-
-	End Function
-
-	''' <summary>
-	''' Retrieve the files specified by the file processing options parameter
-	''' </summary>
-	''' <param name="FilesToRetrieveExt">File processing options, for example: sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy</param>
-	''' <returns></returns>
-	''' <remarks>This function is used by two plugins which, as of September 2013, are unused: PhosphoFDRAggregator and PRIDEMzXML</remarks>
-	Protected Function RetrieveAggregateFiles(ByVal FilesToRetrieveExt As String()) As Boolean
-
-		Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
-
-		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
-		Dim blnSuccess As Boolean
-
-		Try
-			If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
-				m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
-				Return False
-			End If
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
-			Return False
-		End Try
-
-		Try
-			' Cache the current dataset and job info
-			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-
-			Dim lstFilesToUnzip = New List(Of udtAggregateFileProcessingType)
-
-			For Each udtItem As KeyValuePair(Of Integer, udtDataPackageJobInfoType) In dctDataPackageJobs
-
-				If Not OverrideCurrentDatasetAndJobInfo(udtItem.Value) Then
-					Return False
-				End If
-
-				Dim FilterValue = udtItem.Value.SettingsFileName + udtItem.Value.ParameterFileName
-
-				For Each FileNameExt As String In FilesToRetrieveExt
-					Dim SplitString = FileNameExt.Split(":"c)
-					Dim SourceFilename = udtItem.Value.Dataset + SplitString(1)
-					Dim SourceFolderPath = "??"
-
-					Try
-
-						If String.Equals(SplitString(0), udtItem.Value.Tool, StringComparison.CurrentCultureIgnoreCase) Then
-							SourceFolderPath = FindDataFile(SourceFilename)
-							If String.IsNullOrEmpty(SourceFolderPath) Then
-								m_message = "Could not find a valid folder with file " & SourceFilename
-								If m_DebugLevel >= 1 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-								End If
-								Return False
-							End If
-
-							If Not CopyFileToWorkDir(SourceFilename, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-								m_message = "CopyFileToWorkDir returned False for " + SourceFilename + " using folder " + SourceFolderPath
-								If m_DebugLevel >= 1 Then
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-								End If
-								Return False
-							End If
-
-							If m_DebugLevel >= 1 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + SourceFilename + " from folder " + SourceFolderPath)
-							End If
-
-							If SourceFilename.ToLower().EndsWith(".zip") Then
-								' Need to unzip the file
-								' However, if the file is in MyEMSL then we won't be able to unzip it until after the call to ProcessMyEMSLDownloadQueue
-
-								Dim udtAggregateFile = New udtAggregateFileProcessingType
-								udtAggregateFile.Filename = String.Copy(SourceFilename)
-								udtAggregateFile.FilterValue = String.Copy(FilterValue)
-								udtAggregateFile.SaveMode = SplitString(2)
-
-								lstFilesToUnzip.Add(udtAggregateFile)
-							Else
-								'Rename the files where dataset name will cause collisions
-								RetrieveAggregateFilesRename(SourceFilename, FilterValue, SplitString(2))
-							End If
-
-						End If
-
-					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception during copy of file: " + SourceFilename + " from folder " + SourceFolderPath, ex)
-						Return False
-
-					End Try
-
-				Next
-			Next
-
-			If Not ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-				Return False
-			End If
-
-			For Each fileToUnzip In lstFilesToUnzip
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file: " + fileToUnzip.Filename)
-				If UnzipFileStart(Path.Combine(m_WorkingDir, fileToUnzip.Filename), m_WorkingDir, "RetrieveAggregateFiles", False) Then
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File unzipped: " & fileToUnzip.Filename)
-					End If
-					m_jobParams.AddResultFileExtensionToSkip(fileToUnzip.Filename)
-
-					' Note: This assumes that the file we just unzipped was a text file
-					RetrieveAggregateFilesRename(Path.GetFileNameWithoutExtension(fileToUnzip.Filename) + ".txt", fileToUnzip.FilterValue, fileToUnzip.SaveMode)
-				Else
-					Return False
-				End If
-			Next
-
-			' Restore the dataset and job info for this aggregation job
-			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
-
-			blnSuccess = True
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveAggregateFiles", ex)
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	Private Sub RetrieveAggregateFilesRename(ByVal SourceFilename As String, ByVal filterValue As String, ByVal SaveMode As String)
-
-		Dim newFilename As String = ""
-
-		Try
-			Select Case m_jobParams.GetParam("StepTool").ToLower
-				Case "phospho_fdr_aggregator"
-					Dim fi As New FileInfo(Path.Combine(m_WorkingDir, SourceFilename))
-					Dim ext = Path.GetExtension(SourceFilename)
-					Dim filenameNoExt = Path.GetFileNameWithoutExtension(SourceFilename)
-
-					If filterValue.ToLower().Contains("_hcd") Then
-						newFilename = filenameNoExt + "_hcd" + ext
-
-					ElseIf filterValue.ToLower().Contains("_etd") Then
-						newFilename = filenameNoExt + "_etd" + ext
-
-					ElseIf filterValue.ToLower().Contains("_cid") Then
-						newFilename = filenameNoExt + "_cid" + ext
-
-					Else
-						newFilename = SourceFilename
-					End If
-
-					If newFilename <> SourceFilename Then
-						Dim intRetryCount As Integer
-						Dim blnSuccess As Boolean = False
-						Dim strExceptionMsg As String = "unknown reason"
-
-						Do
-							Try
-								fi.MoveTo(Path.Combine(m_WorkingDir, newFilename))
-								blnSuccess = True
-							Catch ex As IOException
-								intRetryCount += 1
-								If intRetryCount = 1 Then
-									strExceptionMsg = String.Copy(ex.Message)
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to rename file " + fi.Name + " in folder " + m_WorkingDir + "; will retry after garbage collection")
-									PRISM.Processes.clsProgRunner.GarbageCollectNow()
-									Threading.Thread.Sleep(1000)
-								End If
-							End Try
-						Loop While Not blnSuccess And intRetryCount <= 1
-
-						If Not blnSuccess Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Unable to rename file" + fi.Name + " to " + newFilename + " in folder " + m_WorkingDir + ": " + strExceptionMsg)
-							Return
-						End If
-					End If
-
-					If SaveMode.ToLower() = "nocopy" Then
-						m_jobParams.AddResultFileExtensionToSkip(newFilename)
-					End If
-
-					Return
-
-			End Select
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMgrSettings.RetrieveAggregateFilesRename; Exception during renaming of file: " + newFilename + " from folder " + m_WorkingDir, ex)
-			Return
-		End Try
-
-		Return
-	End Sub
-
-	''' <summary>
-	''' Retrieve the dataset's cached .mzXML file from the MsXML Cache
+    ''' Retrieve the dataset's cached .mzML file from the MsXML Cache
 	''' </summary>
 	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
 	''' <param name="errorMessage">Output parameter: Error message</param>
@@ -4062,7 +4120,7 @@ Public MustInherit Class clsAnalysisResources
 
 
 	''' <summary>
-	''' Retrieve the dataset's cached .mzML file from the MsXML Cache
+    ''' Retrieve the dataset's cached .mzXML file from the MsXML Cache
 	''' </summary>
 	''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
 	''' <param name="errorMessage">Output parameter: Error message</param>
@@ -4110,80 +4168,100 @@ Public MustInherit Class clsAnalysisResources
 			Return False
 		End If
 
-		Dim inputFolderName = m_jobParams.GetJobParameter("InputFolderName", String.Empty)
-		If String.IsNullOrEmpty(inputFolderName) Then
-			errorMessage = "InputFolderName is empty; cannot retrieve the " & resultFileExtension & " file"
-			Return False
-		End If
+        Dim foldersToSearch = New List(Of String)
+        foldersToSearch.Add(m_jobParams.GetJobParameter("InputFolderName", String.Empty))
+        If foldersToSearch(0).Length = 0 Then
+            foldersToSearch.Clear()
+        End If
 
-		Dim msXmlToolNameVersionFolder As String
-		Try
-			msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(inputFolderName)
-		Catch ex As Exception
-			errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & inputFolderName & "); cannot retrieve the " & resultFileExtension & " File"
-			Return False
-		End Try
+        For Each sharedResultFolder In GetSharedResultFolderList()
+            If sharedResultFolder.Trim.Length = 0 Then Continue For
+            If Not foldersToSearch.Contains(sharedResultFolder) Then
+                foldersToSearch.Add(sharedResultFolder)
+            End If
+        Next
 
-		Dim sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, msXmlToolNameVersionFolder, errorMessage)
-		If Not String.IsNullOrEmpty(errorMessage) Then
-			Return False
-		End If
+        If foldersToSearch.Count = 0 Then
+            errorMessage = "Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the " & resultFileExtension & " file"
+            Return False
+        End If
 
-		Dim diSourceFolder = New DirectoryInfo(sourceFolder)
-		If Not diSourceFolder.Exists Then
-			errorMessage = "Cache folder does not exist (" & sourceFolder & "); will re-generate the " & resultFileExtension & " file"
-			fileMissingFromCache = True
-			Return False
-		End If
+        Dim msXmlToolNameVersionFolder As String = String.Empty
 
-		Dim sourceFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension)
-		Dim expectedFileDescription = resultFileExtension
-		If resultFileExtension <> DOT_PBF_EXTENSION Then
-			sourceFilePath &= DOT_GZ_EXTENSION
-			expectedFileDescription &= DOT_GZ_EXTENSION
-		End If
+        For Each folderName In foldersToSearch
+            Try
+                msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(folderName)
+            Catch ex As Exception
+                errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & folderName & "); cannot retrieve the " & resultFileExtension & " File"                
+            End Try
+        Next
 
-		Dim fiSourceFile = New FileInfo(sourceFilePath)
-		If Not fiSourceFile.Exists Then
-			errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & sourceFolder & "; will re-generate it"
-			fileMissingFromCache = True
-			Return False
-		End If
+        If String.IsNullOrWhiteSpace(msXmlToolNameVersionFolder) Then
+            Return False
+        Else
+            errorMessage = String.Empty
+        End If
 
-		' Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
+        Dim sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, msXmlToolNameVersionFolder, errorMessage)
+        If Not String.IsNullOrEmpty(errorMessage) Then
+            Return False
+        End If
 
-		Dim hashcheckFilePath = fiSourceFile.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+        Dim diSourceFolder = New DirectoryInfo(sourceFolder)
+        If Not diSourceFolder.Exists Then
+            errorMessage = "Cache folder does not exist (" & sourceFolder & "); will re-generate the " & resultFileExtension & " file"
+            fileMissingFromCache = True
+            Return False
+        End If
 
-		errorMessage = String.Empty
-		If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
-			errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & sourceFolder & "; will re-generate it"
-			fileMissingFromCache = True
-			Return False
-		End If
+        Dim sourceFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension)
+        Dim expectedFileDescription = resultFileExtension
+        If resultFileExtension <> DOT_PBF_EXTENSION Then
+            sourceFilePath &= DOT_GZ_EXTENSION
+            expectedFileDescription &= DOT_GZ_EXTENSION
+        End If
 
-		If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-			errorMessage = "Error copying " + fiSourceFile.Name
-			Return False
-		End If
+        Dim fiSourceFile = New FileInfo(sourceFilePath)
+        If Not fiSourceFile.Exists Then
+            errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & sourceFolder & "; will re-generate it"
+            fileMissingFromCache = True
+            Return False
+        End If
 
-		If fiSourceFile.Extension.ToLower() = DOT_GZ_EXTENSION Then
-			' Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
+        ' Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
 
-			m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
-			m_jobParams.AddResultFileToSkip(fiSourceFile.Name.Substring(0, fiSourceFile.Name.Length - DOT_GZ_EXTENSION.Length))
+        Dim hashcheckFilePath = fiSourceFile.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
 
-			If unzip Then
-				Dim localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
+        errorMessage = String.Empty
+        If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
+            errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & sourceFolder & "; will re-generate it"
+            fileMissingFromCache = True
+            Return False
+        End If
 
-				If Not m_IonicZipTools.GUnzipFile(localZippedFile) Then
-					errorMessage = m_IonicZipTools.Message
-					Return False
-				End If
-			End If
+        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+            errorMessage = "Error copying " + fiSourceFile.Name
+            Return False
+        End If
 
-		End If
+        If fiSourceFile.Extension.ToLower() = DOT_GZ_EXTENSION Then
+            ' Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
 
-		Return True
+            m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
+            m_jobParams.AddResultFileToSkip(fiSourceFile.Name.Substring(0, fiSourceFile.Name.Length - DOT_GZ_EXTENSION.Length))
+
+            If unzip Then
+                Dim localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
+
+                If Not m_IonicZipTools.GUnzipFile(localZippedFile) Then
+                    errorMessage = m_IonicZipTools.Message
+                    Return False
+                End If
+            End If
+
+        End If
+
+        Return True
 
 	End Function
 
@@ -4209,7 +4287,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
 	Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
 
-		Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
 		DataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1)
 
 		If DataPackageID < 0 Then
