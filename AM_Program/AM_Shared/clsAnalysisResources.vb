@@ -125,6 +125,9 @@ Public MustInherit Class clsAnalysisResources
 
     Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
 
+    ' This is used by clsAnalysisResourcesRepoPkgr
+    Public Const JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes"
+
     ' These are used by clsAnalysisResourcesPhosphoFdrAggregator
     Public Const JOB_PARAM_DICTIONARY_JOB_DATASET_MAP As String = "PackedParam_JobDatasetMap"
     Public Const JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP As String = "PackedParam_JobSettingsFileMap"

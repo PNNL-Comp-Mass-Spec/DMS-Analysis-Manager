@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnalysisManager_RepoPkgr_PlugIn;
 using AnalysisManagerBase;
 
 namespace AnalysisManager_RepoPkgr_Plugin

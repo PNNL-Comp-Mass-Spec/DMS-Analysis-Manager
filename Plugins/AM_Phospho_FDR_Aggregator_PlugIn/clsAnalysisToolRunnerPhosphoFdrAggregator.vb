@@ -80,50 +80,11 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         ' Run AScore for each of the jobs in the data package
         Dim success = ProcessSynopsisFiles(progLoc)
 
-        'Set up and execute a program runner to run AScore
-        CmdStr = "xyz"
-
-        With CmdRunner
-            ' Must set this to "False" so that a window Does appear; otherwise, AScore_Console.exe crashes
-            ' In addition, cannot capture the text written to the console
-            .CreateNoWindow = False
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = False
-
-            .WriteConsoleOutputToFile = False
-        End With
-
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "AScore", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running AScore, job " & m_JobNum)
-
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging XTandem problems
-            CopyFailedResultsToArchiveFolder()
-
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         ' Sleep 2 seconds before continuing
         System.Threading.Thread.Sleep(2000)        '2 second delay
 
         If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
             result = ConcatenateResultFiles("_cid_outputAScore.txt")
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
-            End If
-        End If
-
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")) Then
-            result = ConcatenateResultFiles("_etd_outputAScore.txt")
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
-            End If
-        End If
-
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")) Then
-            result = ConcatenateResultFiles("_hcd_outputAScore.txt")
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return result
@@ -215,7 +176,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                     Return False
                 End If
 
-
                 ' Find the spectrum file; should be _dta.zip or .mzML.gz
                 Dim spectrumFilePath = DetermineSpectrumFilePath(jobFolder)
 
@@ -235,6 +195,21 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
                 Dim cmdStr = String.Empty
                 cmdStr &= fhtFile & synFile
+
+
+                With CmdRunner
+                    .CreateNoWindow = False
+                    .CacheStandardOutput = False
+                    .EchoOutputToConsole = False
+
+                    .WriteConsoleOutputToFile = True
+                End With
+
+                If Not CmdRunner.RunProgram(progLoc, cmdStr, "AScore", True) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running AScore, job " & m_JobNum)
+
+                    Return False
+                End If
 
 
             Next
