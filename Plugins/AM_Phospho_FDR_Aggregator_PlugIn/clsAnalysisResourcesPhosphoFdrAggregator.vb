@@ -63,8 +63,6 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Building AScore input file")
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function

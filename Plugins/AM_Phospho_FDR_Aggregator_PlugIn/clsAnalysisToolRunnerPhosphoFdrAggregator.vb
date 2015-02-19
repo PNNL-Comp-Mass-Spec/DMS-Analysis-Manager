@@ -11,6 +11,7 @@ Imports AnalysisManagerBase
 Imports System.Linq
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Inherits clsAnalysisToolRunnerBase
@@ -19,7 +20,15 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     'Class for running Phospho_FDRAggregator analysis
     '*********************************************************************************************************
 
-#Region "Enums"
+#Region "Constants and Enums"
+    Protected Const ASCORE_CONSOLE_OUTPUT_PREFIX As String = "AScore_ConsoleOutput"
+
+    Protected Const FILE_SUFFIX_ASCORE_RESULTS As String = "_ascore.txt"
+    Protected Const FILE_SUFFIX_SYN_PLUS_ASCORE As String = "_plus_ascore.txt"
+
+    Protected Const PROGRESS_PCT_PHOSPHO_FDR_RUNNING As Single = 5
+    Protected Const PROGRESS_PCT_PHOSPHO_FDR_COMPLETE As Single = 99
+
     Protected Enum DatasetTypeConstants
         Unknown = 0
         CID = 1
@@ -28,12 +37,28 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     End Enum
 #End Region
 
-#Region "Module Variables"
-    Protected Const PROGRESS_PCT_PHOSPHO_FDR_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_PHOSPHO_FDR_START As Single = 95
-    Protected Const PROGRESS_PCT_PHOSPHO_FDR_COMPLETE As Single = 99
+#Region "Structures"
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected Structure udtJobMetadataForAScore
+        Public Job As Integer
+        Public Dataset As String
+        Public ToolName As String
+        Public FirstHitsFilePath As String
+        Public SynopsisFilePath As String
+        Public ToolNameForAScore As String
+        Public SpectrumFilePath As String
+    End Structure
+
+#End Region
+
+#Region "Module Variables"
+
+    Protected mConsoleOutputErrorMsg As String
+
+    Protected mJobFoldersProcessed As Integer
+    Protected mTotalJobFolders As Integer
+
+    Protected WithEvents mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
@@ -44,232 +69,260 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-        Dim CmdStr As String
         Dim result As IJobParams.CloseOutType
 
-        'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Store the AScore version info in the database
-        If Not StoreToolVersionInfo() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-            m_message = "Error determining AScore version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running AScore")
-
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter")
-        End If
-
-        ' Verify that program file exists
-        ' AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
-        Dim progLoc As String = m_mgrParams.GetParam("AScoreprogloc")
-        If Not System.IO.File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then progLoc = "Parameter 'AScoreprogloc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find AScore program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Run AScore for each of the jobs in the data package
-        Dim success = ProcessSynopsisFiles(progLoc)
-
-        ' Sleep 2 seconds before continuing
-        System.Threading.Thread.Sleep(2000)        '2 second delay
-
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
-            result = ConcatenateResultFiles("_cid_outputAScore.txt")
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
-            End If
-        End If
-
-        'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
-
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
-
-        'Make sure objects are released
-        System.Threading.Thread.Sleep(2000)        '2 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-        ' Override the dataset name and transfer folder path so that the results get copied to the correct location
-        MyBase.RedefineAggregationJobDatasetAndTransferFolder()
-
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
-
-        Dim DumFiles() As String
-
-        'update list of files to be deleted after run
-        DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_outputAScore*")
-        For Each FileToSave As String In DumFiles
-            m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(FileToSave))
-        Next
-
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
-
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
-
-    End Function
-
-    Private Function ProcessSynopsisFiles(ByVal progLoc As String) As Boolean
-
         Try
-            Dim diWorkingFolder = New DirectoryInfo(m_WorkDir)
+            ' Call base class for initial setup
+            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
+            If m_DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter")
+            End If
 
-            ' Extract the dataset raw file paths
-            Dim jobToDatasetMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP)
-            Dim jobToSettingsFileMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
-            Dim jobToToolMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
+            ' Determine the path to the Ascore program
+            ' AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"          
+            Dim progLoc As String = m_mgrParams.GetParam("AScoreprogloc")
+            If Not File.Exists(progLoc) Then
+                If String.IsNullOrWhiteSpace(progLoc) Then progLoc = "Parameter 'AScoreprogloc' not defined for this manager"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find AScore program file: " & progLoc)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-            ' Find folders with synopsis files
-            For Each jobFolder In diWorkingFolder.GetDirectories("Job*")
+            ' Store the AScore version info in the database
+            If Not StoreToolVersionInfo(progLoc) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining AScore version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-                Dim synopsisFiles = jobFolder.GetFiles("*syn*.txt")
-                If synopsisFiles.Count = 0 Then
-                    Continue For
-                End If
+            ' Run AScore for each of the jobs in the data package
+            Dim fileSuffixesToCombine As List(Of String) = Nothing
+            Dim processingRuntimes As Dictionary(Of String, Double) = Nothing
 
-                Dim jobNumber = Integer.Parse(jobFolder.Name.Substring(3))
-                Dim datasetName = String.Empty
-                Dim settingsFileName = String.Empty
-                Dim toolName = String.Empty
+            Dim success = ProcessSynopsisFiles(progLoc, fileSuffixesToCombine, processingRuntimes)
 
-                If Not jobToDatasetMap.TryGetValue(jobNumber.ToString(), datasetName) Then
-                    m_message = "Job " & jobNumber & " not found in packed job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & m_message)
-                    Return False
-                End If
+            If Not fileSuffixesToCombine Is Nothing Then
+                ' Concatenate the results
+                For Each fileSuffix In fileSuffixesToCombine
 
-                settingsFileName = jobToSettingsFileMap(jobNumber.ToString())
-                toolName = jobToToolMap(jobNumber.ToString())
+                    Dim concatenateSuccess = ConcatenateResultFiles(fileSuffix & FILE_SUFFIX_ASCORE_RESULTS)
+                    If Not concatenateSuccess Then
+                        success = False
+                    End If
 
-                ' Determine the AScore parameter file to use
-                Dim bestAScoreParamFilePath = DetermineAScoreParamFilePath(settingsFileName)
+                    concatenateSuccess = ConcatenateResultFiles(fileSuffix & FILE_SUFFIX_SYN_PLUS_ASCORE)
+                    If Not concatenateSuccess Then
+                        success = False
+                    End If
 
-                If String.IsNullOrWhiteSpace(bestAScoreParamFilePath) Then
-                    Return False
-                End If
+                Next
+            End If
 
-                ' Find the spectrum file; should be _dta.zip or .mzML.gz
-                Dim spectrumFilePath = DetermineSpectrumFilePath(jobFolder)
+            ' Concatenate the log files
+            ConcatenateLogFiles(processingRuntimes)
 
-                If String.IsNullOrWhiteSpace(spectrumFilePath) Then
-                    Return False
-                End If
-                
-                ' Find the first hits and synopsis files
-                Dim fhtFile = String.Empty
-                Dim synFile = String.Empty
+            m_progress = PROGRESS_PCT_PHOSPHO_FDR_COMPLETE
 
-                Dim success = DetermineInputFilePaths(jobFolder, jobNumber, datasetName, toolName, fhtFile, synFile)
-                If Not success Then
-                    Return False
-                End If
+            ' Stop the job timer
+            m_StopTime = DateTime.UtcNow
 
+            ' Add the current job data to the summary file
+            If Not UpdateSummaryFile() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            End If
 
-                Dim cmdStr = String.Empty
-                cmdStr &= fhtFile & synFile
+            mCmdRunner = Nothing
 
+            ' Make sure objects are released
+            System.Threading.Thread.Sleep(1000)
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-                With CmdRunner
-                    .CreateNoWindow = False
-                    .CacheStandardOutput = False
-                    .EchoOutputToConsole = False
+            If Not success Then
+                ' Move the source files and any results to the Failed Job folder
+                ' Useful for debugging problems
+                CopyFailedResultsToArchiveFolder()
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-                    .WriteConsoleOutputToFile = True
-                End With
+            ' Override the dataset name and transfer folder path so that the results get copied to the correct location
+            MyBase.RedefineAggregationJobDatasetAndTransferFolder()
 
-                If Not CmdRunner.RunProgram(progLoc, cmdStr, "AScore", True) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running AScore, job " & m_JobNum)
+            result = MakeResultsFolder()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-                    Return False
-                End If
+            result = MoveResultFiles()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                m_message = "Error moving files into results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-
-            Next
+            result = CopyResultsFolderToServer()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & ex.Message)
-            Return False
+            m_message = "Error in PhosphoFdrAggregator->RunTool"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Protected Function ConcatenateResultFiles(ByVal FilterExtension As String) As IJobParams.CloseOutType
-        Dim result As Boolean = True
-        Dim ConcatenateAScoreFiles() As String
-        Dim FileToConcatenate As String = String.Empty
-        Dim bSkipFirstLine As Boolean = False
+    Protected Sub CacheFileSuffix(ByVal fileSuffixesToCombine As List(Of String), ByVal datasetName As String, ByVal fileName As String)
+
+        Dim baseName = Path.GetFileNameWithoutExtension(fileName)
+        baseName = baseName.Substring(datasetName.Length)
+
+        If Not fileSuffixesToCombine.Contains(baseName) Then
+            fileSuffixesToCombine.Add(baseName)
+        End If
+    End Sub
+
+    Protected Function ConcatenateLogFiles(ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
         Try
 
-            ConcatenateAScoreFiles = System.IO.Directory.GetFiles(m_WorkDir, "*" & FilterExtension)
+            Dim targetFile = Path.Combine(m_WorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX & ".txt")
+            Using swConcatenatedFile As StreamWriter = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-            ' Create an instance of StreamWriter to write to a file.
-            Using swConcatenatedFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(m_WorkDir, "Concatenated" & FilterExtension))
+                Dim jobFolderlist = GetJobFolderList()
+                For Each jobFolder In jobFolderlist
 
-                For Each FullFileToConcatenate As String In ConcatenateAScoreFiles
-                    FileToConcatenate = System.IO.Path.GetFileName(FullFileToConcatenate)
+                    Dim jobNumber = jobFolder.Key
 
-                    ' Create an instance of StreamReader to read from a file.
-                    Using srInputFile As System.IO.StreamReader = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, FileToConcatenate))
+                    Dim logFiles = jobFolder.Value.GetFiles(ASCORE_CONSOLE_OUTPUT_PREFIX & "*").ToList()
+                    If logFiles.Count = 0 Then
+                        Continue For
+                    End If
 
-                        Dim inpLine As String
-                        If bSkipFirstLine Then
-                            If srInputFile.Peek > -1 Then
-                                srInputFile.ReadLine()
-                            End If
-                        Else
-                            ' Skip the first line (the header line) on subsequent files
-                            bSkipFirstLine = True
-                        End If
+                    swConcatenatedFile.WriteLine("----------------------------------------------------------")
+                    swConcatenatedFile.WriteLine("Job: " & jobNumber)
 
-                        Do While srInputFile.Peek > -1
-                            inpLine = srInputFile.ReadLine()
-                            If Not inpLine Is Nothing Then
-                                swConcatenatedFile.WriteLine(inpLine)
-                            End If
-                        Loop
+                    For Each logFile In logFiles
 
-                    End Using
+                        ' Logfile name should be of the form AScore_ConsoleOutput_syn.txt
+                        ' Parse out the tag from it -- in this case "syn"
+                        Dim fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1)
+
+                        Dim runtimeMinutes As Double
+                        processingRuntimes.TryGetValue(jobNumber & fileTypeTag, runtimeMinutes)
+
+                        Using srInputFile As StreamReader = New StreamReader(New FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                            Do While Not srInputFile.EndOfStream
+                                Dim dataLine = srInputFile.ReadLine()
+                                If Not String.IsNullOrWhiteSpace(dataLine) Then
+
+                                    If dataLine.StartsWith("Percent Completion") Then Continue Do
+                                    If dataLine.Trim.StartsWith("Skipping PHRP result") Then Continue Do
+
+                                    swConcatenatedFile.WriteLine(dataLine)
+                                End If
+                            Loop
+
+                        End Using
+
+                        swConcatenatedFile.WriteLine("Processing time: " & runtimeMinutes.ToString("0.0") & " minutes")
+                        swConcatenatedFile.WriteLine()
+
+                    Next
 
                 Next
 
             End Using
 
         Catch ex As Exception
-            ' Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateResultFiles, The file could not be concatenated: " & FileToConcatenate & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateLogFiles: " & ex.Message)
+            Return False
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return True
+
+    End Function
+
+    Protected Function ConcatenateResultFiles(ByVal fileSuffix As String) As Boolean
+
+        Dim currentFile As String = String.Empty
+        Dim firstfileProcessed As Boolean = False
+
+        Try
+
+            Dim targetFile = Path.Combine(m_WorkDir, "Concatenated" & fileSuffix)
+            Using swConcatenatedFile As StreamWriter = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+                Dim jobFolderlist = GetJobFolderList()
+                For Each jobFolder In jobFolderlist
+
+                    Dim jobNumber = jobFolder.Key
+
+                    Dim filesToCombine = jobFolder.Value.GetFiles("*" & fileSuffix).ToList()
+
+                    For Each fiResultFile In filesToCombine
+                        currentFile = Path.GetFileName(fiResultFile.FullName)
+
+                        Using srInputFile As StreamReader = New StreamReader(New FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                            If srInputFile.EndOfStream Then Continue For
+
+                            Dim dataLine = srInputFile.ReadLine()
+                            Dim replaceFirstColumnWithJob = dataLine.ToLower().StartsWith("job")
+
+                            If firstfileProcessed Then
+                                ' Skip this header line
+                            Else
+                                ' Write the header line
+                                If replaceFirstColumnWithJob Then
+                                    ' The Job column is already present
+                                    swConcatenatedFile.WriteLine(dataLine)
+                                Else
+                                    ' Add the Job column header
+                                    swConcatenatedFile.WriteLine("Job" & ControlChars.Tab & dataLine)
+                                End If
+
+                                firstfileProcessed = True
+                            End If
+
+                            Do While Not srInputFile.EndOfStream
+                                dataLine = srInputFile.ReadLine()
+                                If Not String.IsNullOrWhiteSpace(dataLine) Then
+
+                                    If replaceFirstColumnWithJob Then
+                                        ' Remove the first column from dataLine
+                                        Dim charIndex = dataLine.IndexOf(ControlChars.Tab)
+                                        If charIndex >= 0 Then
+                                            dataLine = dataLine.Substring(charIndex + 1)
+                                        End If
+                                    End If
+
+                                    swConcatenatedFile.WriteLine(jobNumber & ControlChars.Tab & dataLine)
+                                End If
+                            Loop
+
+                        End Using
+
+                    Next
+                Next
+
+            End Using
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateResultFiles, The file could not be concatenated: " & currentFile & ex.Message)
+            Return False
+        End Try
+
+        Return True
+
     End Function
 
     Protected Sub CopyFailedResultsToArchiveFolder()
@@ -277,22 +330,16 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Dim result As IJobParams.CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
         ' Bump up the debug level if less than 2
         If m_DebugLevel < 2 Then m_DebugLevel = 2
 
-        ' Try to save whatever files are in the work directory (however, delete the _dta.zip file first)
+        ' Try to save whatever files are in the work directory (ignore the Job subfolders)
         Dim strFolderPathToArchive As String
         strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
 
         ' Make the results folder
         result = MakeResultsFolder()
@@ -301,7 +348,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             result = MoveResultFiles()
             If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
         End If
 
@@ -311,7 +358,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Sub
 
-    Private Function DetermineAScoreParamFilePath(ByVal settingsFileName As String) As String
+    Protected Function DetermineAScoreParamFilePath(ByVal settingsFileName As String) As String
         Dim bestAScoreParamFileName As String
 
         Dim datasetType = DatasetTypeConstants.Unknown
@@ -350,49 +397,55 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Private Function DetermineInputFilePaths(
+    Protected Function DetermineInputFilePaths(
       ByVal jobFolder As DirectoryInfo,
-      ByVal jobNumber As Integer,
-      ByVal datasetName As String,
-      ByVal toolName As String,
-      <Out> ByRef fhtFile As String,
-      <Out> ByRef synFile As String) As Boolean
+      ByRef udtJobMetadata As udtJobMetadataForAScore,
+      ByVal fileSuffixesToCombine As List(Of String)) As Boolean
 
-        fhtFile = String.Empty
-        synFile = String.Empty
+        Dim fhtfile = String.Empty
+        Dim synFile = String.Empty
 
-
-        If toolName.ToLower().StartsWith("sequest") Then
-            fhtFile = datasetName & "_fht.txt"
-            synFile = datasetName & "_syn.txt"
+        If udtJobMetadata.ToolName.ToLower().StartsWith("sequest") Then
+            fhtfile = udtJobMetadata.Dataset & "_fht.txt"
+            synFile = udtJobMetadata.Dataset & "_syn.txt"
+            udtJobMetadata.ToolNameForAScore = "sequest"
         End If
 
-        If toolName.ToLower().StartsWith("xtandem") Then
-            fhtFile = datasetName & "_xt_fht.txt"
-            synFile = datasetName & "_xt_syn.txt"
+        If udtJobMetadata.ToolName.ToLower().StartsWith("xtandem") Then
+            fhtfile = udtJobMetadata.Dataset & "_xt_fht.txt"
+            synFile = udtJobMetadata.Dataset & "_xt_syn.txt"
+            udtJobMetadata.ToolNameForAScore = "xtandem"
         End If
 
-        If toolName.ToLower().StartsWith("msgfplus") Then
-            fhtFile = datasetName & "_msgfdb_fht.txt"
-            synFile = datasetName & "_msgfdb_syn.txt"
+        If udtJobMetadata.ToolName.ToLower().StartsWith("msgfplus") Then
+            fhtfile = udtJobMetadata.Dataset & "_msgfdb_fht.txt"
+            synFile = udtJobMetadata.Dataset & "_msgfdb_syn.txt"
+            udtJobMetadata.ToolNameForAScore = "msgfplus"
         End If
 
-        If String.IsNullOrWhiteSpace(fhtFile) Then
-            m_message = "Analysis tool " & toolName & " is not supported by the PhosphoFdrAggregator"
+        If String.IsNullOrWhiteSpace(fhtfile) Then
+            m_message = "Analysis tool " & udtJobMetadata.ToolName & " is not supported by the PhosphoFdrAggregator"
             Return False
         End If
 
-        fhtFile = Path.Combine(jobFolder.FullName, fhtFile)
-        synFile = Path.Combine(jobFolder.FullName, synFile)
+        udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtfile)
+        udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile)
 
-        If Not File.Exists(fhtFile) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FHT file not found for job " & jobNumber)
-            fhtFile = String.Empty
+        If File.Exists(udtJobMetadata.FirstHitsFilePath) Then
+            CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtfile)
+        Else
+            udtJobMetadata.FirstHitsFilePath = String.Empty
         End If
 
-        If Not File.Exists(synFile) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SYN file not found for job " & jobNumber)
-            synFile = String.Empty
+        If File.Exists(udtJobMetadata.SynopsisFilePath) Then
+            CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, synFile)
+        Else
+            udtJobMetadata.SynopsisFilePath = String.Empty
+        End If
+
+        If String.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath) AndAlso String.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find a synopsis or first hits file for job " & udtJobMetadata.Job)
+            Return False
         End If
 
         Return True
@@ -409,7 +462,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 Return String.Empty
             End If
 
-            Return Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) & ".txt")            
+            Return Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) & ".txt")
         End If
 
         Dim mzMLFiles = diJobFolder.GetFiles("*.mzML.gz")
@@ -446,36 +499,438 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     End Function
 
     ''' <summary>
+    ''' Finds the folders that start with Job
+    ''' </summary>
+    ''' <returns>Dictionary where key is the Job number and value is a DirectoryInfo object</returns>
+    ''' <remarks></remarks>
+    Protected Function GetJobFolderList() As Dictionary(Of Integer, DirectoryInfo)
+
+        Dim jobFolderList = New Dictionary(Of Integer, DirectoryInfo)
+
+        Dim diWorkingFolder = New DirectoryInfo(m_WorkDir)
+
+        For Each jobFolder In diWorkingFolder.GetDirectories("Job*")
+
+            Dim jobNumberText = jobFolder.Name.Substring(3)
+            Dim jobNumber As Integer
+
+            If Integer.TryParse(jobNumberText, jobNumber) Then
+                jobFolderList.Add(jobNumber, jobFolder)
+            End If
+        Next
+
+        Return jobFolderList
+
+    End Function
+
+    ''' <summary>
+    ''' Parse the ProMex console output file to track the search progress
+    ''' </summary>
+    ''' <param name="strConsoleOutputFilePath"></param>
+    ''' <remarks></remarks>
+    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+
+        ' Example Console output
+        '
+        ' Fragment Type:  HCD
+        ' Mass Tolerance: 0.05 Da
+        ' Caching data in E:\DMS_WorkDir\Job1153717\HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07_msgfdb_syn.txt
+        ' Computing AScore values and Writing results to E:\DMS_WorkDir
+        ' Modifications for Dataset: HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07
+        ' 	Static,   57.021465 on C
+        ' 	Dynamic,  79.966331 on STY
+        ' Percent Completion 0%
+        ' Percent Completion 0%
+        ' Percent Completion 1%
+        ' Percent Completion 1%
+        ' Percent Completion 1%
+        ' Percent Completion 2%
+        ' Percent Completion 2%
+
+        Const REGEX_AScore_PROGRESS As String = "Percent Completion (\d+)\%"
+
+        Static reCheckProgress As New Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
+
+        Try
+            If Not File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                End If
+
+                Exit Sub
+            End If
+
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+            End If
+
+            ' Value between 0 and 100
+            Dim ascoreProgress As Integer = 0
+
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                Do While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine()
+
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+
+                        Dim strLineInLCase = strLineIn.ToLower()
+
+                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running AScore:"
+                            End If
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                            Continue Do
+
+                        Else
+                            Dim oMatch As Match = reCheckProgress.Match(strLineIn)
+                            If oMatch.Success Then
+                                Integer.TryParse(oMatch.Groups(1).ToString(), ascoreProgress)
+                                Continue Do
+                            End If
+
+                        End If
+
+                    End If
+                Loop
+
+            End Using
+
+            Dim percentCompleteStart = mJobFoldersProcessed / CSng(mTotalJobFolders) * 100.0F
+            Dim percentCompleteEnd = (mJobFoldersProcessed + 1) / CSng(mTotalJobFolders) * 100.0F
+            Dim subtaskProgress = ComputeIncrementalProgress(percentCompleteStart, percentCompleteEnd, ascoreProgress)
+
+            Dim progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subtaskProgress)
+
+            If m_progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
+                m_progress = progressComplete
+
+                If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+                    dtLastProgressWriteTime = DateTime.UtcNow
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
+                End If
+            End If
+
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
+
+    End Sub
+
+    ''' <summary>
+    ''' Run AScore against the Synopsis and First hits files in the Job subfolders
+    ''' </summary>
+    ''' <param name="progLoc">AScore exe path</param>
+    ''' <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>
+    ''' <param name="processingRuntimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function ProcessSynopsisFiles(
+      ByVal progLoc As String,
+      <Out> ByRef fileSuffixesToCombine As List(Of String),
+      <Out> ByRef processingRuntimes As Dictionary(Of String, Double)) As Boolean
+
+        Dim successOverall = True
+
+        fileSuffixesToCombine = New List(Of String)
+        processingRuntimes = New Dictionary(Of String, Double)
+
+        Try
+
+            ' Extract the dataset raw file paths
+            Dim jobToDatasetMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP)
+            Dim jobToSettingsFileMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
+            Dim jobToToolMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
+
+            Dim jobCountSkipped = 0
+
+            Dim jobFolderlist = GetJobFolderList()
+
+            m_progress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING
+
+            mCmdRunner = New clsRunDosProgram(m_WorkDir)
+
+            mJobFoldersProcessed = 0
+            mTotalJobFolders = jobFolderlist.Count
+
+            ' Process each Job folder
+            For Each jobFolder In jobFolderlist
+
+                Dim synopsisFiles = jobFolder.Value.GetFiles("*syn*.txt")
+
+                Dim firstHitsFiles = jobFolder.Value.GetFiles("*fht*.txt")
+                If synopsisFiles.Count + firstHitsFiles.Count = 0 Then
+                    Continue For
+                End If
+
+                Dim udtJobMetadata = New udtJobMetadataForAScore()
+                udtJobMetadata.Job = jobFolder.Key
+
+                Dim datasetName = String.Empty
+                Dim settingsFileName = String.Empty
+
+                If Not jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), datasetName) Then
+                    m_message = "Job " & udtJobMetadata.Job & " not found in packed job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & m_message)
+                    Return False
+                End If
+
+                udtJobMetadata.Dataset = datasetName
+
+                settingsFileName = jobToSettingsFileMap(udtJobMetadata.Job.ToString())
+                udtJobMetadata.ToolName = jobToToolMap(udtJobMetadata.Job.ToString())
+
+                ' Determine the AScore parameter file to use
+                Dim bestAScoreParamFilePath = DetermineAScoreParamFilePath(settingsFileName)
+
+                If String.IsNullOrWhiteSpace(bestAScoreParamFilePath) Then
+                    Return False
+                End If
+
+                ' Find the spectrum file; should be _dta.zip or .mzML.gz
+                udtJobMetadata.SpectrumFilePath = DetermineSpectrumFilePath(jobFolder.Value)
+
+                If String.IsNullOrWhiteSpace(udtJobMetadata.SpectrumFilePath) Then
+                    Return False
+                End If
+
+                ' Find any first hits and synopsis files
+
+                Dim success = DetermineInputFilePaths(jobFolder.Value, udtJobMetadata, fileSuffixesToCombine)
+                If Not success Then
+                    jobCountSkipped += 1
+                Else
+
+
+
+                    If Not String.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath) Then
+                        ' Analyze the first hits file with AScore
+                        success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRuntimes)
+                        If Not success Then
+                            ' An error has already been logged, and m_message has been updated
+                            successOverall = False
+                        End If
+                    End If
+
+                    If Not String.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath) Then
+                        ' Analyze the synopsis file with AScore
+                        success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRuntimes)
+                        If Not success Then
+                            ' An error has already been logged, and m_message has been updated
+                            successOverall = False
+                        End If
+                    End If
+
+                End If
+
+                ' Delete the unzipped spectrum file
+                Try
+                    File.Delete(udtJobMetadata.SpectrumFilePath)
+                Catch ex As Exception
+                    ' Ignore errors
+                End Try
+
+                mJobFoldersProcessed += 1
+                Dim subTaskProgress = mJobFoldersProcessed / CSng(mTotalJobFolders) * 100.0F
+
+                m_progress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress)
+            Next
+
+            If jobCountSkipped > 0 Then
+                m_message = clsGlobal.AppendToComment(m_message, "Skipped " & jobCountSkipped & " job(s) because a synopsis or first hits file was not found")
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & ex.Message)
+            Return False
+        End Try
+
+        Return successOverall
+
+    End Function
+
+    ''' <summary>
+    ''' Runs ascore on the specified file
+    ''' </summary>
+    ''' <param name="progLoc"></param>
+    ''' <param name="udtJobMetadata"></param>
+    ''' <param name="inputFilePath"></param>
+    ''' <param name="ascoreParamFilePath"></param>
+    ''' <param name="fileTypeTag">Should be syn or fht; appened to the AScore_ConsoleOutput file</param>
+    ''' <param name="processingRuntimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function RunAscore(
+      ByVal progLoc As String,
+      ByVal udtJobMetadata As udtJobMetadataForAScore,
+      ByVal inputFilePath As String,
+      ByVal ascoreParamFilePath As String,
+      ByVal fileTypeTag As String,
+      ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
+
+        ' Set up and execute a program runner to run AScore
+
+        mConsoleOutputErrorMsg = String.Empty
+
+        Dim fiSourceFile = New FileInfo(inputFilePath)
+        Dim currentWorkingDir = fiSourceFile.Directory.FullName
+        Dim updatedInputFileName = Path.GetFileNameWithoutExtension(fiSourceFile.Name) & FILE_SUFFIX_SYN_PLUS_ASCORE
+
+        Dim cmdStr = ""
+
+        ' Search engine name
+        cmdStr &= " -T:" & udtJobMetadata.ToolNameForAScore
+
+        ' Input file path
+        cmdStr &= " -F:" & PossiblyQuotePath(inputFilePath)
+
+        ' DTA or mzML file path
+        cmdStr &= " -D:" & PossiblyQuotePath(udtJobMetadata.SpectrumFilePath)
+
+        ' AScore parameter file
+        cmdStr &= " -P:" & PossiblyQuotePath(ascoreParamFilePath)
+
+        ' Output folder
+        cmdStr &= " -O:" & PossiblyQuotePath(currentWorkingDir)
+
+        ' Create an updated version of the input file, with updated peptide sequences and appended AScore-related columns
+        cmdStr &= " -U:" & PossiblyQuotePath(updatedInputFileName)
+
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & cmdStr)
+        End If
+
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+
+        If String.IsNullOrWhiteSpace(fileTypeTag) Then
+            fileTypeTag = ""
+        End If
+
+        With mCmdRunner
+            .CreateNoWindow = True
+            .CacheStandardOutput = False
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = Path.Combine(currentWorkingDir, ASCORE_CONSOLE_OUTPUT_PREFIX & "_" & fileTypeTag & ".txt")
+        End With
+
+        Dim dtStartTime = DateTime.UtcNow
+
+        Dim blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "AScore", True)
+
+        Dim runtimeMinutes = DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes
+        processingRuntimes.Add(udtJobMetadata.Job & fileTypeTag, runtimeMinutes)
+
+        If Not mCmdRunner.WriteConsoleOutputToFile Then
+            ' Write the console output to a text file
+            System.Threading.Thread.Sleep(250)
+
+            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
+            swConsoleOutputfile.Close()
+        End If
+
+        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+        End If
+
+        ' Parse the console output file one more time to check for errors
+        System.Threading.Thread.Sleep(250)
+        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
+
+        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+        End If
+
+
+        If Not blnSuccess Then
+            Dim msg As String = "Error running AScore for job " & udtJobMetadata.Job
+            m_message = clsGlobal.AppendToComment(m_message, msg)
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", file " & fiSourceFile.Name & ", data package job " & udtJobMetadata.Job)
+
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AScore returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to AScore failed (but exit code is 0)")
+            End If
+
+            Return False
+
+        End If
+
+        m_StatusTools.UpdateAndWrite(m_progress)
+        If m_DebugLevel >= 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "AScore search complete for data package job " & udtJobMetadata.Job)
+        End If
+
+        Return True
+
+    End Function
+
+    ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
+        Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("AScoreprogloc")))
+        Dim fiProgram = New FileInfo(strProgLoc)
+        If Not fiProgram.Exists Then
+            Try
+                strToolVersionInfo = "Unknown"
+                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                Return False
+            End Try
+
+        End If
+
+        ' Lookup the version of the .NET application
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiProgram.FullName)
+        If Not blnSuccess Then Return False
+
+
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles = New List(Of FileInfo)
+        ioToolFiles.Add(fiProgram)
+
+        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "AScore_DLL.dll")))
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
 
     End Function
-    
+
+    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+        m_progress = sngPercentComplete
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
+    End Sub
+
     ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' Event handler for mCmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -484,9 +939,17 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         'Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_PHOSPHO_FDR_RUNNING, 0, "", "", "", False)
+            UpdateStatusRunning(m_progress)
         End If
 
+
+        ' Parse the console output file every 15 seconds
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = DateTime.UtcNow
+
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
+
+        End If
     End Sub
 
 #End Region

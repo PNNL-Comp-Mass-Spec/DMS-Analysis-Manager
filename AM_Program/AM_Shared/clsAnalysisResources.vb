@@ -3883,7 +3883,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
     ''' <returns>True if success, false if a problem</returns>
     ''' <remarks>
-    ''' This function is used by plugins, PhosphoFDRAggregator, PRIDEMzXML, and AScore (which is part of MAC_ITRAQ pipeline jobs)
+    ''' This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
     ''' However, PrideMzXML is dormant as of September 2013
     ''' </remarks>
     Protected Function RetrieveAggregateFiles(

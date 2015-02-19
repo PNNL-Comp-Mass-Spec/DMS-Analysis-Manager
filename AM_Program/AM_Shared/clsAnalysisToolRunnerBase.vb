@@ -1556,7 +1556,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Dim blnErrorEncountered As Boolean = False
 
-        'Move files into results folder
+        ' Move files into results folder
         Try
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
             ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
@@ -1576,6 +1576,7 @@ Public Class clsAnalysisToolRunnerBase
 
 
             ' Obtain a list of all files in the working directory
+            ' Ignore subdirectories
             Files = Directory.GetFiles(m_WorkDir, "*")
 
             ' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
