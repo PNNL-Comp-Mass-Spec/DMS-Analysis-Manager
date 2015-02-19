@@ -1,146 +1,212 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.Xml.XPath
-Imports System.Xml
-Imports System.Collections.Specialized
+Imports System.Linq
+Imports System.IO
+Imports System.Text.RegularExpressions
+
 
 Public Class clsAnalysisResourcesPhosphoFdrAggregator
     Inherits clsAnalysisResources
 
-    Friend Const ASCORE_INPUT_FILE As String = "AScoreBatch.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim SplitString As String()
-        Dim FileNameExt As String()
+        ' Lookup the file processing options, for example:
+        ' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
+        ' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
 
-		' Lookup the file processing options, for example:
-		' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
-        For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
-            If FileNameExt(2) = "nocopy" Then
-                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
+        Dim fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(","c).ToList()
+
+        For Each fileSpec As String In fileSpecList.ToList()
+            Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
+            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower = "copy" Then
+                m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
             End If
         Next
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")) Then
-            If Not RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath")) _
-            Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+
+        Dim paramFilesCopied = 0
+
+        If Not RetrieveAScoreParamfile("AScoreCIDParamFile", paramFilesCopied) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")) Then
-            If Not RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath")) _
-            Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+        If Not RetrieveAScoreParamfile("AScoreETDParamFile", paramFilesCopied) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not String.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")) Then
-            If Not RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), _
-                                m_jobParams.GetParam("transferFolderPath")) _
-            Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+        If Not RetrieveAScoreParamfile("AScoreHCDParamFile", paramFilesCopied) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        If paramFilesCopied = 0 Then
+            m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
 
-        If Not RetrieveAggregateFiles(SplitString) Then
+        Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
+
+        ' Retrieve the files for the jobs in the data package associated with this job
+        If Not RetrieveAggregateFiles(fileSpecList, clsAnalysisResources.DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        ' Move the MASIC scanStats files into the folders with the _syn.txt files
+        If Not MoveScanStatsFiles(dctDataPackageJobs) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Building AScore input file")
 
-        If Not BuildInputFile() Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Protected Function BuildInputFile() As Boolean
-        Dim DatasetFiles() As String
-        Dim DatasetType As String
-        Dim DatasetName As String
-        Dim DatasetID As String
-        Dim WorkDir As String = m_mgrParams.GetParam("workdir")
-        Dim inputFile As System.IO.StreamWriter = New System.IO.StreamWriter(System.IO.Path.Combine(WorkDir, ASCORE_INPUT_FILE))
+    Protected Function MoveScanStatsFiles(dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
         Try
-            inputFile.WriteLine("<?xml version=""1.0"" encoding=""UTF-8"" ?>")
-            inputFile.WriteLine("<ascore_batch>")
-            inputFile.WriteLine("  <settings>")
-            inputFile.WriteLine("    <max_threads>4</max_threads>")
-            inputFile.WriteLine("  </settings>")
+            Dim reParseScanStatsFilename = New Regex("(.+)" & SCAN_STATS_EX_FILE_SUFFIX, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
-            'update list of files to be deleted after run
-            DatasetFiles = System.IO.Directory.GetFiles(WorkDir, "*_syn*.txt")
-            For Each Dataset As String In DatasetFiles
-                Dataset = System.IO.Path.GetFileName(Dataset)
+            Dim diWorkingFolder = New DirectoryInfo(m_WorkingDir)
 
-                ' Function RetrieveAggregateFilesRename in clsAnalysisResources in the main analysis manager program
-                '  will have appended _hcd, _etd, or _cid to the synopsis dta, fht, and syn file for each dataset
-                '  The suffix to use is based on text present in the settings file name for each job
-                ' However, if the settings file name did not contain HCD, ETD, or CID, then the dta, fht, and syn files
-                '  will not have had a suffix added; in that case, DatasetType will be ".txt"
-                DatasetType = Dataset.Substring(Dataset.ToLower().IndexOf("_syn") + 4, 4)
+            ' Keys are dataset names; values are file paths
+            Dim datasetToScanStatsPathMap = New Dictionary(Of String, String)
 
-                ' If DatasetType is ".txt" then change it to an empty string
-                If DatasetType.ToLower() = ".txt" Then DatasetType = String.Empty
-
-                DatasetName = Dataset.Substring(0, Dataset.Length - (Dataset.Length - Dataset.ToLower().IndexOf("_syn")))
-                inputFile.WriteLine("  <run>")
-
-                DatasetID = GetDatasetID(DatasetName)
-
-                If String.IsNullOrEmpty(DatasetType) OrElse DatasetType = "_cid" Then
-                    inputFile.WriteLine("    <param_file>" & System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreCIDParamFile")) & "</param_file>")
-                ElseIf DatasetType = "_hcd" Then
-                    inputFile.WriteLine("    <param_file>" & System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreHCDParamFile")) & "</param_file>")
-                ElseIf DatasetType = "_etd" Then
-                    inputFile.WriteLine("    <param_file>" & System.IO.Path.Combine(WorkDir, m_jobParams.GetParam("AScoreETDParamFile")) & "</param_file>")
+            ' First look for _ScanStatsEx.txt files
+            For Each subFolder In diWorkingFolder.GetDirectories("Job*")
+                Dim scanStatsFiles = subFolder.GetFiles("*" & SCAN_STATS_EX_FILE_SUFFIX)
+                If scanStatsFiles.Count = 0 Then
+                    Continue For
                 End If
-                inputFile.WriteLine("    <output_path>" & WorkDir & "</output_path>")
-                inputFile.WriteLine("    <dta_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_dta" & DatasetType & ".txt") & "</dta_file>")
-                inputFile.WriteLine("    <fht_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_fht" & DatasetType & ".txt") & "</fht_file>")
-                inputFile.WriteLine("    <syn_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_syn" & DatasetType & ".txt") & "</syn_file>")
-                inputFile.WriteLine("    <scan_stats_file>" & System.IO.Path.Combine(WorkDir, DatasetName & "_ScanStatsEx" & ".txt") & "</scan_stats_file>")
-                inputFile.WriteLine("    <dataset_id>" & DatasetID & "</dataset_id>")
-                inputFile.WriteLine("  </run>")
+
+                Dim scanStatsFile = scanStatsFiles.First
+
+                Dim reMatch = reParseScanStatsFilename.Match(scanStatsFile.Name)
+                If Not reMatch.Success Then
+                    m_message = "Could not determine the dataset name from " & scanStatsFile.Name
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                End If
+
+                Dim datasetName = reMatch.Groups.Item(1).Value.ToString()
+
+                If Not datasetToScanStatsPathMap.ContainsKey(datasetName) Then
+                    datasetToScanStatsPathMap.Add(datasetName, scanStatsFile.FullName)
+                End If
             Next
 
-            inputFile.WriteLine("</ascore_batch>")
+            Dim foldersToRemove = New List(Of String)
+
+            Dim jobToDatasetMap = New Dictionary(Of String, String)
+            Dim jobToSettingsFileMap = New Dictionary(Of String, String)
+            Dim jobToolMap = New Dictionary(Of String, String)
+
+            ' Now look for Synopsis files
+            For Each subFolder In diWorkingFolder.GetDirectories("Job*")
+
+                Dim synopsisFiles = subFolder.GetFiles("*syn*.txt")
+                If synopsisFiles.Count = 0 Then
+                    Continue For
+                End If
+
+                Dim jobNumber = Integer.Parse(subFolder.Name.Substring(3))
+                Dim udtJobInfo = dctDataPackageJobs(jobNumber)
+                Dim scanStatsFile As String = String.Empty
+
+                If datasetToScanStatsPathMap.TryGetValue(udtJobInfo.Dataset, scanStatsFile) Then
+                    Dim fiSourceFile = New FileInfo(scanStatsFile)
+                    Dim targetFilePath = Path.Combine(subFolder.FullName, fiSourceFile.Name)
+                    fiSourceFile.CopyTo(targetFilePath)
+
+                    If Not foldersToRemove.Contains(fiSourceFile.Directory.FullName) Then
+                        foldersToRemove.Add(fiSourceFile.Directory.FullName)
+                    End If
+                End If
+
+                jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset)
+                jobToSettingsFileMap.Add(jobNumber.ToString(), udtJobInfo.SettingsFileName)
+                jobToolMap.Add(jobNumber.ToString(), udtJobInfo.Tool)
+            Next
+
+            ' Store the packed job parameters
+            StorePackedJobParameterDictionary(jobToDatasetMap, JOB_PARAM_DICTIONARY_JOB_DATASET_MAP)
+            StorePackedJobParameterDictionary(jobToSettingsFileMap, JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
+            StorePackedJobParameterDictionary(jobToolMap, JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
+
+            Threading.Thread.Sleep(100)
+
+            ' Remove the MASIC folders; we don't need them anymore
+            For Each folderPath In foldersToRemove
+                Dim diFolder = New DirectoryInfo(folderPath)
+                If diFolder.Exists Then
+                    diFolder.Delete(True)
+                End If
+            Next
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating AScore input file" & ex.Message)
-
-        Finally
-            inputFile.Close()
+            m_message = "Error in MoveScanStatsFiles"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in MoveScanStatsFiles: " & ex.Message)
+            Return False
         End Try
 
         Return True
+    End Function
+
+    ''' <summary>
+    ''' Retrieves the AScore parameter file stored in the given parameter name
+    ''' </summary>
+    ''' <param name="parameterName">AScoreCIDParamFile or AScoreETDParamFile or AScoreHCDParamFile</param>
+    ''' <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function RetrieveAScoreParamfile(ByVal parameterName As String, ByRef paramFilesCopied As Integer) As Boolean
+
+        Dim paramFileName = m_jobParams.GetJobParameter(parameterName, String.Empty)
+        If String.IsNullOrWhiteSpace(paramFileName) Then
+            Return True
+        End If
+
+        If paramFileName.ToLower().StartsWith("xxx_ascore_") OrElse paramFileName.ToLower().StartsWith("xxx_undefined") Then
+            ' Dummy parameter file; ignore it
+            ' Update the job parameter to be an empty string so that this parameter is ignored in BuildInputFile
+            m_jobParams.SetParam(parameterName, String.Empty)
+            Return True
+        End If
+
+        Dim success = RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"))
+
+        If Not success Then
+            ' File not found in the transfer folder
+            ' Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
+
+            Dim paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\gigasax\DMS_Parameter_Files\AScore")
+            success = RetrieveFile(paramFileName, paramFileFolder)
+        End If
+
+        If success Then
+            paramFilesCopied += 1
+        End If
+
+        Return success
 
     End Function
 
+    <Obsolete>
     Protected Function GetDatasetID(ByVal DatasetName As String) As String
-        Dim DatasetID as Integer = 0
+        Dim DatasetID As Integer = 0
 
-		If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
-			Return DatasetID.ToString()
-		Else
-			Return String.Empty
-		End If
+        If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
+            Return DatasetID.ToString()
+        Else
+            Return String.Empty
+        End If
 
     End Function
 
