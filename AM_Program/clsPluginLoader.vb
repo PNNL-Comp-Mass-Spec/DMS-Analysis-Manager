@@ -405,7 +405,7 @@ Public Class clsPluginLoader
 	''' <remarks></remarks>
 	Public Function GetToolRunner(ByVal ToolName As String) As IToolRunner
 
-		Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower & "']"
+        Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower() & "']"
 
 		Dim className As String = ""
 		Dim assyName As String = ""

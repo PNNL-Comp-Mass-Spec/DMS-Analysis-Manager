@@ -3873,13 +3873,15 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="fileSpecList">
     ''' File processing options, examples:
     ''' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-    ''' sequest:_syn.txt,sequest:_fht.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt
+    ''' sequest:_syn.txt,sequest:_fht.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
     ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
+    ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_syn_ModSummary.txt,MSGFPlus:_dta.zip
     ''' </param>
     ''' <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
     ''' <returns>True if success, false if a problem</returns>
     ''' <remarks>
-    ''' This function is used by two plugins, PhosphoFDRAggregator and PRIDEMzXML, though PrideMzXML is dormant as of September 2013
+    ''' This function is used by plugins, PhosphoFDRAggregator, PRIDEMzXML, and AScore (which is part of MAC_ITRAQ pipeline jobs)
+    ''' However, PrideMzXML is dormant as of September 2013
     ''' </remarks>
     Protected Function RetrieveAggregateFiles(
       ByVal fileSpecList As List(Of String),
@@ -3932,10 +3934,8 @@ Public MustInherit Class clsAnalysisResources
                                 ' MSGF+
                                 fileSpecListCurrent = New List(Of String) From {
                                     "MSGFPlus:_msgfdb_syn.txt",
-                                    "MSGFPlus:_msgfdb_fht.txt",
-                                    "MSGFPlus:_dta.zip",
                                     "MSGFPlus:_msgfdb_syn_ModSummary.txt",
-                                    "masic_finnigan:_ScanStatsEx.txt"}
+                                    "MSGFPlus:_dta.zip"}
 
                             End If
 
@@ -3943,21 +3943,17 @@ Public MustInherit Class clsAnalysisResources
                                 ' Sequest
                                 fileSpecListCurrent = New List(Of String) From {
                                     "sequest:_syn.txt",
-                                    "sequest:_fht.txt",
-                                    "sequest:_dta.zip",
-                                    "MSGFPlus:_syn_ModSummary.txt",
-                                    "masic_finnigan:_ScanStatsEx.txt"}
+                                    "sequest:_syn_ModSummary.txt",
+                                    "sequest:_dta.zip"}
 
                             End If
 
                             If udtJob.Value.Tool.ToLower().StartsWith("xtandem") Then
                                 ' XTandem
                                 fileSpecListCurrent = New List(Of String) From {
-                                    "MSGFPlus:_xt_syn.txt",
-                                    "MSGFPlus:_xt_fht.txt",
-                                    "MSGFPlus:_dta.zip",
-                                    "MSGFPlus:_xt_syn_ModSummary.txt",
-                                    "masic_finnigan:_ScanStatsEx.txt"}
+                                    "xtandem:_xt_syn.txt",
+                                    "xtandem:_xt_syn_ModSummary.txt",
+                                    "xtandem:_dta.zip"}
 
                             End If
 

@@ -1128,13 +1128,13 @@ Public Class clsCodeTest
 						If objAttributeNode Is Nothing Then
 							' Node does not have an attribute named "type"; ignore it
 						Else
-							If objAttributeNode.Value.ToLower = "input" Then
-								' Node does have attribute type="input"
-								' Now examine the node's InnerText value
-								If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
-									blnEtdMode = True
-								End If
-							End If
+                            If objAttributeNode.Value.ToLower() = "input" Then
+                                ' Node does have attribute type="input"
+                                ' Now examine the node's InnerText value
+                                If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
+                                    blnEtdMode = True
+                                End If
+                            End If
 						End If
 					Next intMatchIndex
 
@@ -1771,14 +1771,14 @@ Public Class clsCodeTest
 						If fiFile.Name.ToLower.StartsWith(strDSNameLCase) Then
 							strDesiredName = strDatasetName & "_" & System.DateTime.Now.ToString("M_d_yyyy") & "." & strExtension
 
-							If fiFile.Name.ToLower <> strDesiredName.ToLower Then
-								Try
-									fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName))
-								Catch ex As Exception
-									' Rename failed; that means the correct file already exists; this is OK
-								End Try
+                            If fiFile.Name.ToLower() <> strDesiredName.ToLower() Then
+                                Try
+                                    fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName))
+                                Catch ex As Exception
+                                    ' Rename failed; that means the correct file already exists; this is OK
+                                End Try
 
-							End If
+                            End If
 
 							Exit For
 						End If

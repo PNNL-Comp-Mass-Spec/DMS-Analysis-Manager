@@ -21,7 +21,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         For Each fileSpec As String In fileSpecList.ToList()
             Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower = "copy" Then
+            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower() = "copy" Then
                 m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
             End If
         Next
@@ -58,8 +58,8 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Move the MASIC scanStats files into the folders with the _syn.txt files
-        If Not MoveScanStatsFiles(dctDataPackageJobs) Then
+        ' Cache the data package info
+        If Not CacheDataPackageInfo(dctDataPackageJobs) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -69,66 +69,21 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
     End Function
 
-    Protected Function MoveScanStatsFiles(dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+    Protected Function CacheDataPackageInfo(dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
         Try
-            Dim reParseScanStatsFilename = New Regex("(.+)" & SCAN_STATS_EX_FILE_SUFFIX, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
             Dim diWorkingFolder = New DirectoryInfo(m_WorkingDir)
-
-            ' Keys are dataset names; values are file paths
-            Dim datasetToScanStatsPathMap = New Dictionary(Of String, String)
-
-            ' First look for _ScanStatsEx.txt files
-            For Each subFolder In diWorkingFolder.GetDirectories("Job*")
-                Dim scanStatsFiles = subFolder.GetFiles("*" & SCAN_STATS_EX_FILE_SUFFIX)
-                If scanStatsFiles.Count = 0 Then
-                    Continue For
-                End If
-
-                Dim scanStatsFile = scanStatsFiles.First
-
-                Dim reMatch = reParseScanStatsFilename.Match(scanStatsFile.Name)
-                If Not reMatch.Success Then
-                    m_message = "Could not determine the dataset name from " & scanStatsFile.Name
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return False
-                End If
-
-                Dim datasetName = reMatch.Groups.Item(1).Value.ToString()
-
-                If Not datasetToScanStatsPathMap.ContainsKey(datasetName) Then
-                    datasetToScanStatsPathMap.Add(datasetName, scanStatsFile.FullName)
-                End If
-            Next
-
-            Dim foldersToRemove = New List(Of String)
 
             Dim jobToDatasetMap = New Dictionary(Of String, String)
             Dim jobToSettingsFileMap = New Dictionary(Of String, String)
             Dim jobToolMap = New Dictionary(Of String, String)
 
-            ' Now look for Synopsis files
+            ' Find the Job* folders
             For Each subFolder In diWorkingFolder.GetDirectories("Job*")
-
-                Dim synopsisFiles = subFolder.GetFiles("*syn*.txt")
-                If synopsisFiles.Count = 0 Then
-                    Continue For
-                End If
 
                 Dim jobNumber = Integer.Parse(subFolder.Name.Substring(3))
                 Dim udtJobInfo = dctDataPackageJobs(jobNumber)
-                Dim scanStatsFile As String = String.Empty
-
-                If datasetToScanStatsPathMap.TryGetValue(udtJobInfo.Dataset, scanStatsFile) Then
-                    Dim fiSourceFile = New FileInfo(scanStatsFile)
-                    Dim targetFilePath = Path.Combine(subFolder.FullName, fiSourceFile.Name)
-                    fiSourceFile.CopyTo(targetFilePath)
-
-                    If Not foldersToRemove.Contains(fiSourceFile.Directory.FullName) Then
-                        foldersToRemove.Add(fiSourceFile.Directory.FullName)
-                    End If
-                End If
 
                 jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset)
                 jobToSettingsFileMap.Add(jobNumber.ToString(), udtJobInfo.SettingsFileName)
@@ -140,19 +95,9 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             StorePackedJobParameterDictionary(jobToSettingsFileMap, JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
             StorePackedJobParameterDictionary(jobToolMap, JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
 
-            Threading.Thread.Sleep(100)
-
-            ' Remove the MASIC folders; we don't need them anymore
-            For Each folderPath In foldersToRemove
-                Dim diFolder = New DirectoryInfo(folderPath)
-                If diFolder.Exists Then
-                    diFolder.Delete(True)
-                End If
-            Next
-
         Catch ex As Exception
-            m_message = "Error in MoveScanStatsFiles"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in MoveScanStatsFiles: " & ex.Message)
+            m_message = "Error in CacheDataPackageInfo"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CacheDataPackageInfo: " & ex.Message)
             Return False
         End Try
 

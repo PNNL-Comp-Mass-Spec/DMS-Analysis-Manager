@@ -226,16 +226,15 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 ' Find the first hits and synopsis files
                 Dim fhtFile = String.Empty
                 Dim synFile = String.Empty
-                Dim scanStatsFile = datasetName & clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX
 
-                Dim success = DetermineInputFilePaths(jobFolder, jobNumber, datasetName, toolName, fhtFile, synFile, scanStatsFile)
+                Dim success = DetermineInputFilePaths(jobFolder, jobNumber, datasetName, toolName, fhtFile, synFile)
                 If Not success Then
                     Return False
                 End If
 
 
                 Dim cmdStr = String.Empty
-                cmdStr &= fhtFile & synFile & scanStatsFile
+                cmdStr &= fhtFile & synFile
 
 
             Next
@@ -382,12 +381,10 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
       ByVal datasetName As String,
       ByVal toolName As String,
       <Out> ByRef fhtFile As String,
-      <Out> ByRef synFile As String,
-      <Out> ByRef scanStatsFile As String) As Boolean
+      <Out> ByRef synFile As String) As Boolean
 
         fhtFile = String.Empty
         synFile = String.Empty
-        scanStatsFile = String.Empty
 
 
         If toolName.ToLower().StartsWith("sequest") Then
@@ -412,7 +409,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         fhtFile = Path.Combine(jobFolder.FullName, fhtFile)
         synFile = Path.Combine(jobFolder.FullName, synFile)
-        scanStatsFile = Path.Combine(jobFolder.FullName, scanStatsFile)
 
         If Not File.Exists(fhtFile) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FHT file not found for job " & jobNumber)
@@ -422,11 +418,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         If Not File.Exists(synFile) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SYN file not found for job " & jobNumber)
             synFile = String.Empty
-        End If
-
-        If Not File.Exists(scanStatsFile) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ScanStatsEx file not found for job " & jobNumber & "; be sure to include Masic files in the data package and to include masic_finnigan:_ScanStatsEx.txt in the TargetJobFileList job parameter")
-            scanStatsFile = String.Empty
         End If
 
         Return True
