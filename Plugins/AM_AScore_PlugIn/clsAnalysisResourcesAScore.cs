@@ -9,8 +9,6 @@ namespace AnalysisManager_AScore_PlugIn
 {
     public class clsAnalysisResourcesAScore : clsAnalysisResources
     {
-        //public static string AppFilePath = "";
-        protected const string ASCORE_INPUT_FILE = "AScoreBatch.xml";
 
         public override IJobParams.CloseOutType GetResources()
         {
@@ -69,134 +67,134 @@ namespace AnalysisManager_AScore_PlugIn
 		}
 
 
-        /// <summary>
-        /// run the AScore pipeline(s) listed in "AScoreOperations" parameter
-        /// </summary>
-        protected bool RunAScoreGetResources()
-        {
-            bool blnSuccess = false;
+        ///// <summary>
+        ///// run the AScore pipeline(s) listed in "AScoreOperations" parameter
+        ///// </summary>        
+        //protected bool RunAScoreGetResources()
+        //{
+        //    bool blnSuccess = false;
 
-			string ascoreOperations = m_jobParams.GetParam("AScoreOperations");
+        //    string ascoreOperations = m_jobParams.GetParam("AScoreOperations");
 
-			if (string.IsNullOrWhiteSpace(ascoreOperations)) {
-                m_message = "AScoreOperations parameter is not defined";
-				return false;
-			}
+        //    if (string.IsNullOrWhiteSpace(ascoreOperations)) {
+        //        m_message = "AScoreOperations parameter is not defined";
+        //        return false;
+        //    }
 
-			foreach (string ascoreOperation in ascoreOperations.Split(','))
-            {
-				if (!string.IsNullOrWhiteSpace(ascoreOperation)) {
-					blnSuccess = RunAScoreOperation(ascoreOperation.Trim());
-					if (!blnSuccess) {
-						m_message = "Error running AScore resources operation " + ascoreOperation;
-						break;
-					}
-				}
-            }
+        //    foreach (string ascoreOperation in ascoreOperations.Split(','))
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(ascoreOperation)) {
+        //            blnSuccess = RunAScoreOperation(ascoreOperation.Trim());
+        //            if (!blnSuccess) {
+        //                m_message = "Error running AScore resources operation " + ascoreOperation;
+        //                break;
+        //            }
+        //        }
+        //    }
 
-            return blnSuccess;
+        //    return blnSuccess;
 
-        }
+        //}
 
-        /// <summary>
-        /// Run a single AScore operation
-        /// </summary>
-        /// <param name="ascoreOperation"></param>
-        /// <returns></returns>
-        private bool RunAScoreOperation(string ascoreOperation)
-        {
-            bool blnSuccess;
+        ///// <summary>
+        ///// Run a single AScore operation
+        ///// </summary>
+        ///// <param name="ascoreOperation"></param>
+        ///// <returns></returns>       
+        //private bool RunAScoreOperation(string ascoreOperation)
+        //{
+        //    bool blnSuccess;
 
-			// Note: case statements must be lowercase
-            switch (ascoreOperation.ToLower())
-            {
-                case "runascorephospho":
-                    blnSuccess = GetAScoreFiles();
-                    break;
-                default:
-		            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
-            }
+        //    // Note: case statements must be lowercase
+        //    switch (ascoreOperation.ToLower())
+        //    {
+        //        case "runascorephospho":
+        //            blnSuccess = GetAScoreFiles();
+        //            break;
+        //        default:
+        //            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
+        //    }
 
-			if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
-				return false;
+        //    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+        //        return false;
 			
-            return blnSuccess;
-        }
+        //    return blnSuccess;
+        //}
 
 
-        #region AScore Operations
+        //#region AScore Operations
 
-        private bool GetAScoreFiles()
-        {
-            const bool blnSuccess = true;
+        //private bool GetAScoreFiles()
+        //{
+        //    const bool blnSuccess = true;
 
-	        //Add list the files to delete to global list
-            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
-            foreach (string fileSpec in fileSpecList)
-            {
-                var fileSpecTerms = fileSpec.Split(':').ToList();
+        //    //Add list the files to delete to global list
+        //    var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
+        //    foreach (string fileSpec in fileSpecList)
+        //    {
+        //        var fileSpecTerms = fileSpec.Split(':').ToList();
 
-                if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower() != "copy")
-                {
-                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);               					     
-                }
-            }
+        //        if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower() != "copy")
+        //        {
+        //            m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);               					     
+        //        }
+        //    }
 
-	        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreCIDParamFile param file");
+        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreCIDParamFile param file");
 
-            if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
-            {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), m_jobParams.GetParam("transferFolderPath")))
-                {
-                    return false;
-                }
-            }
+        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
+        //    {
+        //        if (!RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), m_jobParams.GetParam("transferFolderPath")))
+        //        {
+        //            return false;
+        //        }
+        //    }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreETDParamFile param file");
+        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreETDParamFile param file");
 
-            if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")))
-            {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), m_jobParams.GetParam("transferFolderPath")))
-                {
-                    return false;
-                }
-            }
+        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")))
+        //    {
+        //        if (!RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), m_jobParams.GetParam("transferFolderPath")))
+        //        {
+        //            return false;
+        //        }
+        //    }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
+        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
 
-            if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")))
-            {
-                if (!RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), m_jobParams.GetParam("transferFolderPath")))
-                {
-                    return false;
-                }
-            }
+        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")))
+        //    {
+        //        if (!RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), m_jobParams.GetParam("transferFolderPath")))
+        //        {
+        //            return false;
+        //        }
+        //    }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
+        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
 
-            {
-                Dictionary<int, udtDataPackageJobInfoType> dctDataPackageJobs;
-                if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
-                {
-                    //Errors were reported in function call, so just return
-                    return false;
-                }
-            }
+        //    {
+        //        Dictionary<int, udtDataPackageJobInfoType> dctDataPackageJobs;
+        //        if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
+        //        {
+        //            //Errors were reported in function call, so just return
+        //            return false;
+        //        }
+        //    }
 
-            return blnSuccess;
-        }
+        //    return blnSuccess;
+        //}
 
-		protected string GetDatasetID(string DatasetName)
-        {
-			int DatasetID;
+        //protected string GetDatasetID(string DatasetName)
+        //{
+        //    int DatasetID;
 				
-			if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
-				return DatasetID.ToString(CultureInfo.InvariantCulture);
+        //    if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
+        //        return DatasetID.ToString(CultureInfo.InvariantCulture);
 	        
-			return string.Empty;
-        }
+        //    return string.Empty;
+        //}
 
-        #endregion
+        //#endregion
 
 
 
