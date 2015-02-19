@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Globalization;
 using AnalysisManagerBase;
 using MyEMSLReader;
@@ -129,13 +131,14 @@ namespace AnalysisManager_AScore_PlugIn
             const bool blnSuccess = true;
 
 	        //Add list the files to delete to global list
-            string[] SplitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
-            foreach (string row in SplitString)
+            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
+            foreach (string fileSpec in fileSpecList)
             {
-	            string[] FileNameExt = row.Split(':');
-	            if (FileNameExt[2] == "nocopy")
+                var fileSpecTerms = fileSpec.Split(':').ToList();
+
+                if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower() != "copy")
                 {
-					m_jobParams.AddResultFileExtensionToSkip(FileNameExt[1]);                    
+                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);               					     
                 }
             }
 
@@ -172,7 +175,8 @@ namespace AnalysisManager_AScore_PlugIn
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
 
             {
-                if (!RetrieveAggregateFiles(SplitString))
+                Dictionary<int, udtDataPackageJobInfoType> dctDataPackageJobs;
+                if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
                 {
                     //Errors were reported in function call, so just return
                     return false;
