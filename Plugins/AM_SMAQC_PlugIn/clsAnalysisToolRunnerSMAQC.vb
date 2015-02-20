@@ -99,7 +99,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			m_jobParams.AddResultFileToSkip("SMAQC.s3db")					' Don't keep the SQLite DB
 
 			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
 			End If
 
 			CmdRunner = New clsRunDosProgram(m_WorkDir)
