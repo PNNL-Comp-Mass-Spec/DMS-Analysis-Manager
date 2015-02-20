@@ -188,6 +188,132 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             fileSuffixesToCombine.Add(baseName)
         End If
     End Sub
+    
+    Private Sub AddMSGFSpecProbValues(ByVal jobNumber As Integer, ByVal synFilePath As String, ByVal fileTypeTag As String)
+
+        Try
+            Dim fiSynFile = New FileInfo(synFilePath)
+            Dim fiMsgfFile = New FileInfo(Path.Combine(fiSynFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiSynFile.Name) & "_MSGF.txt"))
+
+            If Not fiMsgfFile.Exists Then
+                Dim warningMessage = "MSGF file not found for job " & jobNumber
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
+
+                warningMessage &= "; cannot add MSGF_SpecProb values to the " & fileTypeTag & " file; " & fiMsgfFile.FullName
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+                Return
+            End If
+
+            ' Cache the MSGFSpecProb values
+            ' The dictionary has ResultID values as keys and SpecProb values as values
+            ' Using strings because there is no need to convert from strings to official numbers
+            Dim dctSpecProbByResultID = CacheMSGFValues(fiMsgfFile, jobNumber)
+
+            If dctSpecProbByResultID.Count = 0 Then
+                Return
+            End If
+
+            ' Create an updated synopsis / first hits file, where we've added MSGF_SpecProb as the last column
+            Dim fiUpdatedfile = New FileInfo(fiMsgfFile.FullName & ".msgf")
+            Using swOutFile = New StreamWriter(New FileStream(fiUpdatedfile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+                Using srInputFile = New StreamReader(New FileStream(fiSynFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                    Dim headerLine = srInputFile.ReadLine()
+                    swOutFile.WriteLine(headerLine & ControlChars.Tab & "MSGF_SpecProb")
+
+                    Do While Not srInputFile.EndOfStream
+                        Dim dataLine = srInputFile.ReadLine()
+                        Dim specProbText = String.Empty
+
+                        Dim charIndex = dataLine.IndexOf(ControlChars.Tab)
+                        If charIndex > 0 Then
+                            Dim resultID = dataLine.Substring(0, charIndex)
+                            dctSpecProbByResultID.TryGetValue(resultID, specProbText)
+                        End If
+
+                        swOutFile.WriteLine(dataLine & ControlChars.Tab & specProbText)
+                    Loop
+                End Using
+            End Using
+
+            Threading.Thread.Sleep(100)
+
+            ' Replace the original file with the new one
+            Dim originalFilePath = fiSynFile.FullName
+
+            fiSynFile.MoveTo(fiSynFile.FullName & ".old")
+
+            fiUpdatedfile.MoveTo(originalFilePath)
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in AddMSGFSpecProbValues: " & ex.Message)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Cache the ResultID and SpecProb values in fiMsgfFile
+    ''' </summary>
+    ''' <param name="fiMsgfFile"></param>
+    ''' <param name="jobNumber"></param>
+    ''' <returns>Dictionary where keys are ResultIDs (stored as strings) and values are SpecProb values</returns>
+    ''' <remarks></remarks>
+    Protected Function CacheMSGFValues(ByVal fiMsgfFile As FileInfo, ByVal jobNumber As Integer) As Dictionary(Of String, String)
+
+        Dim dctSpecProbByResultID = New Dictionary(Of String, String)()
+
+        Using srInputFile As StreamReader = New StreamReader(New FileStream(fiMsgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+            If srInputFile.EndOfStream Then
+                Dim warningMessage = "MSGF file for job " & jobNumber & " is empty"
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+                Return dctSpecProbByResultID
+            End If
+
+            Dim lstHeaderNames = New List(Of String) From {"Result_ID", "SpecProb"}
+
+            ' Read the header line
+            Dim headerLine = srInputFile.ReadLine()
+
+            Dim headerMapping = clsGlobal.ParseHeaderLine(headerLine, lstHeaderNames, False)
+
+            Dim resultIdIndex = headerMapping("Result_ID")
+            Dim specProbIndex = headerMapping("SpecProb")
+
+            If resultIdIndex < 0 Then
+                Dim warningMessage = "MSGF file for job " & jobNumber & " did not have header Result_ID"
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+                Return dctSpecProbByResultID
+            End If
+
+            If specProbIndex < 0 Then
+                Dim warningMessage = "MSGF file for job " & jobNumber & " did not have header Result_ID"
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+                Return dctSpecProbByResultID
+            End If
+
+            Do While Not srInputFile.EndOfStream
+                Dim dataLine = srInputFile.ReadLine()
+
+                If Not String.IsNullOrWhiteSpace(dataLine) Then
+                    Dim dataColumns = dataLine.Split(ControlChars.Tab).ToList()
+                    If dataColumns.Count < specProbIndex Then Continue Do
+
+                    Dim resultID = dataColumns.Item(resultIdIndex)
+                    Dim specProb = dataColumns.Item(specProbIndex)
+
+                    dctSpecProbByResultID.Add(resultID, specProb)
+                End If
+            Loop
+
+        End Using
+
+        Return dctSpecProbByResultID
+
+    End Function
 
     Protected Function ConcatenateLogFiles(ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
@@ -243,7 +369,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateLogFiles: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ConcatenateLogFiles: " & ex.Message)
             Return False
         End Try
 
@@ -317,7 +443,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerPhosphoFdrAggregator.ConcatenateResultFiles, The file could not be concatenated: " & currentFile & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ConcatenateResultFiles, The file could not be concatenated: " & currentFile & ex.Message)
             Return False
         End Try
 
@@ -355,6 +481,21 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         ' Copy the results folder to the Archive folder
         Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+
+    End Sub
+
+    Protected Sub CreateJobToDatasetMapFile(ByVal jobsProcessed As List(Of udtJobMetadataForAScore))
+
+        Dim outputFilePath = Path.Combine(m_WorkDir, "Job_to_Dataset_Map.txt")
+
+        Using swMapFile As StreamWriter = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swMapFile.WriteLine("Job" & ControlChars.Tab & "Tool" & ControlChars.Tab & "Dataset")
+
+            For Each job In jobsProcessed
+                swMapFile.WriteLine(job.Job & ControlChars.Tab & job.ToolName & ControlChars.Tab & job.Dataset)
+            Next
+
+        End Using
 
     End Sub
 
@@ -404,8 +545,10 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         Dim fhtfile = String.Empty
         Dim synFile = String.Empty
+        Dim runningSequest = False
 
         If udtJobMetadata.ToolName.ToLower().StartsWith("sequest") Then
+            runningSequest = True
             fhtfile = udtJobMetadata.Dataset & "_fht.txt"
             synFile = udtJobMetadata.Dataset & "_syn.txt"
             udtJobMetadata.ToolNameForAScore = "sequest"
@@ -433,12 +576,18 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         If File.Exists(udtJobMetadata.FirstHitsFilePath) Then
             CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtfile)
+            If runningSequest Then
+                AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.FirstHitsFilePath, "fht")
+            End If
         Else
             udtJobMetadata.FirstHitsFilePath = String.Empty
         End If
 
         If File.Exists(udtJobMetadata.SynopsisFilePath) Then
             CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, synFile)
+            If runningSequest Then
+                AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.SynopsisFilePath, "syn")
+            End If
         Else
             udtJobMetadata.SynopsisFilePath = String.Empty
         End If
@@ -646,6 +795,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             Dim jobToDatasetMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP)
             Dim jobToSettingsFileMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
             Dim jobToToolMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
+            Dim jobsProcessed = New List(Of udtJobMetadataForAScore)
 
             Dim jobCountSkipped = 0
 
@@ -700,13 +850,10 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 End If
 
                 ' Find any first hits and synopsis files
-
                 Dim success = DetermineInputFilePaths(jobFolder.Value, udtJobMetadata, fileSuffixesToCombine)
                 If Not success Then
                     jobCountSkipped += 1
                 Else
-
-
 
                     If Not String.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath) Then
                         ' Analyze the first hits file with AScore
@@ -726,6 +873,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                         End If
                     End If
 
+                    jobsProcessed.Add(udtJobMetadata)
                 End If
 
                 ' Delete the unzipped spectrum file
@@ -744,6 +892,11 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             If jobCountSkipped > 0 Then
                 m_message = clsGlobal.AppendToComment(m_message, "Skipped " & jobCountSkipped & " job(s) because a synopsis or first hits file was not found")
             End If
+
+
+            ' Create the job to dataset map file
+            CreateJobToDatasetMapFile(jobsProcessed)
+
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & ex.Message)

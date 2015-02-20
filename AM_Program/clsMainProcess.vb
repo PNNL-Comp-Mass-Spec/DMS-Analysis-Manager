@@ -397,7 +397,7 @@ Public Class clsMainProcess
 
 				'Get an analysis job, if any are available
 				Dim TaskReturn As clsAnalysisJob.RequestTaskResult
-				TaskReturn = m_AnalysisTask.RequestTask()
+                TaskReturn = m_AnalysisTask.RequestTask()
 				Select Case TaskReturn
 					Case clsDBTask.RequestTaskResult.NoTaskFound
 						If Me.TraceMode Then ShowTraceMessage("No tasks found")

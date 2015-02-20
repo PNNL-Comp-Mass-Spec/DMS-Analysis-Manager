@@ -3876,7 +3876,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="fileSpecList">
     ''' File processing options, examples:
     ''' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-    ''' sequest:_syn.txt,sequest:_fht.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
+    ''' sequest:_syn.txt,sequest:_syn_MSGF.txt,sequest:_fht.txt,sequest:_fht_MSGF.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
     ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
     ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_syn_ModSummary.txt,MSGFPlus:_dta.zip
     ''' </param>
@@ -3946,6 +3946,7 @@ Public MustInherit Class clsAnalysisResources
                                 ' Sequest
                                 fileSpecListCurrent = New List(Of String) From {
                                     "sequest:_syn.txt",
+                                    "sequest:_syn_MSGF.txt",
                                     "sequest:_syn_ModSummary.txt",
                                     "sequest:_dta.zip"}
 
