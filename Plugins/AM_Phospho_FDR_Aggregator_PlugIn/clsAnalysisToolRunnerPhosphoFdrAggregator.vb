@@ -8,6 +8,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports Mage
 Imports System.Linq
 Imports System.IO
 Imports System.Runtime.InteropServices
@@ -179,17 +180,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Protected Sub CacheFileSuffix(ByVal fileSuffixesToCombine As List(Of String), ByVal datasetName As String, ByVal fileName As String)
-
-        Dim baseName = Path.GetFileNameWithoutExtension(fileName)
-        baseName = baseName.Substring(datasetName.Length)
-
-        If Not fileSuffixesToCombine.Contains(baseName) Then
-            fileSuffixesToCombine.Add(baseName)
-        End If
-    End Sub
-    
-    Private Sub AddMSGFSpecProbValues(ByVal jobNumber As Integer, ByVal synFilePath As String, ByVal fileTypeTag As String)
+    Protected Function AddMSGFSpecProbValues(ByVal jobNumber As Integer, ByVal synFilePath As String, ByVal fileTypeTag As String) As Boolean
 
         Try
             Dim fiSynFile = New FileInfo(synFilePath)
@@ -201,41 +192,63 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
                 warningMessage &= "; cannot add MSGF_SpecProb values to the " & fileTypeTag & " file; " & fiMsgfFile.FullName
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-                Return
+                Return True
             End If
 
-            ' Cache the MSGFSpecProb values
-            ' The dictionary has ResultID values as keys and SpecProb values as values
-            ' Using strings because there is no need to convert from strings to official numbers
-            Dim dctSpecProbByResultID = CacheMSGFValues(fiMsgfFile, jobNumber)
+            ' Use Mage to create an updated synopsis file, with column MSGF_SpecProb added
 
-            If dctSpecProbByResultID.Count = 0 Then
-                Return
+            ' First cache the MSGFSpecProb values using a delimited file reader
+
+            Dim msgfReader = New DelimitedFileReader()
+            msgfReader.FilePath = fiMsgfFile.FullName
+
+            Dim lookupSink = New KVSink()
+            lookupSink.KeyColumnName = "Result_ID"
+            lookupSink.ValueColumnName = "SpecProb"
+
+            Dim cachePipeline = ProcessingPipeline.Assemble("Lookup pipeline", msgfReader, lookupSink)
+            cachePipeline.RunRoot(Nothing)
+
+            If lookupSink.Values.Count = 0 Then
+                m_message = fiMsgfFile.Name & " was empty for job " & jobNumber
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
             End If
 
-            ' Create an updated synopsis / first hits file, where we've added MSGF_SpecProb as the last column
+            ' Next create the updated synopsis / first hits file using the values cached in lookupSink 
+
             Dim fiUpdatedfile = New FileInfo(fiMsgfFile.FullName & ".msgf")
-            Using swOutFile = New StreamWriter(New FileStream(fiUpdatedfile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                Using srInputFile = New StreamReader(New FileStream(fiSynFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Dim synReader = New DelimitedFileReader() With {
+                .FilePath = fiSynFile.FullName
+            }
 
-                    Dim headerLine = srInputFile.ReadLine()
-                    swOutFile.WriteLine(headerLine & ControlChars.Tab & "MSGF_SpecProb")
+            Dim synWriter = New DelimitedFileWriter() With {
+                .FilePath = fiUpdatedfile.FullName
+            }
 
-                    Do While Not srInputFile.EndOfStream
-                        Dim dataLine = srInputFile.ReadLine()
-                        Dim specProbText = String.Empty
+            Dim mergeFilter = New MergeFromLookup() With {
+                .OutputColumnList = "*, MSGF_SpecProb|+|text",
+                .LookupKV = lookupSink.Values,
+                .KeyColName = "HitNum",
+                .MergeColName = "MSGF_SpecProb"
+            }
 
-                        Dim charIndex = dataLine.IndexOf(ControlChars.Tab)
-                        If charIndex > 0 Then
-                            Dim resultID = dataLine.Substring(0, charIndex)
-                            dctSpecProbByResultID.TryGetValue(resultID, specProbText)
-                        End If
+            Dim mergePipeline = ProcessingPipeline.Assemble("Main pipeline", synReader, mergeFilter, synWriter)
+            mergePipeline.RunRoot(Nothing)
 
-                        swOutFile.WriteLine(dataLine & ControlChars.Tab & specProbText)
-                    Loop
-                End Using
-            End Using
+            fiUpdatedfile.Refresh()
+            If Not fiUpdatedfile.Exists Then
+                m_message = "Mage did not create " & fiUpdatedfile.Name & " for job " & jobNumber
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            If fiUpdatedfile.Length = 0 Then
+                m_message = fiUpdatedfile.Name & " is 0 bytes for job " & jobNumber
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
             Threading.Thread.Sleep(100)
 
@@ -246,74 +259,24 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
             fiUpdatedfile.MoveTo(originalFilePath)
 
+            Return True
+
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in AddMSGFSpecProbValues: " & ex.Message)
+            Return False
         End Try
-    End Sub
-
-    ''' <summary>
-    ''' Cache the ResultID and SpecProb values in fiMsgfFile
-    ''' </summary>
-    ''' <param name="fiMsgfFile"></param>
-    ''' <param name="jobNumber"></param>
-    ''' <returns>Dictionary where keys are ResultIDs (stored as strings) and values are SpecProb values</returns>
-    ''' <remarks></remarks>
-    Protected Function CacheMSGFValues(ByVal fiMsgfFile As FileInfo, ByVal jobNumber As Integer) As Dictionary(Of String, String)
-
-        Dim dctSpecProbByResultID = New Dictionary(Of String, String)()
-
-        Using srInputFile As StreamReader = New StreamReader(New FileStream(fiMsgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-            If srInputFile.EndOfStream Then
-                Dim warningMessage = "MSGF file for job " & jobNumber & " is empty"
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-                Return dctSpecProbByResultID
-            End If
-
-            Dim lstHeaderNames = New List(Of String) From {"Result_ID", "SpecProb"}
-
-            ' Read the header line
-            Dim headerLine = srInputFile.ReadLine()
-
-            Dim headerMapping = clsGlobal.ParseHeaderLine(headerLine, lstHeaderNames, False)
-
-            Dim resultIdIndex = headerMapping("Result_ID")
-            Dim specProbIndex = headerMapping("SpecProb")
-
-            If resultIdIndex < 0 Then
-                Dim warningMessage = "MSGF file for job " & jobNumber & " did not have header Result_ID"
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-                Return dctSpecProbByResultID
-            End If
-
-            If specProbIndex < 0 Then
-                Dim warningMessage = "MSGF file for job " & jobNumber & " did not have header Result_ID"
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-                Return dctSpecProbByResultID
-            End If
-
-            Do While Not srInputFile.EndOfStream
-                Dim dataLine = srInputFile.ReadLine()
-
-                If Not String.IsNullOrWhiteSpace(dataLine) Then
-                    Dim dataColumns = dataLine.Split(ControlChars.Tab).ToList()
-                    If dataColumns.Count < specProbIndex Then Continue Do
-
-                    Dim resultID = dataColumns.Item(resultIdIndex)
-                    Dim specProb = dataColumns.Item(specProbIndex)
-
-                    dctSpecProbByResultID.Add(resultID, specProb)
-                End If
-            Loop
-
-        End Using
-
-        Return dctSpecProbByResultID
 
     End Function
+    
+    Protected Sub CacheFileSuffix(ByVal fileSuffixesToCombine As List(Of String), ByVal datasetName As String, ByVal fileName As String)
+
+        Dim baseName = Path.GetFileNameWithoutExtension(fileName)
+        baseName = baseName.Substring(datasetName.Length)
+
+        If Not fileSuffixesToCombine.Contains(baseName) Then
+            fileSuffixesToCombine.Add(baseName)
+        End If
+    End Sub
 
     Protected Function ConcatenateLogFiles(ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
@@ -574,10 +537,13 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtfile)
         udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile)
 
+        Dim success As Boolean
+
         If File.Exists(udtJobMetadata.FirstHitsFilePath) Then
             CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtfile)
             If runningSequest Then
-                AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.FirstHitsFilePath, "fht")
+                success = AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.FirstHitsFilePath, "fht")
+                If Not success Then Return False
             End If
         Else
             udtJobMetadata.FirstHitsFilePath = String.Empty
@@ -586,7 +552,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         If File.Exists(udtJobMetadata.SynopsisFilePath) Then
             CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, synFile)
             If runningSequest Then
-                AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.SynopsisFilePath, "syn")
+                success = AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.SynopsisFilePath, "syn")
+                If Not success Then Return False
             End If
         Else
             udtJobMetadata.SynopsisFilePath = String.Empty

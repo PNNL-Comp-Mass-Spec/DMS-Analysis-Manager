@@ -2340,8 +2340,9 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             Else
 
-                Dim oAssemblyName As Reflection.AssemblyName
-                oAssemblyName = Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName()
+                Dim oAssembly = Reflection.Assembly.LoadFrom(ioFileInfo.FullName)
+                Dim oAssemblyName = oAssembly.GetName()
+                oAssembly = Nothing
 
                 Dim strNameAndVersion As String
                 strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()
