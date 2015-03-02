@@ -24,7 +24,7 @@ Public Class clsMSGFResultsSummarizer
 	Public Const DEFAULT_EVALUE_THRESHOLD As Double = 0.0001			' 1E-4   (only used when MSGF Scores are not available)
 	Public Const DEFAULT_FDR_THRESHOLD As Double = 0.01					' 1% FDR
 
-	Public Property DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+    Public Const DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
 
 	Protected Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
 	Protected Const UNKNOWN_MSGF_SPECPROB As Double = 10
@@ -221,12 +221,8 @@ Public Class clsMSGFResultsSummarizer
 	''' <param name="strSourceFolderPath">Source folder path</param>
 	''' <remarks></remarks>
 	Public Sub New(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strDatasetName As String, ByVal intJob As Integer, ByVal strSourceFolderPath As String)
-		mResultType = eResultType
-		mDatasetName = strDatasetName
-		mJob = intJob
-		mWorkDir = strSourceFolderPath
-		mConnectionString = DEFAULT_CONNECTION_STRING
-	End Sub
+        Me.New(eResultType, strDatasetName, intJob, strSourceFolderPath, DEFAULT_CONNECTION_STRING)
+    End Sub
 
 	''' <summary>
 	''' Constructor

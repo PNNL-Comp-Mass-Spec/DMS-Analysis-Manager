@@ -1510,8 +1510,8 @@ Public Class clsAnalysisToolRunnerBase
 
         'Makes results folder and moves files into it
 
-        'Log status (both locally and in the DB)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
+        'Log status
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
         Dim ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
 
         'make the results folder
@@ -2821,7 +2821,7 @@ Public Class clsAnalysisToolRunnerBase
             m_SummaryFile.Add(Environment.NewLine)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
              & " - " & ex.Message)
             Return False
         End Try

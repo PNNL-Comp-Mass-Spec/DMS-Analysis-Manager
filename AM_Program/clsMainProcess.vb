@@ -517,7 +517,7 @@ Public Class clsMainProcess
 			End If
 
 			If blnOneTaskPerformed Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, "Analysis complete for all available jobs")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Analysis complete for all available jobs")
 			End If
 
 			If Me.TraceMode Then ShowTraceMessage("Closing the manager")
@@ -571,7 +571,7 @@ Public Class clsMainProcess
 		' Note: The format of the following text is important; be careful about changing it
 		' In particular, function DetermineRecentErrorMessages in clsMainProcess looks for log entries
 		'   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName & ", Tool " & jobToolDescription)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName & ", Tool " & jobToolDescription)
 
 		If m_DebugLevel >= 2 Then
 			' Log the debug level value whenever the debug level is 2 or higher
@@ -751,7 +751,7 @@ Public Class clsMainProcess
 
 			'Close out the job as a success
 			m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, String.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & jobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & jobNum)
 
 			UpdateStatusIdle("Completed job " & jobNum & ", step " & stepNum)
 
@@ -776,7 +776,7 @@ Public Class clsMainProcess
 				Try
 					If Not m_MgrErrorCleanup.CleanWorkDir() Then
 						If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
 						m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
 						m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
 						Return False
@@ -1840,7 +1840,7 @@ Public Class clsMainProcess
 
 		If (TmpDirArray.Length > 0) Or (TmpFilArray.Length > 0) Then
 			MsgStr = "Working directory not empty: " & m_WorkDirPath
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, MsgStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
 			Return False
 		End If
 
