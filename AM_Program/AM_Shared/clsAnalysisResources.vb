@@ -250,16 +250,11 @@ Public MustInherit Class clsAnalysisResources
 
 	Protected m_StatusTools As IStatusFile		' Might be nothing
 
-	Protected m_GenerationStarted As Boolean = False
-	Protected m_GenerationComplete As Boolean = False
-	Protected m_FastaToolsCnStr As String = ""
+    Protected m_FastaToolsCnStr As String = ""
 	Protected m_FastaFileName As String = ""
-	Protected m_FastaGenTimeOut As Boolean = False
-	Protected m_FastaGenStartTime As DateTime = DateTime.UtcNow
 
-	Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
-	Protected WithEvents m_FastaTimer As Timers.Timer
-	Protected m_IonicZipTools As clsIonicZipTools
+    Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
+    Protected m_IonicZipTools As clsIonicZipTools
 
 	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
 
@@ -296,17 +291,16 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Event handlers"
-	Private Sub m_FastaTools_FileGenerationStarted(ByVal taskMsg As String) Handles m_FastaTools.FileGenerationStarted
 
-		m_GenerationStarted = True
-
-	End Sub
+    Private Sub m_FastaTools_FileGenerationStarted(ByVal taskMsg As String) Handles m_FastaTools.FileGenerationStarted
+        ' m_GenerationStarted = True
+    End Sub
 
 	Private Sub m_FastaTools_FileGenerationCompleted(ByVal FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
 
 		m_FastaFileName = Path.GetFileName(FullOutputPath)	  'Get the name of the fasta file that was generated
-		m_GenerationComplete = True		'Set the completion flag
 
+        ' m_GenerationComplete = True		'Set the completion flag
 	End Sub
 
 	Private Sub m_FastaTools_FileGenerationProgress(ByVal statusMsg As String, ByVal fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
@@ -329,14 +323,6 @@ Public MustInherit Class clsAnalysisResources
 
 	End Sub
 
-	Private Sub m_FastaTimer_Elapsed(ByVal sender As Object, ByVal e As Timers.ElapsedEventArgs) Handles m_FastaTimer.Elapsed
-
-		If DateTime.UtcNow.Subtract(m_FastaGenStartTime).TotalMinutes >= FASTA_GEN_TIMEOUT_INTERVAL_MINUTES Then
-			m_FastaGenTimeOut = True	  'Set the timeout flag so an error will be reported
-			m_GenerationComplete = True		'Set the completion flag so the fasta generation wait loop will exit
-		End If
-
-	End Sub
 #End Region
 
 #Region "Methods"
@@ -532,55 +518,55 @@ Public MustInherit Class clsAnalysisResources
 	''' <summary>
 	''' Copies a file with retries in case of failure
 	''' </summary>
-	''' <param name="SrcFilePath">Full path to source file</param>
-	''' <param name="DestFilePath">Full path to destination file</param>
-	''' <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-	''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+    ''' <param name="srcFilePath">Full path to source file</param>
+    ''' <param name="destFilePath">Full path to destination file</param>
+    ''' <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
+    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
 	''' <returns>TRUE for success; FALSE for error</returns>
 	''' <remarks>Logs copy errors</remarks>
-	Private Function CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, ByVal MaxCopyAttempts As Integer) As Boolean
+    Private Function CopyFileWithRetry(ByVal srcFilePath As String, ByVal destFilePath As String, ByVal overwrite As Boolean, ByVal maxCopyAttempts As Integer) As Boolean
 
-		Const RETRY_HOLDOFF_SECONDS As Integer = 15
+        Const RETRY_HOLDOFF_SECONDS As Integer = 15
 
-		If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
-		Dim RetryCount As Integer = MaxCopyAttempts
+        If maxCopyAttempts < 1 Then maxCopyAttempts = 1
+        Dim retryCount As Integer = maxCopyAttempts
 
-		While RetryCount > 0
-			Try
-				ResetTimestampForQueueWaitTimeLogging()
-				If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
-					Return True
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
-					Return False
-				End If
-			Catch ex As Exception
-				Dim ErrMsg As String = "Exception copying file " + SrcFilePath + " to " + DestFilePath + ": " + _
-				  ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex)
+        While retryCount > 0
+            Try
+                ResetTimestampForQueueWaitTimeLogging()
+                If m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite) Then
+                    Return True
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & srcFilePath & " to " & destFilePath)
+                    Return False
+                End If
+            Catch ex As Exception
+                Dim ErrMsg As String = "Exception copying file " + srcFilePath + " to " + destFilePath + ": " + _
+                  ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex)
 
-				ErrMsg &= " Retry Count = " + RetryCount.ToString
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
-				RetryCount -= 1
+                ErrMsg &= " Retry Count = " + retryCount.ToString
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                retryCount -= 1
 
-				If Not Overwrite AndAlso File.Exists(DestFilePath) Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Tried to overwrite an existing file when Overwrite = False: " + DestFilePath)
-					Return False
-				End If
+                If Not overwrite AndAlso File.Exists(destFilePath) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Tried to overwrite an existing file when Overwrite = False: " + destFilePath)
+                    Return False
+                End If
 
-				Threading.Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000)	   'Wait several seconds before retrying
-			End Try
-		End While
+                Threading.Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000)       'Wait several seconds before retrying
+            End Try
+        End While
 
-		'If we got to here, there were too many failures
-		If RetryCount < 1 Then
-			m_message = "Excessive failures during file copy"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        'If we got to here, there were too many failures
+        If retryCount < 1 Then
+            m_message = "Excessive failures during file copy"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		Return False
+        Return False
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Copies specified file from storage server to local working directory
@@ -864,190 +850,193 @@ Public MustInherit Class clsAnalysisResources
 				m_message = "Protein database connection string not specified"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error in CreateFastaFile: " + m_message)
 				Return False
-			End If
-			m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
-		End If
+            End If
 
-		' Initialize fasta generation state variables
-		m_GenerationStarted = False
-		m_GenerationComplete = False
-		m_FastaFileName = String.Empty
+        End If
 
-		' Set up variables for fasta creation call
-		Dim LegacyFasta As String = m_jobParams.GetParam("LegacyFastaFileName")
-		Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
-		Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
-		Dim usingLegacyFasta = False
+        Dim retryCount = 3
 
-		If Not String.IsNullOrWhiteSpace(CollectionList) AndAlso Not CollectionList.ToLower() = "na" Then
-			OrgDBDescription = "Protein collection: " + CollectionList + " with options " + CreationOpts
-		ElseIf Not String.IsNullOrWhiteSpace(LegacyFasta) AndAlso Not LegacyFasta.ToLower() = "na" Then
-			OrgDBDescription = "Legacy DB: " + LegacyFasta
-			usingLegacyFasta = True
-		Else
-			m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateFastaFile: " + m_message)
-			Return False
-		End If
+        While retryCount > 0
+            Try
+                m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
+                Exit While
+            Catch ex As Exception
+                If retryCount > 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Error instantiating clsGetFASTAFromDMS: " + ex.Message)
+                    ' Sleep 20 seconds after the first failure and 30 seconds after the second failure
+                    If retryCount = 3 Then
+                        Threading.Thread.Sleep(20000)
+                    Else
+                        Threading.Thread.Sleep(30000)
+                    End If
+                Else
+                    m_message = "Error retrieving protein collection or legacy FASTA file: "
+                    If ex.Message.Contains("could not open database connection") Then
+                        m_message &= "could not open database connection"
+                    Else
+                        m_message &= ex.Message
+                    End If
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                End If
+                retryCount -= 1
+            End Try
+        End While
 
-		Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
-		Dim legacyFastaToUse As String
+        ' Initialize fasta generation state variables
+        m_FastaFileName = String.Empty
 
-		If splitFastaEnabled Then
+        ' Set up variables for fasta creation call
+        Dim LegacyFasta As String = m_jobParams.GetParam("LegacyFastaFileName")
+        Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
+        Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
+        Dim usingLegacyFasta = False
 
-			If Not usingLegacyFasta Then
-				m_message = "Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+        If Not String.IsNullOrWhiteSpace(CollectionList) AndAlso Not CollectionList.ToLower() = "na" Then
+            OrgDBDescription = "Protein collection: " + CollectionList + " with options " + CreationOpts
+        ElseIf Not String.IsNullOrWhiteSpace(LegacyFasta) AndAlso Not LegacyFasta.ToLower() = "na" Then
+            OrgDBDescription = "Legacy DB: " + LegacyFasta
+            usingLegacyFasta = True
+        Else
+            m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateFastaFile: " + m_message)
+            Return False
+        End If
 
-			' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
-			' where NN is the number of total cloned steps and nn is this job's specific step number
-			Dim numberOfClonedSteps As Integer
+        Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+        Dim legacyFastaToUse As String
 
-			legacyFastaToUse = GetSplitFastaFileName(m_jobParams, m_message, numberOfClonedSteps)
+        If splitFastaEnabled Then
 
-			If String.IsNullOrEmpty(legacyFastaToUse) Then
-				' The error should have already been logged
-				Return False
-			End If
+            If Not usingLegacyFasta Then
+                m_message = "Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			OrgDBDescription = "Legacy DB: " + legacyFastaToUse
+            ' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
+            ' where NN is the number of total cloned steps and nn is this job's specific step number
+            Dim numberOfClonedSteps As Integer
+
+            legacyFastaToUse = GetSplitFastaFileName(m_jobParams, m_message, numberOfClonedSteps)
+
+            If String.IsNullOrEmpty(legacyFastaToUse) Then
+                ' The error should have already been logged
+                Return False
+            End If
+
+            OrgDBDescription = "Legacy DB: " + legacyFastaToUse
 
             ' Lookup connection strings
             ' Proteinseqs.Protein_Sequences
-			Dim proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring")
-			If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
-				m_message = "Error in CreateFastaFile: manager parameter fastacnstring is not defined"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            Dim proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring")
+            If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
+                m_message = "Error in CreateFastaFile: manager parameter fastacnstring is not defined"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
             ' Gigasax.DMS5
-			Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
-			If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
-				m_message = "Error in CreateFastaFile: manager parameter connectionstring is not defined"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
+            If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
+                m_message = "Error in CreateFastaFile: manager parameter connectionstring is not defined"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			' Lookup the MSGFPlus Index Folder path
-			Dim strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\Proto-7\MSGFPlus_Index_Files")
-			If String.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB) Then
-				strMSGFPlusIndexFilesFolderPathLegacyDB = "\\Proto-7\MSGFPlus_Index_Files\Other"
-			Else
-				strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
-			End If
+            ' Lookup the MSGFPlus Index Folder path
+            Dim strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\Proto-7\MSGFPlus_Index_Files")
+            If String.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB) Then
+                strMSGFPlusIndexFilesFolderPathLegacyDB = "\\Proto-7\MSGFPlus_Index_Files\Other"
+            Else
+                strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
+            End If
 
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Verifying that split fasta file exists: " & legacyFastaToUse)
-			End If
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Verifying that split fasta file exists: " & legacyFastaToUse)
+            End If
 
-			' Make sure the original fasta file has already been split into the appropriate number parts
-			' and that DMS knows about them
-			'
-			m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps)
-			m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
+            ' Make sure the original fasta file has already been split into the appropriate number parts
+            ' and that DMS knows about them
+            '
+            m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps)
+            m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
 
-			m_SplitFastaLastUpdateTime = DateTime.UtcNow
-			m_SplitFastaLastPercentComplete = 0
+            m_SplitFastaLastUpdateTime = DateTime.UtcNow
+            m_SplitFastaLastPercentComplete = 0
 
-			Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(LegacyFasta, legacyFastaToUse)
-			If Not success Then
-				m_message = m_SplitFastaFileUtility.ErrorMessage
-				Return False
-			End If
+            Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(LegacyFasta, legacyFastaToUse)
+            If Not success Then
+                m_message = m_SplitFastaFileUtility.ErrorMessage
+                Return False
+            End If
 
-		Else
-			legacyFastaToUse = String.Copy(LegacyFasta)
-		End If
+        Else
+            legacyFastaToUse = String.Copy(LegacyFasta)
+        End If
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + legacyFastaToUse)
-		End If
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + legacyFastaToUse)
+        End If
 
-		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
-		m_FastaTimer = New Timers.Timer
-		m_FastaTimer.Interval = 5000
-		m_FastaTimer.AutoReset = True
+        Try
+            HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, legacyFastaToUse, DestFolder)
+        Catch Ex As Exception
+            m_message = "Exception generating OrgDb file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + Ex.Message + "; " + clsGlobal.GetExceptionStackTrace(Ex))
+            Return False
+        End Try
 
-		' Note that m_FastaTools does not spawn a new thread
-		'   Since it does not spawn a new thread, the while loop after this Try block won't actually get reached while m_FastaTools.ExportFASTAFile is running
-		'   Furthermore, even if m_FastaTimer_Elapsed sets m_FastaGenTimeOut to True, this won't do any good since m_FastaTools.ExportFASTAFile will still be running
-		m_FastaGenTimeOut = False
-		m_FastaGenStartTime = DateTime.UtcNow
-		Try
-			m_FastaTimer.Start()
-			HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, legacyFastaToUse, DestFolder)
-		Catch Ex As Exception
-			m_message = "Exception generating OrgDb file"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + Ex.Message + "; " + clsGlobal.GetExceptionStackTrace(Ex))
-			Return False
-		End Try
+        If String.IsNullOrEmpty(HashString) Then
+            ' Fasta generator returned empty hash string
+            m_message = "m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + OrgDBDescription
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		' Wait for fasta creation to finish
-		While Not (m_GenerationComplete Or m_FastaGenTimeOut)
-			Threading.Thread.Sleep(2000)
-		End While
+        If String.IsNullOrEmpty(m_FastaFileName) Then
+            ' Fasta generator never raised event FileGenerationCompleted
+            m_message = "m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + OrgDBDescription
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		m_FastaTimer.Stop()
-		If m_FastaGenTimeOut Then
-			'Fasta generator hung - report error and exit
-			m_message = "Timeout error while generating OrdDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_MINUTES.ToString + " minutes have elapsed); " + OrgDBDescription
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        Dim fiFastaFile As FileInfo
+        Dim strFastaFileMsg As String
+        fiFastaFile = New FileInfo(Path.Combine(DestFolder, m_FastaFileName))
 
-		If String.IsNullOrEmpty(HashString) Then
-			' Fasta generator returned empty hash string
-			m_message = "m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + OrgDBDescription
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        If m_DebugLevel >= 1 Then
+            ' Log the name of the .Fasta file we're using
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fasta generation complete, using database: " + m_FastaFileName)
 
-		If String.IsNullOrEmpty(m_FastaFileName) Then
-			' Fasta generator never raised event FileGenerationCompleted
-			m_message = "m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + OrgDBDescription
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+            If m_DebugLevel >= 2 Then
+                ' Also log the file creation and modification dates
+                Try
 
-		Dim fiFastaFile As FileInfo
-		Dim strFastaFileMsg As String
-		fiFastaFile = New FileInfo(Path.Combine(DestFolder, m_FastaFileName))
+                    strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
+                    strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
+                    strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
 
-		If m_DebugLevel >= 1 Then
-			' Log the name of the .Fasta file we're using
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Fasta generation complete, using database: " + m_FastaFileName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
+                Catch ex As Exception
+                    ' Ignore errors here
+                End Try
+            End If
 
-			If m_DebugLevel >= 2 Then
-				' Also log the file creation and modification dates
-				Try
+        End If
 
-					strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
-					strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
-					strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
+        ' Create/Update the .LastUsed file for the newly created Fasta File
+        Dim lastUsedFilePath = fiFastaFile.FullName & ".LastUsed"
+        Try
+            Using swLastUsedFile = New StreamWriter(New FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+            End Using
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
+        End Try
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
-				Catch ex As Exception
-					' Ignore errors here
-				End Try
-			End If
-
-		End If
-
-		' Create/Update the .LastUsed file for the newly created Fasta File
-		Dim lastUsedFilePath = fiFastaFile.FullName & ".LastUsed"
-		Try
-			Using swLastUsedFile = New StreamWriter(New FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-				swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
-			End Using
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
-		End Try
-
-		' If we got to here, everything worked OK
-		Return True
+        ' If we got to here, everything worked OK
+        Return True
 
 	End Function
 
@@ -6128,35 +6117,35 @@ Public MustInherit Class clsAnalysisResources
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Obtaining org db file")
 		End If
 
-		Try
-			'Make a new fasta file from scratch
-			If Not CreateFastaFile(LocalOrgDBFolder) Then
-				'There was a problem. Log entries in lower-level routines provide documentation
-				Return False
-			End If
+        Try
+            ' Make a new fasta file from scratch
+            If Not CreateFastaFile(LocalOrgDBFolder) Then
+                ' There was a problem. Log entries in lower-level routines provide documentation
+                Return False
+            End If
 
-			'Fasta file was successfully generated. Put the name of the generated fastafile in the
-			'	job data class for other methods to use
-			If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
-				m_message = "Error adding parameter 'generatedFastaName' to m_jobParams"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            'Fasta file was successfully generated. Put the name of the generated fastafile in the
+            '	job data class for other methods to use
+            If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
+                m_message = "Error adding parameter 'generatedFastaName' to m_jobParams"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			If Not udtHPCOptions.UsingHPC Then
-				' Delete old fasta files and suffix array files if getting low on disk space
-				Const freeSpaceThresholdPercent As Integer = 20
-				PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
-			End If
+            If Not udtHPCOptions.UsingHPC Then
+                ' Delete old fasta files and suffix array files if getting low on disk space
+                Const freeSpaceThresholdPercent As Integer = 20
+                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
+            End If
 
-		Catch ex As Exception
-			m_message = "Exception in RetrieveOrgDB: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveOrgDB", ex)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in RetrieveOrgDB: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RetrieveOrgDB", ex)
+            Return False
+        End Try
 
-		'We got to here OK, so return
-		Return True
+        'We got to here OK, so return
+        Return True
 
 	End Function
 

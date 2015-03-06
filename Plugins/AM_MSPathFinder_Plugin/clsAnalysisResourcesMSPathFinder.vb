@@ -157,7 +157,7 @@ Public Class clsAnalysisResourcesMSPathFinder
         Try
             Dim FileToGet = m_DatasetName & DOT_MS1FT_EXTENSION
 
-            If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                 'Errors were reported in function call, so just return
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
