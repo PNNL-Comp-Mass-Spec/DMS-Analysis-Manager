@@ -97,8 +97,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
             ' Verify that program files exist
 
-            ' Determine the path to the customized version of MSConvert that includes the MzRefiner filter
-            mMSConvertProgLoc = DetermineProgramLocation("MzRefinery", "MzRefineryProgLoc", "msconvert.exe")
+            ' Determine the path to MSConvert (as of March 10, 2015 the official release of Proteowizard contains MSConvert.exe that supports the MzRefiner filter)
+            mMSConvertProgLoc = DetermineProgramLocation("MzRefinery", "ProteoWizardDir", "msconvert.exe")
 
             If String.IsNullOrWhiteSpace(mMSConvertProgLoc) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
