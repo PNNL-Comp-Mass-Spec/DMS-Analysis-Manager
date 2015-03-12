@@ -2,9 +2,11 @@
 
 Imports Apache.NMS
 
-' sends messages to ActiveMQ message broker using NMS client library
+''' <summary>
+''' Sends messages to ActiveMQ message broker using NMS client library
+''' </summary>
+''' <remarks></remarks>
 Class clsMessageSender
-    '    Implements IDisposable
 
 	Private ReadOnly topicName As String
 	Private ReadOnly brokerUri As String
@@ -23,9 +25,14 @@ Class clsMessageSender
         Me.processorName = processorName
     End Sub
 
-    ' send the message using NMS connection objects
-    ' If connection does not exist, make it..
-    ' If connection objects don't work, erase them and make another set
+    ''' <summary>
+    '''  Send the message using NMS connection objects
+    ''' </summary>
+    ''' <param name="message"></param>
+    ''' <remarks>
+    ''' If connection does not exist, make it
+    ''' If connection objects don't work, erase them and make another set
+    ''' </remarks>
     Public Sub SendMessage(ByVal message As String)
         If Me.isDisposed Then
             Exit Sub
@@ -49,33 +56,67 @@ Class clsMessageSender
         End If
     End Sub
 
-    ' create set of NMS connection objects necessary to talk to the ActiveMQ broker
-    Protected Sub CreateConnection()
+    ''' <summary>
+    ''' Create set of NMS connection objects necessary to talk to the ActiveMQ broker
+    ''' </summary>
+    ''' <param name="retryCount"></param>
+    ''' <param name="timeoutSeconds"></param>
+    ''' <remarks></remarks>
+    Protected Sub CreateConnection(Optional ByVal retryCount As Integer = 2, Optional ByVal timeoutSeconds As Integer = 15)
         If hasConnection Then
             Exit Sub
         End If
-        Try
-			Dim connectionFactory As IConnectionFactory = New ActiveMQ.ConnectionFactory(Me.brokerUri)
-			Me.connection = connectionFactory.CreateConnection()
-			Me.connection.RequestTimeout = New TimeSpan(0, 0, 15)
-			Me.connection.Start()
 
-            Me.session = connection.CreateSession()
+        If retryCount < 0 Then
+            retryCount = 0
+        End If
 
-			Me.producer = Me.session.CreateProducer(New ActiveMQ.Commands.ActiveMQTopic(Me.topicName))
-            Me.producer.Persistent = False
-            Me.hasConnection = True
-            ' temp debug
-            '+ e.ToString()
-            '            Console.WriteLine("--- New connection made ---" & Environment.NewLine)
-        Catch e As Exception
-            ' we couldn't make a viable set of connection objects 
-            ' - this has "long day" written all over it,
-            ' but we don't have to do anything specific at this point (except eat the exception)
+        Dim retriesRemaining As Integer = retryCount
 
-            '+ e.ToString() // temp debug
-			Console.WriteLine("=== Error creating Activemq connection ===" & Environment.NewLine & e.Message)
-        End Try
+        If timeoutSeconds < 5 Then
+            timeoutSeconds = 5
+        End If
+
+        Dim errorList = New List(Of String)()
+
+        While retriesRemaining >= 0
+            Try
+                Dim connectionFactory As IConnectionFactory = New ActiveMQ.ConnectionFactory(Me.brokerUri)
+                Me.connection = connectionFactory.CreateConnection()
+                Me.connection.RequestTimeout = New TimeSpan(0, 0, timeoutSeconds)
+                Me.connection.Start()
+
+                Me.session = connection.CreateSession()
+
+                Me.producer = Me.session.CreateProducer(New ActiveMQ.Commands.ActiveMQTopic(Me.topicName))
+                Me.hasConnection = True
+
+                Return
+            Catch ex As Exception
+                ' Connection failed
+                If Not errorList.Contains(ex.Message) Then
+                    errorList.Add(ex.Message)
+                End If
+
+                ' Sleep for 3 seconds
+                System.Threading.Thread.Sleep(3000)
+            End Try
+
+            retriesRemaining -= 1
+        End While
+
+        ' If we get here, we never could connect to the message broker
+
+        Dim msg = "Exception creating broker connection"
+        If retryCount > 0 Then
+            msg += " after " & (retryCount + 1) & " attempts"
+        End If
+
+        msg += ": " + String.Join("; ", errorList)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+
+        Console.WriteLine("=== Error creating Activemq connection ===" & Environment.NewLine & msg)
+   
     End Sub
 
     Protected Sub DestroyConnection()

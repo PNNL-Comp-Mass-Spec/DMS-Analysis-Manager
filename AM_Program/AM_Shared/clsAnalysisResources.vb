@@ -4175,30 +4175,52 @@ Public MustInherit Class clsAnalysisResources
             Return False
         End If
 
-        Dim msXmlToolNameVersionFolder As String = String.Empty
+        Dim msXmlToolNameVersionFolders As New List(Of String)
 
         For Each folderName In foldersToSearch
             Try
-                msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(folderName)
+                Dim msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(folderName)
+                msXmlToolNameVersionFolders.Add(msXmlToolNameVersionFolder)
             Catch ex As Exception
-                errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & folderName & "); cannot retrieve the " & resultFileExtension & " File"                
+                errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & folderName & "); cannot retrieve the " & resultFileExtension & " File"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
             End Try
         Next
 
-        If String.IsNullOrWhiteSpace(msXmlToolNameVersionFolder) Then
+        If msXmlToolNameVersionFolders.Count = 0 Then
+            If String.IsNullOrEmpty(errorMessage) Then
+                errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
+            End If
             Return False
         Else
             errorMessage = String.Empty
         End If
 
-        Dim sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, msXmlToolNameVersionFolder, errorMessage)
-        If Not String.IsNullOrEmpty(errorMessage) Then
-            Return False
-        End If
+        Dim diSourceFolder As DirectoryInfo = Nothing
 
-        Dim diSourceFolder = New DirectoryInfo(sourceFolder)
-        If Not diSourceFolder.Exists Then
-            errorMessage = "Cache folder does not exist (" & sourceFolder & "); will re-generate the " & resultFileExtension & " file"
+        For Each toolNameVersionFolder In msXmlToolNameVersionFolders
+            Dim sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, toolNameVersionFolder, errorMessage)
+            If Not String.IsNullOrEmpty(errorMessage) Then
+                Continue For
+            End If
+
+            diSourceFolder = New DirectoryInfo(sourceFolder)
+            If diSourceFolder.Exists Then
+                Exit For
+            End If
+
+            If String.IsNullOrEmpty(errorMessage) Then
+                errorMessage = "Cache folder does not exist (" & sourceFolder
+            Else
+                errorMessage &= " or " & sourceFolder
+            End If
+
+        Next
+
+        If diSourceFolder Is Nothing Then
+            errorMessage &= "); will re-generate the " & resultFileExtension & " file"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMessage)
             fileMissingFromCache = True
             Return False
         End If
@@ -4212,7 +4234,7 @@ Public MustInherit Class clsAnalysisResources
 
         Dim fiSourceFile = New FileInfo(sourceFilePath)
         If Not fiSourceFile.Exists Then
-            errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & sourceFolder & "; will re-generate it"
+            errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & diSourceFolder.FullName & "; will re-generate it"
             fileMissingFromCache = True
             Return False
         End If
@@ -4223,7 +4245,7 @@ Public MustInherit Class clsAnalysisResources
 
         errorMessage = String.Empty
         If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
-            errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & sourceFolder & "; will re-generate it"
+            errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & diSourceFolder.FullName & "; will re-generate it"
             fileMissingFromCache = True
             Return False
         End If
