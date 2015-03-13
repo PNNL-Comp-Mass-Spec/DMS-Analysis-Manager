@@ -1,0 +1,107 @@
+Steps to run:
+
+
+1) Copy files to DMS_Workdir
+	%workDir% = E:\DMS_WorkDir2
+
+2) Create subfolders in workDir
+	RunFiles\LocksFolder
+	XYDataWriter
+
+3a) Copy the .Raw file to %WorkDir%
+
+3b) Create the _Peaks.txt file for the .Raw file
+
+
+4) Copy files from Gigasax to RunFiles
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\BaseFiles
+		BasicTargetedWorkflowParameters.xml
+	
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Factors
+	Note: Defined by the Analysis Job's settings file, which translates to job parameter "Factors" in section "GlyQ-IQ"
+		Factors_L10.txt
+
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\ParameterFiles
+	Note: Defined by the Analysis Job's parameter file
+		FragmentedParameters_Velos_7ppm_H.txt
+		 or
+		FragmentedParameters_Velos_7ppm_DH.txt
+
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\WorkflowParameters
+		TargetedAlignmentWorkflowParameters.xml
+
+
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Libraries
+	Note: Defined by the Analysis Job's settings file, which translates to job parameter "Targets" in section "GlyQ-IQ"
+	      Also note that the TargetsFile has a dataset column; this can be ignored (I think).
+		L_13_HighMannose_TargetsFirstAll.txt
+
+	Use L_13_HighMannose_TargetsFirstAll.txt for testing
+	Use L_13_Alditol_No_PSA.txt              for production
+
+
+
+
+5) Create the runtime parameter file in the RunFiles folder
+	Name: GlyQIQ_Parameters_DMS.txt
+	File Contents:
+
+resultsFolderPath,%workDir%\Results
+loggingFolderPath,%workDir%\Results
+factorsFile,Factors_L10.txt
+executorParameterFile,WorkflowExecutorParameters_DMS.xml
+XYDataFolder,XYDataWriter
+WorkflowParametersFile,FragmentedParameters_Velos_7ppm_DH.txt
+TargetedAlignmentWorkflowParameters,%workDir%\RunFiles\TargetedAlignmentWorkflowParameters.xml
+BasicTargetedWorkflowParameters,%workDir%\RunFiles\BasicTargetedWorkflowParameters.xml
+
+6) Create the WorkflowExecutor parameter file in the RunFiles folder
+	Name: WorkflowExecutorParameters_DMS.xml
+	File contents:
+
+<?xml version="1.0" encoding="utf-8"?>
+<WorkflowParameters>
+  <AlignmentInfoFolder>%workDir%\RunFiles\AlignmentInfo</AlignmentInfoFolder>
+  <CopyRawFileLocal>false</CopyRawFileLocal>
+  <DeleteLocalDatasetAfterProcessing>false</DeleteLocalDatasetAfterProcessing>
+  <FileContainingDatasetPaths>\\protoapps\UserData\Slysz\Standard_Testing\Targeted_FeatureFinding\QCShew_OrbiStandard_FileReference.txt</FileContainingDatasetPaths>
+  <FolderPathForCopiedRawDataset>%workDir%\RunFiles\CopyFolder</FolderPathForCopiedRawDataset>
+  <LoggingFolder>%workDir%\RunFiles\Logs</LoggingFolder>
+  <TargetsUsedForAlignmentFilePath></TargetsUsedForAlignmentFilePath>
+  <TargetsFilePath>%workDir%\RunFiles\DummyFile_Parameter_is_Ignored.txt</TargetsFilePath>
+  <ResultsFolder>%workDir%\RunFiles\Results</ResultsFolder>
+  <TargetedAlignmentIsPerformed>false</TargetedAlignmentIsPerformed>
+  <TargetedAlignmentWorkflowParameterFile>%workDir%\RunFiles\TargetedAlignmentWorkflowParameters.xml</TargetedAlignmentWorkflowParameterFile>
+  <WorkflowParameterFile>%workDir%\RunFiles\BasicTargetedWorkflowParameters.xml</WorkflowParameterFile>
+  <WorkflowType>BasicTargetedWorkflowExecutor</WorkflowType>
+</WorkflowParameters>
+
+
+I'm not sure if the Targets file specified in WorkflowExecutorParameters_DMS needs to match the targets file supplied to IQGlyQ_Console.exe
+Waiting to hear back from Scott
+
+
+7) Run IQGlyQ_Console using ProgRunner; it is probably best to include all of the double quotes on these parameters, even if they don't have spaces
+
+' Arguments:
+	WorkingDirectoryPath
+	datasetName
+	datasetEnding
+	targetsFilePath
+	glyQIqParameterFile
+	RunFilesFolderPath
+	LocksFileName
+	ResultsFolder
+	CoreID  (only used if the targets file has been split and is being analyzed by separate instances of IQGlyQ_Console.exe)
+
+C:\DMS_Programs\GlyQ-IQ\IQGlyQ_Console.exe 
+   "%workdir%"
+   "%DatasetName%"
+   "raw"
+   "L_13_HighMannose_TargetsFirstAll.txt"
+   "GlyQIQ_Parameters_DMS.txt"
+   "%WorkDir%\RunFiles"
+   "Lock_0"
+   "%WorkDir%\Results"
+   "1"
+
