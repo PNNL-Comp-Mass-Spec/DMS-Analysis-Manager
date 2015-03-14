@@ -4,22 +4,21 @@ Steps to run:
 1) Copy files to DMS_Workdir
 	%workDir% = E:\DMS_WorkDir2
 
-2) Create subfolders in workDir
-	RunFiles\LocksFolder
-	XYDataWriter
+2) Determine number of cores to use, e.g. 4 cores
 
-3a) Copy the .Raw file to %WorkDir%
+3) Create subfolders in workDir
+	WorkingParametersCore1
+	WorkingParametersCore2
+	WorkingParametersCore3
+	WorkingParametersCore4
 
-3b) Create the _Peaks.txt file for the .Raw file
+4) For each WorkingParametersCore# folder, create subfolder "LocksFolder"
+	WorkingParametersCore1\LocksFolder
+	WorkingParametersCore2\LocksFolder
+	WorkingParametersCore3\LocksFolder
+	WorkingParametersCore4\LocksFolder
 
-
-4) Copy files from Gigasax to RunFiles
-	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\BaseFiles
-		BasicTargetedWorkflowParameters.xml
-	
-	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Factors
-	Note: Defined by the Analysis Job's settings file, which translates to job parameter "Factors" in section "GlyQ-IQ"
-		Factors_L10.txt
+5) Copy files from Gigasax to each of the WorkingParametersCore# folders
 
 	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\ParameterFiles
 	Note: Defined by the Analysis Job's parameter file
@@ -27,23 +26,38 @@ Steps to run:
 		 or
 		FragmentedParameters_Velos_7ppm_DH.txt
 
-	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\WorkflowParameters
-		TargetedAlignmentWorkflowParameters.xml
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Factors
+	Note: Defined by the Analysis Job's settings file, which translates to job parameter "Factors" in section "GlyQ-IQ"
+		Factors_L10.txt
 
 
-	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Libraries
-	Note: Defined by the Analysis Job's settings file, which translates to job parameter "Targets" in section "GlyQ-IQ"
-	      Also note that the TargetsFile has a dataset column; this can be ignored (I think).
-		L_13_HighMannose_TargetsFirstAll.txt
+	# Note: this file isn't actually needed, so skip it
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\BaseFiles
+		BasicTargetedWorkflowParameters.xml
+	
+	From \\gigasax\DMS_Parameter_Files\GlyQ-IQ\BaseFiles
+		AlignmentParameters.xml
+
+
+6) Copy the targets file from \\gigasax\DMS_Parameter_Files\GlyQ-IQ\Libraries
+   to %WorkDir%
+
+	Note: This is Defined by the Analysis Job's settings file, which translates to job parameter "Targets" in section "GlyQ-IQ"
+	      Also note that the TargetsFile has a dataset column; this can be ignored
 
 	Use L_13_HighMannose_TargetsFirstAll.txt for testing
 	Use L_13_Alditol_No_PSA.txt              for production
 
+7) Count the number of rows in the targets file, then split evenly for the number of cores
+	Save files at:
 
+	WorkingParametersCore1\L_13_HighMannose_TargetsFirstAll_Part1.txt
+	WorkingParametersCore2\L_13_HighMannose_TargetsFirstAll_Part2.txt
+	WorkingParametersCore3\L_13_HighMannose_TargetsFirstAll_Part3.txt
+	WorkingParametersCore4\L_13_HighMannose_TargetsFirstAll_Part4.txt
 
-
-5) Create the runtime parameter file in the RunFiles folder
-	Name: GlyQIQ_Parameters_DMS.txt
+8) Create the runtime parameter file in each WorkingParametersCore# folder
+	Name: GlyQIQ_Params_DatasetName.txt
 	File Contents:
 
 resultsFolderPath,%workDir%\Results
@@ -52,36 +66,45 @@ factorsFile,Factors_L10.txt
 executorParameterFile,WorkflowExecutorParameters_DMS.xml
 XYDataFolder,XYDataWriter
 WorkflowParametersFile,FragmentedParameters_Velos_7ppm_DH.txt
-TargetedAlignmentWorkflowParameters,%workDir%\RunFiles\TargetedAlignmentWorkflowParameters.xml
-BasicTargetedWorkflowParameters,%workDir%\RunFiles\BasicTargetedWorkflowParameters.xml
+TargetedAlignmentWorkflowParameters,%workDir%\WorkingParametersCore1\AlignmentParameters.xml
+BasicTargetedWorkflowParameters,%workDir%\WorkingParametersCore1\BasicTargetedWorkflowParameters.xml
 
-6) Create the WorkflowExecutor parameter file in the RunFiles folder
+9) Create the WorkflowExecutor parameter file in the WorkingParametersCore# folder
 	Name: WorkflowExecutorParameters_DMS.xml
+
+	NOTE: The file paths in this file don't matter
+	      Thus, just use the default Executor file:
+	      \\gigasax\dms_parameter_Files\GlyQ-IQ\BaseFiles\ExecutorParametersSK.xml
+
 	File contents:
 
 <?xml version="1.0" encoding="utf-8"?>
 <WorkflowParameters>
-  <AlignmentInfoFolder>%workDir%\RunFiles\AlignmentInfo</AlignmentInfoFolder>
+  <AlignmentInfoFolder>%workDir%\WorkingParametersCore1\AlignmentInfo</AlignmentInfoFolder>
   <CopyRawFileLocal>false</CopyRawFileLocal>
   <DeleteLocalDatasetAfterProcessing>false</DeleteLocalDatasetAfterProcessing>
   <FileContainingDatasetPaths>\\protoapps\UserData\Slysz\Standard_Testing\Targeted_FeatureFinding\QCShew_OrbiStandard_FileReference.txt</FileContainingDatasetPaths>
-  <FolderPathForCopiedRawDataset>%workDir%\RunFiles\CopyFolder</FolderPathForCopiedRawDataset>
-  <LoggingFolder>%workDir%\RunFiles\Logs</LoggingFolder>
+  <FolderPathForCopiedRawDataset>%workDir%\WorkingParametersCore1\CopyFolder</FolderPathForCopiedRawDataset>
+  <LoggingFolder>%workDir%\WorkingParametersCore1\Logs</LoggingFolder>
   <TargetsUsedForAlignmentFilePath></TargetsUsedForAlignmentFilePath>
-  <TargetsFilePath>%workDir%\RunFiles\DummyFile_Parameter_is_Ignored.txt</TargetsFilePath>
-  <ResultsFolder>%workDir%\RunFiles\Results</ResultsFolder>
+  <TargetsFilePath>%workDir%\WorkingParametersCore1\DummyFile_Parameter_is_Ignored.txt</TargetsFilePath>
+  <ResultsFolder>%workDir%\WorkingParametersCore1\Results_Parameter_is_Ignored</ResultsFolder>
   <TargetedAlignmentIsPerformed>false</TargetedAlignmentIsPerformed>
-  <TargetedAlignmentWorkflowParameterFile>%workDir%\RunFiles\TargetedAlignmentWorkflowParameters.xml</TargetedAlignmentWorkflowParameterFile>
-  <WorkflowParameterFile>%workDir%\RunFiles\BasicTargetedWorkflowParameters.xml</WorkflowParameterFile>
+  <TargetedAlignmentWorkflowParameterFile>%workDir%\WorkingParametersCore1\AlignmentParameters.xml</TargetedAlignmentWorkflowParameterFile>
+  <WorkflowParameterFile>%workDir%\WorkingParametersCore1\BasicTargetedWorkflowParameters.xml</WorkflowParameterFile>
   <WorkflowType>BasicTargetedWorkflowExecutor</WorkflowType>
 </WorkflowParameters>
 
 
-I'm not sure if the Targets file specified in WorkflowExecutorParameters_DMS needs to match the targets file supplied to IQGlyQ_Console.exe
-Waiting to hear back from Scott
+10) Copy the .Raw file to %WorkDir%
+
+11) Copy the _Peaks.txt file for the .Raw file (should have been created by the DeconPeakDetector job step)
 
 
-7) Run IQGlyQ_Console using ProgRunner; it is probably best to include all of the double quotes on these parameters, even if they don't have spaces
+
+
+12) Run IQGlyQ_Console using ProgRunner (separate ProgRunner for each Core)
+	It is probably best to include all of the double quotes on these parameters, even if they don't have spaces
 
 ' Arguments:
 	WorkingDirectoryPath
@@ -89,19 +112,46 @@ Waiting to hear back from Scott
 	datasetEnding
 	targetsFilePath
 	glyQIqParameterFile
-	RunFilesFolderPath
+	WorkingParametersFolderPath
 	LocksFileName
 	ResultsFolder
-	CoreID  (only used if the targets file has been split and is being analyzed by separate instances of IQGlyQ_Console.exe)
+	CoreID
 
 C:\DMS_Programs\GlyQ-IQ\IQGlyQ_Console.exe 
    "%workdir%"
    "%DatasetName%"
    "raw"
-   "L_13_HighMannose_TargetsFirstAll.txt"
-   "GlyQIQ_Parameters_DMS.txt"
-   "%WorkDir%\RunFiles"
+   "L_13_HighMannose_TargetsFirstAll_Part1.txt"
+   "GlyQIQ_Params_DatasetName.txt"
+   "%WorkDir%\WorkingParametersCore1"
    "Lock_0"
    "%WorkDir%\Results"
    "1"
+
+
+
+C:\DMS_Programs\GlyQ-IQ\IQGlyQ_Console.exe 
+   "%workdir%"
+   "%DatasetName%"
+   "raw"
+   "L_13_HighMannose_TargetsFirstAll_Part2.txt"
+   "GlyQIQ_Params_DatasetName.txt"
+   "%WorkDir%\WorkingParametersCore2"
+   "Lock_0"
+   "%WorkDir%\Results"
+   "2"
+
+13) When things are running, you'll see interim results at:
+	E:\DMS_WorkDir2\Results_DatasetName_1\DatasetName_iqResults.txt
+	E:\DMS_WorkDir2\Results_DatasetName_2\DatasetName_iqResults.txt
+	E:\DMS_WorkDir2\Results_DatasetName_3\DatasetName_iqResults.txt
+
+14) When each task finishes, it moves the results file to:
+	E:\DMS_WorkDir2\Results_DatasetName\DatasetName_iqResults_1.txt
+	E:\DMS_WorkDir2\Results_DatasetName\DatasetName_iqResults_2.txt
+	E:\DMS_WorkDir2\Results_DatasetName\DatasetName_iqResults_3.txt
+
+
+15) Once all the threads are done, combine the results skipping the header line for cores 2 through 4
+
 

@@ -190,10 +190,10 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisToolRunnerDeconPeakDetector".ToLower()
 			'	myToolRunner = DirectCast(New AnalysisManagerDeconPeakDetectorPlugIn.clsAnalysisToolRunnerDeconPeakDetector, IToolRunner)
 
-			'Case "AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ".ToLower()
-			'	myToolRunner = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisToolRunnerGlyQIQ, IToolRunner)
+            Case "AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ".ToLower()
+                myToolRunner = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisToolRunnerGlyQIQ, IToolRunner)
 
-		End Select
+        End Select
 
 		Return myToolRunner
 	End Function
@@ -318,11 +318,11 @@ Public Class clsPluginLoader
 			'Case "AnalysisManagerDeconPeakDetectorPlugin.clsAnalysisResourcesDeconPeakDetector".ToLower()
 			'	myModule = DirectCast(New AnalysisManagerDeconPeakDetectorPlugIn.clsAnalysisResourcesDeconPeakDetector, IAnalysisResources)
 
-			'Case "AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ".ToLower()
-			'	myModule = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisResourcesGlyQIQ, IAnalysisResources)
+            Case "AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ".ToLower()
+                myModule = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisResourcesGlyQIQ, IAnalysisResources)
 
 
-		End Select
+        End Select
 
 		Return myModule
 

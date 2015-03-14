@@ -9,6 +9,8 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
+Imports System.Threading
+
 
 Public Class clsAnalysisToolRunnerGlyQIQ
     Inherits clsAnalysisToolRunnerBase
@@ -20,22 +22,19 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 #Region "Constants and Enums"
     Protected Const MASTER_SOURCE_APPLICATION_FOLDER As String = "\\pnl\projects\OmicsSW\DMS_Programs\GlyQ-IQ\ApplicationFiles"
 
-    Protected Const GLYQ_IQ_CONSOLE_OUTPUT As String = "GlyQ-IQ_ConsoleOutput.txt"
-
     Protected Const PROGRESS_PCT_STARTING As Single = 1
     Protected Const PROGRESS_PCT_SEARCH_COMPLETE As Single = 95
     Protected Const PROGRESS_PCT_CLEAR_REMOTE_WORKDIR As Single = 97
     Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
+    Protected Const USE_THREADING As Boolean = True
+
 #End Region
 
 #Region "Module Variables"
 
-    Protected mConsoleOutputErrorMsg As String
-
-    Protected mGlyQIQApplicationFilesFolderPath As String
-
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCoreCount As Integer
+    Protected mGlyQRunners As Dictionary(Of Integer, clsGlyQIqRunner)
 
 #End Region
 
@@ -59,27 +58,16 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerGlyQIQ.RunTool(): Enter")
             End If
 
-            ' Lookup the HPC options
-            Dim udtHPCOptions As clsAnalysisResources.udtHPCOptionsType = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName)
+            ' Determine the path to the IQGlyQ program
+            Dim progLoc As String
+            progLoc = DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe")
 
-            ' Make sure the remote workdir is empty
-            If Not ClearFolder(udtHPCOptions.WorkDirPath) Then
+            If String.IsNullOrWhiteSpace(progLoc) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            mGlyQIQApplicationFilesFolderPath = String.Empty
-
-            ' Determine the path to the GlyQIQ application files folder
-            mGlyQIQApplicationFilesFolderPath = clsAnalysisResourcesGlyQIQ.GetGlyQIQAppFilesPath(udtHPCOptions)
-
-            ' Make sure the GlyQ-IQ application files are up-to-date
-            If Not SynchronizeGlyQIQApplicationFiles(udtHPCOptions) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Store the GlyQ-IQ version info in the database
-            m_message = String.Empty
-            If Not StoreToolVersionInfo() Then
+            ' Store the GlyQ-IQ version info in the database            
+            If Not StoreToolVersionInfo(progLoc) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Error determining GlyQ-IQ version"
@@ -87,29 +75,63 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            ' Synchronize the working directory with HPC
-            If Not CopyDataFilesToHPC(udtHPCOptions) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
             ' Run GlyQ-IQ
             Dim blnSuccess = RunGlyQIQ()
 
-            ' Copy the results to the local computer
-            blnSuccess = RetrieveGlyQIQResults(udtHPCOptions)
+            If blnSuccess Then
 
-            If Not blnSuccess Then
-                ' Retrieve the log files and any results files so that we have a copy of them
-                RetrieveResultsSubfolder(udtHPCOptions, "Results")
+                ' Combine the results files
+                Dim diResultsFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "Results_" & m_Dataset))
+                If Not diResultsFolder.Exists Then
+                    m_message = "Results folder not found"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    blnSuccess = False
+                End If
+
+                If blnSuccess Then
+
+                    Using swWriter = New StreamWriter(New FileStream(Path.Combine(m_WorkDir, m_Dataset & "_iqResults_.txt"), FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+
+                        For core = 1 To mCoreCount
+                            Dim fiResultFile = New FileInfo(Path.Combine(diResultsFolder.FullName, m_Dataset & "_iqResults_" & core & ".txt"))
+
+                            If Not fiResultFile.Exists Then
+                                If String.IsNullOrEmpty(m_message) Then
+                                    m_message = "Result file not found: " & fiResultFile.Name
+                                End If
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Result file not found: " & fiResultFile.FullName)
+                                blnSuccess = False
+                                Continue For
+                            End If
+
+                            Dim linesRead = 0
+                            Using srReader = New StreamReader(New FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                                While Not srReader.EndOfStream
+                                    Dim lineIn = srReader.ReadLine()
+                                    linesRead += 1
+
+                                    If linesRead = 1 AndAlso core > 1 Then
+                                        Continue While
+                                    End If
+
+                                    swWriter.WriteLine(lineIn)
+
+                                End While
+
+
+                            End Using
+                        Next
+
+                    End Using
+                End If
             End If
 
+
             ' Zip up the settings files and batch files so we have a record of them
-            PackageResults(udtHPCOptions)
+            PackageResults()
 
             m_progress = PROGRESS_PCT_CLEAR_REMOTE_WORKDIR
 
-            ' Delete all files in the remote workdir
-            ClearFolder(udtHPCOptions.WorkDirPath)
 
             m_progress = PROGRESS_PCT_COMPLETE
 
@@ -159,52 +181,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Private Function ClearFolder(ByVal folderPath As String) As Boolean
-
-        Try
-
-            Dim diFolder As DirectoryInfo = New DirectoryInfo(folderPath)
-            If Not diFolder.Exists Then Return True
-
-            Dim lstFiles = diFolder.GetFiles("*")
-
-            For Each fiFile In lstFiles
-                fiFile.Delete()
-            Next
-
-            Dim lstSubFolders = diFolder.GetDirectories()
-            For Each diSubFolder In lstSubFolders
-                ClearFolder(diSubFolder.FullName)
-                diSubFolder.Delete()
-            Next
-
-            Return True
-
-        Catch ex As Exception
-            m_message = "Exception deleting files from " & folderPath
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Private Function CopyDataFilesToHPC(ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
-
-        Try
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Synchronizing working directory with " & udtHPCOptions.WorkDirPath)
-            Dim success = SynchronizeFolders(m_WorkDir, udtHPCOptions.WorkDirPath, True)
-
-            Return success
-
-        Catch ex As Exception
-            m_message = "Exception copying files to the remote HPC working directory"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Private Function PackageResults(udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
+    Private Function PackageResults() As Boolean
 
         Dim diTempZipFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "FilesToZip"))
 
@@ -223,11 +200,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
             lstFiles = diWorkDir.GetFiles("*.txt")
             For Each fiFile In lstFiles
-                If fiFile.Name.Contains("HPC") Then
-                    lstFilesToMove.Add(fiFile)
-                ElseIf fiFile.Name.StartsWith("0y_HPC_OperationParameters") Then
-                    lstFilesToMove.Add(fiFile)
-                ElseIf fiFile.Name.StartsWith("GlyQIQ_Params") Then
+                If fiFile.Name.StartsWith("GlyQ-IQ_ConsoleOutput") Then
                     lstFilesToMove.Add(fiFile)
                 End If
             Next
@@ -236,8 +209,8 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                 fiFile.MoveTo(Path.Combine(diTempZipFolder.FullName, fiFile.Name))
             Next
 
-            ' Move selected files from the WorkingParameters folder
-            Dim diWorkingParamsSource = New DirectoryInfo(Path.Combine(m_WorkDir, "WorkingParameters"))
+            ' Move selected files from the first WorkingParameters folder
+            Dim diWorkingParamsSource = New DirectoryInfo(Path.Combine(m_WorkDir, "WorkingParametersCore1"))
             Dim diWorkingParamsTarget = New DirectoryInfo(Path.Combine(diTempZipFolder.FullName, "WorkingParameters"))
             If Not diWorkingParamsTarget.Exists Then
                 diWorkingParamsTarget.Create()
@@ -253,7 +226,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                     blnMoveFile = True
                 ElseIf fiFile.Name.StartsWith("AlignmentParameters") Then
                     blnMoveFile = True
-                ElseIf fiFile.Name.StartsWith("ExecutorParametersSK") Then
+                ElseIf fiFile.Name.StartsWith("ExecutorParameters") Then
                     blnMoveFile = True
                 End If
 
@@ -269,205 +242,78 @@ Public Class clsAnalysisToolRunnerGlyQIQ
         Catch ex As Exception
             m_message = "Exception creating GlyQIq_Automation_Files.zip"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
         End Try
 
         Try
             ' Clear the TempZipFolder so we can re-use it
             Threading.Thread.Sleep(250)
             diTempZipFolder.Delete(True)
+
             Threading.Thread.Sleep(250)
             diTempZipFolder.Create()
 
-            ' Zip up all of the files in the G_GridResultsBreakDown folder
-            Dim diGridResults = New DirectoryInfo(Path.Combine(m_WorkDir, "G_GridResultsBreakDown"))
-            For Each fiFile In diGridResults.GetFiles("*", SearchOption.AllDirectories)
-                fiFile.MoveTo(Path.Combine(diTempZipFolder.FullName, fiFile.Name))
-            Next
-
-            Dim strZipFilePath = Path.Combine(m_WorkDir, "G_GridResultsBreakDown.zip")
-
-            m_IonicZipTools.ZipDirectory(diTempZipFolder.FullName, strZipFilePath)
 
         Catch ex As Exception
             m_message = "Exception zipping results"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-        End Try
-
-        Try
-
-            ' Move the ResultsSummary files up one folder
-            Dim diResultsSummaryFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "ResultsSummary"))
-            For Each fiFile In diResultsSummaryFolder.GetFiles()
-                fiFile.MoveTo(Path.Combine(m_WorkDir, fiFile.Name))
-            Next
-
-        Catch ex As Exception
-            m_message = "Exception zipping results"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-        End Try
-
-        Try
-
-            ' Remove extraneous messages from the _ConsoleOutput.txt file
-            Dim strConsoleOutputFilePath = Path.Combine(m_WorkDir, GLYQ_IQ_CONSOLE_OUTPUT)
-            Dim fiConsoleOutputFileOld = New FileInfo(strConsoleOutputFilePath)
-            Dim fiConsoleOutputFileNew = New FileInfo(strConsoleOutputFilePath & ".new")
-
-            Using srInFile = New StreamReader(New FileStream(fiConsoleOutputFileOld.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Dim strLookingForPrefix = "Looking for: " + udtHPCOptions.WorkDirPath
-                Dim strMultiSleepParameterFilePrefix = Path.Combine(udtHPCOptions.WorkDirPath, "WorkingParameters\HPC_MultiSleepParameterFileGlobal")
-
-                Using swOutfile = New StreamWriter(New FileStream(fiConsoleOutputFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    While srInFile.Peek > -1
-                        Dim strLineIn = srInFile.ReadLine()
-
-                        If strLineIn.StartsWith(strLookingForPrefix) OrElse
-                           strLineIn.StartsWith(strMultiSleepParameterFilePrefix) Then
-                            ' Skip this line
-                            Continue While
-                        End If
-
-                        swOutfile.WriteLine(strLineIn)
-                    End While
-                End Using
-            End Using
-
-            fiConsoleOutputFileOld.MoveTo(fiConsoleOutputFileOld.FullName & ".old")
-            fiConsoleOutputFileOld.Refresh()
-            m_jobParams.AddResultFileToSkip(fiConsoleOutputFileOld.Name)
-
-            fiConsoleOutputFileNew.MoveTo(strConsoleOutputFilePath)
-
-        Catch ex As Exception
-            m_message = "Exception updating the console output file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-        End Try
-
-        Return True
-
-    End Function
-
-    Private Function RetrieveGlyQIQResults(ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
-
-        ' Copy all files from the ResultsSummary folder in the remote working directory
-        Dim blnSuccess = RetrieveResultsSubfolder(udtHPCOptions, "ResultsSummary")
-        If Not blnSuccess Then Return False
-
-        ' Retrieve the GridResultsBreakDown files
-        RetrieveResultsSubfolder(udtHPCOptions, "G_GridResultsBreakDown")
-
-        ' Also copy all files in the remote working directory
-        SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir, False)
-
-        Return True
-
-    End Function
-
-    Private Function RetrieveResultsSubfolder(ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType, ByVal folderName As String) As Boolean
-
-        Try
-            Dim resultsFolderSource As String = Path.Combine(udtHPCOptions.WorkDirPath, folderName)
-            Dim resultsFolderTarget = Path.Combine(m_WorkDir, folderName)
-
-            Dim success = SynchronizeFolders(resultsFolderSource, resultsFolderTarget, True)
-
-            If Not success AndAlso String.IsNullOrEmpty(m_message) Then
-                m_message = "SynchronizeFolders returned false for " & folderName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-            Return success
-
-        Catch ex As Exception
-            m_message = "Exception retrieving the results files from " & folderName
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
             Return False
         End Try
 
+        'Try
+
+        '    ' Remove extraneous messages from the _ConsoleOutput.txt file
+        '    If mGlyQRunners Is Nothing Then Exit Try
+
+        '    For Each glyqRunner In mGlyQRunners
+
+        '        Dim strConsoleOutputFilePath = String.Copy(glyqRunner.Value.ConsoleOutputFilePath)
+        '        Dim fiConsoleOutputFileOld = New FileInfo(strConsoleOutputFilePath)
+        '        Dim fiConsoleOutputFileNew = New FileInfo(strConsoleOutputFilePath & ".new")
+
+        '        Using srInFile = New StreamReader(New FileStream(fiConsoleOutputFileOld.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+        '            Dim strLookingForPrefix = "Looking for: " + m_WorkDir
+
+        '            Using swOutfile = New StreamWriter(New FileStream(fiConsoleOutputFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+        '                While srInFile.Peek > -1
+        '                    Dim strLineIn = srInFile.ReadLine()
+
+        '                    If strLineIn.StartsWith(strLookingForPrefix)  Then
+        '                        ' Skip this line
+        '                        Continue While
+        '                    End If
+
+        '                    swOutfile.WriteLine(strLineIn)
+        '                End While
+        '            End Using
+        '        End Using
+
+        '        fiConsoleOutputFileOld.MoveTo(fiConsoleOutputFileOld.FullName & ".old")
+        '        fiConsoleOutputFileOld.Refresh()
+        '        m_jobParams.AddResultFileToSkip(fiConsoleOutputFileOld.Name)
+
+        '        fiConsoleOutputFileNew.MoveTo(strConsoleOutputFilePath)
+
+        '    Next
+        'Catch ex As Exception
+        '    m_message = "Exception updating the console output file"
+        '    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+        'End Try
+
+        Return True
+
     End Function
-
-
-    ''' <summary>
-    ''' Parse the GlyQ-IQ console output file to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
-
-        ' Example Console output, looking for lines like this
-        '
-
-        Static reProgressStats As Regex = New Regex("We found (?<Done>\d+) out of (?<Total>\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
-
-        Try
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-            Dim strLineIn As String
-            Dim glyqIqProgress As Integer = 0
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Do While srInFile.Peek() >= 0
-                    strLineIn = srInFile.ReadLine()
-
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-
-                        Dim reMatch = reProgressStats.Match(strLineIn)
-
-                        If reMatch.Success Then
-                            Dim intDone As Integer
-                            Dim intTotal As Integer
-
-                            If Integer.TryParse(reMatch.Groups("Done").Value, intDone) Then
-                                If Integer.TryParse(reMatch.Groups("Total").Value, intTotal) Then
-                                    glyqIqProgress = CInt(intDone / CSng(intTotal) * 100)
-                                End If
-                            End If
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-            Dim sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_SEARCH_COMPLETE, glyqIqProgress, 100)
-
-            If m_progress < sngActualProgress Then
-                m_progress = sngActualProgress
-                If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                    dtLastProgressWriteTime = DateTime.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-                End If
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
 
     Protected Function RunGlyQIQ() As Boolean
 
         Dim blnSuccess As Boolean
 
-        Dim remoteBatchFilePath = m_jobParams.GetParam(clsAnalysisResourcesGlyQIQ.GLYQ_IQ_LAUNCHER_FILE_PARAM_NAME, "")
-
-        mConsoleOutputErrorMsg = String.Empty
+        mCoreCount = m_jobParams.GetJobParameter(clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0)
+        If mCoreCount < 1 Then
+            m_message = "Core count reported by " & clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT & " is 0; unable to continue"
+            Return False
+        End If
 
         Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
         Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
@@ -479,37 +325,89 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Return False
         End If
 
-        Dim fiLauncherFile = New FileInfo(remoteBatchFilePath)
-
-        ' Set up and execute a program runner to run the batch file that launches GlyQ-IQ
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Launching GlyQ-IQ using " & fiLauncherFile.FullName)
-
-        CmdRunner = New clsRunDosProgram(fiLauncherFile.Directory.FullName)
-
-        With CmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, GLYQ_IQ_CONSOLE_OUTPUT)
-        End With
+        ' Set up and execute a program runner to run each batch file that launches GlyQ-IQ
 
         m_progress = PROGRESS_PCT_STARTING
 
-        Dim CmdStr As String = String.Empty
-        blnSuccess = CmdRunner.RunProgram(fiLauncherFile.FullName, CmdStr, "GlyQ-IQ", True)
+        mGlyQRunners = New Dictionary(Of Integer, clsGlyQIqRunner)()
+        Dim lstThreads As New List(Of Thread)
 
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+        For core = 1 To mCoreCount
+
+            Dim batchFilePath = Path.Combine(m_WorkDir, clsAnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX & core & ".bat")
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Launching GlyQ-IQ, core " & core & ": " & batchFilePath)
+
+            Dim glyQRunner = New clsGlyQIqRunner(m_WorkDir, core, batchFilePath)
+            AddHandler glyQRunner.CmdRunnerWaiting, AddressOf CmdRunner_LoopWaiting
+            mGlyQRunners.Add(core, glyQRunner)
+
+            If USE_THREADING Then
+                Dim newThread As New Thread(New ThreadStart(AddressOf glyQRunner.StartAnalysis))
+                newThread.Priority = Threading.ThreadPriority.Normal
+                newThread.Start()
+                lstThreads.Add(newThread)
+            Else
+                glyQRunner.StartAnalysis()
+
+                If glyQRunner.Status = clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Failure Then
+                    m_message = "Error running " & Path.GetFileName(batchFilePath)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                End If
+            End If
+        Next
+
+        If USE_THREADING Then
+            ' Wait for all of the threads to exit
+            ' Run for a maximum of 14 days
+
+            Dim dtStartTime = DateTime.UtcNow
+            While DateTime.UtcNow.Subtract(dtStartTime).TotalDays < 14
+                ' Poll the status of each of the threads
+
+                Dim stepsComplete = 0
+
+                For Each glyQRunner In mGlyQRunners
+                    Dim eStatus = glyQRunner.Value.Status
+                    If eStatus >= clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Success Then
+                        ' Analysis completed (or failed)
+                        stepsComplete += 1
+                    End If
+                Next
+
+                If stepsComplete >= mGlyQRunners.Count Then
+                    ' All threads are done
+                    Exit While
+                End If
+
+                Thread.Sleep(2000)
+
+            End While
         End If
+     
 
-        ' Note that the console output will end with these messages
-        ' This is normal, and is nothing to worry about
-        '
-        ' CMD.EXE was started with the above path as the current directory.
-        ' UNC paths are not supported.  Defaulting to Windows directory.
-        ' The system cannot find the file specified.
+        blnSuccess = True
+        Dim exitCode As Integer = 0
+
+        ' Look for any console output error messages
+        For Each glyQRunner In mGlyQRunners
+
+            Dim progRunner = glyQRunner.Value.ProgRunner
+
+            If progRunner Is Nothing Then Continue For
+
+            For Each cachedError In progRunner.CachedConsoleErrors
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Core " & glyQRunner.Key & ": " & cachedError)
+                blnSuccess = False
+            Next
+
+            If progRunner.ExitCode <> 0 AndAlso exitCode = 0 Then
+                exitCode = progRunner.ExitCode
+            End If
+
+        Next
+
 
         If Not blnSuccess Then
             Dim Msg As String
@@ -518,8 +416,8 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "GlyQ-IQ returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If exitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "GlyQ-IQ returned a non-zero exit code: " & exitCode.ToString())
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to GlyQ-IQ failed (but exit code is 0)")
             End If
@@ -537,78 +435,46 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Protected Function SynchronizeGlyQIQApplicationFiles(udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
-
-        Try
-            Const appFolderSource As String = MASTER_SOURCE_APPLICATION_FOLDER
-            Dim appFolderTarget = mGlyQIQApplicationFilesFolderPath
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Synchronizing GlyQ-IQ application files at " & appFolderTarget & " using " & appFolderSource)
-
-            Dim success = SynchronizeFolders(appFolderSource, appFolderTarget, True)
-
-            If Not success AndAlso String.IsNullOrEmpty(m_message) Then
-                m_message = "SynchronizeFolders returned false for GlyQ-IQ Application Files"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            ' Copy theRemoteThermo folder into the working directory
-            Dim remoteThermoFolderSource = Path.Combine(MASTER_SOURCE_APPLICATION_FOLDER, "RemoteThermo")
-            Dim remoteThermoFolderTarget = Path.Combine(udtHPCOptions.WorkDirPath, "RemoteThermo")
-
-            success = SynchronizeFolders(remoteThermoFolderSource, remoteThermoFolderTarget, True)
-
-            If Not success AndAlso String.IsNullOrEmpty(m_message) Then
-                m_message = "SynchronizeFolders returned false for RemoteThermo"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            Return success
-
-        Catch ex As Exception
-            m_message = "Exception synchronizing the GlyQ-IQ application files"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-    End Function
 
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
+        Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        Dim applicationFolderPath = Path.Combine(mGlyQIQApplicationFilesFolderPath, "GlyQ-IQ_Application\Release")
-        Dim consoleAppPath = Path.Combine(applicationFolderPath, "IQGlyQ_Console.exe")
+        Dim fiProgram = New FileInfo(strProgLoc)
+        If Not fiProgram.Exists Then
+            Try
+                strToolVersionInfo = "Unknown"
+                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                Return False
+            End Try
 
-        ' Lookup the version of the GlyQ application
-        Dim blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, consoleAppPath)
+        End If
+
+        ' Lookup the version of the .NET application
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiProgram.FullName)
         If Not blnSuccess Then Return False
 
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(consoleAppPath))
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles = New List(Of FileInfo)
+        ioToolFiles.Add(fiProgram)
 
-        Dim lstDLLs = New List(Of String)
-        lstDLLs.Add("IQGlyQ.dll")
-        lstDLLs.Add("IQ2.dll")
-        lstDLLs.Add("Run32.dll")
-
-        For Each dllName In lstDLLs
-            ioToolFiles.Add(New FileInfo(Path.Combine(applicationFolderPath, dllName)))
-        Next
+        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQGlyQ.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQ2_x64.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "Run64.dll")))
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
@@ -629,9 +495,9 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
+
         Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
@@ -642,14 +508,6 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             dtLastStatusUpdate = DateTime.UtcNow
             UpdateStatusRunning(m_progress)
         End If
-
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, GLYQ_IQ_CONSOLE_OUTPUT))
-
-        End If
-
     End Sub
 
 #End Region

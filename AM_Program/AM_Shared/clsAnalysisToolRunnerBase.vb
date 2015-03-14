@@ -1093,12 +1093,34 @@ Public Class clsAnalysisToolRunnerBase
        ByVal strExeName As String, _
        ByVal strStepToolVersion As String) As String
 
+        Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, m_message)
+    End Function
+
+    ''' <summary>
+    ''' Determine the path to the correct version of the step tool
+    ''' </summary>
+    ''' <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+    ''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+    ''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+    ''' <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+    ''' <returns>The path to the program, or an empty string if there is a problem</returns>
+    ''' <remarks></remarks>
+    Public Shared Function DetermineProgramLocation(
+      ByVal strStepToolName As String,
+      ByVal strProgLocManagerParamName As String,
+      ByVal strExeName As String,
+      ByVal strStepToolVersion As String,
+      ByVal mgrParams As IMgrParams,
+      <Out> ByRef errorMessage As String) As String
+
+        errorMessage = String.Empty
+
         ' Lookup the path to the folder that contains the Step tool
-        Dim progLoc As String = m_mgrParams.GetParam(strProgLocManagerParamName)
+        Dim progLoc As String = mgrParams.GetParam(strProgLocManagerParamName)
 
         If String.IsNullOrWhiteSpace(progLoc) Then
-            m_message = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            errorMessage = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Return String.Empty
         End If
 
@@ -1109,8 +1131,8 @@ Public Class clsAnalysisToolRunnerBase
             progLoc = Path.Combine(progLoc, strStepToolVersion)
 
             If Not Directory.Exists(progLoc) Then
-                m_message = "Version-specific folder not found for " & strStepToolName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
+                errorMessage = "Version-specific folder not found for " & strStepToolName
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage & ": " & progLoc)
                 Return String.Empty
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of " & strStepToolName & ": " & progLoc)
@@ -1121,8 +1143,8 @@ Public Class clsAnalysisToolRunnerBase
         progLoc = Path.Combine(progLoc, strExeName)
 
         If Not File.Exists(progLoc) Then
-            m_message = "Cannot find " & strStepToolName & " program file " & strExeName
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & progLoc)
+            errorMessage = "Cannot find " & strStepToolName & " program file " & strExeName
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage & " at " & progLoc)
             Return String.Empty
         End If
 
